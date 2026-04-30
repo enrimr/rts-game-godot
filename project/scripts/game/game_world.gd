@@ -5,7 +5,7 @@ const CAMERA_SPEED: float = 400.0
 const CAMERA_ZOOM_MIN: float = 0.5
 const CAMERA_ZOOM_MAX: float = 2.0
 const CAMERA_ZOOM_STEP: float = 0.1
-const UNIT_CLICK_RADIUS: float = 20.0
+const UNIT_CLICK_RADIUS: float = 32.0
 
 @onready var units_layer: Node2D = $UnitsLayer
 @onready var camera: Camera2D = $Camera2D
@@ -46,12 +46,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
-				_drag_start = mb.global_position
+				_drag_start = get_global_mouse_position()
 				_dragging = true
 			else:
 				if _dragging:
 					_dragging = false
-					_finish_selection(mb.global_position)
+					_finish_selection(get_global_mouse_position())
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_handle_right_click(get_global_mouse_position())
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
@@ -67,8 +67,8 @@ func _zoom(step: float) -> void:
 # --- Selection ---
 
 func _finish_selection(release_pos: Vector2) -> void:
-	var world_start: Vector2 = _screen_to_world(_drag_start)
-	var world_end: Vector2 = _screen_to_world(release_pos)
+	var world_start: Vector2 = _drag_start
+	var world_end: Vector2 = release_pos
 	var rect: Rect2 = Rect2(world_start, Vector2.ZERO).expand(world_end)
 
 	for sel: Node in _selected_units:
@@ -174,9 +174,3 @@ func _find_nearest_resource_of_type(rtype: ResourceNode.ResourceType, from: Vect
 			best_dist = d
 			best = rn
 	return best
-
-# --- Helpers ---
-
-func _screen_to_world(screen_pos: Vector2) -> Vector2:
-	return camera.get_screen_center_position() + \
-		(screen_pos - get_viewport().get_visible_rect().size * 0.5) / camera.zoom.x
