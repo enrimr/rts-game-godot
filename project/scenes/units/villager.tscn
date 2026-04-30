@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://dvillagerscene1"]
+[gd_scene format=3 uid="uid://0duy7ep36vx3"]
 
 [ext_resource type="Script" uid="uid://b5ekk7f4wxr3l" path="res://scripts/units/villager.gd" id="1_villscr"]
 [ext_resource type="Resource" uid="uid://dvillagerdata01" path="res://resources/units/villager_data.tres" id="2_villdat"]
@@ -47,6 +47,13 @@ radius = 32.0
 script = ExtResource("1_villscr")
 unit_data = ExtResource("2_villdat")
 
+[node name="Body" type="ColorRect" parent="."]
+offset_left = -10.0
+offset_top = -20.0
+offset_right = 10.0
+offset_bottom = 4.0
+color = Color(0.6, 0.45, 0.2, 1.0)
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")
 
@@ -63,7 +70,7 @@ avoidance_enabled = true
 visible = false
 
 [node name="SelectionCircle" type="Polygon2D" parent="SelectionIndicator"]
-color = Color(0, 1, 0, 0)
+color = Color(0, 1, 0, 0.7)
 polygon = PackedVector2Array(16.0, 0.0, 15.39, 3.92, 13.86, 7.65, 11.31, 11.31, 7.65, 13.86, 3.92, 15.39, 0.0, 16.0, -3.92, 15.39, -7.65, 13.86, -11.31, 11.31, -13.86, 7.65, -15.39, 3.92, -16.0, 0.0, -15.39, -3.92, -13.86, -7.65, -11.31, -11.31, -7.65, -13.86, -3.92, -15.39, 0.0, -16.0, 3.92, -15.39, 7.65, -13.86, 11.31, -11.31, 13.86, -7.65, 15.39, -3.92)
 
 [node name="HealthBar" type="ProgressBar" parent="."]
