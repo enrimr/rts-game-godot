@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://placeholder_game_world"]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/hud/hud.tscn" id="1_hud"]
+[ext_resource type="Script" path="res://scripts/map/map_manager.gd" id="2_mapmgr"]
+
+[node name="GameWorld" type="Node2D"]
+
+[node name="MapManager" type="Node" parent="."]
+script = ExtResource("2_mapmgr")
+
+[node name="UnitsLayer" type="Node2D" parent="."]
+
+[node name="BuildingsLayer" type="Node2D" parent="."]
+
+[node name="HUD" parent="." instance=ExtResource("1_hud")]

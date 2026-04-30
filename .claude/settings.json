@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import sys,json; d=json.load(sys.stdin); f=d.get(\\\"file_path\\\",\\\"\\\"); exit(0 if any(f.endswith(e) for e in [\\\".gd\\\",\\\".tscn\\\",\\\".tres\\\"]) else 1)\" 2>/dev/null && echo \"[docs-keeper] Code file modified: $CLAUDE_TOOL_INPUT\" >> /tmp/aok_docs_trigger.log || true'"
+          }
+        ]
+      }
+    ]
+  }
+}

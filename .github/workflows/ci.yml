@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check GDScript formatting
+        run: echo "Add gdtoolkit lint step here"
+
+  export-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify project opens
+        run: echo "Add Godot headless export check here"

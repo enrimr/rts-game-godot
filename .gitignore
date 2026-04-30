@@ -1,0 +1,21 @@
+# Godot
+.godot/
+*.translation
+export_presets.cfg
+*.import
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Build
+builds/
+*.pck
+*.exe
+*.x86_64
+*.app

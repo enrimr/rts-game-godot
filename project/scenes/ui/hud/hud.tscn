@@ -1,0 +1,222 @@
+[gd_scene load_steps=5 format=3 uid="uid://hud_main_scene"]
+
+[ext_resource type="Script" path="res://scripts/ui/hud_manager.gd" id="1_hudmgr"]
+[ext_resource type="Script" path="res://scripts/ui/resource_display.gd" id="2_resdisplay"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
+bg_color = Color(0.1, 0.1, 0.1, 0.85)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottombar"]
+bg_color = Color(0.08, 0.08, 0.08, 0.9)
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hudmgr")
+
+[node name="HUDRoot" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="PanelContainer" parent="HUDRoot"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
+[node name="TopBarLayout" type="HBoxContainer" parent="HUDRoot/TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ResourcePanel" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="FoodDisplay" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+layout_mode = 2
+script = ExtResource("2_resdisplay")
+resource_name = "food"
+icon_text = "Food"
+unique_name_in_owner = true
+
+[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/FoodDisplay"]
+layout_mode = 2
+text = "Food"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+
+[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/FoodDisplay"]
+layout_mode = 2
+text = "0"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+
+[node name="WoodDisplay" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+layout_mode = 2
+script = ExtResource("2_resdisplay")
+resource_name = "wood"
+icon_text = "Wood"
+unique_name_in_owner = true
+
+[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/WoodDisplay"]
+layout_mode = 2
+text = "Wood"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+
+[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/WoodDisplay"]
+layout_mode = 2
+text = "0"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+
+[node name="GoldDisplay" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+layout_mode = 2
+script = ExtResource("2_resdisplay")
+resource_name = "gold"
+icon_text = "Gold"
+unique_name_in_owner = true
+
+[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/GoldDisplay"]
+layout_mode = 2
+text = "Gold"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+
+[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/GoldDisplay"]
+layout_mode = 2
+text = "0"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+
+[node name="StoneDisplay" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+layout_mode = 2
+script = ExtResource("2_resdisplay")
+resource_name = "stone"
+icon_text = "Stone"
+unique_name_in_owner = true
+
+[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/StoneDisplay"]
+layout_mode = 2
+text = "Stone"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+
+[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/StoneDisplay"]
+layout_mode = 2
+text = "0"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+
+[node name="PopulationDisplay" type="Label" parent="HUDRoot/TopBar/TopBarLayout"]
+layout_mode = 2
+text = "Pop: 0/200"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+unique_name_in_owner = true
+
+[node name="AgeDisplay" type="Label" parent="HUDRoot/TopBar/TopBarLayout"]
+layout_mode = 2
+text = "Dark Age"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+unique_name_in_owner = true
+
+[node name="GameClock" type="Label" parent="HUDRoot/TopBar/TopBarLayout"]
+layout_mode = 2
+text = "00:00"
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+unique_name_in_owner = true
+
+[node name="BottomBar" type="PanelContainer" parent="HUDRoot"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bottombar")
+
+[node name="BottomLayout" type="HBoxContainer" parent="HUDRoot/BottomBar"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="SelectionPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(600, 120)
+
+[node name="SelectionContent" type="HBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+
+[node name="UnitPortraitsGrid" type="GridContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 10
+unique_name_in_owner = true
+
+[node name="UnitDetailPanel" type="VBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 0)
+theme_override_constants/separation = 4
+
+[node name="UnitNameLabel" type="Label" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent/UnitDetailPanel"]
+layout_mode = 2
+text = ""
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+unique_name_in_owner = true
+
+[node name="UnitHPBar" type="ProgressBar" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent/UnitDetailPanel"]
+layout_mode = 2
+max_value = 100.0
+value = 0.0
+unique_name_in_owner = true
+
+[node name="ActionButtonsGrid" type="GridContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent/UnitDetailPanel"]
+layout_mode = 2
+columns = 5
+
+[node name="MinimapPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 200)
+
+[node name="MinimapPlaceholder" type="ColorRect" parent="HUDRoot/BottomBar/BottomLayout/MinimapPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.102, 0.227, 0.102, 1)
+
+[node name="PauseOverlay" type="ColorRect" parent="HUDRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+visible = false
+mouse_filter = 0
+unique_name_in_owner = true
+
+[node name="PauseLabel" type="Label" parent="HUDRoot/PauseOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "PAUSED"
+theme_override_font_sizes/font_size = 64
+theme_override_colors/font_color = Color(1, 1, 1, 1)
