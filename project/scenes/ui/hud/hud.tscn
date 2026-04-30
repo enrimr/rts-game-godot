@@ -182,6 +182,7 @@ unique_name_in_owner = true
 [node name="ActionButtonsGrid" type="GridContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent/UnitDetailPanel"]
 layout_mode = 2
 columns = 5
+unique_name_in_owner = true
 
 [node name="MinimapPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
 layout_mode = 2
