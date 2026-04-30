@@ -4,7 +4,7 @@ class_name UnitBase
 
 ## Base class for all controllable units.
 
-enum UnitState { IDLE, MOVING, ATTACKING, GATHERING, BUILDING, DEAD }
+enum UnitState { IDLE, MOVING, ATTACKING, GATHERING, RETURNING, BUILDING, DEAD }
 
 @export var unit_data: UnitResource
 
