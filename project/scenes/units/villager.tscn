@@ -54,6 +54,17 @@ offset_right = 10.0
 offset_bottom = 4.0
 color = Color(0.6, 0.45, 0.2, 1.0)
 
+[node name="UnitLabel" type="Label" parent="."]
+offset_left = -10.0
+offset_top = -18.0
+offset_right = 10.0
+offset_bottom = 2.0
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.15, 0.08, 0.0, 1.0)
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")
 
