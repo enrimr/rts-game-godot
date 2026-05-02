@@ -99,8 +99,8 @@ func update_selection(units: Array) -> void:
 		if max_hp > 0.0:
 			_unit_hp_bar.value = (hp / max_hp) * 100.0
 
-	# Show villager action buttons whenever at least one villager is selected.
-	if first is Villager:
+	# has_method check is more robust than `is Villager` across autoload contexts
+	if first.has_method("order_gather"):
 		_populate_villager_actions()
 
 func update_age(age: int) -> void:

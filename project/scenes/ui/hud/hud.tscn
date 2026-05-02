@@ -140,48 +140,54 @@ theme_override_constants/separation = 0
 [node name="SelectionPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(600, 120)
+custom_minimum_size = Vector2(600, 160)
 
-[node name="SelectionContent" type="HBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel"]
+[node name="SelectionVBox" type="VBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 4
 offset_left = 8.0
-offset_top = 8.0
+offset_top = 6.0
 offset_right = -8.0
-offset_bottom = -8.0
+offset_bottom = -6.0
 
-[node name="UnitPortraitsGrid" type="GridContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent"]
+[node name="TopRow" type="HBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="UnitPortraitsGrid" type="GridContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 10
 unique_name_in_owner = true
 
-[node name="UnitDetailPanel" type="VBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent"]
+[node name="UnitDetailPanel" type="VBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow"]
 layout_mode = 2
 custom_minimum_size = Vector2(140, 0)
 theme_override_constants/separation = 4
 
-[node name="UnitNameLabel" type="Label" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent/UnitDetailPanel"]
+[node name="UnitNameLabel" type="Label" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel"]
 layout_mode = 2
 text = ""
 theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
 unique_name_in_owner = true
 
-[node name="UnitHPBar" type="ProgressBar" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent/UnitDetailPanel"]
+[node name="UnitHPBar" type="ProgressBar" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel"]
 layout_mode = 2
 max_value = 100.0
 value = 0.0
 unique_name_in_owner = true
 
-[node name="ActionButtonsGrid" type="GridContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionContent/UnitDetailPanel"]
+[node name="ActionButtonsGrid" type="GridContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox"]
 layout_mode = 2
-columns = 5
+size_flags_horizontal = 3
+columns = 6
 unique_name_in_owner = true
 
 [node name="MinimapPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
