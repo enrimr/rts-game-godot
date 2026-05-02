@@ -26,12 +26,9 @@ bg_color = Color(0.22, 0.45, 0.18, 1.0)
 [node name="GameWorld" type="Node2D"]
 script = ExtResource("1_gwscript")
 
-[node name="Ground" type="ColorRect" parent="."]
-offset_left = -2000.0
-offset_top = -2000.0
-offset_right = 2000.0
-offset_bottom = 2000.0
+[node name="Ground" type="Polygon2D" parent="."]
 color = Color(0.22, 0.45, 0.18, 1.0)
+polygon = PackedVector2Array(-2000, -2000, 2000, -2000, 2000, 2000, -2000, 2000)
 z_index = -10
 
 [node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
@@ -51,6 +48,7 @@ offset_top = -32.0
 offset_right = 32.0
 offset_bottom = 32.0
 color = Color(0.55, 0.35, 0.1, 1.0)
+mouse_filter = 2
 
 [node name="DropOffLabel" type="Label" parent="DropOffNode"]
 offset_left = -40.0
@@ -61,6 +59,7 @@ text = "Town Center"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+mouse_filter = 2
 
 [node name="Tree1" type="Node2D" parent="."]
 position = Vector2(200.0, 100.0)
@@ -74,6 +73,7 @@ offset_top = -24.0
 offset_right = 16.0
 offset_bottom = 8.0
 color = Color(0.1, 0.55, 0.1, 1.0)
+mouse_filter = 2
 
 [node name="TreeLabel1" type="Label" parent="Tree1"]
 offset_left = -20.0
@@ -84,6 +84,7 @@ text = "Wood"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 9
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+mouse_filter = 2
 
 [node name="Tree2" type="Node2D" parent="."]
 position = Vector2(260.0, 140.0)
@@ -97,6 +98,7 @@ offset_top = -24.0
 offset_right = 16.0
 offset_bottom = 8.0
 color = Color(0.1, 0.55, 0.1, 1.0)
+mouse_filter = 2
 
 [node name="GoldMine" type="Node2D" parent="."]
 position = Vector2(-220.0, 150.0)
@@ -110,6 +112,7 @@ offset_top = -18.0
 offset_right = 18.0
 offset_bottom = 10.0
 color = Color(0.9, 0.75, 0.1, 1.0)
+mouse_filter = 2
 
 [node name="GoldLabel" type="Label" parent="GoldMine"]
 offset_left = -20.0
@@ -120,6 +123,7 @@ text = "Gold"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 9
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+mouse_filter = 2
 
 [node name="UnitsLayer" type="Node2D" parent="."]
 
