@@ -20,29 +20,29 @@ signal action_requested(action_id: String)
 @onready var _pause_overlay: ColorRect = %PauseOverlay
 
 const VILLAGER_ACTIONS: Array = [
-	{"id": "gather_wood",  "label": "Chop\nWood",    "color": Color(0.20, 0.55, 0.15)},
-	{"id": "gather_gold",  "label": "Mine\nGold",    "color": Color(0.75, 0.65, 0.10)},
-	{"id": "gather_stone", "label": "Mine\nStone",   "color": Color(0.55, 0.55, 0.55)},
-	{"id": "gather_food",  "label": "Hunt\nFood",    "color": Color(0.60, 0.20, 0.15)},
-	{"id": "build_menu",   "label": "Build...",      "color": Color(0.20, 0.30, 0.60)},
-	{"id": "stop",         "label": "Stop",          "color": Color(0.50, 0.10, 0.10)},
+	{"id": "gather_wood",  "label": "Chop\nWood",    "color": Color(0.20, 0.55, 0.15), "cost": {}},
+	{"id": "gather_gold",  "label": "Mine\nGold",    "color": Color(0.75, 0.65, 0.10), "cost": {}},
+	{"id": "gather_stone", "label": "Mine\nStone",   "color": Color(0.55, 0.55, 0.55), "cost": {}},
+	{"id": "gather_food",  "label": "Hunt\nFood",    "color": Color(0.60, 0.20, 0.15), "cost": {}},
+	{"id": "build_menu",   "label": "Build...",      "color": Color(0.20, 0.30, 0.60), "cost": {}},
+	{"id": "stop",         "label": "Stop",          "color": Color(0.50, 0.10, 0.10), "cost": {}},
 ]
 
 const BUILD_ACTIONS: Array = [
-	{"id": "build:house",        "label": "House\n25W",       "color": Color(0.50, 0.38, 0.22)},
-	{"id": "build:barracks",     "label": "Barracks\n175W",   "color": Color(0.45, 0.22, 0.18)},
-	{"id": "build:lumber_camp",  "label": "Lumber\n100W",     "color": Color(0.30, 0.20, 0.08)},
-	{"id": "build:mining_camp",  "label": "Mining\n100W",     "color": Color(0.50, 0.46, 0.34)},
-	{"id": "build:farm",         "label": "Farm\n60W",        "color": Color(0.60, 0.52, 0.18)},
-	{"id": "back",               "label": "← Back",           "color": Color(0.25, 0.25, 0.25)},
+	{"id": "build:house",        "label": "House\n25W",       "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25}},
+	{"id": "build:barracks",     "label": "Barracks\n175W",   "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}},
+	{"id": "build:lumber_camp",  "label": "Lumber\n100W",     "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}},
+	{"id": "build:mining_camp",  "label": "Mining\n100W",     "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}},
+	{"id": "build:farm",         "label": "Farm\n60W",        "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60}},
+	{"id": "back",               "label": "← Back",           "color": Color(0.25, 0.25, 0.25), "cost": {}},
 ]
 
 const BARRACKS_ACTIONS: Array = [
-	{"id": "train:militia", "label": "Train\nMilitia\n60F 20W", "color": Color(0.5, 0.2, 0.1)},
+	{"id": "train:militia", "label": "Train\nMilitia\n60F 20W", "color": Color(0.5, 0.2, 0.1), "cost": {"food": 60, "wood": 20}},
 ]
 
 const TOWN_CENTER_ACTIONS: Array = [
-	{"id": "train:villager", "label": "Train\nVillager\n50F", "color": Color(0.20, 0.45, 0.20)},
+	{"id": "train:villager", "label": "Train\nVillager\n50F", "color": Color(0.20, 0.45, 0.20), "cost": {"food": 50}},
 ]
 
 var _elapsed_seconds: float = 0.0
@@ -140,18 +140,45 @@ func _populate_buttons(actions: Array) -> void:
 		btn.action_id = data["id"] as String
 		btn.text = data["label"] as String
 		var color: Color = data["color"] as Color
+		var cost: Dictionary = data.get("cost", {}) as Dictionary
+		btn.set_meta("cost", cost)
+		btn.set_meta("base_color", color)
+		var can_pay: bool = cost.is_empty() or ResourceManager.can_afford(local_player_id, cost)
+		var effective_color: Color = color if can_pay else Color(0.25, 0.25, 0.25)
 		var style: StyleBoxFlat = StyleBoxFlat.new()
-		style.bg_color = color
+		style.bg_color = effective_color
 		style.corner_radius_top_left = 4
 		style.corner_radius_top_right = 4
 		style.corner_radius_bottom_left = 4
 		style.corner_radius_bottom_right = 4
 		btn.add_theme_stylebox_override("normal", style)
 		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
-		hover_style.bg_color = color.lightened(0.25)
+		hover_style.bg_color = effective_color.lightened(0.25)
 		btn.add_theme_stylebox_override("hover", hover_style)
+		btn.disabled = not can_pay
 		btn.action_pressed.connect(_on_action_button_pressed)
 		_action_grid.add_child(btn)
+
+func _refresh_button_states() -> void:
+	for child: Node in _action_grid.get_children():
+		if not (child is ActionButton):
+			continue
+		var btn: ActionButton = child as ActionButton
+		var cost: Dictionary = btn.get_meta("cost", {}) as Dictionary
+		var base_color: Color = btn.get_meta("base_color", Color(0.3, 0.3, 0.3)) as Color
+		var can_pay: bool = cost.is_empty() or ResourceManager.can_afford(local_player_id, cost)
+		btn.disabled = not can_pay
+		var effective_color: Color = base_color if can_pay else Color(0.25, 0.25, 0.25)
+		var style: StyleBoxFlat = StyleBoxFlat.new()
+		style.bg_color = effective_color
+		style.corner_radius_top_left = 4
+		style.corner_radius_top_right = 4
+		style.corner_radius_bottom_left = 4
+		style.corner_radius_bottom_right = 4
+		btn.add_theme_stylebox_override("normal", style)
+		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
+		hover_style.bg_color = effective_color.lightened(0.25)
+		btn.add_theme_stylebox_override("hover", hover_style)
 
 func _on_action_button_pressed(action_id: String) -> void:
 	if action_id == "build_menu":
@@ -180,6 +207,7 @@ func _on_resource_changed(player_id: int, resource: String, amount: int) -> void
 		"wood":  _wood_display.set_amount(amount)
 		"gold":  _gold_display.set_amount(amount)
 		"stone": _stone_display.set_amount(amount)
+	_refresh_button_states()
 
 func _on_unit_selected(units: Array) -> void:
 	_selected_building = null
