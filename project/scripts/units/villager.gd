@@ -137,23 +137,26 @@ func _handle_gathering(delta: float) -> void:
 				carried_amount = 0.0
 				_update_gather_indicator()
 
-func _handle_returning(delta: float) -> void:
-	if nav_agent.is_navigation_finished():
-		if is_instance_valid(drop_off_target):
+const DROP_OFF_RANGE: float = 72.0
+
+func _handle_returning(_delta: float) -> void:
+	if is_instance_valid(drop_off_target):
+		var dist: float = global_position.distance_to((drop_off_target as Node2D).global_position)
+		if dist <= DROP_OFF_RANGE:
 			ResourceManager.add_resource(player_id, carried_resource, carried_amount)
 			carried_amount = 0.0
 			_update_gather_indicator()
+			if is_instance_valid(gather_target):
+				_destination_state = UnitState.GATHERING
+				_start_move_to(gather_target.global_position)
+			else:
+				current_state = UnitState.IDLE
+				_play_animation(_get_animation_name())
+			return
 
-		if is_instance_valid(gather_target):
-			_destination_state = UnitState.GATHERING
-			_start_move_to(gather_target.global_position)
-		else:
-			current_state = UnitState.IDLE
-			_play_animation(_get_animation_name())
-	else:
-		var next_pos: Vector2 = nav_agent.get_next_path_position()
-		var desired_velocity: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
-		nav_agent.set_velocity(desired_velocity)
+	var next_pos: Vector2 = nav_agent.get_next_path_position()
+	var desired_velocity: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
+	nav_agent.set_velocity(desired_velocity)
 
 const BUILD_RANGE: float = 60.0
 
