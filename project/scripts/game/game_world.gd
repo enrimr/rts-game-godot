@@ -52,6 +52,7 @@ func _ready() -> void:
 		EventBus.unit_spawned.emit(v, 0)
 
 	hud.action_requested.connect(_on_action_requested)
+	EventBus.unit_spawned.connect(_on_unit_spawned)
 
 	var minimap: MinimapRenderer = hud.get_node_or_null("%Minimap") as MinimapRenderer
 	if minimap != null:
@@ -317,3 +318,7 @@ func _find_nearest_resource_of_type(rtype: ResourceNode.ResourceType, from: Vect
 			best_dist = d
 			best = rn
 	return best
+
+func _on_unit_spawned(unit: Node, _player: int) -> void:
+	if unit.get_parent() != units_layer:
+		unit.reparent(units_layer)
