@@ -17,6 +17,7 @@ signal action_requested(action_id: String)
 @onready var _unit_name_label: Label = %UnitNameLabel
 @onready var _unit_hp_bar: ProgressBar = %UnitHPBar
 @onready var _action_grid: GridContainer = %ActionButtonsGrid
+@onready var _train_queue_row: HBoxContainer = %TrainQueueRow
 @onready var _pause_overlay: ColorRect = %PauseOverlay
 
 const VILLAGER_ACTIONS: Array = [
@@ -132,6 +133,8 @@ func toggle_pause(is_paused: bool) -> void:
 func _clear_action_buttons() -> void:
 	for child: Node in _action_grid.get_children():
 		child.queue_free()
+	for child: Node in _train_queue_row.get_children():
+		child.queue_free()
 
 func _populate_buttons(actions: Array) -> void:
 	_clear_action_buttons()
@@ -191,10 +194,6 @@ func _on_action_button_pressed(action_id: String) -> void:
 		_in_build_menu = false
 		_populate_buttons(VILLAGER_ACTIONS)
 		return
-	if action_id == "train:militia":
-		if is_instance_valid(_selected_building) and _selected_building is Barracks:
-			(_selected_building as Barracks).order_train()
-		return
 	action_requested.emit(action_id)
 
 func _on_game_started() -> void:
@@ -250,11 +249,11 @@ func _on_building_selected(building: Node) -> void:
 		_unit_hp_bar.value = 0.0
 		_populate_buttons(TOWN_CENTER_ACTIONS)
 		var tc: TownCenter = building as TownCenter
-		_on_train_queue_changed(building, tc.get_queue_size(), tc.get_max_queue())
+		_on_train_queue_changed(building, tc.get_queue(), tc.get_max_queue())
 	elif building is Barracks:
 		_populate_buttons(BARRACKS_ACTIONS)
 		var br: Barracks = building as Barracks
-		_on_train_queue_changed(building, br.get_queue_size(), br.get_max_queue())
+		_on_train_queue_changed(building, br.get_queue(), br.get_max_queue())
 
 func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 	if player_id != local_player_id:
@@ -266,10 +265,17 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 		return
 	update_age(new_age)
 
-func _on_train_queue_changed(building: Node, queued: int, max_queue: int) -> void:
+func _on_cancel_train_slot(index: int) -> void:
+	if not is_instance_valid(_selected_building):
+		return
+	if _selected_building.has_method("order_cancel_train"):
+		_selected_building.order_cancel_train(index)
+
+func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> void:
 	if building != _selected_building:
 		return
 	_refresh_button_states()
+	# Update train button label with queue count
 	for child: Node in _action_grid.get_children():
 		if not (child is ActionButton):
 			continue
@@ -279,6 +285,16 @@ func _on_train_queue_changed(building: Node, queued: int, max_queue: int) -> voi
 			continue
 		var base_label: String = btn.get_meta("base_label", btn.text) as String
 		btn.set_meta("base_label", base_label)
+		var queued: int = queue.size()
 		btn.text = base_label + "\n%d/%d" % [queued, max_queue]
 		if queued >= max_queue:
 			btn.disabled = true
+	# Rebuild the visual queue row
+	for slot: Node in _train_queue_row.get_children():
+		slot.queue_free()
+	for i: int in range(queue.size()):
+		var entry: Dictionary = queue[i] as Dictionary
+		var slot: TrainQueueSlot = TrainQueueSlot.new()
+		_train_queue_row.add_child(slot)
+		slot.setup(i, entry["label"] as String, entry["color"] as Color, i == 0)
+		slot.cancel_requested.connect(_on_cancel_train_slot)

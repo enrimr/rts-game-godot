@@ -191,6 +191,12 @@ size_flags_horizontal = 3
 columns = 6
 unique_name_in_owner = true
 
+[node name="TrainQueueRow" type="HBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/separation = 4
+unique_name_in_owner = true
+
 [node name="MinimapPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
 layout_mode = 2
 custom_minimum_size = Vector2(220, 220)

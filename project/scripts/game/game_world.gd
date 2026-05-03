@@ -288,6 +288,9 @@ func _on_action_requested(action_id: String) -> void:
 		"train:villager":
 			if is_instance_valid(_selected_building) and _selected_building is TownCenter:
 				(_selected_building as TownCenter).order_train()
+		"train:militia":
+			if is_instance_valid(_selected_building) and _selected_building is Barracks:
+				(_selected_building as Barracks).order_train()
 		"stop":
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):
