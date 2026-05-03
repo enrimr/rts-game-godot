@@ -48,6 +48,7 @@ func _physics_process(delta: float) -> void:
 # --- Public API ---
 
 func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
+	_unregister_from_build_target()
 	gather_target = target
 	carried_resource = resource_type
 	drop_off_target = drop_off
@@ -57,6 +58,7 @@ func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
 	_start_move_to((target as Node2D).global_position)
 
 func order_build(target: Node) -> void:
+	_unregister_from_build_target()
 	if is_instance_valid(build_target) and build_target.construction_complete.is_connected(_on_construction_complete):
 		build_target.construction_complete.disconnect(_on_construction_complete)
 	build_target = target
@@ -67,6 +69,7 @@ func order_build(target: Node) -> void:
 	_start_move_to((target as Node2D).global_position)
 
 func order_move(destination: Vector2) -> void:
+	_unregister_from_build_target()
 	gather_target = null
 	build_target = null
 	attack_target = null
@@ -74,6 +77,7 @@ func order_move(destination: Vector2) -> void:
 	_start_move_to(destination)
 
 func order_attack(target: Node) -> void:
+	_unregister_from_build_target()
 	attack_target = target
 	gather_target = null
 	build_target = null
@@ -113,10 +117,16 @@ func _handle_movement(delta: float) -> void:
 	nav_agent.set_velocity(_nav_velocity())
 
 func _enter_state(new_state: UnitState) -> void:
+	if new_state == UnitState.BUILDING and is_instance_valid(build_target):
+		build_target.register_builder()
 	current_state = new_state
 	_destination_state = UnitState.IDLE
 	nav_agent.set_velocity(Vector2.ZERO)
 	_play_animation(_get_animation_name())
+
+func _unregister_from_build_target() -> void:
+	if current_state == UnitState.BUILDING and is_instance_valid(build_target):
+		build_target.unregister_builder()
 
 func _jitter_repath() -> void:
 	var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
@@ -187,6 +197,7 @@ func _handle_returning(delta: float) -> void:
 
 func _handle_building(delta: float) -> void:
 	if not is_instance_valid(build_target):
+		build_target = null
 		current_state = UnitState.IDLE
 		_play_animation(_get_animation_name())
 		return
@@ -260,6 +271,7 @@ func _find_nearest_drop_off() -> Node:
 	return best
 
 func _on_construction_complete() -> void:
+	_unregister_from_build_target()
 	build_target = null
 	current_state = UnitState.IDLE
 	_play_animation(_get_animation_name())
@@ -299,6 +311,7 @@ func _play_animation(anim_name: String) -> void:
 		animated_sprite.play(anim_name)
 
 func die() -> void:
+	_unregister_from_build_target()
 	current_state = UnitState.DEAD
 	_play_animation("die")
 	EventBus.unit_died.emit(self, player_id)

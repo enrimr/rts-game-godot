@@ -6,10 +6,13 @@ enum BuildingState { BLUEPRINT, UNDER_CONSTRUCTION, COMPLETE, DESTROYED }
 
 @export var building_data: BuildingResource
 
+const MAX_BUILD_SPEED_MULTIPLIER: float = 3.0
+
 var player_id: int = 0
 var state: BuildingState = BuildingState.BLUEPRINT
 var health: float = 0.0
 var construction_progress: float = 0.0
+var _active_builders: int = 0
 
 signal construction_complete
 signal building_destroyed(building: Node)
@@ -22,8 +25,17 @@ func _ready() -> void:
 		health = building_data.max_health
 	_refresh_visuals()
 
-func add_construction(amount: float) -> void:
-	construction_progress = minf(construction_progress + amount, 100.0)
+func register_builder() -> void:
+	_active_builders += 1
+
+func unregister_builder() -> void:
+	_active_builders = maxi(0, _active_builders - 1)
+
+func add_construction(base_amount: float) -> void:
+	var multiplier: float = minf(float(_active_builders), MAX_BUILD_SPEED_MULTIPLIER)
+	if multiplier < 1.0:
+		multiplier = 1.0
+	construction_progress = minf(construction_progress + base_amount * multiplier, 100.0)
 	_refresh_visuals()
 	if construction_progress >= 100.0:
 		_complete_construction()
