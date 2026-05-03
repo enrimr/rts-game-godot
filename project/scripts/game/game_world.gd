@@ -129,6 +129,11 @@ func _finish_selection(release_pos: Vector2) -> void:
 			_selected_units.append(unit)
 
 	if is_click and _selected_units.is_empty():
+		# Check Town Center first
+		if _drag_start.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
+			_selected_building = drop_off
+			EventBus.building_selected.emit(drop_off)
+			return
 		for building: Node in buildings_layer.get_children():
 			if not is_instance_valid(building):
 				continue
@@ -278,6 +283,9 @@ func _on_action_requested(action_id: String) -> void:
 			_order_gather_nearest_resource(ResourceNode.ResourceType.STONE)
 		"gather_food":
 			_order_gather_nearest_resource(ResourceNode.ResourceType.FOOD_HUNT)
+		"train:villager":
+			if is_instance_valid(_selected_building) and _selected_building is TownCenter:
+				(_selected_building as TownCenter).order_train()
 		"stop":
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):

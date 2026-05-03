@@ -41,6 +41,10 @@ const BARRACKS_ACTIONS: Array = [
 	{"id": "train:militia", "label": "Train\nMilitia\n60F 20W", "color": Color(0.5, 0.2, 0.1)},
 ]
 
+const TOWN_CENTER_ACTIONS: Array = [
+	{"id": "train:villager", "label": "Train\nVillager\n50F", "color": Color(0.20, 0.45, 0.20)},
+]
+
 var _elapsed_seconds: float = 0.0
 var _clock_running: bool = false
 var _in_build_menu: bool = false
@@ -211,7 +215,11 @@ func _on_building_selected(building: Node) -> void:
 	if max_hp > 0.0:
 		_unit_hp_bar.value = (hp / max_hp) * 100.0
 
-	if building is Barracks:
+	if building is TownCenter:
+		_unit_name_label.text = "Town Center"
+		_unit_hp_bar.value = 0.0
+		_populate_buttons(TOWN_CENTER_ACTIONS)
+	elif building is Barracks:
 		_populate_buttons(BARRACKS_ACTIONS)
 
 func _on_population_changed(player_id: int, current: int, cap: int) -> void:

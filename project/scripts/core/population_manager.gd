@@ -3,7 +3,7 @@ extends Node
 var _population: Dictionary = {}   # player_id -> {current, cap}
 
 func init_player(player_id: int) -> void:
-	_population[player_id] = {"current": 0, "cap": 200}
+	_population[player_id] = {"current": 0, "cap": 15}
 
 func get_population(player_id: int) -> Dictionary:
 	return _population.get(player_id, {"current": 0, "cap": 200})
