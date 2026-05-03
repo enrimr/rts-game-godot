@@ -148,8 +148,28 @@ func _handle_right_click(world_pos: Vector2) -> void:
 	var resource_node: ResourceNode = _find_resource_at(world_pos)
 	if resource_node != null:
 		_order_gather_all(resource_node)
-	else:
-		_order_move_all(world_pos)
+		return
+	var building: Node = _find_building_at(world_pos)
+	if building != null:
+		_order_build_all(building)
+		return
+	_order_move_all(world_pos)
+
+func _find_building_at(world_pos: Vector2) -> Node:
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		var b2d: Node2D = building as Node2D
+		if world_pos.distance_to(b2d.global_position) < BUILDING_CLICK_RADIUS:
+			var state_val: Variant = building.get("state")
+			if state_val != null and state_val as int == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
+				return building
+	return null
+
+func _order_build_all(building: Node) -> void:
+	for unit: Node in _selected_units:
+		if is_instance_valid(unit) and unit.has_method("order_build"):
+			unit.order_build(building)
 
 func _find_resource_at(world_pos: Vector2) -> ResourceNode:
 	for child: Node in get_children():
