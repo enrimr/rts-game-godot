@@ -2,7 +2,6 @@ extends CanvasLayer
 
 const AGE_NAMES: Array = ["Dark Age", "Feudal Age", "Castle Age", "Imperial Age"]
 
-# Emitted when player clicks an action button with villagers selected.
 signal action_requested(action_id: String)
 
 @export var local_player_id: int = 0
@@ -20,18 +19,27 @@ signal action_requested(action_id: String)
 @onready var _action_grid: GridContainer = %ActionButtonsGrid
 @onready var _pause_overlay: ColorRect = %PauseOverlay
 
-# Actions shown when one or more villagers are selected.
 const VILLAGER_ACTIONS: Array = [
-	{"id": "gather_wood", "label": "Chop\nWood",   "color": Color(0.2, 0.55, 0.15)},
-	{"id": "gather_gold", "label": "Mine\nGold",   "color": Color(0.75, 0.65, 0.1)},
-	{"id": "gather_stone","label": "Mine\nStone",  "color": Color(0.55, 0.55, 0.55)},
-	{"id": "gather_food", "label": "Hunt\nFood",   "color": Color(0.6, 0.2, 0.15)},
-	{"id": "build",       "label": "Build",        "color": Color(0.3, 0.3, 0.6)},
-	{"id": "stop",        "label": "Stop",         "color": Color(0.5, 0.1, 0.1)},
+	{"id": "gather_wood",  "label": "Chop\nWood",    "color": Color(0.20, 0.55, 0.15)},
+	{"id": "gather_gold",  "label": "Mine\nGold",    "color": Color(0.75, 0.65, 0.10)},
+	{"id": "gather_stone", "label": "Mine\nStone",   "color": Color(0.55, 0.55, 0.55)},
+	{"id": "gather_food",  "label": "Hunt\nFood",    "color": Color(0.60, 0.20, 0.15)},
+	{"id": "build_menu",   "label": "Build...",      "color": Color(0.20, 0.30, 0.60)},
+	{"id": "stop",         "label": "Stop",          "color": Color(0.50, 0.10, 0.10)},
+]
+
+const BUILD_ACTIONS: Array = [
+	{"id": "build:house",        "label": "House\n25W",       "color": Color(0.50, 0.38, 0.22)},
+	{"id": "build:barracks",     "label": "Barracks\n175W",   "color": Color(0.45, 0.22, 0.18)},
+	{"id": "build:lumber_camp",  "label": "Lumber\n100W",     "color": Color(0.30, 0.20, 0.08)},
+	{"id": "build:mining_camp",  "label": "Mining\n100W",     "color": Color(0.50, 0.46, 0.34)},
+	{"id": "build:farm",         "label": "Farm\n60W",        "color": Color(0.60, 0.52, 0.18)},
+	{"id": "back",               "label": "← Back",           "color": Color(0.25, 0.25, 0.25)},
 ]
 
 var _elapsed_seconds: float = 0.0
 var _clock_running: bool = false
+var _in_build_menu: bool = false
 
 func _ready() -> void:
 	EventBus.resource_changed.connect(_on_resource_changed)
@@ -49,9 +57,7 @@ func _process(delta: float) -> void:
 		return
 	_elapsed_seconds += delta
 	var total_secs: int = int(_elapsed_seconds)
-	var mins: int = total_secs / 60
-	var secs: int = total_secs % 60
-	_clock_label.text = "%02d:%02d" % [mins, secs]
+	_clock_label.text = "%02d:%02d" % [total_secs / 60, total_secs % 60]
 
 func update_resources(player_id: int, resources: Dictionary) -> void:
 	if player_id != local_player_id:
@@ -65,6 +71,7 @@ func update_selection(units: Array) -> void:
 	for child: Node in _unit_portraits_grid.get_children():
 		child.queue_free()
 	_clear_action_buttons()
+	_in_build_menu = false
 
 	if units.is_empty():
 		_unit_name_label.text = ""
@@ -99,13 +106,11 @@ func update_selection(units: Array) -> void:
 		if max_hp > 0.0:
 			_unit_hp_bar.value = (hp / max_hp) * 100.0
 
-	# has_method check is more robust than `is Villager` across autoload contexts
-	if first.has_method("order_gather"):
-		_populate_villager_actions()
+		if first.has_method("order_gather"):
+			_populate_buttons(VILLAGER_ACTIONS)
 
 func update_age(age: int) -> void:
-	var clamped_age: int = clampi(age, 0, AGE_NAMES.size() - 1)
-	_age_label.text = AGE_NAMES[clamped_age]
+	_age_label.text = AGE_NAMES[clampi(age, 0, AGE_NAMES.size() - 1)]
 
 func toggle_pause(is_paused: bool) -> void:
 	_pause_overlay.visible = is_paused
@@ -116,8 +121,9 @@ func _clear_action_buttons() -> void:
 	for child: Node in _action_grid.get_children():
 		child.queue_free()
 
-func _populate_villager_actions() -> void:
-	for entry: Variant in VILLAGER_ACTIONS:
+func _populate_buttons(actions: Array) -> void:
+	_clear_action_buttons()
+	for entry: Variant in actions:
 		var data: Dictionary = entry as Dictionary
 		var btn: ActionButton = ActionButton.new()
 		btn.action_id = data["id"] as String
@@ -131,12 +137,20 @@ func _populate_villager_actions() -> void:
 		style.corner_radius_bottom_right = 4
 		btn.add_theme_stylebox_override("normal", style)
 		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
-		hover_style.bg_color = color.lightened(0.2)
+		hover_style.bg_color = color.lightened(0.25)
 		btn.add_theme_stylebox_override("hover", hover_style)
 		btn.action_pressed.connect(_on_action_button_pressed)
 		_action_grid.add_child(btn)
 
 func _on_action_button_pressed(action_id: String) -> void:
+	if action_id == "build_menu":
+		_in_build_menu = true
+		_populate_buttons(BUILD_ACTIONS)
+		return
+	if action_id == "back":
+		_in_build_menu = false
+		_populate_buttons(VILLAGER_ACTIONS)
+		return
 	action_requested.emit(action_id)
 
 func _on_game_started() -> void:

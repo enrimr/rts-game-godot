@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingResource" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://bpu66yjdkmq8c" path="res://resources/buildings/building_resource.gd" id="1_bldres"]
+
+[resource]
+script = ExtResource("1_bldres")
+id = "farm"
+display_name = "Farm"
+description = "Provides a continuous food source."
+max_health = 300.0
+line_of_sight = 3.0
+garrison_capacity = 0
+cost_wood = 60
+cost_stone = 0
+cost_gold = 0
+build_time = 15.0
+footprint = Vector2i(3, 3)

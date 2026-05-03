@@ -1,6 +1,23 @@
 extends Node2D
 
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
+
+const BUILDING_SCENES: Dictionary = {
+	"house":       "res://scenes/buildings/house.tscn",
+	"barracks":    "res://scenes/buildings/barracks.tscn",
+	"lumber_camp": "res://scenes/buildings/lumber_camp.tscn",
+	"mining_camp": "res://scenes/buildings/mining_camp.tscn",
+	"farm":        "res://scenes/buildings/farm.tscn",
+}
+
+const BUILDING_COSTS: Dictionary = {
+	"house":       {"wood": 25},
+	"barracks":    {"wood": 175},
+	"lumber_camp": {"wood": 100},
+	"mining_camp": {"wood": 100},
+	"farm":        {"wood": 60},
+}
+
 const CAMERA_SPEED: float = 400.0
 const CAMERA_ZOOM_MIN: float = 0.5
 const CAMERA_ZOOM_MAX: float = 2.0
@@ -8,6 +25,7 @@ const CAMERA_ZOOM_STEP: float = 0.1
 const UNIT_CLICK_RADIUS: float = 32.0
 
 @onready var units_layer: Node2D = $UnitsLayer
+@onready var buildings_layer: Node2D = $BuildingsLayer
 @onready var camera: Camera2D = $Camera2D
 @onready var drop_off: Node2D = $DropOffNode
 @onready var hud: CanvasLayer = $HUD
@@ -15,6 +33,11 @@ const UNIT_CLICK_RADIUS: float = 32.0
 var _selected_units: Array[Node] = []
 var _drag_start: Vector2 = Vector2.ZERO
 var _dragging: bool = false
+
+# Build placement state
+var _placing_building: bool = false
+var _placing_id: String = ""
+var _ghost: Node2D = null
 
 func _ready() -> void:
 	ResourceManager.init_player(0)
@@ -38,6 +61,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_handle_camera(delta)
+	if _placing_building and is_instance_valid(_ghost):
+		_ghost.global_position = get_global_mouse_position()
 
 func _handle_camera(delta: float) -> void:
 	var dir: Vector2 = Vector2.ZERO
@@ -50,6 +75,14 @@ func _handle_camera(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
+
+		if _placing_building:
+			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+				_confirm_placement(get_global_mouse_position())
+			elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
+				_cancel_placement()
+			return
+
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_drag_start = get_global_mouse_position()
@@ -73,9 +106,7 @@ func _zoom(step: float) -> void:
 # --- Selection ---
 
 func _finish_selection(release_pos: Vector2) -> void:
-	var world_start: Vector2 = _drag_start
-	var world_end: Vector2 = release_pos
-	var rect: Rect2 = Rect2(world_start, Vector2.ZERO).expand(world_end)
+	var rect: Rect2 = Rect2(_drag_start, Vector2.ZERO).expand(release_pos)
 
 	for sel: Node in _selected_units:
 		if is_instance_valid(sel):
@@ -87,7 +118,7 @@ func _finish_selection(release_pos: Vector2) -> void:
 			continue
 		var unit2d: Node2D = unit as Node2D
 		var in_rect: bool = rect.get_area() >= 10.0 and rect.has_point(unit2d.global_position)
-		var clicked: bool = rect.get_area() < 10.0 and world_start.distance_to(unit2d.global_position) < UNIT_CLICK_RADIUS
+		var clicked: bool = rect.get_area() < 10.0 and _drag_start.distance_to(unit2d.global_position) < UNIT_CLICK_RADIUS
 		if in_rect or clicked:
 			unit.set_selected(true)
 			_selected_units.append(unit)
@@ -99,7 +130,6 @@ func _finish_selection(release_pos: Vector2) -> void:
 func _handle_right_click(world_pos: Vector2) -> void:
 	if _selected_units.is_empty():
 		return
-
 	var resource_node: ResourceNode = _find_resource_at(world_pos)
 	if resource_node != null:
 		_order_gather_all(resource_node)
@@ -107,7 +137,6 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		_order_move_all(world_pos)
 
 func _find_resource_at(world_pos: Vector2) -> ResourceNode:
-	# Check all ResourceNode children of the world by proximity.
 	for child: Node in get_children():
 		if child is ResourceNode:
 			var rn: ResourceNode = child as ResourceNode
@@ -118,28 +147,73 @@ func _find_resource_at(world_pos: Vector2) -> ResourceNode:
 func _order_gather_all(resource_node: ResourceNode) -> void:
 	var resource_name: String = resource_node.get_resource_name()
 	for unit: Node in _selected_units:
-		if not is_instance_valid(unit):
-			continue
-		if unit.has_method("order_gather"):
+		if is_instance_valid(unit) and unit.has_method("order_gather"):
 			unit.order_gather(resource_node, resource_name, drop_off)
 
 func _order_move_all(world_pos: Vector2) -> void:
 	var count: int = _selected_units.size()
 	for i: int in range(count):
 		var unit: Node = _selected_units[i]
-		if not is_instance_valid(unit):
+		if not is_instance_valid(unit) or not unit.has_method("order_move"):
 			continue
-		if unit.has_method("order_move"):
-			# Spread units in a small grid so they don't pile up.
-			var offset: Vector2 = Vector2(
-				float(i % 4) * 30.0 - 45.0,
-				float(i / 4) * 30.0
-			)
-			unit.order_move(world_pos + offset)
+		var offset: Vector2 = Vector2(float(i % 4) * 30.0 - 45.0, float(i / 4) * 30.0)
+		unit.order_move(world_pos + offset)
+
+# --- Building placement ---
+
+func _start_placement(building_id: String) -> void:
+	if not BUILDING_SCENES.has(building_id):
+		return
+	if not ResourceManager.can_afford(0, BUILDING_COSTS.get(building_id, {})):
+		return
+
+	_cancel_placement()
+	_placing_building = true
+	_placing_id = building_id
+
+	var scene: PackedScene = load(BUILDING_SCENES[building_id]) as PackedScene
+	_ghost = scene.instantiate() as Node2D
+	# Make ghost semi-transparent and disable its collision
+	_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5)
+	for child: Node in _ghost.get_children():
+		if child is CollisionShape2D or child is CollisionPolygon2D:
+			(child as CollisionShape2D).disabled = true
+	buildings_layer.add_child(_ghost)
+
+func _confirm_placement(world_pos: Vector2) -> void:
+	var costs: Dictionary = BUILDING_COSTS.get(_placing_id, {})
+	if not ResourceManager.spend_resource(0, costs):
+		_cancel_placement()
+		return
+
+	var scene: PackedScene = load(BUILDING_SCENES[_placing_id]) as PackedScene
+	var building: Node2D = scene.instantiate() as Node2D
+	building.global_position = world_pos
+	building.set("player_id", 0)
+	building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
+	buildings_layer.add_child(building)
+	EventBus.building_placed.emit(building, 0)
+
+	# Send selected villagers to build it
+	for unit: Node in _selected_units:
+		if is_instance_valid(unit) and unit.has_method("order_build"):
+			unit.order_build(building)
+
+	_cancel_placement()
+
+func _cancel_placement() -> void:
+	_placing_building = false
+	_placing_id = ""
+	if is_instance_valid(_ghost):
+		_ghost.queue_free()
+	_ghost = null
 
 # --- HUD action buttons ---
 
 func _on_action_requested(action_id: String) -> void:
+	if action_id.begins_with("build:"):
+		_start_placement(action_id.trim_prefix("build:"))
+		return
 	match action_id:
 		"gather_wood":
 			_order_gather_nearest_resource(ResourceNode.ResourceType.WOOD)

@@ -1,0 +1,43 @@
+[gd_scene load_steps=4 format=3 uid="uid://building_farm"]
+
+[ext_resource type="Script" uid="uid://bdc4ox7saddj7" path="res://scripts/buildings/building_base.gd" id="1_bb"]
+[ext_resource type="Resource" path="res://resources/buildings/farm.tres" id="2_data"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(64.0, 64.0)
+
+[node name="Farm" type="StaticBody2D"]
+script = ExtResource("1_bb")
+building_data = ExtResource("2_data")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_1")
+
+[node name="Body" type="ColorRect" parent="."]
+offset_left = -32.0
+offset_top = -32.0
+offset_right = 32.0
+offset_bottom = 32.0
+color = Color(0.70, 0.62, 0.22, 1.0)
+mouse_filter = 2
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -32.0
+offset_top = -46.0
+offset_right = 32.0
+offset_bottom = -34.0
+text = "Farm"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 9
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+mouse_filter = 2
+
+[node name="ConstructionBar" type="ProgressBar" parent="."]
+offset_left = -32.0
+offset_top = 34.0
+offset_right = 32.0
+offset_bottom = 42.0
+max_value = 100.0
+value = 0.0
+show_percentage = false
+mouse_filter = 2
