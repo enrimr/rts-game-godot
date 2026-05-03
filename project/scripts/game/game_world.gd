@@ -28,6 +28,12 @@ func _ready() -> void:
 		EventBus.unit_spawned.emit(v, 0)
 
 	hud.action_requested.connect(_on_action_requested)
+
+	var minimap: MinimapRenderer = hud.get_node_or_null("%Minimap") as MinimapRenderer
+	if minimap != null:
+		minimap.world_node = self
+		minimap.camera_node = camera
+
 	GameManager.start_game([{"id": 0}])
 
 func _process(delta: float) -> void:

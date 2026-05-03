@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://hud_main_scene"]
+[gd_scene load_steps=6 format=3 uid="uid://hud_main_scene"]
 
 [ext_resource type="Script" path="res://scripts/ui/hud_manager.gd" id="1_hudmgr"]
 [ext_resource type="Script" path="res://scripts/ui/resource_display.gd" id="2_resdisplay"]
+[ext_resource type="Script" path="res://scripts/ui/minimap.gd" id="3_minimap"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
 bg_color = Color(0.1, 0.1, 0.1, 0.85)
@@ -192,16 +193,17 @@ unique_name_in_owner = true
 
 [node name="MinimapPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
 layout_mode = 2
-custom_minimum_size = Vector2(200, 200)
+custom_minimum_size = Vector2(220, 220)
 
-[node name="MinimapPlaceholder" type="ColorRect" parent="HUDRoot/BottomBar/BottomLayout/MinimapPanel"]
+[node name="Minimap" type="Control" parent="HUDRoot/BottomBar/BottomLayout/MinimapPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.102, 0.227, 0.102, 1)
+script = ExtResource("3_minimap")
+unique_name_in_owner = true
 
 [node name="PauseOverlay" type="ColorRect" parent="HUDRoot"]
 layout_mode = 1
