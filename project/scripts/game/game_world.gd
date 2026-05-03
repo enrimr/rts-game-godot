@@ -49,6 +49,7 @@ func _ready() -> void:
 		units_layer.add_child(v)
 		v.global_position = drop_off.global_position + Vector2(i * 40 - 40, 0.0)
 		v.set("player_id", 0)
+		PopulationManager.add_unit(0)
 		EventBus.unit_spawned.emit(v, 0)
 
 	hud.action_requested.connect(_on_action_requested)
