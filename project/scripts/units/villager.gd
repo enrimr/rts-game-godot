@@ -24,6 +24,10 @@ var _gather_timer: float = 0.0
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 
+const BUILD_RANGE: float = 60.0
+const DROP_OFF_RANGE: float = 72.0
+const GATHER_RANGE: float = 48.0
+
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
@@ -50,7 +54,7 @@ func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
 	build_target = null
 	attack_target = null
 	_destination_state = UnitState.GATHERING
-	_start_move_to(target.global_position)
+	_start_move_to((target as Node2D).global_position)
 
 func order_build(target: Node) -> void:
 	if is_instance_valid(build_target) and build_target.construction_complete.is_connected(_on_construction_complete):
@@ -84,24 +88,39 @@ func _start_move_to(destination: Vector2) -> void:
 	_play_animation(_get_animation_name())
 
 func _handle_movement(delta: float) -> void:
+	# Distance-based transitions for targets with collision — don't rely on is_navigation_finished
 	if _destination_state == UnitState.BUILDING and is_instance_valid(build_target):
-		var dist: float = global_position.distance_to((build_target as Node2D).global_position)
-		if dist <= BUILD_RANGE:
-			current_state = UnitState.BUILDING
-			_destination_state = UnitState.IDLE
-			nav_agent.set_velocity(Vector2.ZERO)
-			_play_animation(_get_animation_name())
+		if global_position.distance_to((build_target as Node2D).global_position) <= BUILD_RANGE:
+			_enter_state(UnitState.BUILDING)
+			return
+	elif _destination_state == UnitState.GATHERING and is_instance_valid(gather_target):
+		if global_position.distance_to((gather_target as Node2D).global_position) <= GATHER_RANGE:
+			_enter_state(UnitState.GATHERING)
+			return
+	elif _destination_state == UnitState.RETURNING and is_instance_valid(drop_off_target):
+		if global_position.distance_to((drop_off_target as Node2D).global_position) <= DROP_OFF_RANGE:
+			_enter_state(UnitState.RETURNING)
 			return
 
 	if nav_agent.is_navigation_finished():
-		current_state = _destination_state
-		_destination_state = UnitState.IDLE
-		_play_animation(_get_animation_name())
+		_enter_state(_destination_state)
 		return
 
-	var next_pos: Vector2 = nav_agent.get_next_path_position()
-	var desired_velocity: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
-	nav_agent.set_velocity(desired_velocity)
+	if _advance_stuck(delta):
+		_jitter_repath()
+		return
+
+	nav_agent.set_velocity(_nav_velocity())
+
+func _enter_state(new_state: UnitState) -> void:
+	current_state = new_state
+	_destination_state = UnitState.IDLE
+	nav_agent.set_velocity(Vector2.ZERO)
+	_play_animation(_get_animation_name())
+
+func _jitter_repath() -> void:
+	var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
+	nav_agent.target_position = nav_agent.target_position + jitter
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	velocity = safe_velocity
@@ -113,6 +132,12 @@ func _handle_gathering(delta: float) -> void:
 		_play_animation(_get_animation_name())
 		return
 
+	var dist: float = global_position.distance_to((gather_target as Node2D).global_position)
+	if dist > GATHER_RANGE:
+		_destination_state = UnitState.GATHERING
+		_start_move_to((gather_target as Node2D).global_position)
+		return
+
 	_gather_timer += delta
 	if _gather_timer >= gather_interval:
 		_gather_timer = 0.0
@@ -121,7 +146,6 @@ func _handle_gathering(delta: float) -> void:
 		_update_gather_indicator()
 
 		if not (gather_target is ResourceNode):
-			# Infinite sources (farms) — deposit directly each tick, no trip back
 			ResourceManager.add_resource(player_id, carried_resource, carried_amount)
 			carried_amount = 0.0
 			_update_gather_indicator()
@@ -130,35 +154,36 @@ func _handle_gathering(delta: float) -> void:
 			if is_instance_valid(drop_off):
 				drop_off_target = drop_off
 				_destination_state = UnitState.RETURNING
-				_start_move_to(drop_off.global_position)
+				_start_move_to((drop_off as Node2D).global_position)
 			else:
-				# No drop-off found; deposit directly so gathering doesn't stall
 				ResourceManager.add_resource(player_id, carried_resource, carried_amount)
 				carried_amount = 0.0
 				_update_gather_indicator()
 
-const DROP_OFF_RANGE: float = 72.0
+func _handle_returning(delta: float) -> void:
+	if not is_instance_valid(drop_off_target):
+		current_state = UnitState.IDLE
+		_play_animation(_get_animation_name())
+		return
 
-func _handle_returning(_delta: float) -> void:
-	if is_instance_valid(drop_off_target):
-		var dist: float = global_position.distance_to((drop_off_target as Node2D).global_position)
-		if dist <= DROP_OFF_RANGE:
-			ResourceManager.add_resource(player_id, carried_resource, carried_amount)
-			carried_amount = 0.0
-			_update_gather_indicator()
-			if is_instance_valid(gather_target):
-				_destination_state = UnitState.GATHERING
-				_start_move_to(gather_target.global_position)
-			else:
-				current_state = UnitState.IDLE
-				_play_animation(_get_animation_name())
-			return
+	var dist: float = global_position.distance_to((drop_off_target as Node2D).global_position)
+	if dist <= DROP_OFF_RANGE:
+		ResourceManager.add_resource(player_id, carried_resource, carried_amount)
+		carried_amount = 0.0
+		_update_gather_indicator()
+		if is_instance_valid(gather_target):
+			_destination_state = UnitState.GATHERING
+			_start_move_to((gather_target as Node2D).global_position)
+		else:
+			current_state = UnitState.IDLE
+			_play_animation(_get_animation_name())
+		return
 
-	var next_pos: Vector2 = nav_agent.get_next_path_position()
-	var desired_velocity: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
-	nav_agent.set_velocity(desired_velocity)
+	if _advance_stuck(delta):
+		_jitter_repath()
+		return
 
-const BUILD_RANGE: float = 60.0
+	nav_agent.set_velocity(_nav_velocity())
 
 func _handle_building(delta: float) -> void:
 	if not is_instance_valid(build_target):
@@ -169,15 +194,14 @@ func _handle_building(delta: float) -> void:
 	var build_pos: Vector2 = (build_target as Node2D).global_position
 	var dist: float = global_position.distance_to(build_pos)
 	if dist > BUILD_RANGE:
-		# Aim just outside the building so the nav mesh can reach it
 		var approach: Vector2 = build_pos + (global_position - build_pos).normalized() * (BUILD_RANGE * 0.5)
 		nav_agent.target_position = approach
-		var next_pos: Vector2 = nav_agent.get_next_path_position()
-		var desired: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
-		nav_agent.set_velocity(desired)
+		if _advance_stuck(delta):
+			_jitter_repath()
+			return
+		nav_agent.set_velocity(_nav_velocity())
 		return
 
-	# Within range — stop and hammer
 	nav_agent.set_velocity(Vector2.ZERO)
 	build_target.add_construction(build_rate * delta)
 
@@ -188,15 +212,15 @@ func _handle_attacking(delta: float) -> void:
 		return
 
 	var dist: float = global_position.distance_to(attack_target.global_position)
-	if dist > unit_data.attack_range * 32.0:
-		# Close the gap before swinging
+	var attack_reach: float = unit_data.attack_range * 32.0
+	if dist > attack_reach:
 		nav_agent.target_position = attack_target.global_position
-		var next_pos: Vector2 = nav_agent.get_next_path_position()
-		var desired_velocity: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
-		nav_agent.set_velocity(desired_velocity)
+		if _advance_stuck(delta):
+			_jitter_repath()
+			return
+		nav_agent.set_velocity(_nav_velocity())
 		return
 
-	# Within range — stop and attack on timer
 	nav_agent.set_velocity(Vector2.ZERO)
 	_attack_timer += delta
 	if _attack_timer >= 1.0 / unit_data.attack_speed:
@@ -206,18 +230,15 @@ func _handle_attacking(delta: float) -> void:
 			EventBus.unit_attacked.emit(self, attack_target)
 
 func _get_target_armor() -> float:
-	# Melee attacks subtract target's melee armor when the property is exposed
 	var armor: Variant = attack_target.get("armor_melee")
 	if armor != null:
-		var armor_float: float = armor
-		return armor_float
+		return armor as float
 	return 0.0
 
 func _resolve_drop_off() -> Node:
 	return _find_nearest_drop_off()
 
 func _find_nearest_drop_off() -> Node:
-	# Iterative BFS to avoid deep recursion on large scenes
 	var root: Node = get_tree().root
 	var best: Node = null
 	var best_dist: float = INF

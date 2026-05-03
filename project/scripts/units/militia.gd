@@ -33,11 +33,15 @@ func _handle_movement(delta: float) -> void:
 	if nav_agent.is_navigation_finished():
 		current_state = _destination_state
 		_destination_state = UnitState.IDLE
+		nav_agent.set_velocity(Vector2.ZERO)
 		return
 
-	var next_pos: Vector2 = nav_agent.get_next_path_position()
-	var desired_velocity: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
-	nav_agent.set_velocity(desired_velocity)
+	if _advance_stuck(delta):
+		var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
+		nav_agent.target_position = nav_agent.target_position + jitter
+		return
+
+	nav_agent.set_velocity(_nav_velocity())
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	velocity = safe_velocity
@@ -49,11 +53,14 @@ func _handle_attacking(delta: float) -> void:
 		return
 
 	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
-	if dist > unit_data.attack_range * 32.0:
+	var attack_reach: float = unit_data.attack_range * 32.0
+	if dist > attack_reach:
 		nav_agent.target_position = (attack_target as Node2D).global_position
-		var next_pos: Vector2 = nav_agent.get_next_path_position()
-		var desired_velocity: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
-		nav_agent.set_velocity(desired_velocity)
+		if _advance_stuck(delta):
+			var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
+			nav_agent.target_position = nav_agent.target_position + jitter
+			return
+		nav_agent.set_velocity(_nav_velocity())
 		return
 
 	nav_agent.set_velocity(Vector2.ZERO)

@@ -38,9 +38,10 @@ mouse_filter = 2
 shape = SubResource("CapsuleShape2D_1")
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
-path_desired_distance = 8.0
-target_desired_distance = 8.0
+path_desired_distance = 16.0
+target_desired_distance = 24.0
 avoidance_enabled = true
+avoidance_priority = 0.5
 
 [node name="SelectionIndicator" type="Node2D" parent="."]
 visible = false
