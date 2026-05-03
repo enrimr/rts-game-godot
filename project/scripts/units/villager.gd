@@ -84,6 +84,15 @@ func _start_move_to(destination: Vector2) -> void:
 	_play_animation(_get_animation_name())
 
 func _handle_movement(delta: float) -> void:
+	if _destination_state == UnitState.BUILDING and is_instance_valid(build_target):
+		var dist: float = global_position.distance_to((build_target as Node2D).global_position)
+		if dist <= BUILD_RANGE:
+			current_state = UnitState.BUILDING
+			_destination_state = UnitState.IDLE
+			nav_agent.set_velocity(Vector2.ZERO)
+			_play_animation(_get_animation_name())
+			return
+
 	if nav_agent.is_navigation_finished():
 		current_state = _destination_state
 		_destination_state = UnitState.IDLE
@@ -149,10 +158,12 @@ func _handle_building(delta: float) -> void:
 		_play_animation(_get_animation_name())
 		return
 
-	var dist: float = global_position.distance_to((build_target as Node2D).global_position)
+	var build_pos: Vector2 = (build_target as Node2D).global_position
+	var dist: float = global_position.distance_to(build_pos)
 	if dist > BUILD_RANGE:
-		# Not close enough yet — keep walking toward the building
-		nav_agent.target_position = (build_target as Node2D).global_position
+		# Aim just outside the building so the nav mesh can reach it
+		var approach: Vector2 = build_pos + (global_position - build_pos).normalized() * (BUILD_RANGE * 0.5)
+		nav_agent.target_position = approach
 		var next_pos: Vector2 = nav_agent.get_next_path_position()
 		var desired: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
 		nav_agent.set_velocity(desired)

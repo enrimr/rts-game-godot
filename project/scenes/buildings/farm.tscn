@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://building_farm"]
 
-[ext_resource type="Script" uid="uid://bdc4ox7saddj7" path="res://scripts/buildings/building_base.gd" id="1_bb"]
+[ext_resource type="Script" path="res://scripts/buildings/farm.gd" id="1_bb"]
 [ext_resource type="Resource" path="res://resources/buildings/farm.tres" id="2_data"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]

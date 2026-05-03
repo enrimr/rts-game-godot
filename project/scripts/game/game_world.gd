@@ -31,6 +31,7 @@ const UNIT_CLICK_RADIUS: float = 32.0
 @onready var hud: CanvasLayer = $HUD
 
 var _selected_units: Array[Node] = []
+var _selected_building: Node = null
 var _drag_start: Vector2 = Vector2.ZERO
 var _dragging: bool = false
 
@@ -105,23 +106,37 @@ func _zoom(step: float) -> void:
 
 # --- Selection ---
 
+const BUILDING_CLICK_RADIUS: float = 40.0
+
 func _finish_selection(release_pos: Vector2) -> void:
 	var rect: Rect2 = Rect2(_drag_start, Vector2.ZERO).expand(release_pos)
+	var is_click: bool = rect.get_area() < 10.0
 
 	for sel: Node in _selected_units:
 		if is_instance_valid(sel):
 			sel.set_selected(false)
 	_selected_units.clear()
+	_selected_building = null
 
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
 			continue
 		var unit2d: Node2D = unit as Node2D
-		var in_rect: bool = rect.get_area() >= 10.0 and rect.has_point(unit2d.global_position)
-		var clicked: bool = rect.get_area() < 10.0 and _drag_start.distance_to(unit2d.global_position) < UNIT_CLICK_RADIUS
+		var in_rect: bool = not is_click and rect.has_point(unit2d.global_position)
+		var clicked: bool = is_click and _drag_start.distance_to(unit2d.global_position) < UNIT_CLICK_RADIUS
 		if in_rect or clicked:
 			unit.set_selected(true)
 			_selected_units.append(unit)
+
+	if is_click and _selected_units.is_empty():
+		for building: Node in buildings_layer.get_children():
+			if not is_instance_valid(building):
+				continue
+			var b2d: Node2D = building as Node2D
+			if _drag_start.distance_to(b2d.global_position) < BUILDING_CLICK_RADIUS:
+				_selected_building = building
+				EventBus.building_selected.emit(building)
+				return
 
 	SelectionManager.select(_selected_units)
 

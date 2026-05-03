@@ -13,10 +13,15 @@ signal unit_died(unit: Node, player_id: int)
 signal unit_selected(units: Array)
 signal unit_command_issued(units: Array, command: Dictionary)
 
+# Population
+signal population_changed(player_id: int, current: int, cap: int)
+signal population_cap_changed(player_id: int, cap: int)
+
 # Buildings
 signal building_placed(building: Node, player_id: int)
 signal building_destroyed(building: Node, player_id: int)
 signal building_construction_complete(building: Node)
+signal building_selected(building: Node)
 
 # Research
 signal technology_researched(player_id: int, tech_id: String)
