@@ -53,12 +53,14 @@ func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
 	_start_move_to(target.global_position)
 
 func order_build(target: Node) -> void:
+	if is_instance_valid(build_target) and build_target.construction_complete.is_connected(_on_construction_complete):
+		build_target.construction_complete.disconnect(_on_construction_complete)
 	build_target = target
 	gather_target = null
 	attack_target = null
 	_destination_state = UnitState.BUILDING
 	build_target.construction_complete.connect(_on_construction_complete, CONNECT_ONE_SHOT)
-	_start_move_to(target.global_position)
+	_start_move_to((target as Node2D).global_position)
 
 func order_move(destination: Vector2) -> void:
 	gather_target = null
@@ -139,12 +141,25 @@ func _handle_returning(delta: float) -> void:
 		var desired_velocity: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
 		nav_agent.set_velocity(desired_velocity)
 
+const BUILD_RANGE: float = 60.0
+
 func _handle_building(delta: float) -> void:
 	if not is_instance_valid(build_target):
 		current_state = UnitState.IDLE
 		_play_animation(_get_animation_name())
 		return
 
+	var dist: float = global_position.distance_to((build_target as Node2D).global_position)
+	if dist > BUILD_RANGE:
+		# Not close enough yet — keep walking toward the building
+		nav_agent.target_position = (build_target as Node2D).global_position
+		var next_pos: Vector2 = nav_agent.get_next_path_position()
+		var desired: Vector2 = (next_pos - global_position).normalized() * unit_data.move_speed
+		nav_agent.set_velocity(desired)
+		return
+
+	# Within range — stop and hammer
+	nav_agent.set_velocity(Vector2.ZERO)
 	build_target.add_construction(build_rate * delta)
 
 func _handle_attacking(delta: float) -> void:
