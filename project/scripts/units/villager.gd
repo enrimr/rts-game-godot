@@ -120,7 +120,12 @@ func _handle_gathering(delta: float) -> void:
 		carried_amount = minf(carried_amount + available, carry_capacity)
 		_update_gather_indicator()
 
-		if carried_amount >= carry_capacity:
+		if not (gather_target is ResourceNode):
+			# Infinite sources (farms) — deposit directly each tick, no trip back
+			ResourceManager.add_resource(player_id, carried_resource, carried_amount)
+			carried_amount = 0.0
+			_update_gather_indicator()
+		elif carried_amount >= carry_capacity:
 			var drop_off: Node = _resolve_drop_off()
 			if is_instance_valid(drop_off):
 				drop_off_target = drop_off
@@ -206,8 +211,6 @@ func _get_target_armor() -> float:
 	return 0.0
 
 func _resolve_drop_off() -> Node:
-	if is_instance_valid(drop_off_target):
-		return drop_off_target
 	return _find_nearest_drop_off()
 
 func _find_nearest_drop_off() -> Node:

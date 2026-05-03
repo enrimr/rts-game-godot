@@ -149,11 +149,31 @@ func _handle_right_click(world_pos: Vector2) -> void:
 	if resource_node != null:
 		_order_gather_all(resource_node)
 		return
+	var farm: Farm = _find_farm_at(world_pos)
+	if farm != null:
+		_order_gather_farm(farm)
+		return
 	var building: Node = _find_building_at(world_pos)
 	if building != null:
 		_order_build_all(building)
 		return
 	_order_move_all(world_pos)
+
+func _find_farm_at(world_pos: Vector2) -> Farm:
+	for building: Node in buildings_layer.get_children():
+		if not (building is Farm):
+			continue
+		var b2d: Node2D = building as Node2D
+		if world_pos.distance_to(b2d.global_position) < BUILDING_CLICK_RADIUS:
+			var farm: Farm = building as Farm
+			if farm.state == BuildingBase.BuildingState.COMPLETE:
+				return farm
+	return null
+
+func _order_gather_farm(farm: Farm) -> void:
+	for unit: Node in _selected_units:
+		if is_instance_valid(unit) and unit.has_method("order_gather"):
+			unit.order_gather(farm, "food", null)
 
 func _find_building_at(world_pos: Vector2) -> Node:
 	for building: Node in buildings_layer.get_children():
