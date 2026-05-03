@@ -55,6 +55,7 @@ func _ready() -> void:
 	EventBus.unit_selected.connect(_on_unit_selected)
 	EventBus.building_selected.connect(_on_building_selected)
 	EventBus.population_changed.connect(_on_population_changed)
+	EventBus.train_queue_changed.connect(_on_train_queue_changed)
 	EventBus.age_advance_complete.connect(_on_age_advance_complete)
 	GameManager.game_started.connect(_on_game_started)
 	GameManager.game_paused.connect(toggle_pause)
@@ -143,6 +144,7 @@ func _populate_buttons(actions: Array) -> void:
 		var cost: Dictionary = data.get("cost", {}) as Dictionary
 		btn.set_meta("cost", cost)
 		btn.set_meta("base_color", color)
+		btn.set_meta("base_label", btn.text)
 		var can_pay: bool = cost.is_empty() or ResourceManager.can_afford(local_player_id, cost)
 		var effective_color: Color = color if can_pay else Color(0.25, 0.25, 0.25)
 		var style: StyleBoxFlat = StyleBoxFlat.new()
@@ -247,8 +249,12 @@ func _on_building_selected(building: Node) -> void:
 		_unit_name_label.text = "Town Center"
 		_unit_hp_bar.value = 0.0
 		_populate_buttons(TOWN_CENTER_ACTIONS)
+		var tc: TownCenter = building as TownCenter
+		_on_train_queue_changed(building, tc.get_queue_size(), tc.get_max_queue())
 	elif building is Barracks:
 		_populate_buttons(BARRACKS_ACTIONS)
+		var br: Barracks = building as Barracks
+		_on_train_queue_changed(building, br.get_queue_size(), br.get_max_queue())
 
 func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 	if player_id != local_player_id:
@@ -259,3 +265,20 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 	if player_id != local_player_id:
 		return
 	update_age(new_age)
+
+func _on_train_queue_changed(building: Node, queued: int, max_queue: int) -> void:
+	if building != _selected_building:
+		return
+	_refresh_button_states()
+	for child: Node in _action_grid.get_children():
+		if not (child is ActionButton):
+			continue
+		var btn: ActionButton = child as ActionButton
+		var aid: String = btn.action_id
+		if aid != "train:militia" and aid != "train:villager":
+			continue
+		var base_label: String = btn.get_meta("base_label", btn.text) as String
+		btn.set_meta("base_label", base_label)
+		btn.text = base_label + "\n%d/%d" % [queued, max_queue]
+		if queued >= max_queue:
+			btn.disabled = true

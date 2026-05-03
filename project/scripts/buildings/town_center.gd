@@ -5,6 +5,7 @@ class_name TownCenter
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const VILLAGER_DATA: UnitResource = preload("res://resources/units/villager_data.tres")
 const VILLAGER_COSTS: Dictionary = {"food": 50}
+const MAX_QUEUE: int = 5
 
 @export var player_id: int = 0
 
@@ -26,14 +27,24 @@ func _process(delta: float) -> void:
 		if is_instance_valid(_train_bar) and _train_queue == 0:
 			_train_bar.value = 0.0
 		_spawn_villager()
+		EventBus.train_queue_changed.emit(self, _train_queue, MAX_QUEUE)
 
 func order_train() -> bool:
+	if _train_queue >= MAX_QUEUE:
+		return false
 	if PopulationManager.at_cap(player_id):
 		return false
 	if not ResourceManager.spend_resource(player_id, VILLAGER_COSTS):
 		return false
 	_train_queue += 1
+	EventBus.train_queue_changed.emit(self, _train_queue, MAX_QUEUE)
 	return true
+
+func get_queue_size() -> int:
+	return _train_queue
+
+func get_max_queue() -> int:
+	return MAX_QUEUE
 
 func _spawn_villager() -> void:
 	var unit: Node2D = VILLAGER_SCENE.instantiate() as Node2D

@@ -18,6 +18,7 @@ signal population_changed(player_id: int, current: int, cap: int)
 signal population_cap_changed(player_id: int, cap: int)
 
 # Buildings
+signal train_queue_changed(building: Node, queued: int, max_queue: int)
 signal building_placed(building: Node, player_id: int)
 signal building_destroyed(building: Node, player_id: int)
 signal building_construction_complete(building: Node)
