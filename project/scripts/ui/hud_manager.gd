@@ -51,6 +51,7 @@ var _elapsed_seconds: float = 0.0
 var _clock_running: bool = false
 var _in_build_menu: bool = false
 var _selected_building: Node = null
+var _status_unit: Node = null
 
 func _ready() -> void:
 	EventBus.resource_changed.connect(_on_resource_changed)
@@ -67,11 +68,12 @@ func _ready() -> void:
 	_unit_hp_bar.value = 0.0
 
 func _process(delta: float) -> void:
-	if not _clock_running:
-		return
-	_elapsed_seconds += delta
-	var total_secs: int = int(_elapsed_seconds)
-	_clock_label.text = "%02d:%02d" % [total_secs / 60, total_secs % 60]
+	if _clock_running:
+		_elapsed_seconds += delta
+		var total_secs: int = int(_elapsed_seconds)
+		_clock_label.text = "%02d:%02d" % [total_secs / 60, total_secs % 60]
+	if is_instance_valid(_status_unit):
+		_unit_status_label.text = _get_unit_status(_status_unit)
 
 func update_resources(player_id: int, resources: Dictionary) -> void:
 	if player_id != local_player_id:
@@ -91,6 +93,7 @@ func update_selection(units: Array) -> void:
 		_unit_name_label.text = ""
 		_unit_hp_bar.value = 0.0
 		_unit_status_label.text = ""
+		_status_unit = null
 		return
 
 	var capped: Array = units.slice(0, 40)
@@ -121,7 +124,7 @@ func update_selection(units: Array) -> void:
 		if max_hp > 0.0:
 			_unit_hp_bar.value = (hp / max_hp) * 100.0
 
-		_unit_status_label.text = _get_unit_status(first)
+		_status_unit = first if first.has_method("order_gather") else null
 
 		if first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
@@ -225,6 +228,7 @@ func _on_building_selected(building: Node) -> void:
 	_clear_action_buttons()
 	_in_build_menu = false
 
+	_status_unit = null
 	if not is_instance_valid(building):
 		_unit_name_label.text = ""
 		_unit_hp_bar.value = 0.0
