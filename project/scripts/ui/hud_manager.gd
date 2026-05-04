@@ -214,16 +214,35 @@ func _populate_buttons(actions: Array) -> void:
 		btn.action_pressed.connect(_on_action_button_pressed)
 		_action_grid.add_child(btn)
 
+func _get_queue_size() -> int:
+	if not is_instance_valid(_selected_building):
+		return 0
+	if _selected_building.has_method("get_queue"):
+		return (_selected_building.get_queue() as Array).size()
+	return 0
+
+func _get_max_queue() -> int:
+	if not is_instance_valid(_selected_building):
+		return 0
+	if _selected_building.has_method("get_max_queue"):
+		return _selected_building.get_max_queue() as int
+	return 0
+
 func _refresh_button_states() -> void:
+	var queue_size: int = _get_queue_size()
+	var max_queue: int = _get_max_queue()
+	var queue_full: bool = max_queue > 0 and queue_size >= max_queue
 	for child: Node in _action_grid.get_children():
 		if not (child is ActionButton):
 			continue
 		var btn: ActionButton = child as ActionButton
 		var cost: Dictionary = btn.get_meta("cost", {}) as Dictionary
 		var base_color: Color = btn.get_meta("base_color", Color(0.3, 0.3, 0.3)) as Color
+		var is_train: bool = btn.action_id.begins_with("train:")
 		var can_pay: bool = cost.is_empty() or ResourceManager.can_afford(local_player_id, cost)
-		btn.disabled = not can_pay
-		var effective_color: Color = base_color if can_pay else Color(0.25, 0.25, 0.25)
+		var enabled: bool = can_pay and (not is_train or not queue_full)
+		btn.disabled = not enabled
+		var effective_color: Color = base_color if enabled else Color(0.25, 0.25, 0.25)
 		var style: StyleBoxFlat = StyleBoxFlat.new()
 		style.bg_color = effective_color
 		style.corner_radius_top_left = 4
@@ -373,21 +392,17 @@ func _on_cancel_train_slot(index: int) -> void:
 func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> void:
 	if building != _selected_building:
 		return
-	_refresh_button_states()
 	# Update train button label with queue count
 	for child: Node in _action_grid.get_children():
 		if not (child is ActionButton):
 			continue
 		var btn: ActionButton = child as ActionButton
 		var aid: String = btn.action_id
-		if aid != "train:militia" and aid != "train:villager":
+		if not aid.begins_with("train:"):
 			continue
 		var base_label: String = btn.get_meta("base_label", btn.text) as String
-		btn.set_meta("base_label", base_label)
-		var queued: int = queue.size()
-		btn.text = base_label + "\n%d/%d" % [queued, max_queue]
-		if queued >= max_queue:
-			btn.disabled = true
+		btn.text = base_label + "\n%d/%d" % [queue.size(), max_queue]
+	_refresh_button_states()
 	# Rebuild the visual queue row
 	for slot: Node in _train_queue_row.get_children():
 		slot.queue_free()
