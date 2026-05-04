@@ -16,6 +16,7 @@ signal action_requested(action_id: String)
 @onready var _unit_portraits_grid: GridContainer = %UnitPortraitsGrid
 @onready var _unit_name_label: Label = %UnitNameLabel
 @onready var _unit_hp_bar: ProgressBar = %UnitHPBar
+@onready var _unit_status_label: Label = %UnitStatusLabel
 @onready var _action_grid: GridContainer = %ActionButtonsGrid
 @onready var _train_queue_row: HBoxContainer = %TrainQueueRow
 @onready var _pause_overlay: ColorRect = %PauseOverlay
@@ -89,6 +90,7 @@ func update_selection(units: Array) -> void:
 	if units.is_empty():
 		_unit_name_label.text = ""
 		_unit_hp_bar.value = 0.0
+		_unit_status_label.text = ""
 		return
 
 	var capped: Array = units.slice(0, 40)
@@ -118,6 +120,8 @@ func update_selection(units: Array) -> void:
 				max_hp = max_hp_v as float
 		if max_hp > 0.0:
 			_unit_hp_bar.value = (hp / max_hp) * 100.0
+
+		_unit_status_label.text = _get_unit_status(first)
 
 		if first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
@@ -224,6 +228,7 @@ func _on_building_selected(building: Node) -> void:
 	if not is_instance_valid(building):
 		_unit_name_label.text = ""
 		_unit_hp_bar.value = 0.0
+		_unit_status_label.text = ""
 		return
 
 	var display_name: String = "Building"
@@ -264,6 +269,39 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 	if player_id != local_player_id:
 		return
 	update_age(new_age)
+
+func _get_unit_status(unit: Node) -> String:
+	var state_v: Variant = unit.get("current_state")
+	if state_v == null:
+		return ""
+	var state: int = state_v as int
+	match state:
+		1: # MOVING
+			return "Moving"
+		2: # ATTACKING
+			return "Attacking"
+		3: # GATHERING
+			var resource: Variant = unit.get("carried_resource")
+			var amount: Variant = unit.get("carried_amount")
+			if resource != null and amount != null:
+				var r: String = resource as String
+				var a: float = amount as float
+				if r.is_empty():
+					return "Gathering"
+				return "Gathering %s  %d / %d" % [r.capitalize(), int(a),
+					int((unit.get("carry_capacity") as float) if unit.get("carry_capacity") != null else 10.0)]
+			return "Gathering"
+		4: # RETURNING
+			var resource: Variant = unit.get("carried_resource")
+			var amount: Variant = unit.get("carried_amount")
+			if resource != null and amount != null:
+				return "Returning  %s %d" % [(resource as String).capitalize(), int(amount as float)]
+			return "Returning"
+		5: # BUILDING
+			return "Building"
+		6: # DEAD
+			return "Dead"
+	return ""
 
 func _on_cancel_train_slot(index: int) -> void:
 	if not is_instance_valid(_selected_building):

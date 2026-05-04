@@ -185,6 +185,13 @@ max_value = 100.0
 value = 0.0
 unique_name_in_owner = true
 
+[node name="UnitStatusLabel" type="Label" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.8, 0.95, 0.8, 1)
+unique_name_in_owner = true
+
 [node name="ActionButtonsGrid" type="GridContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
