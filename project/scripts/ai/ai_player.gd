@@ -43,11 +43,9 @@ func _run_tick() -> void:
 func _manage_villagers() -> void:
 	if not is_instance_valid(town_center):
 		return
-	var tc: TownCenter = town_center as TownCenter
-	# Train villagers up to 8, limited by pop cap
 	var vcount: int = _count_units_of_type("Villager")
 	if vcount < 8 and not PopulationManager.at_cap(player_id):
-		tc.order_train()
+		_spawn_villager()
 	# Assign idle villagers to nearest resource
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit) or not (unit is Villager):
@@ -145,6 +143,16 @@ func _launch_attack() -> void:
 		if m.player_id != player_id:
 			continue
 		m.order_attack(target)
+
+func _spawn_villager() -> void:
+	if not ResourceManager.spend_resource(player_id, {"food": 50}):
+		return
+	var v: Node2D = VILLAGER_SCENE.instantiate() as Node2D
+	v.set("player_id", player_id)
+	units_layer.add_child(v)
+	v.global_position = town_center.global_position + Vector2(randf_range(-50.0, 50.0), 60.0)
+	PopulationManager.add_unit(player_id)
+	EventBus.unit_spawned.emit(v, player_id)
 
 # --- Helpers ---
 
