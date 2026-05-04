@@ -21,38 +21,38 @@ signal action_requested(action_id: String)
 @onready var _train_queue_row: HBoxContainer = %TrainQueueRow
 @onready var _pause_overlay: ColorRect = %PauseOverlay
 
-const DESTROY_ACTION: Dictionary = {"id": "destroy", "label": "Destroy", "color": Color(0.55, 0.05, 0.05), "cost": {}}
+const DESTROY_ACTION: Dictionary = {"id": "destroy", "label": "Destroy", "color": Color(0.55, 0.05, 0.05), "cost": {}, "key": KEY_DELETE}
 
 const VILLAGER_ACTIONS: Array = [
-	{"id": "gather_wood",  "label": "Chop\nWood",    "color": Color(0.20, 0.55, 0.15), "cost": {}},
-	{"id": "gather_gold",  "label": "Mine\nGold",    "color": Color(0.75, 0.65, 0.10), "cost": {}},
-	{"id": "gather_stone", "label": "Mine\nStone",   "color": Color(0.55, 0.55, 0.55), "cost": {}},
-	{"id": "gather_food",  "label": "Hunt\nFood",    "color": Color(0.60, 0.20, 0.15), "cost": {}},
-	{"id": "build_menu",   "label": "Build...",      "color": Color(0.20, 0.30, 0.60), "cost": {}},
-	{"id": "stop",         "label": "Stop",          "color": Color(0.50, 0.10, 0.10), "cost": {}},
+	{"id": "gather_wood",  "label": "Wood",    "color": Color(0.20, 0.55, 0.15), "cost": {}, "key": KEY_C},
+	{"id": "gather_gold",  "label": "Gold",    "color": Color(0.75, 0.65, 0.10), "cost": {}, "key": KEY_G},
+	{"id": "gather_stone", "label": "Stone",   "color": Color(0.55, 0.55, 0.55), "cost": {}, "key": KEY_T},
+	{"id": "gather_food",  "label": "Food",    "color": Color(0.60, 0.20, 0.15), "cost": {}, "key": KEY_H},
+	{"id": "build_menu",   "label": "Build",   "color": Color(0.20, 0.30, 0.60), "cost": {}, "key": KEY_B},
+	{"id": "stop",         "label": "Stop",    "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
 	DESTROY_ACTION,
 ]
 
 const BUILD_ACTIONS: Array = [
-	{"id": "build:house",        "label": "House\n25W",       "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25}},
-	{"id": "build:barracks",     "label": "Barracks\n175W",   "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}},
-	{"id": "build:lumber_camp",  "label": "Lumber\n100W",     "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}},
-	{"id": "build:mining_camp",  "label": "Mining\n100W",     "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}},
-	{"id": "build:farm",         "label": "Farm\n60W",        "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60}},
-	{"id": "back",               "label": "← Back",           "color": Color(0.25, 0.25, 0.25), "cost": {}},
+	{"id": "build:house",        "label": "House\n25W",      "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H},
+	{"id": "build:barracks",     "label": "Barracks\n175W",  "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B},
+	{"id": "build:lumber_camp",  "label": "Lumber\n100W",    "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L},
+	{"id": "build:mining_camp",  "label": "Mining\n100W",    "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N},
+	{"id": "build:farm",         "label": "Farm\n60W",       "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F},
+	{"id": "back",               "label": "← Back",          "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE},
 ]
 
 const BARRACKS_ACTIONS: Array = [
-	{"id": "train:militia", "label": "Train\nMilitia\n60F 20W", "color": Color(0.5, 0.2, 0.1), "cost": {"food": 60, "wood": 20}},
+	{"id": "train:militia", "label": "Militia\n60F 20W", "color": Color(0.5, 0.2, 0.1), "cost": {"food": 60, "wood": 20}, "key": KEY_M},
 	DESTROY_ACTION,
 ]
 
 const TOWN_CENTER_ACTIONS: Array = [
-	{"id": "train:villager", "label": "Train\nVillager\n50F", "color": Color(0.20, 0.45, 0.20), "cost": {"food": 50}},
+	{"id": "train:villager", "label": "Villager\n50F", "color": Color(0.20, 0.45, 0.20), "cost": {"food": 50}, "key": KEY_V},
 ]
 
 const UNIT_ACTIONS: Array = [
-	{"id": "stop",    "label": "Stop",    "color": Color(0.50, 0.10, 0.10), "cost": {}},
+	{"id": "stop",    "label": "Stop",    "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
 	DESTROY_ACTION,
 ]
 
@@ -65,6 +65,7 @@ var _clock_running: bool = false
 var _in_build_menu: bool = false
 var _selected_building: Node = null
 var _status_unit: Node = null
+var _active_actions: Array = []
 
 func _ready() -> void:
 	EventBus.resource_changed.connect(_on_resource_changed)
@@ -90,6 +91,20 @@ func _process(delta: float) -> void:
 		_clock_label.text = "%02d:%02d" % [total_secs / 60, total_secs % 60]
 	if is_instance_valid(_status_unit):
 		_unit_status_label.text = _get_unit_status(_status_unit)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key: InputEventKey = event as InputEventKey
+	if not key.pressed or key.echo or _active_actions.is_empty():
+		return
+	for entry: Variant in _active_actions:
+		var data: Dictionary = entry as Dictionary
+		var mapped: int = data.get("key", -1) as int
+		if mapped == key.keycode or mapped == key.physical_keycode:
+			_on_action_button_pressed(data["id"] as String)
+			get_viewport().set_input_as_handled()
+			return
 
 func update_resources(player_id: int, resources: Dictionary) -> void:
 	if player_id != local_player_id:
@@ -156,18 +171,28 @@ func toggle_pause(is_paused: bool) -> void:
 # --- Private ---
 
 func _clear_action_buttons() -> void:
+	_active_actions = []
 	for child: Node in _action_grid.get_children():
 		child.queue_free()
 	for child: Node in _train_queue_row.get_children():
 		child.queue_free()
 
+func _key_label(keycode: int) -> String:
+	match keycode:
+		KEY_DELETE: return "Del"
+		KEY_ESCAPE: return "Esc"
+		_: return char(keycode)
+
 func _populate_buttons(actions: Array) -> void:
 	_clear_action_buttons()
+	_active_actions = actions
 	for entry: Variant in actions:
 		var data: Dictionary = entry as Dictionary
 		var btn: ActionButton = ActionButton.new()
 		btn.action_id = data["id"] as String
-		btn.text = data["label"] as String
+		var key_int: int = data.get("key", -1) as int
+		var key_hint: String = ("[%s] " % _key_label(key_int)) if key_int > 0 else ""
+		btn.text = key_hint + (data["label"] as String)
 		var color: Color = data["color"] as Color
 		var cost: Dictionary = data.get("cost", {}) as Dictionary
 		btn.set_meta("cost", cost)
