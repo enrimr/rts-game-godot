@@ -210,6 +210,17 @@ func _find_farm_at(world_pos: Vector2) -> Farm:
 	return null
 
 func _order_gather_farm(farm: Farm) -> void:
+	if farm.is_depleted():
+		_order_restore_farm(farm)
+		return
+	for unit: Node in _selected_units:
+		if is_instance_valid(unit) and unit.has_method("order_gather"):
+			unit.order_gather(farm, "food", null)
+
+func _order_restore_farm(farm: Farm) -> void:
+	if not ResourceManager.spend_resource(0, farm.get_restore_cost()):
+		return
+	farm.restore()
 	for unit: Node in _selected_units:
 		if is_instance_valid(unit) and unit.has_method("order_gather"):
 			unit.order_gather(farm, "food", null)

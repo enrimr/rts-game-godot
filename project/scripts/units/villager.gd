@@ -23,6 +23,7 @@ var attack_target: Node = null
 var _gather_timer: float = 0.0
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
+var _farm_gathered: float = 0.0
 
 const BUILD_RANGE: float = 60.0
 const DROP_OFF_RANGE: float = 72.0
@@ -55,6 +56,7 @@ func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
 	drop_off_target = drop_off
 	build_target = null
 	attack_target = null
+	_farm_gathered = 0.0
 	_destination_state = UnitState.GATHERING
 	_start_move_to((target as Node2D).global_position)
 
@@ -170,13 +172,17 @@ func _handle_gathering(delta: float) -> void:
 		_gather_timer = 0.0
 		var available: float = gather_target.gather(gather_rate)
 		carried_amount = minf(carried_amount + available, carry_capacity)
-		_update_gather_indicator()
 
 		if not (gather_target is ResourceNode):
+			_farm_gathered += available
 			ResourceManager.add_resource(player_id, carried_resource, carried_amount)
 			carried_amount = 0.0
+			if is_instance_valid(gather_indicator):
+				gather_indicator.text = carried_resource + " " + str(int(_farm_gathered))
+		else:
 			_update_gather_indicator()
-		elif carried_amount >= carry_capacity:
+
+		if gather_target is ResourceNode and carried_amount >= carry_capacity:
 			var drop_off: Node = _resolve_drop_off()
 			if is_instance_valid(drop_off):
 				drop_off_target = drop_off

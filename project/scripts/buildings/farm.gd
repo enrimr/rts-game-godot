@@ -4,10 +4,16 @@ class_name Farm
 
 @export var max_food: float = 250.0
 @export var gather_rate: float = 1.0
+@export var restore_cost: Dictionary = {"wood": 40}
 
 var _remaining: float = 0.0
+var _is_depleted: bool = false
 
-signal depleted
+@onready var _body: ColorRect = get_node_or_null("Body")
+@onready var _food_bar: ProgressBar = get_node_or_null("FoodBar")
+
+const COLOR_ACTIVE: Color = Color(0.70, 0.62, 0.22, 1.0)
+const COLOR_DEPLETED: Color = Color(0.38, 0.30, 0.18, 1.0)
 
 func _ready() -> void:
 	super._ready()
@@ -15,16 +21,40 @@ func _ready() -> void:
 
 func _on_construction_complete() -> void:
 	_remaining = max_food
+	_is_depleted = false
+	_refresh_farm_visuals()
 
 func gather(amount: float) -> float:
-	if state != BuildingState.COMPLETE or _remaining <= 0.0:
+	if state != BuildingState.COMPLETE or _is_depleted:
 		return 0.0
 	var taken: float = minf(amount, _remaining)
 	_remaining -= taken
+	_refresh_farm_visuals()
 	if _remaining <= 0.0:
-		depleted.emit()
-		queue_free()
+		_deplete()
 	return taken
 
 func get_resource_name() -> String:
 	return "food"
+
+func is_depleted() -> bool:
+	return _is_depleted
+
+func restore() -> void:
+	_remaining = max_food
+	_is_depleted = false
+	_refresh_farm_visuals()
+
+func get_restore_cost() -> Dictionary:
+	return restore_cost
+
+func _deplete() -> void:
+	_is_depleted = true
+	_refresh_farm_visuals()
+
+func _refresh_farm_visuals() -> void:
+	if is_instance_valid(_body):
+		_body.color = COLOR_ACTIVE if not _is_depleted else COLOR_DEPLETED
+	if is_instance_valid(_food_bar):
+		_food_bar.visible = state == BuildingState.COMPLETE
+		_food_bar.value = (_remaining / max_food) * 100.0 if max_food > 0.0 else 0.0
