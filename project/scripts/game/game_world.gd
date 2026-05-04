@@ -186,8 +186,6 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		return
 	var gate: Gate = _find_gate_at(world_pos)
 	if gate != null and gate.state == BuildingBase.BuildingState.COMPLETE:
-		if gate.player_id == 0 and not gate.is_open:
-			gate.toggle()
 		_order_move_all(world_pos)
 		return
 	var building: Node = _find_building_at(world_pos)
@@ -363,9 +361,9 @@ func _on_action_requested(action_id: String) -> void:
 		"train:militia":
 			if is_instance_valid(_selected_building) and _selected_building is Barracks:
 				(_selected_building as Barracks).order_train()
-		"gate_toggle":
+		"gate_lock":
 			if is_instance_valid(_selected_building) and _selected_building is Gate:
-				(_selected_building as Gate).toggle()
+				(_selected_building as Gate).toggle_lock()
 		"stop":
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):

@@ -63,7 +63,7 @@ const BUILDING_ACTIONS: Array = [
 ]
 
 const GATE_ACTIONS: Array = [
-	{"id": "gate_toggle", "label": "Open/\nClose", "color": Color(0.28, 0.45, 0.28), "cost": {}, "key": KEY_O},
+	{"id": "gate_lock", "label": "Lock", "color": Color(0.55, 0.15, 0.10), "cost": {}, "key": KEY_O},
 	DESTROY_ACTION,
 ]
 
@@ -336,6 +336,7 @@ func _on_building_selected(building: Node) -> void:
 		var gate: Gate = building as Gate
 		_populate_buttons(GATE_ACTIONS)
 		_refresh_gate_toggle_label(gate)
+		_unit_status_label.text = "LOCKED" if gate.locked else ("Open" if gate.is_open else "Closed")
 		if not gate.gate_toggled.is_connected(_on_gate_toggled):
 			gate.gate_toggled.connect(_on_gate_toggled)
 	else:
@@ -343,16 +344,18 @@ func _on_building_selected(building: Node) -> void:
 
 func _on_gate_toggled(_is_open: bool) -> void:
 	if is_instance_valid(_selected_building) and _selected_building is Gate:
-		_refresh_gate_toggle_label(_selected_building as Gate)
+		var gate: Gate = _selected_building as Gate
+		_refresh_gate_toggle_label(gate)
+		_unit_status_label.text = "LOCKED" if gate.locked else ("Open" if gate.is_open else "Closed")
 
 func _refresh_gate_toggle_label(gate: Gate) -> void:
 	for child: Node in _action_grid.get_children():
 		if not (child is ActionButton):
 			continue
 		var btn: ActionButton = child as ActionButton
-		if btn.action_id != "gate_toggle":
+		if btn.action_id != "gate_lock":
 			continue
-		btn.text = "[O] " + ("Close" if gate.is_open else "Open")
+		btn.text = "[O] " + ("Unlock" if gate.locked else "Lock")
 
 func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 	if player_id != local_player_id:
