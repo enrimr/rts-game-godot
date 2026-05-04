@@ -3,19 +3,23 @@ extends Node2D
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 
 const BUILDING_SCENES: Dictionary = {
-	"house":       "res://scenes/buildings/house.tscn",
-	"barracks":    "res://scenes/buildings/barracks.tscn",
-	"lumber_camp": "res://scenes/buildings/lumber_camp.tscn",
-	"mining_camp": "res://scenes/buildings/mining_camp.tscn",
-	"farm":        "res://scenes/buildings/farm.tscn",
+	"house":         "res://scenes/buildings/house.tscn",
+	"barracks":      "res://scenes/buildings/barracks.tscn",
+	"lumber_camp":   "res://scenes/buildings/lumber_camp.tscn",
+	"mining_camp":   "res://scenes/buildings/mining_camp.tscn",
+	"farm":          "res://scenes/buildings/farm.tscn",
+	"wall_segment":  "res://scenes/buildings/wall_segment.tscn",
+	"gate":          "res://scenes/buildings/gate.tscn",
 }
 
 const BUILDING_COSTS: Dictionary = {
-	"house":       {"wood": 25},
-	"barracks":    {"wood": 175},
-	"lumber_camp": {"wood": 100},
-	"mining_camp": {"wood": 100},
-	"farm":        {"wood": 60},
+	"house":         {"wood": 25},
+	"barracks":      {"wood": 175},
+	"lumber_camp":   {"wood": 100},
+	"mining_camp":   {"wood": 100},
+	"farm":          {"wood": 60},
+	"wall_segment":  {"stone": 5},
+	"gate":          {"wood": 30},
 }
 
 const CAMERA_SPEED: float = 400.0
@@ -39,6 +43,7 @@ var _dragging: bool = false
 var _placing_building: bool = false
 var _placing_id: String = ""
 var _ghost: Node2D = null
+var _ghost_rotation: float = 0.0
 
 func _ready() -> void:
 	ResourceManager.init_player(0)
@@ -66,6 +71,7 @@ func _process(delta: float) -> void:
 	_handle_camera(delta)
 	if _placing_building and is_instance_valid(_ghost):
 		_ghost.global_position = get_global_mouse_position()
+		_ghost.rotation = _ghost_rotation
 
 func _handle_camera(delta: float) -> void:
 	var dir: Vector2 = Vector2.ZERO
@@ -76,6 +82,13 @@ func _handle_camera(delta: float) -> void:
 	camera.position += dir * CAMERA_SPEED * delta
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and _placing_building:
+		var ke: InputEventKey = event as InputEventKey
+		if ke.pressed and not ke.echo and ke.physical_keycode == KEY_R:
+			_ghost_rotation += PI / 2.0
+			get_viewport().set_input_as_handled()
+			return
+
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
 
@@ -171,11 +184,26 @@ func _handle_right_click(world_pos: Vector2) -> void:
 	if drop_off_node != null:
 		_order_drop_off_all(drop_off_node)
 		return
+	var gate: Gate = _find_gate_at(world_pos)
+	if gate != null and gate.state == BuildingBase.BuildingState.COMPLETE:
+		if gate.player_id == 0 and not gate.is_open:
+			gate.toggle()
+		_order_move_all(world_pos)
+		return
 	var building: Node = _find_building_at(world_pos)
 	if building != null:
 		_order_build_all(building)
 		return
 	_order_move_all(world_pos)
+
+func _find_gate_at(world_pos: Vector2) -> Gate:
+	for building: Node in buildings_layer.get_children():
+		if not (building is Gate):
+			continue
+		var b2d: Node2D = building as Node2D
+		if world_pos.distance_to(b2d.global_position) < BUILDING_CLICK_RADIUS:
+			return building as Gate
+	return null
 
 func _find_drop_off_at(world_pos: Vector2) -> Node:
 	# Town Center
@@ -275,10 +303,10 @@ func _start_placement(building_id: String) -> void:
 	_cancel_placement()
 	_placing_building = true
 	_placing_id = building_id
+	_ghost_rotation = 0.0
 
 	var scene: PackedScene = load(BUILDING_SCENES[building_id]) as PackedScene
 	_ghost = scene.instantiate() as Node2D
-	# Make ghost semi-transparent and disable its collision
 	_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5)
 	for child: Node in _ghost.get_children():
 		if child is CollisionShape2D or child is CollisionPolygon2D:
@@ -294,12 +322,12 @@ func _confirm_placement(world_pos: Vector2) -> void:
 	var scene: PackedScene = load(BUILDING_SCENES[_placing_id]) as PackedScene
 	var building: Node2D = scene.instantiate() as Node2D
 	building.global_position = world_pos
+	building.rotation = _ghost_rotation
 	building.set("player_id", 0)
 	building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
 	buildings_layer.add_child(building)
 	EventBus.building_placed.emit(building, 0)
 
-	# Send selected villagers to build it
 	for unit: Node in _selected_units:
 		if is_instance_valid(unit) and unit.has_method("order_build"):
 			unit.order_build(building)
@@ -309,6 +337,7 @@ func _confirm_placement(world_pos: Vector2) -> void:
 func _cancel_placement() -> void:
 	_placing_building = false
 	_placing_id = ""
+	_ghost_rotation = 0.0
 	if is_instance_valid(_ghost):
 		_ghost.queue_free()
 	_ghost = null
@@ -334,6 +363,9 @@ func _on_action_requested(action_id: String) -> void:
 		"train:militia":
 			if is_instance_valid(_selected_building) and _selected_building is Barracks:
 				(_selected_building as Barracks).order_train()
+		"gate_toggle":
+			if is_instance_valid(_selected_building) and _selected_building is Gate:
+				(_selected_building as Gate).toggle()
 		"stop":
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):

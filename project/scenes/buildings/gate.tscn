@@ -1,0 +1,47 @@
+[gd_scene load_steps=4 format=3 uid="uid://building_gate"]
+
+[ext_resource type="Script" path="res://scripts/buildings/gate.gd" id="1_gate"]
+[ext_resource type="Resource" path="res://resources/buildings/gate.tres" id="2_data"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(48.0, 20.0)
+
+[node name="Gate" type="StaticBody2D"]
+script = ExtResource("1_gate")
+building_data = ExtResource("2_data")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_1")
+
+[node name="Body" type="ColorRect" parent="."]
+offset_left = -24.0
+offset_top = -10.0
+offset_right = 24.0
+offset_bottom = 10.0
+color = Color(0.45, 0.32, 0.14, 1.0)
+mouse_filter = 2
+
+[node name="StateLabel" type="Label" parent="."]
+offset_left = -24.0
+offset_top = -22.0
+offset_right = 24.0
+offset_bottom = -10.0
+text = "GATE"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 9
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+mouse_filter = 2
+
+[node name="ConstructionBar" type="ProgressBar" parent="."]
+offset_left = -24.0
+offset_top = 12.0
+offset_right = 24.0
+offset_bottom = 20.0
+max_value = 100.0
+value = 0.0
+show_percentage = false
+mouse_filter = 2
+
+[node name="NavigationObstacle2D" type="NavigationObstacle2D" parent="."]
+radius = 0.0
+avoidance_enabled = false

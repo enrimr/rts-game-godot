@@ -34,12 +34,14 @@ const VILLAGER_ACTIONS: Array = [
 ]
 
 const BUILD_ACTIONS: Array = [
-	{"id": "build:house",        "label": "House\n25W",      "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H},
-	{"id": "build:barracks",     "label": "Barracks\n175W",  "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B},
-	{"id": "build:lumber_camp",  "label": "Lumber\n100W",    "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L},
-	{"id": "build:mining_camp",  "label": "Mining\n100W",    "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N},
-	{"id": "build:farm",         "label": "Farm\n60W",       "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F},
-	{"id": "back",               "label": "← Back",          "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE},
+	{"id": "build:house",         "label": "House\n25W",      "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H},
+	{"id": "build:barracks",      "label": "Barracks\n175W",  "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B},
+	{"id": "build:lumber_camp",   "label": "Lumber\n100W",    "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L},
+	{"id": "build:mining_camp",   "label": "Mining\n100W",    "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N},
+	{"id": "build:farm",          "label": "Farm\n60W",       "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F},
+	{"id": "build:wall_segment",  "label": "Wall\n5S",        "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_W},
+	{"id": "build:gate",          "label": "Gate\n30W",       "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G},
+	{"id": "back",                "label": "← Back",          "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE},
 ]
 
 const BARRACKS_ACTIONS: Array = [
@@ -57,6 +59,11 @@ const UNIT_ACTIONS: Array = [
 ]
 
 const BUILDING_ACTIONS: Array = [
+	DESTROY_ACTION,
+]
+
+const GATE_ACTIONS: Array = [
+	{"id": "gate_toggle", "label": "Open/\nClose", "color": Color(0.28, 0.45, 0.28), "cost": {}, "key": KEY_O},
 	DESTROY_ACTION,
 ]
 
@@ -325,8 +332,27 @@ func _on_building_selected(building: Node) -> void:
 		_populate_buttons(BARRACKS_ACTIONS)
 		var br: Barracks = building as Barracks
 		_on_train_queue_changed(building, br.get_queue(), br.get_max_queue())
+	elif building is Gate:
+		var gate: Gate = building as Gate
+		_populate_buttons(GATE_ACTIONS)
+		_refresh_gate_toggle_label(gate)
+		if not gate.gate_toggled.is_connected(_on_gate_toggled):
+			gate.gate_toggled.connect(_on_gate_toggled)
 	else:
 		_populate_buttons(BUILDING_ACTIONS)
+
+func _on_gate_toggled(_is_open: bool) -> void:
+	if is_instance_valid(_selected_building) and _selected_building is Gate:
+		_refresh_gate_toggle_label(_selected_building as Gate)
+
+func _refresh_gate_toggle_label(gate: Gate) -> void:
+	for child: Node in _action_grid.get_children():
+		if not (child is ActionButton):
+			continue
+		var btn: ActionButton = child as ActionButton
+		if btn.action_id != "gate_toggle":
+			continue
+		btn.text = "[O] " + ("Close" if gate.is_open else "Open")
 
 func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 	if player_id != local_player_id:
