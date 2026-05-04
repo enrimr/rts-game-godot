@@ -160,11 +160,36 @@ func _handle_right_click(world_pos: Vector2) -> void:
 	if farm != null:
 		_order_gather_farm(farm)
 		return
+	var drop_off_node: Node = _find_drop_off_at(world_pos)
+	if drop_off_node != null:
+		_order_drop_off_all(drop_off_node)
+		return
 	var building: Node = _find_building_at(world_pos)
 	if building != null:
 		_order_build_all(building)
 		return
 	_order_move_all(world_pos)
+
+func _find_drop_off_at(world_pos: Vector2) -> Node:
+	# Town Center
+	if world_pos.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
+		return drop_off
+	# Lumber/Mining camps (any complete building that has a DropOffBuilding child)
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		var b2d: Node2D = building as Node2D
+		if world_pos.distance_to(b2d.global_position) >= BUILDING_CLICK_RADIUS:
+			continue
+		for child: Node in building.get_children():
+			if child is DropOffBuilding:
+				return building
+	return null
+
+func _order_drop_off_all(target: Node) -> void:
+	for unit: Node in _selected_units:
+		if is_instance_valid(unit) and unit.has_method("order_drop_off"):
+			unit.order_drop_off(target)
 
 func _find_farm_at(world_pos: Vector2) -> Farm:
 	for building: Node in buildings_layer.get_children():

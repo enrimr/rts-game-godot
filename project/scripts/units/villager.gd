@@ -58,6 +58,16 @@ func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
 	_destination_state = UnitState.GATHERING
 	_start_move_to((target as Node2D).global_position)
 
+func order_drop_off(target: Node) -> void:
+	if carried_amount <= 0.0:
+		return
+	_unregister_from_build_target()
+	drop_off_target = target
+	build_target = null
+	attack_target = null
+	_destination_state = UnitState.RETURNING
+	_start_move_to((target as Node2D).global_position)
+
 func order_build(target: Node) -> void:
 	_unregister_from_build_target()
 	if is_instance_valid(build_target) and build_target.construction_complete.is_connected(_on_construction_complete):
