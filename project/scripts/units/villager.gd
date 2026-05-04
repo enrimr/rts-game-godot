@@ -11,7 +11,6 @@ class_name Villager
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var gather_indicator: Label = $GatherIndicator
-@onready var attack_range_area: Area2D = $AttackRange
 
 var gather_target: Node = null
 var carried_resource: String = ""
