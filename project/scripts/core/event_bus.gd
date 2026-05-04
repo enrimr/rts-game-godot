@@ -17,6 +17,9 @@ signal unit_command_issued(units: Array, command: Dictionary)
 signal population_changed(player_id: int, current: int, cap: int)
 signal population_cap_changed(player_id: int, cap: int)
 
+# Resources
+signal resource_node_selected(node: Node)
+
 # Buildings
 signal train_queue_changed(building: Node, queue: Array, max_queue: int)
 signal building_placed(building: Node, player_id: int)

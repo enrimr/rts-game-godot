@@ -59,6 +59,7 @@ func _ready() -> void:
 	EventBus.building_selected.connect(_on_building_selected)
 	EventBus.population_changed.connect(_on_population_changed)
 	EventBus.train_queue_changed.connect(_on_train_queue_changed)
+	EventBus.resource_node_selected.connect(_on_resource_node_selected)
 	EventBus.age_advance_complete.connect(_on_age_advance_complete)
 	GameManager.game_started.connect(_on_game_started)
 	GameManager.game_paused.connect(toggle_pause)
@@ -306,6 +307,18 @@ func _get_unit_status(unit: Node) -> String:
 		6: # DEAD
 			return "Dead"
 	return ""
+
+func _on_resource_node_selected(node: Node) -> void:
+	_selected_building = null
+	_status_unit = null
+	for child: Node in _unit_portraits_grid.get_children():
+		child.queue_free()
+	_clear_action_buttons()
+	var rn: ResourceNode = node as ResourceNode
+	var res_name: String = rn.get_resource_name().capitalize()
+	_unit_name_label.text = res_name
+	_unit_hp_bar.value = (rn.remaining_amount / rn.initial_amount) * 100.0
+	_unit_status_label.text = "%d / %d" % [int(rn.remaining_amount), int(rn.initial_amount)]
 
 func _on_cancel_train_slot(index: int) -> void:
 	if not is_instance_valid(_selected_building):

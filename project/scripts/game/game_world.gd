@@ -144,6 +144,13 @@ func _finish_selection(release_pos: Vector2) -> void:
 				_selected_building = building
 				EventBus.building_selected.emit(building)
 				return
+		for child: Node in get_children():
+			if not (child is ResourceNode):
+				continue
+			var rn: ResourceNode = child as ResourceNode
+			if _drag_start.distance_to(rn.global_position) < UNIT_CLICK_RADIUS:
+				EventBus.resource_node_selected.emit(rn)
+				return
 
 	SelectionManager.select(_selected_units)
 
