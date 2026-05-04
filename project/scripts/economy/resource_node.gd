@@ -22,6 +22,7 @@ signal depleted(node: Node)
 
 func _ready() -> void:
 	remaining_amount = initial_amount
+	add_to_group("resource_nodes")
 
 func get_resource_name() -> String:
 	return RESOURCE_NAMES.get(resource_type, "food") as String

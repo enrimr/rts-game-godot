@@ -27,6 +27,7 @@ var _destination_state: UnitState = UnitState.IDLE
 const BUILD_RANGE: float = 60.0
 const DROP_OFF_RANGE: float = 72.0
 const GATHER_RANGE: float = 48.0
+const FALLBACK_RESOURCE_RANGE: float = 400.0
 
 func _ready() -> void:
 	super._ready()
@@ -138,8 +139,13 @@ func _on_velocity_computed(safe_velocity: Vector2) -> void:
 
 func _handle_gathering(delta: float) -> void:
 	if not is_instance_valid(gather_target):
-		current_state = UnitState.IDLE
-		_play_animation(_get_animation_name())
+		var fallback: Node = _find_nearest_same_resource()
+		if fallback != null:
+			gather_target = fallback
+			_start_move_to((fallback as Node2D).global_position)
+		else:
+			current_state = UnitState.IDLE
+			_play_animation(_get_animation_name())
 		return
 
 	var dist: float = global_position.distance_to((gather_target as Node2D).global_position)
@@ -245,6 +251,23 @@ func _get_target_armor() -> float:
 	if armor != null:
 		return armor as float
 	return 0.0
+
+func _find_nearest_same_resource() -> Node:
+	if carried_resource.is_empty():
+		return null
+	var best: Node = null
+	var best_dist: float = FALLBACK_RESOURCE_RANGE
+	for node: Node in get_tree().get_nodes_in_group("resource_nodes"):
+		if not is_instance_valid(node):
+			continue
+		var rn: ResourceNode = node as ResourceNode
+		if rn.get_resource_name() != carried_resource:
+			continue
+		var d: float = global_position.distance_to((rn as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = rn
+	return best
 
 func _resolve_drop_off() -> Node:
 	return _find_nearest_drop_off()
