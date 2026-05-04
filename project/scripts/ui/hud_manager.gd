@@ -86,6 +86,7 @@ func _ready() -> void:
 	EventBus.age_advance_complete.connect(_on_age_advance_complete)
 	GameManager.game_started.connect(_on_game_started)
 	GameManager.game_paused.connect(toggle_pause)
+	GameManager.game_over.connect(_on_game_over)
 	_pause_overlay.visible = false
 	_clock_label.text = "00:00"
 	_unit_name_label.text = ""
@@ -449,3 +450,33 @@ func _on_building_destroyed(building: Node, _player_id: int) -> void:
 
 func _on_unit_died(unit: Node, _player_id: int) -> void:
 	_status_unit = null
+
+func _on_game_over(winner_player_id: int) -> void:
+	_clock_running = false
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	get_node("HUDRoot").add_child(overlay)
+
+	var lbl: Label = Label.new()
+	lbl.text = "VICTORIA!" if winner_player_id == 0 else "DERROTA"
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	lbl.add_theme_font_size_override("font_size", 96)
+	var col: Color = Color(0.2, 1.0, 0.3) if winner_player_id == 0 else Color(1.0, 0.2, 0.2)
+	lbl.add_theme_color_override("font_color", col)
+	overlay.add_child(lbl)
+
+	var sub: Label = Label.new()
+	sub.text = "Pulsa Escape para salir"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	sub.offset_top = -80.0
+	sub.offset_bottom = -40.0
+	sub.offset_left = -300.0
+	sub.offset_right = 300.0
+	sub.add_theme_font_size_override("font_size", 22)
+	sub.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
+	overlay.add_child(sub)

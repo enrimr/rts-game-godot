@@ -10,6 +10,9 @@ func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
+func _on_auto_attack_target(target: Node) -> void:
+	order_attack(target)
+
 func _physics_process(delta: float) -> void:
 	match current_state:
 		UnitState.MOVING:
@@ -49,7 +52,9 @@ func _on_velocity_computed(safe_velocity: Vector2) -> void:
 
 func _handle_attacking(delta: float) -> void:
 	if not is_instance_valid(attack_target):
+		attack_target = null
 		current_state = UnitState.IDLE
+		_scan_area_for_target()
 		return
 
 	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
@@ -76,3 +81,12 @@ func _get_target_armor() -> float:
 	if armor != null:
 		return armor as float
 	return 0.0
+
+func _scan_area_for_target() -> void:
+	if not is_instance_valid(attack_range_area):
+		return
+	for body: Node in attack_range_area.get_overlapping_bodies():
+		var pid: Variant = body.get("player_id")
+		if pid != null and (pid as int) != player_id:
+			order_attack(body)
+			return

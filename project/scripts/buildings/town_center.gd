@@ -9,6 +9,15 @@ const MAX_QUEUE: int = 5
 
 @export var player_id: int = 0
 
+var health: float = 2000.0
+const MAX_HEALTH: float = 2000.0
+
+func take_damage(amount: float, _source: Node = null) -> void:
+	health -= amount
+	if health <= 0.0:
+		EventBus.building_destroyed.emit(self, player_id)
+		queue_free()
+
 var _train_queue: Array[Dictionary] = []
 var _train_timer: float = 0.0
 

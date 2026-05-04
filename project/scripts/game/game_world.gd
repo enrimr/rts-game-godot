@@ -1,6 +1,7 @@
 extends Node2D
 
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
+const AI_TOWN_CENTER_SCENE: PackedScene = preload("res://scenes/buildings/town_center_ai.tscn")
 
 const BUILDING_SCENES: Dictionary = {
 	"house":         "res://scenes/buildings/house.tscn",
@@ -34,6 +35,8 @@ const UNIT_CLICK_RADIUS: float = 32.0
 @onready var drop_off: Node2D = $DropOffNode
 @onready var hud: CanvasLayer = $HUD
 
+var _ai_town_center: Node2D = null
+
 var _selected_units: Array[Node] = []
 var _selected_building: Node = null
 var _drag_start: Vector2 = Vector2.ZERO
@@ -48,6 +51,8 @@ var _ghost_rotation: float = 0.0
 func _ready() -> void:
 	ResourceManager.init_player(0)
 	PopulationManager.init_player(0)
+	ResourceManager.init_player(1)
+	PopulationManager.init_player(1)
 
 	for i: int in range(3):
 		var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
@@ -57,15 +62,58 @@ func _ready() -> void:
 		PopulationManager.add_unit(0)
 		EventBus.unit_spawned.emit(v, 0)
 
+	_setup_ai()
+
 	hud.action_requested.connect(_on_action_requested)
 	EventBus.unit_spawned.connect(_on_unit_spawned)
+	EventBus.building_destroyed.connect(_on_building_destroyed_check_victory)
 
 	var minimap: MinimapRenderer = hud.get_node_or_null("%Minimap") as MinimapRenderer
 	if minimap != null:
 		minimap.world_node = self
 		minimap.camera_node = camera
 
-	GameManager.start_game([{"id": 0}])
+	GameManager.start_game([{"id": 0}, {"id": 1}])
+
+func _setup_ai() -> void:
+	# Spawn AI town center on opposite side of map
+	_ai_town_center = AI_TOWN_CENTER_SCENE.instantiate() as Node2D
+	_ai_town_center.global_position = Vector2(600.0, 400.0)
+	_ai_town_center.set("player_id", 1)
+	buildings_layer.add_child(_ai_town_center)
+
+	# AI drop-off is the DropOff child of the town center
+	var ai_drop_off: Node = _ai_town_center.get_node_or_null("DropOff")
+
+	# Spawn 3 AI villagers
+	for i: int in range(3):
+		var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
+		units_layer.add_child(v)
+		v.global_position = _ai_town_center.global_position + Vector2(i * 40 - 40, 60.0)
+		v.set("player_id", 1)
+		PopulationManager.add_unit(1)
+		EventBus.unit_spawned.emit(v, 1)
+
+	# Wire up AI controller
+	var ai: Node = Node.new()
+	ai.set_script(load("res://scripts/ai/ai_player.gd"))
+	ai.set("player_id", 1)
+	add_child(ai)
+	ai.set("town_center", _ai_town_center)
+	ai.set("units_layer", units_layer)
+	ai.set("buildings_layer", buildings_layer)
+	ai.set("drop_off", ai_drop_off if ai_drop_off != null else _ai_town_center)
+	ai.set("enemy_town_center", drop_off)
+
+func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void:
+	# Player's town center destroyed → AI wins
+	if building == drop_off:
+		GameManager.declare_winner(1)
+		return
+	# AI's town center destroyed → Player wins
+	if building == _ai_town_center:
+		GameManager.declare_winner(0)
+		return
 
 func _process(delta: float) -> void:
 	_handle_camera(delta)

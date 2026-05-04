@@ -38,3 +38,9 @@ func toggle_pause() -> void:
 		state = GameState.PLAYING
 		get_tree().paused = false
 		game_paused.emit(false)
+
+func declare_winner(winner_id: int) -> void:
+	if state != GameState.PLAYING:
+		return
+	state = GameState.GAME_OVER
+	game_over.emit(winner_id)

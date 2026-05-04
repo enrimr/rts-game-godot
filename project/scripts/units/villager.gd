@@ -34,6 +34,9 @@ func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
+func _on_auto_attack_target(target: Node) -> void:
+	order_attack(target)
+
 func _physics_process(delta: float) -> void:
 	match current_state:
 		UnitState.MOVING:

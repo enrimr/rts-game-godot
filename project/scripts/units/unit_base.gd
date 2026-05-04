@@ -22,11 +22,15 @@ const MAX_STUCK_RETRIES: int = 1
 @onready var nav_agent: NavigationAgent2D = $NavigationAgent2D
 @onready var health_bar: ProgressBar = $HealthBar
 @onready var selection_indicator: Node2D = $SelectionIndicator
+@onready var attack_range_area: Area2D = get_node_or_null("AttackRange")
 
 func _ready() -> void:
 	if unit_data:
 		health = unit_data.max_health
 	_last_position = global_position
+	if is_instance_valid(attack_range_area):
+		attack_range_area.monitoring = true
+		attack_range_area.body_entered.connect(_on_enemy_entered_range)
 
 func set_selected(value: bool) -> void:
 	is_selected = value
@@ -45,8 +49,22 @@ func take_damage(amount: float, source: Node = null) -> void:
 
 func die() -> void:
 	current_state = UnitState.DEAD
+	if is_instance_valid(attack_range_area):
+		attack_range_area.monitoring = false
 	EventBus.unit_died.emit(self, player_id)
 	queue_free()
+
+func _on_enemy_entered_range(body: Node) -> void:
+	if current_state != UnitState.IDLE:
+		return
+	var body_pid: Variant = body.get("player_id")
+	if body_pid == null or (body_pid as int) == player_id:
+		return
+	_on_auto_attack_target(body)
+
+# Override in subclasses to trigger attack logic.
+func _on_auto_attack_target(_target: Node) -> void:
+	pass
 
 # Returns the desired velocity toward the next nav path point.
 # Returns ZERO when already at the point or navigation is finished.

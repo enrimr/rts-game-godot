@@ -109,7 +109,7 @@ theme_override_font_sizes/font_size = 10
 mouse_filter = 2
 
 [node name="AttackRange" type="Area2D" parent="."]
-monitoring = false
+collision_mask = 1
 monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackRange"]
