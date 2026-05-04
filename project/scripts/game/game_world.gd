@@ -338,6 +338,22 @@ func _on_action_requested(action_id: String) -> void:
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):
 					unit.order_move((unit as Node2D).global_position)
+		"destroy":
+			if not _selected_units.is_empty():
+				for unit: Node in _selected_units:
+					if is_instance_valid(unit) and unit.has_method("die"):
+						unit.die()
+				_selected_units.clear()
+				SelectionManager.select([])
+			elif is_instance_valid(_selected_building):
+				var target: Node = _selected_building
+				_selected_building = null
+				if target.has_method("take_damage"):
+					var hp: Variant = target.get("health")
+					var dmg: float = (hp as float + 1.0) if hp != null else 9999.0
+					target.take_damage(dmg)
+				elif target.has_method("queue_free"):
+					target.queue_free()
 
 func _order_gather_nearest_resource(rtype: ResourceNode.ResourceType) -> void:
 	if _selected_units.is_empty():

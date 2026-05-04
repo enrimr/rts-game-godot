@@ -21,6 +21,8 @@ signal action_requested(action_id: String)
 @onready var _train_queue_row: HBoxContainer = %TrainQueueRow
 @onready var _pause_overlay: ColorRect = %PauseOverlay
 
+const DESTROY_ACTION: Dictionary = {"id": "destroy", "label": "Destroy", "color": Color(0.55, 0.05, 0.05), "cost": {}}
+
 const VILLAGER_ACTIONS: Array = [
 	{"id": "gather_wood",  "label": "Chop\nWood",    "color": Color(0.20, 0.55, 0.15), "cost": {}},
 	{"id": "gather_gold",  "label": "Mine\nGold",    "color": Color(0.75, 0.65, 0.10), "cost": {}},
@@ -28,6 +30,7 @@ const VILLAGER_ACTIONS: Array = [
 	{"id": "gather_food",  "label": "Hunt\nFood",    "color": Color(0.60, 0.20, 0.15), "cost": {}},
 	{"id": "build_menu",   "label": "Build...",      "color": Color(0.20, 0.30, 0.60), "cost": {}},
 	{"id": "stop",         "label": "Stop",          "color": Color(0.50, 0.10, 0.10), "cost": {}},
+	DESTROY_ACTION,
 ]
 
 const BUILD_ACTIONS: Array = [
@@ -41,10 +44,20 @@ const BUILD_ACTIONS: Array = [
 
 const BARRACKS_ACTIONS: Array = [
 	{"id": "train:militia", "label": "Train\nMilitia\n60F 20W", "color": Color(0.5, 0.2, 0.1), "cost": {"food": 60, "wood": 20}},
+	DESTROY_ACTION,
 ]
 
 const TOWN_CENTER_ACTIONS: Array = [
 	{"id": "train:villager", "label": "Train\nVillager\n50F", "color": Color(0.20, 0.45, 0.20), "cost": {"food": 50}},
+]
+
+const UNIT_ACTIONS: Array = [
+	{"id": "stop",    "label": "Stop",    "color": Color(0.50, 0.10, 0.10), "cost": {}},
+	DESTROY_ACTION,
+]
+
+const BUILDING_ACTIONS: Array = [
+	DESTROY_ACTION,
 ]
 
 var _elapsed_seconds: float = 0.0
@@ -57,6 +70,8 @@ func _ready() -> void:
 	EventBus.resource_changed.connect(_on_resource_changed)
 	EventBus.unit_selected.connect(_on_unit_selected)
 	EventBus.building_selected.connect(_on_building_selected)
+	EventBus.building_destroyed.connect(_on_building_destroyed)
+	EventBus.unit_died.connect(_on_unit_died)
 	EventBus.population_changed.connect(_on_population_changed)
 	EventBus.train_queue_changed.connect(_on_train_queue_changed)
 	EventBus.resource_node_selected.connect(_on_resource_node_selected)
@@ -129,6 +144,8 @@ func update_selection(units: Array) -> void:
 
 		if first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
+		else:
+			_populate_buttons(UNIT_ACTIONS)
 
 func update_age(age: int) -> void:
 	_age_label.text = AGE_NAMES[clampi(age, 0, AGE_NAMES.size() - 1)]
@@ -264,6 +281,8 @@ func _on_building_selected(building: Node) -> void:
 		_populate_buttons(BARRACKS_ACTIONS)
 		var br: Barracks = building as Barracks
 		_on_train_queue_changed(building, br.get_queue(), br.get_max_queue())
+	else:
+		_populate_buttons(BUILDING_ACTIONS)
 
 func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 	if player_id != local_player_id:
@@ -353,3 +372,11 @@ func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> vo
 		_train_queue_row.add_child(slot)
 		slot.setup(i, entry["label"] as String, entry["color"] as Color, i == 0)
 		slot.cancel_requested.connect(_on_cancel_train_slot)
+
+func _on_building_destroyed(building: Node, _player_id: int) -> void:
+	if building == _selected_building:
+		_selected_building = null
+		_on_building_selected(null)
+
+func _on_unit_died(unit: Node, _player_id: int) -> void:
+	_status_unit = null
