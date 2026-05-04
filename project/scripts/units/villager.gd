@@ -142,6 +142,7 @@ func _handle_gathering(delta: float) -> void:
 		var fallback: Node = _find_nearest_same_resource()
 		if fallback != null:
 			gather_target = fallback
+			_destination_state = UnitState.GATHERING
 			_start_move_to((fallback as Node2D).global_position)
 		else:
 			current_state = UnitState.IDLE
