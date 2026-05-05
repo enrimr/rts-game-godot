@@ -21,6 +21,7 @@ signal building_destroyed(building: Node)
 @onready var _body_rect: ColorRect   = get_node_or_null("Body")
 
 func _ready() -> void:
+	add_to_group("buildings")
 	if building_data:
 		health = building_data.max_health
 	_refresh_visuals()

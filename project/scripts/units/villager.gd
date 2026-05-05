@@ -318,8 +318,32 @@ func _find_nearest_drop_off() -> Node:
 func _on_construction_complete() -> void:
 	_unregister_from_build_target()
 	build_target = null
-	current_state = UnitState.IDLE
-	_play_animation(_get_animation_name())
+	var next: Node = _find_nearest_construction()
+	if next != null:
+		order_build(next)
+	else:
+		current_state = UnitState.IDLE
+		_play_animation(_get_animation_name())
+
+const CONSTRUCTION_SEARCH_RANGE: float = 400.0
+
+func _find_nearest_construction() -> Node:
+	var best: Node = null
+	var best_dist: float = CONSTRUCTION_SEARCH_RANGE
+	for building: Node in get_tree().get_nodes_in_group("buildings"):
+		if not is_instance_valid(building):
+			continue
+		var bpid: Variant = building.get("player_id")
+		if bpid == null or (bpid as int) != player_id:
+			continue
+		var bstate: Variant = building.get("state")
+		if bstate == null or (bstate as int) != BuildingBase.BuildingState.UNDER_CONSTRUCTION:
+			continue
+		var d: float = global_position.distance_to((building as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = building
+	return best
 
 func _update_gather_indicator() -> void:
 	if not is_instance_valid(gather_indicator):
