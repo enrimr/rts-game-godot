@@ -10,7 +10,10 @@ var max_health: float = 2000.0
 @onready var _drop_off: Node = get_node_or_null("DropOff")
 
 func _ready() -> void:
-	pass
+	call_deferred("_add_player_color_stripe")
+
+func _add_player_color_stripe() -> void:
+	PlayerColors.apply_color_stripe(self, player_id, 80.0, 40.0)
 
 func take_damage(amount: float, _source: Node = null) -> void:
 	health -= amount

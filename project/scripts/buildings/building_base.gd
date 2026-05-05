@@ -24,6 +24,7 @@ func _ready() -> void:
 	if building_data:
 		health = building_data.max_health
 	_refresh_visuals()
+	call_deferred("_apply_player_color_stripe")
 
 func register_builder() -> void:
 	_active_builders += 1
@@ -57,6 +58,14 @@ func _refresh_visuals() -> void:
 	if is_instance_valid(_body_rect):
 		var alpha: float = 0.4 + construction_progress / 100.0 * 0.6
 		_body_rect.modulate = Color(1.0, 1.0, 1.0, alpha)
+
+func _apply_player_color_stripe() -> void:
+	if not is_instance_valid(_body_rect):
+		PlayerColors.apply_color_stripe(self, player_id, 48.0, 36.0)
+		return
+	var w: float = _body_rect.offset_right - _body_rect.offset_left
+	var b: float = _body_rect.offset_bottom
+	PlayerColors.apply_color_stripe(self, player_id, w, b)
 
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount

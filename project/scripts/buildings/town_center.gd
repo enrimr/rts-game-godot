@@ -23,6 +23,12 @@ var _train_timer: float = 0.0
 
 @onready var _train_bar: ProgressBar = get_node_or_null("TrainingBar")
 
+func _ready() -> void:
+	call_deferred("_add_player_color_stripe")
+
+func _add_player_color_stripe() -> void:
+	PlayerColors.apply_color_stripe(self, player_id, 80.0, 40.0)
+
 func _process(delta: float) -> void:
 	if _train_queue.is_empty():
 		return

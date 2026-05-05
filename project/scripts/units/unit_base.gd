@@ -31,6 +31,10 @@ func _ready() -> void:
 	if is_instance_valid(attack_range_area):
 		attack_range_area.monitoring = true
 		attack_range_area.body_entered.connect(_on_enemy_entered_range)
+	call_deferred("_add_player_color_stripe")
+
+func _add_player_color_stripe() -> void:
+	PlayerColors.apply_color_stripe(self, player_id, 20.0, 4.0)
 
 func set_selected(value: bool) -> void:
 	is_selected = value
