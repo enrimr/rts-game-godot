@@ -26,8 +26,8 @@ Early development — Milestone 1 in progress.
 ### Running the game
 
 ```bash
-git clone https://github.com/enrimr/age-of-kingdoms.git
-cd age-of-kingdoms
+git clone https://github.com/enrimr/rts-game-godot.git
+cd rts-game-godot
 ```
 
 Open **Godot → Import** and select `project/project.godot`.
