@@ -33,6 +33,14 @@ func order_attack(target: Node) -> void:
 	current_state = UnitState.MOVING
 
 func _handle_movement(delta: float) -> void:
+	if _destination_state == UnitState.ATTACKING and is_instance_valid(attack_target):
+		var attack_reach: float = unit_data.attack_range * 32.0
+		if global_position.distance_to((attack_target as Node2D).global_position) <= attack_reach:
+			current_state = UnitState.ATTACKING
+			_destination_state = UnitState.IDLE
+			nav_agent.set_velocity(Vector2.ZERO)
+			return
+
 	if nav_agent.is_navigation_finished():
 		current_state = _destination_state
 		_destination_state = UnitState.IDLE
