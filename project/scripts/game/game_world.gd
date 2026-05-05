@@ -42,6 +42,9 @@ var _selected_building: Node = null
 var _drag_start: Vector2 = Vector2.ZERO
 var _dragging: bool = false
 
+var _panning: bool = false
+var _pan_last_pos: Vector2 = Vector2.ZERO
+
 # Build placement state
 var _placing_building: bool = false
 var _placing_id: String = ""
@@ -139,6 +142,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 
+	if event is InputEventMouseMotion and _panning:
+		var motion: InputEventMouseMotion = event as InputEventMouseMotion
+		camera.position -= motion.relative / camera.zoom.x
+		get_viewport().set_input_as_handled()
+		return
+
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
 
@@ -147,6 +156,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				_confirm_placement(get_global_mouse_position())
 			elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
 				_cancel_placement()
+			return
+
+		if mb.button_index == MOUSE_BUTTON_MIDDLE:
+			if mb.pressed:
+				_panning = true
+				_pan_last_pos = mb.position
+			else:
+				_panning = false
 			return
 
 		if mb.button_index == MOUSE_BUTTON_LEFT:
