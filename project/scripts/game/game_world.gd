@@ -378,7 +378,13 @@ func _confirm_placement(world_pos: Vector2) -> void:
 		if is_instance_valid(unit) and unit.has_method("order_build"):
 			unit.order_build(building)
 
-	_cancel_placement()
+	if Input.is_key_pressed(KEY_SHIFT):
+		# Keep placement mode active for the same building type.
+		var keep_id: String = _placing_id
+		_cancel_placement()
+		_start_placement(keep_id)
+	else:
+		_cancel_placement()
 
 func _cancel_placement() -> void:
 	_placing_building = false
