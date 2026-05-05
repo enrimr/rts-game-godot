@@ -27,6 +27,7 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 grow_horizontal = 2
+mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
 
 [node name="TopBarLayout" type="HBoxContainer" parent="HUDRoot/TopBar"]
@@ -132,6 +133,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_bottombar")
 
 [node name="BottomLayout" type="HBoxContainer" parent="HUDRoot/BottomBar"]
@@ -142,6 +144,7 @@ theme_override_constants/separation = 0
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(600, 160)
+mouse_filter = 2
 
 [node name="SelectionVBox" type="VBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel"]
 layout_mode = 1
@@ -214,6 +217,7 @@ unique_name_in_owner = true
 [node name="MinimapPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
 layout_mode = 2
 custom_minimum_size = Vector2(220, 220)
+mouse_filter = 2
 
 [node name="Minimap" type="Control" parent="HUDRoot/BottomBar/BottomLayout/MinimapPanel"]
 layout_mode = 1

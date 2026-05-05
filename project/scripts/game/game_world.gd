@@ -134,13 +134,31 @@ func _handle_camera(delta: float) -> void:
 	if Input.is_action_pressed("camera_pan_down"):  dir.y += 1.0
 	camera.position += dir * CAMERA_SPEED * delta
 
+func _is_mouse_over_hud() -> bool:
+	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
+	for control: Node in _get_hud_blocking_rects():
+		if not is_instance_valid(control):
+			continue
+		var c: Control = control as Control
+		if c.get_global_rect().has_point(mouse_pos):
+			return true
+	return false
+
+func _get_hud_blocking_rects() -> Array[Control]:
+	var result: Array[Control] = []
+	var top_bar: Control = hud.get_node_or_null("HUDRoot/TopBar") as Control
+	var bottom_bar: Control = hud.get_node_or_null("HUDRoot/BottomBar") as Control
+	if top_bar != null: result.append(top_bar)
+	if bottom_bar != null: result.append(bottom_bar)
+	return result
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and _placing_building:
+	if event is InputEventKey:
 		var ke: InputEventKey = event as InputEventKey
-		if ke.pressed and not ke.echo and ke.physical_keycode == KEY_R:
+		if _placing_building and ke.pressed and not ke.echo and ke.physical_keycode == KEY_R:
 			_ghost_rotation += PI / 2.0
 			get_viewport().set_input_as_handled()
-			return
+		return
 
 	if event is InputEventMouseMotion and _panning:
 		var motion: InputEventMouseMotion = event as InputEventMouseMotion
@@ -151,19 +169,28 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
 
+		if mb.button_index == MOUSE_BUTTON_MIDDLE:
+			_panning = mb.pressed
+			get_viewport().set_input_as_handled()
+			return
+
+		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
+			_zoom(CAMERA_ZOOM_STEP)
+			get_viewport().set_input_as_handled()
+			return
+		if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
+			_zoom(-CAMERA_ZOOM_STEP)
+			get_viewport().set_input_as_handled()
+			return
+
+		if _is_mouse_over_hud():
+			return
+
 		if _placing_building:
 			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
 				_confirm_placement(get_global_mouse_position())
 			elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
 				_cancel_placement()
-			return
-
-		if mb.button_index == MOUSE_BUTTON_MIDDLE:
-			if mb.pressed:
-				_panning = true
-				_pan_last_pos = mb.position
-			else:
-				_panning = false
 			return
 
 		if mb.button_index == MOUSE_BUTTON_LEFT:
@@ -176,10 +203,6 @@ func _unhandled_input(event: InputEvent) -> void:
 					_finish_selection(get_global_mouse_position())
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_handle_right_click(get_global_mouse_position())
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
-			_zoom(CAMERA_ZOOM_STEP)
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
-			_zoom(-CAMERA_ZOOM_STEP)
 
 func _zoom(step: float) -> void:
 	camera.zoom = (camera.zoom + Vector2(step, step)).clamp(
