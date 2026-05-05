@@ -50,6 +50,11 @@ func take_damage(amount: float, source: Node = null) -> void:
 	health_bar.value = health / unit_data.max_health * 100.0
 	if health <= 0.0:
 		die()
+		return
+	if current_state == UnitState.IDLE and source != null and is_instance_valid(source):
+		var src_pid: Variant = source.get("player_id")
+		if src_pid != null and (src_pid as int) != player_id:
+			_on_auto_attack_target(source)
 
 func die() -> void:
 	current_state = UnitState.DEAD
