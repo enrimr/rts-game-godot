@@ -1,6 +1,7 @@
 # Age of Kingdoms
 
-An open-source Age of Empires II inspired real-time strategy game built with [Godot 4](https://godotengine.org).
+An Age of Empires II inspired real-time strategy game built with [Godot 4](https://godotengine.org).  
+Created by **Enrique Ismael Mendoza Robaina** ([@enrimr](https://github.com/enrimr)).
 
 ## Status
 
@@ -25,8 +26,8 @@ Early development — Milestone 1 in progress.
 ### Running the game
 
 ```bash
-git clone https://github.com/your-username/age-of-empires-clone-godot.git
-cd age-of-empires-clone-godot
+git clone https://github.com/enrimr/age-of-kingdoms.git
+cd age-of-kingdoms
 ```
 
 Open **Godot → Import** and select `project/project.godot`.
@@ -47,4 +48,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[CC BY-NC 4.0](LICENSE) — free to use and modify with attribution, no commercial use.  
+Copyright © 2026 Enrique Ismael Mendoza Robaina.
