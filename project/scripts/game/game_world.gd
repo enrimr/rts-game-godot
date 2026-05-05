@@ -120,6 +120,8 @@ func _process(delta: float) -> void:
 	if _placing_building and is_instance_valid(_ghost):
 		_ghost.global_position = get_global_mouse_position()
 		_ghost.rotation = _ghost_rotation
+		var valid: bool = not _placement_overlaps(get_global_mouse_position())
+		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if valid else Color(1.0, 0.2, 0.2, 0.5)
 
 func _handle_camera(delta: float) -> void:
 	var dir: Vector2 = Vector2.ZERO
@@ -359,7 +361,30 @@ func _start_placement(building_id: String) -> void:
 			(child as CollisionShape2D).disabled = true
 	buildings_layer.add_child(_ghost)
 
+func _placement_overlaps(world_pos: Vector2) -> bool:
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var shape: RectangleShape2D = _get_ghost_shape()
+	if shape == null:
+		return false
+	var params: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	params.shape = shape
+	params.transform = Transform2D(0.0, world_pos)
+	params.collision_mask = 1
+	params.exclude = []
+	var results: Array[Dictionary] = space.intersect_shape(params, 1)
+	return results.size() > 0
+
+func _get_ghost_shape() -> RectangleShape2D:
+	for child: Node in _ghost.get_children():
+		if child is CollisionShape2D:
+			var cs: CollisionShape2D = child as CollisionShape2D
+			if cs.shape is RectangleShape2D:
+				return cs.shape as RectangleShape2D
+	return null
+
 func _confirm_placement(world_pos: Vector2) -> void:
+	if _placement_overlaps(world_pos):
+		return
 	var costs: Dictionary = BUILDING_COSTS.get(_placing_id, {})
 	if not ResourceManager.spend_resource(0, costs):
 		_cancel_placement()
