@@ -126,13 +126,23 @@ func _process(delta: float) -> void:
 		var valid: bool = not _placement_overlaps(get_global_mouse_position())
 		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if valid else Color(1.0, 0.2, 0.2, 0.5)
 
+const EDGE_SCROLL_MARGIN: float = 24.0
+
 func _handle_camera(delta: float) -> void:
 	var dir: Vector2 = Vector2.ZERO
 	if Input.is_action_pressed("camera_pan_left"):  dir.x -= 1.0
 	if Input.is_action_pressed("camera_pan_right"): dir.x += 1.0
 	if Input.is_action_pressed("camera_pan_up"):    dir.y -= 1.0
 	if Input.is_action_pressed("camera_pan_down"):  dir.y += 1.0
-	camera.position += dir * CAMERA_SPEED * delta
+
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	var mp: Vector2 = get_viewport().get_mouse_position()
+	if mp.x < EDGE_SCROLL_MARGIN:               dir.x -= 1.0
+	elif mp.x > vp.x - EDGE_SCROLL_MARGIN:      dir.x += 1.0
+	if mp.y < EDGE_SCROLL_MARGIN:               dir.y -= 1.0
+	elif mp.y > vp.y - EDGE_SCROLL_MARGIN:      dir.y += 1.0
+
+	camera.position += dir.normalized() * CAMERA_SPEED * delta
 
 func _is_mouse_over_hud() -> bool:
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
