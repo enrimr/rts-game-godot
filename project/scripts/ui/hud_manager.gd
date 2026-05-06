@@ -151,6 +151,9 @@ func update_selection(units: Array) -> void:
 			var name_val: Variant = (unit_data as Resource).get("display_name")
 			if name_val != null:
 				display_name = name_val as String
+		elif first is Animal:
+			var aname: Variant = first.get("animal_name")
+			display_name = aname as String if aname != null else "Animal"
 		_unit_name_label.text = display_name
 
 		var hp_variant: Variant = first.get("health")
@@ -160,12 +163,21 @@ func update_selection(units: Array) -> void:
 			var max_hp_v: Variant = (unit_data as Resource).get("max_health")
 			if max_hp_v != null:
 				max_hp = max_hp_v as float
+		elif first is Animal:
+			var mhp: Variant = first.get("max_health")
+			if mhp != null:
+				max_hp = mhp as float
 		if max_hp > 0.0:
 			_unit_hp_bar.value = (hp / max_hp) * 100.0
 
 		_status_unit = first if first.has_method("order_gather") else null
 
-		if first.has_method("order_gather"):
+		if first is Animal:
+			var astate: Variant = first.get("current_state")
+			var lured: bool = astate != null and (astate as int) == Animal.AnimalState.LURED
+			_unit_status_label.text = "Lured" if lured else "Wild"
+			_populate_buttons([])
+		elif first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
 		else:
 			_populate_buttons(UNIT_ACTIONS)

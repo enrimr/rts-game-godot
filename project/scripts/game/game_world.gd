@@ -60,7 +60,7 @@ func _ready() -> void:
 	PopulationManager.init_player(1)
 
 	_rng.randomize()
-	var map_data: Dictionary = MapGenerator.generate(self, _rng)
+	var map_data: Dictionary = MapGenerator.generate(self, units_layer, _rng)
 
 	# Place player TC at generated position
 	drop_off.global_position = map_data["tc0"] as Vector2
@@ -244,6 +244,8 @@ func _finish_selection(release_pos: Vector2) -> void:
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
 			continue
+		if unit is Animal:
+			continue  # animals are selected separately below
 		var unit2d: Node2D = unit as Node2D
 		var in_rect: bool = not is_click and rect.has_point(unit2d.global_position)
 		var clicked: bool = is_click and _drag_start.distance_to(unit2d.global_position) < UNIT_CLICK_RADIUS
@@ -252,6 +254,13 @@ func _finish_selection(release_pos: Vector2) -> void:
 			_selected_units.append(unit)
 
 	if is_click and _selected_units.is_empty():
+		# Check animals
+		var animal: Animal = _find_animal_at(_drag_start)
+		if animal != null:
+			animal.set_selected(true)
+			_selected_units.append(animal)
+			SelectionManager.select(_selected_units)
+			return
 		# Check Town Center first
 		if _drag_start.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
 			_selected_building = drop_off
@@ -283,6 +292,10 @@ func _finish_selection(release_pos: Vector2) -> void:
 func _handle_right_click(world_pos: Vector2) -> void:
 	if _selected_units.is_empty():
 		return
+	var animal: Animal = _find_animal_at(world_pos)
+	if animal != null:
+		_order_interact_animal(animal)
+		return
 	var resource_node: ResourceNode = _find_resource_at(world_pos)
 	if resource_node != null:
 		_order_gather_all(resource_node)
@@ -304,6 +317,25 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		_order_build_all(building)
 		return
 	_order_move_all(world_pos)
+
+func _find_animal_at(world_pos: Vector2) -> Animal:
+	for unit: Node in units_layer.get_children():
+		if not (unit is Animal):
+			continue
+		if world_pos.distance_to((unit as Node2D).global_position) < UNIT_CLICK_RADIUS:
+			return unit as Animal
+	return null
+
+func _order_interact_animal(animal: Animal) -> void:
+	# Villagers lure the animal; military units attack it
+	for unit: Node in _selected_units:
+		if not is_instance_valid(unit):
+			continue
+		if unit is Villager:
+			animal.lure(unit)
+			(unit as Villager).order_move((animal as Node2D).global_position)
+		elif unit.has_method("order_attack"):
+			unit.order_attack(animal)
 
 func _find_gate_at(world_pos: Vector2) -> Gate:
 	for building: Node in buildings_layer.get_children():

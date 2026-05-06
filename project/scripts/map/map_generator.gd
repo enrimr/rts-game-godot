@@ -19,15 +19,16 @@ const RES_LABELS: Dictionary = {
 	ResourceNode.ResourceType.FOOD_HUNT:  "Food",
 }
 
-static func generate(parent: Node2D, rng: RandomNumberGenerator) -> Dictionary:
+static func generate(parent: Node2D, units_layer: Node2D, rng: RandomNumberGenerator) -> Dictionary:
 	var tc0_pos: Vector2 = _random_tc_pos(rng)
 	var tc1_pos: Vector2 = -tc0_pos
 
 	_spawn_player_resources(parent, rng, tc0_pos, 0.0)
-	# Mirror the same layout 180° for player 1
 	_spawn_player_resources(parent, rng, tc1_pos, PI)
 
 	_spawn_neutral_resources(parent, rng)
+
+	_spawn_animals(units_layer, rng, tc0_pos, tc1_pos)
 
 	return {"tc0": tc0_pos, "tc1": tc1_pos}
 
@@ -116,6 +117,36 @@ static func _spawn_forest_zone(
 		pos.y = clampf(pos.y, -MAP_HALF, MAP_HALF)
 		_create_resource_node(parent, rng, pos, ResourceNode.ResourceType.WOOD,
 			amount * rng.randf_range(0.8, 1.2))
+
+const ANIMAL_SCENE: String = "res://scenes/units/animal.tscn"
+
+static func _spawn_animals(units_layer: Node2D, rng: RandomNumberGenerator,
+		tc0: Vector2, tc1: Vector2) -> void:
+	var scene: PackedScene = load(ANIMAL_SCENE) as PackedScene
+	# 4 deer near each TC start (lurable food source close to home)
+	for tc: Vector2 in [tc0, tc1]:
+		for _i: int in range(4):
+			var angle: float = rng.randf() * TAU
+			var dist: float  = rng.randf_range(250.0, 450.0)
+			_place_animal(scene, units_layer, tc + Vector2(cos(angle), sin(angle)) * dist, rng)
+	# 10 deer scattered across the rest of the map
+	for _i: int in range(10):
+		var pos: Vector2 = Vector2(
+			rng.randf_range(-MAP_HALF * 0.85, MAP_HALF * 0.85),
+			rng.randf_range(-MAP_HALF * 0.85, MAP_HALF * 0.85))
+		# Keep away from TC starts
+		if pos.distance_to(tc0) > 300.0 and pos.distance_to(tc1) > 300.0:
+			_place_animal(scene, units_layer, pos, rng)
+
+static func _place_animal(scene: PackedScene, units_layer: Node2D, pos: Vector2,
+		rng: RandomNumberGenerator) -> void:
+	var animal: Node2D = scene.instantiate() as Node2D
+	units_layer.add_child(animal)
+	animal.global_position = pos
+	# Small random health variation
+	var hp: float = rng.randf_range(30.0, 50.0)
+	animal.set("max_health", hp)
+	animal.set("health", hp)
 
 static func _offset(origin: Vector2, angle: float, dist: float) -> Vector2:
 	return origin + Vector2(cos(angle), sin(angle)) * dist

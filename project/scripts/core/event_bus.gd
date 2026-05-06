@@ -12,6 +12,7 @@ signal unit_spawned(unit: Node, player_id: int)
 signal unit_died(unit: Node, player_id: int)
 signal unit_selected(units: Array)
 signal unit_command_issued(units: Array, command: Dictionary)
+signal animal_selected(animal: Node)
 
 # Population
 signal population_changed(player_id: int, current: int, cap: int)
