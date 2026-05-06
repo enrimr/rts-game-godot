@@ -64,6 +64,9 @@ value = 0.0
 show_percentage = false
 mouse_filter = 2
 
+[node name="NavigationObstacle2D" type="NavigationObstacle2D" parent="DropOffNode"]
+avoidance_enabled = true
+
 [node name="UnitsLayer" type="Node2D" parent="."]
 
 [node name="BuildingsLayer" type="Node2D" parent="."]

@@ -9,6 +9,8 @@ size = Vector2(64.0, 64.0)
 [node name="Farm" type="StaticBody2D"]
 script = ExtResource("1_bb")
 building_data = ExtResource("2_data")
+collision_layer = 1
+collision_mask = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_1")
@@ -41,6 +43,9 @@ max_value = 100.0
 value = 0.0
 show_percentage = false
 mouse_filter = 2
+
+[node name="NavigationObstacle2D" type="NavigationObstacle2D" parent="."]
+avoidance_enabled = true
 
 [node name="FoodBar" type="ProgressBar" parent="."]
 offset_left = -32.0
