@@ -327,14 +327,10 @@ func _find_animal_at(world_pos: Vector2) -> Animal:
 	return null
 
 func _order_interact_animal(animal: Animal) -> void:
-	# Villagers lure the animal; military units attack it
 	for unit: Node in _selected_units:
 		if not is_instance_valid(unit):
 			continue
-		if unit is Villager:
-			animal.lure(unit)
-			(unit as Villager).order_move((animal as Node2D).global_position)
-		elif unit.has_method("order_attack"):
+		if unit.has_method("order_attack"):
 			unit.order_attack(animal)
 
 func _find_gate_at(world_pos: Vector2) -> Gate:

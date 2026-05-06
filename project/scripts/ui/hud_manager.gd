@@ -174,8 +174,8 @@ func update_selection(units: Array) -> void:
 
 		if first is Animal:
 			var astate: Variant = first.get("current_state")
-			var lured: bool = astate != null and (astate as int) == Animal.AnimalState.LURED
-			_unit_status_label.text = "Lured" if lured else "Wild"
+			var owned: bool = astate != null and (astate as int) == Animal.AnimalState.OWNED
+			_unit_status_label.text = "Yours" if owned else "Wild"
 			_populate_buttons([])
 		elif first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)

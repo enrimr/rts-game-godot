@@ -2,25 +2,21 @@ extends CharacterBody2D
 
 class_name Animal
 
-enum AnimalState { WILD, LURED, FLEEING, DEAD }
+enum AnimalState { WILD, OWNED, FLEEING, DEAD }
 
 const FOOD_AMOUNT: float = 150.0
 const WANDER_SPEED: float = 40.0
-const LURED_SPEED: float = 70.0
-const FLEE_SPEED: float  = 110.0
-const WANDER_RADIUS: float = 200.0
-const LURE_RANGE: float   = 240.0
+const FLEE_SPEED: float   = 110.0
+const WANDER_RADIUS: float = 220.0
 const FLEE_DURATION: float = 3.0
 
 @export var max_health: float = 40.0
 @export var animal_name: String = "Deer"
 
-var player_id: int = -1   # -1 = neutral wild animal; set when lured
+var player_id: int = -1
 var health: float = 0.0
 var current_state: AnimalState = AnimalState.WILD
 
-var _lurer: Node = null
-var _wander_target: Vector2 = Vector2.ZERO
 var _wander_timer: float = 0.0
 var _flee_timer: float = 0.0
 var _origin: Vector2 = Vector2.ZERO
@@ -29,6 +25,7 @@ var _origin: Vector2 = Vector2.ZERO
 @onready var _selection_indicator: Node2D = $SelectionIndicator
 @onready var _body_rect: ColorRect = $Body
 @onready var _nav: NavigationAgent2D = $NavigationAgent2D
+@onready var _convert_area: Area2D = $ConvertArea
 
 func _ready() -> void:
 	health = max_health
@@ -36,6 +33,7 @@ func _ready() -> void:
 	_pick_wander_target()
 	add_to_group("animals")
 	_nav.velocity_computed.connect(_on_velocity_computed)
+	_convert_area.body_entered.connect(_on_body_entered_range)
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	velocity = safe_velocity
@@ -52,25 +50,17 @@ func take_damage(amount: float, source: Node = null) -> void:
 	if health <= 0.0:
 		_die()
 		return
-	# Wild animal flees when hit
 	if current_state == AnimalState.WILD and source != null:
 		_start_flee(source)
 
-func lure(by_unit: Node) -> void:
-	if current_state == AnimalState.DEAD:
-		return
-	_lurer = by_unit
-	player_id = by_unit.get("player_id") as int if by_unit.get("player_id") != null else 0
-	current_state = AnimalState.LURED
-	_body_rect.color = Color(0.75, 0.55, 0.20, 1.0)  # slightly warmer to show tamed
-
 func _physics_process(delta: float) -> void:
 	match current_state:
-		AnimalState.WILD:    _handle_wild(delta)
-		AnimalState.LURED:   _handle_lured(delta)
-		AnimalState.FLEEING: _handle_flee(delta)
+		AnimalState.WILD, AnimalState.OWNED:
+			_handle_wander(delta)
+		AnimalState.FLEEING:
+			_handle_flee(delta)
 
-func _handle_wild(delta: float) -> void:
+func _handle_wander(delta: float) -> void:
 	_wander_timer -= delta
 	if _wander_timer <= 0.0:
 		_pick_wander_target()
@@ -79,23 +69,6 @@ func _handle_wild(delta: float) -> void:
 		return
 	_nav.set_velocity(_direction_to_target() * WANDER_SPEED)
 
-func _handle_lured(delta: float) -> void:
-	if not is_instance_valid(_lurer):
-		current_state = AnimalState.WILD
-		_lurer = null
-		return
-	var dist: float = global_position.distance_to((_lurer as Node2D).global_position)
-	if dist > LURE_RANGE:
-		# Too far — go back to wild
-		current_state = AnimalState.WILD
-		_lurer = null
-		return
-	_nav.target_position = (_lurer as Node2D).global_position
-	if _nav.is_navigation_finished() or dist < 48.0:
-		velocity = Vector2.ZERO
-		return
-	_nav.set_velocity(_direction_to_target() * LURED_SPEED)
-
 func _handle_flee(delta: float) -> void:
 	_flee_timer -= delta
 	if _flee_timer <= 0.0 or _nav.is_navigation_finished():
@@ -103,6 +76,24 @@ func _handle_flee(delta: float) -> void:
 		_pick_wander_target()
 		return
 	_nav.set_velocity(_direction_to_target() * FLEE_SPEED)
+
+func _on_body_entered_range(body: Node) -> void:
+	if current_state != AnimalState.WILD:
+		return
+	var pid: Variant = body.get("player_id")
+	if pid == null:
+		return
+	var owner_id: int = pid as int
+	if owner_id < 0:
+		return
+	_convert_to(owner_id)
+
+func _convert_to(owner_id: int) -> void:
+	player_id = owner_id
+	current_state = AnimalState.OWNED
+	# Tint warm to signal ownership
+	_body_rect.color = Color(0.78, 0.55, 0.18, 1.0)
+	_origin = global_position  # wander around current position from now on
 
 func _start_flee(from_source: Node) -> void:
 	current_state = AnimalState.FLEEING
@@ -113,16 +104,14 @@ func _start_flee(from_source: Node) -> void:
 func _pick_wander_target() -> void:
 	_wander_timer = randf_range(3.0, 8.0)
 	var angle: float = randf() * TAU
-	var dist: float = randf_range(60.0, WANDER_RADIUS)
-	var target: Vector2 = _origin + Vector2(cos(angle), sin(angle)) * dist
-	_nav.target_position = target
-	_wander_target = target
+	var dist: float  = randf_range(60.0, WANDER_RADIUS)
+	_nav.target_position = _origin + Vector2(cos(angle), sin(angle)) * dist
 
 func _direction_to_target() -> Vector2:
 	if _nav.is_navigation_finished():
 		return Vector2.ZERO
 	var next: Vector2 = _nav.get_next_path_position()
-	var dir: Vector2 = next - global_position
+	var dir: Vector2  = next - global_position
 	if dir.length_squared() < 1.0:
 		return Vector2.ZERO
 	return dir.normalized()
@@ -135,8 +124,7 @@ func _die() -> void:
 	food_node.set_script(load("res://scripts/economy/resource_node.gd"))
 	food_node.set("resource_type", ResourceNode.ResourceType.FOOD_HUNT)
 	food_node.set("initial_amount", FOOD_AMOUNT)
-	var world: Node = get_parent().get_parent()
-	world.add_child(food_node)
+	get_parent().get_parent().add_child(food_node)
 	food_node.global_position = global_position
 	var rect: ColorRect = ColorRect.new()
 	rect.color = Color(0.65, 0.18, 0.10, 1.0)
