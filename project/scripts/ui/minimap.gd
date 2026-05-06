@@ -5,15 +5,14 @@ class_name MinimapRenderer
 const WORLD_MIN: Vector2 = Vector2(-2000.0, -2000.0)
 const WORLD_SIZE: float = 4000.0
 
-const COLOR_BG:               Color = Color(0.08, 0.18, 0.08, 1.0)
-const COLOR_BORDER:           Color = Color(0.0,  0.0,  0.0,  1.0)
-const COLOR_UNIT_FRIENDLY:    Color = Color(0.3,  0.75, 1.0,  1.0)
-const COLOR_RESOURCE_WOOD:    Color = Color(0.15, 0.65, 0.15, 1.0)
-const COLOR_RESOURCE_GOLD:    Color = Color(0.95, 0.8,  0.1,  1.0)
-const COLOR_RESOURCE_STONE:   Color = Color(0.75, 0.75, 0.75, 1.0)
-const COLOR_BUILDING:         Color = Color(0.7,  0.5,  0.2,  1.0)
-const COLOR_CAMERA_RECT:      Color = Color(1.0,  1.0,  1.0,  0.75)
-const COLOR_GRID:             Color = Color(1.0,  1.0,  1.0,  0.06)
+const COLOR_BG:             Color = Color(0.08, 0.18, 0.08, 1.0)
+const COLOR_BORDER:         Color = Color(0.0,  0.0,  0.0,  1.0)
+const COLOR_RESOURCE_WOOD:  Color = Color(0.15, 0.65, 0.15, 1.0)
+const COLOR_RESOURCE_GOLD:  Color = Color(0.95, 0.8,  0.1,  1.0)
+const COLOR_RESOURCE_STONE: Color = Color(0.75, 0.75, 0.75, 1.0)
+const COLOR_ANIMAL:         Color = Color(0.85, 0.65, 0.25, 1.0)
+const COLOR_CAMERA_RECT:    Color = Color(1.0,  1.0,  1.0,  0.75)
+const COLOR_GRID:           Color = Color(1.0,  1.0,  1.0,  0.06)
 
 var world_node: Node2D = null
 var camera_node: Camera2D = null
@@ -47,11 +46,24 @@ func _draw() -> void:
 			draw_rect(Rect2(mp - Vector2(2.5, 2.5), Vector2(5.0, 5.0)),
 				_resource_color(rn.resource_type))
 
-	# Drop-off buildings (Town Center etc.)
-	for child: Node in world_node.get_children():
-		if child is DropOffBuilding:
-			var mp: Vector2 = _to_mm((child as Node2D).global_position, ms)
-			draw_rect(Rect2(mp - Vector2(4.0, 4.0), Vector2(8.0, 8.0)), COLOR_BUILDING)
+	# Buildings layer
+	var buildings_layer: Node = world_node.get_node_or_null("BuildingsLayer")
+	if buildings_layer != null:
+		for building: Node in buildings_layer.get_children():
+			if not is_instance_valid(building):
+				continue
+			var mp: Vector2 = _to_mm((building as Node2D).global_position, ms)
+			var pid: Variant = building.get("player_id")
+			var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.7, 0.5, 0.2)
+			draw_rect(Rect2(mp - Vector2(3.5, 3.5), Vector2(7.0, 7.0)), col)
+
+	# Town Center (DropOffNode in world root)
+	var drop_off: Node = world_node.get_node_or_null("DropOffNode")
+	if drop_off != null:
+		var mp: Vector2 = _to_mm((drop_off as Node2D).global_position, ms)
+		var pid: Variant = drop_off.get("player_id")
+		var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.7, 0.5, 0.2)
+		draw_rect(Rect2(mp - Vector2(5.0, 5.0), Vector2(10.0, 10.0)), col)
 
 	# Units
 	var units_layer: Node = world_node.get_node_or_null("UnitsLayer")
@@ -60,7 +72,12 @@ func _draw() -> void:
 			if not is_instance_valid(unit):
 				continue
 			var mp: Vector2 = _to_mm((unit as Node2D).global_position, ms)
-			draw_circle(mp, 3.0, COLOR_UNIT_FRIENDLY)
+			if unit is Animal:
+				draw_circle(mp, 2.5, COLOR_ANIMAL)
+				continue
+			var pid: Variant = unit.get("player_id")
+			var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.8, 0.8, 0.8)
+			draw_circle(mp, 3.0, col)
 
 	# Camera viewport rectangle
 	if camera_node != null:
