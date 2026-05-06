@@ -3,6 +3,8 @@ extends Node2D
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const AI_TOWN_CENTER_SCENE: PackedScene = preload("res://scenes/buildings/town_center_ai.tscn")
 
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+
 const BUILDING_SCENES: Dictionary = {
 	"house":         "res://scenes/buildings/house.tscn",
 	"barracks":      "res://scenes/buildings/barracks.tscn",
@@ -57,15 +59,22 @@ func _ready() -> void:
 	ResourceManager.init_player(1)
 	PopulationManager.init_player(1)
 
+	_rng.randomize()
+	var map_data: Dictionary = MapGenerator.generate(self, _rng)
+
+	# Place player TC at generated position
+	drop_off.global_position = map_data["tc0"] as Vector2
+	camera.position = drop_off.global_position
+
 	for i: int in range(3):
 		var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
 		units_layer.add_child(v)
-		v.global_position = drop_off.global_position + Vector2(i * 40 - 40, 0.0)
+		v.global_position = drop_off.global_position + Vector2(i * 40 - 40, 60.0)
 		v.set("player_id", 0)
 		PopulationManager.add_unit(0)
 		EventBus.unit_spawned.emit(v, 0)
 
-	_setup_ai()
+	_setup_ai(map_data["tc1"] as Vector2)
 
 	hud.action_requested.connect(_on_action_requested)
 	EventBus.unit_spawned.connect(_on_unit_spawned)
@@ -78,10 +87,9 @@ func _ready() -> void:
 
 	GameManager.start_game([{"id": 0}, {"id": 1}])
 
-func _setup_ai() -> void:
-	# Spawn AI town center on opposite side of map
+func _setup_ai(tc_pos: Vector2) -> void:
 	_ai_town_center = AI_TOWN_CENTER_SCENE.instantiate() as Node2D
-	_ai_town_center.global_position = Vector2(600.0, 400.0)
+	_ai_town_center.global_position = tc_pos
 	_ai_town_center.set("player_id", 1)
 	buildings_layer.add_child(_ai_town_center)
 
