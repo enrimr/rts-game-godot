@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://archer_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "archer"
+display_name = "Archer"
+description = "Ranged unit. Requires Feudal Age."
+max_health = 30.0
+move_speed = 110.0
+line_of_sight = 6.0
+population_cost = 1
+attack = 5.0
+attack_range = 4.0
+attack_speed = 1.0
+armor_melee = 0.0
+armor_pierce = 0.0
+age_required = 1
+train_time = 35.0
+cost_food = 0
+cost_wood = 25
+cost_gold = 45

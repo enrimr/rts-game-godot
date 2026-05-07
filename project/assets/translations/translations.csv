@@ -1,0 +1,95 @@
+keys,en,es
+UI_AGE_DARK,Dark Age,Edad Oscura
+UI_AGE_FEUDAL,Feudal Age,Edad Feudal
+UI_AGE_CASTLE,Castle Age,Edad del Castillo
+UI_AGE_IMPERIAL,Imperial Age,Era Imperial
+UI_POP,Pop: %d/%d,Pob: %d/%d
+UI_BUILDING,Building,Edificio
+UI_UNIT,Unit,Unidad
+UI_ANIMAL,Animal,Animal
+UI_TOWN_CENTER,Town Center,Centro Urbano
+UI_STATUS_MOVING,Moving,Moviéndose
+UI_STATUS_ATTACKING,Attacking,Atacando
+UI_STATUS_GATHERING,Gathering,Recolectando
+UI_STATUS_GATHERING_RES,Gathering %s  %d / %d,Recolectando %s  %d / %d
+UI_STATUS_RETURNING,Returning,Volviendo
+UI_STATUS_RETURNING_RES,Returning  %s %d,Volviendo  %s %d
+UI_STATUS_BUILDING,Building,Construyendo
+UI_STATUS_DEAD,Dead,Muerto
+UI_STATUS_YOURS,Yours,Tuyo
+UI_STATUS_WILD,Wild,Salvaje
+UI_GATE_LOCKED,LOCKED,BLOQUEADA
+UI_GATE_OPEN,Open,Abierta
+UI_GATE_CLOSED,Closed,Cerrada
+UI_GATE_LOCK,Lock,Bloquear
+UI_GATE_UNLOCK,Unlock,Desbloquear
+UI_ADVANCE,Advance,Avanzar
+ACTION_WOOD,Wood,Madera
+ACTION_GOLD,Gold,Oro
+ACTION_STONE,Stone,Piedra
+ACTION_FOOD,Food,Comida
+ACTION_BUILD,Build,Construir
+ACTION_STOP,Stop,Parar
+ACTION_DESTROY,Destroy,Destruir
+ACTION_BACK,← Back,← Volver
+ACTION_HOUSE,House\n25W,Casa\n25M
+ACTION_BARRACKS,Barracks\n175W,Cuartel\n175M
+ACTION_LUMBER,Lumber\n100W,Leñador\n100M
+ACTION_MINING,Mining\n100W,Minería\n100M
+ACTION_FARM,Farm\n60W,Granja\n60M
+ACTION_WALL,Wall\n5S,Muro\n5P
+ACTION_GATE,Gate\n30W,Puerta\n30M
+ACTION_VILLAGER,Villager\n50F,Aldeano\n50C
+NOTIF_UNIT_ATTACK,Your units are under attack!,¡Tus unidades están bajo ataque!
+NOTIF_BUILDING_ATTACK,Your buildings are being attacked!,¡Tus edificios están siendo atacados!
+NOTIF_POP_CAP,Population limit reached!,¡Límite de población alcanzado!
+NOTIF_AGE_ADVANCING,Advancing to the %s...,Avanzando hacia la %s...
+NOTIF_AGE_COMPLETE,%s reached!,¡%s alcanzada!
+NOTIF_BUILDING_BUILT,%s built,%s construido
+NOTIF_BUILDING_DESTROYED_PLAYER,Your %s has been destroyed!,¡Tu %s ha sido destruido!
+NOTIF_BUILDING_DESTROYED_ENEMY,Enemy building destroyed,Edificio enemigo destruido
+GAMEOVER_VICTORY,VICTORY!,¡VICTORIA!
+GAMEOVER_DEFEAT,DEFEAT,DERROTA
+GAMEOVER_SUMMARY,Match Summary,Resumen de partida
+GAMEOVER_TIME,Match time,Tiempo de partida
+GAMEOVER_AGE,Age reached,Edad alcanzada
+GAMEOVER_UNITS,Units trained,Unidades entrenadas
+GAMEOVER_BUILDINGS,Buildings built,Edificios construidos
+GAMEOVER_KILLS,Enemies killed,Enemigos eliminados
+GAMEOVER_FOOD,Food gathered,Comida recolectada
+GAMEOVER_WOOD,Wood gathered,Madera recolectada
+GAMEOVER_GOLD,Gold gathered,Oro recolectado
+GAMEOVER_STONE,Stone gathered,Piedra recolectada
+GAMEOVER_VIEW_MAP,View map,Ver mapa
+GAMEOVER_BACK_MENU,Back to menu,Volver al inicio
+GAMEOVER_EXIT,Exit to menu,Salir al menú
+MENU_PLAY,Play,Jugar
+MENU_SETTINGS,Settings,Ajustes
+MENU_QUIT,Quit,Salir
+MENU_LOADING,Preparing the world...,Preparando el mundo...
+SETTINGS_TITLE,Settings,Ajustes
+SETTINGS_MUSIC,Music,Música
+SETTINGS_SFX,Sound Effects,Efectos de sonido
+SETTINGS_DIFFICULTY,AI Difficulty,Dificultad de la IA
+SETTINGS_EASY,Easy,Fácil
+SETTINGS_NORMAL,Normal,Normal
+SETTINGS_HARD,Hard,Difícil
+SETTINGS_SAVE,Save & Close,Guardar y cerrar
+SETTINGS_LANGUAGE,Language,Idioma
+MENU_NEW_GAME,New Game,Nueva Partida
+LOBBY_TITLE,Match Setup,Configuración de Partida
+LOBBY_MAP_SIZE,Map Size,Tamaño del Mapa
+LOBBY_MAP_SMALL,Small,Pequeño
+LOBBY_MAP_MEDIUM,Medium,Mediano
+LOBBY_MAP_LARGE,Large,Grande
+LOBBY_RESOURCES,Starting Resources,Recursos Iniciales
+LOBBY_RES_SCARCE,Scarce,Escasos
+LOBBY_RES_NORMAL,Normal,Normal
+LOBBY_RES_ABUNDANT,Abundant,Abundantes
+LOBBY_CIVILIZATION,Your Civilization,Tu Civilización
+LOBBY_STARTING_AGE,Starting Age,Edad de Inicio
+LOBBY_START,Start Game,Iniciar Partida
+LOBBY_BACK,← Back,← Volver
+CIV_BRITONS_DESC,Masters of the longbow. Archers have +1 range per age.,Maestros del arco largo. Los arqueros tienen +1 de alcance por era.
+CIV_FRANKS_DESC,Powerful cavalry. Start with +200 food and villagers gather food 15% faster.,Caballería poderosa. Empiezas con +200 comida y los aldeanos recolectan comida un 15% más rápido.
+CIV_MONGOLS_DESC,Swift and relentless. Scouts move 20% faster and military trains 10% faster.,Rápidos e implacables. Los exploradores se mueven un 20% más rápido y el ejército entrena un 10% más rápido.

@@ -28,6 +28,7 @@ const BUILD_RANGE: float = 60.0
 const DROP_OFF_RANGE: float = 72.0
 const GATHER_RANGE: float = 48.0
 const FALLBACK_RESOURCE_RANGE: float = 400.0
+const REPAIR_RATE: float = 10.0  # HP per second restored when repairing
 
 func _ready() -> void:
 	super._ready()
@@ -77,14 +78,20 @@ func order_drop_off(target: Node) -> void:
 
 func order_build(target: Node) -> void:
 	_unregister_from_build_target()
-	if is_instance_valid(build_target) and build_target.construction_complete.is_connected(_on_construction_complete):
-		build_target.construction_complete.disconnect(_on_construction_complete)
+	if is_instance_valid(build_target) and build_target.get("construction_complete") != null:
+		if build_target.construction_complete.is_connected(_on_construction_complete):
+			build_target.construction_complete.disconnect(_on_construction_complete)
 	build_target = target
 	gather_target = null
 	attack_target = null
 	_destination_state = UnitState.BUILDING
-	build_target.construction_complete.connect(_on_construction_complete, CONNECT_ONE_SHOT)
-	_start_move_to((target as Node2D).global_position)
+	var bstate: Variant = target.get("state")
+	var is_under_construction: bool = bstate != null and (bstate as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION
+	if is_under_construction:
+		build_target.construction_complete.connect(_on_construction_complete, CONNECT_ONE_SHOT)
+	# For complete buildings (repair) approach the edge, not the center
+	var dest: Vector2 = _nav_target_for(target) if not is_under_construction else (target as Node2D).global_position
+	_start_move_to(dest)
 
 func order_move(destination: Vector2) -> void:
 	_unregister_from_build_target()
@@ -100,7 +107,7 @@ func order_attack(target: Node) -> void:
 	gather_target = null
 	build_target = null
 	_destination_state = UnitState.ATTACKING
-	_start_move_to(target.global_position)
+	_start_move_to(_nav_target_for(target))
 
 # --- Internal helpers ---
 
@@ -111,7 +118,12 @@ func _start_move_to(destination: Vector2) -> void:
 
 func _handle_movement(delta: float) -> void:
 	# Distance-based transitions for targets with collision — don't rely on is_navigation_finished
-	if _destination_state == UnitState.BUILDING and is_instance_valid(build_target):
+	if _destination_state == UnitState.ATTACKING and is_instance_valid(attack_target):
+		var attack_reach: float = _attack_reach_to(attack_target)
+		if global_position.distance_to((attack_target as Node2D).global_position) <= attack_reach:
+			_enter_state(UnitState.ATTACKING)
+			return
+	elif _destination_state == UnitState.BUILDING and is_instance_valid(build_target):
 		if global_position.distance_to((build_target as Node2D).global_position) <= BUILD_RANGE:
 			_enter_state(UnitState.BUILDING)
 			return
@@ -136,7 +148,10 @@ func _handle_movement(delta: float) -> void:
 
 func _enter_state(new_state: UnitState) -> void:
 	if new_state == UnitState.BUILDING and is_instance_valid(build_target):
-		build_target.register_builder()
+		# register_builder only exists on BuildingBase (under-construction buildings)
+		var bstate: Variant = build_target.get("state")
+		if bstate != null and (bstate as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
+			build_target.register_builder()
 	current_state = new_state
 	_destination_state = UnitState.IDLE
 	nav_agent.set_velocity(Vector2.ZERO)
@@ -144,7 +159,9 @@ func _enter_state(new_state: UnitState) -> void:
 
 func _unregister_from_build_target() -> void:
 	if current_state == UnitState.BUILDING and is_instance_valid(build_target):
-		build_target.unregister_builder()
+		var bstate: Variant = build_target.get("state")
+		if bstate != null and (bstate as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
+			build_target.unregister_builder()
 
 func _jitter_repath() -> void:
 	var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
@@ -242,18 +259,40 @@ func _handle_building(delta: float) -> void:
 		return
 
 	nav_agent.set_velocity(Vector2.ZERO)
+
+	# Repair: building is complete (or has no state, e.g. TownCenterBuilding) and damaged
+	var bstate: Variant = build_target.get("state")
+	var is_complete: bool = bstate == null or (bstate as int) == BuildingBase.BuildingState.COMPLETE
+	if is_complete:
+		var cur_hp: Variant = build_target.get("health")
+		var max_hp: Variant = build_target.get("max_health")
+		if cur_hp != null and max_hp != null:
+			var new_hp: float = minf((cur_hp as float) + REPAIR_RATE * delta, max_hp as float)
+			build_target.set("health", new_hp)
+			var hbar: ProgressBar = build_target.get_node_or_null("HealthBar") as ProgressBar
+			if is_instance_valid(hbar):
+				hbar.value = new_hp / (max_hp as float) * 100.0
+			if new_hp >= (max_hp as float):
+				build_target = null
+				current_state = UnitState.IDLE
+				_play_animation(_get_animation_name())
+		return
+
+	# Construction: building is under construction
 	build_target.add_construction(build_rate * delta)
 
 func _handle_attacking(delta: float) -> void:
 	if not is_instance_valid(attack_target):
+		attack_target = null
 		current_state = UnitState.IDLE
 		_play_animation(_get_animation_name())
 		return
 
-	var dist: float = global_position.distance_to(attack_target.global_position)
-	var attack_reach: float = unit_data.attack_range * 32.0
+	var target_pos: Vector2 = (attack_target as Node2D).global_position
+	var dist: float = global_position.distance_to(target_pos)
+	var attack_reach: float = _attack_reach_to(attack_target)
 	if dist > attack_reach:
-		nav_agent.target_position = attack_target.global_position
+		nav_agent.target_position = _nav_target_for(attack_target)
 		if _advance_stuck(delta):
 			_jitter_repath()
 			return
@@ -265,14 +304,9 @@ func _handle_attacking(delta: float) -> void:
 	if _attack_timer >= 1.0 / unit_data.attack_speed:
 		_attack_timer = 0.0
 		if attack_target.has_method("take_damage"):
-			attack_target.take_damage(unit_data.attack - _get_target_armor(), self)
+			attack_target.take_damage(unit_data.attack - _get_target_armor(attack_target), self)
+			AudioManager.play("hit_melee", -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
-
-func _get_target_armor() -> float:
-	var armor: Variant = attack_target.get("armor_melee")
-	if armor != null:
-		return armor as float
-	return 0.0
 
 func _find_nearest_same_resource() -> Node:
 	if carried_resource.is_empty():

@@ -11,6 +11,7 @@ const MAX_BUILD_SPEED_MULTIPLIER: float = 3.0
 var player_id: int = 0
 var state: BuildingState = BuildingState.BLUEPRINT
 var health: float = 0.0
+var max_health: float = 0.0
 var construction_progress: float = 0.0
 var _active_builders: int = 0
 
@@ -20,9 +21,86 @@ signal building_destroyed(building: Node)
 @onready var _progress_bar: ProgressBar = get_node_or_null("ConstructionBar")
 @onready var _body_rect: ColorRect   = get_node_or_null("Body")
 
+var _selection_line: Line2D = null
+var rally_point: Vector2 = Vector2.ZERO
+var _rally_marker: Node2D = null
+
+func set_rally_point(world_pos: Vector2) -> void:
+	rally_point = world_pos
+	if not is_instance_valid(_rally_marker):
+		_rally_marker = _make_rally_marker()
+		add_child(_rally_marker)
+	_rally_marker.global_position = world_pos
+	_rally_marker.visible = true
+
+func _show_rally_marker(show: bool) -> void:
+	if is_instance_valid(_rally_marker):
+		_rally_marker.visible = show and rally_point != Vector2.ZERO
+
+static func _make_rally_marker() -> Node2D:
+	var root: Node2D = Node2D.new()
+	root.z_index = 5
+	var line: Line2D = Line2D.new()
+	line.width = 1.0
+	line.default_color = Color(1.0, 0.92, 0.2, 0.7)
+	line.points = PackedVector2Array([
+		Vector2(-6.0, 0.0), Vector2(6.0, 0.0),
+		Vector2(0.0, 0.0), Vector2(0.0, -12.0),
+	])
+	root.add_child(line)
+	var circle: Line2D = Line2D.new()
+	circle.width = 1.0
+	circle.default_color = Color(1.0, 0.92, 0.2, 0.7)
+	var pts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(17):
+		var a: float = i * TAU / 16.0
+		pts.append(Vector2(cos(a), sin(a)) * 5.0)
+	circle.points = pts
+	root.add_child(circle)
+	return root
+
+func set_selected(value: bool) -> void:
+	if value:
+		if not is_instance_valid(_selection_line):
+			_selection_line = _make_selection_line(_footprint_rect())
+			add_child(_selection_line)
+		_selection_line.visible = true
+	else:
+		if is_instance_valid(_selection_line):
+			_selection_line.visible = false
+	_show_rally_marker(value)
+
+func _footprint_rect() -> Rect2:
+	const PAD: float = 4.0
+	if is_instance_valid(_body_rect):
+		return Rect2(
+			_body_rect.offset_left  - PAD, _body_rect.offset_top    - PAD,
+			_body_rect.offset_right - _body_rect.offset_left + PAD * 2.0,
+			_body_rect.offset_bottom - _body_rect.offset_top + PAD * 2.0)
+	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if cs != null and cs.shape is RectangleShape2D:
+		var h: Vector2 = (cs.shape as RectangleShape2D).size * 0.5
+		return Rect2(-h.x - PAD, -h.y - PAD, (h.x + PAD) * 2.0, (h.y + PAD) * 2.0)
+	return Rect2(-28.0, -28.0, 56.0, 56.0)
+
+static func _make_selection_line(r: Rect2) -> Line2D:
+	var line: Line2D = Line2D.new()
+	line.width = 1.5
+	line.default_color = Color(1.0, 0.92, 0.2, 0.95)
+	line.z_index = 6
+	line.points = PackedVector2Array([
+		r.position,
+		Vector2(r.end.x,    r.position.y),
+		r.end,
+		Vector2(r.position.x, r.end.y),
+		r.position,
+	])
+	return line
+
 func _ready() -> void:
 	add_to_group("buildings")
 	if building_data:
+		max_health = building_data.max_health
 		health = building_data.max_health
 	_refresh_visuals()
 	call_deferred("_apply_player_color_stripe")
@@ -48,6 +126,8 @@ func _complete_construction() -> void:
 		_progress_bar.visible = false
 	if is_instance_valid(_body_rect):
 		_body_rect.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	if player_id == 0:
+		AudioManager.play("build_complete")
 	construction_complete.emit()
 	EventBus.building_construction_complete.emit(self)
 
@@ -70,11 +150,17 @@ func _apply_player_color_stripe() -> void:
 
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
+	EventBus.damage_dealt.emit(self, amount, source)
+	if source != null and is_instance_valid(source):
+		var src_pid: Variant = source.get("player_id")
+		if src_pid != null and (src_pid as int) != player_id and player_id != 0:
+			EventBus.ai_unit_under_attack.emit(player_id)
 	if health <= 0.0:
 		_destroy()
 
 func _destroy() -> void:
 	state = BuildingState.DESTROYED
+	AudioManager.play("build_destroy", -2.0)
 	EventBus.building_destroyed.emit(self, player_id)
 	building_destroyed.emit(self)
 	queue_free()

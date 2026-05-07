@@ -12,6 +12,8 @@ const FLEE_DURATION: float = 3.0
 
 @export var max_health: float = 40.0
 @export var animal_name: String = "Deer"
+@export var convertible: bool = false
+@export var line_of_sight: float = 1.0
 
 var player_id: int = -1
 var health: float = 0.0
@@ -55,8 +57,10 @@ func take_damage(amount: float, source: Node = null) -> void:
 
 func _physics_process(delta: float) -> void:
 	match current_state:
-		AnimalState.WILD, AnimalState.OWNED:
+		AnimalState.WILD:
 			_handle_wander(delta)
+		AnimalState.OWNED:
+			_handle_owned_move()
 		AnimalState.FLEEING:
 			_handle_flee(delta)
 
@@ -69,6 +73,17 @@ func _handle_wander(delta: float) -> void:
 		return
 	_nav.set_velocity(_direction_to_target() * WANDER_SPEED)
 
+func _handle_owned_move() -> void:
+	if _nav.is_navigation_finished():
+		velocity = Vector2.ZERO
+		return
+	_nav.set_velocity(_direction_to_target() * WANDER_SPEED)
+
+func order_move(destination: Vector2) -> void:
+	if current_state != AnimalState.OWNED:
+		return
+	_nav.target_position = destination
+
 func _handle_flee(delta: float) -> void:
 	_flee_timer -= delta
 	if _flee_timer <= 0.0 or _nav.is_navigation_finished():
@@ -78,7 +93,9 @@ func _handle_flee(delta: float) -> void:
 	_nav.set_velocity(_direction_to_target() * FLEE_SPEED)
 
 func _on_body_entered_range(body: Node) -> void:
-	if current_state != AnimalState.WILD:
+	if not convertible:
+		return
+	if current_state == AnimalState.DEAD:
 		return
 	var pid: Variant = body.get("player_id")
 	if pid == null:
@@ -86,14 +103,25 @@ func _on_body_entered_range(body: Node) -> void:
 	var owner_id: int = pid as int
 	if owner_id < 0:
 		return
+	_try_convert(owner_id)
+
+func _try_convert(owner_id: int) -> void:
+	if current_state == AnimalState.DEAD:
+		return
+	if player_id == owner_id:
+		return
 	_convert_to(owner_id)
 
 func _convert_to(owner_id: int) -> void:
 	player_id = owner_id
 	current_state = AnimalState.OWNED
-	# Tint warm to signal ownership
+	_on_converted()
+	_origin = global_position
+	_nav.target_position = global_position
+	velocity = Vector2.ZERO
+
+func _on_converted() -> void:
 	_body_rect.color = Color(0.78, 0.55, 0.18, 1.0)
-	_origin = global_position  # wander around current position from now on
 
 func _start_flee(from_source: Node) -> void:
 	current_state = AnimalState.FLEEING

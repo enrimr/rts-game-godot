@@ -1,6 +1,7 @@
 extends Node2D
 
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
+const SCOUT_SCENE: PackedScene = preload("res://scenes/units/scout.tscn")
 const AI_TOWN_CENTER_SCENE: PackedScene = preload("res://scenes/buildings/town_center_ai.tscn")
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -38,6 +39,7 @@ const UNIT_CLICK_RADIUS: float = 32.0
 @onready var hud: CanvasLayer = $HUD
 
 var _ai_town_center: Node2D = null
+var _fog: FogOfWar = null
 
 var _selected_units: Array[Node] = []
 var _selected_building: Node = null
@@ -47,17 +49,26 @@ var _dragging: bool = false
 var _panning: bool = false
 var _pan_last_pos: Vector2 = Vector2.ZERO
 
+var _following: bool = false
+
 # Build placement state
 var _placing_building: bool = false
 var _placing_id: String = ""
 var _ghost: Node2D = null
 var _ghost_rotation: float = 0.0
 
+# Drag-select rectangle overlay
+var _drag_overlay: Node2D = null
+
 func _ready() -> void:
 	ResourceManager.init_player(0)
 	PopulationManager.init_player(0)
+	AgeManager.init_player(0, MatchConfig.starting_age)
 	ResourceManager.init_player(1)
 	PopulationManager.init_player(1)
+	AgeManager.init_player(1)
+
+	_apply_civilization()
 
 	_rng.randomize()
 	var map_data: Dictionary = MapGenerator.generate(self, units_layer, _rng)
@@ -74,18 +85,53 @@ func _ready() -> void:
 		PopulationManager.add_unit(0)
 		EventBus.unit_spawned.emit(v, 0)
 
+	var scout0: CharacterBody2D = SCOUT_SCENE.instantiate()
+	units_layer.add_child(scout0)
+	scout0.global_position = drop_off.global_position + Vector2(80.0, -60.0)
+	scout0.set("player_id", 0)
+	PopulationManager.add_unit(0)
+	EventBus.unit_spawned.emit(scout0, 0)
+
 	_setup_ai(map_data["tc1"] as Vector2)
 
 	hud.action_requested.connect(_on_action_requested)
+	hud.follow_requested.connect(toggle_follow)
 	EventBus.unit_spawned.connect(_on_unit_spawned)
 	EventBus.building_destroyed.connect(_on_building_destroyed_check_victory)
+	EventBus.minimap_move_order.connect(func(p: Vector2) -> void:
+		_following = false
+		_order_move_all(p)
+	)
+	EventBus.unit_selected.connect(_on_unit_selected_follow)
+
+	_fog = FogOfWar.new()
+	add_child(_fog)
+	_fog.setup(units_layer, buildings_layer, drop_off, self)
 
 	var minimap: MinimapRenderer = hud.get_node_or_null("%Minimap") as MinimapRenderer
 	if minimap != null:
 		minimap.world_node = self
 		minimap.camera_node = camera
+		minimap.fog = _fog
+
+	_drag_overlay = _DragOverlay.new()
+	_drag_overlay.z_index = 20
+	add_child(_drag_overlay)
 
 	GameManager.start_game([{"id": 0}, {"id": 1}])
+	AudioManager.play_music()
+	GameManager.game_over.connect(_on_game_over)
+
+func _apply_civilization() -> void:
+	var civ_path: String = "res://resources/civilizations/%s.tres" % MatchConfig.player_civ_id
+	var civ: CivilizationResource = load(civ_path) as CivilizationResource
+	if civ == null:
+		return
+	# Apply starting resource bonuses
+	for key: String in (civ.starting_bonuses as Dictionary):
+		ResourceManager.add_resource(0, key, (civ.starting_bonuses as Dictionary)[key] as float)
+	# Apply villager stat multipliers at spawn time via unit_data overrides stored in MatchConfig
+	MatchConfig.set_meta("civ", civ)
 
 func _setup_ai(tc_pos: Vector2) -> void:
 	_ai_town_center = AI_TOWN_CENTER_SCENE.instantiate() as Node2D
@@ -104,6 +150,13 @@ func _setup_ai(tc_pos: Vector2) -> void:
 		v.set("player_id", 1)
 		PopulationManager.add_unit(1)
 		EventBus.unit_spawned.emit(v, 1)
+
+	var scout1: CharacterBody2D = SCOUT_SCENE.instantiate()
+	units_layer.add_child(scout1)
+	scout1.global_position = _ai_town_center.global_position + Vector2(80.0, -60.0)
+	scout1.set("player_id", 1)
+	PopulationManager.add_unit(1)
+	EventBus.unit_spawned.emit(scout1, 1)
 
 	# Wire up AI controller
 	var ai: Node = Node.new()
@@ -128,11 +181,47 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 
 func _process(delta: float) -> void:
 	_handle_camera(delta)
+	_handle_follow()
 	if _placing_building and is_instance_valid(_ghost):
 		_ghost.global_position = get_global_mouse_position()
 		_ghost.rotation = _ghost_rotation
 		var valid: bool = not _placement_overlaps(get_global_mouse_position())
 		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if valid else Color(1.0, 0.2, 0.2, 0.5)
+	if is_instance_valid(_drag_overlay):
+		var overlay: _DragOverlay = _drag_overlay as _DragOverlay
+		overlay.active = _dragging
+		if _dragging:
+			overlay.drag_rect = Rect2(_drag_start, Vector2.ZERO).expand(get_global_mouse_position())
+		overlay.queue_redraw()
+
+class _DragOverlay extends Node2D:
+	var drag_rect: Rect2 = Rect2()
+	var active: bool = false
+	func _draw() -> void:
+		if not active:
+			return
+		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.18), true)
+		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.75), false, 1.5)
+
+func _handle_follow() -> void:
+	if not _following or _selected_units.is_empty():
+		return
+	var centroid: Vector2 = Vector2.ZERO
+	var count: int = 0
+	for unit: Node in _selected_units:
+		if is_instance_valid(unit):
+			centroid += (unit as Node2D).global_position
+			count += 1
+	if count == 0:
+		_following = false
+		return
+	camera.position = centroid / float(count)
+
+func toggle_follow() -> void:
+	_following = not _following
+
+func _on_unit_selected_follow(_units: Array) -> void:
+	_following = false
 
 const EDGE_SCROLL_MARGIN: float = 24.0
 
@@ -150,7 +239,11 @@ func _handle_camera(delta: float) -> void:
 	if mp.y < EDGE_SCROLL_MARGIN:               dir.y -= 1.0
 	elif mp.y > vp.y - EDGE_SCROLL_MARGIN:      dir.y += 1.0
 
-	camera.position += dir.normalized() * CAMERA_SPEED * delta
+	if dir != Vector2.ZERO:
+		if _following:
+			_following = false
+			EventBus.camera_follow_cancelled.emit()
+		camera.position += dir.normalized() * CAMERA_SPEED * delta
 
 func _is_mouse_over_hud() -> bool:
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
@@ -189,6 +282,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 		if mb.button_index == MOUSE_BUTTON_MIDDLE:
 			_panning = mb.pressed
+			if _panning and _following:
+				_following = false
+				EventBus.camera_follow_cancelled.emit()
 			get_viewport().set_input_as_handled()
 			return
 
@@ -239,26 +335,36 @@ func _finish_selection(release_pos: Vector2) -> void:
 		if is_instance_valid(sel):
 			sel.set_selected(false)
 	_selected_units.clear()
+	if is_instance_valid(_selected_building) and _selected_building.has_method("set_selected"):
+		_selected_building.set_selected(false)
 	_selected_building = null
 
-	for unit: Node in units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		if unit is Animal:
-			continue  # animals are selected separately below
-		var unit2d: Node2D = unit as Node2D
-		var in_rect: bool = not is_click and rect.has_point(unit2d.global_position)
-		var clicked: bool = is_click and _drag_start.distance_to(unit2d.global_position) < UNIT_CLICK_RADIUS
-		if in_rect or clicked:
-			unit.set_selected(true)
-			_selected_units.append(unit)
-
-	if is_click and _selected_units.is_empty():
-		# Check animals
-		var animal: Animal = _find_animal_at(_drag_start)
-		if animal != null:
-			animal.set_selected(true)
-			_selected_units.append(animal)
+	if is_click:
+		# Click: select only the single nearest friendly unit within radius
+		var best_unit: Node = null
+		var best_dist: float = UNIT_CLICK_RADIUS
+		for unit: Node in units_layer.get_children():
+			if not is_instance_valid(unit):
+				continue
+			var unit2d: Node2D = unit as Node2D
+			var d: float = _drag_start.distance_to(unit2d.global_position)
+			if d >= best_dist:
+				continue
+			if unit is Animal:
+				var animal: Animal = unit as Animal
+				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
+					best_dist = d
+					best_unit = unit
+				continue
+			var pid: Variant = unit.get("player_id")
+			if pid == null or (pid as int) != 0:
+				continue
+			best_dist = d
+			best_unit = unit
+		if best_unit != null:
+			best_unit.set_selected(true)
+			_selected_units.append(best_unit)
+			AudioManager.play("ui_select")
 			SelectionManager.select(_selected_units)
 			return
 		# Check Town Center first
@@ -284,38 +390,103 @@ func _finish_selection(release_pos: Vector2) -> void:
 			if _drag_start.distance_to(rn.global_position) < UNIT_CLICK_RADIUS:
 				EventBus.resource_node_selected.emit(rn)
 				return
+	else:
+		# Drag: select all friendly units and owned animals inside the rectangle
+		for unit: Node in units_layer.get_children():
+			if not is_instance_valid(unit):
+				continue
+			if unit is Animal:
+				var animal: Animal = unit as Animal
+				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
+					if rect.has_point((unit as Node2D).global_position):
+						animal.set_selected(true)
+						_selected_units.append(animal)
+				continue
+			var pid: Variant = unit.get("player_id")
+			if pid == null or (pid as int) != 0:
+				continue
+			if rect.has_point((unit as Node2D).global_position):
+				unit.set_selected(true)
+				_selected_units.append(unit)
 
+	if not _selected_units.is_empty():
+		AudioManager.play("ui_select")
 	SelectionManager.select(_selected_units)
 
 # --- Right-click: gather or move ---
 
 func _handle_right_click(world_pos: Vector2) -> void:
 	if _selected_units.is_empty():
+		if is_instance_valid(_selected_building) and _selected_building.has_method("set_rally_point"):
+			_selected_building.set_rally_point(world_pos)
+			_flash_target(_selected_building, Color(1.0, 0.92, 0.2, 1.0))
 		return
+
+	# 1. Enemy unit clicked → attack
+	var enemy_unit: Node = _find_enemy_unit_at(world_pos)
+	if enemy_unit != null:
+		_order_attack_all(enemy_unit)
+		return
+
+	# 2. Animal clicked
 	var animal: Animal = _find_animal_at(world_pos)
 	if animal != null:
 		_order_interact_animal(animal)
 		return
+
+	# 3. Enemy building clicked → attack
+	var enemy_building: Node = _find_enemy_building_at(world_pos)
+	if enemy_building != null:
+		_order_attack_all(enemy_building)
+		return
+
+	# 4. Own resource drop-off → drop off carried resources, or repair if damaged and no one carries
+	var drop_off_node: Node = _find_drop_off_at(world_pos)
+	if drop_off_node != null:
+		var hp: Variant = drop_off_node.get("health")
+		var mhp: Variant = drop_off_node.get("max_health")
+		var is_damaged: bool = hp != null and mhp != null and (hp as float) < (mhp as float)
+		var any_carrying: bool = false
+		for u: Node in _selected_units:
+			if is_instance_valid(u) and (u.get("carried_amount") as float) > 0.0:
+				any_carrying = true
+				break
+		if is_damaged and not any_carrying:
+			_order_build_all(drop_off_node)
+		else:
+			_order_drop_off_all(drop_off_node)
+		return
+
+	# 5. Resource node → gather
 	var resource_node: ResourceNode = _find_resource_at(world_pos)
 	if resource_node != null:
 		_order_gather_all(resource_node)
 		return
+
+	# 6. Farm → gather/restore
 	var farm: Farm = _find_farm_at(world_pos)
 	if farm != null:
 		_order_gather_farm(farm)
 		return
-	var drop_off_node: Node = _find_drop_off_at(world_pos)
-	if drop_off_node != null:
-		_order_drop_off_all(drop_off_node)
-		return
+
+	# 7. Own gate → just move through it
 	var gate: Gate = _find_gate_at(world_pos)
 	if gate != null and gate.state == BuildingBase.BuildingState.COMPLETE:
 		_order_move_all(world_pos)
 		return
-	var building: Node = _find_building_at(world_pos)
-	if building != null:
-		_order_build_all(building)
+
+	# 8. Own building under construction → build
+	var own_construction: Node = _find_own_construction_at(world_pos)
+	if own_construction != null:
+		_order_build_all(own_construction)
 		return
+
+	# 9. Own complete but damaged building → repair
+	var damaged_building: Node = _find_own_damaged_building_at(world_pos)
+	if damaged_building != null:
+		_order_build_all(damaged_building)
+		return
+
 	_order_move_all(world_pos)
 
 func _find_animal_at(world_pos: Vector2) -> Animal:
@@ -327,6 +498,11 @@ func _find_animal_at(world_pos: Vector2) -> Animal:
 	return null
 
 func _order_interact_animal(animal: Animal) -> void:
+	# Own sheep: move selected units toward it (to escort / bring closer)
+	# Enemy or wild animals: attack
+	if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
+		_order_move_all((animal as Node2D).global_position)
+		return
 	for unit: Node in _selected_units:
 		if not is_instance_valid(unit):
 			continue
@@ -359,6 +535,7 @@ func _find_drop_off_at(world_pos: Vector2) -> Node:
 	return null
 
 func _order_drop_off_all(target: Node) -> void:
+	_flash_target(target, Color(1.8, 1.8, 0.4, 1.0))
 	for unit: Node in _selected_units:
 		if is_instance_valid(unit) and unit.has_method("order_drop_off"):
 			unit.order_drop_off(target)
@@ -375,6 +552,7 @@ func _find_farm_at(world_pos: Vector2) -> Farm:
 	return null
 
 func _order_gather_farm(farm: Farm) -> void:
+	_flash_target(farm, Color(1.8, 1.8, 0.4, 1.0))
 	if farm.is_depleted():
 		_order_restore_farm(farm)
 		return
@@ -390,18 +568,91 @@ func _order_restore_farm(farm: Farm) -> void:
 		if is_instance_valid(unit) and unit.has_method("order_gather"):
 			unit.order_gather(farm, "food", null)
 
-func _find_building_at(world_pos: Vector2) -> Node:
+func _find_enemy_unit_at(world_pos: Vector2) -> Node:
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit) or unit is Animal:
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) == 0:
+			continue
+		if world_pos.distance_to((unit as Node2D).global_position) < UNIT_CLICK_RADIUS:
+			return unit
+	return null
+
+func _find_enemy_building_at(world_pos: Vector2) -> Node:
+	# Check enemy Town Center
+	if is_instance_valid(_ai_town_center):
+		if world_pos.distance_to((_ai_town_center as Node2D).global_position) < BUILDING_CLICK_RADIUS:
+			return _ai_town_center
+	# Check buildings layer
 	for building: Node in buildings_layer.get_children():
 		if not is_instance_valid(building):
 			continue
-		var b2d: Node2D = building as Node2D
-		if world_pos.distance_to(b2d.global_position) < BUILDING_CLICK_RADIUS:
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) == 0:
+			continue
+		if world_pos.distance_to((building as Node2D).global_position) < BUILDING_CLICK_RADIUS:
+			return building
+	return null
+
+func _find_own_construction_at(world_pos: Vector2) -> Node:
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) != 0:
+			continue
+		if world_pos.distance_to((building as Node2D).global_position) < BUILDING_CLICK_RADIUS:
 			var state_val: Variant = building.get("state")
-			if state_val != null and state_val as int == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
+			if state_val != null and (state_val as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 				return building
 	return null
 
+func _find_own_damaged_building_at(world_pos: Vector2) -> Node:
+	# Helper: returns true if a node is a complete (or TC-style) building with less than full HP
+	var check: Callable = func(node: Node) -> bool:
+		var hp: Variant = node.get("health")
+		var mhp: Variant = node.get("max_health")
+		if hp == null or mhp == null or (mhp as float) <= 0.0:
+			return false
+		if (hp as float) >= (mhp as float):
+			return false
+		# Must be complete (BuildingBase) or have no state field (TownCenterBuilding)
+		var sv: Variant = node.get("state")
+		if sv != null and (sv as int) != BuildingBase.BuildingState.COMPLETE:
+			return false
+		return true
+
+	if world_pos.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS and check.call(drop_off):
+		return drop_off
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) != 0:
+			continue
+		if world_pos.distance_to((building as Node2D).global_position) < BUILDING_CLICK_RADIUS and check.call(building):
+			return building
+	return null
+
+func _flash_target(node: Node, flash_color: Color = Color(2.0, 2.0, 2.0, 1.0)) -> void:
+	if not is_instance_valid(node):
+		return
+	var n2d: Node2D = node as Node2D
+	var original: Color = n2d.modulate
+	var tw: Tween = create_tween()
+	tw.tween_property(n2d, "modulate", flash_color, 0.07)
+	tw.tween_property(n2d, "modulate", original,    0.28)
+
+func _order_attack_all(target: Node) -> void:
+	AudioManager.play("cmd_attack")
+	_flash_target(target, Color(2.2, 0.4, 0.4, 1.0))
+	for unit: Node in _selected_units:
+		if is_instance_valid(unit) and unit.has_method("order_attack"):
+			unit.order_attack(target)
+
 func _order_build_all(building: Node) -> void:
+	_flash_target(building, Color(0.6, 1.8, 0.6, 1.0))
 	for unit: Node in _selected_units:
 		if is_instance_valid(unit) and unit.has_method("order_build"):
 			unit.order_build(building)
@@ -415,19 +666,62 @@ func _find_resource_at(world_pos: Vector2) -> ResourceNode:
 	return null
 
 func _order_gather_all(resource_node: ResourceNode) -> void:
+	_flash_target(resource_node, Color(1.8, 1.8, 0.4, 1.0))
 	var resource_name: String = resource_node.get_resource_name()
 	for unit: Node in _selected_units:
 		if is_instance_valid(unit) and unit.has_method("order_gather"):
 			unit.order_gather(resource_node, resource_name, drop_off)
 
 func _order_move_all(world_pos: Vector2) -> void:
-	var count: int = _selected_units.size()
+	AudioManager.play("cmd_move")
+	var valid_units: Array[Node] = []
+	for u: Node in _selected_units:
+		if is_instance_valid(u) and u.has_method("order_move"):
+			valid_units.append(u)
+	var count: int = valid_units.size()
+	if count == 0:
+		return
+	var slots: Array[Vector2] = _formation_slots(world_pos, count)
 	for i: int in range(count):
-		var unit: Node = _selected_units[i]
-		if not is_instance_valid(unit) or not unit.has_method("order_move"):
-			continue
-		var offset: Vector2 = Vector2(float(i % 4) * 30.0 - 45.0, float(i / 4) * 30.0)
-		unit.order_move(world_pos + offset)
+		valid_units[i].order_move(slots[i])
+
+## Returns world-space positions for `count` units in concentric rings around `center`.
+## The formation faces away from the average origin of the selected units (nearest ring
+## is placed on the side closest to where units are coming from).
+func _formation_slots(center: Vector2, count: int) -> Array[Vector2]:
+	const SPACING: float = 34.0  # px between slots
+
+	# Average position of selected units → direction they approach from
+	var avg_origin: Vector2 = Vector2.ZERO
+	for u: Node in _selected_units:
+		if is_instance_valid(u):
+			avg_origin += (u as Node2D).global_position
+	avg_origin /= float(_selected_units.size())
+	# "back" direction: from center toward average origin (units arrive from that side)
+	var back_dir: Vector2 = (avg_origin - center).normalized()
+	if back_dir == Vector2.ZERO:
+		back_dir = Vector2.DOWN
+
+	var slots: Array[Vector2] = []
+	slots.append(center)  # slot 0: the exact target point
+	if count == 1:
+		return slots
+
+	# Fill concentric rings: ring r has 6*r slots, radius r*SPACING
+	var ring: int = 1
+	while slots.size() < count:
+		var slots_in_ring: int = 6 * ring
+		var radius: float = ring * SPACING
+		# Start angle: point the first slot toward the back (approaching side)
+		var start_angle: float = back_dir.angle()
+		for s: int in range(slots_in_ring):
+			if slots.size() >= count:
+				break
+			var angle: float = start_angle + s * TAU / float(slots_in_ring)
+			slots.append(center + Vector2(cos(angle), sin(angle)) * radius)
+		ring += 1
+
+	return slots
 
 # --- Building placement ---
 
@@ -486,6 +780,7 @@ func _confirm_placement(world_pos: Vector2) -> void:
 	building.set("player_id", 0)
 	building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
 	buildings_layer.add_child(building)
+	AudioManager.play("build_place")
 	EventBus.building_placed.emit(building, 0)
 
 	for unit: Node in _selected_units:
@@ -524,11 +819,20 @@ func _on_action_requested(action_id: String) -> void:
 		"gather_food":
 			_order_gather_nearest_resource(ResourceNode.ResourceType.FOOD_HUNT)
 		"train:villager":
-			if is_instance_valid(_selected_building) and _selected_building is TownCenter:
-				(_selected_building as TownCenter).order_train()
+			if is_instance_valid(_selected_building) and _selected_building.has_method("order_train"):
+				if _selected_building is TownCenter or _selected_building is TownCenterBuilding:
+					_selected_building.order_train()
 		"train:militia":
 			if is_instance_valid(_selected_building) and _selected_building is Barracks:
-				(_selected_building as Barracks).order_train()
+				(_selected_building as Barracks).order_train("militia")
+		"train:archer":
+			if is_instance_valid(_selected_building) and _selected_building is Barracks:
+				(_selected_building as Barracks).order_train("archer")
+		"train:pikeman":
+			if is_instance_valid(_selected_building) and _selected_building is Barracks:
+				(_selected_building as Barracks).order_train("pikeman")
+		"advance_age":
+			AgeManager.start_advance(0)
 		"gate_lock":
 			if is_instance_valid(_selected_building) and _selected_building is Gate:
 				(_selected_building as Gate).toggle_lock()
@@ -545,6 +849,8 @@ func _on_action_requested(action_id: String) -> void:
 				SelectionManager.select([])
 			elif is_instance_valid(_selected_building):
 				var target: Node = _selected_building
+				if target.has_method("set_selected"):
+					target.set_selected(false)
 				_selected_building = null
 				if target.has_method("take_damage"):
 					var hp: Variant = target.get("health")
@@ -583,3 +889,22 @@ func _find_nearest_resource_of_type(rtype: ResourceNode.ResourceType, from: Vect
 func _on_unit_spawned(unit: Node, _player: int) -> void:
 	if unit.get_parent() != units_layer:
 		unit.reparent(units_layer)
+
+func _on_game_over(_winner: int) -> void:
+	AudioManager.stop_music()
+	set_process(false)
+	set_physics_process(false)
+	set_process_unhandled_input(false)
+	# Freeze units and buildings without pausing the whole tree
+	# (pausing the tree stops building production queues too)
+	for unit: Node in units_layer.get_children():
+		if is_instance_valid(unit):
+			(unit as Node).set_process(false)
+			(unit as Node).set_physics_process(false)
+	for building: Node in buildings_layer.get_children():
+		if is_instance_valid(building):
+			(building as Node).set_process(false)
+	if is_instance_valid(drop_off):
+		drop_off.set_process(false)
+	if is_instance_valid(_ai_town_center):
+		_ai_town_center.set_process(false)

@@ -1,6 +1,6 @@
 extends UnitBase
 
-class_name Militia
+class_name Pikeman
 
 var attack_target: Node = null
 var _attack_timer: float = 0.0
@@ -15,10 +15,8 @@ func _on_auto_attack_target(target: Node) -> void:
 
 func _physics_process(delta: float) -> void:
 	match current_state:
-		UnitState.MOVING:
-			_handle_movement(delta)
-		UnitState.ATTACKING:
-			_handle_attacking(delta)
+		UnitState.MOVING:    _handle_movement(delta)
+		UnitState.ATTACKING: _handle_attacking(delta)
 
 func order_move(destination: Vector2) -> void:
 	attack_target = null
@@ -34,24 +32,19 @@ func order_attack(target: Node) -> void:
 
 func _handle_movement(delta: float) -> void:
 	if _destination_state == UnitState.ATTACKING and is_instance_valid(attack_target):
-		var attack_reach: float = _attack_reach_to(attack_target)
-		if global_position.distance_to((attack_target as Node2D).global_position) <= attack_reach:
+		if global_position.distance_to((attack_target as Node2D).global_position) <= _attack_reach_to(attack_target):
 			current_state = UnitState.ATTACKING
 			_destination_state = UnitState.IDLE
 			nav_agent.set_velocity(Vector2.ZERO)
 			return
-
 	if nav_agent.is_navigation_finished():
 		current_state = _destination_state
 		_destination_state = UnitState.IDLE
 		nav_agent.set_velocity(Vector2.ZERO)
 		return
-
 	if _advance_stuck(delta):
-		var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
-		nav_agent.target_position = nav_agent.target_position + jitter
+		nav_agent.target_position += Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
 		return
-
 	nav_agent.set_velocity(_nav_velocity())
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
@@ -62,16 +55,15 @@ func _handle_attacking(delta: float) -> void:
 	if not is_instance_valid(attack_target):
 		attack_target = null
 		current_state = UnitState.IDLE
-		_scan_area_for_target()
+		_scan_for_target()
 		return
 
 	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
-	var attack_reach: float = _attack_reach_to(attack_target)
-	if dist > attack_reach:
+	var reach: float = _attack_reach_to(attack_target)
+	if dist > reach:
 		nav_agent.target_position = _nav_target_for(attack_target)
 		if _advance_stuck(delta):
-			var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
-			nav_agent.target_position = nav_agent.target_position + jitter
+			nav_agent.target_position += Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
 			return
 		nav_agent.set_velocity(_nav_velocity())
 		return
@@ -85,7 +77,7 @@ func _handle_attacking(delta: float) -> void:
 			AudioManager.play("hit_melee", -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
 
-func _scan_area_for_target() -> void:
+func _scan_for_target() -> void:
 	if not is_instance_valid(attack_range_area):
 		return
 	for body: Node in attack_range_area.get_overlapping_bodies():

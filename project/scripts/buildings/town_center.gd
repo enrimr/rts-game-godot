@@ -10,10 +10,43 @@ const MAX_QUEUE: int = 5
 @export var player_id: int = 0
 
 var health: float = 2000.0
-const MAX_HEALTH: float = 2000.0
+var max_health: float = 2000.0
 
-func take_damage(amount: float, _source: Node = null) -> void:
+var _selection_line: Line2D = null
+var rally_point: Vector2 = Vector2.ZERO
+var _rally_marker: Node2D = null
+
+func set_rally_point(world_pos: Vector2) -> void:
+	rally_point = world_pos
+	if not is_instance_valid(_rally_marker):
+		_rally_marker = BuildingBase._make_rally_marker()
+		add_child(_rally_marker)
+	_rally_marker.global_position = world_pos
+	_rally_marker.visible = true
+
+func set_selected(value: bool) -> void:
+	if value:
+		if not is_instance_valid(_selection_line):
+			const PAD: float = 4.0
+			var r: Rect2 = Rect2(-40.0 - PAD, -40.0 - PAD, 80.0 + PAD * 2.0, 80.0 + PAD * 2.0)
+			var line: Line2D = Line2D.new()
+			line.width = 1.5
+			line.default_color = Color(1.0, 0.92, 0.2, 0.95)
+			line.z_index = 6
+			line.points = PackedVector2Array([r.position, Vector2(r.end.x, r.position.y),
+				r.end, Vector2(r.position.x, r.end.y), r.position])
+			_selection_line = line
+			add_child(_selection_line)
+		_selection_line.visible = true
+	else:
+		if is_instance_valid(_selection_line):
+			_selection_line.visible = false
+	if is_instance_valid(_rally_marker):
+		_rally_marker.visible = value and rally_point != Vector2.ZERO
+
+func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
+	EventBus.damage_dealt.emit(self, amount, source)
 	if health <= 0.0:
 		EventBus.building_destroyed.emit(self, player_id)
 		queue_free()
@@ -80,4 +113,8 @@ func _spawn_villager() -> void:
 	get_parent().add_child(unit)
 	unit.global_position = global_position + Vector2(80.0, 0.0)
 	PopulationManager.add_unit(player_id)
+	if rally_point != Vector2.ZERO and unit.has_method("order_move"):
+		unit.order_move(rally_point)
+	if player_id == 0:
+		AudioManager.play("unit_ready")
 	EventBus.unit_spawned.emit(unit, player_id)

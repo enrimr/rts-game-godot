@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CivilizationResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/civilizations/civilization_resource.gd" id="1_britons"]
+
+[resource]
+script = ExtResource("1_britons")
+id = "britons"
+display_name = "Britons"
+description = "Masters of the longbow. Archers have +1 range per age and Town Centers cost no stone."
+unique_unit_ids = []
+unique_technology_ids = []
+starting_bonuses = {}
+stat_multipliers = {"archer_range_bonus": 1.0, "tc_stone_cost": 0.0}
+missing_units = []
+missing_technologies = []

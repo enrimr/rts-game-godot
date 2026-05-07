@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://scout_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "scout"
+display_name = "Scout"
+description = "Fast explorer with wide line of sight."
+max_health = 35.0
+move_speed = 180.0
+line_of_sight = 8.0
+population_cost = 1
+attack = 2.0
+attack_range = 0.8
+attack_speed = 1.0
+armor_melee = 0.0
+armor_pierce = 0.0
+train_time = 30.0
+cost_food = 80
+cost_wood = 0
+cost_gold = 0

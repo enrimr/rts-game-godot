@@ -1,6 +1,6 @@
 extends UnitBase
 
-class_name Militia
+class_name Scout
 
 var attack_target: Node = null
 var _attack_timer: float = 0.0
@@ -34,8 +34,7 @@ func order_attack(target: Node) -> void:
 
 func _handle_movement(delta: float) -> void:
 	if _destination_state == UnitState.ATTACKING and is_instance_valid(attack_target):
-		var attack_reach: float = _attack_reach_to(attack_target)
-		if global_position.distance_to((attack_target as Node2D).global_position) <= attack_reach:
+		if global_position.distance_to((attack_target as Node2D).global_position) <= _attack_reach_to(attack_target):
 			current_state = UnitState.ATTACKING
 			_destination_state = UnitState.IDLE
 			nav_agent.set_velocity(Vector2.ZERO)
@@ -62,7 +61,6 @@ func _handle_attacking(delta: float) -> void:
 	if not is_instance_valid(attack_target):
 		attack_target = null
 		current_state = UnitState.IDLE
-		_scan_area_for_target()
 		return
 
 	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
@@ -82,17 +80,4 @@ func _handle_attacking(delta: float) -> void:
 		_attack_timer = 0.0
 		if attack_target.has_method("take_damage"):
 			attack_target.take_damage(unit_data.attack - _get_target_armor(attack_target), self)
-			AudioManager.play("hit_melee", -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
-
-func _scan_area_for_target() -> void:
-	if not is_instance_valid(attack_range_area):
-		return
-	for body: Node in attack_range_area.get_overlapping_bodies():
-		var pid: Variant = body.get("player_id")
-		if pid == null or (pid as int) == player_id:
-			continue
-		if body.get("unit_data") == null and not (body is Animal):
-			continue
-		order_attack(body)
-		return
