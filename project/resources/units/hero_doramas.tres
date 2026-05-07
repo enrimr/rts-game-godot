@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "doramas"
+display_name = "Doramas"
+description = "Champion of Gran Canaria. Can only be killed by treachery."
+max_health = 160.0
+move_speed = 115.0
+line_of_sight = 6.0
+population_cost = 0
+attack = 12.0
+attack_range = 1.5
+attack_speed = 1.4
+armor_melee = 2.0
+armor_pierce = 2.0
+age_required = 0
+train_time = 0.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 0
+is_hero = true
+hero_ability_id = "challenge"
+hero_ability_cooldown = 45.0

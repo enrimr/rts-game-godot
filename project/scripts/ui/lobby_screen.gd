@@ -9,9 +9,14 @@ signal start_requested
 signal back_requested
 
 const CIVS: Array[Dictionary] = [
-	{"id": "britons",  "name": "Britons",  "desc_key": "CIV_BRITONS_DESC"},
-	{"id": "franks",   "name": "Franks",   "desc_key": "CIV_FRANKS_DESC"},
-	{"id": "mongols",  "name": "Mongols",  "desc_key": "CIV_MONGOLS_DESC"},
+	{"id": "guanches",    "name_key": "CIV_GUANCHES_NAME",    "desc_key": "CIV_GUANCHES_DESC"},
+	{"id": "canarii",     "name_key": "CIV_CANARII_NAME",     "desc_key": "CIV_CANARII_DESC"},
+	{"id": "mahos",       "name_key": "CIV_MAHOS_NAME",       "desc_key": "CIV_MAHOS_DESC"},
+	{"id": "franks",      "name_key": "CIV_FRANKS_NAME",      "desc_key": "CIV_FRANKS_DESC"},
+	{"id": "britons",     "name_key": "CIV_BRITONS_NAME",     "desc_key": "CIV_BRITONS_DESC"},
+	{"id": "castellanos", "name_key": "CIV_CASTELLANOS_NAME", "desc_key": "CIV_CASTELLANOS_DESC"},
+	{"id": "atlantes",    "name_key": "CIV_ATLANTES_NAME",    "desc_key": "CIV_ATLANTES_DESC"},
+	{"id": "fenicios",    "name_key": "CIV_FENICIOS_NAME",    "desc_key": "CIV_FENICIOS_DESC"},
 ]
 
 const AGE_KEYS: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
@@ -38,7 +43,7 @@ func _build() -> void:
 	add_child(center)
 
 	var card: PanelContainer = PanelContainer.new()
-	card.custom_minimum_size = Vector2(580, 0)
+	card.custom_minimum_size = Vector2(660, 0)
 	var sty: StyleBoxFlat = StyleBoxFlat.new()
 	sty.bg_color = Color(0.08, 0.08, 0.12, 0.97)
 	sty.corner_radius_top_left    = 8
@@ -66,6 +71,17 @@ func _build() -> void:
 	vbox.add_child(title)
 
 	vbox.add_child(_make_sep())
+
+	# Map type
+	vbox.add_child(_make_label(tr("LOBBY_MAP_TYPE")))
+	var type_opts: Array[String] = [
+		tr("LOBBY_MAPTYPE_STANDARD"),
+		tr("LOBBY_MAPTYPE_VOLCANIC"),
+		tr("LOBBY_MAPTYPE_DESERT"),
+		tr("LOBBY_MAPTYPE_ISLANDS"),
+	]
+	vbox.add_child(_make_option_row(type_opts, MatchConfig.map_type,
+		func(i: int) -> void: MatchConfig.map_type = i))
 
 	# Map size
 	vbox.add_child(_make_label(tr("LOBBY_MAP_SIZE")))
@@ -121,18 +137,21 @@ func _build() -> void:
 
 # --- Civilization row ---
 
-func _make_civ_row() -> HBoxContainer:
-	var row: HBoxContainer = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+func _make_civ_row() -> GridContainer:
+	var grid: GridContainer = GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 6)
 	_civ_btns.clear()
 	for i: int in range(CIVS.size()):
 		var civ: Dictionary = CIVS[i] as Dictionary
 		var btn: Button = Button.new()
-		btn.text = civ["name"] as String
-		btn.custom_minimum_size = Vector2(120, 36)
+		btn.text = tr(civ["name_key"] as String)
+		btn.custom_minimum_size = Vector2(128, 34)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.focus_mode = Control.FOCUS_NONE
-		btn.add_theme_font_size_override("font_size", 14)
-		row.add_child(btn)
+		btn.add_theme_font_size_override("font_size", 13)
+		grid.add_child(btn)
 		_civ_btns.append(btn)
 		var captured_i: int = i
 		btn.pressed.connect(func() -> void:
@@ -142,7 +161,7 @@ func _make_civ_row() -> HBoxContainer:
 			_refresh_civ_desc()
 		)
 	_refresh_civ_highlight()
-	return row
+	return grid
 
 func _refresh_civ_highlight() -> void:
 	for i: int in range(_civ_btns.size()):

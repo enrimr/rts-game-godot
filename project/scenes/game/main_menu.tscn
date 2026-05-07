@@ -35,14 +35,14 @@ theme_override_constants/separation = 24
 
 [node name="TitleLabel" type="Label" parent="CenterContainer"]
 layout_mode = 2
-text = "AGE OF KINGDOMS"
+text = "CALIMA KINGDOMS"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 52
 theme_override_colors/font_color = Color(1.0, 0.85, 0.4, 1.0)
 
 [node name="SubtitleLabel" type="Label" parent="CenterContainer"]
 layout_mode = 2
-text = "A real-time strategy game"
+text = "Flames of the Atlantic"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1.0)

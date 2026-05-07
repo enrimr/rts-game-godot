@@ -16,6 +16,7 @@ const COLOR_GRID:           Color = Color(1.0,  1.0,  1.0,  0.06)
 
 var world_node: Node2D = null
 var camera_node: Camera2D = null
+var fog: FogOfWar = null
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
@@ -38,10 +39,12 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
 		return
 
-	# Resources
+	# Resources — show once area is explored (neutral, not enemy-owned)
 	for child: Node in world_node.get_children():
 		if child is ResourceNode:
 			var rn: ResourceNode = child as ResourceNode
+			if not _fog_allows_see(rn.global_position, true):
+				continue
 			var mp: Vector2 = _to_mm(rn.global_position, ms)
 			draw_rect(Rect2(mp - Vector2(2.5, 2.5), Vector2(5.0, 5.0)),
 				_resource_color(rn.resource_type))
@@ -52,14 +55,17 @@ func _draw() -> void:
 		for building: Node in buildings_layer.get_children():
 			if not is_instance_valid(building):
 				continue
-			var mp: Vector2 = _to_mm((building as Node2D).global_position, ms)
 			var pid: Variant = building.get("player_id")
+			var is_own: bool = pid != null and (pid as int) == 0
+			if not _fog_allows_see((building as Node2D).global_position, is_own):
+				continue
+			var mp: Vector2 = _to_mm((building as Node2D).global_position, ms)
 			var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.7, 0.5, 0.2)
 			draw_rect(Rect2(mp - Vector2(3.5, 3.5), Vector2(7.0, 7.0)), col)
 
 	# Town Center (DropOffNode in world root)
 	var drop_off: Node = world_node.get_node_or_null("DropOffNode")
-	if drop_off != null:
+	if drop_off != null and _fog_allows_see((drop_off as Node2D).global_position, true):
 		var mp: Vector2 = _to_mm((drop_off as Node2D).global_position, ms)
 		var pid: Variant = drop_off.get("player_id")
 		var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.7, 0.5, 0.2)
@@ -71,11 +77,14 @@ func _draw() -> void:
 		for unit: Node in units_layer.get_children():
 			if not is_instance_valid(unit):
 				continue
+			var pid: Variant = unit.get("player_id")
+			var is_own: bool = pid != null and (pid as int) == 0
+			if not _fog_allows_see((unit as Node2D).global_position, is_own):
+				continue
 			var mp: Vector2 = _to_mm((unit as Node2D).global_position, ms)
 			if unit is Animal:
 				draw_circle(mp, 2.5, COLOR_ANIMAL)
 				continue
-			var pid: Variant = unit.get("player_id")
 			var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.8, 0.8, 0.8)
 			draw_circle(mp, 3.0, col)
 
@@ -95,6 +104,8 @@ func _gui_input(event: InputEvent) -> void:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
 			_move_camera_to(mb.position)
+		elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
+			EventBus.minimap_move_order.emit(_to_world(mb.position, size))
 	elif event is InputEventMouseMotion:
 		var mm: InputEventMouseMotion = event as InputEventMouseMotion
 		if mm.button_mask & MOUSE_BUTTON_MASK_LEFT:
@@ -112,6 +123,15 @@ func _to_mm(world_pos: Vector2, ms: Vector2) -> Vector2:
 
 func _to_world(mm_pos: Vector2, ms: Vector2) -> Vector2:
 	return mm_pos / ms * WORLD_SIZE + WORLD_MIN
+
+# own units/buildings: visible in explored+visible cells; enemies: only in visible cells
+func _fog_allows_see(world_pos: Vector2, is_own: bool) -> bool:
+	if fog == null:
+		return true
+	var state: int = fog.get_cell_state(world_pos)
+	if is_own:
+		return state >= FogOfWar.STATE_EXPLORED
+	return state == FogOfWar.STATE_VISIBLE
 
 func _resource_color(rtype: ResourceNode.ResourceType) -> Color:
 	match rtype:

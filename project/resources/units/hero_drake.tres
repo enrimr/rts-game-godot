@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "drake"
+display_name = "Francis Drake"
+description = "English privateer. Nearby kills generate bonus gold."
+max_health = 145.0
+move_speed = 120.0
+line_of_sight = 7.0
+population_cost = 0
+attack = 10.0
+attack_range = 3.5
+attack_speed = 1.5
+armor_melee = 1.0
+armor_pierce = 3.0
+age_required = 0
+train_time = 0.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 0
+is_hero = true
+hero_ability_id = "plunder"
+hero_ability_cooldown = 55.0

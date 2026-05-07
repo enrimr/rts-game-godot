@@ -5,11 +5,11 @@
 [resource]
 script = ExtResource("1_franks")
 id = "franks"
-display_name = "Franks"
-description = "Powerful cavalry nation. Start with +200 food and villagers gather food 15% faster."
-unique_unit_ids = []
+display_name = "Francos"
+description = "Fast advancing cavalry nation. Age advancement costs less and cavalry is stronger from the Feudal Age."
+unique_unit_ids = ["chevalier_normand"]
 unique_technology_ids = []
-starting_bonuses = {"food": 200}
-stat_multipliers = {"villager_food_gather_rate": 1.15}
-missing_units = []
+starting_bonuses = {}
+stat_multipliers = {"age_advance_cost": 0.85, "cavalry_hp": 1.15, "farm_build_speed": 1.20}
+missing_units = ["full_archery", "late_naval"]
 missing_technologies = []

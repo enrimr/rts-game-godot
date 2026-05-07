@@ -5,11 +5,11 @@
 [resource]
 script = ExtResource("1_britons")
 id = "britons"
-display_name = "Britons"
-description = "Masters of the longbow. Archers have +1 range per age and Town Centers cost no stone."
-unique_unit_ids = []
+display_name = "Britanos"
+description = "Naval raiders and master archers. Foot archers gain range each age and warships attack faster."
+unique_unit_ids = ["longbowman"]
 unique_technology_ids = []
 starting_bonuses = {}
-stat_multipliers = {"archer_range_bonus": 1.0, "tc_stone_cost": 0.0}
-missing_units = []
+stat_multipliers = {"archer_range_bonus_per_age": 1.0, "warship_attack_speed": 1.20}
+missing_units = ["heavy_cavalry_upgrades"]
 missing_technologies = []

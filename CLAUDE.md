@@ -1,4 +1,4 @@
-# Age of Kingdoms — CLAUDE.md
+# Calima Kingdoms: Flames of the Atlantic — CLAUDE.md
 
 ## Project Overview
 

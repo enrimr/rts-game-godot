@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CivilizationResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/civilizations/civilization_resource.gd" id="1_castellanos"]
+
+[resource]
+script = ExtResource("1_castellanos")
+id = "castellanos"
+display_name = "Castellanos"
+description = "Late-game powerhouse. Each age advance unlocks a free Blacksmith technology and swordsmen are exceptionally tough."
+unique_unit_ids = ["conquistador"]
+unique_technology_ids = []
+starting_bonuses = {}
+stat_multipliers = {"swordsman_hp": 1.15, "tower_range": 1.10, "castle_range": 1.10}
+missing_units = []
+missing_technologies = []

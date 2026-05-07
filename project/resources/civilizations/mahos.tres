@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CivilizationResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/civilizations/civilization_resource.gd" id="1_mahos"]
+
+[resource]
+script = ExtResource("1_mahos")
+id = "mahos"
+display_name = "Mahos"
+description = "Swift desert warriors. Buildings cost less wood and scouts move faster across arid terrain."
+unique_unit_ids = ["sand_raider"]
+unique_technology_ids = []
+starting_bonuses = {}
+stat_multipliers = {"building_wood_cost": 0.70, "scout_speed": 1.25, "light_cavalry_speed": 1.25}
+missing_units = ["heavy_cavalry_upgrades"]
+missing_technologies = []

@@ -9,9 +9,9 @@ var _player_resources: Dictionary = {}
 func init_player(player_id: int, starting_resources: Dictionary = {}) -> void:
 	_player_resources[player_id] = {
 		"food": starting_resources.get("food", 200),
-		"wood": starting_resources.get("wood", 200),
-		"gold": starting_resources.get("gold", 100),
-		"stone": starting_resources.get("stone", 200),
+		"wood": starting_resources.get("wood", 75),
+		"gold": starting_resources.get("gold", 50),
+		"stone": starting_resources.get("stone", 0),
 	}
 
 func get_resources(player_id: int) -> Dictionary:

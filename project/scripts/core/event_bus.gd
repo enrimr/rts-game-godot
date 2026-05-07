@@ -36,6 +36,9 @@ signal age_advance_complete(player_id: int, new_age: int)
 # Combat
 signal unit_attacked(attacker: Node, target: Node)
 signal damage_dealt(target: Node, amount: float, attacker: Node)
+signal ai_unit_under_attack(player_id: int)
 
 # Map
 signal fog_of_war_updated(player_id: int, revealed_cells: Array)
+signal minimap_move_order(world_pos: Vector2)
+signal camera_follow_cancelled()
