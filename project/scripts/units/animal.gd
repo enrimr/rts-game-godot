@@ -82,7 +82,7 @@ func _handle_owned_move() -> void:
 func order_move(destination: Vector2) -> void:
 	if current_state != AnimalState.OWNED:
 		return
-	_nav.target_position = destination
+	_nav.target_position = TerrainManager.nearest_passable(destination, "")
 
 func _handle_flee(delta: float) -> void:
 	_flee_timer -= delta
@@ -127,13 +127,14 @@ func _start_flee(from_source: Node) -> void:
 	current_state = AnimalState.FLEEING
 	_flee_timer = FLEE_DURATION
 	var away: Vector2 = global_position + (global_position - (from_source as Node2D).global_position).normalized() * 300.0
-	_nav.target_position = away
+	_nav.target_position = TerrainManager.nearest_passable(away, "")
 
 func _pick_wander_target() -> void:
 	_wander_timer = randf_range(3.0, 8.0)
 	var angle: float = randf() * TAU
 	var dist: float  = randf_range(60.0, WANDER_RADIUS)
-	_nav.target_position = _origin + Vector2(cos(angle), sin(angle)) * dist
+	var candidate: Vector2 = _origin + Vector2(cos(angle), sin(angle)) * dist
+	_nav.target_position = TerrainManager.nearest_passable(candidate, "")
 
 func _direction_to_target() -> Vector2:
 	if _nav.is_navigation_finished():

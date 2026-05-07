@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://placeholder_game_world"]
+[gd_scene load_steps=9 format=3 uid="uid://placeholder_game_world"]
 
 [ext_resource type="Script" path="res://scripts/game/game_world.gd" id="1_gwscript"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/hud.tscn" id="2_hud"]
@@ -7,21 +7,31 @@
 [ext_resource type="Script" path="res://scripts/buildings/town_center.gd" id="6_tc"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_1"]
-vertices = PackedVector2Array(-2000, -2000, 2000, -2000, 2000, 2000, -2000, 2000)
+vertices = PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)
 polygons = [PackedInt32Array(0, 3, 2, 1)]
-outlines = [PackedVector2Array(-2000, -2000, 2000, -2000, 2000, 2000, -2000, 2000)]
+outlines = [PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)]
+
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_2"]
+vertices = PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)
+polygons = [PackedInt32Array(0, 3, 2, 1)]
+outlines = [PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)]
 
 [node name="GameWorld" type="Node2D"]
 script = ExtResource("1_gwscript")
 
 [node name="Ground" type="Polygon2D" parent="."]
-color = Color(0.22, 0.45, 0.18, 1.0)
-polygon = PackedVector2Array(-2000, -2000, 2000, -2000, 2000, 2000, -2000, 2000)
+color = Color(0.10, 0.10, 0.12, 1.0)
+polygon = PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)
 z_index = -10
 
 
 [node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
+navigation_layers = 1
 navigation_polygon = SubResource("NavigationPolygon_1")
+
+[node name="OceanNavigationRegion2D" type="NavigationRegion2D" parent="."]
+navigation_layers = 2
+navigation_polygon = SubResource("NavigationPolygon_2")
 
 [node name="MapManager" type="Node" parent="."]
 script = ExtResource("3_mapmgr")

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://fishing_boat_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "fishing_boat"
+display_name = "Fishing Boat"
+description = "Gathers fish from the ocean."
+max_health = 45.0
+move_speed = 90.0
+line_of_sight = 5.0
+population_cost = 1
+attack = 0.0
+attack_range = 0.0
+attack_speed = 0.0
+armor_melee = 0.0
+armor_pierce = 2.0
+age_required = 0
+train_time = 25.0
+cost_food = 0
+cost_wood = 75
+cost_gold = 0

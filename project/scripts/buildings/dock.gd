@@ -1,35 +1,37 @@
 extends BuildingBase
 
-class_name Barracks
+class_name Dock
 
-const SPAWN_OFFSET: Vector2 = Vector2(60.0, 0.0)
+## Dock — coastal building that trains naval units.
+## Must be placed straddling land and water — at least one edge in ocean,
+## at least one edge on land.
+
 const MAX_QUEUE: int = 5
 
-# All trainable units, unlocked by age_required
 const UNIT_DEFS: Array[Dictionary] = [
 	{
-		"id": "militia",
-		"scene": "res://scenes/units/militia.tscn",
-		"data": "res://resources/units/militia_data.tres",
-		"label": "M",
-		"color": Color(0.7, 0.15, 0.10),
+		"id": "fishing_boat",
+		"scene": "res://scenes/units/fishing_boat.tscn",
+		"data": "res://resources/units/fishing_boat_data.tres",
+		"label": "F",
+		"color": Color(0.20, 0.50, 0.65),
 		"age": 0,
 	},
 	{
-		"id": "archer",
-		"scene": "res://scenes/units/archer.tscn",
-		"data": "res://resources/units/archer_data.tres",
-		"label": "A",
-		"color": Color(0.25, 0.45, 0.20),
+		"id": "transport_ship",
+		"scene": "res://scenes/units/transport_ship.tscn",
+		"data": "res://resources/units/transport_ship_data.tres",
+		"label": "T",
+		"color": Color(0.55, 0.45, 0.20),
 		"age": 1,
 	},
 	{
-		"id": "pikeman",
-		"scene": "res://scenes/units/pikeman.tscn",
-		"data": "res://resources/units/pikeman_data.tres",
-		"label": "P",
-		"color": Color(0.50, 0.45, 0.65),
-		"age": 2,
+		"id": "war_galley",
+		"scene": "res://scenes/units/war_galley.tscn",
+		"data": "res://resources/units/war_galley_data.tres",
+		"label": "G",
+		"color": Color(0.65, 0.18, 0.18),
+		"age": 1,
 	},
 ]
 
@@ -58,10 +60,8 @@ func _process(delta: float) -> void:
 		_do_spawn(scene_path)
 		EventBus.train_queue_changed.emit(self, _train_queue.duplicate(), MAX_QUEUE)
 
-func order_train(unit_id: String = "militia") -> bool:
+func order_train(unit_id: String) -> bool:
 	if _train_queue.size() >= MAX_QUEUE:
-		return false
-	if PopulationManager.at_cap(player_id):
 		return false
 	var def: Dictionary = _find_def(unit_id)
 	if def.is_empty():
@@ -127,12 +127,37 @@ func _do_spawn(scene_path: String) -> void:
 		return
 	var unit: Node2D = packed.instantiate() as Node2D
 	unit.set("player_id", player_id)
-	unit.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.rival_civ_id)
+	# civ_id set to "atlantes" by ShipBase._ready() — ocean passable
 	get_parent().add_child(unit)
-	unit.global_position = global_position + SPAWN_OFFSET
+	unit.global_position = global_position + _water_spawn_offset()
 	PopulationManager.add_unit(player_id)
 	if rally_point != Vector2.ZERO and unit.has_method("order_move"):
 		unit.order_move(rally_point)
 	if player_id == 0:
 		AudioManager.play("unit_ready")
 	EventBus.unit_spawned.emit(unit, player_id)
+
+# Probes the 4 cardinal directions and returns an offset pointing toward the
+# nearest ocean tile, so ships always spawn on the water side of the dock.
+func _water_spawn_offset() -> Vector2:
+	const PROBE_DIST: float = 56.0
+	const DIRS: Array = [
+		Vector2(0.0,  1.0),   # south
+		Vector2(0.0, -1.0),   # north
+		Vector2( 1.0, 0.0),   # east
+		Vector2(-1.0, 0.0),   # west
+	]
+	for dir: Variant in DIRS:
+		var d: Vector2 = dir as Vector2
+		if TerrainManager.is_ocean(global_position + d * PROBE_DIST):
+			return d * PROBE_DIST
+	# Fallback — try diagonals
+	const DIAGS: Array = [
+		Vector2( 1.0,  1.0), Vector2(-1.0,  1.0),
+		Vector2( 1.0, -1.0), Vector2(-1.0, -1.0),
+	]
+	for dir: Variant in DIAGS:
+		var d: Vector2 = (dir as Vector2).normalized()
+		if TerrainManager.is_ocean(global_position + d * PROBE_DIST):
+			return d * PROBE_DIST
+	return Vector2(0.0, PROBE_DIST)  # last-resort south

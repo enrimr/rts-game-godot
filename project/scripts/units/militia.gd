@@ -23,7 +23,7 @@ func _physics_process(delta: float) -> void:
 func order_move(destination: Vector2) -> void:
 	attack_target = null
 	_destination_state = UnitState.IDLE
-	nav_agent.target_position = destination
+	nav_agent.target_position = _safe_destination(destination)
 	current_state = UnitState.MOVING
 
 func order_attack(target: Node) -> void:

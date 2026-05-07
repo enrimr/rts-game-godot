@@ -40,6 +40,10 @@ ACTION_FARM,Farm\n60W,Granja\n60M
 ACTION_WALL,Wall\n5S,Muro\n5P
 ACTION_GATE,Gate\n30W,Puerta\n30M
 ACTION_VILLAGER,Villager\n50F,Aldeano\n50C
+ACTION_DOCK,Dock\n150W,Puerto\n150M
+ACTION_FISHING_BOAT,Fishing Boat,Barco Pesquero
+ACTION_TRANSPORT_SHIP,Transport Ship,Barco de Transporte
+ACTION_WAR_GALLEY,War Galley,Galera de Guerra
 NOTIF_UNIT_ATTACK,Your units are under attack!,¡Tus unidades están bajo ataque!
 NOTIF_BUILDING_ATTACK,Your buildings are being attacked!,¡Tus edificios están siendo atacados!
 NOTIF_POP_CAP,Population limit reached!,¡Límite de población alcanzado!
@@ -63,6 +67,25 @@ GAMEOVER_STONE,Stone gathered,Piedra recolectada
 GAMEOVER_VIEW_MAP,View map,Ver mapa
 GAMEOVER_BACK_MENU,Back to menu,Volver al inicio
 GAMEOVER_EXIT,Exit to menu,Salir al menú
+GAMEOVER_PLAYER,You,Tú
+GAMEOVER_RIVAL,Rival,Rival
+HERO_ABILITY,Use Ability,Usar Habilidad
+HERO_ABILITY_READY,Ready,Lista
+HERO_ABILITY_COOLDOWN,Cooldown: %ds,Recarga: %ds
+HERO_BENCOMO_ABILITY,Mencey's Charge,Ímpetu del Mencey
+HERO_DORAMAS_ABILITY,Challenge,Desafío
+HERO_GUADARFIA_ABILITY,Ambush,Emboscada
+HERO_BETHENCOURT_ABILITY,Forced Diplomacy,Diplomacia Forzada
+HERO_DRAKE_ABILITY,Plunder,Saqueo
+HERO_QUIJOTE_ABILITY,Knight Errant's Charge,Acometida del Caballero Errante
+HERO_ARTAXERAX_ABILITY,Calima,Calima
+HERO_HANNO_ABILITY,Trade Route,Ruta Comercial
+GAMEOVER_CHARTS,Match Charts,Gráficas de Partida
+GAMEOVER_CHARTS_CLOSE,Close,Cerrar
+CHART_POPULATION,Population,Población
+CHART_RESOURCES,Resources Gathered,Recursos Recolectados
+CHART_AGE,Age Progression,Progresión de Edad
+CHART_OFFENSIVES,Offensives (kills/interval),Ofensivas (bajas/intervalo)
 MENU_PLAY,Play,Jugar
 MENU_SETTINGS,Settings,Ajustes
 MENU_QUIT,Quit,Salir
@@ -78,6 +101,11 @@ SETTINGS_SAVE,Save & Close,Guardar y cerrar
 SETTINGS_LANGUAGE,Language,Idioma
 MENU_NEW_GAME,New Game,Nueva Partida
 LOBBY_TITLE,Match Setup,Configuración de Partida
+LOBBY_MAP_TYPE,Map Type,Tipo de Mapa
+LOBBY_MAPTYPE_STANDARD,Standard,Estándar
+LOBBY_MAPTYPE_VOLCANIC,Volcanic Coast,Costa Volcánica
+LOBBY_MAPTYPE_DESERT,Desert Coast,Costa Desértica
+LOBBY_MAPTYPE_ISLANDS,Islands,Islas
 LOBBY_MAP_SIZE,Map Size,Tamaño del Mapa
 LOBBY_MAP_SMALL,Small,Pequeño
 LOBBY_MAP_MEDIUM,Medium,Mediano
@@ -90,6 +118,19 @@ LOBBY_CIVILIZATION,Your Civilization,Tu Civilización
 LOBBY_STARTING_AGE,Starting Age,Edad de Inicio
 LOBBY_START,Start Game,Iniciar Partida
 LOBBY_BACK,← Back,← Volver
-CIV_BRITONS_DESC,Masters of the longbow. Archers have +1 range per age.,Maestros del arco largo. Los arqueros tienen +1 de alcance por era.
-CIV_FRANKS_DESC,Powerful cavalry. Start with +200 food and villagers gather food 15% faster.,Caballería poderosa. Empiezas con +200 comida y los aldeanos recolectan comida un 15% más rápido.
-CIV_MONGOLS_DESC,Swift and relentless. Scouts move 20% faster and military trains 10% faster.,Rápidos e implacables. Los exploradores se mueven un 20% más rápido y el ejército entrena un 10% más rápido.
+CIV_GUANCHES_NAME,Guanches,Guanches
+CIV_GUANCHES_DESC,Masters of volcanic terrain. Stone buildings are tougher and spearmen are available from the start.,Dueños del terreno volcánico. Los edificios de piedra son más resistentes y los lanceros están disponibles desde el inicio.
+CIV_CANARII_NAME,Canarii,Canarii
+CIV_CANARII_DESC,Powerful economy and cheap archers. Villagers gather food faster and houses serve as drop-off points.,Economía potente y arqueros baratos. Los aldeanos recolectan comida más rápido y las casas sirven como puntos de entrega.
+CIV_MAHOS_NAME,Mahos,Mahos
+CIV_MAHOS_DESC,Swift desert warriors. Buildings cost less wood and scouts move faster across arid terrain.,Guerreros del desierto veloces. Los edificios cuestan menos madera y los exploradores se mueven más rápido en terreno árido.
+CIV_FRANKS_NAME,Francos,Francos
+CIV_FRANKS_DESC,Fast advancing cavalry nation. Age advancement costs less and cavalry is stronger from Feudal Age.,Nación de caballería con avance rápido. Avanzar de edad cuesta menos y la caballería es más fuerte desde la Edad Feudal.
+CIV_BRITONS_NAME,Britanos,Britanos
+CIV_BRITONS_DESC,Naval raiders and master archers. Foot archers gain range each age and warships attack faster.,Corsarios navales y arqueros expertos. Los arqueros ganan alcance por era y los barcos de guerra atacan más rápido.
+CIV_CASTELLANOS_NAME,Castellanos,Castellanos
+CIV_CASTELLANOS_DESC,Late-game powerhouse. Each age advance unlocks a free technology and swordsmen are exceptionally tough.,Potencia del juego tardío. Cada avance de edad desbloquea una tecnología gratuita y los espadachines son excepcionalmente resistentes.
+CIV_ATLANTES_NAME,Atlantes,Atlantes
+CIV_ATLANTES_DESC,Mysterious seafarers. Build on ocean tiles, move freely through shallow water and dominate the coast.,Navegantes misteriosos. Construyen sobre el océano, se mueven libremente por aguas poco profundas y dominan la costa.
+CIV_FENICIOS_NAME,Fenicios,Fenicios
+CIV_FENICIOS_DESC,Ancient traders. Market available from the start and merchant ships generate passive gold.,Comerciantes ancestrales. El mercado está disponible desde el inicio y los barcos mercantes generan oro pasivo.

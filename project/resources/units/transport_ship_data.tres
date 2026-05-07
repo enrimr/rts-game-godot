@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://transport_ship_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "transport_ship"
+display_name = "Transport Ship"
+description = "Carries units across water. No combat ability."
+max_health = 150.0
+move_speed = 80.0
+line_of_sight = 5.0
+population_cost = 1
+attack = 0.0
+attack_range = 0.0
+attack_speed = 0.0
+armor_melee = 0.0
+armor_pierce = 5.0
+age_required = 1
+train_time = 45.0
+cost_food = 0
+cost_wood = 125
+cost_gold = 0

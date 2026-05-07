@@ -4,6 +4,17 @@ const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const SCOUT_SCENE: PackedScene = preload("res://scenes/units/scout.tscn")
 const AI_TOWN_CENTER_SCENE: PackedScene = preload("res://scenes/buildings/town_center_ai.tscn")
 
+const HERO_DATA_BY_CIV: Dictionary = {
+	"guanches":    "res://resources/units/hero_bencomo.tres",
+	"canarii":     "res://resources/units/hero_doramas.tres",
+	"mahos":       "res://resources/units/hero_guadarfia.tres",
+	"franks":      "res://resources/units/hero_bethencourt.tres",
+	"britons":     "res://resources/units/hero_drake.tres",
+	"castellanos": "res://resources/units/hero_quijote.tres",
+	"atlantes":    "res://resources/units/hero_artaxerax.tres",
+	"fenicios":    "res://resources/units/hero_hanno.tres",
+}
+
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 const BUILDING_SCENES: Dictionary = {
@@ -14,6 +25,7 @@ const BUILDING_SCENES: Dictionary = {
 	"farm":          "res://scenes/buildings/farm.tscn",
 	"wall_segment":  "res://scenes/buildings/wall_segment.tscn",
 	"gate":          "res://scenes/buildings/gate.tscn",
+	"dock":          "res://scenes/buildings/dock.tscn",
 }
 
 const BUILDING_COSTS: Dictionary = {
@@ -24,7 +36,11 @@ const BUILDING_COSTS: Dictionary = {
 	"farm":          {"wood": 60},
 	"wall_segment":  {"stone": 5},
 	"gate":          {"wood": 30},
+	"dock":          {"wood": 150},
 }
+
+# Buildings that must be placed adjacent to water (at least one edge in ocean terrain).
+const COASTAL_BUILDINGS: Array = ["dock"]
 
 const CAMERA_SPEED: float = 400.0
 const CAMERA_ZOOM_MIN: float = 0.5
@@ -82,6 +98,7 @@ func _ready() -> void:
 		units_layer.add_child(v)
 		v.global_position = drop_off.global_position + Vector2(i * 40 - 40, 60.0)
 		v.set("player_id", 0)
+		v.set("civ_id", MatchConfig.player_civ_id)
 		PopulationManager.add_unit(0)
 		EventBus.unit_spawned.emit(v, 0)
 
@@ -89,8 +106,11 @@ func _ready() -> void:
 	units_layer.add_child(scout0)
 	scout0.global_position = drop_off.global_position + Vector2(80.0, -60.0)
 	scout0.set("player_id", 0)
+	scout0.set("civ_id", MatchConfig.player_civ_id)
 	PopulationManager.add_unit(0)
 	EventBus.unit_spawned.emit(scout0, 0)
+
+	_spawn_hero(0, drop_off.global_position)
 
 	_setup_ai(map_data["tc1"] as Vector2)
 
@@ -133,6 +153,29 @@ func _apply_civilization() -> void:
 	# Apply villager stat multipliers at spawn time via unit_data overrides stored in MatchConfig
 	MatchConfig.set_meta("civ", civ)
 
+func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
+	var civ_id: String = MatchConfig.player_civ_id if player_id == 0 else MatchConfig.rival_civ_id
+	var data_path: String = HERO_DATA_BY_CIV.get(civ_id, "") as String
+	if data_path.is_empty():
+		return
+	var hero_data: UnitResource = load(data_path) as UnitResource
+	if hero_data == null:
+		return
+	# Instantiate the militia scene (shares all child nodes: nav agent, health bar, etc.)
+	# then replace its script with HeroUnit before adding to the tree.
+	var militia_scene: PackedScene = load("res://scenes/units/militia.tscn") as PackedScene
+	if militia_scene == null:
+		return
+	var hero: CharacterBody2D = militia_scene.instantiate() as CharacterBody2D
+	hero.set_script(load("res://scripts/units/hero_unit.gd"))
+	hero.set("unit_data", hero_data)
+	hero.set("player_id", player_id)
+	hero.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.rival_civ_id)
+	hero.global_position = tc_pos + Vector2(-80.0, -60.0)
+	units_layer.add_child(hero)
+	# Heroes do not count toward population cap
+	EventBus.unit_spawned.emit(hero, player_id)
+
 func _setup_ai(tc_pos: Vector2) -> void:
 	_ai_town_center = AI_TOWN_CENTER_SCENE.instantiate() as Node2D
 	_ai_town_center.global_position = tc_pos
@@ -148,6 +191,7 @@ func _setup_ai(tc_pos: Vector2) -> void:
 		units_layer.add_child(v)
 		v.global_position = _ai_town_center.global_position + Vector2(i * 40 - 40, 60.0)
 		v.set("player_id", 1)
+		v.set("civ_id", MatchConfig.rival_civ_id)
 		PopulationManager.add_unit(1)
 		EventBus.unit_spawned.emit(v, 1)
 
@@ -155,6 +199,7 @@ func _setup_ai(tc_pos: Vector2) -> void:
 	units_layer.add_child(scout1)
 	scout1.global_position = _ai_town_center.global_position + Vector2(80.0, -60.0)
 	scout1.set("player_id", 1)
+	scout1.set("civ_id", MatchConfig.rival_civ_id)
 	PopulationManager.add_unit(1)
 	EventBus.unit_spawned.emit(scout1, 1)
 
@@ -522,13 +567,16 @@ func _find_drop_off_at(world_pos: Vector2) -> Node:
 	# Town Center
 	if world_pos.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
 		return drop_off
-	# Lumber/Mining camps (any complete building that has a DropOffBuilding child)
 	for building: Node in buildings_layer.get_children():
 		if not is_instance_valid(building):
 			continue
 		var b2d: Node2D = building as Node2D
 		if world_pos.distance_to(b2d.global_position) >= BUILDING_CLICK_RADIUS:
 			continue
+		# Dock — drop-off for fishing boats
+		if building is Dock:
+			return building
+		# Lumber/Mining camps (any complete building that has a DropOffBuilding child)
 		for child: Node in building.get_children():
 			if child is DropOffBuilding:
 				return building
@@ -537,7 +585,15 @@ func _find_drop_off_at(world_pos: Vector2) -> Node:
 func _order_drop_off_all(target: Node) -> void:
 	_flash_target(target, Color(1.8, 1.8, 0.4, 1.0))
 	for unit: Node in _selected_units:
-		if is_instance_valid(unit) and unit.has_method("order_drop_off"):
+		if not is_instance_valid(unit):
+			continue
+		if unit is FishingBoat:
+			var fb: FishingBoat = unit as FishingBoat
+			fb.drop_off_target = target
+			if fb.carried_amount > 0.0:
+				fb.current_state = UnitBase.UnitState.RETURNING
+				fb.nav_agent.target_position = fb._safe_destination((target as Node2D).global_position)
+		elif unit.has_method("order_drop_off"):
 			unit.order_drop_off(target)
 
 func _find_farm_at(world_pos: Vector2) -> Farm:
@@ -668,9 +724,31 @@ func _find_resource_at(world_pos: Vector2) -> ResourceNode:
 func _order_gather_all(resource_node: ResourceNode) -> void:
 	_flash_target(resource_node, Color(1.8, 1.8, 0.4, 1.0))
 	var resource_name: String = resource_node.get_resource_name()
+	var is_fish: bool = resource_node.resource_type == ResourceNode.ResourceType.FOOD_FISH
 	for unit: Node in _selected_units:
-		if is_instance_valid(unit) and unit.has_method("order_gather"):
+		if not is_instance_valid(unit):
+			continue
+		if is_fish and unit is FishingBoat:
+			# Find the nearest friendly dock to use as drop-off
+			var dock_node: Node = _find_nearest_dock(unit as Node2D)
+			(unit as FishingBoat).order_fish(resource_node, dock_node)
+		elif not is_fish and unit.has_method("order_gather"):
 			unit.order_gather(resource_node, resource_name, drop_off)
+
+func _find_nearest_dock(requester: Node2D) -> Node:
+	var best: Node = null
+	var best_dist: float = 9999999.0
+	for b: Node in buildings_layer.get_children():
+		if not (b is Dock):
+			continue
+		var pid: Variant = b.get("player_id")
+		if pid == null or (pid as int) != 0:
+			continue
+		var d: float = requester.global_position.distance_to((b as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = b
+	return best
 
 func _order_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")
@@ -755,7 +833,31 @@ func _placement_overlaps(world_pos: Vector2) -> bool:
 	params.collision_mask = 1
 	params.exclude = []
 	var results: Array[Dictionary] = space.intersect_shape(params, 1)
-	return results.size() > 0
+	if results.size() > 0:
+		return true
+	# Coastal buildings require at least one adjacent tile to be ocean
+	if _placing_id in COASTAL_BUILDINGS and not _is_coastal(world_pos, shape):
+		return true
+	return false
+
+# Returns true if the dock footprint touches both ocean and land —
+# at least one cardinal probe is ocean AND at least one is non-ocean.
+func _is_coastal(world_pos: Vector2, shape: RectangleShape2D) -> bool:
+	var half: Vector2 = shape.size * 0.5 + Vector2(8.0, 8.0)
+	var probes: Array[Vector2] = [
+		world_pos + Vector2(0.0,  half.y),
+		world_pos + Vector2(0.0, -half.y),
+		world_pos + Vector2( half.x, 0.0),
+		world_pos + Vector2(-half.x, 0.0),
+	]
+	var has_ocean: bool = false
+	var has_land:  bool = false
+	for p: Vector2 in probes:
+		if TerrainManager.is_ocean(p):
+			has_ocean = true
+		else:
+			has_land = true
+	return has_ocean and has_land
 
 func _get_ghost_shape() -> RectangleShape2D:
 	for child: Node in _ghost.get_children():
@@ -831,6 +933,9 @@ func _on_action_requested(action_id: String) -> void:
 		"train:pikeman":
 			if is_instance_valid(_selected_building) and _selected_building is Barracks:
 				(_selected_building as Barracks).order_train("pikeman")
+		"train:fishing_boat", "train:transport_ship", "train:war_galley":
+			if is_instance_valid(_selected_building) and _selected_building is Dock:
+				(_selected_building as Dock).order_train(action_id.trim_prefix("train:"))
 		"advance_age":
 			AgeManager.start_advance(0)
 		"gate_lock":
@@ -840,6 +945,11 @@ func _on_action_requested(action_id: String) -> void:
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):
 					unit.order_move((unit as Node2D).global_position)
+		"hero_ability":
+			for unit: Node in _selected_units:
+				if unit is HeroUnit:
+					(unit as HeroUnit).use_ability()
+					break
 		"destroy":
 			if not _selected_units.is_empty():
 				for unit: Node in _selected_units:

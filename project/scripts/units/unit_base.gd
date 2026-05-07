@@ -10,6 +10,7 @@ var player_id: int = 0
 var current_state: UnitState = UnitState.IDLE
 var health: float = 0.0
 var is_selected: bool = false
+var civ_id: String = ""   # set at spawn time from MatchConfig for player units
 
 var _stuck_timer: float = 0.0
 var _stuck_retries: int = 0
@@ -138,6 +139,11 @@ func _nav_target_for(target: Node) -> Vector2:
 		)
 		return target_pos + clamped + to_self.normalized() * 8.0
 	return target_pos
+
+# Clamps a movement destination to the nearest passable tile for this unit.
+# Call this before setting nav_agent.target_position.
+func _safe_destination(destination: Vector2) -> Vector2:
+	return TerrainManager.nearest_passable(destination, civ_id)
 
 # Returns the desired velocity toward the next nav path point.
 # Returns ZERO when already at the point or navigation is finished.

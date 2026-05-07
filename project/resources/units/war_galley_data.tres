@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://war_galley_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "war_galley"
+display_name = "War Galley"
+description = "Ranged naval combat unit. Strong against ships and coastal targets."
+max_health = 120.0
+move_speed = 85.0
+line_of_sight = 7.0
+population_cost = 1
+attack = 6.0
+attack_range = 5.5
+attack_speed = 0.8
+armor_melee = 0.0
+armor_pierce = 4.0
+age_required = 1
+train_time = 35.0
+cost_food = 0
+cost_wood = 75
+cost_gold = 35

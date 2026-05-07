@@ -112,7 +112,7 @@ func order_attack(target: Node) -> void:
 # --- Internal helpers ---
 
 func _start_move_to(destination: Vector2) -> void:
-	nav_agent.target_position = destination
+	nav_agent.target_position = _safe_destination(destination)
 	current_state = UnitState.MOVING
 	_play_animation(_get_animation_name())
 

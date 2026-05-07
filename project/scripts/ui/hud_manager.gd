@@ -40,6 +40,7 @@ const BUILD_ACTIONS: Array = [
 	{"id": "build:farm",          "label": "ACTION_FARM",       "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F},
 	{"id": "build:wall_segment",  "label": "ACTION_WALL",       "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_W},
 	{"id": "build:gate",          "label": "ACTION_GATE",       "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G},
+	{"id": "build:dock",          "label": "ACTION_DOCK",       "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D},
 	{"id": "back",                "label": "ACTION_BACK",       "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE},
 ]
 
@@ -54,6 +55,12 @@ const UNIT_ACTIONS: Array = [
 
 const BUILDING_ACTIONS: Array = [
 	DESTROY_ACTION,
+]
+
+const DOCK_UNIT_DEFS: Array = [
+	{"id": "fishing_boat",   "label": "ACTION_FISHING_BOAT",   "color": Color(0.20, 0.50, 0.65), "cost": {"wood": 75},            "age": 0},
+	{"id": "transport_ship", "label": "ACTION_TRANSPORT_SHIP", "color": Color(0.55, 0.45, 0.20), "cost": {"wood": 125},           "age": 1},
+	{"id": "war_galley",     "label": "ACTION_WAR_GALLEY",     "color": Color(0.65, 0.18, 0.18), "cost": {"wood": 75, "gold": 35}, "age": 1},
 ]
 
 const GATE_ACTIONS: Array = [
@@ -76,6 +83,13 @@ var _stat_units_trained: int = 0
 var _stat_buildings_built: int = 0
 var _stat_enemies_killed: int = 0
 var _stat_resources_gathered: Dictionary = {"food": 0, "wood": 0, "gold": 0, "stone": 0}
+
+# Rival stats (player_id 1)
+var _ai_stat_units_trained: int = 0
+var _ai_stat_buildings_built: int = 0
+var _ai_stat_units_lost: int = 0
+var _ai_stat_resources_gathered: Dictionary = {"food": 0, "wood": 0, "gold": 0, "stone": 0}
+var _ai_last_resources: Dictionary = {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -109,6 +123,10 @@ func _process(delta: float) -> void:
 		_elapsed_seconds += delta
 		var total_secs: int = int(_elapsed_seconds)
 		_clock_label.text = "%02d:%02d" % [total_secs / 60, total_secs % 60]
+		_snapshot_timer += delta
+		if _snapshot_timer >= SNAPSHOT_INTERVAL:
+			_snapshot_timer = 0.0
+			_take_snapshot()
 	if is_instance_valid(_status_unit):
 		_unit_status_label.text = _get_unit_status(_status_unit)
 	if is_instance_valid(_age_advance_bar):
@@ -191,6 +209,8 @@ func update_selection(units: Array) -> void:
 			var owned: bool = astate != null and (astate as int) == Animal.AnimalState.OWNED
 			_unit_status_label.text = tr("UI_STATUS_YOURS") if owned else tr("UI_STATUS_WILD")
 			_populate_buttons([])
+		elif first is HeroUnit:
+			_populate_hero_buttons(first as HeroUnit)
 		elif first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
 		else:
@@ -388,6 +408,10 @@ func _on_building_selected(building: Node) -> void:
 		_populate_barracks_actions(building as Barracks)
 		var br: Barracks = building as Barracks
 		_on_train_queue_changed(building, br.get_queue(), br.get_max_queue())
+	elif building is Dock:
+		_populate_dock_actions(building as Dock)
+		var dk: Dock = building as Dock
+		_on_train_queue_changed(building, dk.get_queue(), dk.get_max_queue())
 	elif building is Gate:
 		var gate: Gate = building as Gate
 		_populate_buttons(GATE_ACTIONS)
@@ -447,6 +471,30 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 			_populate_tc_actions()
 		elif _selected_building is Barracks:
 			_populate_barracks_actions(_selected_building as Barracks)
+		elif _selected_building is Dock:
+			_populate_dock_actions(_selected_building as Dock)
+
+func _populate_hero_buttons(hero: HeroUnit) -> void:
+	_clear_action_buttons()
+	var actions: Array = [DESTROY_ACTION]
+	var udata: UnitResource = hero.unit_data
+	if udata != null and not udata.hero_ability_id.is_empty():
+		var cd_frac: float = hero.get_cooldown_fraction()
+		var cd_secs: int = int(udata.hero_ability_cooldown * cd_frac)
+		var label: String
+		if cd_frac <= 0.0:
+			label = tr("HERO_ABILITY_READY")
+		else:
+			label = tr("HERO_ABILITY_COOLDOWN") % cd_secs
+		actions.insert(0, {
+			"id": "hero_ability",
+			"label": label,
+			"color": Color(0.55, 0.20, 0.55) if cd_frac <= 0.0 else Color(0.25, 0.25, 0.30),
+			"cost": {},
+			"key": KEY_Q,
+			"raw_label": true,
+		})
+	_populate_buttons(actions)
 
 func _populate_tc_actions() -> void:
 	var current_age: int = AgeManager.get_age(local_player_id)
@@ -498,6 +546,31 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 			"color": def["color"] as Color,
 			"cost": costs,
 			"key": (KEY_M if uid == "militia" else (KEY_A if uid == "archer" else KEY_P)),
+		})
+	actions.append(DESTROY_ACTION)
+	_populate_buttons(actions)
+
+func _populate_dock_actions(dock: Dock) -> void:
+	var current_age: int = AgeManager.get_age(local_player_id)
+	var actions: Array = []
+	for def: Dictionary in DOCK_UNIT_DEFS:
+		if (def["age"] as int) > current_age:
+			continue
+		var uid: String = def["id"] as String
+		var costs: Dictionary = def["cost"] as Dictionary
+		var cost_parts: Array[String] = []
+		if costs.get("food", 0) > 0: cost_parts.append("%dF" % costs["food"])
+		if costs.get("wood", 0) > 0: cost_parts.append("%dW" % costs["wood"])
+		if costs.get("gold", 0) > 0: cost_parts.append("%dG" % costs["gold"])
+		var cost_label: String = " ".join(PackedStringArray(cost_parts))
+		var key_map: Dictionary = {"fishing_boat": KEY_F, "transport_ship": KEY_T, "war_galley": KEY_G}
+		actions.append({
+			"id": "train:" + uid,
+			"label": tr("ACTION_" + uid.to_upper()) + "\n" + cost_label,
+			"color": def["color"] as Color,
+			"cost": costs,
+			"key": key_map.get(uid, KEY_NONE) as Key,
+			"raw_label": true,
 		})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
@@ -656,32 +729,97 @@ func _set_follow_active(active: bool) -> void:
 # --- Stats signal handlers ---
 
 func _on_stat_unit_spawned(_unit: Node, player_id: int) -> void:
-	if player_id == local_player_id and _clock_running:
+	if not _clock_running:
+		return
+	if player_id == local_player_id:
 		_stat_units_trained += 1
+	else:
+		_ai_stat_units_trained += 1
 
 func _on_stat_building_complete(building: Node) -> void:
 	var pid: Variant = building.get("player_id")
-	if pid != null and (pid as int) == local_player_id:
+	if pid == null:
+		return
+	if (pid as int) == local_player_id:
 		_stat_buildings_built += 1
+	else:
+		_ai_stat_buildings_built += 1
 
 func _on_stat_unit_died(unit: Node, player_id: int) -> void:
-	# Count enemy kills (enemy unit dies)
+	var udata: Variant = unit.get("unit_data")
+	if udata == null:
+		return
 	if player_id != local_player_id:
-		var udata: Variant = unit.get("unit_data")
-		if udata != null:
-			_stat_enemies_killed += 1
+		_stat_enemies_killed += 1
+	else:
+		_ai_stat_units_lost += 1
 
 var _last_resources: Dictionary = {}
 
+# --- Timeline snapshots (sampled every SNAPSHOT_INTERVAL seconds) ---
+const SNAPSHOT_INTERVAL: float = 15.0
+var _snapshot_timer: float = 0.0
+
+var _snap_pop_a:       Array = []   # player population
+var _snap_pop_b:       Array = []   # AI population
+var _snap_res_a:       Array = []   # player total resources gathered
+var _snap_res_b:       Array = []   # AI total resources gathered
+var _snap_age_a:       Array = []   # player age (0-3)
+var _snap_age_b:       Array = []   # AI age (0-3)
+
+var _snap_kills_a_prev: int = 0     # enemies killed at last snapshot
+var _snap_kills_b_prev: int = 0
+var _snap_kills_a:      Array = []  # kills per interval
+var _snap_kills_b:      Array = []
+
+# indices (in the above arrays) where an offensive happened (kills delta > threshold)
+var _offense_snaps_a: Array = []
+var _offense_snaps_b: Array = []
+
+const OFFENSE_THRESHOLD: int = 2   # kills in one interval to count as an offensive
+
+func _take_snapshot() -> void:
+	var pop_a: Dictionary = PopulationManager.get_population(local_player_id)
+	var pop_b: Dictionary = PopulationManager.get_population(1)
+	_snap_pop_a.append(float(pop_a.get("current", 0) as int))
+	_snap_pop_b.append(float(pop_b.get("current", 0) as int))
+
+	var total_a: int = 0
+	var total_b: int = 0
+	for k: String in ["food", "wood", "gold", "stone"]:
+		total_a += _stat_resources_gathered.get(k, 0) as int
+		total_b += _ai_stat_resources_gathered.get(k, 0) as int
+	_snap_res_a.append(float(total_a))
+	_snap_res_b.append(float(total_b))
+
+	_snap_age_a.append(float(AgeManager.get_age(local_player_id)))
+	_snap_age_b.append(float(AgeManager.get_age(1)))
+
+	var kills_delta_a: int = _stat_enemies_killed - _snap_kills_a_prev
+	var kills_delta_b: int = _ai_stat_units_lost   - _snap_kills_b_prev
+	_snap_kills_a.append(float(kills_delta_a))
+	_snap_kills_b.append(float(kills_delta_b))
+	var snap_idx: int = _snap_kills_a.size() - 1
+	if kills_delta_a >= OFFENSE_THRESHOLD:
+		_offense_snaps_a.append(snap_idx)
+	if kills_delta_b >= OFFENSE_THRESHOLD:
+		_offense_snaps_b.append(snap_idx)
+	_snap_kills_a_prev = _stat_enemies_killed
+	_snap_kills_b_prev = _ai_stat_units_lost
+
 func _on_stat_resources_updated(player_id: int, resources: Dictionary) -> void:
-	if player_id != local_player_id:
-		return
 	for res: String in ["food", "wood", "gold", "stone"]:
 		var current: float = resources.get(res, 0.0) as float
-		var last: float = _last_resources.get(res, current) as float
-		if current > last:
-			_stat_resources_gathered[res] = (_stat_resources_gathered[res] as int) + int(current - last)
-		_last_resources[res] = current
+		if player_id == local_player_id:
+			var last: float = _last_resources.get(res, current) as float
+			if current > last:
+				_stat_resources_gathered[res] = (_stat_resources_gathered[res] as int) + int(current - last)
+			_last_resources[res] = current
+		else:
+			var last: float = _ai_last_resources.get(res, current) as float
+			if current > last:
+				_ai_stat_resources_gathered[res] = (_ai_stat_resources_gathered[res] as int) + int(current - last)
+			_ai_last_resources[res] = current
 
 # --- Game over screen ---
 
@@ -696,6 +834,7 @@ func _make_panel_style(bg: Color) -> StyleBoxFlat:
 
 func _on_game_over(winner_player_id: int) -> void:
 	_clock_running = false
+	_take_snapshot()
 
 	var root: Node = get_node("HUDRoot")
 
@@ -749,40 +888,56 @@ func _on_game_over(winner_player_id: int) -> void:
 	stats_header.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
 	vbox.add_child(stats_header)
 
-	# Stats grid
+	# Stats grid — 3 columns: stat label | player value | rival value
 	var grid: GridContainer = GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 24)
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 20)
 	grid.add_theme_constant_override("v_separation", 6)
 	vbox.add_child(grid)
 
 	var total_secs: int = int(_elapsed_seconds)
 	var time_str: String = "%02d:%02d" % [total_secs / 60, total_secs % 60]
-	var final_age: String = tr(["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"][clampi(AgeManager.get_age(local_player_id), 0, 3)])
+	var age_keys: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
+	var player_age: String = tr(age_keys[clampi(AgeManager.get_age(local_player_id), 0, 3)])
+	var ai_age: String     = tr(age_keys[clampi(AgeManager.get_age(1), 0, 3)])
 
+	# Column headers
+	var _blank: Label = Label.new()
+	grid.add_child(_blank)
+	for hdr_text: String in [tr("GAMEOVER_PLAYER"), tr("GAMEOVER_RIVAL")]:
+		var hdr: Label = Label.new()
+		hdr.text = hdr_text
+		hdr.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		hdr.add_theme_font_size_override("font_size", 13)
+		var hdr_col: Color = Color(0.40, 0.70, 1.0) if hdr_text == tr("GAMEOVER_PLAYER") else Color(1.0, 0.45, 0.45)
+		hdr.add_theme_color_override("font_color", hdr_col)
+		grid.add_child(hdr)
+
+	# [stat label, player value, rival value]
 	var stat_rows: Array = [
-		[tr("GAMEOVER_TIME"),      time_str],
-		[tr("GAMEOVER_AGE"),       final_age],
-		[tr("GAMEOVER_UNITS"),     str(_stat_units_trained)],
-		[tr("GAMEOVER_BUILDINGS"), str(_stat_buildings_built)],
-		[tr("GAMEOVER_KILLS"),     str(_stat_enemies_killed)],
-		[tr("GAMEOVER_FOOD"),      str(_stat_resources_gathered.get("food", 0))],
-		[tr("GAMEOVER_WOOD"),      str(_stat_resources_gathered.get("wood", 0))],
-		[tr("GAMEOVER_GOLD"),      str(_stat_resources_gathered.get("gold", 0))],
-		[tr("GAMEOVER_STONE"),     str(_stat_resources_gathered.get("stone", 0))],
+		[tr("GAMEOVER_TIME"),      time_str,                                               time_str],
+		[tr("GAMEOVER_AGE"),       player_age,                                             ai_age],
+		[tr("GAMEOVER_UNITS"),     str(_stat_units_trained),                               str(_ai_stat_units_trained)],
+		[tr("GAMEOVER_BUILDINGS"), str(_stat_buildings_built),                             str(_ai_stat_buildings_built)],
+		[tr("GAMEOVER_KILLS"),     str(_stat_enemies_killed),                              str(_ai_stat_units_lost)],
+		[tr("GAMEOVER_FOOD"),      str(_stat_resources_gathered.get("food", 0)),           str(_ai_stat_resources_gathered.get("food", 0))],
+		[tr("GAMEOVER_WOOD"),      str(_stat_resources_gathered.get("wood", 0)),           str(_ai_stat_resources_gathered.get("wood", 0))],
+		[tr("GAMEOVER_GOLD"),      str(_stat_resources_gathered.get("gold", 0)),           str(_ai_stat_resources_gathered.get("gold", 0))],
+		[tr("GAMEOVER_STONE"),     str(_stat_resources_gathered.get("stone", 0)),          str(_ai_stat_resources_gathered.get("stone", 0))],
 	]
 	for row: Array in stat_rows:
 		var key_lbl: Label = Label.new()
 		key_lbl.text = row[0] as String
-		key_lbl.add_theme_font_size_override("font_size", 15)
+		key_lbl.add_theme_font_size_override("font_size", 14)
 		key_lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
 		grid.add_child(key_lbl)
-		var val_lbl: Label = Label.new()
-		val_lbl.text = row[1] as String
-		val_lbl.add_theme_font_size_override("font_size", 15)
-		val_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-		val_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		grid.add_child(val_lbl)
+		for col: int in range(1, 3):
+			var val_lbl: Label = Label.new()
+			val_lbl.text = row[col] as String
+			val_lbl.add_theme_font_size_override("font_size", 14)
+			val_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+			val_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			grid.add_child(val_lbl)
 
 	# Separator
 	var sep2: HSeparator = HSeparator.new()
@@ -824,6 +979,18 @@ func _on_game_over(winner_player_id: int) -> void:
 	)
 	btn_row.add_child(map_btn)
 
+	# "Ver gráficas" button — opens timeline charts overlay
+	var charts_btn: Button = Button.new()
+	charts_btn.text = tr("GAMEOVER_CHARTS")
+	charts_btn.custom_minimum_size = Vector2(150.0, 36.0)
+	charts_btn.add_theme_font_size_override("font_size", 16)
+	charts_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.22, 0.20, 0.38, 0.95)))
+	charts_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.36, 0.32, 0.60, 0.95)))
+	charts_btn.pressed.connect(func() -> void:
+		_show_charts_panel(root)
+	)
+	btn_row.add_child(charts_btn)
+
 	# "Volver al menú" button
 	var menu_btn: Button = Button.new()
 	menu_btn.text = tr("GAMEOVER_BACK_MENU")
@@ -835,3 +1002,96 @@ func _on_game_over(winner_player_id: int) -> void:
 		get_tree().change_scene_to_file("res://scenes/game/main_menu.tscn")
 	)
 	btn_row.add_child(menu_btn)
+
+# --- Match timeline charts ---
+
+func _show_charts_panel(parent: Node) -> void:
+	# Full-screen overlay
+	var ov: ColorRect = ColorRect.new()
+	ov.color = Color(0.0, 0.0, 0.0, 0.80)
+	ov.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ov.mouse_filter = Control.MOUSE_FILTER_STOP
+	parent.add_child(ov)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
+	ov.add_child(center)
+
+	var card: PanelContainer = PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.07, 0.07, 0.10, 0.98)))
+	card.custom_minimum_size = Vector2(700.0, 0.0)
+	center.add_child(card)
+
+	var margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 28)
+	card.add_child(margin)
+
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 14)
+	margin.add_child(vbox)
+
+	# Title
+	var title_lbl: Label = Label.new()
+	title_lbl.text = tr("GAMEOVER_CHARTS")
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_lbl.add_theme_font_size_override("font_size", 22)
+	title_lbl.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
+	vbox.add_child(title_lbl)
+
+	# Legend row
+	var legend: HBoxContainer = HBoxContainer.new()
+	legend.alignment = BoxContainer.ALIGNMENT_CENTER
+	legend.add_theme_constant_override("separation", 24)
+	vbox.add_child(legend)
+	for ldata: Array in [[tr("GAMEOVER_PLAYER"), Color(0.40, 0.70, 1.0)], [tr("GAMEOVER_RIVAL"), Color(1.0, 0.45, 0.45)]]:
+		var row: HBoxContainer = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		legend.add_child(row)
+		var swatch: ColorRect = ColorRect.new()
+		swatch.color = ldata[1] as Color
+		swatch.custom_minimum_size = Vector2(18, 10)
+		row.add_child(swatch)
+		var ll: Label = Label.new()
+		ll.text = ldata[0] as String
+		ll.add_theme_font_size_override("font_size", 13)
+		ll.add_theme_color_override("font_color", ldata[1] as Color)
+		row.add_child(ll)
+
+	vbox.add_child(HSeparator.new())
+
+	# Charts definition: [title_key, series_a, series_b, spikes_a, spikes_b, mode]
+	var chart_defs: Array = [
+		[tr("CHART_POPULATION"), _snap_pop_a, _snap_pop_b, [], [], MatchChart.Mode.LINES],
+		[tr("CHART_RESOURCES"),  _snap_res_a, _snap_res_b, [], [], MatchChart.Mode.LINES],
+		[tr("CHART_AGE"),        _snap_age_a, _snap_age_b, [], [], MatchChart.Mode.STEPS],
+		[tr("CHART_OFFENSIVES"), _snap_kills_a, _snap_kills_b, _offense_snaps_a, _offense_snaps_b, MatchChart.Mode.BARS],
+	]
+
+	for cdef: Array in chart_defs:
+		var chart: MatchChart = MatchChart.new()
+		chart.chart_title  = cdef[0] as String
+		chart.series_a     = cdef[1] as Array
+		chart.series_b     = cdef[2] as Array
+		chart.spikes_a     = cdef[3] as Array
+		chart.spikes_b     = cdef[4] as Array
+		chart.mode         = cdef[5] as int
+		chart.total_time   = _elapsed_seconds
+		chart.custom_minimum_size = Vector2(0.0, 90.0)
+		chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		vbox.add_child(chart)
+
+	vbox.add_child(HSeparator.new())
+
+	# Close button
+	var close_btn: Button = Button.new()
+	close_btn.text = tr("GAMEOVER_CHARTS_CLOSE")
+	close_btn.custom_minimum_size = Vector2(160.0, 36.0)
+	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	close_btn.focus_mode = Control.FOCUS_NONE
+	close_btn.add_theme_font_size_override("font_size", 16)
+	close_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.20, 0.20, 0.25, 0.95)))
+	close_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.35, 0.35, 0.42, 0.95)))
+	close_btn.pressed.connect(func() -> void: ov.queue_free())
+	vbox.add_child(close_btn)
