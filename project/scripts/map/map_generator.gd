@@ -788,6 +788,23 @@ func _create_resource_node(parent: Node2D, pos: Vector2,
 	area.add_child(shape)
 	node.add_child(area)
 
+	# Fish nodes live in the ocean — only land resources need physics blocking.
+	if rtype != ResourceNode.ResourceType.FOOD_FISH:
+		var body: StaticBody2D = StaticBody2D.new()
+		body.collision_layer = 1
+		body.collision_mask = 0
+		var body_shape: CollisionShape2D = CollisionShape2D.new()
+		var body_circle: CircleShape2D = CircleShape2D.new()
+		body_circle.radius = maxf(w * 0.7, 8.0)
+		body_shape.shape = body_circle
+		body.add_child(body_shape)
+		node.add_child(body)
+
+		var obstacle: NavigationObstacle2D = NavigationObstacle2D.new()
+		obstacle.radius = w + 10.0
+		obstacle.avoidance_enabled = true
+		node.add_child(obstacle)
+
 # ── Navigation mesh carving ─────────────────────────────────────────────────
 #
 # Layer 1 (NavigationRegion2D)      → land units: covers land, excludes ocean
