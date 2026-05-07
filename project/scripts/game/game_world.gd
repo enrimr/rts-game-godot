@@ -596,7 +596,7 @@ func _order_board(unit: Node, transport: TransportShip) -> void:
 		_start_board_poll(unit, transport)
 
 func _start_board_poll(unit: Node, transport: TransportShip) -> void:
-	# Poll each physics frame until close enough, then board.
+	var gw: Node = self
 	var timer: SceneTreeTimer = get_tree().create_timer(0.1)
 	timer.timeout.connect(func() -> void:
 		if not is_instance_valid(unit) or not is_instance_valid(transport):
@@ -605,10 +605,10 @@ func _start_board_poll(unit: Node, transport: TransportShip) -> void:
 			(transport as Node2D).global_position)
 		if d <= TransportShip.BOARD_RANGE:
 			transport.board(unit)
-			_selected_units.erase(unit)
-			SelectionManager.select(_selected_units)
+			gw._selected_units.erase(unit)
+			SelectionManager.select(gw._selected_units)
 		else:
-			_start_board_poll(unit, transport)
+			gw._start_board_poll(unit, transport)
 	)
 
 func _find_animal_at(world_pos: Vector2) -> Animal:
