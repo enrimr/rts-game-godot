@@ -251,7 +251,7 @@ func _handle_building(delta: float) -> void:
 	var dist: float = global_position.distance_to(build_pos)
 	if dist > BUILD_RANGE:
 		var approach: Vector2 = build_pos + (global_position - build_pos).normalized() * (BUILD_RANGE * 0.5)
-		nav_agent.target_position = approach
+		nav_agent.target_position = _safe_destination(approach)
 		if _advance_stuck(delta):
 			_jitter_repath()
 			return

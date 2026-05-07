@@ -10,6 +10,8 @@ signal resource_depleted(player_id: int, resource: String)
 # Units
 signal unit_spawned(unit: Node, player_id: int)
 signal unit_died(unit: Node, player_id: int)
+signal hero_died(player_id: int, hero_data: UnitResource)
+signal hero_respawned(player_id: int)
 signal unit_selected(units: Array)
 signal unit_command_issued(units: Array, command: Dictionary)
 signal animal_selected(animal: Node)

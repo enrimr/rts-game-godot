@@ -77,6 +77,8 @@ var _active_actions: Array = []
 var _follow_btn: Button = null
 var _following: bool = false
 var _age_advance_bar: ProgressBar = null
+var _hero_respawn_bar: ProgressBar = null
+var _hero_respawn_label: Label = null
 
 # --- Stats tracking ---
 var _stat_units_trained: int = 0
@@ -107,6 +109,7 @@ func _ready() -> void:
 	GameManager.game_paused.connect(toggle_pause)
 	GameManager.game_over.connect(_on_game_over)
 	EventBus.camera_follow_cancelled.connect(func() -> void: _set_follow_active(false))
+	EventBus.hero_respawned.connect(_on_hero_respawned)
 	EventBus.unit_spawned.connect(_on_stat_unit_spawned)
 	EventBus.building_construction_complete.connect(_on_stat_building_complete)
 	EventBus.unit_died.connect(_on_stat_unit_died)
@@ -131,6 +134,13 @@ func _process(delta: float) -> void:
 		_unit_status_label.text = _get_unit_status(_status_unit)
 	if is_instance_valid(_age_advance_bar):
 		_age_advance_bar.value = AgeManager.get_advance_progress(local_player_id) * 100.0
+	if is_instance_valid(_hero_respawn_bar) and is_instance_valid(_selected_building):
+		var tc: Variant = _selected_building
+		if tc.has_method("get_hero_respawn_fraction"):
+			_hero_respawn_bar.value = (tc.get_hero_respawn_fraction() as float) * 100.0
+			var secs: int = tc.get_hero_respawn_remaining() as int
+			if is_instance_valid(_hero_respawn_label):
+				_hero_respawn_label.text = tr("UI_HERO_RESPAWNING") % secs if secs > 0 else tr("UI_HERO_READY")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
@@ -230,6 +240,15 @@ func _clear_action_buttons() -> void:
 		child.queue_free()
 	for child: Node in _train_queue_row.get_children():
 		child.queue_free()
+	if is_instance_valid(_age_advance_bar):
+		_age_advance_bar.queue_free()
+		_age_advance_bar = null
+	if is_instance_valid(_hero_respawn_bar):
+		_hero_respawn_bar.queue_free()
+		_hero_respawn_bar = null
+	if is_instance_valid(_hero_respawn_label):
+		_hero_respawn_label.queue_free()
+		_hero_respawn_label = null
 
 func _key_label(keycode: int) -> String:
 	match keycode:
@@ -526,6 +545,10 @@ func _populate_tc_actions() -> void:
 	if AgeManager.is_advancing(local_player_id):
 		_build_age_advance_bar()
 
+	if is_instance_valid(_selected_building) and _selected_building.has_method("is_respawning_hero"):
+		if _selected_building.is_respawning_hero() as bool:
+			_build_hero_respawn_bar()
+
 func _populate_barracks_actions(barracks: Barracks) -> void:
 	var actions: Array = []
 	for def: Dictionary in barracks.get_available_units():
@@ -572,6 +595,14 @@ func _populate_dock_actions(dock: Dock) -> void:
 			"key": key_map.get(uid, KEY_NONE) as Key,
 			"raw_label": true,
 		})
+	actions.append({
+		"id": "build:fish_trap",
+		"label": tr("ACTION_FISH_TRAP") + "\n75W",
+		"color": Color(0.15, 0.40, 0.55),
+		"cost": {"wood": 75},
+		"key": KEY_P,
+		"raw_label": true,
+	})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
 
@@ -591,6 +622,36 @@ func _build_age_advance_bar() -> void:
 	fill.bg_color = Color(0.70, 0.60, 0.15)
 	_age_advance_bar.add_theme_stylebox_override("fill", fill)
 	detail_panel.add_child(_age_advance_bar)
+
+func _build_hero_respawn_bar() -> void:
+	if is_instance_valid(_hero_respawn_bar):
+		return
+	var detail_panel: Node = get_node_or_null("HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel")
+	if detail_panel == null:
+		return
+	_hero_respawn_label = Label.new()
+	_hero_respawn_label.add_theme_font_size_override("font_size", 11)
+	_hero_respawn_label.add_theme_color_override("font_color", Color(0.90, 0.75, 0.25))
+	_hero_respawn_label.text = ""
+	detail_panel.add_child(_hero_respawn_label)
+	_hero_respawn_bar = ProgressBar.new()
+	_hero_respawn_bar.min_value = 0.0
+	_hero_respawn_bar.max_value = 100.0
+	_hero_respawn_bar.value = 0.0
+	_hero_respawn_bar.show_percentage = false
+	_hero_respawn_bar.custom_minimum_size = Vector2(0, 12)
+	var fill: StyleBoxFlat = StyleBoxFlat.new()
+	fill.bg_color = Color(0.75, 0.55, 0.10)
+	_hero_respawn_bar.add_theme_stylebox_override("fill", fill)
+	detail_panel.add_child(_hero_respawn_bar)
+
+func _on_hero_respawned(_respawn_player_id: int) -> void:
+	if is_instance_valid(_hero_respawn_bar):
+		_hero_respawn_bar.queue_free()
+		_hero_respawn_bar = null
+	if is_instance_valid(_hero_respawn_label):
+		_hero_respawn_label.queue_free()
+		_hero_respawn_label = null
 
 func _get_unit_status(unit: Node) -> String:
 	var state_v: Variant = unit.get("current_state")

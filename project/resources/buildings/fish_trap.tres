@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingResource" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://bpu66yjdkmq8c" path="res://resources/buildings/building_resource.gd" id="1_bldres"]
+
+[resource]
+script = ExtResource("1_bldres")
+id = "fish_trap"
+display_name = "Fish Trap"
+description = "Ocean building constructed and harvested by Fishing Boats. Provides a passive food source."
+max_health = 600.0
+line_of_sight = 4.0
+garrison_capacity = 0
+cost_wood = 75
+cost_stone = 0
+cost_gold = 0
+build_time = 25.0
+footprint = Vector2i(2, 2)

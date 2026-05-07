@@ -26,6 +26,7 @@ const BUILDING_SCENES: Dictionary = {
 	"wall_segment":  "res://scenes/buildings/wall_segment.tscn",
 	"gate":          "res://scenes/buildings/gate.tscn",
 	"dock":          "res://scenes/buildings/dock.tscn",
+	"fish_trap":     "res://scenes/buildings/fish_trap.tscn",
 }
 
 const BUILDING_COSTS: Dictionary = {
@@ -37,10 +38,14 @@ const BUILDING_COSTS: Dictionary = {
 	"wall_segment":  {"stone": 5},
 	"gate":          {"wood": 30},
 	"dock":          {"wood": 150},
+	"fish_trap":     {"wood": 75},
 }
 
 # Buildings that must be placed adjacent to water (at least one edge in ocean terrain).
 const COASTAL_BUILDINGS: Array = ["dock"]
+
+# Buildings that must be placed fully in ocean (all footprint probes in ocean terrain).
+const OCEAN_BUILDINGS: Array = ["fish_trap"]
 
 const CAMERA_SPEED: float = 400.0
 const CAMERA_ZOOM_MIN: float = 0.5
@@ -514,6 +519,12 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		_order_gather_farm(farm)
 		return
 
+	# 6b. Fish Trap clicked by fishing boat → gather/restore
+	var fish_trap: FishTrap = _find_fish_trap_at(world_pos)
+	if fish_trap != null:
+		_order_gather_fish_trap(fish_trap)
+		return
+
 	# 7. Own gate → just move through it
 	var gate: Gate = _find_gate_at(world_pos)
 	if gate != null and gate.state == BuildingBase.BuildingState.COMPLETE:
@@ -623,6 +634,37 @@ func _order_restore_farm(farm: Farm) -> void:
 	for unit: Node in _selected_units:
 		if is_instance_valid(unit) and unit.has_method("order_gather"):
 			unit.order_gather(farm, "food", null)
+
+func _find_fish_trap_at(world_pos: Vector2) -> FishTrap:
+	for building: Node in buildings_layer.get_children():
+		if not (building is FishTrap):
+			continue
+		if world_pos.distance_to((building as Node2D).global_position) < BUILDING_CLICK_RADIUS:
+			var ft: FishTrap = building as FishTrap
+			if ft.state == BuildingBase.BuildingState.COMPLETE:
+				return ft
+	return null
+
+func _order_gather_fish_trap(fish_trap: FishTrap) -> void:
+	_flash_target(fish_trap, Color(1.8, 1.8, 0.4, 1.0))
+	if fish_trap.is_depleted():
+		_order_restore_fish_trap(fish_trap)
+		return
+	for unit: Node in _selected_units:
+		if unit is FishingBoat:
+			var fb: FishingBoat = unit as FishingBoat
+			var dock_node: Node = _find_nearest_dock(fb)
+			fb.order_fish(fish_trap, dock_node)
+
+func _order_restore_fish_trap(fish_trap: FishTrap) -> void:
+	if not ResourceManager.spend_resource(0, fish_trap.get_restore_cost()):
+		return
+	fish_trap.restore()
+	for unit: Node in _selected_units:
+		if unit is FishingBoat:
+			var fb: FishingBoat = unit as FishingBoat
+			var dock_node: Node = _find_nearest_dock(fb)
+			fb.order_fish(fish_trap, dock_node)
 
 func _find_enemy_unit_at(world_pos: Vector2) -> Node:
 	for unit: Node in units_layer.get_children():
@@ -838,6 +880,9 @@ func _placement_overlaps(world_pos: Vector2) -> bool:
 	# Coastal buildings require at least one adjacent tile to be ocean
 	if _placing_id in COASTAL_BUILDINGS and not _is_coastal(world_pos, shape):
 		return true
+	# Ocean buildings must be placed fully in ocean
+	if _placing_id in OCEAN_BUILDINGS and not _is_fully_ocean(world_pos, shape):
+		return true
 	return false
 
 # Returns true if the dock footprint touches both ocean and land —
@@ -858,6 +903,20 @@ func _is_coastal(world_pos: Vector2, shape: RectangleShape2D) -> bool:
 		else:
 			has_land = true
 	return has_ocean and has_land
+
+func _is_fully_ocean(world_pos: Vector2, shape: RectangleShape2D) -> bool:
+	var half: Vector2 = shape.size * 0.5
+	var probes: Array[Vector2] = [
+		world_pos,
+		world_pos + Vector2(half.x,  half.y),
+		world_pos + Vector2(-half.x, half.y),
+		world_pos + Vector2(half.x, -half.y),
+		world_pos + Vector2(-half.x, -half.y),
+	]
+	for p: Vector2 in probes:
+		if not TerrainManager.is_ocean(p):
+			return false
+	return true
 
 func _get_ghost_shape() -> RectangleShape2D:
 	for child: Node in _ghost.get_children():

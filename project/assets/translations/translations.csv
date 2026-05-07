@@ -42,6 +42,7 @@ ACTION_GATE,Gate\n30W,Puerta\n30M
 ACTION_VILLAGER,Villager\n50F,Aldeano\n50C
 ACTION_DOCK,Dock\n150W,Puerto\n150M
 ACTION_FISHING_BOAT,Fishing Boat,Barco Pesquero
+ACTION_FISH_TRAP,Fish Trap,Trampa de Peces
 ACTION_TRANSPORT_SHIP,Transport Ship,Barco de Transporte
 ACTION_WAR_GALLEY,War Galley,Galera de Guerra
 NOTIF_UNIT_ATTACK,Your units are under attack!,¡Tus unidades están bajo ataque!
@@ -70,6 +71,8 @@ GAMEOVER_EXIT,Exit to menu,Salir al menú
 GAMEOVER_PLAYER,You,Tú
 GAMEOVER_RIVAL,Rival,Rival
 HERO_ABILITY,Use Ability,Usar Habilidad
+UI_HERO_RESPAWNING,Respawning: %ds,Reapareciendo: %ds
+UI_HERO_READY,Hero Ready!,¡Héroe listo!
 HERO_ABILITY_READY,Ready,Lista
 HERO_ABILITY_COOLDOWN,Cooldown: %ds,Recarga: %ds
 HERO_BENCOMO_ABILITY,Mencey's Charge,Ímpetu del Mencey

@@ -60,6 +60,21 @@ func _ready() -> void:
 		unit_data = unit_data.duplicate() as UnitResource
 		unit_data.move_speed *= 1.15
 	_build_hero_ring()
+	# Update portrait label to hero initials instead of the militia default "M"
+	if unit_data:
+		var label_node: Node = get_node_or_null("UnitLabel")
+		if label_node != null:
+			var parts: PackedStringArray = unit_data.display_name.split(" ")
+			var initials: String = ""
+			for p: String in parts:
+				if not p.is_empty():
+					initials += p[0]
+			label_node.set("text", initials.left(2))
+
+func die() -> void:
+	if unit_data:
+		EventBus.hero_died.emit(player_id, unit_data)
+	super.die()
 
 func _build_hero_ring() -> void:
 	_hero_ring = Node2D.new()
