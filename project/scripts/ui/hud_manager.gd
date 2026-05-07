@@ -53,6 +53,12 @@ const UNIT_ACTIONS: Array = [
 	DESTROY_ACTION,
 ]
 
+const TRANSPORT_ACTIONS: Array = [
+	{"id": "unload",  "label": "UI_UNLOAD",      "color": Color(0.20, 0.45, 0.65), "cost": {}, "key": KEY_U},
+	{"id": "stop",    "label": "ACTION_STOP",    "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
+	DESTROY_ACTION,
+]
+
 const BUILDING_ACTIONS: Array = [
 	DESTROY_ACTION,
 ]
@@ -110,6 +116,7 @@ func _ready() -> void:
 	GameManager.game_over.connect(_on_game_over)
 	EventBus.camera_follow_cancelled.connect(func() -> void: _set_follow_active(false))
 	EventBus.hero_respawned.connect(_on_hero_respawned)
+	EventBus.garrison_changed.connect(_on_garrison_changed)
 	EventBus.unit_spawned.connect(_on_stat_unit_spawned)
 	EventBus.building_construction_complete.connect(_on_stat_building_complete)
 	EventBus.unit_died.connect(_on_stat_unit_died)
@@ -221,6 +228,8 @@ func update_selection(units: Array) -> void:
 			_populate_buttons([])
 		elif first is HeroUnit:
 			_populate_hero_buttons(first as HeroUnit)
+		elif first is TransportShip:
+			_populate_transport_buttons(first as TransportShip)
 		elif first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
 		else:
@@ -514,6 +523,28 @@ func _populate_hero_buttons(hero: HeroUnit) -> void:
 			"raw_label": true,
 		})
 	_populate_buttons(actions)
+
+func _populate_transport_buttons(ship: TransportShip) -> void:
+	var garrison: Array = ship.get_garrison()
+	var cap: int = ship.get_capacity()
+	var actions: Array = []
+	if not garrison.is_empty():
+		actions.append({
+			"id": "unload",
+			"label": tr("UI_UNLOAD") + " (%d/%d)" % [garrison.size(), cap],
+			"color": Color(0.20, 0.45, 0.65),
+			"cost": {},
+			"key": KEY_U,
+			"raw_label": true,
+		})
+	actions.append({"id": "stop", "label": "ACTION_STOP", "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X})
+	actions.append(DESTROY_ACTION)
+	_populate_buttons(actions)
+	_unit_status_label.text = tr("UI_GARRISON_STATUS") % [garrison.size(), cap]
+
+func _on_garrison_changed(ship: Node, current: int, capacity: int) -> void:
+	if _selected_units.size() == 1 and _selected_units[0] == ship:
+		_populate_transport_buttons(ship as TransportShip)
 
 func _populate_tc_actions() -> void:
 	var current_age: int = AgeManager.get_age(local_player_id)

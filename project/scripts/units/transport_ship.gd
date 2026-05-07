@@ -2,12 +2,21 @@ extends ShipBase
 
 class_name TransportShip
 
-## Transport Ship — carries land units across water.
-## Garrisoning/ungarrisoning is click-based (future milestone).
-## For now behaves as a mobile unit that can be ordered to move.
+## Transport Ship — carries up to CAPACITY land units across water.
+## Board:  right-click this ship with land units selected → they walk to the
+##         ship, vanish, and are stored in _garrison.
+## Unload: select the ship, click the Unload button OR right-click on land →
+##         ship moves there then places all garrisoned units on the shore.
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
+const CAPACITY: int = 8
+const BOARD_RANGE: float = 52.0   # land unit must be within this distance to board
+const UNLOAD_OFFSET: float = 56.0 # spacing between unloaded units
+
+var _garrison: Array[Node] = []   # stored land units (hidden, process disabled)
+
+# Pending unload destination — ship moves here then dumps units.
+var _unload_target: Vector2 = Vector2.ZERO
+var _unloading: bool = false
 
 func _ready() -> void:
 	super._ready()
@@ -18,7 +27,7 @@ func _on_velocity_computed(safe_vel: Vector2) -> void:
 	move_and_slide()
 
 func _on_auto_attack_target(_target: Node) -> void:
-	pass  # Transport ships don't attack
+	pass
 
 func _physics_process(delta: float) -> void:
 	match current_state:
@@ -26,14 +35,72 @@ func _physics_process(delta: float) -> void:
 			_handle_movement(delta)
 
 func order_move(destination: Vector2) -> void:
-	attack_target = null
+	_unloading = false
+	nav_agent.target_position = _safe_destination(destination)
+	current_state = UnitState.MOVING
+
+func order_move_then_unload(destination: Vector2) -> void:
+	_unload_target = destination
+	_unloading = true
 	nav_agent.target_position = _safe_destination(destination)
 	current_state = UnitState.MOVING
 
 func _handle_movement(delta: float) -> void:
 	if nav_agent.is_navigation_finished():
 		current_state = UnitState.IDLE
+		if _unloading:
+			_unloading = false
+			unload_all()
 		return
 	if _advance_stuck(delta):
 		current_state = UnitState.IDLE
+		if _unloading:
+			_unloading = false
+			unload_all()
 	nav_agent.set_velocity(_nav_velocity())
+
+# Called by game_world when a land unit right-clicks this ship.
+func board(unit: Node) -> bool:
+	if _garrison.size() >= CAPACITY:
+		return false
+	if not is_instance_valid(unit):
+		return false
+	_garrison.append(unit)
+	unit.set_process(false)
+	unit.set_physics_process(false)
+	unit.visible = false
+	if unit.has_method("set_selected"):
+		unit.call("set_selected", false)
+	EventBus.garrison_changed.emit(self, _garrison.size(), CAPACITY)
+	return true
+
+# Unload all garrisoned units near current position.
+func unload_all() -> void:
+	if _garrison.is_empty():
+		return
+	var count: int = _garrison.size()
+	for i: int in range(count):
+		var unit: Node = _garrison[i]
+		if not is_instance_valid(unit):
+			continue
+		var angle: float = TAU * float(i) / float(count)
+		var offset: Vector2 = Vector2(cos(angle), sin(angle)) * UNLOAD_OFFSET
+		var land_pos: Vector2 = TerrainManager.nearest_passable(
+			global_position + offset, unit.get("civ_id") as String)
+		unit.set_process(true)
+		unit.set_physics_process(true)
+		unit.visible = true
+		(unit as Node2D).global_position = land_pos
+		if unit.has_method("order_move"):
+			unit.call("order_move", land_pos)
+	_garrison.clear()
+	EventBus.garrison_changed.emit(self, 0, CAPACITY)
+
+func get_garrison() -> Array:
+	return _garrison.duplicate()
+
+func get_capacity() -> int:
+	return CAPACITY
+
+func is_full() -> bool:
+	return _garrison.size() >= CAPACITY

@@ -42,6 +42,8 @@ ACTION_GATE,Gate\n30W,Puerta\n30M
 ACTION_VILLAGER,Villager\n50F,Aldeano\n50C
 ACTION_DOCK,Dock\n150W,Puerto\n150M
 ACTION_FISHING_BOAT,Fishing Boat,Barco Pesquero
+UI_UNLOAD,Unload,Desembarcar
+UI_GARRISON_STATUS,Garrison: %d / %d,Tripulación: %d / %d
 ACTION_FISH_TRAP,Fish Trap,Trampa de Peces
 ACTION_TRANSPORT_SHIP,Transport Ship,Barco de Transporte
 ACTION_WAR_GALLEY,War Galley,Galera de Guerra

@@ -472,6 +472,29 @@ func _handle_right_click(world_pos: Vector2) -> void:
 			_flash_target(_selected_building, Color(1.0, 0.92, 0.2, 1.0))
 		return
 
+	# 0a. Own transport ship clicked with boardable land units → board
+	var transport: TransportShip = _find_own_transport_at(world_pos)
+	if transport != null and not transport.is_full():
+		var any_boarded: bool = false
+		for unit: Node in _selected_units.duplicate():
+			if not is_instance_valid(unit) or unit is ShipBase:
+				continue
+			var pid: Variant = unit.get("player_id")
+			if pid == null or (pid as int) != 0:
+				continue
+			_order_board(unit, transport)
+			any_boarded = true
+		if any_boarded:
+			_flash_target(transport, Color(0.4, 1.0, 0.4, 1.0))
+			return
+
+	# 0b. Transport ship selected → right-click on land = move then unload
+	if _selected_units.size() == 1 and _selected_units[0] is TransportShip:
+		var ts: TransportShip = _selected_units[0] as TransportShip
+		if not ts._garrison.is_empty() and not TerrainManager.is_ocean(world_pos):
+			ts.order_move_then_unload(world_pos)
+			return
+
 	# 1. Enemy unit clicked → attack
 	var enemy_unit: Node = _find_enemy_unit_at(world_pos)
 	if enemy_unit != null:
@@ -544,6 +567,49 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		return
 
 	_order_move_all(world_pos)
+
+func _find_own_transport_at(world_pos: Vector2) -> TransportShip:
+	for unit: Node in units_layer.get_children():
+		if not (unit is TransportShip):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != 0:
+			continue
+		if world_pos.distance_to((unit as Node2D).global_position) < UNIT_CLICK_RADIUS:
+			return unit as TransportShip
+	return null
+
+func _order_board(unit: Node, transport: TransportShip) -> void:
+	# Make the unit walk toward the transport; board once in range.
+	# We use a lightweight polling approach: move the unit toward the ship
+	# and board immediately if already close, otherwise let movement handle it.
+	var dist: float = (unit as Node2D).global_position.distance_to(
+		(transport as Node2D).global_position)
+	if dist <= TransportShip.BOARD_RANGE:
+		transport.board(unit)
+		_selected_units.erase(unit)
+		SelectionManager.select(_selected_units)
+	else:
+		# Move toward ship; boarding completes when the unit arrives via _board_poll
+		if unit.has_method("order_move"):
+			unit.call("order_move", (transport as Node2D).global_position)
+		_start_board_poll(unit, transport)
+
+func _start_board_poll(unit: Node, transport: TransportShip) -> void:
+	# Poll each physics frame until close enough, then board.
+	var timer: SceneTreeTimer = get_tree().create_timer(0.1)
+	timer.timeout.connect(func() -> void:
+		if not is_instance_valid(unit) or not is_instance_valid(transport):
+			return
+		var d: float = (unit as Node2D).global_position.distance_to(
+			(transport as Node2D).global_position)
+		if d <= TransportShip.BOARD_RANGE:
+			transport.board(unit)
+			_selected_units.erase(unit)
+			SelectionManager.select(_selected_units)
+		else:
+			_start_board_poll(unit, transport)
+	)
 
 func _find_animal_at(world_pos: Vector2) -> Animal:
 	for unit: Node in units_layer.get_children():
@@ -1000,6 +1066,11 @@ func _on_action_requested(action_id: String) -> void:
 		"gate_lock":
 			if is_instance_valid(_selected_building) and _selected_building is Gate:
 				(_selected_building as Gate).toggle_lock()
+		"unload":
+			for unit: Node in _selected_units:
+				if unit is TransportShip:
+					(unit as TransportShip).unload_all()
+					break
 		"stop":
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):
