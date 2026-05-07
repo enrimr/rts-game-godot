@@ -3,6 +3,7 @@
 *.translation
 export_presets.cfg
 *.import
+*.uid
 
 # OS
 .DS_Store
