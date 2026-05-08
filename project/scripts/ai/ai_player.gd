@@ -315,6 +315,12 @@ func _launch_attack() -> void:
 		min_units = maxi(min_units - 1, 1)
 	if mcount < min_units:
 		return
+
+	# Pick the nearest enemy building to attack — if none found fall back to TC
+	var target: Node = _find_nearest_enemy_building()
+	if target == null:
+		target = enemy_town_center
+
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
 			continue
@@ -323,7 +329,32 @@ func _launch_attack() -> void:
 			continue
 		if unit is Militia or unit is Archer or unit is Pikeman:
 			if unit.has_method("order_attack"):
-				unit.order_attack(enemy_town_center)
+				unit.order_attack(target)
+
+func _find_nearest_enemy_building() -> Node:
+	# Find the closest enemy building (player_id 0) to our own town center
+	var origin: Vector2 = town_center.global_position if is_instance_valid(town_center) else Vector2.ZERO
+	var best: Node = null
+	var best_dist: float = INF
+	# Check player TC
+	if is_instance_valid(enemy_town_center):
+		best = enemy_town_center
+		best_dist = origin.distance_to((enemy_town_center as Node2D).global_position)
+	# Check all enemy buildings in the buildings layer
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		var sv: Variant = building.get("state")
+		if sv != null and (sv as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
+			continue
+		var d: float = origin.distance_to((building as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = building
+	return best
 
 func _check_zone_threat() -> void:
 	if not is_instance_valid(town_center):
