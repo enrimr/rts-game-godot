@@ -11,6 +11,7 @@ const BUILDING_SCENES: Dictionary = {
 	"mining_camp": "res://scenes/buildings/mining_camp.tscn",
 	"farm":        "res://scenes/buildings/farm.tscn",
 	"dock":        "res://scenes/buildings/dock.tscn",
+	"fish_trap":   "res://scenes/buildings/fish_trap.tscn",
 }
 const BUILDING_COSTS: Dictionary = {
 	"barracks":    {"wood": 175},
@@ -19,6 +20,7 @@ const BUILDING_COSTS: Dictionary = {
 	"mining_camp": {"wood": 100},
 	"farm":        {"wood": 60},
 	"dock":        {"wood": 150},
+	"fish_trap":   {"wood": 75},
 }
 
 const TICK_INTERVAL: float        = 2.0
@@ -103,6 +105,7 @@ func _run_tick() -> void:
 	if _is_naval_map():
 		_manage_naval()
 		_manage_naval_patrol()
+		_manage_fishing_boats()
 
 # ── Population ───────────────────────────────────────────────────────────────
 
@@ -449,6 +452,92 @@ func _manage_naval() -> void:
 	if age >= GameManager.Age.CASTLE and galleys < 4 \
 			and ResourceManager.can_afford(player_id, {"wood": 75, "gold": 35}):
 		dk.order_train("war_galley")
+
+func _manage_fishing_boats() -> void:
+	var dock: Node = _find_own_dock()
+	if dock == null:
+		return
+	var dk_pos: Vector2 = (dock as Node2D).global_position
+
+	# Check if any wild fish node exists in the ocean
+	var fish_node: Node = _find_nearest_fish_node(dk_pos)
+
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit) or not (unit is FishingBoat):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		var fb: FishingBoat = unit as FishingBoat
+		if fb.current_state != UnitBase.UnitState.IDLE:
+			continue
+
+		if fish_node != null:
+			# Send to nearest wild fish bank
+			fb.order_fish(fish_node, dock)
+		else:
+			# No wild fish — look for an existing own fish trap that isn't depleted
+			var trap: FishTrap = _find_own_fish_trap()
+			if trap != null:
+				fb.order_fish(trap, dock)
+			else:
+				# Build a fish trap if we can afford it
+				if ResourceManager.can_afford(player_id, BUILDING_COSTS["fish_trap"]):
+					_build_fish_trap(fb, dock)
+
+func _find_nearest_fish_node(from: Vector2) -> Node:
+	var best: Node = null
+	var best_dist: float = INF
+	for node: Node in get_tree().get_nodes_in_group("resource_nodes"):
+		var rtype: Variant = node.get("resource_type")
+		if rtype == null or (rtype as int) != ResourceNode.ResourceType.FOOD_FISH:
+			continue
+		var d: float = from.distance_to((node as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = node
+	return best
+
+func _find_own_fish_trap() -> FishTrap:
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building) or not (building is FishTrap):
+			continue
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		var ft: FishTrap = building as FishTrap
+		if ft.state == BuildingBase.BuildingState.COMPLETE and not ft.is_depleted():
+			return ft
+	return null
+
+func _build_fish_trap(boat: FishingBoat, dock: Node) -> void:
+	# Place the fish trap in the ocean near the dock
+	var pos: Vector2 = _find_ocean_build_pos((dock as Node2D).global_position, 80.0, 200.0)
+	if pos == Vector2.ZERO:
+		return
+	var scene_path: String = BUILDING_SCENES.get("fish_trap", "") as String
+	var packed: PackedScene = load(scene_path) as PackedScene
+	if packed == null:
+		return
+	var b: Node2D = packed.instantiate() as Node2D
+	b.global_position = pos
+	b.set("player_id", player_id)
+	buildings_layer.add_child(b)
+	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
+	b.add_construction(100.0)
+	EventBus.building_placed.emit(b, player_id)
+	ResourceManager.spend_resource(player_id, BUILDING_COSTS["fish_trap"])
+	# Send the boat to build it, then it will auto-fish once construction completes
+	boat.order_build(b)
+
+func _find_ocean_build_pos(origin: Vector2, min_r: float, max_r: float) -> Vector2:
+	for _i: int in range(24):
+		var angle: float = randf() * TAU
+		var dist: float = randf_range(min_r, max_r)
+		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * dist
+		if TerrainManager.is_ocean(pos):
+			return pos
+	return Vector2.ZERO
 
 func _manage_naval_patrol() -> void:
 	# Send war galleys to explore/patrol toward the enemy side of the map

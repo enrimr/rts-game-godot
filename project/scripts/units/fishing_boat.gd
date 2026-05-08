@@ -51,8 +51,13 @@ func order_build(target: Node) -> void:
 		target.construction_complete.connect(_on_construction_complete, CONNECT_ONE_SHOT)
 
 func _on_construction_complete() -> void:
+	var completed: Node = build_target
 	build_target = null
-	current_state = UnitState.IDLE
+	# Immediately start fishing from the just-built trap if it's a FishTrap
+	if is_instance_valid(completed) and completed is FishTrap and is_instance_valid(drop_off_target):
+		order_fish(completed, drop_off_target)
+	else:
+		current_state = UnitState.IDLE
 
 func order_move(destination: Vector2) -> void:
 	fish_target = null
@@ -160,11 +165,14 @@ func _find_new_fish() -> void:
 		if d < best_dist:
 			best_dist = d
 			best = node
-	# Also check fish traps in range
+	# Also check own fish traps
 	for node: Node in get_tree().get_nodes_in_group("buildings"):
 		if not (node is FishTrap):
 			continue
 		var ft: FishTrap = node as FishTrap
+		var ft_pid: Variant = ft.get("player_id")
+		if ft_pid == null or (ft_pid as int) != player_id:
+			continue
 		if ft.state != BuildingBase.BuildingState.COMPLETE or ft.is_depleted():
 			continue
 		var d: float = global_position.distance_to((ft as Node2D).global_position)
