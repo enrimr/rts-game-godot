@@ -246,7 +246,7 @@ El Muelle debe colocarse en tierra **adyacente al agua**. Es el único edificio 
 | Unidad | Edad | Coste | Función |
 |---|---|---|---|
 | **Barca Pesquera** | Edad Oscura | 75 Madera | Económica — recolecta peces de nodos oceánicos y devuelve Comida al Muelle más cercano |
-| **Barco de Transporte** | Edad Feudal | 125 Madera | Se mueve por el agua; sin combate (sistema de guarnición en un hito futuro) |
+| **Barco de Transporte** | Edad Feudal | 125 Madera | Embarca unidades militares (Milicia, Arquero, Piquero, Explorador, Héroe) para cruzar el estrecho; los Aldeanos no pueden embarcar |
 | **Galera de Guerra** | Edad Feudal | 75 Madera + 35 Oro | Combate naval a distancia: 6 de ataque, 5.5 de alcance, 120 PV |
 
 ### Pesca
@@ -254,6 +254,8 @@ El Muelle debe colocarse en tierra **adyacente al agua**. Es el único edificio 
 Los nodos de peces aparecen en el océano entre las islas. Haz clic derecho en un nodo de peces con una **Barca Pesquera** para comenzar a recolectar. La barca recolecta automáticamente y regresa al Muelle amigo más cercano para entregar comida. Hacer clic derecho en un Muelle mientras se llevan peces también activa la entrega inmediata.
 
 La pesca cuenta hacia el mismo almacén de **Comida** que las granjas y la caza, lo que convierte a las Barcas Pesqueras en una inversión sólida en la primera fase del juego en mapas de Islas — se amortizan rápidamente y no requieren ningún espacio de tierra.
+
+Las Barcas Pesqueras también pueden construir **Trampas de Pesca** directamente sobre casillas oceánicas. Una Trampa de Pesca regenera comida con el tiempo sin necesidad de que la barca viaje a un nodo de recursos, ofreciendo un flujo pasivo de comida de bajo mantenimiento.
 
 ### Consejos navales
 
@@ -268,10 +270,10 @@ La pesca cuenta hacia el mismo almacén de **Comida** que las granjas y la caza,
 
 | Mapa | Descripción | Nota estratégica |
 |---|---|---|
-| **Isla Única** | Una isla, borde oceánico | El control del centro es decisivo |
-| **Archipiélago** | 2-3 islas, océano entre ellas | Flota necesaria para expandirse; Britanos/Atlantes con ventaja |
+| **Estándar** | Terreno variado en tierra | Juego general |
 | **Costa Volcánica** | Franja costera con caldera impasable en el centro | Divide el mapa en dos corredores; Guanches con ventaja |
 | **Costa Desértica** | Árido, escaso en madera, océano al oeste | Mahos con ventaja; Castellanos sufren sin madera |
+| **Islas** | Dos islas separadas por océano | Naval imprescindible; construye un Muelle pronto — controlar el estrecho es clave |
 
 ---
 
@@ -280,7 +282,8 @@ La pesca cuenta hacia el mismo almacén de **Comida** que las granjas y la caza,
 Antes de iniciar una escaramuza eliges:
 
 - **Tamaño del mapa** — Pequeño, Mediano o Grande
-- **Recursos iniciales** — Escasos, Normales o Abundantes
+- **Tipo de mapa** — Estándar / Costa Volcánica / Costa Desértica / Islas
+- **Recursos iniciales** — Escasos / Normales / Abundantes / **Combate Total** (todos los recursos a 9999)
 - **Civilización** — una de las ocho
 - **Edad de inicio** — Oscura, Feudal, Castillo o Imperial
 

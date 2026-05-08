@@ -246,7 +246,7 @@ The Dock must be placed on land **adjacent to water**. It is the only building f
 | Unit | Age | Cost | Role |
 |---|---|---|---|
 | **Fishing Boat** | Dark Age | 75 Wood | Economic — gathers fish from ocean nodes and returns food to the nearest Dock |
-| **Transport Ship** | Feudal Age | 125 Wood | Moves across water; cannot fight (garrison system coming in a later milestone) |
+| **Transport Ship** | Feudal Age | 125 Wood | Boards military units (Militia, Archer, Pikeman, Scout, Hero) to cross the strait; Villagers cannot board |
 | **War Galley** | Feudal Age | 75 Wood + 35 Gold | Ranged naval combat: 6 attack, 5.5 range, 120 HP |
 
 ### Fishing
@@ -254,6 +254,8 @@ The Dock must be placed on land **adjacent to water**. It is the only building f
 Fish nodes appear in the ocean between islands. Right-click a fish node with a **Fishing Boat** to begin gathering. The boat gathers automatically and then returns to the nearest friendly Dock to drop off food. Right-clicking a Dock while carrying fish also triggers an immediate drop-off.
 
 Fish counts toward the same **Food** stockpile as farms and hunting, making Fishing Boats a strong early-game investment on Islands maps — they pay for themselves quickly and do not require any land.
+
+Fishing Boats can also build **Fish Traps** directly on ocean tiles. A Fish Trap regenerates food over time without requiring the boat to travel back and forth to a node, providing a low-maintenance passive food stream.
 
 ### Naval tips
 
@@ -268,10 +270,10 @@ Fish counts toward the same **Food** stockpile as farms and hunting, making Fish
 
 | Map | Description | Strategic note |
 |---|---|---|
-| **Single Island** | One island, ocean border | Central control is decisive |
-| **Archipelago** | 2–3 islands, ocean between them | Fleet required for expansion; Britanos/Atlantes advantaged |
+| **Standard** | Mixed land terrain | General-purpose play |
 | **Volcanic Coast** | Coastal strip with impassable caldera at center | Divides map into two corridors; Guanches advantaged |
 | **Desert Coast** | Arid, wood-scarce, ocean to the west | Mahos advantaged; Castellanos struggle without wood |
+| **Islands** | Two islands separated by ocean | Naval required; build a Dock early — control the strait to win |
 
 ---
 
@@ -280,7 +282,8 @@ Fish counts toward the same **Food** stockpile as farms and hunting, making Fish
 Before starting a skirmish you choose:
 
 - **Map size** — Small, Medium, or Large
-- **Starting resources** — Scarce, Normal, or Abundant
+- **Map type** — Standard / Volcanic Coast / Desert Coast / Islands
+- **Starting resources** — Scarce / Normal / Abundant / **Full Combat** (all resources 9999)
 - **Civilization** — one of the eight
 - **Starting Age** — Dark, Feudal, Castle, or Imperial
 

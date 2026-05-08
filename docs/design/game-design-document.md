@@ -90,10 +90,10 @@ Hero rules:
 
 | Map | Description | Strategic focus |
 |---|---|---|
-| **Single Island** | Land surrounded by ocean | Central control, no naval escape |
-| **Archipelago** | 2–3 islands, naval routes between them | Fleet required for expansion |
+| **Standard** | Land map with varied terrain | General play |
 | **Volcanic Coast** | Coastal land with impassable caldera at center | Two land corridors, Guanches advantaged |
 | **Desert Coast** | Arid Lanzarote-style map, ocean to the west | Wood-scarce, Mahos advantaged |
+| **Islands** | Two islands separated by ocean | Naval required; Dock, Fishing Boats, Transport Ships, War Galleys essential |
 
 ---
 
@@ -140,8 +140,8 @@ The Dock is the sole production building for naval units. Fishing Boats automati
 
 | Unit | Age | Cost | HP | Attack | Range | Role |
 |---|---|---|---|---|---|---|
-| **Fishing Boat** | Dark | 75W | — | — | — | Gathers FOOD_FISH from ocean nodes; returns food to Dock |
-| **Transport Ship** | Feudal | 125W | — | — | — | Ocean movement only; no combat (garrison system, future milestone) |
+| **Fishing Boat** | Dark | 75W | — | — | — | Gathers FOOD_FISH from ocean nodes; returns food to Dock; can build Fish Traps |
+| **Transport Ship** | Feudal | 125W | — | — | — | Boards military units (Militia, Archer, Pikeman, Scout, Hero); Villagers blocked |
 | **War Galley** | Feudal | 75W + 35G | 120 | 6 | 5.5 | Ranged naval combat |
 
 ## Win Conditions
@@ -159,7 +159,8 @@ Players configure a skirmish before starting:
 | Option | Values |
 |---|---|
 | Map Size | Small / Medium / Large |
-| Starting Resources | Scarce / Normal / Abundant |
+| Map Type | Standard / Volcanic Coast / Desert Coast / Islands |
+| Starting Resources | Scarce / Normal / Abundant / Full Combat (all resources 9999) |
 | Civilization | Choose from 8 civs |
 | Starting Age | Dark / Feudal / Castle / Imperial |
 
@@ -171,10 +172,9 @@ Players configure a skirmish before starting:
 |---|---|---|
 | M1 | Playable map with villagers gathering resources | Done |
 | M2 | Town Center, Barracks, walls, basic military | Done |
-| M3 | Full tech tree for one civilization | In progress |
-| M4 | AI opponent | Done |
-| M5 | All 8 civilizations with unique content | Planned |
-| M6 | Hero units for each civilization | Planned |
-| M7 | Custom terrain tiles (malpaís, dune, risco, laurisilva) | Planned |
-| M8 | All 4 map types with generators | Planned |
-| M9 | Multiplayer (LAN) | Planned |
+| M3 | Full tech tree, naval gameplay, Islands map, 8 civilizations | In progress |
+| M4 | AI opponent with naval assault on Islands | Done |
+| M5 | All 8 civilizations with unique content and hero units | Planned |
+| M6 | Custom terrain tiles (malpaís, dune, risco, laurisilva) | Planned |
+| M7 | All map types with generators | Planned |
+| M8 | Multiplayer (LAN) | Planned |

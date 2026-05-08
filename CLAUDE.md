@@ -7,7 +7,7 @@ An Age of Empires II inspired 2D real-time strategy game built in **Godot 4** wi
 - **Engine**: Godot 4.3+
 - **Language**: GDScript (no C#)
 - **Genre**: 2D real-time strategy (top-down isometric-style)
-- **Scope**: Single-player skirmish vs AI, 5 civilizations, multiplayer planned later
+- **Scope**: Single-player skirmish vs AI, 8 civilizations, multiplayer planned later
 
 ## Repository Layout
 
@@ -16,7 +16,7 @@ project/          ← Open this in Godot editor (contains project.godot)
   assets/         ← Art, audio, fonts, shaders
   scenes/         ← .tscn scene files
   scripts/        ← .gd source files
-    core/         ← Singletons: GameManager, EventBus, ResourceManager, SelectionManager
+    core/         ← Singletons: GameManager, EventBus, ResourceManager, SelectionManager, CivBonusManager, TechManager
     units/        ← UnitBase, Villager, military unit classes
     buildings/    ← BuildingBase and specific building scripts
     economy/      ← ResourceNode, drop-off logic
@@ -36,7 +36,7 @@ docs/             ← Architecture and design documentation
 
 1. **EventBus pattern** — cross-system communication happens exclusively through signals on `EventBus` (autoload). Never call methods across system boundaries directly.
 2. **Data-driven resources** — all tuneable values live in `Resource` subclasses under `resources/`. Scripts read from resources; they do not hardcode stats.
-3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `ResourceManager`, `SelectionManager` — access these by name anywhere.
+3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager` — access these by name anywhere.
 4. **Type hints everywhere** — every GDScript function must declare parameter types and return type.
 
 ## Key Files
@@ -57,6 +57,8 @@ docs/             ← Architecture and design documentation
 | `project/scripts/ui/hud_manager.gd` | CanvasLayer controller: wires EventBus/GameManager signals, drives all HUD child nodes |
 | `project/scripts/ui/resource_display.gd` | `ResourceDisplay` — HBoxContainer showing one resource icon + amount |
 | `project/scripts/ui/unit_portrait.gd` | `UnitPortrait` — PanelContainer showing unit name abbreviation and HP bar in selection grid |
+| `project/scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, and age-up costs |
+| `project/scripts/core/tech_manager.gd` | Research queue, applies technology effects to units |
 
 ## Coding Conventions
 
@@ -86,7 +88,7 @@ Run from the GUT panel inside Godot editor, or headlessly via CI.
 
 ## Current Milestone
 
-**M1** — Playable map with villagers that gather resources and return to a drop-off building.
+**M3** — Full tech tree, 8 civilizations with unique content, naval gameplay on Islands maps.
 
 ## Sub-agents
 

@@ -28,6 +28,8 @@ Uses Godot's built-in `NavigationAgent2D` on each unit. Navigation regions are u
 |---|---|---|
 | `is_impassable_for` | `(world_pos: Vector2, civ_id: String) -> bool` | Returns `true` if the tile at `world_pos` is impassable for the given civilization |
 | `nearest_passable` | `(world_pos: Vector2, civ_id: String) -> Vector2` | Radial search (30 rings × 24 px step) returning the closest passable position |
+| `nearest_ocean` | `(world_pos: Vector2) -> Vector2` | Spiral search returning the closest ocean tile — used to guarantee ship spawns land in water |
+| `bake_minimap_texture` | `() -> ImageTexture` | Generates a 256×256 terrain texture used by the minimap renderer |
 
 **Integration points:**
 
@@ -48,9 +50,28 @@ This means ship units — whose `civ_id` resolves to a civ that has ocean marked
 
 Tracked per-player as a boolean grid. Revealed when any unit/building has line of sight of a cell. Stored in `MapManager._fog_revealed`.
 
+## Tech Tree System
+
+Technologies are defined as `TechnologyResource` `.tres` files under `resources/technologies/`. Eight technologies are currently implemented:
+
+| Technology | Researched at | Cost | Effect |
+|---|---|---|---|
+| `loom` | Barracks | Food | Villager HP / armor |
+| `fletching` | Barracks | Food / Gold | Archer attack / range |
+| `scale_barding` | Barracks | Food / Gold | Cavalry armor |
+| `bodkin_arrow` | Barracks | Food / Gold | Archer attack |
+| `chain_barding` | Barracks | Food / Gold | Cavalry armor |
+| `blast_furnace` | Barracks | Food / Gold | Infantry attack |
+| `plate_barding` | Barracks | Food / Gold | Cavalry armor |
+| `shipwright` | Barracks | Food / Gold | Ship speed / cost |
+
+`TechManager` (autoload) owns the research queue and applies effects when research completes. `CivBonusManager` (autoload) stores per-player multipliers derived from civilization bonuses and applied techs.
+
 ## AI System
 
 `AIPlayer` runs on a 1-second tick rather than every frame. Strategy enum controls economic vs. military priorities. Difficulty scales timings and reaction windows.
+
+The AI builds lumber camps, mining camps, farms, and multiple barracks as its economy grows. On **Islands** maps the AI also builds a Dock, trains fishing boats, war galleys, and a transport ship. The naval assault sequence boards military units onto the transport ship and sails to the enemy shore. The AI attacks the nearest enemy building rather than always targeting the Town Center.
 
 ## UI / HUD System
 
@@ -90,7 +111,7 @@ All naval units extend `ShipBase` (`scripts/units/ship_base.gd`), which itself e
 | Unit | Script | Age | Cost | Notes |
 |---|---|---|---|---|
 | Fishing Boat | `scripts/units/fishing_boat.gd` | Dark | 75W | Gathers `FOOD_FISH` from ocean nodes; returns food to nearest friendly Dock |
-| Transport Ship | `scripts/units/transport_ship.gd` | Feudal | 125W | No combat; reserved for the garrison/transport milestone |
+| Transport Ship | `scripts/units/transport_ship.gd` | Feudal | 125W | No combat; boards military units (Militia, Archer, Pikeman, Scout, Hero) — Villagers cannot board |
 | War Galley | `scripts/units/war_galley.gd` | Feudal | 75W + 35G | Ranged naval combat: 6 attack, 5.5 range, 120 HP |
 
 ### Dock building
@@ -103,6 +124,10 @@ All naval units extend `ShipBase` (`scripts/units/ship_base.gd`), which itself e
 - HUD hotkey: **D** in the build menu.
 
 Fishing boats automatically return food to the nearest friendly Dock. Right-clicking a Dock while carrying fish triggers the drop-off.
+
+Fishing boats can also construct a **Fish Trap** on ocean tiles. Fish Traps are ocean buildings that regenerate food over time, providing a passive food source that does not require the boat to travel to a resource node.
+
+Map boundary walls (invisible `NavigationObstacle2D` nodes along the map edges) prevent ships from sailing outside the playable area.
 
 ## Age Advancement
 

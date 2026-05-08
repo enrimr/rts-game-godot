@@ -12,6 +12,8 @@ Calima Kingdoms: Flames of the Atlantic is a 2D real-time strategy game built in
 | EventBus | `scripts/core/event_bus.gd` | Decoupled signal dispatch |
 | ResourceManager | `scripts/core/resource_manager.gd` | Per-player resource stockpiles |
 | SelectionManager | `scripts/core/selection_manager.gd` | Unit/building selection |
+| CivBonusManager | `scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, age-up costs |
+| TechManager | `scripts/core/tech_manager.gd` | Research queue, applies technology effects |
 | MapManager | `scripts/map/map_manager.gd` | Tile map, fog of war, pathfinding |
 | TerrainManager | `scripts/map/terrain_manager.gd` | Impassability queries and nearest-passable search for all units |
 | HUD | `scripts/ui/hud_manager.gd` | In-game overlay: resources, selection panel, age label, game clock, pause overlay (scene: `scenes/ui/hud/hud.tscn`) |
@@ -29,6 +31,8 @@ The following nodes are registered as autoloads in `project.godot`:
 - `EventBus` → `scripts/core/event_bus.gd`
 - `ResourceManager` → `scripts/core/resource_manager.gd`
 - `SelectionManager` → `scripts/core/selection_manager.gd`
+- `CivBonusManager` → `scripts/core/civ_bonus_manager.gd`
+- `TechManager` → `scripts/core/tech_manager.gd`
 - `TerrainManager` → `scripts/map/terrain_manager.gd`
 
 ## Data Layer

@@ -53,6 +53,17 @@ Shortcut keys are shown in brackets on each button, e.g. **[V] Villager**.
 | Barracks | M — Militia, A — Archer (Feudal+), P — Pikeman (Castle+) |
 | Villager selected | B — Build menu, C — Gather Wood, G — Gather Gold, T — Gather Stone, H — Gather Food, X — Stop |
 
+### Pause menu
+
+Press **Escape** or click the **☰** button (top-right corner) to open the pause menu.
+
+| Option | Action |
+|---|---|
+| Resume | Close the menu and continue playing |
+| Settings | Adjust music volume, SFX volume, and language |
+| Surrender | Concede the match |
+| Exit | Return to the main menu |
+
 ---
 
 ## Resources
@@ -176,12 +187,27 @@ Enemy buildings appear in explored cells but do not update — scout to confirm 
 
 ---
 
+## Match setup
+
+Before starting a skirmish you choose:
+
+- **Map size** — Small, Medium, or Large
+- **Map type** — Standard / Volcanic Coast / Desert Coast / Islands
+- **Starting resources** — Scarce / Normal / Abundant / **Full Combat** (all resources 9999 — skips the economy phase entirely)
+- **Civilization** — one of the eight
+- **Starting Age** — Dark, Feudal, Castle, or Imperial
+
+---
+
 ## AI behaviour
 
 The enemy AI:
 
-- Gathers resources and builds a Barracks automatically.
+- Gathers resources and builds a Barracks, Lumber Camp, Mining Camp, and Farms automatically.
+- Builds multiple Barracks as the economy scales.
 - Trains units and launches attacks every 30 seconds (faster when aggressive).
 - Advances Ages as soon as it can afford to.
 - **Escalates aggression** if you attack its units or enter its base — interval drops to ~10 s and it rallies all soldiers to defend.
 - Upgrades its military as Ages unlock new units (Archer in Feudal, Pikeman in Castle).
+- Attacks the **nearest enemy building**, not always the Town Center.
+- On **Islands** maps: builds a Dock, trains Fishing Boats and War Galleys, then loads military units onto a Transport Ship for a naval assault on the enemy shore.

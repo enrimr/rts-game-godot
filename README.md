@@ -19,7 +19,11 @@ Active development — core gameplay loop playable. See [GAMEPLAY.md](GAMEPLAY.m
   - Castle unlocks Pikeman in the Barracks
 - Sheep conversion (nearest unit claims them)
 - Scout unit for each team at game start
-- AI opponent: gathers resources, builds a Barracks, trains and attacks, advances Ages, escalates aggression when threatened
+- AI opponent: gathers resources, builds Barracks/Lumber Camps/Mining Camps/Farms, trains and attacks, advances Ages, escalates aggression when threatened; on Islands maps builds a Dock and executes naval assaults
+- **Naval gameplay** on Islands maps: Dock, Fishing Boat, Transport Ship, War Galley; fish traps; naval AI assault
+- Tech tree with 8 technologies (loom, fletching, blast furnace, etc.) researched at the Barracks
+- Match lobby with map type (Standard / Volcanic Coast / Desert Coast / Islands) and resource mode (Scarce / Normal / Abundant / Full Combat)
+- In-game pause menu (Escape or ☰): Resume, Settings, Surrender, Exit
 - Minimap with right-click to move selected units
 - Camera follow selected unit group
 - Population cap (Houses expand it)
@@ -80,9 +84,10 @@ Full architecture notes: [CLAUDE.md](CLAUDE.md) · [docs/architecture/overview.m
 | M1 | Villagers gather resources, basic map | Done |
 | M2 | Town Center, Barracks, military, fog of war | Done |
 | M3 | Age progression, new units (Archer, Pikeman) | Done |
-| M4 | Full tech tree for one civilization | Planned |
-| M5 | Five civilizations with unique content | Planned |
-| M6 | Multiplayer (LAN) | Planned |
+| M4 | Naval gameplay (Dock, ships, Islands map), tech tree, 8 civs | In progress |
+| M5 | All 8 civilizations with hero units and unique content | Planned |
+| M6 | Custom terrain tiles (malpaís, dune, risco, laurisilva) | Planned |
+| M7 | Multiplayer (LAN) | Planned |
 
 ## Contributing
 
