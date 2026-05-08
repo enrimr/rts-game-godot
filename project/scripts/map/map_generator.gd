@@ -914,7 +914,7 @@ func _add_nav_obstacles(parent: Node2D) -> void:
 		# Ocean mesh: full-map rect with each land island as a CW hole,
 		# so ships can navigate everywhere except the land blobs.
 		if ocean_region != null:
-			var half: float = _map_half * 1.05
+			var half: float = _map_half  # exact boundary — no overshoot
 			# Outer boundary CCW
 			var ocean_poly: NavigationPolygon = NavigationPolygon.new()
 			ocean_poly.add_outline(PackedVector2Array([
@@ -930,6 +930,8 @@ func _add_nav_obstacles(parent: Node2D) -> void:
 				ocean_poly.add_outline(rev)
 			ocean_poly.make_polygons_from_outlines()
 			ocean_region.navigation_polygon = ocean_poly
+			# Physical walls so ships cannot sail past the map edge
+			_add_ocean_boundary_walls(parent, half)
 
 	# Solid impassable zones → NavigationObstacle2D on the land region
 	const IMPASSABLE: Array = [
@@ -952,3 +954,26 @@ func _add_nav_obstacles(parent: Node2D) -> void:
 		obstacle.vertices = pts
 		obstacle.position = center
 		land_region.add_child(obstacle)
+
+# Places four thin StaticBody2D walls along the map edges so ships
+# (CharacterBody2D on the ocean layer) cannot navigate outside the playable area.
+func _add_ocean_boundary_walls(parent: Node2D, half: float) -> void:
+	const THICKNESS: float = 40.0
+	# [position, half-size]
+	var walls: Array = [
+		[Vector2(0.0,        -half - THICKNESS * 0.5), Vector2(half + THICKNESS, THICKNESS)],  # top
+		[Vector2(0.0,         half + THICKNESS * 0.5), Vector2(half + THICKNESS, THICKNESS)],  # bottom
+		[Vector2(-half - THICKNESS * 0.5, 0.0),        Vector2(THICKNESS, half + THICKNESS)],  # left
+		[Vector2( half + THICKNESS * 0.5, 0.0),        Vector2(THICKNESS, half + THICKNESS)],  # right
+	]
+	for w: Array in walls:
+		var body: StaticBody2D = StaticBody2D.new()
+		body.position = w[0] as Vector2
+		body.collision_layer = 1
+		body.collision_mask  = 0
+		var shape: CollisionShape2D = CollisionShape2D.new()
+		var rect: RectangleShape2D = RectangleShape2D.new()
+		rect.size = (w[1] as Vector2) * 2.0
+		shape.shape = rect
+		body.add_child(shape)
+		parent.add_child(body)
