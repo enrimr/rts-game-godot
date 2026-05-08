@@ -96,12 +96,25 @@ var _stat_buildings_built: int = 0
 var _stat_enemies_killed: int = 0
 var _stat_resources_gathered: Dictionary = {"food": 0, "wood": 0, "gold": 0, "stone": 0}
 
-# Rival stats (player_id 1)
+# Rival stats — indexed by player_id (supports any number of rivals)
+# Kept as separate vars for compatibility with snapshot/chart code (player_id 1)
 var _ai_stat_units_trained: int = 0
 var _ai_stat_buildings_built: int = 0
 var _ai_stat_units_lost: int = 0
 var _ai_stat_resources_gathered: Dictionary = {"food": 0, "wood": 0, "gold": 0, "stone": 0}
 var _ai_last_resources: Dictionary = {}
+
+# Extended per-rival stats: rival_player_id → stat dict
+var _rival_stats: Dictionary = {}       # int → Dictionary
+var _rival_last_res: Dictionary = {}    # int → Dictionary
+
+func _init_rival_stats(rival_id: int) -> void:
+	_rival_stats[rival_id] = {
+		"units_trained": 0, "buildings_built": 0,
+		"units_lost": 0,
+		"resources": {"food": 0, "wood": 0, "gold": 0, "stone": 0},
+	}
+	_rival_last_res[rival_id] = {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -395,6 +408,8 @@ func _on_game_started() -> void:
 	var starting: Dictionary = ResourceManager.get_resources(local_player_id)
 	update_resources(local_player_id, starting)
 	_last_resources = starting.duplicate()
+	for rival_id: int in MatchConfig.get_rival_player_ids():
+		_init_rival_stats(rival_id)
 
 func _on_resource_changed(player_id: int, resource: String, amount: int) -> void:
 	if player_id != local_player_id:
@@ -927,7 +942,11 @@ func _on_stat_unit_spawned(_unit: Node, player_id: int) -> void:
 	if player_id == local_player_id:
 		_stat_units_trained += 1
 	else:
-		_ai_stat_units_trained += 1
+		if player_id == 1:
+			_ai_stat_units_trained += 1
+		if _rival_stats.has(player_id):
+			(_rival_stats[player_id] as Dictionary)["units_trained"] = \
+				((_rival_stats[player_id] as Dictionary)["units_trained"] as int) + 1
 
 func _on_stat_building_complete(building: Node) -> void:
 	var pid: Variant = building.get("player_id")
@@ -936,7 +955,11 @@ func _on_stat_building_complete(building: Node) -> void:
 	if (pid as int) == local_player_id:
 		_stat_buildings_built += 1
 	else:
-		_ai_stat_buildings_built += 1
+		if (pid as int) == 1:
+			_ai_stat_buildings_built += 1
+		if _rival_stats.has(pid as int):
+			(_rival_stats[pid as int] as Dictionary)["buildings_built"] = \
+				((_rival_stats[pid as int] as Dictionary)["buildings_built"] as int) + 1
 
 func _on_stat_unit_died(unit: Node, player_id: int) -> void:
 	var udata: Variant = unit.get("unit_data")
@@ -944,8 +967,15 @@ func _on_stat_unit_died(unit: Node, player_id: int) -> void:
 		return
 	if player_id != local_player_id:
 		_stat_enemies_killed += 1
+		if player_id == 1:
+			_ai_stat_units_lost += 1
+		if _rival_stats.has(player_id):
+			(_rival_stats[player_id] as Dictionary)["units_lost"] = \
+				((_rival_stats[player_id] as Dictionary)["units_lost"] as int) + 1
 	else:
-		_ai_stat_units_lost += 1
+		if _rival_stats.has(1):
+			(_rival_stats[1] as Dictionary)["units_lost"] = \
+				((_rival_stats[1] as Dictionary)["units_lost"] as int) + 1
 
 var _last_resources: Dictionary = {}
 
@@ -1009,10 +1039,22 @@ func _on_stat_resources_updated(player_id: int, resources: Dictionary) -> void:
 				_stat_resources_gathered[res] = (_stat_resources_gathered[res] as int) + int(current - last)
 			_last_resources[res] = current
 		else:
-			var last: float = _ai_last_resources.get(res, current) as float
-			if current > last:
-				_ai_stat_resources_gathered[res] = (_ai_stat_resources_gathered[res] as int) + int(current - last)
-			_ai_last_resources[res] = current
+			# Legacy player_id 1 path
+			if player_id == 1:
+				var last: float = _ai_last_resources.get(res, current) as float
+				if current > last:
+					_ai_stat_resources_gathered[res] = (_ai_stat_resources_gathered[res] as int) + int(current - last)
+				_ai_last_resources[res] = current
+			# Generic rival path
+			if _rival_stats.has(player_id):
+				var rival_last: Dictionary = _rival_last_res.get(player_id, {}) as Dictionary
+				var last_r: float = rival_last.get(res, current) as float
+				if current > last_r:
+					var rival_res: Dictionary = (_rival_stats[player_id] as Dictionary)["resources"] as Dictionary
+					rival_res[res] = (rival_res.get(res, 0) as int) + int(current - last_r)
+				if not _rival_last_res.has(player_id):
+					_rival_last_res[player_id] = {}
+				(_rival_last_res[player_id] as Dictionary)[res] = current
 
 # --- Game over screen ---
 
@@ -1091,68 +1133,133 @@ func _on_game_over(winner_player_id: int) -> void:
 	var total_secs: int = int(_elapsed_seconds)
 	var time_str: String = "%02d:%02d" % [total_secs / 60, total_secs % 60]
 	var age_keys: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
-	var player_age: String = tr(age_keys[clampi(AgeManager.get_age(local_player_id), 0, 3)])
-	var ai_age: String     = tr(age_keys[clampi(AgeManager.get_age(1), 0, 3)])
 
-	var player_civ_name: String = MatchConfig.player_civ_id
-	var rival_civ_name: String  = MatchConfig.rival_civ_id
-	var _player_civ_res: CivilizationResource = load(
-		"res://resources/civilizations/%s.tres" % MatchConfig.player_civ_id) as CivilizationResource
-	var _rival_civ_res: CivilizationResource = load(
-		"res://resources/civilizations/%s.tres" % MatchConfig.rival_civ_id) as CivilizationResource
-	if _player_civ_res != null:
-		player_civ_name = _player_civ_res.display_name
-	if _rival_civ_res != null:
-		rival_civ_name = _rival_civ_res.display_name
+	var rival_ids: Array[int] = MatchConfig.get_rival_player_ids()
+	var total_cols: int = 1 + rival_ids.size()   # player + rivals
+	grid.columns = 1 + total_cols
 
-	# Column headers — show civ name beneath player/rival label
+	# Helper: get display name for a civ_id
+	var _get_civ_display: Callable = func(civ_id: String) -> String:
+		var res: CivilizationResource = load(
+			"res://resources/civilizations/%s.tres" % civ_id) as CivilizationResource
+		return res.display_name if res != null else civ_id
+
+	# Column headers
 	var _blank: Label = Label.new()
 	grid.add_child(_blank)
-	var _hdr_colors: Array[Color] = [Color(0.40, 0.70, 1.0), Color(1.0, 0.45, 0.45)]
-	var _hdr_labels: Array[String] = [tr("GAMEOVER_PLAYER"), tr("GAMEOVER_RIVAL")]
-	var _civ_names: Array[String]  = [player_civ_name, rival_civ_name]
-	for hi: int in range(2):
-		var col: VBoxContainer = VBoxContainer.new()
-		col.add_theme_constant_override("separation", 1)
-		var hdr: Label = Label.new()
-		hdr.text = _hdr_labels[hi]
-		hdr.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		hdr.add_theme_font_size_override("font_size", 13)
-		hdr.add_theme_color_override("font_color", _hdr_colors[hi])
-		col.add_child(hdr)
-		var civ_lbl: Label = Label.new()
-		civ_lbl.text = _civ_names[hi]
-		civ_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		civ_lbl.add_theme_font_size_override("font_size", 11)
-		civ_lbl.add_theme_color_override("font_color", _hdr_colors[hi].lightened(0.3))
-		col.add_child(civ_lbl)
-		grid.add_child(col)
 
-	# [stat label, player value, rival value]
-	var stat_rows: Array = [
-		[tr("GAMEOVER_TIME"),      time_str,                                               time_str],
-		[tr("GAMEOVER_AGE"),       player_age,                                             ai_age],
-		[tr("GAMEOVER_UNITS"),     str(_stat_units_trained),                               str(_ai_stat_units_trained)],
-		[tr("GAMEOVER_BUILDINGS"), str(_stat_buildings_built),                             str(_ai_stat_buildings_built)],
-		[tr("GAMEOVER_KILLS"),     str(_stat_enemies_killed),                              str(_ai_stat_units_lost)],
-		[tr("GAMEOVER_FOOD"),      str(_stat_resources_gathered.get("food", 0)),           str(_ai_stat_resources_gathered.get("food", 0))],
-		[tr("GAMEOVER_WOOD"),      str(_stat_resources_gathered.get("wood", 0)),           str(_ai_stat_resources_gathered.get("wood", 0))],
-		[tr("GAMEOVER_GOLD"),      str(_stat_resources_gathered.get("gold", 0)),           str(_ai_stat_resources_gathered.get("gold", 0))],
-		[tr("GAMEOVER_STONE"),     str(_stat_resources_gathered.get("stone", 0)),          str(_ai_stat_resources_gathered.get("stone", 0))],
+	var rival_colors: Array[Color] = [
+		Color(1.0, 0.45, 0.45), Color(1.0, 0.75, 0.25), Color(0.65, 0.45, 1.0),
 	]
-	for row: Array in stat_rows:
+
+	# Player column
+	var player_col: VBoxContainer = VBoxContainer.new()
+	player_col.add_theme_constant_override("separation", 1)
+	var ph: Label = Label.new()
+	ph.text = tr("GAMEOVER_PLAYER")
+	ph.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	ph.add_theme_font_size_override("font_size", 13)
+	ph.add_theme_color_override("font_color", Color(0.40, 0.70, 1.0))
+	player_col.add_child(ph)
+	var pc: Label = Label.new()
+	pc.text = _get_civ_display.call(MatchConfig.player_civ_id) as String
+	pc.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	pc.add_theme_font_size_override("font_size", 11)
+	pc.add_theme_color_override("font_color", Color(0.40, 0.70, 1.0).lightened(0.3))
+	player_col.add_child(pc)
+	grid.add_child(player_col)
+
+	# Rival columns
+	for ri: int in range(rival_ids.size()):
+		var rid: int = rival_ids[ri]
+		var rcol: VBoxContainer = VBoxContainer.new()
+		rcol.add_theme_constant_override("separation", 1)
+		var rh: Label = Label.new()
+		var rival_label: String = tr("GAMEOVER_RIVAL") if rival_ids.size() == 1 \
+			else tr("GAMEOVER_RIVAL") + " %d" % (ri + 1)
+		rh.text = rival_label
+		rh.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		rh.add_theme_font_size_override("font_size", 13)
+		var rcol_color: Color = rival_colors[mini(ri, rival_colors.size() - 1)]
+		rh.add_theme_color_override("font_color", rcol_color)
+		rcol.add_child(rh)
+		var rcc: Label = Label.new()
+		rcc.text = _get_civ_display.call(MatchConfig.get_rival_civ_id(rid)) as String
+		rcc.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		rcc.add_theme_font_size_override("font_size", 11)
+		rcc.add_theme_color_override("font_color", rcol_color.lightened(0.3))
+		rcol.add_child(rcc)
+		grid.add_child(rcol)
+
+	# Helper: get rival stat value string
+	var _rival_val: Callable = func(rid: int, key: String) -> String:
+		if _rival_stats.has(rid):
+			return str((_rival_stats[rid] as Dictionary).get(key, 0))
+		# Fallback to legacy player_id 1 vars
+		match key:
+			"units_trained":   return str(_ai_stat_units_trained)
+			"buildings_built": return str(_ai_stat_buildings_built)
+			"units_lost":      return str(_ai_stat_units_lost)
+		return "0"
+
+	var _rival_res_val: Callable = func(rid: int, res: String) -> String:
+		if _rival_stats.has(rid):
+			var r: Dictionary = (_rival_stats[rid] as Dictionary).get("resources", {}) as Dictionary
+			return str(r.get(res, 0))
+		return str(_ai_stat_resources_gathered.get(res, 0))
+
+	# Build stat rows — first element is label, then one value per column
+	var stat_defs: Array = [
+		{"label": tr("GAMEOVER_TIME"),
+			"player": time_str,
+			"rival_fn": func(_rid: int) -> String: return time_str},
+		{"label": tr("GAMEOVER_AGE"),
+			"player": tr(age_keys[clampi(AgeManager.get_age(local_player_id), 0, 3)]),
+			"rival_fn": func(rid: int) -> String: return tr(age_keys[clampi(AgeManager.get_age(rid), 0, 3)])},
+		{"label": tr("GAMEOVER_UNITS"),
+			"player": str(_stat_units_trained),
+			"rival_fn": func(rid: int) -> String: return _rival_val.call(rid, "units_trained") as String},
+		{"label": tr("GAMEOVER_BUILDINGS"),
+			"player": str(_stat_buildings_built),
+			"rival_fn": func(rid: int) -> String: return _rival_val.call(rid, "buildings_built") as String},
+		{"label": tr("GAMEOVER_KILLS"),
+			"player": str(_stat_enemies_killed),
+			"rival_fn": func(rid: int) -> String: return _rival_val.call(rid, "units_lost") as String},
+		{"label": tr("GAMEOVER_FOOD"),
+			"player": str(_stat_resources_gathered.get("food", 0)),
+			"rival_fn": func(rid: int) -> String: return _rival_res_val.call(rid, "food") as String},
+		{"label": tr("GAMEOVER_WOOD"),
+			"player": str(_stat_resources_gathered.get("wood", 0)),
+			"rival_fn": func(rid: int) -> String: return _rival_res_val.call(rid, "wood") as String},
+		{"label": tr("GAMEOVER_GOLD"),
+			"player": str(_stat_resources_gathered.get("gold", 0)),
+			"rival_fn": func(rid: int) -> String: return _rival_res_val.call(rid, "gold") as String},
+		{"label": tr("GAMEOVER_STONE"),
+			"player": str(_stat_resources_gathered.get("stone", 0)),
+			"rival_fn": func(rid: int) -> String: return _rival_res_val.call(rid, "stone") as String},
+	]
+
+	for stat: Dictionary in stat_defs:
 		var key_lbl: Label = Label.new()
-		key_lbl.text = row[0] as String
+		key_lbl.text = stat["label"] as String
 		key_lbl.add_theme_font_size_override("font_size", 14)
 		key_lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
 		grid.add_child(key_lbl)
-		for col: int in range(1, 3):
-			var val_lbl: Label = Label.new()
-			val_lbl.text = row[col] as String
-			val_lbl.add_theme_font_size_override("font_size", 14)
-			val_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-			val_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-			grid.add_child(val_lbl)
+
+		var player_val: Label = Label.new()
+		player_val.text = stat["player"] as String
+		player_val.add_theme_font_size_override("font_size", 14)
+		player_val.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+		player_val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		grid.add_child(player_val)
+
+		for rid: int in rival_ids:
+			var rival_val: Label = Label.new()
+			rival_val.text = (stat["rival_fn"] as Callable).call(rid) as String
+			rival_val.add_theme_font_size_override("font_size", 14)
+			rival_val.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+			rival_val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			grid.add_child(rival_val)
 
 	# Separator
 	var sep2: HSeparator = HSeparator.new()

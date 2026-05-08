@@ -131,7 +131,7 @@ func _do_spawn(scene_path: String) -> void:
 		return
 	var unit: Node2D = packed.instantiate() as Node2D
 	unit.set("player_id", player_id)
-	unit.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.rival_civ_id)
+	unit.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.get_rival_civ_id(player_id))
 	get_parent().add_child(unit)
 	unit.global_position = global_position + SPAWN_OFFSET
 	PopulationManager.add_unit(player_id)

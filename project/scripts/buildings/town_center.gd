@@ -139,7 +139,7 @@ func get_max_queue() -> int:
 func _spawn_villager() -> void:
 	var unit: Node2D = VILLAGER_SCENE.instantiate() as Node2D
 	unit.set("player_id", player_id)
-	unit.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.rival_civ_id)
+	unit.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.get_rival_civ_id(player_id))
 	get_parent().add_child(unit)
 	unit.global_position = global_position + Vector2(80.0, 0.0)
 	PopulationManager.add_unit(player_id)
@@ -157,7 +157,7 @@ func _do_respawn_hero(hero_data: UnitResource) -> void:
 	hero.set_script(load("res://scripts/units/hero_unit.gd"))
 	hero.set("unit_data", hero_data)
 	hero.set("player_id", player_id)
-	hero.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.rival_civ_id)
+	hero.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.get_rival_civ_id(player_id))
 	hero.global_position = global_position + Vector2(-80.0, -60.0)
 	get_parent().add_child(hero)
 	if player_id == 0:

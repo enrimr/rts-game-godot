@@ -59,7 +59,9 @@ const UNIT_CLICK_RADIUS: float = 32.0
 @onready var drop_off: Node2D = $DropOffNode
 @onready var hud: CanvasLayer = $HUD
 
-var _ai_town_center: Node2D = null
+# All AI town centers indexed by player_id
+var _ai_town_centers: Dictionary = {}   # int → Node2D
+var _ai_town_center: Node2D = null      # legacy alias for player_id 1
 var _fog: FogOfWar = null
 
 var _selected_units: Array[Node] = []
@@ -83,20 +85,23 @@ var _drag_overlay: Node2D = null
 
 func _ready() -> void:
 	var starting_res: Dictionary = MatchConfig.get_starting_resources()
+	# Init player 0 and all rivals
 	ResourceManager.init_player(0, starting_res)
 	PopulationManager.init_player(0)
 	AgeManager.init_player(0, MatchConfig.starting_age)
-	ResourceManager.init_player(1, starting_res)
-	PopulationManager.init_player(1)
-	AgeManager.init_player(1)
+	for rival_id: int in MatchConfig.get_rival_player_ids():
+		ResourceManager.init_player(rival_id, starting_res)
+		PopulationManager.init_player(rival_id)
+		AgeManager.init_player(rival_id)
 
 	_apply_civilization()
 
 	_rng.randomize()
 	var map_data: Dictionary = MapGenerator.generate(self, units_layer, _rng)
+	var tc_positions: Array[Vector2] = map_data["tc_positions"] as Array[Vector2]
 
-	# Place player TC at generated position
-	drop_off.global_position = map_data["tc0"] as Vector2
+	# Place player TC at tc_positions[0]
+	drop_off.global_position = tc_positions[0]
 	camera.position = drop_off.global_position
 
 	for i: int in range(3):
@@ -118,7 +123,15 @@ func _ready() -> void:
 
 	_spawn_hero(0, drop_off.global_position)
 
-	_setup_ai(map_data["tc1"] as Vector2)
+	# Spawn one AI per rival
+	for rival_id: int in MatchConfig.get_rival_player_ids():
+		var tc_pos: Vector2 = tc_positions[rival_id] if rival_id < tc_positions.size() \
+			else tc_positions[tc_positions.size() - 1]
+		_setup_ai(rival_id, tc_pos)
+
+	# Legacy alias points at the first rival TC for backwards-compat references
+	if _ai_town_centers.size() > 0:
+		_ai_town_center = _ai_town_centers[1]
 
 	hud.action_requested.connect(_on_action_requested)
 	hud.follow_requested.connect(toggle_follow)
@@ -144,35 +157,39 @@ func _ready() -> void:
 	_drag_overlay.z_index = 20
 	add_child(_drag_overlay)
 
-	GameManager.start_game([{"id": 0}, {"id": 1}])
+	var player_list: Array[Dictionary] = [{"id": 0}]
+	for rival_id: int in MatchConfig.get_rival_player_ids():
+		player_list.append({"id": rival_id})
+	GameManager.start_game(player_list)
 	AudioManager.play_music()
 	GameManager.game_over.connect(_on_game_over)
 
 func _apply_civilization() -> void:
 	var civ_path: String = "res://resources/civilizations/%s.tres" % MatchConfig.player_civ_id
 	var civ: CivilizationResource = load(civ_path) as CivilizationResource
-	if civ == null:
-		return
-	# Apply starting resource bonuses
-	for key: String in (civ.starting_bonuses as Dictionary):
-		ResourceManager.add_resource(0, key, (civ.starting_bonuses as Dictionary)[key] as float)
-	# Apply villager stat multipliers at spawn time via unit_data overrides stored in MatchConfig
-	MatchConfig.set_meta("civ", civ)
+	if civ != null:
+		for key: String in (civ.starting_bonuses as Dictionary):
+			ResourceManager.add_resource(0, key, (civ.starting_bonuses as Dictionary)[key] as float)
+		MatchConfig.set_meta("civ", civ)
 	CivBonusManager.init_player(0, MatchConfig.player_civ_id)
-	CivBonusManager.init_player(1, MatchConfig.rival_civ_id)
 	TechManager.init_player(0)
-	TechManager.init_player(1)
+	for rival_id: int in MatchConfig.get_rival_player_ids():
+		CivBonusManager.init_player(rival_id, MatchConfig.get_rival_civ_id(rival_id))
+		TechManager.init_player(rival_id)
+
+func _get_civ_id_for_player(player_id: int) -> String:
+	if player_id == 0:
+		return MatchConfig.player_civ_id
+	return MatchConfig.get_rival_civ_id(player_id)
 
 func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
-	var civ_id: String = MatchConfig.player_civ_id if player_id == 0 else MatchConfig.rival_civ_id
+	var civ_id: String = _get_civ_id_for_player(player_id)
 	var data_path: String = HERO_DATA_BY_CIV.get(civ_id, "") as String
 	if data_path.is_empty():
 		return
 	var hero_data: UnitResource = load(data_path) as UnitResource
 	if hero_data == null:
 		return
-	# Instantiate the militia scene (shares all child nodes: nav agent, health bar, etc.)
-	# then replace its script with HeroUnit before adding to the tree.
 	var militia_scene: PackedScene = load("res://scenes/units/militia.tscn") as PackedScene
 	if militia_scene == null:
 		return
@@ -180,59 +197,83 @@ func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	hero.set_script(load("res://scripts/units/hero_unit.gd"))
 	hero.set("unit_data", hero_data)
 	hero.set("player_id", player_id)
-	hero.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.rival_civ_id)
+	hero.set("civ_id", civ_id)
 	hero.global_position = tc_pos + Vector2(-80.0, -60.0)
 	units_layer.add_child(hero)
-	# Heroes do not count toward population cap
 	EventBus.unit_spawned.emit(hero, player_id)
 
-func _setup_ai(tc_pos: Vector2) -> void:
-	_ai_town_center = AI_TOWN_CENTER_SCENE.instantiate() as Node2D
-	_ai_town_center.global_position = tc_pos
-	_ai_town_center.set("player_id", 1)
-	buildings_layer.add_child(_ai_town_center)
+func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
+	var rival_civ: String = MatchConfig.get_rival_civ_id(rival_id)
+	var tc: Node2D = AI_TOWN_CENTER_SCENE.instantiate() as Node2D
+	tc.global_position = tc_pos
+	tc.set("player_id", rival_id)
+	buildings_layer.add_child(tc)
+	_ai_town_centers[rival_id] = tc
 
-	# AI drop-off is the DropOff child of the town center
-	var ai_drop_off: Node = _ai_town_center.get_node_or_null("DropOff")
+	var ai_drop_off: Node = tc.get_node_or_null("DropOff")
 
-	# Spawn 3 AI villagers
 	for i: int in range(3):
 		var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
 		units_layer.add_child(v)
-		v.global_position = _ai_town_center.global_position + Vector2(i * 40 - 40, 60.0)
-		v.set("player_id", 1)
-		v.set("civ_id", MatchConfig.rival_civ_id)
-		PopulationManager.add_unit(1)
-		EventBus.unit_spawned.emit(v, 1)
+		v.global_position = tc.global_position + Vector2(i * 40 - 40, 60.0)
+		v.set("player_id", rival_id)
+		v.set("civ_id", rival_civ)
+		PopulationManager.add_unit(rival_id)
+		EventBus.unit_spawned.emit(v, rival_id)
 
-	var scout1: CharacterBody2D = SCOUT_SCENE.instantiate()
-	units_layer.add_child(scout1)
-	scout1.global_position = _ai_town_center.global_position + Vector2(80.0, -60.0)
-	scout1.set("player_id", 1)
-	scout1.set("civ_id", MatchConfig.rival_civ_id)
-	PopulationManager.add_unit(1)
-	EventBus.unit_spawned.emit(scout1, 1)
+	var scout: CharacterBody2D = SCOUT_SCENE.instantiate()
+	units_layer.add_child(scout)
+	scout.global_position = tc.global_position + Vector2(80.0, -60.0)
+	scout.set("player_id", rival_id)
+	scout.set("civ_id", rival_civ)
+	PopulationManager.add_unit(rival_id)
+	EventBus.unit_spawned.emit(scout, rival_id)
 
-	# Wire up AI controller
 	var ai: Node = Node.new()
 	ai.set_script(load("res://scripts/ai/ai_player.gd"))
-	ai.set("player_id", 1)
+	ai.set("player_id", rival_id)
 	add_child(ai)
-	ai.set("town_center", _ai_town_center)
+	ai.set("town_center", tc)
 	ai.set("units_layer", units_layer)
 	ai.set("buildings_layer", buildings_layer)
-	ai.set("drop_off", ai_drop_off if ai_drop_off != null else _ai_town_center)
+	ai.set("drop_off", ai_drop_off if ai_drop_off != null else tc)
+	# AI targets player TC initially; will switch dynamically in Fase 4
 	ai.set("enemy_town_center", drop_off)
 
-func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void:
-	# Player's town center destroyed → AI wins
+func _on_building_destroyed_check_victory(building: Node, _owner_id: int) -> void:
+	# Check if the player's TC was destroyed
 	if building == drop_off:
+		# Find any surviving AI to declare as winner
+		for rival_id: int in _ai_town_centers:
+			if is_instance_valid(_ai_town_centers[rival_id]):
+				GameManager.declare_winner(rival_id)
+				return
 		GameManager.declare_winner(1)
 		return
-	# AI's town center destroyed → Player wins
-	if building == _ai_town_center:
-		GameManager.declare_winner(0)
+
+	# Check if a rival TC was destroyed — if all rivals are gone, player wins
+	var destroyed_rival: int = -1
+	for rival_id: int in _ai_town_centers:
+		if _ai_town_centers[rival_id] == building:
+			destroyed_rival = rival_id
+			break
+
+	if destroyed_rival < 0:
 		return
+
+	# Remove destroyed TC from the active map
+	_ai_town_centers.erase(destroyed_rival)
+	if _ai_town_center == building:
+		_ai_town_center = null
+
+	# Check if any rival TCs remain
+	var remaining_rivals: int = 0
+	for rival_id: int in _ai_town_centers:
+		if is_instance_valid(_ai_town_centers[rival_id]):
+			remaining_rivals += 1
+
+	if remaining_rivals == 0:
+		GameManager.declare_winner(0)
 
 func _process(delta: float) -> void:
 	_handle_camera(delta)

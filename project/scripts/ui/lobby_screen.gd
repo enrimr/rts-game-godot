@@ -21,29 +21,65 @@ const CIVS: Array[Dictionary] = [
 
 const AGE_KEYS: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
 
-var _civ_index: int = 0
-var _civ_desc_label: Label = null
-var _civ_btns: Array[Button] = []
+const DEFAULT_RIVAL_CIVS: Array[String] = ["castellanos", "franks", "atlantes"]
+
+var _player_civ_index: int = 0
+var _player_civ_desc_label: Label = null
+var _player_civ_btns: Array[Button] = []
+
+# Per-rival state — indexed 0..2
+var _rival_civ_indices: Array[int]       = [0, 0, 0]
+var _rival_panels:      Array[Node]      = []  # VBoxContainer per rival
+var _rival_civ_btns:    Array[Array]     = [[], [], []]
+var _rival_desc_labels: Array[Label]     = [null, null, null]
+
+var _rivals_container: VBoxContainer = null
+var _scroll: ScrollContainer = null
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
+	_init_rival_state()
 	_build()
 
+func _init_rival_state() -> void:
+	for i: int in range(3):
+		var civ_id: String = DEFAULT_RIVAL_CIVS[i] if i < DEFAULT_RIVAL_CIVS.size() else "castellanos"
+		var idx: int = _civ_index_for_id(civ_id)
+		_rival_civ_indices[i] = idx
+	_sync_rival_config_to_match()
+
+func _civ_index_for_id(id: String) -> int:
+	for i: int in range(CIVS.size()):
+		if (CIVS[i] as Dictionary)["id"] as String == id:
+			return i
+	return 0
+
+func _sync_rival_config_to_match() -> void:
+	MatchConfig.rival_civ_ids.clear()
+	for i: int in range(MatchConfig.rival_count):
+		MatchConfig.rival_civ_ids.append(
+			(CIVS[_rival_civ_indices[i]] as Dictionary)["id"] as String)
+
 func _build() -> void:
-	# Dark background
 	var bg: ColorRect = ColorRect.new()
 	bg.color = Color(0.0, 0.0, 0.0, 0.72)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = MOUSE_FILTER_PASS
 	add_child(bg)
 
-	var center: CenterContainer = CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = MOUSE_FILTER_PASS
-	add_child(center)
+	# Outer scroll so the panel never clips on small screens
+	_scroll = ScrollContainer.new()
+	_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(_scroll)
+
+	var outer_center: CenterContainer = CenterContainer.new()
+	outer_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer_center.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(outer_center)
 
 	var card: PanelContainer = PanelContainer.new()
-	card.custom_minimum_size = Vector2(660, 0)
+	card.custom_minimum_size = Vector2(700, 0)
 	var sty: StyleBoxFlat = StyleBoxFlat.new()
 	sty.bg_color = Color(0.08, 0.08, 0.12, 0.97)
 	sty.corner_radius_top_left    = 8
@@ -51,7 +87,7 @@ func _build() -> void:
 	sty.corner_radius_bottom_left = 8
 	sty.corner_radius_bottom_right = 8
 	card.add_theme_stylebox_override("panel", sty)
-	center.add_child(card)
+	outer_center.add_child(card)
 
 	var margin: MarginContainer = MarginContainer.new()
 	for side: String in ["left", "right", "top", "bottom"]:
@@ -59,7 +95,7 @@ func _build() -> void:
 	card.add_child(margin)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 20)
+	vbox.add_theme_constant_override("separation", 18)
 	margin.add_child(vbox)
 
 	# Title
@@ -103,18 +139,45 @@ func _build() -> void:
 	vbox.add_child(_make_option_row(age_opts, MatchConfig.starting_age,
 		func(i: int) -> void: MatchConfig.starting_age = i))
 
-	# Civilization
-	vbox.add_child(_make_label(tr("LOBBY_CIVILIZATION")))
-	vbox.add_child(_make_civ_row())
+	# Number of rivals
+	vbox.add_child(_make_sep())
+	vbox.add_child(_make_label(tr("LOBBY_RIVAL_COUNT")))
+	var rival_count_opts: Array[String] = ["1", "2", "3"]
+	vbox.add_child(_make_option_row(rival_count_opts, MatchConfig.rival_count - 1,
+		func(i: int) -> void:
+			MatchConfig.rival_count = i + 1
+			_sync_rival_config_to_match()
+			_rebuild_rivals_container()
+	))
 
-	# Civ description
-	_civ_desc_label = Label.new()
-	_civ_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_civ_desc_label.add_theme_font_size_override("font_size", 13)
-	_civ_desc_label.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
-	_civ_desc_label.custom_minimum_size = Vector2(0, 36)
-	vbox.add_child(_civ_desc_label)
-	_refresh_civ_desc()
+	vbox.add_child(_make_sep())
+
+	# Player civilization
+	vbox.add_child(_make_label(tr("LOBBY_CIVILIZATION")))
+	vbox.add_child(_make_civ_grid(_player_civ_btns, _player_civ_index,
+		func(i: int) -> void:
+			_player_civ_index = i
+			MatchConfig.player_civ_id = (CIVS[i] as Dictionary)["id"] as String
+			_refresh_civ_highlight(_player_civ_btns, _player_civ_index)
+			if is_instance_valid(_player_civ_desc_label):
+				_player_civ_desc_label.text = tr((CIVS[i] as Dictionary)["desc_key"] as String)
+	))
+
+	_player_civ_desc_label = Label.new()
+	_player_civ_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_player_civ_desc_label.add_theme_font_size_override("font_size", 13)
+	_player_civ_desc_label.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
+	_player_civ_desc_label.custom_minimum_size = Vector2(0, 32)
+	_player_civ_desc_label.text = tr((CIVS[_player_civ_index] as Dictionary)["desc_key"] as String)
+	vbox.add_child(_player_civ_desc_label)
+
+	vbox.add_child(_make_sep())
+
+	# Rival civilization panels (dynamic)
+	_rivals_container = VBoxContainer.new()
+	_rivals_container.add_theme_constant_override("separation", 14)
+	vbox.add_child(_rivals_container)
+	_rebuild_rivals_container()
 
 	vbox.add_child(_make_sep())
 
@@ -135,51 +198,81 @@ func _build() -> void:
 	start_btn.pressed.connect(func() -> void: start_requested.emit())
 	btn_row.add_child(start_btn)
 
-# --- Civilization row ---
+# --- Rival panels ---
 
-func _make_civ_row() -> GridContainer:
+func _rebuild_rivals_container() -> void:
+	for child: Node in _rivals_container.get_children():
+		child.queue_free()
+	_rival_panels.clear()
+
+	for ri: int in range(MatchConfig.rival_count):
+		var panel: VBoxContainer = VBoxContainer.new()
+		panel.add_theme_constant_override("separation", 6)
+		_rivals_container.add_child(panel)
+		_rival_panels.append(panel)
+
+		var rival_num: int = ri + 1
+		var header: Label = _make_label(tr("LOBBY_RIVAL") + " %d — " % rival_num + tr("LOBBY_CIVILIZATION"))
+		header.add_theme_color_override("font_color", Color(1.0, 0.55, 0.35))
+		panel.add_child(header)
+
+		var captured_ri: int = ri
+		var btns: Array[Button] = []
+		_rival_civ_btns[ri] = btns
+		panel.add_child(_make_civ_grid(btns, _rival_civ_indices[ri],
+			func(i: int) -> void:
+				_rival_civ_indices[captured_ri] = i
+				_sync_rival_config_to_match()
+				_refresh_civ_highlight(_rival_civ_btns[captured_ri] as Array[Button],
+					_rival_civ_indices[captured_ri])
+				if is_instance_valid(_rival_desc_labels[captured_ri]):
+					_rival_desc_labels[captured_ri].text = \
+						tr((CIVS[i] as Dictionary)["desc_key"] as String)
+		))
+
+		var desc: Label = Label.new()
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.add_theme_font_size_override("font_size", 13)
+		desc.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
+		desc.custom_minimum_size = Vector2(0, 28)
+		desc.text = tr((CIVS[_rival_civ_indices[ri]] as Dictionary)["desc_key"] as String)
+		panel.add_child(desc)
+		_rival_desc_labels[ri] = desc
+
+# --- Civilization grid ---
+
+func _make_civ_grid(btns_out: Array[Button], initial_idx: int, on_select: Callable) -> GridContainer:
 	var grid: GridContainer = GridContainer.new()
 	grid.columns = 4
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 6)
-	_civ_btns.clear()
+	btns_out.clear()
 	for i: int in range(CIVS.size()):
 		var civ: Dictionary = CIVS[i] as Dictionary
 		var btn: Button = Button.new()
 		btn.text = tr(civ["name_key"] as String)
-		btn.custom_minimum_size = Vector2(128, 34)
+		btn.custom_minimum_size = Vector2(128, 32)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.add_theme_font_size_override("font_size", 13)
 		grid.add_child(btn)
-		_civ_btns.append(btn)
+		btns_out.append(btn)
 		var captured_i: int = i
-		btn.pressed.connect(func() -> void:
-			_civ_index = captured_i
-			MatchConfig.player_civ_id = (CIVS[captured_i] as Dictionary)["id"] as String
-			_refresh_civ_highlight()
-			_refresh_civ_desc()
-		)
-	_refresh_civ_highlight()
+		btn.pressed.connect(func() -> void: on_select.call(captured_i))
+	_refresh_civ_highlight(btns_out, initial_idx)
 	return grid
 
-func _refresh_civ_highlight() -> void:
-	for i: int in range(_civ_btns.size()):
-		var active: bool = i == _civ_index
+func _refresh_civ_highlight(btns: Array[Button], selected: int) -> void:
+	for i: int in range(btns.size()):
+		var active: bool = i == selected
 		var s: StyleBoxFlat = StyleBoxFlat.new()
 		s.bg_color = Color(0.22, 0.40, 0.55, 0.95) if active else Color(0.18, 0.18, 0.22, 0.9)
 		s.corner_radius_top_left    = 4
 		s.corner_radius_top_right   = 4
 		s.corner_radius_bottom_left = 4
 		s.corner_radius_bottom_right = 4
-		_civ_btns[i].add_theme_stylebox_override("normal", s)
-		_civ_btns[i].add_theme_stylebox_override("pressed", s)
-
-func _refresh_civ_desc() -> void:
-	if not is_instance_valid(_civ_desc_label):
-		return
-	var key: String = (CIVS[_civ_index] as Dictionary)["desc_key"] as String
-	_civ_desc_label.text = tr(key)
+		btns[i].add_theme_stylebox_override("normal", s)
+		btns[i].add_theme_stylebox_override("pressed", s)
 
 # --- Option row (segmented button group) ---
 
@@ -190,25 +283,12 @@ func _make_option_row(labels: Array[String], initial: int, on_select: Callable) 
 	for i: int in range(labels.size()):
 		var btn: Button = Button.new()
 		btn.text = labels[i]
-		btn.custom_minimum_size = Vector2(110, 32)
+		btn.custom_minimum_size = Vector2(100, 32)
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.add_theme_font_size_override("font_size", 14)
 		row.add_child(btn)
 		btns.append(btn)
 
-	var refresh: Callable = func() -> void:
-		for j: int in range(btns.size()):
-			var active: bool = j == _get_btn_value(row, btns, btns[j])
-			var s: StyleBoxFlat = StyleBoxFlat.new()
-			s.bg_color = Color(0.22, 0.45, 0.22, 0.95) if active else Color(0.18, 0.18, 0.22, 0.9)
-			s.corner_radius_top_left    = 4
-			s.corner_radius_top_right   = 4
-			s.corner_radius_bottom_left = 4
-			s.corner_radius_bottom_right = 4
-			btns[j].add_theme_stylebox_override("normal", s)
-			btns[j].add_theme_stylebox_override("pressed", s)
-
-	# Store selected index on the row node as metadata
 	row.set_meta("selected", initial)
 	_apply_btn_styles(btns, initial)
 
@@ -232,9 +312,6 @@ func _apply_btn_styles(btns: Array[Button], selected: int) -> void:
 		s.corner_radius_bottom_right = 4
 		btns[j].add_theme_stylebox_override("normal", s)
 		btns[j].add_theme_stylebox_override("pressed", s)
-
-func _get_btn_value(_row: HBoxContainer, _btns: Array[Button], _btn: Button) -> int:
-	return 0  # unused — styles applied directly
 
 # --- Helpers ---
 

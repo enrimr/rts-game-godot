@@ -310,7 +310,8 @@ func _manage_age_advance() -> void:
 # ── Attack & Defense ──────────────────────────────────────────────────────────
 
 func _launch_attack() -> void:
-	if not is_instance_valid(enemy_town_center):
+	var etc: Node2D = _get_primary_enemy_tc()
+	if etc == null:
 		return
 	var mcount: int = _count_military()
 	var min_units: int = GameSettings.get_ai_min_attack_units()
@@ -319,10 +320,9 @@ func _launch_attack() -> void:
 	if mcount < min_units:
 		return
 
-	# Pick the nearest enemy building to attack — if none found fall back to TC
 	var target: Node = _find_nearest_enemy_building()
 	if target == null:
-		target = enemy_town_center
+		target = etc
 
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
@@ -334,15 +334,31 @@ func _launch_attack() -> void:
 			if unit.has_method("order_attack"):
 				unit.order_attack(target)
 
+# Returns the nearest valid enemy town center (any player that isn't us).
+func _get_primary_enemy_tc() -> Node2D:
+	if is_instance_valid(enemy_town_center):
+		return enemy_town_center
+	# Fallback: scan buildings for any TC not owned by us
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		if building.get("is_town_center") == true or \
+				building.get_script() != null and (building.get_script() as Script).resource_path.contains("town_center"):
+			return building as Node2D
+	return null
+
 func _find_nearest_enemy_building() -> Node:
-	# Find the closest enemy building (player_id 0) to our own town center
 	var origin: Vector2 = town_center.global_position if is_instance_valid(town_center) else Vector2.ZERO
 	var best: Node = null
 	var best_dist: float = INF
-	# Check player TC
-	if is_instance_valid(enemy_town_center):
-		best = enemy_town_center
-		best_dist = origin.distance_to((enemy_town_center as Node2D).global_position)
+	# Seed with current primary enemy TC if valid
+	var etc: Node2D = _get_primary_enemy_tc()
+	if etc != null:
+		best = etc
+		best_dist = origin.distance_to(etc.global_position)
 	# Check all enemy buildings in the buildings layer
 	for building: Node in buildings_layer.get_children():
 		if not is_instance_valid(building):
@@ -540,8 +556,8 @@ func _find_ocean_build_pos(origin: Vector2, min_r: float, max_r: float) -> Vecto
 	return Vector2.ZERO
 
 func _manage_naval_patrol() -> void:
-	# Send war galleys to explore/patrol toward the enemy side of the map
-	if not is_instance_valid(enemy_town_center):
+	var etc: Node2D = _get_primary_enemy_tc()
+	if etc == null:
 		return
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit) or not (unit is WarGalley):
@@ -552,19 +568,17 @@ func _manage_naval_patrol() -> void:
 		var wg: WarGalley = unit as WarGalley
 		if wg.current_state != UnitBase.UnitState.IDLE:
 			continue
-		# Pick a random ocean point roughly toward the enemy
-		var toward: Vector2 = enemy_town_center.global_position
+		var toward: Vector2 = etc.global_position
 		var jitter: Vector2 = Vector2(randf_range(-300.0, 300.0), randf_range(-300.0, 300.0))
 		var dest: Vector2 = wg.global_position.lerp(toward + jitter, randf_range(0.3, 0.7))
-		# Make sure destination is ocean
 		if TerrainManager.is_ocean(dest):
 			wg.order_move(dest)
 
 func _launch_naval_assault() -> void:
-	if not is_instance_valid(enemy_town_center):
+	var etc: Node2D = _get_primary_enemy_tc()
+	if etc == null:
 		return
 
-	# Send war galleys to attack any enemy naval units or patrol toward enemy
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit) or not (unit is WarGalley):
 			continue
@@ -576,14 +590,12 @@ func _launch_naval_assault() -> void:
 		if enemy_ship != null:
 			wg.order_attack(enemy_ship)
 		elif wg.current_state == UnitBase.UnitState.IDLE:
-			# Patrol toward the enemy island
-			var toward: Vector2 = enemy_town_center.global_position
+			var toward: Vector2 = etc.global_position
 			var jitter: Vector2 = Vector2(randf_range(-200.0, 200.0), randf_range(-200.0, 200.0))
 			var dest: Vector2 = wg.global_position.lerp(toward + jitter, randf_range(0.4, 0.8))
 			if TerrainManager.is_ocean(dest):
 				wg.order_move(dest)
 
-	# Transport assault: board idle military and sail to enemy shore
 	var military: int = _count_military()
 	if military < 3:
 		return
@@ -594,16 +606,13 @@ func _launch_naval_assault() -> void:
 		return
 	var ts: TransportShip = _naval_transport as TransportShip
 
-	# Only board if transport is idle and not already carrying troops
 	if ts.get_garrison().size() > 0:
-		# Already loaded — send it to the enemy shore
-		ts.order_move_then_unload(enemy_town_center.global_position)
+		ts.order_move_then_unload(etc.global_position)
 		return
 
 	if ts.current_state != UnitBase.UnitState.IDLE:
 		return
 
-	# Board up to 4 idle military units
 	var boarded: int = 0
 	for unit: Node in units_layer.get_children():
 		if ts.is_full() or boarded >= 4:
@@ -620,7 +629,7 @@ func _launch_naval_assault() -> void:
 			boarded += 1
 
 	if boarded > 0:
-		ts.order_move_then_unload(enemy_town_center.global_position)
+		ts.order_move_then_unload(etc.global_position)
 
 func _find_nearest_enemy_ship(from: Vector2) -> Node:
 	var best: Node = null
@@ -786,7 +795,7 @@ func _spawn_villager() -> void:
 		return
 	var v: Node2D = VILLAGER_SCENE.instantiate() as Node2D
 	v.set("player_id", player_id)
-	v.set("civ_id", MatchConfig.rival_civ_id)
+	v.set("civ_id", MatchConfig.get_rival_civ_id(player_id))
 	units_layer.add_child(v)
 	v.global_position = town_center.global_position + Vector2(randf_range(-50.0, 50.0), 60.0)
 	PopulationManager.add_unit(player_id)

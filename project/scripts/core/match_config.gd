@@ -12,8 +12,21 @@ var map_size:        int    = MapSize.MEDIUM
 var resources:       int    = Resources.NORMAL
 var map_type:        int    = MapType.STANDARD
 var player_civ_id:   String = "guanches"
-var rival_civ_id:    String = "castellanos"
 var starting_age:    int    = 0           # GameManager.Age
+
+# Multi-rival support: rival_civ_ids[0] = first rival, etc.
+var rival_count:    int            = 1
+var rival_civ_ids:  Array[String]  = ["castellanos"]
+
+# Compatibility accessor — first rival's civ id
+var rival_civ_id: String:
+	get:
+		return rival_civ_ids[0] if rival_civ_ids.size() > 0 else "castellanos"
+	set(v):
+		if rival_civ_ids.is_empty():
+			rival_civ_ids.append(v)
+		else:
+			rival_civ_ids[0] = v
 
 # Map size → MAP_HALF px
 const MAP_HALF_BY_SIZE: Array[float] = [1200.0, 1800.0, 2600.0]
@@ -39,3 +52,17 @@ func get_starting_resources() -> Dictionary:
 	if resources == Resources.FULL_COMBAT:
 		return FULL_COMBAT_STARTING
 	return {}  # use ResourceManager defaults
+
+# Returns player_id list for all rival AIs: [1, 2, 3, ...]
+func get_rival_player_ids() -> Array[int]:
+	var ids: Array[int] = []
+	for i: int in range(rival_count):
+		ids.append(i + 1)
+	return ids
+
+# Returns the civ_id for a given rival player_id (1-based)
+func get_rival_civ_id(rival_player_id: int) -> String:
+	var idx: int = rival_player_id - 1
+	if idx >= 0 and idx < rival_civ_ids.size():
+		return rival_civ_ids[idx]
+	return "castellanos"

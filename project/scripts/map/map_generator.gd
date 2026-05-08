@@ -73,100 +73,117 @@ func _run(parent: Node2D, units_layer: Node2D,
 	_terrain_root.z_index = -9
 	parent.add_child(_terrain_root)
 
-	var tc0: Vector2
-	var tc1: Vector2
+	var player_count: int = 1 + MatchConfig.rival_count
+	var tc_positions: Array[Vector2] = []
 
 	match MatchConfig.map_type:
 		MatchConfig.MapType.ISLANDS:
-			var result: Dictionary = _run_islands(parent, units_layer)
-			tc0 = result["tc0"]
-			tc1 = result["tc1"]
+			tc_positions = _run_islands(parent, units_layer, player_count)
 		MatchConfig.MapType.VOLCANIC_COAST:
-			tc0 = _random_tc_pos()
-			tc1 = -tc0
-			_register(tc0, R_TC)
-			_register(tc1, R_TC)
-			_register_unit_cluster(tc0)
-			_register_unit_cluster(tc1)
+			tc_positions = _place_tc_ring(player_count)
+			for tc: Vector2 in tc_positions:
+				_register(tc, R_TC)
+				_register_unit_cluster(tc)
 			_paint_volcanic_coast(parent)
-			_spawn_animals(units_layer, tc0, tc1)
-			_spawn_player_resources(parent, tc0, 0.0)
-			_spawn_player_resources(parent, tc1, PI)
+			_spawn_animals_multi(units_layer, tc_positions)
+			for i: int in range(tc_positions.size()):
+				_spawn_player_resources(parent, tc_positions[i],
+					TAU * float(i) / float(tc_positions.size()))
 			_spawn_neutral_resources(parent)
 		MatchConfig.MapType.DESERT_COAST:
-			tc0 = _random_tc_pos()
-			tc1 = -tc0
-			_register(tc0, R_TC)
-			_register(tc1, R_TC)
-			_register_unit_cluster(tc0)
-			_register_unit_cluster(tc1)
+			tc_positions = _place_tc_ring(player_count)
+			for tc: Vector2 in tc_positions:
+				_register(tc, R_TC)
+				_register_unit_cluster(tc)
 			_paint_desert_coast(parent)
-			_spawn_animals(units_layer, tc0, tc1)
-			_spawn_player_resources(parent, tc0, 0.0)
-			_spawn_player_resources(parent, tc1, PI)
+			_spawn_animals_multi(units_layer, tc_positions)
+			for i: int in range(tc_positions.size()):
+				_spawn_player_resources(parent, tc_positions[i],
+					TAU * float(i) / float(tc_positions.size()))
 			_spawn_neutral_resources(parent)
 		_: # STANDARD
-			tc0 = _random_tc_pos()
-			tc1 = -tc0
-			_register(tc0, R_TC)
-			_register(tc1, R_TC)
-			_register_unit_cluster(tc0)
-			_register_unit_cluster(tc1)
+			tc_positions = _place_tc_ring(player_count)
+			for tc: Vector2 in tc_positions:
+				_register(tc, R_TC)
+				_register_unit_cluster(tc)
 			_paint_standard(parent)
-			_spawn_animals(units_layer, tc0, tc1)
-			_spawn_player_resources(parent, tc0, 0.0)
-			_spawn_player_resources(parent, tc1, PI)
+			_spawn_animals_multi(units_layer, tc_positions)
+			for i: int in range(tc_positions.size()):
+				_spawn_player_resources(parent, tc_positions[i],
+					TAU * float(i) / float(tc_positions.size()))
 			_spawn_neutral_resources(parent)
 
 	_add_nav_obstacles(parent)
 	TerrainManager.bake_minimap_texture(_map_half, 256)
-	return {"tc0": tc0, "tc1": tc1}
+	return {"tc_positions": tc_positions}
+
+# Distribute N TCs evenly around a ring, with small random jitter per position.
+# For 2 players this reproduces the classic face-to-face layout.
+func _place_tc_ring(count: int) -> Array[Vector2]:
+	var ring_dist: float = _map_half * 0.48
+	# For 2 players start angle is random; for 3+ also random so no axis alignment
+	var base_angle: float = _rng.randf() * TAU
+	var result: Array[Vector2] = []
+	for i: int in range(count):
+		var angle: float = base_angle + TAU * float(i) / float(count)
+		var jitter: Vector2 = Vector2(
+			_rng.randf_range(-_map_half * 0.07, _map_half * 0.07),
+			_rng.randf_range(-_map_half * 0.07, _map_half * 0.07))
+		var pos: Vector2 = _clamp_map(
+			Vector2(cos(angle), sin(angle)) * ring_dist + jitter)
+		result.append(pos)
+	return result
 
 # ── Islands map ─────────────────────────────────────────────────────────────
 
-func _run_islands(parent: Node2D, units_layer: Node2D) -> Dictionary:
-	# Ocean background — full map (animated water shader)
+func _run_islands(parent: Node2D, units_layer: Node2D,
+		player_count: int) -> Array[Vector2]:
 	_paint_ocean_bg(parent, _map_half * 1.05)
 
-	# Generate two land blobs, one per player, on opposite sides
-	var island_radius: float = _map_half * 0.38
-	var offset_x: float = _map_half * 0.50
+	# Scale island size down slightly when more players fit more islands
+	var island_radius: float = _map_half * (0.38 if player_count <= 2 else 0.30)
+	var ring_dist: float = _map_half * (0.50 if player_count <= 2 else 0.46)
+	var base_angle: float = _rng.randf() * TAU
 
-	var center0: Vector2 = Vector2(-offset_x, _rng.randf_range(-_map_half * 0.15, _map_half * 0.15))
-	var center1: Vector2 = Vector2( offset_x, -center0.y)
+	var island_centers: Array[Vector2] = []
+	_land_polys.clear()
 
-	var poly0: PackedVector2Array = _make_island_poly(center0, island_radius)
-	var poly1: PackedVector2Array = _make_island_poly(center1, island_radius)
-	_land_polys = [poly0, poly1]
-	TerrainManager.set_land_polys(_land_polys, true)
+	for i: int in range(player_count):
+		var angle: float = base_angle + TAU * float(i) / float(player_count)
+		var center: Vector2 = Vector2(cos(angle), sin(angle)) * ring_dist
+		center += Vector2(_rng.randf_range(-20, 20), _rng.randf_range(-20, 20))
+		island_centers.append(center)
+		var poly: PackedVector2Array = _make_island_poly(center, island_radius)
+		_land_polys.append(poly)
+		TerrainManager.set_land_polys(_land_polys, true)
+		_paint_polygon(parent, poly, TERRAIN_COLORS[TerrainManager.TerrainType.GRASS])
+		_scatter_island_terrain(center, island_radius)
 
-	# Paint land blobs
-	_paint_polygon(parent, poly0, TERRAIN_COLORS[TerrainManager.TerrainType.GRASS])
-	_paint_polygon(parent, poly1, TERRAIN_COLORS[TerrainManager.TerrainType.GRASS])
-
-	# Scatter terrain on each island
-	_scatter_island_terrain(center0, island_radius)
-	_scatter_island_terrain(center1, island_radius)
-
-	# Paint terrain patches
 	_flush_terrain_zones_visual(parent)
 
-	# TC placement: near centre of each island
-	var tc0: Vector2 = center0 + Vector2(_rng.randf_range(-60, 60), _rng.randf_range(-60, 60))
-	var tc1: Vector2 = center1 + Vector2(_rng.randf_range(-60, 60), _rng.randf_range(-60, 60))
-	_register(tc0, R_TC)
-	_register(tc1, R_TC)
-	_register_unit_cluster(tc0)
-	_register_unit_cluster(tc1)
+	# TC per island
+	var tc_positions: Array[Vector2] = []
+	for center: Vector2 in island_centers:
+		var tc: Vector2 = center + Vector2(_rng.randf_range(-60, 60), _rng.randf_range(-60, 60))
+		_register(tc, R_TC)
+		_register_unit_cluster(tc)
+		tc_positions.append(tc)
 
-	# Resources constrained to land
-	_spawn_island_resources(parent, tc0, center0, island_radius)
-	_spawn_island_resources(parent, tc1, center1, island_radius)
-	_spawn_animals(units_layer, tc0, tc1)
-	_spawn_fish(parent, center0, center1, island_radius)
-	_spawn_resource_islets(parent, center0, center1, island_radius)
+	# Resources per island
+	for i: int in range(player_count):
+		_spawn_island_resources(parent, tc_positions[i], island_centers[i], island_radius)
 
-	return {"tc0": tc0, "tc1": tc1}
+	# Animals, fish, islets
+	_spawn_animals_multi(units_layer, tc_positions)
+	var map_center: Vector2 = Vector2.ZERO
+	for c: Vector2 in island_centers:
+		map_center += c
+	map_center /= float(island_centers.size())
+	_spawn_fish_multi(parent, island_centers, island_radius)
+	_spawn_resource_islets(parent, island_centers[0],
+		island_centers[island_centers.size() - 1], island_radius)
+
+	return tc_positions
 
 # Build a bumpy circle polygon for an island
 func _make_island_poly(center: Vector2, radius: float) -> PackedVector2Array:
@@ -538,11 +555,12 @@ func _register_unit_cluster(tc: Vector2) -> void:
 
 # ── Animals ──────────────────────────────────────────────────────────────────
 
-func _spawn_animals(units_layer: Node2D, tc0: Vector2, tc1: Vector2) -> void:
+func _spawn_animals_multi(units_layer: Node2D, tc_positions: Array[Vector2]) -> void:
 	var deer_scene:  PackedScene = load(ANIMAL_SCENE) as PackedScene
 	var sheep_scene: PackedScene = load(SHEEP_SCENE)  as PackedScene
 
-	for tc: Vector2 in [tc0, tc1]:
+	# 4 sheep near each TC
+	for tc: Vector2 in tc_positions:
 		var placed: int = 0
 		for _attempt: int in range(MAX_PLACE_TRIES * 4):
 			if placed >= 4:
@@ -556,6 +574,7 @@ func _spawn_animals(units_layer: Node2D, tc0: Vector2, tc1: Vector2) -> void:
 			_place_animal(sheep_scene, units_layer, pos, true)
 			placed += 1
 
+	# Neutral deer away from all TCs
 	var placed_deer: int = 0
 	for _attempt: int in range(MAX_PLACE_TRIES * 8):
 		if placed_deer >= 8:
@@ -563,7 +582,12 @@ func _spawn_animals(units_layer: Node2D, tc0: Vector2, tc1: Vector2) -> void:
 		var pos: Vector2 = Vector2(
 			_rng.randf_range(-_map_half * 0.85, _map_half * 0.85),
 			_rng.randf_range(-_map_half * 0.85, _map_half * 0.85))
-		if pos.distance_to(tc0) < 300.0 or pos.distance_to(tc1) < 300.0:
+		var too_close: bool = false
+		for tc: Vector2 in tc_positions:
+			if pos.distance_to(tc) < 300.0:
+				too_close = true
+				break
+		if too_close:
 			continue
 		if TerrainManager.is_ocean(pos):
 			continue
@@ -663,17 +687,21 @@ func _spawn_neutral_resources(parent: Node2D) -> void:
 			_spawn_forest_zone(parent, fc, roundi(_rng.randf_range(26.0, 34.0) * _res_mult),
 				220.0 * _res_mult, 100.0)
 
-# Spawns fish (FOOD_FISH) in ocean water between the two islands.
-func _spawn_fish(parent: Node2D, center0: Vector2, center1: Vector2, island_radius: float) -> void:
-	var mid: Vector2 = (center0 + center1) * 0.5
-	var total: int = roundi(8.0 * _res_mult)
+func _spawn_fish_multi(parent: Node2D, island_centers: Array[Vector2],
+		island_radius: float) -> void:
+	var map_center: Vector2 = Vector2.ZERO
+	for c: Vector2 in island_centers:
+		map_center += c
+	map_center /= float(island_centers.size())
+
+	var total: int = roundi(8.0 * _res_mult * float(island_centers.size()) * 0.75)
 	var placed: int = 0
 	for _attempt: int in range(MAX_PLACE_TRIES * total * 2):
 		if placed >= total:
 			break
 		var a: float = _rng.randf() * TAU
-		var d: float = _rng.randf_range(island_radius * 0.5, island_radius * 1.8)
-		var pos: Vector2 = mid + Vector2(cos(a), sin(a)) * d
+		var d: float = _rng.randf_range(island_radius * 0.5, island_radius * 2.0)
+		var pos: Vector2 = map_center + Vector2(cos(a), sin(a)) * d
 		pos = _clamp_map(pos)
 		if not TerrainManager.is_ocean(pos):
 			continue

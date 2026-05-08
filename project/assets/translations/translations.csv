@@ -125,6 +125,8 @@ LOBBY_RES_ABUNDANT,Abundant,Abundantes
 LOBBY_RES_FULL_COMBAT,Full Combat,Combate Total
 LOBBY_CIVILIZATION,Your Civilization,Tu Civilización
 LOBBY_STARTING_AGE,Starting Age,Edad de Inicio
+LOBBY_RIVAL_COUNT,Number of Rivals,Número de Rivales
+LOBBY_RIVAL,Rival,Rival
 LOBBY_START,Start Game,Iniciar Partida
 LOBBY_BACK,← Back,← Volver
 CIV_GUANCHES_NAME,Guanches,Guanches
