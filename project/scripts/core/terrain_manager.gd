@@ -131,24 +131,65 @@ func nearest_passable(world_pos: Vector2, civ_id: String) -> Vector2:
 # map_half: half-size of the playable world in world units.
 # resolution: pixel dimensions of the output square texture.
 func bake_minimap_texture(map_half: float, resolution: int) -> void:
-	const TERRAIN_COLORS: Dictionary = {
-		0: Color(0.22, 0.45, 0.18),   # GRASS
-		1: Color(0.14, 0.12, 0.11),   # MALPAIS
-		2: Color(0.78, 0.68, 0.42),   # DUNE
-		3: Color(0.08, 0.30, 0.12),   # LAURISILVA
-		4: Color(0.48, 0.44, 0.40),   # RISCO
-		5: Color(0.10, 0.28, 0.52),   # OCEAN
-		6: Color(0.30, 0.08, 0.04),   # CALDERA
-	}
+	const TERRAIN_COLORS: Array[Color] = [
+		Color(0.22, 0.45, 0.18),   # GRASS
+		Color(0.14, 0.12, 0.11),   # MALPAIS
+		Color(0.78, 0.68, 0.42),   # DUNE
+		Color(0.08, 0.30, 0.12),   # LAURISILVA
+		Color(0.48, 0.44, 0.40),   # RISCO
+		Color(0.10, 0.28, 0.52),   # OCEAN
+		Color(0.30, 0.08, 0.04),   # CALDERA
+	]
+	# Flatten zones into parallel arrays — avoids per-pixel Dictionary access
+	var z_count: int = _zones.size()
+	var z_cx: PackedFloat32Array = PackedFloat32Array()
+	var z_cy: PackedFloat32Array = PackedFloat32Array()
+	var z_r2: PackedFloat32Array = PackedFloat32Array()
+	var z_t:  PackedInt32Array   = PackedInt32Array()
+	z_cx.resize(z_count)
+	z_cy.resize(z_count)
+	z_r2.resize(z_count)
+	z_t.resize(z_count)
+	for i: int in range(z_count):
+		var z: Dictionary = _zones[i]
+		var c: Vector2 = z["center"] as Vector2
+		var r: float   = z["radius"] as float
+		z_cx[i] = c.x
+		z_cy[i] = c.y
+		z_r2[i] = r * r
+		z_t[i]  = z["type"] as int
+
 	var img: Image = Image.create(resolution, resolution, false, Image.FORMAT_RGB8)
-	var world_min: Vector2 = Vector2(-map_half, -map_half)
+	var world_min: float = -map_half
 	var world_size: float = map_half * 2.0
+	var ocean_color: Color = TERRAIN_COLORS[TerrainType.OCEAN]
+
 	for py: int in range(resolution):
+		var wy: float = world_min + (float(py) + 0.5) / float(resolution) * world_size
 		for px: int in range(resolution):
-			var wx: float = world_min.x + (float(px) + 0.5) / float(resolution) * world_size
-			var wy: float = world_min.y + (float(py) + 0.5) / float(resolution) * world_size
-			var t: int = get_terrain(Vector2(wx, wy)) as int
-			img.set_pixel(px, py, TERRAIN_COLORS[t] as Color)
+			var wx: float = world_min + (float(px) + 0.5) / float(resolution) * world_size
+
+			# Island map: check if outside all land polygons → ocean
+			if _is_island_map:
+				var in_land: bool = false
+				for poly: Variant in _land_polys:
+					if Geometry2D.is_point_in_polygon(Vector2(wx, wy), poly as PackedVector2Array):
+						in_land = true
+						break
+				if not in_land:
+					img.set_pixel(px, py, ocean_color)
+					continue
+
+			# Walk zones in reverse (last zone = highest priority)
+			var terrain: int = TerrainType.GRASS
+			var wv: Vector2 = Vector2(wx, wy)
+			for i: int in range(z_count - 1, -1, -1):
+				var dx: float = wx - z_cx[i]
+				var dy: float = wy - z_cy[i]
+				if dx * dx + dy * dy <= z_r2[i]:
+					terrain = z_t[i]
+					break
+			img.set_pixel(px, py, TERRAIN_COLORS[terrain])
 	minimap_texture = ImageTexture.create_from_image(img)
 
 # Returns the nearest ocean position to world_pos, searching outward in rings.

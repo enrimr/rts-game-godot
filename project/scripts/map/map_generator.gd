@@ -3,7 +3,7 @@ class_name MapGenerator
 ## Generates a symmetric random map and paints procedural terrain zones.
 ## Placement order: background → terrain zones → TCs → units → animals → resources.
 
-const MAX_PLACE_TRIES: int = 40
+const MAX_PLACE_TRIES: int = 30
 
 # --- Radii used when registering objects ---
 const R_TC: float        = 130.0
@@ -41,8 +41,15 @@ const TERRAIN_COLORS: Dictionary = {
 	TerrainManager.TerrainType.CALDERA:    Color(0.30, 0.08, 0.04),
 }
 
-# Placement registry
-var _placed: Array[Dictionary] = []
+# Placement registry — flat arrays for fast iteration
+var _placed_pos: PackedVector2Array = PackedVector2Array()
+var _placed_rad: PackedFloat32Array = PackedFloat32Array()
+
+# Spatial hash — cell size = max placement radius (R_TC = 130).
+# Each cell key = Vector2i(floor(x/CELL), floor(y/CELL)) → Array of indices.
+const SPATIAL_CELL: float = 140.0
+var _spatial: Dictionary = {}
+
 var _rng: RandomNumberGenerator = null
 var _map_half: float = 1800.0
 var _res_mult: float = 1.0
@@ -51,6 +58,9 @@ var _res_mult: float = 1.0
 var _terrain_root: Node2D = null
 # Land polygons for island map (used by TerrainManager)
 var _land_polys: Array = []
+
+# Cached resource node script — loaded once per generation
+var _res_node_script: Script = null
 
 # ── Public entry point ──────────────────────────────────────────────────────
 
@@ -67,6 +77,7 @@ static func generate(parent: Node2D, units_layer: Node2D,
 func _run(parent: Node2D, units_layer: Node2D,
 		rng: RandomNumberGenerator) -> Dictionary:
 	_rng = rng
+	_res_node_script = load("res://scripts/economy/resource_node.gd") as Script
 
 	# Terrain root sits below everything else
 	_terrain_root = Node2D.new()
@@ -315,99 +326,99 @@ func _flush_terrain_zones_visual(parent: Node2D) -> void:
 func _paint_laurisilva(parent: Node2D, center: Vector2, radius: float) -> void:
 	# Base: dark green blob
 	_paint_circle_patch(parent, center, radius, Color(0.08, 0.28, 0.10))
-	# 18–26 individual tree canopies scattered inside the zone
-	var tree_count: int = _rng.randi_range(18, 26)
+	# Batch all canopies into a single Polygon2D per colour group to minimise
+	# scene-tree nodes. We use 3 colour groups; each gets one Polygon2D with
+	# all canopy outlines appended as a single closed polygon (separated by a
+	# degenerate edge back to the first point, which is invisible at this scale).
+	const CSTEPS: int = 6   # hexagonal canopy — fewer vertices, still round
+	const GROUPS: int = 3
+	var group_pts: Array = [PackedVector2Array(), PackedVector2Array(), PackedVector2Array()]
+	var group_colors: Array[Color] = [
+		Color(0.06, 0.44, 0.08),
+		Color(0.10, 0.52, 0.10),
+		Color(0.14, 0.38, 0.08),
+	]
+
+	var tree_count: int = _rng.randi_range(10, 16)
 	for _i: int in range(tree_count):
 		var a: float = _rng.randf() * TAU
 		var d: float = _rng.randf_range(0.0, radius * 0.90)
 		var pos: Vector2 = center + Vector2(cos(a), sin(a)) * d
-		var tr_r: float = _rng.randf_range(radius * 0.04, radius * 0.09)
-		# Trunk — thin dark brown rectangle
-		var trunk: Polygon2D = Polygon2D.new()
-		trunk.color = Color(0.28, 0.18, 0.08)
-		trunk.z_index = -7
-		var tw: float = tr_r * 0.25
-		var th: float = tr_r * 0.55
-		trunk.polygon = PackedVector2Array([
-			Vector2(-tw, 0.0), Vector2(tw, 0.0),
-			Vector2(tw, th),   Vector2(-tw, th),
-		])
-		trunk.position = pos
-		parent.add_child(trunk)
-		# Canopy — irregular green circle
+		var tr_r: float = _rng.randf_range(radius * 0.05, radius * 0.10)
+		var group: int = _rng.randi() % GROUPS
+		var pts: PackedVector2Array = group_pts[group] as PackedVector2Array
+		# Append canopy polygon; if not empty, add a degenerate bridge back
+		if pts.size() > 0:
+			pts.append(pts[0])   # close previous sub-polygon
+		var start_pt: Vector2 = pos + Vector2(tr_r, 0.0)
+		for ci: int in range(CSTEPS):
+			var ca: float = TAU * float(ci) / float(CSTEPS)
+			var cr: float = tr_r * _rng.randf_range(0.80, 1.20)
+			pts.append(pos + Vector2(cos(ca), sin(ca)) * cr)
+		pts.append(start_pt)   # close this sub-polygon
+
+	for g: int in range(GROUPS):
+		var pts: PackedVector2Array = group_pts[g] as PackedVector2Array
+		if pts.size() < 3:
+			continue
 		var canopy: Polygon2D = Polygon2D.new()
-		canopy.color = Color(
-			_rng.randf_range(0.05, 0.18),
-			_rng.randf_range(0.38, 0.58),
-			_rng.randf_range(0.05, 0.18))
+		canopy.color = group_colors[g]
 		canopy.z_index = -6
-		var cpts: PackedVector2Array = PackedVector2Array()
-		var csteps: int = 8
-		for ci: int in range(csteps):
-			var ca: float = TAU * ci / csteps
-			var cr: float = tr_r * _rng.randf_range(0.75, 1.25)
-			cpts.append(Vector2(cos(ca), sin(ca)) * cr)
-		canopy.polygon = cpts
-		canopy.position = pos + Vector2(0.0, -tr_r * 0.3)
+		canopy.polygon = pts
 		parent.add_child(canopy)
 
 func _paint_risco(parent: Node2D, center: Vector2, radius: float) -> void:
-	# Base: mid-grey irregular blob
 	_paint_circle_patch(parent, center, radius, Color(0.46, 0.42, 0.38))
-	# 6–10 angular rock shards on top
-	var rock_count: int = _rng.randi_range(6, 10)
+	# Batch all rock shards into two Polygon2D nodes (light / dark)
+	var pts_light: PackedVector2Array = PackedVector2Array()
+	var pts_dark:  PackedVector2Array = PackedVector2Array()
+	var rock_count: int = _rng.randi_range(5, 8)
 	for _i: int in range(rock_count):
 		var a: float = _rng.randf() * TAU
 		var d: float = _rng.randf_range(0.0, radius * 0.80)
 		var pos: Vector2 = center + Vector2(cos(a), sin(a)) * d
-		var rock: Polygon2D = Polygon2D.new()
-		# Angular polygon — 5 to 7 points with NO wobble (straight edges = rock)
 		var sides: int = _rng.randi_range(5, 7)
 		var rr: float = _rng.randf_range(radius * 0.10, radius * 0.22)
 		var rot: float = _rng.randf() * TAU
-		var rpts: PackedVector2Array = PackedVector2Array()
+		var pts: PackedVector2Array = pts_light if _rng.randf() > 0.5 else pts_dark
+		if pts.size() > 0:
+			pts.append(pts[0])
 		for ri: int in range(sides):
 			var ra: float = rot + TAU * ri / sides
-			# Deliberately uneven radii for jagged look
-			var rlen: float = rr * _rng.randf_range(0.55, 1.0)
-			rpts.append(Vector2(cos(ra), sin(ra)) * rlen)
-		rock.polygon = rpts
-		rock.position = pos
-		# Alternating light/dark grey to suggest depth
-		var shade: float = _rng.randf_range(0.30, 0.65)
-		rock.color = Color(shade, shade * 0.96, shade * 0.90)
+			pts.append(pos + Vector2(cos(ra), sin(ra)) * rr * _rng.randf_range(0.55, 1.0))
+
+	for data: Array in [[pts_light, Color(0.60, 0.57, 0.53)], [pts_dark, Color(0.32, 0.30, 0.28)]]:
+		var pts: PackedVector2Array = data[0] as PackedVector2Array
+		if pts.size() < 3:
+			continue
+		var rock: Polygon2D = Polygon2D.new()
+		rock.color = data[1] as Color
 		rock.z_index = -7
+		rock.polygon = pts
 		parent.add_child(rock)
-		# Small shadow line along bottom edge
-		var shadow: Line2D = Line2D.new()
-		shadow.default_color = Color(0.10, 0.10, 0.10, 0.45)
-		shadow.width = 1.5
-		shadow.z_index = -6
-		shadow.add_point(pos + Vector2(-rr * 0.5, rr * 0.35))
-		shadow.add_point(pos + Vector2( rr * 0.5, rr * 0.35))
-		parent.add_child(shadow)
 
 func _paint_malpais(parent: Node2D, center: Vector2, radius: float) -> void:
-	# Base: near-black blob
 	_paint_circle_patch(parent, center, radius, Color(0.12, 0.10, 0.09))
-	# Scatter of small sharp dark fragments
-	var frag_count: int = _rng.randi_range(12, 20)
+	# Batch all fragments into a single Polygon2D
+	var all_pts: PackedVector2Array = PackedVector2Array()
+	var frag_count: int = _rng.randi_range(8, 14)
 	for _i: int in range(frag_count):
 		var a: float = _rng.randf() * TAU
 		var d: float = _rng.randf_range(0.0, radius * 0.88)
 		var pos: Vector2 = center + Vector2(cos(a), sin(a)) * d
-		var frag: Polygon2D = Polygon2D.new()
 		var fr: float = _rng.randf_range(radius * 0.04, radius * 0.10)
-		var fpts: PackedVector2Array = PackedVector2Array()
 		var fsides: int = _rng.randi_range(4, 6)
+		if all_pts.size() > 0:
+			all_pts.append(all_pts[0])
 		for fi: int in range(fsides):
 			var fa: float = TAU * fi / fsides + _rng.randf_range(-0.2, 0.2)
-			fpts.append(Vector2(cos(fa), sin(fa)) * fr * _rng.randf_range(0.5, 1.0))
-		frag.polygon = fpts
-		frag.position = pos
-		var grey: float = _rng.randf_range(0.18, 0.32)
-		frag.color = Color(grey, grey * 0.90, grey * 0.85)
+			all_pts.append(pos + Vector2(cos(fa), sin(fa)) * fr * _rng.randf_range(0.5, 1.0))
+
+	if all_pts.size() >= 3:
+		var frag: Polygon2D = Polygon2D.new()
+		frag.color = Color(0.26, 0.23, 0.22)
 		frag.z_index = -7
+		frag.polygon = all_pts
 		parent.add_child(frag)
 
 func _paint_caldera(parent: Node2D, center: Vector2, radius: float) -> void:
@@ -495,12 +506,35 @@ func _paint_polygon(parent: Node2D, pts: PackedVector2Array, col: Color) -> void
 # ── Registry helpers ─────────────────────────────────────────────────────────
 
 func _register(pos: Vector2, radius: float) -> void:
-	_placed.append({"pos": pos, "radius": radius})
+	var idx: int = _placed_pos.size()
+	_placed_pos.append(pos)
+	_placed_rad.append(radius)
+	# Insert into every spatial cell the object's bounding box overlaps.
+	var half_r: float = radius
+	var x0: int = floori((pos.x - half_r) / SPATIAL_CELL)
+	var x1: int = floori((pos.x + half_r) / SPATIAL_CELL)
+	var y0: int = floori((pos.y - half_r) / SPATIAL_CELL)
+	var y1: int = floori((pos.y + half_r) / SPATIAL_CELL)
+	for cx: int in range(x0, x1 + 1):
+		for cy: int in range(y0, y1 + 1):
+			var key: Vector2i = Vector2i(cx, cy)
+			if not _spatial.has(key):
+				_spatial[key] = []
+			(_spatial[key] as Array).append(idx)
 
 func _is_free(pos: Vector2, radius: float) -> bool:
-	for entry: Dictionary in _placed:
-		if pos.distance_to(entry["pos"] as Vector2) < radius + (entry["radius"] as float):
-			return false
+	var cx: int = floori(pos.x / SPATIAL_CELL)
+	var cy: int = floori(pos.y / SPATIAL_CELL)
+	# Check the 3×3 neighbourhood of cells around the query point.
+	for dx: int in range(-1, 2):
+		for dy: int in range(-1, 2):
+			var key: Vector2i = Vector2i(cx + dx, cy + dy)
+			if not _spatial.has(key):
+				continue
+			for idx: int in (_spatial[key] as Array):
+				var min_dist: float = radius + _placed_rad[idx]
+				if pos.distance_squared_to(_placed_pos[idx]) < min_dist * min_dist:
+					return false
 	return true
 
 func _find_free_arc(center: Vector2, dist_min: float, dist_max: float,
@@ -848,7 +882,8 @@ func _spawn_deposit_clamped(parent: Node2D, center: Vector2,
 
 func _spawn_forest_zone(parent: Node2D, zone_center: Vector2,
 		count: int, amount: float, zone_radius: float) -> void:
-	for _i: int in range(MAX_PLACE_TRIES * count):
+	var max_iter: int = count * 12   # tight budget — spatial hash makes each try cheap
+	for _i: int in range(max_iter):
 		if count <= 0:
 			break
 		var pos: Vector2 = _find_free_near(zone_center, zone_radius, R_RES_WOOD)
@@ -864,7 +899,7 @@ func _spawn_forest_zone(parent: Node2D, zone_center: Vector2,
 func _create_resource_node(parent: Node2D, pos: Vector2,
 		rtype: ResourceNode.ResourceType, amount: float) -> void:
 	var node: Node2D = Node2D.new()
-	node.set_script(load("res://scripts/economy/resource_node.gd"))
+	node.set_script(_res_node_script)
 	node.set("resource_type", rtype)
 	node.set("initial_amount", amount)
 	parent.add_child(node)
