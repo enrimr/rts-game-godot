@@ -78,6 +78,7 @@ var _elapsed_seconds: float = 0.0
 var _clock_running: bool = false
 var _in_build_menu: bool = false
 var _selected_building: Node = null
+var _selected_unit: Node = null   # tracked for transport garrison refresh
 var _status_unit: Node = null
 var _active_actions: Array = []
 var _follow_btn: Button = null
@@ -379,6 +380,7 @@ func _on_unit_selected(units: Array) -> void:
 	if is_instance_valid(_selected_building) and _selected_building.has_method("set_selected"):
 		_selected_building.set_selected(false)
 	_selected_building = null
+	_selected_unit = units[0] if units.size() == 1 else null
 	_set_follow_active(false)
 	update_selection(units)
 	if is_instance_valid(_follow_btn):
@@ -542,8 +544,8 @@ func _populate_transport_buttons(ship: TransportShip) -> void:
 	_populate_buttons(actions)
 	_unit_status_label.text = tr("UI_GARRISON_STATUS") % [garrison.size(), cap]
 
-func _on_garrison_changed(ship: Node, current: int, capacity: int) -> void:
-	if _selected_units.size() == 1 and _selected_units[0] == ship:
+func _on_garrison_changed(ship: Node, _current: int, _capacity: int) -> void:
+	if is_instance_valid(_selected_unit) and _selected_unit == ship:
 		_populate_transport_buttons(ship as TransportShip)
 
 func _populate_tc_actions() -> void:
