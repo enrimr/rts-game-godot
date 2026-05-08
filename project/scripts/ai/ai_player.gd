@@ -43,8 +43,7 @@ var _built: Dictionary = {"barracks": 0, "house": 0, "lumber_camp": 0, "mining_c
 
 # Naval state
 var _naval_transport: Node = null   # active transport ship reference
-var _naval_assault_timer: float = 0.0
-const NAVAL_ASSAULT_INTERVAL: float = 45.0
+var _naval_scout_target: Vector2 = Vector2.ZERO  # last scout destination for war galleys
 
 enum AggressionLevel { PASSIVE, ALERTED, AGGRESSIVE }
 var _aggression: AggressionLevel = AggressionLevel.PASSIVE
@@ -76,15 +75,12 @@ func _process(delta: float) -> void:
 		_timer = 0.0
 		_run_tick()
 
-	if _is_naval_map():
-		_naval_assault_timer += delta
-		if _naval_assault_timer >= NAVAL_ASSAULT_INTERVAL:
-			_naval_assault_timer = 0.0
-			_launch_naval_assault()
-
 	if _attack_timer >= _effective_attack_interval():
 		_attack_timer = 0.0
-		_launch_attack()
+		if _is_naval_map():
+			_launch_naval_assault()
+		else:
+			_launch_attack()
 
 	if _threat_timer >= THREAT_CHECK_INTERVAL:
 		_threat_timer = 0.0
@@ -106,6 +102,7 @@ func _run_tick() -> void:
 	_manage_age_advance()
 	if _is_naval_map():
 		_manage_naval()
+		_manage_naval_patrol()
 
 # ── Population ───────────────────────────────────────────────────────────────
 
@@ -384,58 +381,112 @@ func _is_naval_map() -> bool:
 	return MatchConfig.map_type == MatchConfig.MapType.ISLANDS
 
 func _manage_naval() -> void:
-	# Build a dock near the shore if we don't have one yet
-	if _built.get("dock", 0) as int == 0 \
-			and ResourceManager.can_afford(player_id, BUILDING_COSTS["dock"]):
-		_build_dock_on_shore()
-		return
-
+	# Build dock as soon as we can afford it
 	if _built.get("dock", 0) as int == 0:
+		if ResourceManager.can_afford(player_id, BUILDING_COSTS["dock"]):
+			_build_dock_on_shore()
 		return
 
-	# Train war galleys for defense, then a transport once we have 3+ military
 	var dock: Node = _find_own_dock()
-	if dock == null or dock.get("state") as int != BuildingBase.BuildingState.COMPLETE:
+	if dock == null:
 		return
-	if (dock as Dock).get_queue().size() >= (dock as Dock).get_max_queue():
+	var dk: Dock = dock as Dock
+	if dk.state != BuildingBase.BuildingState.COMPLETE:
+		return
+	if dk.get_queue().size() >= dk.get_max_queue():
 		return
 
 	var age: int = AgeManager.get_age(player_id)
-	if age < GameManager.Age.FEUDAL:
-		return
-
-	var galleys: int  = _count_naval("WarGalley")
+	var galleys: int    = _count_naval("WarGalley")
 	var transports: int = _count_naval("TransportShip")
 
-	# Keep 1-2 war galleys before investing in transport
-	if galleys < 2 and ResourceManager.can_afford(player_id, {"wood": 75, "gold": 25}):
-		(dock as Dock).order_train("war_galley")
+	# Dark Age: only fishing boats for food income
+	if age < GameManager.Age.FEUDAL:
+		if _count_naval("FishingBoat") < 2:
+			dk.order_train("fishing_boat")
 		return
 
-	# One transport is enough for the assault
-	if transports < 1 and ResourceManager.can_afford(player_id, {"wood": 100, "gold": 50}):
-		(dock as Dock).order_train("transport_ship")
+	# Feudal+: build 2 war galleys first, then 1 transport, then more galleys
+	var galley_target: int = 2 if age == GameManager.Age.FEUDAL else 3
+	if galleys < galley_target and ResourceManager.can_afford(player_id, {"wood": 75, "gold": 35}):
+		dk.order_train("war_galley")
+		return
+	if transports < 1 and ResourceManager.can_afford(player_id, {"wood": 125}):
+		dk.order_train("transport_ship")
+		return
+	# Additional galleys in Castle/Imperial
+	if age >= GameManager.Age.CASTLE and galleys < 4 \
+			and ResourceManager.can_afford(player_id, {"wood": 75, "gold": 35}):
+		dk.order_train("war_galley")
+
+func _manage_naval_patrol() -> void:
+	# Send war galleys to explore/patrol toward the enemy side of the map
+	if not is_instance_valid(enemy_town_center):
+		return
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit) or not (unit is WarGalley):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		var wg: WarGalley = unit as WarGalley
+		if wg.current_state != UnitBase.UnitState.IDLE:
+			continue
+		# Pick a random ocean point roughly toward the enemy
+		var toward: Vector2 = enemy_town_center.global_position
+		var jitter: Vector2 = Vector2(randf_range(-300.0, 300.0), randf_range(-300.0, 300.0))
+		var dest: Vector2 = wg.global_position.lerp(toward + jitter, randf_range(0.3, 0.7))
+		# Make sure destination is ocean
+		if TerrainManager.is_ocean(dest):
+			wg.order_move(dest)
 
 func _launch_naval_assault() -> void:
 	if not is_instance_valid(enemy_town_center):
 		return
+
+	# Send war galleys to attack any enemy naval units or patrol toward enemy
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit) or not (unit is WarGalley):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		var wg: WarGalley = unit as WarGalley
+		var enemy_ship: Node = _find_nearest_enemy_ship(wg.global_position)
+		if enemy_ship != null:
+			wg.order_attack(enemy_ship)
+		elif wg.current_state == UnitBase.UnitState.IDLE:
+			# Patrol toward the enemy island
+			var toward: Vector2 = enemy_town_center.global_position
+			var jitter: Vector2 = Vector2(randf_range(-200.0, 200.0), randf_range(-200.0, 200.0))
+			var dest: Vector2 = wg.global_position.lerp(toward + jitter, randf_range(0.4, 0.8))
+			if TerrainManager.is_ocean(dest):
+				wg.order_move(dest)
+
+	# Transport assault: board idle military and sail to enemy shore
 	var military: int = _count_military()
 	if military < 3:
 		return
 
-	# Find or reuse the AI transport ship
 	if not is_instance_valid(_naval_transport):
 		_naval_transport = _find_own_transport()
 	if not is_instance_valid(_naval_transport):
 		return
 	var ts: TransportShip = _naval_transport as TransportShip
-	if ts == null:
+
+	# Only board if transport is idle and not already carrying troops
+	if ts.get_garrison().size() > 0:
+		# Already loaded — send it to the enemy shore
+		ts.order_move_then_unload(enemy_town_center.global_position)
 		return
 
-	# Board idle military units onto the transport
+	if ts.current_state != UnitBase.UnitState.IDLE:
+		return
+
+	# Board up to 4 idle military units
 	var boarded: int = 0
 	for unit: Node in units_layer.get_children():
-		if ts.is_full():
+		if ts.is_full() or boarded >= 4:
 			break
 		if not is_instance_valid(unit):
 			continue
@@ -444,16 +495,31 @@ func _launch_naval_assault() -> void:
 			continue
 		if not (unit is Militia or unit is Archer or unit is Pikeman):
 			continue
-		if unit.has_method("current_state") or unit.get("current_state") as int == UnitBase.UnitState.IDLE:
+		if unit.get("current_state") as int == UnitBase.UnitState.IDLE:
 			ts.board(unit)
 			boarded += 1
 
-	if boarded > 0 or ts.get_garrison().size() > 0:
-		# Order the ship to move near the enemy town center then unload
+	if boarded > 0:
 		ts.order_move_then_unload(enemy_town_center.global_position)
 
+func _find_nearest_enemy_ship(from: Vector2) -> Node:
+	var best: Node = null
+	var best_dist: float = 800.0
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		if not (unit is WarGalley or unit is FishingBoat or unit is TransportShip):
+			continue
+		var d: float = from.distance_to((unit as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = unit
+	return best
+
 func _build_dock_on_shore() -> void:
-	# Find a shore position: probe outward from TC until we hit an ocean-adjacent land tile
 	if not is_instance_valid(town_center):
 		return
 	var pos: Vector2 = _find_shore_position()
@@ -474,7 +540,6 @@ func _build_dock_on_shore() -> void:
 	_built["dock"] = 1
 
 func _find_shore_position() -> Vector2:
-	# Spiral outward from TC, looking for a land tile that is adjacent to ocean
 	var origin: Vector2 = town_center.global_position
 	const PROBE: float = 48.0
 	const DIRS: Array = [
@@ -486,7 +551,6 @@ func _find_shore_position() -> Vector2:
 			var candidate: Vector2 = origin + (dir as Vector2) * PROBE * float(radius)
 			if TerrainManager.is_ocean(candidate):
 				continue
-			# Check if at least one neighbour is ocean
 			for nd: Variant in DIRS:
 				if TerrainManager.is_ocean(candidate + (nd as Vector2) * PROBE):
 					return candidate
@@ -525,6 +589,7 @@ func _count_naval(type_name: String) -> int:
 		match type_name:
 			"WarGalley":      if unit is WarGalley:      count += 1
 			"TransportShip":  if unit is TransportShip:  count += 1
+			"FishingBoat":    if unit is FishingBoat:    count += 1
 	return count
 
 # ── Building placement ────────────────────────────────────────────────────────
