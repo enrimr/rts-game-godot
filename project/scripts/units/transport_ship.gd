@@ -96,6 +96,26 @@ func unload_all() -> void:
 	_garrison.clear()
 	EventBus.garrison_changed.emit(self, 0, CAPACITY)
 
+func unload_one(index: int) -> void:
+	if index < 0 or index >= _garrison.size():
+		return
+	var unit: Node = _garrison[index]
+	_garrison.remove_at(index)
+	if not is_instance_valid(unit):
+		EventBus.garrison_changed.emit(self, _garrison.size(), CAPACITY)
+		return
+	var angle: float = randf() * TAU
+	var land_pos: Vector2 = TerrainManager.nearest_passable(
+		global_position + Vector2(cos(angle), sin(angle)) * UNLOAD_OFFSET,
+		unit.get("civ_id") as String)
+	unit.set_process(true)
+	unit.set_physics_process(true)
+	unit.visible = true
+	(unit as Node2D).global_position = land_pos
+	if unit.has_method("order_move"):
+		unit.call("order_move", land_pos)
+	EventBus.garrison_changed.emit(self, _garrison.size(), CAPACITY)
+
 func get_garrison() -> Array:
 	return _garrison.duplicate()
 

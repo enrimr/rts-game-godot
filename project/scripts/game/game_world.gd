@@ -1071,6 +1071,13 @@ func _on_action_requested(action_id: String) -> void:
 				if unit is TransportShip:
 					(unit as TransportShip).unload_all()
 					break
+		_:
+			if action_id.begins_with("unload_unit:"):
+				var idx: int = int(action_id.substr(12))
+				for unit: Node in _selected_units:
+					if unit is TransportShip:
+						(unit as TransportShip).unload_one(idx)
+						break
 		"stop":
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):

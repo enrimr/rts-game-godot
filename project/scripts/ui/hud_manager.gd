@@ -220,7 +220,7 @@ func update_selection(units: Array) -> void:
 		if max_hp > 0.0:
 			_unit_hp_bar.value = (hp / max_hp) * 100.0
 
-		_status_unit = first if first.has_method("order_gather") else null
+		_status_unit = first if (first.has_method("order_gather") or first is FishingBoat) else null
 
 		if first is Animal:
 			var astate: Variant = first.get("current_state")
@@ -529,6 +529,23 @@ func _populate_hero_buttons(hero: HeroUnit) -> void:
 func _populate_transport_buttons(ship: TransportShip) -> void:
 	var garrison: Array = ship.get_garrison()
 	var cap: int = ship.get_capacity()
+
+	# Fill portrait grid with garrisoned units; each portrait is clickable to unload that unit.
+	for child: Node in _unit_portraits_grid.get_children():
+		child.queue_free()
+	for i: int in range(garrison.size()):
+		var garrisoned: Node = garrison[i] as Node
+		var portrait: UnitPortrait = UnitPortrait.new()
+		_unit_portraits_grid.add_child(portrait)
+		portrait.setup(garrisoned)
+		var idx: int = i
+		portrait.gui_input.connect(func(event: InputEvent) -> void:
+			if event is InputEventMouseButton:
+				var mb: InputEventMouseButton = event as InputEventMouseButton
+				if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+					action_requested.emit("unload_unit:%d" % idx)
+		)
+
 	var actions: Array = []
 	if not garrison.is_empty():
 		actions.append({
@@ -697,6 +714,9 @@ func _get_unit_status(unit: Node) -> String:
 		2: # ATTACKING
 			return tr("UI_STATUS_ATTACKING")
 		3: # GATHERING
+			if unit is FishingBoat:
+				var fb: FishingBoat = unit as FishingBoat
+				return tr("UI_STATUS_GATHERING_RES") % ["Fish", int(fb.carried_amount), int(FishingBoat.CARRY_CAPACITY)]
 			var resource: Variant = unit.get("carried_resource")
 			var amount: Variant = unit.get("carried_amount")
 			if resource != null and amount != null:
@@ -708,6 +728,9 @@ func _get_unit_status(unit: Node) -> String:
 					int((unit.get("carry_capacity") as float) if unit.get("carry_capacity") != null else 10.0)]
 			return tr("UI_STATUS_GATHERING")
 		4: # RETURNING
+			if unit is FishingBoat:
+				var fb: FishingBoat = unit as FishingBoat
+				return tr("UI_STATUS_RETURNING_RES") % ["Fish", int(fb.carried_amount)]
 			var resource: Variant = unit.get("carried_resource")
 			var amount: Variant = unit.get("carried_amount")
 			if resource != null and amount != null:
