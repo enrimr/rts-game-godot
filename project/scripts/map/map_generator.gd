@@ -599,14 +599,14 @@ func _spawn_player_resources(parent: Node2D, tc: Vector2,
 		roundi(5.0 * _res_mult), 180.0 * _res_mult, stone_angle + angle_offset, 360.0, 530.0)
 
 	var forest_base: float = _rng.randf_range(0.0, TAU)
-	for i: int in range(5):
-		var fangle: float = forest_base + (TAU / 5.0) * float(i) \
+	for i: int in range(8):
+		var fangle: float = forest_base + (TAU / 8.0) * float(i) \
 				+ _rng.randf_range(-0.3, 0.3) + angle_offset
-		var fdist:  float = _rng.randf_range(180.0, 450.0)
+		var fdist:  float = _rng.randf_range(160.0, 500.0)
 		var fcenter: Vector2 = _clamp_map(tc + Vector2(cos(fangle), sin(fangle)) * fdist)
 		if not TerrainManager.is_ocean(fcenter):
-			_spawn_forest_zone(parent, fcenter, roundi(_rng.randf_range(22.0, 32.0) * _res_mult),
-				200.0 * _res_mult, 85.0)
+			_spawn_forest_zone(parent, fcenter, roundi(_rng.randf_range(26.0, 38.0) * _res_mult),
+				200.0 * _res_mult, 90.0)
 
 	var food_angle: float = _rng.randf_range(0.0, TAU) + angle_offset
 	_spawn_deposit(parent, tc, ResourceNode.ResourceType.FOOD_HUNT,
@@ -627,14 +627,14 @@ func _spawn_player_resources_clamped(parent: Node2D, tc: Vector2,
 		roundi(4.0 * _res_mult), 160.0 * _res_mult,
 		_rng.randf_range(0.0, TAU) + angle_offset, 160.0, max_dist, island_center, island_radius)
 
-	var forest_count: int = _rng.randi_range(4, 5)
+	var forest_count: int = _rng.randi_range(6, 8)
 	for i: int in range(forest_count):
 		var fangle: float = angle_offset + TAU / float(forest_count) * float(i) + _rng.randf_range(-0.4, 0.4)
 		var fcenter: Vector2 = island_center + \
-			Vector2(cos(fangle), sin(fangle)) * _rng.randf_range(island_radius * 0.1, island_radius * 0.50)
+			Vector2(cos(fangle), sin(fangle)) * _rng.randf_range(island_radius * 0.1, island_radius * 0.55)
 		if TerrainManager._point_in_any_land(fcenter) and TerrainManager.is_buildable(fcenter):
-			_spawn_forest_zone(parent, fcenter, roundi(_rng.randf_range(24.0, 36.0) * _res_mult),
-				180.0 * _res_mult, 70.0)
+			_spawn_forest_zone(parent, fcenter, roundi(_rng.randf_range(28.0, 42.0) * _res_mult),
+				180.0 * _res_mult, 75.0)
 
 	var food_angle: float = _rng.randf_range(0.0, TAU) + angle_offset
 	_spawn_deposit_clamped(parent, tc, ResourceNode.ResourceType.FOOD_HUNT,
@@ -652,10 +652,16 @@ func _spawn_neutral_resources(parent: Node2D) -> void:
 	_spawn_deposit(parent, Vector2.ZERO, ResourceNode.ResourceType.STONE,
 		roundi(5.0 * _res_mult), 200.0 * _res_mult, base_angle + PI * 1.5, 450.0, 720.0)
 	var fangle: float = _rng.randf_range(0.0, TAU)
-	for fa: float in [fangle, fangle + PI * 0.5, fangle + PI, fangle + PI * 1.5]:
-		var fc: Vector2 = _clamp_map(Vector2(cos(fa), sin(fa)) * _rng.randf_range(300.0, 650.0))
+	var neutral_forest_angles: Array[float] = [
+		fangle, fangle + PI * 0.4, fangle + PI * 0.8,
+		fangle + PI * 1.2, fangle + PI * 1.6,
+		fangle + PI * 0.2, fangle + PI * 1.0,
+	]
+	for fa: float in neutral_forest_angles:
+		var fc: Vector2 = _clamp_map(Vector2(cos(fa), sin(fa)) * _rng.randf_range(250.0, 700.0))
 		if not TerrainManager.is_ocean(fc):
-			_spawn_forest_zone(parent, fc, roundi(28.0 * _res_mult), 220.0 * _res_mult, 100.0)
+			_spawn_forest_zone(parent, fc, roundi(_rng.randf_range(26.0, 34.0) * _res_mult),
+				220.0 * _res_mult, 100.0)
 
 # Spawns fish (FOOD_FISH) in ocean water between the two islands.
 func _spawn_fish(parent: Node2D, center0: Vector2, center1: Vector2, island_radius: float) -> void:

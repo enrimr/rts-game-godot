@@ -1094,17 +1094,39 @@ func _on_game_over(winner_player_id: int) -> void:
 	var player_age: String = tr(age_keys[clampi(AgeManager.get_age(local_player_id), 0, 3)])
 	var ai_age: String     = tr(age_keys[clampi(AgeManager.get_age(1), 0, 3)])
 
-	# Column headers
+	var player_civ_name: String = MatchConfig.player_civ_id
+	var rival_civ_name: String  = MatchConfig.rival_civ_id
+	var _player_civ_res: CivilizationResource = load(
+		"res://resources/civilizations/%s.tres" % MatchConfig.player_civ_id) as CivilizationResource
+	var _rival_civ_res: CivilizationResource = load(
+		"res://resources/civilizations/%s.tres" % MatchConfig.rival_civ_id) as CivilizationResource
+	if _player_civ_res != null:
+		player_civ_name = _player_civ_res.display_name
+	if _rival_civ_res != null:
+		rival_civ_name = _rival_civ_res.display_name
+
+	# Column headers — show civ name beneath player/rival label
 	var _blank: Label = Label.new()
 	grid.add_child(_blank)
-	for hdr_text: String in [tr("GAMEOVER_PLAYER"), tr("GAMEOVER_RIVAL")]:
+	var _hdr_colors: Array[Color] = [Color(0.40, 0.70, 1.0), Color(1.0, 0.45, 0.45)]
+	var _hdr_labels: Array[String] = [tr("GAMEOVER_PLAYER"), tr("GAMEOVER_RIVAL")]
+	var _civ_names: Array[String]  = [player_civ_name, rival_civ_name]
+	for hi: int in range(2):
+		var col: VBoxContainer = VBoxContainer.new()
+		col.add_theme_constant_override("separation", 1)
 		var hdr: Label = Label.new()
-		hdr.text = hdr_text
+		hdr.text = _hdr_labels[hi]
 		hdr.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		hdr.add_theme_font_size_override("font_size", 13)
-		var hdr_col: Color = Color(0.40, 0.70, 1.0) if hdr_text == tr("GAMEOVER_PLAYER") else Color(1.0, 0.45, 0.45)
-		hdr.add_theme_color_override("font_color", hdr_col)
-		grid.add_child(hdr)
+		hdr.add_theme_color_override("font_color", _hdr_colors[hi])
+		col.add_child(hdr)
+		var civ_lbl: Label = Label.new()
+		civ_lbl.text = _civ_names[hi]
+		civ_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		civ_lbl.add_theme_font_size_override("font_size", 11)
+		civ_lbl.add_theme_color_override("font_color", _hdr_colors[hi].lightened(0.3))
+		col.add_child(civ_lbl)
+		grid.add_child(col)
 
 	# [stat label, player value, rival value]
 	var stat_rows: Array = [
