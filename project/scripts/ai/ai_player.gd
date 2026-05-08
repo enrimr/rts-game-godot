@@ -10,6 +10,7 @@ const BUILDING_SCENES: Dictionary = {
 	"lumber_camp": "res://scenes/buildings/lumber_camp.tscn",
 	"mining_camp": "res://scenes/buildings/mining_camp.tscn",
 	"farm":        "res://scenes/buildings/farm.tscn",
+	"dock":        "res://scenes/buildings/dock.tscn",
 }
 const BUILDING_COSTS: Dictionary = {
 	"barracks":    {"wood": 175},
@@ -17,6 +18,7 @@ const BUILDING_COSTS: Dictionary = {
 	"lumber_camp": {"wood": 100},
 	"mining_camp": {"wood": 100},
 	"farm":        {"wood": 60},
+	"dock":        {"wood": 150},
 }
 
 const TICK_INTERVAL: float        = 2.0
@@ -37,7 +39,12 @@ var _attack_timer: float  = 0.0
 var _threat_timer: float  = 0.0
 
 # Track which building types have been built (counts)
-var _built: Dictionary = {"barracks": 0, "house": 0, "lumber_camp": 0, "mining_camp": 0, "farm": 0}
+var _built: Dictionary = {"barracks": 0, "house": 0, "lumber_camp": 0, "mining_camp": 0, "farm": 0, "dock": 0}
+
+# Naval state
+var _naval_transport: Node = null   # active transport ship reference
+var _naval_assault_timer: float = 0.0
+const NAVAL_ASSAULT_INTERVAL: float = 45.0
 
 enum AggressionLevel { PASSIVE, ALERTED, AGGRESSIVE }
 var _aggression: AggressionLevel = AggressionLevel.PASSIVE
@@ -69,6 +76,12 @@ func _process(delta: float) -> void:
 		_timer = 0.0
 		_run_tick()
 
+	if _is_naval_map():
+		_naval_assault_timer += delta
+		if _naval_assault_timer >= NAVAL_ASSAULT_INTERVAL:
+			_naval_assault_timer = 0.0
+			_launch_naval_assault()
+
 	if _attack_timer >= _effective_attack_interval():
 		_attack_timer = 0.0
 		_launch_attack()
@@ -91,11 +104,13 @@ func _run_tick() -> void:
 	_manage_military_buildings()
 	_manage_military()
 	_manage_age_advance()
+	if _is_naval_map():
+		_manage_naval()
 
 # ── Population ───────────────────────────────────────────────────────────────
 
 func _manage_population() -> void:
-	var pop: int    = PopulationManager.get_population(player_id)
+	var pop: int    = PopulationManager.get_population(player_id).get("current", 0) as int
 	var cap: int    = PopulationManager.get_cap(player_id)
 	# Build a house when within 3 of the cap and we can afford it
 	if cap - pop <= 3 and ResourceManager.can_afford(player_id, BUILDING_COSTS["house"]):
@@ -362,6 +377,155 @@ func _defend_base() -> void:
 			continue
 		if (unit is Militia or unit is Archer or unit is Pikeman) and unit.has_method("order_attack"):
 			unit.order_attack(best_enemy)
+
+# ── Naval AI ─────────────────────────────────────────────────────────────────
+
+func _is_naval_map() -> bool:
+	return MatchConfig.map_type == MatchConfig.MapType.ISLANDS
+
+func _manage_naval() -> void:
+	# Build a dock near the shore if we don't have one yet
+	if _built.get("dock", 0) as int == 0 \
+			and ResourceManager.can_afford(player_id, BUILDING_COSTS["dock"]):
+		_build_dock_on_shore()
+		return
+
+	if _built.get("dock", 0) as int == 0:
+		return
+
+	# Train war galleys for defense, then a transport once we have 3+ military
+	var dock: Node = _find_own_dock()
+	if dock == null or dock.get("state") as int != BuildingBase.BuildingState.COMPLETE:
+		return
+	if (dock as Dock).get_queue().size() >= (dock as Dock).get_max_queue():
+		return
+
+	var age: int = AgeManager.get_age(player_id)
+	if age < GameManager.Age.FEUDAL:
+		return
+
+	var galleys: int  = _count_naval("WarGalley")
+	var transports: int = _count_naval("TransportShip")
+
+	# Keep 1-2 war galleys before investing in transport
+	if galleys < 2 and ResourceManager.can_afford(player_id, {"wood": 75, "gold": 25}):
+		(dock as Dock).order_train("war_galley")
+		return
+
+	# One transport is enough for the assault
+	if transports < 1 and ResourceManager.can_afford(player_id, {"wood": 100, "gold": 50}):
+		(dock as Dock).order_train("transport_ship")
+
+func _launch_naval_assault() -> void:
+	if not is_instance_valid(enemy_town_center):
+		return
+	var military: int = _count_military()
+	if military < 3:
+		return
+
+	# Find or reuse the AI transport ship
+	if not is_instance_valid(_naval_transport):
+		_naval_transport = _find_own_transport()
+	if not is_instance_valid(_naval_transport):
+		return
+	var ts: TransportShip = _naval_transport as TransportShip
+	if ts == null:
+		return
+
+	# Board idle military units onto the transport
+	var boarded: int = 0
+	for unit: Node in units_layer.get_children():
+		if ts.is_full():
+			break
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		if not (unit is Militia or unit is Archer or unit is Pikeman):
+			continue
+		if unit.has_method("current_state") or unit.get("current_state") as int == UnitBase.UnitState.IDLE:
+			ts.board(unit)
+			boarded += 1
+
+	if boarded > 0 or ts.get_garrison().size() > 0:
+		# Order the ship to move near the enemy town center then unload
+		ts.order_move_then_unload(enemy_town_center.global_position)
+
+func _build_dock_on_shore() -> void:
+	# Find a shore position: probe outward from TC until we hit an ocean-adjacent land tile
+	if not is_instance_valid(town_center):
+		return
+	var pos: Vector2 = _find_shore_position()
+	if pos == Vector2.ZERO:
+		return
+	var scene_path: String = BUILDING_SCENES.get("dock", "") as String
+	var packed: PackedScene = load(scene_path) as PackedScene
+	if packed == null:
+		return
+	var b: Node2D = packed.instantiate() as Node2D
+	b.global_position = pos
+	b.set("player_id", player_id)
+	buildings_layer.add_child(b)
+	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
+	b.add_construction(100.0)
+	EventBus.building_placed.emit(b, player_id)
+	ResourceManager.spend_resource(player_id, BUILDING_COSTS["dock"])
+	_built["dock"] = 1
+
+func _find_shore_position() -> Vector2:
+	# Spiral outward from TC, looking for a land tile that is adjacent to ocean
+	var origin: Vector2 = town_center.global_position
+	const PROBE: float = 48.0
+	const DIRS: Array = [
+		Vector2(1, 0), Vector2(0, 1), Vector2(-1, 0), Vector2(0, -1),
+		Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1),
+	]
+	for radius: int in range(2, 14):
+		for dir: Variant in DIRS:
+			var candidate: Vector2 = origin + (dir as Vector2) * PROBE * float(radius)
+			if TerrainManager.is_ocean(candidate):
+				continue
+			# Check if at least one neighbour is ocean
+			for nd: Variant in DIRS:
+				if TerrainManager.is_ocean(candidate + (nd as Vector2) * PROBE):
+					return candidate
+	return Vector2.ZERO
+
+func _find_own_dock() -> Node:
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		if building is Dock:
+			return building
+	return null
+
+func _find_own_transport() -> Node:
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		if unit is TransportShip:
+			return unit
+	return null
+
+func _count_naval(type_name: String) -> int:
+	var count: int = 0
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		match type_name:
+			"WarGalley":      if unit is WarGalley:      count += 1
+			"TransportShip":  if unit is TransportShip:  count += 1
+	return count
 
 # ── Building placement ────────────────────────────────────────────────────────
 

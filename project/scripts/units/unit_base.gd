@@ -30,6 +30,7 @@ func _ready() -> void:
 		var hp_mult: float = CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
 		health = unit_data.max_health * hp_mult
 		health_bar.max_value = health
+		health_bar.value = health
 	_last_position = global_position
 	if is_instance_valid(attack_range_area):
 		attack_range_area.monitoring = true
@@ -50,7 +51,7 @@ func move_to(target_position: Vector2) -> void:
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
 	EventBus.damage_dealt.emit(self, amount, source)
-	health_bar.value = health / health_bar.max_value * 100.0
+	health_bar.value = health
 	if health <= 0.0:
 		die()
 		return
