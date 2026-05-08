@@ -151,6 +151,22 @@ func bake_minimap_texture(map_half: float, resolution: int) -> void:
 			img.set_pixel(px, py, TERRAIN_COLORS[t] as Color)
 	minimap_texture = ImageTexture.create_from_image(img)
 
+# Returns the nearest ocean position to world_pos, searching outward in rings.
+# Returns Vector2.ZERO if none found within the search radius.
+func nearest_ocean(world_pos: Vector2) -> Vector2:
+	if is_ocean(world_pos):
+		return world_pos
+	var step: float = 20.0
+	for ring: int in range(1, 40):
+		var r: float = step * ring
+		var checks: int = maxi(8, ring * 8)
+		for i: int in range(checks):
+			var a: float = TAU * i / checks
+			var candidate: Vector2 = world_pos + Vector2(cos(a), sin(a)) * r
+			if is_ocean(candidate):
+				return candidate
+	return Vector2.ZERO
+
 # Returns true if world_pos is within any of the land polygons.
 func _point_in_any_land(p: Vector2) -> bool:
 	for poly: Variant in _land_polys:

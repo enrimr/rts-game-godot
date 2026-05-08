@@ -129,7 +129,7 @@ func _do_spawn(scene_path: String) -> void:
 	unit.set("player_id", player_id)
 	# civ_id set to "atlantes" by ShipBase._ready() — ocean passable
 	get_parent().add_child(unit)
-	unit.global_position = global_position + _water_spawn_offset()
+	unit.global_position = _water_spawn_pos()
 	PopulationManager.add_unit(player_id)
 	if rally_point != Vector2.ZERO and unit.has_method("order_move"):
 		unit.order_move(rally_point)
@@ -137,27 +137,10 @@ func _do_spawn(scene_path: String) -> void:
 		AudioManager.play("unit_ready")
 	EventBus.unit_spawned.emit(unit, player_id)
 
-# Probes the 4 cardinal directions and returns an offset pointing toward the
-# nearest ocean tile, so ships always spawn on the water side of the dock.
-func _water_spawn_offset() -> Vector2:
-	const PROBE_DIST: float = 56.0
-	const DIRS: Array = [
-		Vector2(0.0,  1.0),   # south
-		Vector2(0.0, -1.0),   # north
-		Vector2( 1.0, 0.0),   # east
-		Vector2(-1.0, 0.0),   # west
-	]
-	for dir: Variant in DIRS:
-		var d: Vector2 = dir as Vector2
-		if TerrainManager.is_ocean(global_position + d * PROBE_DIST):
-			return d * PROBE_DIST
-	# Fallback — try diagonals
-	const DIAGS: Array = [
-		Vector2( 1.0,  1.0), Vector2(-1.0,  1.0),
-		Vector2( 1.0, -1.0), Vector2(-1.0, -1.0),
-	]
-	for dir: Variant in DIAGS:
-		var d: Vector2 = (dir as Vector2).normalized()
-		if TerrainManager.is_ocean(global_position + d * PROBE_DIST):
-			return d * PROBE_DIST
-	return Vector2(0.0, PROBE_DIST)  # last-resort south
+# Returns the world position where ships should spawn — the nearest ocean tile
+# to the dock, guaranteed to be water regardless of dock placement.
+func _water_spawn_pos() -> Vector2:
+	var ocean_pos: Vector2 = TerrainManager.nearest_ocean(global_position)
+	if ocean_pos != Vector2.ZERO:
+		return ocean_pos
+	return global_position + Vector2(0.0, 60.0)  # absolute last resort
