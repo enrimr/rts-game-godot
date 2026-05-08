@@ -81,7 +81,7 @@ func _handle_attacking(delta: float) -> void:
 	if _attack_timer >= 1.0 / unit_data.attack_speed:
 		_attack_timer = 0.0
 		if attack_target.has_method("take_damage"):
-			attack_target.take_damage(unit_data.attack - _get_target_armor(attack_target), self)
+			attack_target.take_damage(_get_effective_attack() - _get_target_armor(attack_target), self)
 			AudioManager.play("hit_melee", -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
 

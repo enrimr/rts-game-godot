@@ -43,10 +43,14 @@ var _zones: Array[Dictionary] = []
 var _land_polys: Array = []    # Array of PackedVector2Array
 var _is_island_map: bool = false
 
+# Baked terrain texture — set by MapGenerator after generation completes.
+var minimap_texture: ImageTexture = null
+
 func reset() -> void:
 	_zones.clear()
 	_land_polys.clear()
 	_is_island_map = false
+	minimap_texture = null
 
 func add_zone(center: Vector2, radius: float, type: TerrainType) -> void:
 	_zones.append({"center": center, "radius": radius, "type": type})
@@ -122,6 +126,30 @@ func nearest_passable(world_pos: Vector2, civ_id: String) -> Vector2:
 			if not is_impassable_for(candidate, civ_id):
 				return candidate
 	return world_pos  # fallback — could not find passable tile
+
+# Bakes a terrain overview texture by sampling get_terrain() on a grid.
+# map_half: half-size of the playable world in world units.
+# resolution: pixel dimensions of the output square texture.
+func bake_minimap_texture(map_half: float, resolution: int) -> void:
+	const TERRAIN_COLORS: Dictionary = {
+		0: Color(0.22, 0.45, 0.18),   # GRASS
+		1: Color(0.14, 0.12, 0.11),   # MALPAIS
+		2: Color(0.78, 0.68, 0.42),   # DUNE
+		3: Color(0.08, 0.30, 0.12),   # LAURISILVA
+		4: Color(0.48, 0.44, 0.40),   # RISCO
+		5: Color(0.10, 0.28, 0.52),   # OCEAN
+		6: Color(0.30, 0.08, 0.04),   # CALDERA
+	}
+	var img: Image = Image.create(resolution, resolution, false, Image.FORMAT_RGB8)
+	var world_min: Vector2 = Vector2(-map_half, -map_half)
+	var world_size: float = map_half * 2.0
+	for py: int in range(resolution):
+		for px: int in range(resolution):
+			var wx: float = world_min.x + (float(px) + 0.5) / float(resolution) * world_size
+			var wy: float = world_min.y + (float(py) + 0.5) / float(resolution) * world_size
+			var t: int = get_terrain(Vector2(wx, wy)) as int
+			img.set_pixel(px, py, TERRAIN_COLORS[t] as Color)
+	minimap_texture = ImageTexture.create_from_image(img)
 
 # Returns true if world_pos is within any of the land polygons.
 func _point_in_any_land(p: Vector2) -> bool:

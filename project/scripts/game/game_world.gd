@@ -82,10 +82,11 @@ var _ghost_rotation: float = 0.0
 var _drag_overlay: Node2D = null
 
 func _ready() -> void:
-	ResourceManager.init_player(0)
+	var starting_res: Dictionary = MatchConfig.get_starting_resources()
+	ResourceManager.init_player(0, starting_res)
 	PopulationManager.init_player(0)
 	AgeManager.init_player(0, MatchConfig.starting_age)
-	ResourceManager.init_player(1)
+	ResourceManager.init_player(1, starting_res)
 	PopulationManager.init_player(1)
 	AgeManager.init_player(1)
 
@@ -157,6 +158,10 @@ func _apply_civilization() -> void:
 		ResourceManager.add_resource(0, key, (civ.starting_bonuses as Dictionary)[key] as float)
 	# Apply villager stat multipliers at spawn time via unit_data overrides stored in MatchConfig
 	MatchConfig.set_meta("civ", civ)
+	CivBonusManager.init_player(0, MatchConfig.player_civ_id)
+	CivBonusManager.init_player(1, MatchConfig.rival_civ_id)
+	TechManager.init_player(0)
+	TechManager.init_player(1)
 
 func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	var civ_id: String = MatchConfig.player_civ_id if player_id == 0 else MatchConfig.rival_civ_id
@@ -521,7 +526,8 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		var is_damaged: bool = hp != null and mhp != null and (hp as float) < (mhp as float)
 		var any_carrying: bool = false
 		for u: Node in _selected_units:
-			if is_instance_valid(u) and (u.get("carried_amount") as float) > 0.0:
+			var ca: Variant = u.get("carried_amount")
+			if is_instance_valid(u) and ca != null and (ca as float) > 0.0:
 				any_carrying = true
 				break
 		if is_damaged and not any_carrying:
@@ -1036,6 +1042,11 @@ func _on_action_requested(action_id: String) -> void:
 	if action_id.begins_with("build:"):
 		_start_placement(action_id.trim_prefix("build:"))
 		return
+	if action_id.begins_with("research:"):
+		var tech_id: String = action_id.substr("research:".length())
+		if is_instance_valid(_selected_building):
+			TechManager.start_research(0, tech_id, _selected_building)
+		return
 	match action_id:
 		"gather_wood":
 			_order_gather_nearest_resource(ResourceNode.ResourceType.WOOD)
@@ -1088,13 +1099,7 @@ func _on_action_requested(action_id: String) -> void:
 					(unit as HeroUnit).use_ability()
 					break
 		"destroy":
-			if not _selected_units.is_empty():
-				for unit: Node in _selected_units:
-					if is_instance_valid(unit) and unit.has_method("die"):
-						unit.die()
-				_selected_units.clear()
-				SelectionManager.select([])
-			elif is_instance_valid(_selected_building):
+			if is_instance_valid(_selected_building):
 				var target: Node = _selected_building
 				if target.has_method("set_selected"):
 					target.set_selected(false)
@@ -1105,6 +1110,12 @@ func _on_action_requested(action_id: String) -> void:
 					target.take_damage(dmg)
 				elif target.has_method("queue_free"):
 					target.queue_free()
+			elif not _selected_units.is_empty():
+				for unit: Node in _selected_units:
+					if is_instance_valid(unit) and unit.has_method("die"):
+						unit.die()
+				_selected_units.clear()
+				SelectionManager.select([])
 
 func _order_gather_nearest_resource(rtype: ResourceNode.ResourceType) -> void:
 	if _selected_units.is_empty():

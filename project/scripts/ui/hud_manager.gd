@@ -86,6 +86,9 @@ var _following: bool = false
 var _age_advance_bar: ProgressBar = null
 var _hero_respawn_bar: ProgressBar = null
 var _hero_respawn_label: Label = null
+var _research_bar: ProgressBar = null
+var _research_label: Label = null
+var _pause_menu: Control = null
 
 # --- Stats tracking ---
 var _stat_units_trained: int = 0
@@ -128,6 +131,7 @@ func _ready() -> void:
 	_unit_hp_bar.value = 0.0
 	_build_follow_button()
 	_build_notifications()
+	_build_pause_menu_button()
 
 func _process(delta: float) -> void:
 	if _clock_running:
@@ -142,6 +146,15 @@ func _process(delta: float) -> void:
 		_unit_status_label.text = _get_unit_status(_status_unit)
 	if is_instance_valid(_age_advance_bar):
 		_age_advance_bar.value = AgeManager.get_advance_progress(local_player_id) * 100.0
+	if is_instance_valid(_research_bar) and is_instance_valid(_selected_building):
+		_research_bar.value = TechManager.get_research_progress(_selected_building) * 100.0
+		if TechManager.get_researching_tech(_selected_building) == null:
+			if is_instance_valid(_research_bar):
+				_research_bar.queue_free()
+				_research_bar = null
+			if is_instance_valid(_research_label):
+				_research_label.queue_free()
+				_research_label = null
 	if is_instance_valid(_hero_respawn_bar) and is_instance_valid(_selected_building):
 		var tc: Variant = _selected_building
 		if tc.has_method("get_hero_respawn_fraction"):
@@ -154,7 +167,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
 		return
 	var key: InputEventKey = event as InputEventKey
-	if not key.pressed or key.echo or _active_actions.is_empty():
+	if not key.pressed or key.echo:
+		return
+	if key.keycode == KEY_ESCAPE or key.physical_keycode == KEY_ESCAPE:
+		if is_instance_valid(_pause_menu):
+			_close_pause_menu()
+		else:
+			_open_pause_menu()
+		get_viewport().set_input_as_handled()
+		return
+	if _active_actions.is_empty():
 		return
 	for entry: Variant in _active_actions:
 		var data: Dictionary = entry as Dictionary
@@ -259,6 +281,12 @@ func _clear_action_buttons() -> void:
 	if is_instance_valid(_hero_respawn_label):
 		_hero_respawn_label.queue_free()
 		_hero_respawn_label = null
+	if is_instance_valid(_research_bar):
+		_research_bar.queue_free()
+		_research_bar = null
+	if is_instance_valid(_research_label):
+		_research_label.queue_free()
+		_research_label = null
 
 func _key_label(keycode: int) -> String:
 	match keycode:
@@ -354,6 +382,8 @@ func _on_action_button_pressed(action_id: String) -> void:
 		AudioManager.play("train_queue")
 	elif action_id == "advance_age":
 		AudioManager.play("age_advance")
+	elif action_id.begins_with("research:"):
+		AudioManager.play("ui_click")
 	else:
 		AudioManager.play("ui_click")
 	action_requested.emit(action_id)
@@ -425,7 +455,7 @@ func _on_building_selected(building: Node) -> void:
 	if max_hp > 0.0:
 		_unit_hp_bar.value = (hp / max_hp) * 100.0
 
-	if building is TownCenter or building is TownCenterBuilding:
+	if building.has_method("is_respawning_hero"):
 		_unit_name_label.text = tr("UI_TOWN_CENTER")
 		var tc_hp: Variant = building.get("health")
 		var tc_max: Variant = building.get("max_health")
@@ -485,7 +515,7 @@ func _on_age_advance_started(player_id: int, _target_age: int) -> void:
 	if player_id != local_player_id:
 		return
 	# If TC is selected, refresh buttons to replace advance button with progress bar
-	if is_instance_valid(_selected_building) and (_selected_building is TownCenter or _selected_building is TownCenterBuilding):
+	if is_instance_valid(_selected_building) and _selected_building.has_method("is_respawning_hero"):
 		_populate_tc_actions()
 
 func _on_age_advance_complete(player_id: int, new_age: int) -> void:
@@ -497,7 +527,7 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 		_age_advance_bar = null
 	# Refresh TC or barracks actions to show newly unlocked units
 	if is_instance_valid(_selected_building):
-		if _selected_building is TownCenter or _selected_building is TownCenterBuilding:
+		if is_instance_valid(_selected_building) and _selected_building.has_method("is_respawning_hero"):
 			_populate_tc_actions()
 		elif _selected_building is Barracks:
 			_populate_barracks_actions(_selected_building as Barracks)
@@ -620,8 +650,27 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 			"cost": costs,
 			"key": (KEY_M if uid == "militia" else (KEY_A if uid == "archer" else KEY_P)),
 		})
+	var techs: Array[TechnologyResource] = TechManager.get_available_techs(local_player_id, TechnologyResource.ResearchBuilding.BARRACKS)
+	for tech: TechnologyResource in techs:
+		var cost_str: String = ""
+		if tech.cost_food > 0: cost_str += "\n%dF" % tech.cost_food
+		if tech.cost_wood > 0: cost_str += "\n%dW" % tech.cost_wood
+		if tech.cost_gold > 0: cost_str += "\n%dG" % tech.cost_gold
+		var tech_costs: Dictionary = {}
+		if tech.cost_food > 0: tech_costs["food"] = tech.cost_food
+		if tech.cost_wood > 0: tech_costs["wood"] = tech.cost_wood
+		if tech.cost_gold > 0: tech_costs["gold"] = tech.cost_gold
+		actions.append({
+			"id": "research:%s" % tech.id,
+			"label": tech.display_name + cost_str,
+			"color": Color(0.25, 0.45, 0.55),
+			"cost": tech_costs,
+			"key": 0,
+			"raw_label": true,
+		})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
+	_build_research_bar(barracks)
 
 func _populate_dock_actions(dock: Dock) -> void:
 	var current_age: int = AgeManager.get_age(local_player_id)
@@ -694,6 +743,33 @@ func _build_hero_respawn_bar() -> void:
 	fill.bg_color = Color(0.75, 0.55, 0.10)
 	_hero_respawn_bar.add_theme_stylebox_override("fill", fill)
 	detail_panel.add_child(_hero_respawn_bar)
+
+func _build_research_bar(building: Node) -> void:
+	if not is_instance_valid(building):
+		return
+	var tech: TechnologyResource = TechManager.get_researching_tech(building)
+	if tech == null:
+		return
+	var detail_panel: Node = get_node_or_null("HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel")
+	if detail_panel == null:
+		return
+	if not is_instance_valid(_research_label):
+		_research_label = Label.new()
+		_research_label.add_theme_font_size_override("font_size", 11)
+		_research_label.add_theme_color_override("font_color", Color(0.55, 0.80, 0.90))
+		detail_panel.add_child(_research_label)
+	_research_label.text = tr("UI_RESEARCHING") % tech.display_name if tr("UI_RESEARCHING") != "UI_RESEARCHING" else ("Researching: " + tech.display_name)
+	if not is_instance_valid(_research_bar):
+		_research_bar = ProgressBar.new()
+		_research_bar.min_value = 0.0
+		_research_bar.max_value = 100.0
+		_research_bar.value = 0.0
+		_research_bar.show_percentage = false
+		_research_bar.custom_minimum_size = Vector2(0, 12)
+		var fill: StyleBoxFlat = StyleBoxFlat.new()
+		fill.bg_color = Color(0.25, 0.55, 0.75)
+		_research_bar.add_theme_stylebox_override("fill", fill)
+		detail_panel.add_child(_research_bar)
 
 func _on_hero_respawned(_respawn_player_id: int) -> void:
 	if is_instance_valid(_hero_respawn_bar):
@@ -1212,3 +1288,255 @@ func _show_charts_panel(parent: Node) -> void:
 	close_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.35, 0.35, 0.42, 0.95)))
 	close_btn.pressed.connect(func() -> void: ov.queue_free())
 	vbox.add_child(close_btn)
+
+# ── In-game pause menu ──────────────────────────────────────────────────────
+
+func _build_pause_menu_button() -> void:
+	var hud_root: Control = get_node_or_null("HUDRoot") as Control
+	if hud_root == null:
+		return
+	var btn: Button = Button.new()
+	btn.text = "☰"
+	btn.custom_minimum_size = Vector2(36, 36)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.tooltip_text = "Menu (Esc)"
+	# Anchor to top-right corner
+	btn.anchor_left   = 1.0
+	btn.anchor_top    = 0.0
+	btn.anchor_right  = 1.0
+	btn.anchor_bottom = 0.0
+	btn.offset_left   = -44.0
+	btn.offset_top    =   6.0
+	btn.offset_right  =  -6.0
+	btn.offset_bottom =  42.0
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.bg_color = Color(0.12, 0.12, 0.18, 0.92)
+	s.corner_radius_top_left = 4
+	s.corner_radius_top_right = 4
+	s.corner_radius_bottom_left = 4
+	s.corner_radius_bottom_right = 4
+	btn.add_theme_stylebox_override("normal", s)
+	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
+	sh.bg_color = Color(0.28, 0.28, 0.42, 0.97)
+	btn.add_theme_stylebox_override("hover", sh)
+	btn.pressed.connect(_open_pause_menu)
+	hud_root.add_child(btn)
+
+func _open_pause_menu() -> void:
+	if is_instance_valid(_pause_menu):
+		return
+	if GameManager.state == GameManager.GameState.GAME_OVER:
+		return
+	GameManager.toggle_pause()
+
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+	_pause_menu = overlay
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
+	overlay.add_child(center)
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(320, 0)
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.08, 0.12, 0.97)))
+	center.add_child(card)
+
+	var margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 36)
+	card.add_child(margin)
+
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 14)
+	margin.add_child(vbox)
+
+	var title: Label = Label.new()
+	title.text = tr("MENU_SETTINGS")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
+	vbox.add_child(title)
+	vbox.add_child(HSeparator.new())
+
+	var resume_btn: Button = _make_pause_btn(tr("PAUSEMENU_RESUME"), Color(0.18, 0.38, 0.18, 0.95), Color(0.28, 0.55, 0.28, 0.95))
+	resume_btn.pressed.connect(_close_pause_menu)
+	vbox.add_child(resume_btn)
+
+	var settings_btn: Button = _make_pause_btn(tr("MENU_SETTINGS"), Color(0.20, 0.20, 0.28, 0.95), Color(0.32, 0.32, 0.45, 0.95))
+	settings_btn.pressed.connect(_open_ingame_settings)
+	vbox.add_child(settings_btn)
+
+	vbox.add_child(HSeparator.new())
+
+	var surrender_btn: Button = _make_pause_btn(tr("PAUSEMENU_SURRENDER"), Color(0.48, 0.12, 0.08, 0.95), Color(0.65, 0.18, 0.10, 0.95))
+	surrender_btn.pressed.connect(_on_surrender)
+	vbox.add_child(surrender_btn)
+
+	var quit_btn: Button = _make_pause_btn(tr("PAUSEMENU_QUIT"), Color(0.22, 0.10, 0.10, 0.95), Color(0.38, 0.15, 0.12, 0.95))
+	quit_btn.pressed.connect(func() -> void: get_tree().quit())
+	vbox.add_child(quit_btn)
+
+func _close_pause_menu() -> void:
+	if is_instance_valid(_pause_menu):
+		_pause_menu.queue_free()
+		_pause_menu = null
+	if GameManager.state == GameManager.GameState.PAUSED:
+		GameManager.toggle_pause()
+
+func _open_ingame_settings() -> void:
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
+	overlay.add_child(center)
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(440, 0)
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.08, 0.12, 0.97)))
+	center.add_child(card)
+
+	var margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 32)
+	card.add_child(margin)
+
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 18)
+	margin.add_child(vbox)
+
+	var title: Label = Label.new()
+	title.text = tr("SETTINGS_TITLE")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
+	vbox.add_child(title)
+	vbox.add_child(HSeparator.new())
+
+	# Music
+	var music_lbl: Label = Label.new()
+	music_lbl.text = tr("SETTINGS_MUSIC")
+	music_lbl.add_theme_font_size_override("font_size", 15)
+	music_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
+	vbox.add_child(music_lbl)
+	var music_slider: HSlider = _make_settings_slider(GameSettings.music_volume)
+	vbox.add_child(music_slider)
+	var music_pct: Label = _make_settings_pct_label(GameSettings.music_volume)
+	vbox.add_child(music_pct)
+	music_slider.value_changed.connect(func(v: float) -> void:
+		GameSettings.music_volume = v
+		music_pct.text = "%d%%" % int(v * 100.0)
+		AudioManager.apply_settings()
+	)
+
+	# SFX
+	var sfx_lbl: Label = Label.new()
+	sfx_lbl.text = tr("SETTINGS_SFX")
+	sfx_lbl.add_theme_font_size_override("font_size", 15)
+	sfx_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
+	vbox.add_child(sfx_lbl)
+	var sfx_slider: HSlider = _make_settings_slider(GameSettings.sfx_volume)
+	vbox.add_child(sfx_slider)
+	var sfx_pct: Label = _make_settings_pct_label(GameSettings.sfx_volume)
+	vbox.add_child(sfx_pct)
+	sfx_slider.value_changed.connect(func(v: float) -> void:
+		GameSettings.sfx_volume = v
+		sfx_pct.text = "%d%%" % int(v * 100.0)
+		AudioManager.apply_settings()
+	)
+
+	vbox.add_child(HSeparator.new())
+
+	# Language
+	var lang_lbl: Label = Label.new()
+	lang_lbl.text = tr("SETTINGS_LANGUAGE")
+	lang_lbl.add_theme_font_size_override("font_size", 15)
+	lang_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
+	vbox.add_child(lang_lbl)
+	var lang_row: HBoxContainer = HBoxContainer.new()
+	lang_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(lang_row)
+	var lang_codes: Array[String] = ["en", "es"]
+	var lang_names: Array[String] = ["English", "Español"]
+	var lang_btns: Array[Button] = []
+	for li: int in range(2):
+		var lb: Button = Button.new()
+		lb.text = lang_names[li]
+		lb.custom_minimum_size = Vector2(100, 36)
+		lb.focus_mode = Control.FOCUS_NONE
+		lb.add_theme_font_size_override("font_size", 15)
+		lang_row.add_child(lb)
+		lang_btns.append(lb)
+	var refresh_lang: Callable = func() -> void:
+		for li: int in range(2):
+			var active: bool = GameSettings.language == lang_codes[li]
+			var sl: StyleBoxFlat = _make_panel_style(Color(0.22, 0.45, 0.22, 0.95) if active else Color(0.18, 0.18, 0.22, 0.9))
+			lang_btns[li].add_theme_stylebox_override("normal", sl)
+			lang_btns[li].add_theme_stylebox_override("pressed", sl)
+	refresh_lang.call()
+	for li: int in range(2):
+		var captured_li: int = li
+		lang_btns[li].pressed.connect(func() -> void:
+			GameSettings.language = lang_codes[captured_li]
+			GameSettings.apply_language()
+			GameSettings.save_settings()
+			refresh_lang.call()
+		)
+
+	vbox.add_child(HSeparator.new())
+
+	var close_btn: Button = Button.new()
+	close_btn.text = tr("SETTINGS_SAVE")
+	close_btn.custom_minimum_size = Vector2(200, 40)
+	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	close_btn.focus_mode = Control.FOCUS_NONE
+	close_btn.add_theme_font_size_override("font_size", 16)
+	close_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.20, 0.35, 0.55, 0.95)))
+	close_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.30, 0.50, 0.75, 0.95)))
+	vbox.add_child(close_btn)
+	close_btn.pressed.connect(func() -> void:
+		GameSettings.save_settings()
+		overlay.queue_free()
+	)
+
+func _make_settings_slider(initial: float) -> HSlider:
+	var s: HSlider = HSlider.new()
+	s.min_value = 0.0
+	s.max_value = 1.0
+	s.step = 0.01
+	s.value = initial
+	s.custom_minimum_size = Vector2(0, 24)
+	return s
+
+func _make_settings_pct_label(initial: float) -> Label:
+	var lbl: Label = Label.new()
+	lbl.text = "%d%%" % int(initial * 100.0)
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
+	return lbl
+
+func _on_surrender() -> void:
+	_close_pause_menu()
+	GameManager.declare_winner(1)
+
+func _make_pause_btn(label_text: String, normal_col: Color, hover_col: Color) -> Button:
+	var btn: Button = Button.new()
+	btn.text = label_text
+	btn.custom_minimum_size = Vector2(240, 42)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 16)
+	btn.add_theme_stylebox_override("normal", _make_panel_style(normal_col))
+	var hs: StyleBoxFlat = _make_panel_style(hover_col)
+	btn.add_theme_stylebox_override("hover", hs)
+	return btn

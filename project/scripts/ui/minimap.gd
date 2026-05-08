@@ -27,7 +27,22 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	var ms: Vector2 = size
 
-	draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BG)
+	if TerrainManager.minimap_texture != null:
+		draw_texture_rect(TerrainManager.minimap_texture, Rect2(Vector2.ZERO, ms), false)
+	else:
+		draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BG)
+
+	# Fog of war overlay — drawn over terrain, under units/buildings
+	if fog != null:
+		var cell_w: float = ms.x / float(FogOfWar.GRID_W)
+		var cell_h: float = ms.y / float(FogOfWar.GRID_H)
+		for cy: int in range(FogOfWar.GRID_H):
+			for cx: int in range(FogOfWar.GRID_W):
+				var state: int = fog._cells[cy * FogOfWar.GRID_W + cx]
+				if state == FogOfWar.STATE_VISIBLE:
+					continue
+				var fog_col: Color = Color(0.0, 0.0, 0.0, 1.0) if state == FogOfWar.STATE_UNEXPLORED else Color(0.0, 0.0, 0.0, 0.55)
+				draw_rect(Rect2(Vector2(cx * cell_w, cy * cell_h), Vector2(cell_w + 1.0, cell_h + 1.0)), fog_col)
 
 	# Subtle grid lines every 25% of the map
 	for i: int in range(1, 4):

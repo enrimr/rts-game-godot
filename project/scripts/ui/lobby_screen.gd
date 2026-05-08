@@ -91,7 +91,7 @@ func _build() -> void:
 
 	# Resources
 	vbox.add_child(_make_label(tr("LOBBY_RESOURCES")))
-	var res_opts: Array[String] = [tr("LOBBY_RES_SCARCE"), tr("LOBBY_RES_NORMAL"), tr("LOBBY_RES_ABUNDANT")]
+	var res_opts: Array[String] = [tr("LOBBY_RES_SCARCE"), tr("LOBBY_RES_NORMAL"), tr("LOBBY_RES_ABUNDANT"), tr("LOBBY_RES_FULL_COMBAT")]
 	vbox.add_child(_make_option_row(res_opts, MatchConfig.resources,
 		func(i: int) -> void: MatchConfig.resources = i))
 

@@ -11,6 +11,8 @@ class_name TransportShip
 const CAPACITY: int = 8
 const BOARD_RANGE: float = 52.0   # land unit must be within this distance to board
 const UNLOAD_OFFSET: float = 56.0 # spacing between unloaded units
+const SHORE_CHECK_RADIUS: float = 80.0  # max distance to shore for unloading
+const SHORE_CHECK_STEPS: int = 16       # angular samples when probing for shore
 
 var _garrison: Array[Node] = []   # stored land units (hidden, process disabled)
 
@@ -59,6 +61,15 @@ func _handle_movement(delta: float) -> void:
 			unload_all()
 	nav_agent.set_velocity(_nav_velocity())
 
+# Returns true if the ship is close enough to shore to allow unloading.
+func _is_near_shore() -> bool:
+	for i: int in range(SHORE_CHECK_STEPS):
+		var angle: float = TAU * float(i) / float(SHORE_CHECK_STEPS)
+		var probe: Vector2 = global_position + Vector2(cos(angle), sin(angle)) * SHORE_CHECK_RADIUS
+		if not TerrainManager.is_ocean(probe):
+			return true
+	return false
+
 # Called by game_world when a land unit right-clicks this ship.
 func board(unit: Node) -> bool:
 	if _garrison.size() >= CAPACITY:
@@ -77,6 +88,8 @@ func board(unit: Node) -> bool:
 # Unload all garrisoned units near current position.
 func unload_all() -> void:
 	if _garrison.is_empty():
+		return
+	if not _is_near_shore():
 		return
 	var count: int = _garrison.size()
 	for i: int in range(count):
@@ -98,6 +111,8 @@ func unload_all() -> void:
 
 func unload_one(index: int) -> void:
 	if index < 0 or index >= _garrison.size():
+		return
+	if not _is_near_shore():
 		return
 	var unit: Node = _garrison[index]
 	_garrison.remove_at(index)

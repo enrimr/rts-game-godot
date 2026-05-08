@@ -119,6 +119,7 @@ func _run(parent: Node2D, units_layer: Node2D,
 			_spawn_neutral_resources(parent)
 
 	_add_nav_obstacles(parent)
+	TerrainManager.bake_minimap_texture(_map_half, 256)
 	return {"tc0": tc0, "tc1": tc1}
 
 # ── Islands map ─────────────────────────────────────────────────────────────
@@ -163,6 +164,7 @@ func _run_islands(parent: Node2D, units_layer: Node2D) -> Dictionary:
 	_spawn_island_resources(parent, tc1, center1, island_radius)
 	_spawn_animals(units_layer, tc0, tc1)
 	_spawn_fish(parent, center0, center1, island_radius)
+	_spawn_resource_islets(parent, center0, center1, island_radius)
 
 	return {"tc0": tc0, "tc1": tc1}
 
@@ -625,13 +627,14 @@ func _spawn_player_resources_clamped(parent: Node2D, tc: Vector2,
 		roundi(4.0 * _res_mult), 160.0 * _res_mult,
 		_rng.randf_range(0.0, TAU) + angle_offset, 160.0, max_dist, island_center, island_radius)
 
-	for i: int in range(3):
-		var fangle: float = angle_offset + TAU / 3.0 * float(i) + _rng.randf_range(-0.4, 0.4)
+	var forest_count: int = _rng.randi_range(4, 5)
+	for i: int in range(forest_count):
+		var fangle: float = angle_offset + TAU / float(forest_count) * float(i) + _rng.randf_range(-0.4, 0.4)
 		var fcenter: Vector2 = island_center + \
-			Vector2(cos(fangle), sin(fangle)) * _rng.randf_range(island_radius * 0.1, island_radius * 0.45)
+			Vector2(cos(fangle), sin(fangle)) * _rng.randf_range(island_radius * 0.1, island_radius * 0.50)
 		if TerrainManager._point_in_any_land(fcenter) and TerrainManager.is_buildable(fcenter):
-			_spawn_forest_zone(parent, fcenter, roundi(_rng.randf_range(16.0, 24.0) * _res_mult),
-				160.0 * _res_mult, 65.0)
+			_spawn_forest_zone(parent, fcenter, roundi(_rng.randf_range(24.0, 36.0) * _res_mult),
+				180.0 * _res_mult, 70.0)
 
 	var food_angle: float = _rng.randf_range(0.0, TAU) + angle_offset
 	_spawn_deposit_clamped(parent, tc, ResourceNode.ResourceType.FOOD_HUNT,
@@ -674,6 +677,85 @@ func _spawn_fish(parent: Node2D, center0: Vector2, center1: Vector2, island_radi
 		_create_resource_node(parent, pos, ResourceNode.ResourceType.FOOD_FISH,
 			200.0 * _rng.randf_range(0.8, 1.2))
 		placed += 1
+
+# Spawns small resource islets in the open ocean between and around the two main islands.
+# Each islet is a small land polygon with one random resource type.
+func _spawn_resource_islets(parent: Node2D, center0: Vector2, center1: Vector2,
+		island_radius: float) -> void:
+	# Possible islet compositions: list of resource types to place on each
+	const ISLET_TEMPLATES: Array = [
+		[ResourceNode.ResourceType.GOLD],
+		[ResourceNode.ResourceType.WOOD, ResourceNode.ResourceType.STONE],
+		[ResourceNode.ResourceType.STONE],
+		[ResourceNode.ResourceType.WOOD],
+		[ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE],
+	]
+
+	var islet_count: int = _rng.randi_range(3, 4)
+	var min_dist_from_main: float = island_radius * 1.25
+	var islet_radius: float = _map_half * 0.09
+
+	for _i: int in range(islet_count):
+		# Find a position in the ocean not too close to any existing land
+		var islet_center: Vector2 = Vector2.ZERO
+		var found: bool = false
+		for _attempt: int in range(60):
+			var a: float = _rng.randf() * TAU
+			var d: float = _rng.randf_range(island_radius * 1.3, _map_half * 0.75)
+			var mid: Vector2 = (center0 + center1) * 0.5
+			var candidate: Vector2 = mid + Vector2(cos(a), sin(a)) * d
+			candidate = _clamp_map(candidate)
+			if not TerrainManager.is_ocean(candidate):
+				continue
+			if candidate.distance_to(center0) < min_dist_from_main:
+				continue
+			if candidate.distance_to(center1) < min_dist_from_main:
+				continue
+			# Check no existing land poly nearby
+			var too_close: bool = false
+			for poly: Variant in _land_polys:
+				for pt: Vector2 in (poly as PackedVector2Array):
+					if candidate.distance_to(pt) < island_radius * 0.8:
+						too_close = true
+						break
+				if too_close:
+					break
+			if too_close:
+				continue
+			islet_center = candidate
+			found = true
+			break
+		if not found:
+			continue
+
+		# Build and paint the islet polygon
+		var poly: PackedVector2Array = _make_island_poly(islet_center, islet_radius)
+		_land_polys.append(poly)
+		TerrainManager.set_land_polys(_land_polys, true)
+		_paint_polygon(parent, poly, TERRAIN_COLORS[TerrainManager.TerrainType.GRASS])
+
+		# Pick a random template and spawn its resources on the islet
+		var template: Array = ISLET_TEMPLATES[_rng.randi() % ISLET_TEMPLATES.size()] as Array
+		for rtype: Variant in template:
+			var res: ResourceNode.ResourceType = rtype as ResourceNode.ResourceType
+			var is_wood: bool = res == ResourceNode.ResourceType.WOOD
+			var obj_r: float = R_RES_WOOD if is_wood else R_RES_OTHER
+			var count: int = _rng.randi_range(3, 5) if is_wood else _rng.randi_range(2, 4)
+			var amount: float = (180.0 if is_wood else 200.0) * _res_mult
+			var placed: int = 0
+			for _j: int in range(MAX_PLACE_TRIES * count):
+				if placed >= count:
+					break
+				var a: float = _rng.randf() * TAU
+				var d: float = _rng.randf_range(0.0, islet_radius * 0.75)
+				var pos: Vector2 = islet_center + Vector2(cos(a), sin(a)) * d
+				if not TerrainManager._point_in_any_land(pos):
+					continue
+				if not _is_free(pos, obj_r):
+					continue
+				_register(pos, obj_r)
+				_create_resource_node(parent, pos, res, amount * _rng.randf_range(0.85, 1.15))
+				placed += 1
 
 func _spawn_deposit(parent: Node2D, center: Vector2,
 		rtype: ResourceNode.ResourceType, count: int, amount: float,

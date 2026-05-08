@@ -31,6 +31,8 @@ AudioManager="*res://scripts/core/audio_manager.gd"
 GameSettings="*res://scripts/core/game_settings.gd"
 MatchConfig="*res://scripts/core/match_config.gd"
 TerrainManager="*res://scripts/core/terrain_manager.gd"
+CivBonusManager="*res://scripts/core/civ_bonus_manager.gd"
+TechManager="*res://scripts/core/tech_manager.gd"
 
 [internationalization]
 

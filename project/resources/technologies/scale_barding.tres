@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_scale_barding"]
+
+[resource]
+script = ExtResource("1_scale_barding")
+id = "scale_barding"
+display_name = "Scale Barding"
+description = "Scale armour improves melee protection for all units."
+required_age = 1
+research_building = 5
+research_time = 40.0
+cost_food = 100
+cost_wood = 0
+cost_gold = 50
+effects = {"unit_armor_melee": 1.15}
+prerequisites = []

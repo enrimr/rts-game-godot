@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_blast_furnace"]
+
+[resource]
+script = ExtResource("1_blast_furnace")
+id = "blast_furnace"
+display_name = "Blast Furnace"
+description = "High-temperature forging produces superior weapons for all units."
+required_age = 3
+research_building = 5
+research_time = 50.0
+cost_food = 275
+cost_wood = 0
+cost_gold = 225
+effects = {"unit_attack": 1.15}
+prerequisites = []

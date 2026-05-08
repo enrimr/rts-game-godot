@@ -100,8 +100,9 @@ static func _make_selection_line(r: Rect2) -> Line2D:
 func _ready() -> void:
 	add_to_group("buildings")
 	if building_data:
-		max_health = building_data.max_health
-		health = building_data.max_health
+		var hp_mult: float = CivBonusManager.get_building_hp_multiplier(player_id, building_data.id)
+		max_health = building_data.max_health * hp_mult
+		health = max_health
 	_refresh_visuals()
 	call_deferred("_apply_player_color_stripe")
 

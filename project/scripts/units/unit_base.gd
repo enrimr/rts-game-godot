@@ -27,7 +27,9 @@ const MAX_STUCK_RETRIES: int = 1
 
 func _ready() -> void:
 	if unit_data:
-		health = unit_data.max_health
+		var hp_mult: float = CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
+		health = unit_data.max_health * hp_mult
+		health_bar.max_value = health
 	_last_position = global_position
 	if is_instance_valid(attack_range_area):
 		attack_range_area.monitoring = true
@@ -48,7 +50,7 @@ func move_to(target_position: Vector2) -> void:
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
 	EventBus.damage_dealt.emit(self, amount, source)
-	health_bar.value = health / unit_data.max_health * 100.0
+	health_bar.value = health / health_bar.max_value * 100.0
 	if health <= 0.0:
 		die()
 		return
@@ -91,13 +93,22 @@ func _on_auto_attack_target(_target: Node) -> void:
 func _get_target_armor(target: Node) -> float:
 	if not is_instance_valid(target):
 		return 0.0
+	var base_armor: float = 0.0
 	var udata: Variant = target.get("unit_data")
 	if udata is UnitResource:
-		return (udata as UnitResource).armor_melee
-	var bdata: Variant = target.get("building_data")
-	if bdata is BuildingResource:
-		return (bdata as BuildingResource).get("armor_melee") if (bdata as BuildingResource).get("armor_melee") != null else 0.0
-	return 0.0
+		base_armor = (udata as UnitResource).armor_melee
+	else:
+		var bdata: Variant = target.get("building_data")
+		if bdata is BuildingResource:
+			base_armor = (bdata as BuildingResource).get("armor_melee") if (bdata as BuildingResource).get("armor_melee") != null else 0.0
+	var target_pid: Variant = target.get("player_id")
+	if target_pid != null:
+		var armor_mult: float = CivBonusManager.get_unit_armor_bonus(target_pid as int)
+		base_armor *= armor_mult
+	return base_armor
+
+func _get_effective_attack() -> float:
+	return unit_data.attack * CivBonusManager.get_unit_attack_multiplier(player_id, unit_data.id)
 
 # Effective attack reach toward a target, extended by half the target's
 # footprint so units stop and fight at the edge rather than trying to reach center.
@@ -154,7 +165,7 @@ func _nav_velocity() -> Vector2:
 	var dir: Vector2 = next - global_position
 	if dir.length_squared() < 1.0:
 		return Vector2.ZERO
-	return dir.normalized() * unit_data.move_speed
+	return dir.normalized() * unit_data.move_speed * CivBonusManager.get_unit_speed_multiplier(player_id, unit_data.id)
 
 # Tracks movement over time. Returns true once per stuck period so the
 # caller can take corrective action (re-path with jitter or force-finish).

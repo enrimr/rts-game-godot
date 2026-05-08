@@ -1,28 +1,47 @@
 extends Node
 
-## AIPlayer — tick-based AI that collects resources, builds, trains, and attacks.
+## AIPlayer — tick-based AI that manages economy, constructs buildings, trains
+## varied military units, and launches coordinated attacks.
 
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
-const MILITIA_SCENE: PackedScene  = preload("res://scenes/units/militia.tscn")
-const BARRACKS_SCENE: PackedScene = preload("res://scenes/buildings/barracks.tscn")
+const BUILDING_SCENES: Dictionary = {
+	"barracks":    "res://scenes/buildings/barracks.tscn",
+	"house":       "res://scenes/buildings/house.tscn",
+	"lumber_camp": "res://scenes/buildings/lumber_camp.tscn",
+	"mining_camp": "res://scenes/buildings/mining_camp.tscn",
+	"farm":        "res://scenes/buildings/farm.tscn",
+}
+const BUILDING_COSTS: Dictionary = {
+	"barracks":    {"wood": 175},
+	"house":       {"wood": 25},
+	"lumber_camp": {"wood": 100},
+	"mining_camp": {"wood": 100},
+	"farm":        {"wood": 60},
+}
 
-const ATTACK_INTERVAL: float   = 30.0
-const TICK_INTERVAL: float     = 2.0
-const CONTROL_ZONE_RADIUS: float = 400.0   # px around TC considered "home"
-const THREAT_CHECK_INTERVAL: float = 3.0  # how often to scan for nearby enemies
+const TICK_INTERVAL: float        = 2.0
+const THREAT_CHECK_INTERVAL: float = 3.0
+const CONTROL_ZONE_RADIUS: float  = 400.0
+const AGGRESSION_DECAY: float     = 20.0
 
 @export var player_id: int = 1
 
-var town_center: Node2D = null
-var units_layer: Node2D = null
+var town_center: Node2D   = null
+var units_layer: Node2D   = null
 var buildings_layer: Node2D = null
-var drop_off: Node2D = null
+var drop_off: Node2D      = null
 var enemy_town_center: Node2D = null
 
-var _timer: float = 0.0
-var _attack_timer: float = 0.0
-var _threat_timer: float = 0.0
-var _barracks_built: bool = false
+var _timer: float         = 0.0
+var _attack_timer: float  = 0.0
+var _threat_timer: float  = 0.0
+
+# Track which building types have been built (counts)
+var _built: Dictionary = {"barracks": 0, "house": 0, "lumber_camp": 0, "mining_camp": 0, "farm": 0}
+
+enum AggressionLevel { PASSIVE, ALERTED, AGGRESSIVE }
+var _aggression: AggressionLevel = AggressionLevel.PASSIVE
+var _aggression_timer: float = 0.0
 
 func _ready() -> void:
 	EventBus.ai_unit_under_attack.connect(_on_ai_unit_under_attack)
@@ -32,17 +51,11 @@ func _on_ai_unit_under_attack(attacked_player_id: int) -> void:
 		return
 	notify_under_attack()
 
-# Aggression state
-enum AggressionLevel { PASSIVE, ALERTED, AGGRESSIVE }
-var _aggression: AggressionLevel = AggressionLevel.PASSIVE
-var _aggression_timer: float = 0.0
-const AGGRESSION_DECAY: float = 20.0  # seconds before returning to PASSIVE
-
 func _process(delta: float) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 
-	_timer += delta
+	_timer        += delta
 	_attack_timer += delta
 	_threat_timer += delta
 
@@ -56,8 +69,7 @@ func _process(delta: float) -> void:
 		_timer = 0.0
 		_run_tick()
 
-	var effective_attack_interval: float = _effective_attack_interval()
-	if _attack_timer >= effective_attack_interval:
+	if _attack_timer >= _effective_attack_interval():
 		_attack_timer = 0.0
 		_launch_attack()
 
@@ -72,17 +84,238 @@ func _effective_attack_interval() -> float:
 	return GameSettings.get_ai_attack_interval()
 
 func _run_tick() -> void:
+	_sync_built_counts()
+	_manage_population()
 	_manage_villagers()
-	_manage_buildings()
+	_manage_economy_buildings()
+	_manage_military_buildings()
 	_manage_military()
 	_manage_age_advance()
 
-# --- Threat detection ---
+# ── Population ───────────────────────────────────────────────────────────────
+
+func _manage_population() -> void:
+	var pop: int    = PopulationManager.get_population(player_id)
+	var cap: int    = PopulationManager.get_cap(player_id)
+	# Build a house when within 3 of the cap and we can afford it
+	if cap - pop <= 3 and ResourceManager.can_afford(player_id, BUILDING_COSTS["house"]):
+		_build("house")
+
+# ── Economy ──────────────────────────────────────────────────────────────────
+
+func _manage_villagers() -> void:
+	if not is_instance_valid(town_center):
+		return
+	var vcount: int = _count_of_type("Villager")
+	var target: int = GameSettings.get_ai_villager_target()
+	if vcount < target and not PopulationManager.at_cap(player_id):
+		_spawn_villager()
+	# Re-assign idle villagers
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit) or not (unit is Villager):
+			continue
+		var v: Villager = unit as Villager
+		if v.player_id != player_id:
+			continue
+		if v.current_state == UnitBase.UnitState.IDLE:
+			_assign_villager(v)
+
+func _assign_villager(v: Villager) -> void:
+	var res: Dictionary = ResourceManager.get_resources(player_id)
+	var wood: int  = res.get("wood",  0) as int
+	var food: int  = res.get("food",  0) as int
+	var gold: int  = res.get("gold",  0) as int
+
+	# Priority: always need food; push wood if low; gold for military
+	var priority: Array[ResourceNode.ResourceType]
+	if food < 200:
+		priority = [ResourceNode.ResourceType.FOOD_HUNT, ResourceNode.ResourceType.WOOD,
+					ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE]
+	elif wood < 150:
+		priority = [ResourceNode.ResourceType.WOOD, ResourceNode.ResourceType.FOOD_HUNT,
+					ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE]
+	elif gold < 100:
+		priority = [ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.WOOD,
+					ResourceNode.ResourceType.FOOD_HUNT, ResourceNode.ResourceType.STONE]
+	else:
+		priority = [ResourceNode.ResourceType.WOOD, ResourceNode.ResourceType.FOOD_HUNT,
+					ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE]
+
+	for rtype: ResourceNode.ResourceType in priority:
+		var node: ResourceNode = _find_nearest_resource(rtype, v.global_position)
+		if node != null:
+			var nearest_drop: Node2D = _find_nearest_drop_off(rtype)
+			v.order_gather(node, node.get_resource_name(), nearest_drop if nearest_drop != null else drop_off)
+			return
+
+# ── Economy buildings ─────────────────────────────────────────────────────────
+
+func _manage_economy_buildings() -> void:
+	var age: int = AgeManager.get_age(player_id)
+	var res: Dictionary = ResourceManager.get_resources(player_id)
+	var wood: int = res.get("wood", 0) as int
+
+	# Lumber camp: build one near the nearest wood cluster if we have no drop-off for wood
+	if _built["lumber_camp"] == 0 and ResourceManager.can_afford(player_id, BUILDING_COSTS["lumber_camp"]):
+		_build_near_resource("lumber_camp", ResourceNode.ResourceType.WOOD)
+
+	# Mining camp: build one near gold/stone once in Feudal
+	if age >= GameManager.Age.FEUDAL and _built["mining_camp"] == 0 \
+			and ResourceManager.can_afford(player_id, BUILDING_COSTS["mining_camp"]):
+		_build_near_resource("mining_camp", ResourceNode.ResourceType.GOLD)
+
+	# Farms: build up to 2 farms in Feudal when food is low and we have wood spare
+	if age >= GameManager.Age.FEUDAL:
+		var farm_count: int = _built.get("farm", 0) as int
+		var max_farms: int = 2 if GameSettings.difficulty == GameSettings.Difficulty.EASY else 3
+		if farm_count < max_farms and wood > 120 \
+				and ResourceManager.can_afford(player_id, BUILDING_COSTS["farm"]):
+			_build("farm")
+
+# ── Military buildings ────────────────────────────────────────────────────────
+
+func _manage_military_buildings() -> void:
+	var age: int = AgeManager.get_age(player_id)
+	var barracks_count: int = _built.get("barracks", 0) as int
+
+	# First barracks as soon as possible
+	if barracks_count == 0 and ResourceManager.can_afford(player_id, BUILDING_COSTS["barracks"]):
+		_build("barracks")
+		return
+
+	# Second barracks in Feudal
+	if age >= GameManager.Age.FEUDAL and barracks_count < 2 \
+			and ResourceManager.can_afford(player_id, BUILDING_COSTS["barracks"]):
+		_build("barracks")
+		return
+
+	# Third barracks in Castle
+	if age >= GameManager.Age.CASTLE and barracks_count < 3 \
+			and ResourceManager.can_afford(player_id, BUILDING_COSTS["barracks"]):
+		_build("barracks")
+
+# ── Military training ─────────────────────────────────────────────────────────
+
+func _manage_military() -> void:
+	if _built.get("barracks", 0) as int == 0:
+		return
+
+	var age: int = AgeManager.get_age(player_id)
+	var military: int = _count_military()
+	var passive_target: int = GameSettings.get_ai_military_target_passive()
+	var target: int = passive_target if _aggression == AggressionLevel.PASSIVE else passive_target + 4
+
+	if military >= target:
+		return
+
+	# Desired composition by age: [militia_fraction, archer_fraction, pikeman_fraction]
+	# Values are relative weights — pick unit type by current ratio deficit
+	var desired: Dictionary
+	match age:
+		GameManager.Age.DARK:
+			desired = {"militia": 1.0, "archer": 0.0, "pikeman": 0.0}
+		GameManager.Age.FEUDAL:
+			desired = {"militia": 0.4, "archer": 0.5, "pikeman": 0.1}
+		GameManager.Age.CASTLE:
+			desired = {"militia": 0.3, "archer": 0.4, "pikeman": 0.3}
+		_: # IMPERIAL
+			desired = {"militia": 0.2, "archer": 0.4, "pikeman": 0.4}
+
+	var unit_id: String = _pick_unit_to_train(desired)
+	if unit_id.is_empty():
+		return
+
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building) or not (building is Barracks):
+			continue
+		var br: Barracks = building as Barracks
+		if br.player_id != player_id:
+			continue
+		if br.state != BuildingBase.BuildingState.COMPLETE:
+			continue
+		if br.get_queue().size() >= br.get_max_queue():
+			continue
+		br.order_train(unit_id)
+		break
+
+func _pick_unit_to_train(desired: Dictionary) -> String:
+	var militia_c: int = _count_of_type("Militia")
+	var archer_c: int  = _count_of_type("Archer")
+	var pike_c: int    = _count_of_type("Pikeman")
+	var total: int     = militia_c + archer_c + pike_c
+
+	if total == 0:
+		# Train whatever is available first
+		for unit_id: String in ["militia", "archer", "pikeman"]:
+			if _can_train(unit_id):
+				return unit_id
+		return ""
+
+	# Find unit type most below its desired ratio
+	var best_id: String = ""
+	var best_deficit: float = -1.0
+	for unit_id: String in desired.keys():
+		var want: float = desired[unit_id] as float
+		if want <= 0.0:
+			continue
+		if not _can_train(unit_id):
+			continue
+		var current_ratio: float = 0.0
+		match unit_id:
+			"militia": current_ratio = float(militia_c) / float(total)
+			"archer":  current_ratio = float(archer_c)  / float(total)
+			"pikeman": current_ratio = float(pike_c)    / float(total)
+		var deficit: float = want - current_ratio
+		if deficit > best_deficit:
+			best_deficit = deficit
+			best_id = unit_id
+	return best_id
+
+func _can_train(unit_id: String) -> bool:
+	var age: int = AgeManager.get_age(player_id)
+	match unit_id:
+		"militia":  return true  # available from Dark Age
+		"archer":   return age >= GameManager.Age.FEUDAL
+		"pikeman":  return age >= GameManager.Age.CASTLE
+	return false
+
+# ── Age advancement ───────────────────────────────────────────────────────────
+
+func _manage_age_advance() -> void:
+	if AgeManager.is_advancing(player_id):
+		return
+	if AgeManager.get_age(player_id) >= GameManager.Age.IMPERIAL:
+		return
+	# Only advance when economy is stable and we have a defensive force
+	var military: int = _count_military()
+	var min_mil: int = 2 if GameSettings.difficulty == GameSettings.Difficulty.EASY else 3
+	if military >= min_mil and AgeManager.can_advance(player_id):
+		AgeManager.start_advance(player_id)
+
+# ── Attack & Defense ──────────────────────────────────────────────────────────
+
+func _launch_attack() -> void:
+	if not is_instance_valid(enemy_town_center):
+		return
+	var mcount: int = _count_military()
+	var min_units: int = GameSettings.get_ai_min_attack_units()
+	if _aggression == AggressionLevel.AGGRESSIVE:
+		min_units = maxi(min_units - 1, 1)
+	if mcount < min_units:
+		return
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		if unit is Militia or unit is Archer or unit is Pikeman:
+			if unit.has_method("order_attack"):
+				unit.order_attack(enemy_town_center)
 
 func _check_zone_threat() -> void:
 	if not is_instance_valid(town_center):
 		return
-	var threat_found: bool = false
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
 			continue
@@ -90,30 +323,23 @@ func _check_zone_threat() -> void:
 		if pid == null or (pid as int) == player_id:
 			continue
 		if (unit as Node2D).global_position.distance_to(town_center.global_position) <= CONTROL_ZONE_RADIUS:
-			threat_found = true
-			break
-
-	if threat_found:
-		_escalate_aggression(AggressionLevel.AGGRESSIVE)
-		_defend_base()
+			_escalate_aggression(AggressionLevel.AGGRESSIVE)
+			_defend_base()
+			return
 
 func _escalate_aggression(level: AggressionLevel) -> void:
 	if level > _aggression:
 		_aggression = level
 	_aggression_timer = 0.0
 
-# Called when an AI unit takes damage — wired up in _spawn_villager / militia spawn.
 func notify_under_attack() -> void:
 	_escalate_aggression(AggressionLevel.ALERTED)
-	# Trigger an early counter-attack if we have enough units
-	var mcount: int = _count_units_of_type("Militia")
-	if mcount >= 2:
-		_attack_timer = _effective_attack_interval()  # fires next frame
+	if _count_military() >= 2:
+		_attack_timer = _effective_attack_interval()
 
 func _defend_base() -> void:
 	if not is_instance_valid(town_center):
 		return
-	# Find the closest enemy unit in the zone and rally all militia toward it
 	var best_enemy: Node = null
 	var best_dist: float = CONTROL_ZONE_RADIUS
 	for unit: Node in units_layer.get_children():
@@ -126,66 +352,116 @@ func _defend_base() -> void:
 		if d < best_dist:
 			best_dist = d
 			best_enemy = unit
-
 	if best_enemy == null:
 		return
-
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
-			continue
-		if not (unit is Militia or unit is Archer or unit is Pikeman):
 			continue
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if unit.has_method("order_attack"):
+		if (unit is Militia or unit is Archer or unit is Pikeman) and unit.has_method("order_attack"):
 			unit.order_attack(best_enemy)
 
-# --- Age advancement ---
+# ── Building placement ────────────────────────────────────────────────────────
 
-func _manage_age_advance() -> void:
-	if AgeManager.is_advancing(player_id):
+func _build(building_id: String) -> void:
+	var scene_path: String = BUILDING_SCENES.get(building_id, "") as String
+	if scene_path.is_empty() or not is_instance_valid(town_center):
 		return
-	var current_age: int = AgeManager.get_age(player_id)
-	if current_age >= GameManager.Age.IMPERIAL:
+	var packed: PackedScene = load(scene_path) as PackedScene
+	if packed == null:
 		return
-	# AI advances as soon as it can afford it and has a defensive force
-	if _count_units_of_type_any(["Militia", "Archer", "Pikeman"]) >= 3 and AgeManager.can_advance(player_id):
-		AgeManager.start_advance(player_id)
+	var b: Node2D = packed.instantiate() as Node2D
+	b.global_position = _find_build_pos(town_center.global_position, 80.0, 220.0)
+	b.set("player_id", player_id)
+	buildings_layer.add_child(b)
+	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
+	b.add_construction(100.0)
+	EventBus.building_placed.emit(b, player_id)
+	ResourceManager.spend_resource(player_id, BUILDING_COSTS[building_id])
+	_built[building_id] = (_built.get(building_id, 0) as int) + 1
 
-# --- Economy ---
-
-func _manage_villagers() -> void:
-	if not is_instance_valid(town_center):
+func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType) -> void:
+	var nearest: ResourceNode = _find_nearest_resource(rtype,
+		town_center.global_position if is_instance_valid(town_center) else Vector2.ZERO)
+	if nearest == null:
+		_build(building_id)
 		return
-	var vcount: int = _count_units_of_type("Villager")
-	if vcount < GameSettings.get_ai_villager_target() and not PopulationManager.at_cap(player_id):
-		_spawn_villager()
+	var scene_path: String = BUILDING_SCENES.get(building_id, "") as String
+	if scene_path.is_empty():
+		return
+	var packed: PackedScene = load(scene_path) as PackedScene
+	if packed == null:
+		return
+	var b: Node2D = packed.instantiate() as Node2D
+	b.global_position = _find_build_pos(nearest.global_position, 50.0, 140.0)
+	b.set("player_id", player_id)
+	buildings_layer.add_child(b)
+	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
+	b.add_construction(100.0)
+	EventBus.building_placed.emit(b, player_id)
+	ResourceManager.spend_resource(player_id, BUILDING_COSTS[building_id])
+	_built[building_id] = (_built.get(building_id, 0) as int) + 1
+	# Re-assign nearby idle villagers to this drop-off
+	_redirect_villagers_to_drop_off(b, rtype)
+
+func _find_build_pos(origin: Vector2, min_r: float, max_r: float) -> Vector2:
+	for _i: int in range(20):
+		var angle: float = randf() * TAU
+		var dist: float  = randf_range(min_r, max_r)
+		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * dist
+		if not TerrainManager.is_ocean(pos):
+			return pos
+	return origin + Vector2(randf_range(-max_r, max_r), randf_range(min_r, max_r))
+
+func _redirect_villagers_to_drop_off(new_drop: Node2D, rtype: ResourceNode.ResourceType) -> void:
+	var reassigned: int = 0
 	for unit: Node in units_layer.get_children():
+		if reassigned >= 2:
+			break
 		if not is_instance_valid(unit) or not (unit is Villager):
 			continue
 		var v: Villager = unit as Villager
 		if v.player_id != player_id:
 			continue
-		if v.current_state == UnitBase.UnitState.IDLE:
-			_assign_villager_to_resource(v)
+		var carried: Variant = v.get("carried_resource")
+		if carried != null and (carried as String) != "" and v.gather_target != null:
+			v.drop_off_target = new_drop
+			reassigned += 1
 
-func _assign_villager_to_resource(v: Villager) -> void:
-	var preferred: Array[ResourceNode.ResourceType] = [
-		ResourceNode.ResourceType.WOOD,
-		ResourceNode.ResourceType.FOOD_HUNT,
-		ResourceNode.ResourceType.GOLD,
-		ResourceNode.ResourceType.STONE,
-	]
-	var wood: int = ResourceManager.get_resources(player_id).get("wood", 0) as int
-	if wood > 300:
-		preferred = [ResourceNode.ResourceType.FOOD_HUNT, ResourceNode.ResourceType.WOOD,
-					 ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE]
-	for rtype: ResourceNode.ResourceType in preferred:
-		var node: ResourceNode = _find_nearest_resource(rtype, v.global_position)
-		if node != null:
-			v.order_gather(node, node.get_resource_name(), drop_off)
-			return
+# ── Spawn helpers ─────────────────────────────────────────────────────────────
+
+func _spawn_villager() -> void:
+	if not ResourceManager.spend_resource(player_id, {"food": 50}):
+		return
+	var v: Node2D = VILLAGER_SCENE.instantiate() as Node2D
+	v.set("player_id", player_id)
+	v.set("civ_id", MatchConfig.rival_civ_id)
+	units_layer.add_child(v)
+	v.global_position = town_center.global_position + Vector2(randf_range(-50.0, 50.0), 60.0)
+	PopulationManager.add_unit(player_id)
+	EventBus.unit_spawned.emit(v, player_id)
+
+# ── Sync built counts from actual buildings layer ─────────────────────────────
+
+func _sync_built_counts() -> void:
+	for key: String in _built.keys():
+		_built[key] = 0
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		var bdata: Variant = building.get("building_data")
+		if bdata == null:
+			continue
+		var bid: String = (bdata as Resource).get("id") as String
+		if _built.has(bid):
+			_built[bid] = (_built[bid] as int) + 1
+
+# ── Resource search ───────────────────────────────────────────────────────────
 
 func _find_nearest_resource(rtype: ResourceNode.ResourceType, from: Vector2) -> ResourceNode:
 	var best: ResourceNode = null
@@ -202,83 +478,40 @@ func _find_nearest_resource(rtype: ResourceNode.ResourceType, from: Vector2) -> 
 			best = rn
 	return best
 
-# --- Buildings ---
-
-func _manage_buildings() -> void:
-	if not is_instance_valid(town_center):
-		return
-	if _barracks_built:
-		return
-	if ResourceManager.can_afford(player_id, {"wood": 175}):
-		_build_barracks()
-
-func _build_barracks() -> void:
-	var barracks: Node2D = BARRACKS_SCENE.instantiate() as Node2D
-	var offset: Vector2 = Vector2(randf_range(-120.0, 120.0), randf_range(80.0, 160.0))
-	barracks.global_position = town_center.global_position + offset
-	barracks.set("player_id", player_id)
-	buildings_layer.add_child(barracks)
-	barracks.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
-	barracks.add_construction(100.0)
-	EventBus.building_placed.emit(barracks, player_id)
-	ResourceManager.spend_resource(player_id, {"wood": 175})
-	_barracks_built = true
-
-# --- Military ---
-
-func _manage_military() -> void:
-	if not _barracks_built:
-		return
-	var target_count: int = GameSettings.get_ai_military_target_passive() if _aggression == AggressionLevel.PASSIVE else GameSettings.get_ai_military_target_passive() + 3
-	var mcount: int = _count_units_of_type_any(["Militia", "Archer", "Pikeman"])
-	if mcount < target_count:
-		for building: Node in buildings_layer.get_children():
-			if not is_instance_valid(building) or not (building is Barracks):
-				continue
-			var br: Barracks = building as Barracks
-			if br.player_id != player_id:
-				continue
-			# Train best available unit (highest age = most powerful)
-			var available: Array[Dictionary] = br.get_available_units()
-			if available.is_empty():
-				break
-			var best_def: Dictionary = available[available.size() - 1] as Dictionary
-			br.order_train(best_def["id"] as String)
-			break
-
-func _launch_attack() -> void:
-	if not is_instance_valid(enemy_town_center):
-		return
-	var mcount: int = _count_units_of_type_any(["Militia", "Archer", "Pikeman"])
-	var min_for_attack: int = GameSettings.get_ai_min_attack_units() - 1 if _aggression == AggressionLevel.AGGRESSIVE else GameSettings.get_ai_min_attack_units()
-	if mcount < min_for_attack:
-		return
-	for unit: Node in units_layer.get_children():
-		if not is_instance_valid(unit):
+func _find_nearest_drop_off(rtype: ResourceNode.ResourceType) -> Node2D:
+	# Wood → lumber camp; gold/stone → mining camp; food → TC
+	var preferred_id: String
+	match rtype:
+		ResourceNode.ResourceType.WOOD:
+			preferred_id = "lumber_camp"
+		ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE:
+			preferred_id = "mining_camp"
+		_:
+			return drop_off
+	var best: Node2D = null
+	var best_dist: float = INF
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
 			continue
-		var pid: Variant = unit.get("player_id")
+		var pid: Variant = building.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if unit is Militia or unit is Archer or unit is Pikeman:
-			if unit.has_method("order_attack"):
-				unit.order_attack(enemy_town_center)
+		var bdata: Variant = building.get("building_data")
+		if bdata == null:
+			continue
+		if (bdata as Resource).get("id") as String != preferred_id:
+			continue
+		if building.get("state") as int != BuildingBase.BuildingState.COMPLETE:
+			continue
+		var d: float = (building as Node2D).global_position.distance_to(town_center.global_position)
+		if d < best_dist:
+			best_dist = d
+			best = building as Node2D
+	return best if best != null else drop_off
 
-func _spawn_villager() -> void:
-	if not ResourceManager.spend_resource(player_id, {"food": 50}):
-		return
-	var v: Node2D = VILLAGER_SCENE.instantiate() as Node2D
-	v.set("player_id", player_id)
-	units_layer.add_child(v)
-	v.global_position = town_center.global_position + Vector2(randf_range(-50.0, 50.0), 60.0)
-	PopulationManager.add_unit(player_id)
-	EventBus.unit_spawned.emit(v, player_id)
+# ── Count helpers ─────────────────────────────────────────────────────────────
 
-# --- Helpers ---
-
-func _count_units_of_type(type_name: String) -> int:
-	return _count_units_of_type_any([type_name])
-
-func _count_units_of_type_any(type_names: Array) -> int:
+func _count_of_type(type_name: String) -> int:
 	var count: int = 0
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
@@ -286,14 +519,12 @@ func _count_units_of_type_any(type_names: Array) -> int:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		for type_name: Variant in type_names:
-			match type_name as String:
-				"Villager":
-					if unit is Villager: count += 1
-				"Militia":
-					if unit is Militia: count += 1
-				"Archer":
-					if unit is Archer: count += 1
-				"Pikeman":
-					if unit is Pikeman: count += 1
+		match type_name:
+			"Villager": if unit is Villager:  count += 1
+			"Militia":  if unit is Militia:   count += 1
+			"Archer":   if unit is Archer:    count += 1
+			"Pikeman":  if unit is Pikeman:   count += 1
 	return count
+
+func _count_military() -> int:
+	return _count_of_type("Militia") + _count_of_type("Archer") + _count_of_type("Pikeman")

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_plate_barding"]
+
+[resource]
+script = ExtResource("1_plate_barding")
+id = "plate_barding"
+display_name = "Plate Barding"
+description = "Full plate armour grants maximum melee protection."
+required_age = 3
+research_building = 5
+research_time = 60.0
+cost_food = 300
+cost_wood = 0
+cost_gold = 200
+effects = {"unit_armor_melee": 1.15}
+prerequisites = ["chain_barding"]

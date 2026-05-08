@@ -193,7 +193,8 @@ func _handle_gathering(delta: float) -> void:
 	if _gather_timer >= gather_interval:
 		_gather_timer = 0.0
 		var available: float = gather_target.gather(gather_rate)
-		carried_amount = minf(carried_amount + available, carry_capacity)
+		var rate_mult: float = CivBonusManager.get_gather_rate_multiplier(player_id, carried_resource)
+		carried_amount = minf(carried_amount + available * rate_mult, carry_capacity)
 
 		if not (gather_target is ResourceNode):
 			_farm_gathered += available
@@ -304,7 +305,7 @@ func _handle_attacking(delta: float) -> void:
 	if _attack_timer >= 1.0 / unit_data.attack_speed:
 		_attack_timer = 0.0
 		if attack_target.has_method("take_damage"):
-			attack_target.take_damage(unit_data.attack - _get_target_armor(attack_target), self)
+			attack_target.take_damage(_get_effective_attack() - _get_target_armor(attack_target), self)
 			AudioManager.play("hit_melee", -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
 

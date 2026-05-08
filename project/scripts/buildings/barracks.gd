@@ -71,6 +71,10 @@ func order_train(unit_id: String = "militia") -> bool:
 	if unit_data.cost_food > 0: costs["food"] = unit_data.cost_food
 	if unit_data.cost_wood > 0: costs["wood"] = unit_data.cost_wood
 	if unit_data.cost_gold > 0: costs["gold"] = unit_data.cost_gold
+	var cost_mult: Dictionary = CivBonusManager.get_unit_cost_multiplier(player_id, unit_id)
+	if cost_mult.has("food"): costs["food"] = int(costs.get("food", 0) * (cost_mult["food"] as float))
+	if cost_mult.has("wood"): costs["wood"] = int(costs.get("wood", 0) * (cost_mult["wood"] as float))
+	if cost_mult.has("gold"): costs["gold"] = int(costs.get("gold", 0) * (cost_mult["gold"] as float))
 	if not ResourceManager.spend_resource(player_id, costs):
 		return false
 	_train_queue.append({

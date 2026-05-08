@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_chain_barding"]
+
+[resource]
+script = ExtResource("1_chain_barding")
+id = "chain_barding"
+display_name = "Chain Barding"
+description = "Interlocked rings provide superior melee armour."
+required_age = 2
+research_building = 5
+research_time = 45.0
+cost_food = 200
+cost_wood = 0
+cost_gold = 100
+effects = {"unit_armor_melee": 1.15}
+prerequisites = ["scale_barding"]

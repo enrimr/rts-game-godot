@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_shipwright"]
+
+[resource]
+script = ExtResource("1_shipwright")
+id = "shipwright"
+display_name = "Shipwright"
+description = "Expert shipbuilders make sturdier hulls and reduce construction costs."
+required_age = 1
+research_building = 5
+research_time = 40.0
+cost_food = 0
+cost_wood = 200
+cost_gold = 60
+effects = {"ship_hp": 1.15, "ship_cost": 0.85}
+prerequisites = []

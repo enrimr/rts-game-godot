@@ -91,6 +91,9 @@ CHART_POPULATION,Population,Población
 CHART_RESOURCES,Resources Gathered,Recursos Recolectados
 CHART_AGE,Age Progression,Progresión de Edad
 CHART_OFFENSIVES,Offensives (kills/interval),Ofensivas (bajas/intervalo)
+PAUSEMENU_RESUME,Resume,Continuar
+PAUSEMENU_SURRENDER,Surrender,Rendirse
+PAUSEMENU_QUIT,Exit Game,Salir del Juego
 MENU_PLAY,Play,Jugar
 MENU_SETTINGS,Settings,Ajustes
 MENU_QUIT,Quit,Salir
@@ -119,6 +122,7 @@ LOBBY_RESOURCES,Starting Resources,Recursos Iniciales
 LOBBY_RES_SCARCE,Scarce,Escasos
 LOBBY_RES_NORMAL,Normal,Normal
 LOBBY_RES_ABUNDANT,Abundant,Abundantes
+LOBBY_RES_FULL_COMBAT,Full Combat,Combate Total
 LOBBY_CIVILIZATION,Your Civilization,Tu Civilización
 LOBBY_STARTING_AGE,Starting Age,Edad de Inicio
 LOBBY_START,Start Game,Iniciar Partida
