@@ -829,6 +829,33 @@ func _spawn_scattered_resources(parent: Node2D, tc_positions: Array[Vector2]) ->
 			200.0 * _res_mult, float(sz[2]), true)
 		placed_forest += 1
 
+	# ── Edge pass: resources along the map border (75–95 % of map half) ──────
+	# Distributes 8 groups around the ring so every corner/edge gets content.
+	const EDGE_INNER: float = 0.75
+	const EDGE_OUTER: float = 0.95
+	var edge_angle_base: float = _rng.randf() * TAU
+	for ei: int in range(8):
+		var ea: float = edge_angle_base + TAU * float(ei) / 8.0 + _rng.randf_range(-0.2, 0.2)
+		var ed: float = _rng.randf_range(_map_half * EDGE_INNER, _map_half * EDGE_OUTER)
+		var ep: Vector2 = _clamp_map(Vector2(cos(ea), sin(ea)) * ed)
+		if TerrainManager.is_ocean(ep):
+			continue
+		# Alternate: forest → gold → forest → stone → forest → gold → forest → stone
+		match ei % 4:
+			0, 2:
+				var sz: Array = FOREST_SIZES[_rng.randi() % FOREST_SIZES.size()] as Array
+				_spawn_forest_zone(parent, ep,
+					roundi(_rng.randf_range(float(sz[0]), float(sz[1])) * _res_mult),
+					200.0 * _res_mult, float(sz[2]), true)
+			1:
+				_spawn_deposit(parent, ep, ResourceNode.ResourceType.GOLD,
+					roundi(_rng.randf_range(4.0, 6.0) * _res_mult),
+					200.0 * _res_mult, _rng.randf() * TAU, 0.0, 55.0)
+			3:
+				_spawn_deposit(parent, ep, ResourceNode.ResourceType.STONE,
+					roundi(_rng.randf_range(3.0, 5.0) * _res_mult),
+					200.0 * _res_mult, _rng.randf() * TAU, 0.0, 55.0)
+
 func _spawn_fish_multi(parent: Node2D, island_centers: Array[Vector2],
 		island_radius: float) -> void:
 	var map_center: Vector2 = Vector2.ZERO

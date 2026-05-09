@@ -203,6 +203,8 @@ This ensures the mid-map and map edges are not empty.
 | Stone deposits | ~2 × res_mult | 4–6 |
 | Forest zones | ~6 × res_mult | size variant randomly chosen |
 
+After the random scatter, an **edge pass** places 8 evenly-distributed groups around the map perimeter (75–95 % of `_map_half`), alternating forest → gold → forest → stone. This fills corners and edges that the random scatter might miss.
+
 ### Islands-only resources
 
 - **Fish banks** (`FOOD_FISH`): ~8 × player_count × 0.75 nodes scattered in ocean around the map centre, between 0.5× and 2× island radius.
