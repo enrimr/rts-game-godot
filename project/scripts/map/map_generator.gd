@@ -676,14 +676,17 @@ func _spawn_player_resources(parent: Node2D, tc: Vector2,
 
 	var forest_base: float = _rng.randf_range(0.0, TAU)
 	# Size variants: [tree_min, tree_max, zone_radius]
-	const FOREST_SIZES: Array = [[12, 18, 50], [22, 30, 75], [35, 45, 105]]
+	# Close forests (< 320 px) are limited to small/medium so they don't crowd the TC.
+	const FOREST_SIZES_SMALL:  Array = [[12, 18, 50], [22, 28, 70]]
+	const FOREST_SIZES_ALL:    Array = [[12, 18, 50], [22, 30, 75], [35, 45, 105]]
 	for i: int in range(8):
 		var fangle: float = forest_base + (TAU / 8.0) * float(i) \
 				+ _rng.randf_range(-0.3, 0.3) + angle_offset
-		var fdist:  float = _rng.randf_range(160.0, 500.0)
+		var fdist:  float = _rng.randf_range(280.0, 520.0)
 		var fcenter: Vector2 = _clamp_map(tc + Vector2(cos(fangle), sin(fangle)) * fdist)
 		if not TerrainManager.is_ocean(fcenter):
-			var sz: Array = FOREST_SIZES[_rng.randi() % FOREST_SIZES.size()] as Array
+			var pool: Array = FOREST_SIZES_SMALL if fdist < 360.0 else FOREST_SIZES_ALL
+			var sz: Array = pool[_rng.randi() % pool.size()] as Array
 			_spawn_forest_zone(parent, fcenter,
 				roundi(_rng.randf_range(float(sz[0]), float(sz[1])) * _res_mult),
 				200.0 * _res_mult, float(sz[2]), true)
