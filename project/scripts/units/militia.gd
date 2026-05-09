@@ -56,6 +56,8 @@ func _handle_movement(delta: float) -> void:
 	nav_agent.set_velocity(_nav_velocity())
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
+	if current_state != UnitState.MOVING:
+		return
 	velocity = safe_velocity
 	move_and_slide()
 

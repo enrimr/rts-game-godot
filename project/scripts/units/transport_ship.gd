@@ -25,6 +25,8 @@ func _ready() -> void:
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _on_velocity_computed(safe_vel: Vector2) -> void:
+	if current_state != UnitState.MOVING:
+		return
 	velocity = safe_vel
 	move_and_slide()
 

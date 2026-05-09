@@ -169,6 +169,8 @@ func _jitter_repath() -> void:
 	nav_agent.target_position = nav_agent.target_position + jitter
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
+	if current_state == UnitState.IDLE or current_state == UnitState.DEAD:
+		return
 	velocity = safe_velocity
 	move_and_slide()
 

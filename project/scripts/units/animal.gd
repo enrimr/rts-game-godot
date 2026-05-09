@@ -38,6 +38,8 @@ func _ready() -> void:
 	_convert_area.body_entered.connect(_on_body_entered_range)
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
+	if current_state == AnimalState.DEAD:
+		return
 	velocity = safe_velocity
 	move_and_slide()
 
