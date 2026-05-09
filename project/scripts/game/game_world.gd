@@ -68,6 +68,10 @@ var _selected_units: Array[Node] = []
 var _selected_building: Node = null
 var _drag_start: Vector2 = Vector2.ZERO
 var _dragging: bool = false
+var _last_click_time: float = -1.0
+var _last_click_unit_script: Script = null
+const DOUBLE_CLICK_SEC: float  = 0.35
+const DOUBLE_CLICK_RADIUS: float = 600.0
 
 var _panning: bool = false
 var _pan_last_pos: Vector2 = Vector2.ZERO
@@ -458,8 +462,33 @@ func _finish_selection(release_pos: Vector2) -> void:
 			best_dist = d
 			best_unit = unit
 		if best_unit != null:
-			best_unit.set_selected(true)
-			_selected_units.append(best_unit)
+			var now: float = Time.get_ticks_msec() / 1000.0
+			var unit_script: Script = best_unit.get_script() as Script
+			var is_double: bool = (now - _last_click_time) <= DOUBLE_CLICK_SEC \
+				and unit_script == _last_click_unit_script
+			_last_click_time = now
+			_last_click_unit_script = unit_script
+
+			if is_double:
+				# Select all friendly units of the same type within DOUBLE_CLICK_RADIUS
+				for unit: Node in units_layer.get_children():
+					if not is_instance_valid(unit):
+						continue
+					var pid: Variant = unit.get("player_id")
+					if pid == null or (pid as int) != 0:
+						continue
+					if unit.get_script() != unit_script:
+						continue
+					if (unit as Node2D).global_position.distance_to(
+							(best_unit as Node2D).global_position) > DOUBLE_CLICK_RADIUS:
+						continue
+					unit.set_selected(true)
+					if not _selected_units.has(unit):
+						_selected_units.append(unit)
+			else:
+				best_unit.set_selected(true)
+				_selected_units.append(best_unit)
+
 			AudioManager.play("ui_select")
 			SelectionManager.select(_selected_units)
 			return
