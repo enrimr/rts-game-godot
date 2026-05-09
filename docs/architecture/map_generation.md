@@ -151,13 +151,24 @@ This keeps the scene-tree node count low regardless of tree density.
 ### Per-player resources (land maps)
 
 Called once per TC with an angle offset so deposits face outward.
+Forest zones use **tight packing** (`FOREST_NODE_RADIUS = 13 px`) with random size variants.
 
 | Resource | Count | Distance from TC |
 |---|---|---|
 | Gold deposit | 5 nodes | 320–480 px |
 | Stone deposit | 5 nodes | 360–530 px |
-| Forest zones | 8 zones of 26–38 trees each | 160–500 px |
+| Forest zones | 8 zones (size variant chosen randomly) | 160–500 px |
 | Hunting food | 2 deposits of 3 nodes | 160–300 px |
+
+### Forest size variants
+
+Applied to player, neutral, and scattered forests. Tight packing removes large gaps that block units.
+
+| Variant | Tree count | Zone radius |
+|---|---|---|
+| Small | 12–18 | 50 px |
+| Medium | 22–30 | 75 px |
+| Large | 35–45 | 105 px |
 
 ### Per-player resources (Islands)
 
@@ -167,7 +178,7 @@ Distances are clamped to 65 % of island radius to keep deposits on land.
 |---|---|
 | Gold deposit | 4 nodes |
 | Stone deposit | 4 nodes |
-| Forest zones | 6–8 zones of 28–42 trees each |
+| Forest zones | 6–8 zones (size variant randomly chosen) |
 | Hunting food | 1 deposit of 3 nodes |
 
 ### Neutral resources (land maps)
@@ -178,7 +189,19 @@ Placed around map centre regardless of TC positions.
 |---|---|---|
 | Gold deposits | 2 × 6 nodes | 400–700 px |
 | Stone deposits | 2 × 5 nodes | 450–720 px |
-| Forest zones | 7 zones of 26–34 trees each | 250–700 px |
+| Forest zones | 7 zones (size variant randomly chosen) | 250–700 px |
+
+### Scattered resources (land maps)
+
+`_spawn_scattered_resources()` runs after neutral resources on all non-Islands maps.
+Deposits are placed at **random positions across the full map**, with a 500 px minimum distance from any TC.
+This ensures the mid-map and map edges are not empty.
+
+| Resource | Groups placed | Nodes per group |
+|---|---|---|
+| Gold deposits | ~3 × res_mult | 4–7 |
+| Stone deposits | ~2 × res_mult | 4–6 |
+| Forest zones | ~6 × res_mult | size variant randomly chosen |
 
 ### Islands-only resources
 
