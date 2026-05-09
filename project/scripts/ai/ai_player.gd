@@ -682,7 +682,8 @@ func _find_shore_position() -> Vector2:
 				continue
 			for nd: Variant in DIRS:
 				if TerrainManager.is_ocean(candidate + (nd as Vector2) * PROBE):
-					return candidate
+					if _build_pos_clear(candidate):
+						return candidate
 	return Vector2.ZERO
 
 func _find_own_dock() -> Node:
@@ -730,8 +731,11 @@ func _build(building_id: String) -> void:
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
 		return
+	var pos: Vector2 = _find_build_pos(town_center.global_position, 80.0, 220.0)
+	if pos == Vector2.INF:
+		return
 	var b: Node2D = packed.instantiate() as Node2D
-	b.global_position = _find_build_pos(town_center.global_position, 80.0, 220.0)
+	b.global_position = pos
 	b.set("player_id", player_id)
 	buildings_layer.add_child(b)
 	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
@@ -752,8 +756,11 @@ func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType)
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
 		return
+	var pos: Vector2 = _find_build_pos(nearest.global_position, 50.0, 140.0)
+	if pos == Vector2.INF:
+		return
 	var b: Node2D = packed.instantiate() as Node2D
-	b.global_position = _find_build_pos(nearest.global_position, 50.0, 140.0)
+	b.global_position = pos
 	b.set("player_id", player_id)
 	buildings_layer.add_child(b)
 	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
@@ -765,13 +772,42 @@ func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType)
 	_redirect_villagers_to_drop_off(b, rtype)
 
 func _find_build_pos(origin: Vector2, min_r: float, max_r: float) -> Vector2:
-	for _i: int in range(20):
+	for _i: int in range(40):
 		var angle: float = randf() * TAU
 		var dist: float  = randf_range(min_r, max_r)
 		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * dist
-		if not TerrainManager.is_ocean(pos):
+		if _build_pos_clear(pos):
 			return pos
-	return origin + Vector2(randf_range(-max_r, max_r), randf_range(min_r, max_r))
+	# Fallback: try a wider ring before giving up
+	for _i: int in range(20):
+		var angle: float = randf() * TAU
+		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * max_r * 1.5
+		if _build_pos_clear(pos):
+			return pos
+	return Vector2.INF
+
+## Returns true when `pos` is safe to build at: not ocean, not impassable
+## terrain, no resource nodes within BUILDING_CLEAR px, and no existing
+## building footprint overlapping.
+const BUILDING_CLEAR: float = 52.0
+func _build_pos_clear(pos: Vector2) -> bool:
+	if TerrainManager.is_ocean(pos):
+		return false
+	if not TerrainManager.is_buildable(pos):
+		return false
+	# Check resource nodes
+	for node: Node in get_tree().get_nodes_in_group("resource_nodes"):
+		if not is_instance_valid(node):
+			continue
+		if pos.distance_to((node as Node2D).global_position) < BUILDING_CLEAR:
+			return false
+	# Check existing buildings
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		if pos.distance_to((building as Node2D).global_position) < BUILDING_CLEAR:
+			return false
+	return true
 
 func _redirect_villagers_to_drop_off(new_drop: Node2D, rtype: ResourceNode.ResourceType) -> void:
 	var reassigned: int = 0
