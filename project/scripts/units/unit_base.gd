@@ -94,7 +94,7 @@ func _on_enemy_entered_range(body: Node) -> void:
 ## Subclasses' order_move clears _attack_move_active; we re-set it right after.
 func order_attack_move(destination: Vector2) -> void:
 	if has_method("order_move"):
-		order_move(destination)
+		call("order_move", destination)
 	_attack_move_active = true
 
 # Override in subclasses to trigger attack logic.
