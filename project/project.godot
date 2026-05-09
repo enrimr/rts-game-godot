@@ -34,12 +34,6 @@ TerrainManager="*res://scripts/core/terrain_manager.gd"
 CivBonusManager="*res://scripts/core/civ_bonus_manager.gd"
 TechManager="*res://scripts/core/tech_manager.gd"
 
-[internationalization]
-
-locale/translations=PackedStringArray("res://assets/translations/translations.en.translation", "res://assets/translations/translations.es.translation")
-locale/locale_filter_mode=1
-locale/locale_filter=PackedStringArray("en", "es")
-
 [display]
 
 window/size/viewport_width=1920
@@ -82,6 +76,13 @@ action={
 ]
 }
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://assets/translations/translations.en.translation", "res://assets/translations/translations.es.translation")
+locale/locale_filter_mode=1
+locale/locale_filter=PackedStringArray("en", "es")
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
