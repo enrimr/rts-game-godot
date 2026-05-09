@@ -18,10 +18,12 @@ var _attack_move_active: bool = false
 var _stuck_timer: float = 0.0
 var _stuck_retries: int = 0
 var _last_position: Vector2 = Vector2.ZERO
+# Original requested destination — kept so we can re-issue after escaping a stuck.
+var _move_destination: Vector2 = Vector2.ZERO
 
-const STUCK_TIMEOUT: float = 1.5
-const STUCK_THRESHOLD: float = 8.0
-const MAX_STUCK_RETRIES: int = 1
+const STUCK_TIMEOUT: float = 1.2
+const STUCK_THRESHOLD: float = 6.0
+const MAX_STUCK_RETRIES: int = 6
 
 @onready var nav_agent: NavigationAgent2D = $NavigationAgent2D
 @onready var health_bar: ProgressBar = $HealthBar
@@ -169,6 +171,11 @@ func _nav_target_for(target: Node) -> Vector2:
 func _safe_destination(destination: Vector2) -> Vector2:
 	return TerrainManager.nearest_passable(destination, civ_id)
 
+# Sets the nav target and records the original destination for unstick recovery.
+func _navigate_to(destination: Vector2) -> void:
+	_move_destination = destination
+	nav_agent.target_position = _safe_destination(destination)
+
 # Returns the desired velocity toward the next nav path point.
 # Returns ZERO when already at the point or navigation is finished.
 func _nav_velocity() -> Vector2:
@@ -181,9 +188,10 @@ func _nav_velocity() -> Vector2:
 	return dir.normalized() * unit_data.move_speed * CivBonusManager.get_unit_speed_multiplier(player_id, unit_data.id)
 
 # Tracks movement over time. Returns true once per stuck period so the
-# caller can take corrective action (re-path with jitter or force-finish).
+# caller can take corrective action. On each trigger _stuck_retries increments
+# and the caller should use _unstick() for escalating recovery.
 func _advance_stuck(delta: float) -> bool:
-	if global_position.distance_to(_last_position) >= STUCK_THRESHOLD:
+	if global_position.distance_squared_to(_last_position) >= STUCK_THRESHOLD * STUCK_THRESHOLD:
 		_stuck_timer = 0.0
 		_stuck_retries = 0
 		_last_position = global_position
@@ -192,5 +200,36 @@ func _advance_stuck(delta: float) -> bool:
 	if _stuck_timer >= STUCK_TIMEOUT:
 		_stuck_timer = 0.0
 		_last_position = global_position
+		_stuck_retries += 1
 		return true
 	return false
+
+# Escalating unstick strategy called every time _advance_stuck fires.
+# Retries 1-2: small target jitter.
+# Retries 3-4: large jitter + re-path to passable position near destination.
+# Retries 5+:  physically push the unit sideways out of the obstacle.
+func _unstick() -> void:
+	var dest: Vector2 = _move_destination if _move_destination != Vector2.ZERO \
+		else nav_agent.target_position
+	match _stuck_retries:
+		1, 2:
+			var jitter: float = 28.0 * float(_stuck_retries)
+			nav_agent.target_position = _safe_destination(
+				dest + Vector2(randf_range(-jitter, jitter), randf_range(-jitter, jitter)))
+		3, 4:
+			var jitter: float = 56.0
+			var new_dest: Vector2 = _safe_destination(
+				dest + Vector2(randf_range(-jitter, jitter), randf_range(-jitter, jitter)))
+			nav_agent.target_position = new_dest
+			# Also nudge the unit itself slightly away from where it's stuck
+			var push: Vector2 = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * 20.0
+			global_position += push
+		_:
+			# Push unit toward destination, stepping around the blocker
+			var to_dest: Vector2 = (dest - global_position).normalized()
+			var perp: Vector2 = Vector2(-to_dest.y, to_dest.x)
+			var side: float = 1.0 if (_stuck_retries % 2 == 0) else -1.0
+			global_position += perp * side * 32.0 + to_dest * 16.0
+			nav_agent.target_position = _safe_destination(dest)
+			if _stuck_retries > MAX_STUCK_RETRIES:
+				_stuck_retries = 0

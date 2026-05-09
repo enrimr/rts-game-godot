@@ -64,7 +64,7 @@ func _on_construction_complete() -> void:
 func order_move(destination: Vector2) -> void:
 	fish_target = null
 	build_target = null
-	nav_agent.target_position = _safe_destination(destination)
+	_navigate_to(destination)
 	current_state = UnitState.MOVING
 
 func order_fish(target: Node, dock: Node) -> void:
@@ -83,9 +83,9 @@ func _handle_movement(delta: float) -> void:
 			current_state = UnitState.IDLE
 		return
 	if _advance_stuck(delta):
-		current_state = UnitState.IDLE
-	var vel: Vector2 = _nav_velocity()
-	nav_agent.set_velocity(vel)
+		_unstick()
+		return
+	nav_agent.set_velocity(_nav_velocity())
 
 func _handle_fishing(delta: float) -> void:
 	if not is_instance_valid(fish_target):
@@ -125,7 +125,8 @@ func _handle_returning(delta: float) -> void:
 	if nav_agent.is_navigation_finished():
 		nav_agent.target_position = _safe_destination((drop_off_target as Node2D).global_position)
 	if _advance_stuck(delta):
-		current_state = UnitState.IDLE
+		_unstick()
+		return
 	nav_agent.set_velocity(_nav_velocity())
 
 func _return_to_dock() -> void:
@@ -145,7 +146,8 @@ func _handle_boat_building(delta: float) -> void:
 	if dist > BUILD_RANGE:
 		nav_agent.target_position = _safe_destination(build_pos)
 		if _advance_stuck(delta):
-			current_state = UnitState.IDLE
+			_unstick()
+			return
 		nav_agent.set_velocity(_nav_velocity())
 		return
 	nav_agent.set_velocity(Vector2.ZERO)

@@ -24,13 +24,14 @@ func order_move(destination: Vector2) -> void:
 	_attack_move_active = false
 	attack_target = null
 	_destination_state = UnitState.IDLE
-	nav_agent.target_position = _safe_destination(destination)
+	_navigate_to(destination)
 	current_state = UnitState.MOVING
 
 func order_attack(target: Node) -> void:
 	attack_target = target
 	_destination_state = UnitState.ATTACKING
-	nav_agent.target_position = _nav_target_for(target)
+	_move_destination = _nav_target_for(target)
+	nav_agent.target_position = _move_destination
 	current_state = UnitState.MOVING
 
 func _handle_movement(delta: float) -> void:
@@ -49,8 +50,7 @@ func _handle_movement(delta: float) -> void:
 		return
 
 	if _advance_stuck(delta):
-		var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
-		nav_agent.target_position = nav_agent.target_position + jitter
+		_unstick()
 		return
 
 	nav_agent.set_velocity(_nav_velocity())
@@ -73,8 +73,7 @@ func _handle_attacking(delta: float) -> void:
 	if dist > attack_reach:
 		nav_agent.target_position = _nav_target_for(attack_target)
 		if _advance_stuck(delta):
-			var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
-			nav_agent.target_position = nav_agent.target_position + jitter
+			_unstick()
 			return
 		nav_agent.set_velocity(_nav_velocity())
 		return

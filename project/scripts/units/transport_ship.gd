@@ -40,13 +40,13 @@ func _physics_process(delta: float) -> void:
 
 func order_move(destination: Vector2) -> void:
 	_unloading = false
-	nav_agent.target_position = _safe_destination(destination)
+	_navigate_to(destination)
 	current_state = UnitState.MOVING
 
 func order_move_then_unload(destination: Vector2) -> void:
 	_unload_target = destination
 	_unloading = true
-	nav_agent.target_position = _safe_destination(destination)
+	_navigate_to(destination)
 	current_state = UnitState.MOVING
 
 func _handle_movement(delta: float) -> void:
@@ -57,10 +57,8 @@ func _handle_movement(delta: float) -> void:
 			unload_all()
 		return
 	if _advance_stuck(delta):
-		current_state = UnitState.IDLE
-		if _unloading:
-			_unloading = false
-			unload_all()
+		_unstick()
+		return
 	nav_agent.set_velocity(_nav_velocity())
 
 # Returns true if the ship is close enough to shore to allow unloading.

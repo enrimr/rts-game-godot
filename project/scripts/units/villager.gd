@@ -100,6 +100,7 @@ func order_move(destination: Vector2) -> void:
 	build_target = null
 	attack_target = null
 	_destination_state = UnitState.IDLE
+	_move_destination = destination
 	_start_move_to(destination)
 
 func order_attack(target: Node) -> void:
@@ -113,6 +114,8 @@ func order_attack(target: Node) -> void:
 # --- Internal helpers ---
 
 func _start_move_to(destination: Vector2) -> void:
+	if _move_destination == Vector2.ZERO:
+		_move_destination = destination
 	nav_agent.target_position = _safe_destination(destination)
 	current_state = UnitState.MOVING
 	_play_animation(_get_animation_name())
@@ -165,8 +168,7 @@ func _unregister_from_build_target() -> void:
 			build_target.unregister_builder()
 
 func _jitter_repath() -> void:
-	var jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-24.0, 24.0))
-	nav_agent.target_position = nav_agent.target_position + jitter
+	_unstick()
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	if current_state == UnitState.IDLE or current_state == UnitState.DEAD:
