@@ -5,12 +5,12 @@ extends Node
 
 enum MapSize   { SMALL = 0, MEDIUM = 1, LARGE = 2 }
 enum Resources { SCARCE = 0, NORMAL = 1, ABUNDANT = 2, FULL_COMBAT = 3 }
-enum MapType   { STANDARD = 0, VOLCANIC_COAST = 1, DESERT_COAST = 2, ISLANDS = 3 }
+enum MapType   { PLAINS = 0, STANDARD = 1, VOLCANIC_COAST = 2, DESERT_COAST = 3, ISLANDS = 4 }
 
 # Chosen by the player in the lobby
 var map_size:        int    = MapSize.MEDIUM
 var resources:       int    = Resources.NORMAL
-var map_type:        int    = MapType.STANDARD
+var map_type:        int    = MapType.PLAINS
 var player_civ_id:   String = "guanches"
 var starting_age:    int    = 0           # GameManager.Age
 

@@ -111,6 +111,7 @@ func _build() -> void:
 	# Map type
 	vbox.add_child(_make_label(tr("LOBBY_MAP_TYPE")))
 	var type_opts: Array[String] = [
+		tr("LOBBY_MAPTYPE_PLAINS"),
 		tr("LOBBY_MAPTYPE_STANDARD"),
 		tr("LOBBY_MAPTYPE_VOLCANIC"),
 		tr("LOBBY_MAPTYPE_DESERT"),

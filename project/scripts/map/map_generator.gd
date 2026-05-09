@@ -90,6 +90,18 @@ func _run(parent: Node2D, units_layer: Node2D,
 	match MatchConfig.map_type:
 		MatchConfig.MapType.ISLANDS:
 			tc_positions = _run_islands(parent, units_layer, player_count)
+		MatchConfig.MapType.PLAINS:
+			tc_positions = _place_tc_ring(player_count)
+			for tc: Vector2 in tc_positions:
+				_register(tc, R_TC)
+				_register_unit_cluster(tc)
+			# No terrain zones — pure flat grass, just paint the base green
+			_paint_rect_bg(parent, _map_half, TERRAIN_COLORS[TerrainManager.TerrainType.GRASS])
+			_spawn_animals_multi(units_layer, tc_positions)
+			for i: int in range(tc_positions.size()):
+				_spawn_player_resources(parent, tc_positions[i],
+					TAU * float(i) / float(tc_positions.size()))
+			_spawn_neutral_resources(parent)
 		MatchConfig.MapType.VOLCANIC_COAST:
 			tc_positions = _place_tc_ring(player_count)
 			for tc: Vector2 in tc_positions:

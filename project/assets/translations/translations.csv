@@ -110,6 +110,7 @@ SETTINGS_LANGUAGE,Language,Idioma
 MENU_NEW_GAME,New Game,Nueva Partida
 LOBBY_TITLE,Match Setup,Configuración de Partida
 LOBBY_MAP_TYPE,Map Type,Tipo de Mapa
+LOBBY_MAPTYPE_PLAINS,Plains,Llanura
 LOBBY_MAPTYPE_STANDARD,Standard,Estándar
 LOBBY_MAPTYPE_VOLCANIC,Volcanic Coast,Costa Volcánica
 LOBBY_MAPTYPE_DESERT,Desert Coast,Costa Desértica

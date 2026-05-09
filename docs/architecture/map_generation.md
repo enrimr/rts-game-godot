@@ -39,6 +39,7 @@ Selected in the lobby via `MatchConfig.map_type` (`MatchConfig.MapType` enum).
 
 | Type | Enum | Description |
 |---|---|---|
+| Plains | `PLAINS` | Flat green grass, no terrain zones — simplest map |
 | Standard | `STANDARD` | Grass base with scattered terrain zones |
 | Volcanic Coast | `VOLCANIC_COAST` | Central caldera + malpais bands |
 | Desert Coast | `DESERT_COAST` | Full dune base with grass oases near TCs |
