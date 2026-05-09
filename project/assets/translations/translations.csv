@@ -30,6 +30,8 @@ ACTION_STONE,Stone,Piedra
 ACTION_FOOD,Food,Comida
 ACTION_BUILD,Build,Construir
 ACTION_STOP,Stop,Parar
+ACTION_MOVE_TO,Move,Mover
+ACTION_ATTACK_MOVE,Attack Move,Atacar-Mover
 ACTION_DESTROY,Destroy,Destruir
 ACTION_BACK,← Back,← Volver
 ACTION_HOUSE,House\n25W,Casa\n25M

@@ -19,6 +19,7 @@ func _physics_process(delta: float) -> void:
 		UnitState.ATTACKING: _handle_attacking(delta)
 
 func order_move(destination: Vector2) -> void:
+	_attack_move_active = false
 	attack_target = null
 	_destination_state = UnitState.IDLE
 	nav_agent.target_position = _safe_destination(destination)

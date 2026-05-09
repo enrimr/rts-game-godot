@@ -84,6 +84,9 @@ var _placing_id: String = ""
 var _ghost: Node2D = null
 var _ghost_rotation: float = 0.0
 
+# Pending action waiting for a map click ("move_to" or "attack_move")
+var _pending_action: String = ""
+
 # Drag-select rectangle overlay
 var _drag_overlay: Node2D = null
 
@@ -139,6 +142,8 @@ func _ready() -> void:
 
 	hud.action_requested.connect(_on_action_requested)
 	hud.follow_requested.connect(toggle_follow)
+	hud.pending_action_started.connect(func(id: String) -> void: _pending_action = id)
+	hud.pending_action_cancelled.connect(func() -> void: _pending_action = "")
 	EventBus.unit_spawned.connect(_on_unit_spawned)
 	EventBus.building_destroyed.connect(_on_building_destroyed_check_victory)
 	EventBus.minimap_move_order.connect(func(p: Vector2) -> void:
@@ -303,6 +308,18 @@ class _DragOverlay extends Node2D:
 		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.18), true)
 		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.75), false, 1.5)
 
+class _FlashMarker extends Node2D:
+	var flash_color: Color = Color.WHITE
+	var flash_t: float = 0.0:
+		set(v):
+			flash_t = v
+			queue_redraw()
+	func _draw() -> void:
+		var radius: float = 10.0 + flash_t * 10.0
+		var alpha: float = (1.0 - flash_t) * 0.85
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 24,
+			Color(flash_color.r, flash_color.g, flash_color.b, alpha), 2.0)
+
 func _handle_follow() -> void:
 	if not _following or _selected_units.is_empty():
 		return
@@ -405,6 +422,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				_confirm_placement(get_global_mouse_position())
 			elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
 				_cancel_placement()
+			return
+
+		if not _pending_action.is_empty():
+			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+				_execute_pending_action(get_global_mouse_position())
+				get_viewport().set_input_as_handled()
+			elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
+				hud.cancel_pending()
+				get_viewport().set_input_as_handled()
 			return
 
 		if mb.button_index == MOUSE_BUTTON_LEFT:
@@ -933,6 +959,55 @@ func _find_nearest_dock(requester: Node2D) -> Node:
 			best_dist = d
 			best = b
 	return best
+
+func _execute_pending_action(world_pos: Vector2) -> void:
+	var action: String = _pending_action
+	hud.cancel_pending()   # clears _pending_action via signal
+	match action:
+		"move_to":
+			_order_move_all(world_pos)
+			_flash_point(world_pos, Color(0.4, 0.8, 1.0, 1.0))
+		"attack_move":
+			# If an enemy is directly at the click position, attack it
+			var enemy_unit: Node = _find_enemy_unit_at(world_pos)
+			var enemy_building: Node = _find_enemy_building_at(world_pos)
+			var target: Node = enemy_unit if enemy_unit != null else enemy_building
+			if target != null:
+				_order_attack_all(target)
+			else:
+				# Move to position; units will auto-attack any enemy they spot en route
+				_order_attack_move_all(world_pos)
+			_flash_point(world_pos, Color(1.0, 0.35, 0.15, 1.0))
+
+func _order_attack_move_all(world_pos: Vector2) -> void:
+	AudioManager.play("cmd_move")
+	var valid_units: Array[Node] = []
+	for u: Node in _selected_units:
+		if is_instance_valid(u) and u.has_method("order_move"):
+			valid_units.append(u)
+	var count: int = valid_units.size()
+	if count == 0:
+		return
+	var slots: Array[Vector2] = _formation_slots(world_pos, count)
+	for i: int in range(count):
+		if valid_units[i].has_method("order_attack_move"):
+			valid_units[i].order_attack_move(slots[i])
+		else:
+			valid_units[i].order_move(slots[i])
+
+## Briefly shows a coloured expanding ring at `world_pos` to confirm a click order.
+func _flash_point(world_pos: Vector2, color: Color) -> void:
+	var marker: _FlashMarker = _FlashMarker.new()
+	marker.flash_color = color
+	marker.z_index = 10
+	add_child(marker)
+	marker.global_position = world_pos
+	var tween: Tween = create_tween()
+	tween.tween_property(marker, "flash_t", 1.0, 0.45).from(0.0)
+	tween.tween_callback(func() -> void:
+		if is_instance_valid(marker):
+			marker.queue_free()
+	)
 
 func _order_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")

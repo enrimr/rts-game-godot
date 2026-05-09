@@ -2,6 +2,9 @@ extends CanvasLayer
 
 signal action_requested(action_id: String)
 signal follow_requested()
+## Emitted for actions that require a follow-up map click (move_to, attack_move).
+signal pending_action_started(action_id: String)
+signal pending_action_cancelled()
 
 @export var local_player_id: int = 0
 
@@ -23,12 +26,14 @@ signal follow_requested()
 const DESTROY_ACTION: Dictionary = {"id": "destroy", "label": "ACTION_DESTROY", "color": Color(0.55, 0.05, 0.05), "cost": {}, "key": KEY_DELETE}
 
 const VILLAGER_ACTIONS: Array = [
-	{"id": "gather_wood",  "label": "ACTION_WOOD",    "color": Color(0.20, 0.55, 0.15), "cost": {}, "key": KEY_C},
-	{"id": "gather_gold",  "label": "ACTION_GOLD",    "color": Color(0.75, 0.65, 0.10), "cost": {}, "key": KEY_G},
-	{"id": "gather_stone", "label": "ACTION_STONE",   "color": Color(0.55, 0.55, 0.55), "cost": {}, "key": KEY_T},
-	{"id": "gather_food",  "label": "ACTION_FOOD",    "color": Color(0.60, 0.20, 0.15), "cost": {}, "key": KEY_H},
-	{"id": "build_menu",   "label": "ACTION_BUILD",   "color": Color(0.20, 0.30, 0.60), "cost": {}, "key": KEY_B},
-	{"id": "stop",         "label": "ACTION_STOP",    "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
+	{"id": "gather_wood",  "label": "ACTION_WOOD",         "color": Color(0.20, 0.55, 0.15), "cost": {}, "key": KEY_C},
+	{"id": "gather_gold",  "label": "ACTION_GOLD",         "color": Color(0.75, 0.65, 0.10), "cost": {}, "key": KEY_G},
+	{"id": "gather_stone", "label": "ACTION_STONE",        "color": Color(0.55, 0.55, 0.55), "cost": {}, "key": KEY_T},
+	{"id": "gather_food",  "label": "ACTION_FOOD",         "color": Color(0.60, 0.20, 0.15), "cost": {}, "key": KEY_H},
+	{"id": "build_menu",   "label": "ACTION_BUILD",        "color": Color(0.20, 0.30, 0.60), "cost": {}, "key": KEY_B},
+	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M},
+	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A},
+	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
 	DESTROY_ACTION,
 ]
 
@@ -49,8 +54,14 @@ const TOWN_CENTER_ACTIONS: Array = [
 ]
 
 const UNIT_ACTIONS: Array = [
-	{"id": "stop",    "label": "ACTION_STOP",    "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
+	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M},
+	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A},
+	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
 	DESTROY_ACTION,
+]
+
+const ANIMAL_ACTIONS: Array = [
+	{"id": "move_to", "label": "ACTION_MOVE_TO", "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M},
 ]
 
 const TRANSPORT_ACTIONS: Array = [
@@ -83,6 +94,7 @@ var _status_unit: Node = null
 var _active_actions: Array = []
 var _follow_btn: Button = null
 var _following: bool = false
+var _pending_action: String = ""  # action waiting for a map click
 var _age_advance_bar: ProgressBar = null
 var _hero_respawn_bar: ProgressBar = null
 var _hero_respawn_label: Label = null
@@ -208,6 +220,7 @@ func update_resources(player_id: int, resources: Dictionary) -> void:
 	_stone_display.set_amount(int(resources.get("stone", 0)))
 
 func update_selection(units: Array) -> void:
+	cancel_pending()
 	for child: Node in _unit_portraits_grid.get_children():
 		child.queue_free()
 	_clear_action_buttons()
@@ -261,7 +274,7 @@ func update_selection(units: Array) -> void:
 			var astate: Variant = first.get("current_state")
 			var owned: bool = astate != null and (astate as int) == Animal.AnimalState.OWNED
 			_unit_status_label.text = tr("UI_STATUS_YOURS") if owned else tr("UI_STATUS_WILD")
-			_populate_buttons([])
+			_populate_buttons(ANIMAL_ACTIONS if owned else [])
 		elif first is HeroUnit:
 			_populate_hero_buttons(first as HeroUnit)
 		elif first is TransportShip:
@@ -391,6 +404,11 @@ func _on_action_button_pressed(action_id: String) -> void:
 		_in_build_menu = false
 		_populate_buttons(VILLAGER_ACTIONS)
 		return
+	# Actions that wait for a map click before executing
+	if action_id == "move_to" or action_id == "attack_move":
+		AudioManager.play("ui_click")
+		_set_pending_action(action_id)
+		return
 	if action_id.begins_with("train:"):
 		AudioManager.play("train_queue")
 	elif action_id == "advance_age":
@@ -400,6 +418,39 @@ func _on_action_button_pressed(action_id: String) -> void:
 	else:
 		AudioManager.play("ui_click")
 	action_requested.emit(action_id)
+
+func _set_pending_action(action_id: String) -> void:
+	_pending_action = action_id
+	_highlight_pending_button(action_id)
+	pending_action_started.emit(action_id)
+
+func cancel_pending() -> void:
+	if _pending_action.is_empty():
+		return
+	_pending_action = ""
+	_highlight_pending_button("")
+	pending_action_cancelled.emit()
+
+func _highlight_pending_button(active_id: String) -> void:
+	for child: Node in _action_grid.get_children():
+		if not (child is ActionButton):
+			continue
+		var btn: ActionButton = child as ActionButton
+		var base_color: Color = btn.get_meta("base_color", Color(0.3, 0.3, 0.3)) as Color
+		var is_active: bool = btn.action_id == active_id and not active_id.is_empty()
+		var effective_color: Color = base_color.lightened(0.45) if is_active else base_color
+		if btn.disabled:
+			effective_color = Color(0.25, 0.25, 0.25)
+		var style: StyleBoxFlat = StyleBoxFlat.new()
+		style.bg_color = effective_color
+		style.corner_radius_top_left = 4
+		style.corner_radius_top_right = 4
+		style.corner_radius_bottom_left = 4
+		style.corner_radius_bottom_right = 4
+		btn.add_theme_stylebox_override("normal", style)
+		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
+		hover_style.bg_color = effective_color.lightened(0.25)
+		btn.add_theme_stylebox_override("hover", hover_style)
 
 func _on_game_started() -> void:
 	_elapsed_seconds = 0.0

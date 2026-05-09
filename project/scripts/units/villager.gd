@@ -94,6 +94,7 @@ func order_build(target: Node) -> void:
 	_start_move_to(dest)
 
 func order_move(destination: Vector2) -> void:
+	_attack_move_active = false
 	_unregister_from_build_target()
 	gather_target = null
 	build_target = null

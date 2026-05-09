@@ -11,6 +11,9 @@ var current_state: UnitState = UnitState.IDLE
 var health: float = 0.0
 var is_selected: bool = false
 var civ_id: String = ""   # set at spawn time from MatchConfig for player units
+# True while unit is executing an attack-move order: auto-attacks enemies spotted
+# during movement rather than ignoring them.
+var _attack_move_active: bool = false
 
 var _stuck_timer: float = 0.0
 var _stuck_retries: int = 0
@@ -74,8 +77,10 @@ func die() -> void:
 	EventBus.unit_died.emit(self, player_id)
 	queue_free()
 
+## Called when any body enters the attack-range Area2D.
+## Triggers auto-attack only from IDLE, or from MOVING when attack-move is active.
 func _on_enemy_entered_range(body: Node) -> void:
-	if current_state != UnitState.IDLE:
+	if current_state != UnitState.IDLE and not (current_state == UnitState.MOVING and _attack_move_active):
 		return
 	var body_pid: Variant = body.get("player_id")
 	if body_pid == null or (body_pid as int) == player_id:
@@ -85,9 +90,16 @@ func _on_enemy_entered_range(body: Node) -> void:
 		return
 	_on_auto_attack_target(body)
 
+## Move to destination, auto-attacking any enemy spotted along the way.
+## Subclasses' order_move clears _attack_move_active; we re-set it right after.
+func order_attack_move(destination: Vector2) -> void:
+	if has_method("order_move"):
+		order_move(destination)
+	_attack_move_active = true
+
 # Override in subclasses to trigger attack logic.
 func _on_auto_attack_target(_target: Node) -> void:
-	pass
+	_attack_move_active = false
 
 # Reads armor_melee from a target node, handling both unit (via unit_data) and
 # building (via building_data or direct property) targets.
