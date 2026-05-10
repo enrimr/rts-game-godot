@@ -87,6 +87,14 @@ HERO_DRAKE_ABILITY,Plunder,Saqueo
 HERO_QUIJOTE_ABILITY,Knight Errant's Charge,Acometida del Caballero Errante
 HERO_ARTAXERAX_ABILITY,Calima,Calima
 HERO_HANNO_ABILITY,Trade Route,Ruta Comercial
+HERO_MENCEYES_CHARGE_ABILITY,Mencey's Charge,Ímpetu del Mencey
+HERO_CHALLENGE_ABILITY,Challenge,Desafío
+HERO_AMBUSH_ABILITY,Ambush,Emboscada
+HERO_FORCED_DIPLOMACY_ABILITY,Forced Diplomacy,Diplomacia Forzada
+HERO_PLUNDER_ABILITY,Plunder,Saqueo
+HERO_KNIGHT_ERRANT_CHARGE_ABILITY,Knight Errant's Charge,Acometida del Caballero Errante
+HERO_CALIMA_ABILITY,Calima,Calima
+HERO_TRADE_ROUTE_ABILITY,Trade Route,Ruta Comercial
 GAMEOVER_CHARTS,Match Charts,Gráficas de Partida
 GAMEOVER_CHARTS_CLOSE,Close,Cerrar
 CHART_POPULATION,Population,Población

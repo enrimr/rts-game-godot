@@ -24,3 +24,4 @@ cost_gold = 0
 is_hero = true
 hero_ability_id = "forced_diplomacy"
 hero_ability_cooldown = 60.0
+hero_ability_description = "Converts the nearest enemy unit to your side for 12s."

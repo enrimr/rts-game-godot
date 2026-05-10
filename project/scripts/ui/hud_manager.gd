@@ -187,6 +187,27 @@ func _process(delta: float) -> void:
 			var secs: int = tc.get_hero_respawn_remaining() as int
 			if is_instance_valid(_hero_respawn_label):
 				_hero_respawn_label.text = tr("UI_HERO_RESPAWNING") % secs if secs > 0 else tr("UI_HERO_READY")
+	# Update hero ability button cooldown in real time
+	if is_instance_valid(_selected_unit) and _selected_unit is HeroUnit:
+		var hero: HeroUnit = _selected_unit as HeroUnit
+		var udata: UnitResource = hero.unit_data
+		if udata != null and not udata.hero_ability_id.is_empty():
+			for child: Node in _action_grid.get_children():
+				if not (child is ActionButton):
+					continue
+				var btn: ActionButton = child as ActionButton
+				if btn.action_id != "hero_ability":
+					continue
+				var cd_frac: float = hero.get_cooldown_fraction()
+				var ability_name: String = tr("HERO_%s_ABILITY" % udata.hero_ability_id.to_upper())
+				var key_hint: String = "[Q] "
+				if cd_frac <= 0.0:
+					btn.text = key_hint + ability_name + "\n" + tr("HERO_ABILITY_READY")
+					btn.modulate = Color(1.0, 1.0, 1.0)
+				else:
+					var cd_secs: int = int(udata.hero_ability_cooldown * cd_frac)
+					btn.text = key_hint + ability_name + "\n" + tr("HERO_ABILITY_COOLDOWN") % cd_secs
+					btn.modulate = Color(0.65, 0.65, 0.65)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
@@ -350,6 +371,9 @@ func _populate_buttons(actions: Array) -> void:
 		hover_style.bg_color = effective_color.lightened(0.25)
 		btn.add_theme_stylebox_override("hover", hover_style)
 		btn.disabled = not can_pay
+		var desc: String = data.get("description", "") as String
+		if not desc.is_empty():
+			btn.tooltip_text = desc
 		btn.action_pressed.connect(_on_action_button_pressed)
 		_action_grid.add_child(btn)
 
@@ -612,18 +636,16 @@ func _populate_hero_buttons(hero: HeroUnit) -> void:
 	if udata != null and not udata.hero_ability_id.is_empty():
 		var cd_frac: float = hero.get_cooldown_fraction()
 		var cd_secs: int = int(udata.hero_ability_cooldown * cd_frac)
-		var label: String
-		if cd_frac <= 0.0:
-			label = tr("HERO_ABILITY_READY")
-		else:
-			label = tr("HERO_ABILITY_COOLDOWN") % cd_secs
+		var ability_name: String = tr("HERO_%s_ABILITY" % udata.hero_ability_id.to_upper())
+		var status: String = tr("HERO_ABILITY_READY") if cd_frac <= 0.0 else tr("HERO_ABILITY_COOLDOWN") % cd_secs
 		actions.insert(0, {
 			"id": "hero_ability",
-			"label": label,
+			"label": ability_name + "\n" + status,
 			"color": Color(0.55, 0.20, 0.55) if cd_frac <= 0.0 else Color(0.25, 0.25, 0.30),
 			"cost": {},
 			"key": KEY_Q,
 			"raw_label": true,
+			"description": udata.hero_ability_description,
 		})
 	_populate_buttons(actions)
 

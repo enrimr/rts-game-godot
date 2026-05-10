@@ -24,3 +24,4 @@ cost_gold = 0
 is_hero = true
 hero_ability_id = "calima"
 hero_ability_cooldown = 60.0
+hero_ability_description = "Shrouds nearby allied units in a veil of calima for 12s. Cloaked units cannot be targeted by enemies."

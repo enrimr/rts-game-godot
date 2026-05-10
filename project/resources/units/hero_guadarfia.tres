@@ -24,3 +24,4 @@ cost_gold = 0
 is_hero = true
 hero_ability_id = "ambush"
 hero_ability_cooldown = 45.0
+hero_ability_description = "Becomes nearly invisible for 8s. Enemies cannot auto-attack Guadarfía while cloaked."

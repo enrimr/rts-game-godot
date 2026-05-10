@@ -24,3 +24,4 @@ cost_gold = 0
 is_hero = true
 hero_ability_id = "challenge"
 hero_ability_cooldown = 45.0
+hero_ability_description = "Taunts the nearest enemy unit, forcing it to attack Doramas for 6s."

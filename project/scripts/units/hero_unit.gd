@@ -278,17 +278,18 @@ func _do_charge() -> void:
 		ability_used.emit(self)
 	)
 
-const CALIMA_RADIUS: float = 120.0
+const CALIMA_RADIUS: float = 180.0
 
 func _spawn_calima_cloud(duration: float) -> void:
-	var cloud: ColorRect = ColorRect.new()
-	cloud.color = Color(0.85, 0.78, 0.60, 0.45)
-	var diameter: float = CALIMA_RADIUS * 2.0
-	cloud.size = Vector2(diameter, diameter)
-	cloud.position = global_position - Vector2(CALIMA_RADIUS, CALIMA_RADIUS)
+	var cloud: Node2D = Node2D.new()
 	cloud.z_index = 50
-	cloud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cloud.global_position = global_position
+	var cloud_color: Color = Color(0.85, 0.78, 0.60, 0.45)
+	cloud.draw.connect(func() -> void:
+		cloud.draw_circle(Vector2.ZERO, CALIMA_RADIUS, cloud_color)
+	)
 	get_tree().current_scene.add_child(cloud)
+	cloud.queue_redraw()
 
 	# Apply cloak to all allied units inside the radius
 	var cloaked_units: Array[Node] = []

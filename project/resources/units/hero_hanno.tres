@@ -24,3 +24,4 @@ cost_gold = 0
 is_hero = true
 hero_ability_id = "trade_route"
 hero_ability_cooldown = 50.0
+hero_ability_description = "Establishes a trade route, generating 50 gold over 30s."

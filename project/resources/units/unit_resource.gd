@@ -32,6 +32,7 @@ class_name UnitResource
 @export var is_hero: bool = false
 @export var hero_ability_id: String = ""   # matches HeroUnit.Ability enum key
 @export var hero_ability_cooldown: float = 50.0
+@export var hero_ability_description: String = ""
 
 @export_group("Visuals")
 @export var icon: Texture2D
