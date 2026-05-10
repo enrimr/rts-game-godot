@@ -11,6 +11,7 @@ var current_state: UnitState = UnitState.IDLE
 var health: float = 0.0
 var is_selected: bool = false
 var civ_id: String = ""   # set at spawn time from MatchConfig for player units
+var is_cloaked: bool = false
 # True while unit is executing an attack-move order: auto-attacks enemies spotted
 # during movement rather than ignoring them.
 var _attack_move_active: bool = false
@@ -90,6 +91,8 @@ func _on_enemy_entered_range(body: Node) -> void:
 	# Only auto-attack units, not buildings (buildings don't have unit_data)
 	if body.get("unit_data") == null and not (body is Animal):
 		return
+	if body.get("is_cloaked") == true:
+		return
 	_on_auto_attack_target(body)
 
 ## Move to destination, auto-attacking any enemy spotted along the way.
@@ -118,8 +121,8 @@ func _get_target_armor(target: Node) -> float:
 			base_armor = (bdata as BuildingResource).get("armor_melee") if (bdata as BuildingResource).get("armor_melee") != null else 0.0
 	var target_pid: Variant = target.get("player_id")
 	if target_pid != null:
-		var armor_mult: float = CivBonusManager.get_unit_armor_bonus(target_pid as int)
-		base_armor *= armor_mult
+		var armor_bonus: float = CivBonusManager.get_unit_armor_bonus(target_pid as int)
+		base_armor += armor_bonus
 	return base_armor
 
 func _get_effective_attack() -> float:

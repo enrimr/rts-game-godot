@@ -13,5 +13,5 @@ research_time = 60.0
 cost_food = 300
 cost_wood = 0
 cost_gold = 200
-effects = {"unit_armor_melee": 1.15}
+effects = {"unit_armor_melee": 1.0}
 prerequisites = ["chain_barding"]

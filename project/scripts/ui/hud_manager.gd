@@ -576,6 +576,11 @@ func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 		tw.tween_property(_population_label, "modulate:a", 1.0, 0.25)
 	else:
 		_population_label.remove_theme_color_override("font_color")
+	# Refresh queue display so the blocked indicator updates when pop frees up
+	if is_instance_valid(_selected_building) and _selected_building.has_method("get_queue"):
+		_on_train_queue_changed(_selected_building,
+			_selected_building.get_queue() as Array,
+			_selected_building.get_max_queue() as int)
 
 func _on_age_advance_started(player_id: int, _target_age: int) -> void:
 	if player_id != local_player_id:
@@ -921,11 +926,12 @@ func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> vo
 	# Rebuild the visual queue row
 	for slot: Node in _train_queue_row.get_children():
 		slot.queue_free()
+	var pop_blocked: bool = not queue.is_empty() and PopulationManager.at_cap(local_player_id)
 	for i: int in range(queue.size()):
 		var entry: Dictionary = queue[i] as Dictionary
 		var slot: TrainQueueSlot = TrainQueueSlot.new()
 		_train_queue_row.add_child(slot)
-		slot.setup(i, entry["label"] as String, entry["color"] as Color, i == 0)
+		slot.setup(i, entry["label"] as String, entry["color"] as Color, i == 0, i == 0 and pop_blocked)
 		slot.cancel_requested.connect(_on_cancel_train_slot)
 
 func _on_building_destroyed(building: Node, _player_id: int) -> void:

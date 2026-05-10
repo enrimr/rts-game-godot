@@ -13,17 +13,23 @@ func init_player(player_id: int, civ_id: String) -> void:
 func get_multiplier(player_id: int, key: String) -> float:
 	var player_mults: Variant = _multipliers.get(player_id)
 	if player_mults == null:
-		return 1.0
+		return 0.0 if key in _ADDITIVE_KEYS else 1.0
 	var val: Variant = (player_mults as Dictionary).get(key)
 	if val == null:
-		return 1.0
+		return 0.0 if key in _ADDITIVE_KEYS else 1.0
 	return val as float
+
+const _ADDITIVE_KEYS: Array[String] = ["unit_armor_melee"]
 
 func apply_tech_effect(player_id: int, effect_key: String, value: float) -> void:
 	if not _multipliers.has(player_id):
 		_multipliers[player_id] = {}
 	var current: float = get_multiplier(player_id, effect_key)
-	(_multipliers[player_id] as Dictionary)[effect_key] = current * value
+	if effect_key in _ADDITIVE_KEYS:
+		# Armor bonuses accumulate as flat points, not as multipliers
+		(_multipliers[player_id] as Dictionary)[effect_key] = current + value
+	else:
+		(_multipliers[player_id] as Dictionary)[effect_key] = current * value
 
 func get_unit_cost_multiplier(player_id: int, unit_id: String) -> Dictionary:
 	var result: Dictionary = {}

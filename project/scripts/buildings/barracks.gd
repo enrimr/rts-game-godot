@@ -50,6 +50,8 @@ func _process(delta: float) -> void:
 	if is_instance_valid(_train_bar):
 		_train_bar.value = (_train_timer / train_time) * 100.0
 	if _train_timer >= train_time:
+		if PopulationManager.at_cap(player_id):
+			return
 		_train_timer = 0.0
 		var scene_path: String = entry.get("scene", "") as String
 		_train_queue.pop_front()

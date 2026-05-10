@@ -13,5 +13,5 @@ research_time = 40.0
 cost_food = 100
 cost_wood = 0
 cost_gold = 50
-effects = {"unit_armor_melee": 1.15}
+effects = {"unit_armor_melee": 1.0}
 prerequisites = []

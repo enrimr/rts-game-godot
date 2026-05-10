@@ -54,6 +54,10 @@ var _aggression_timer: float = 0.0
 func _ready() -> void:
 	EventBus.ai_unit_under_attack.connect(_on_ai_unit_under_attack)
 
+func _exit_tree() -> void:
+	if EventBus.ai_unit_under_attack.is_connected(_on_ai_unit_under_attack):
+		EventBus.ai_unit_under_attack.disconnect(_on_ai_unit_under_attack)
+
 func _on_ai_unit_under_attack(attacked_player_id: int) -> void:
 	if attacked_player_id != player_id:
 		return
@@ -106,6 +110,7 @@ func _run_tick() -> void:
 		_manage_naval()
 		_manage_naval_patrol()
 		_manage_fishing_boats()
+		_attack_with_idle_land_units()
 
 # ── Population ───────────────────────────────────────────────────────────────
 
@@ -125,7 +130,21 @@ func _manage_villagers() -> void:
 	var target: int = GameSettings.get_ai_villager_target()
 	if vcount < target and not PopulationManager.at_cap(player_id):
 		_spawn_villager()
-	# Re-assign idle villagers
+	# Pre-compute gather counts once so _assign_villager doesn't re-walk children per idle unit
+	var counts: Dictionary = {}
+	var assigned_total: int = 0
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit) or not (unit is Villager):
+			continue
+		var vil: Villager = unit as Villager
+		if vil.player_id != player_id:
+			continue
+		if not is_instance_valid(vil.gather_target) or not (vil.gather_target is ResourceNode):
+			continue
+		var rt: ResourceNode.ResourceType = (vil.gather_target as ResourceNode).resource_type
+		var n: int = counts.get(rt, 0) as int
+		counts[rt] = n + 1
+		assigned_total += 1
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit) or not (unit is Villager):
 			continue
@@ -133,35 +152,63 @@ func _manage_villagers() -> void:
 		if v.player_id != player_id:
 			continue
 		if v.current_state == UnitBase.UnitState.IDLE:
-			_assign_villager(v)
+			_assign_villager(v, counts, assigned_total)
 
-func _assign_villager(v: Villager) -> void:
-	var res: Dictionary = ResourceManager.get_resources(player_id)
-	var wood: int  = res.get("wood",  0) as int
-	var food: int  = res.get("food",  0) as int
-	var gold: int  = res.get("gold",  0) as int
+func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> void:
+	var age: int = AgeManager.get_age(player_id)
 
-	# Priority: always need food; push wood if low; gold for military
-	var priority: Array[ResourceNode.ResourceType]
-	if food < 200:
-		priority = [ResourceNode.ResourceType.FOOD_HUNT, ResourceNode.ResourceType.WOOD,
-					ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE]
-	elif wood < 150:
-		priority = [ResourceNode.ResourceType.WOOD, ResourceNode.ResourceType.FOOD_HUNT,
-					ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE]
-	elif gold < 100:
-		priority = [ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.WOOD,
-					ResourceNode.ResourceType.FOOD_HUNT, ResourceNode.ResourceType.STONE]
-	else:
-		priority = [ResourceNode.ResourceType.WOOD, ResourceNode.ResourceType.FOOD_HUNT,
-					ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE]
+	# Target fraction of villagers on each resource type, by age (IMPERIAL is the default)
+	var target_fractions: Dictionary = {
+		ResourceNode.ResourceType.FOOD_HUNT: 0.25,
+		ResourceNode.ResourceType.WOOD:      0.20,
+		ResourceNode.ResourceType.GOLD:      0.45,
+		ResourceNode.ResourceType.STONE:     0.10,
+	}
+	match age:
+		GameManager.Age.DARK:
+			target_fractions = {
+				ResourceNode.ResourceType.FOOD_HUNT: 0.60,
+				ResourceNode.ResourceType.WOOD:      0.40,
+				ResourceNode.ResourceType.GOLD:      0.00,
+				ResourceNode.ResourceType.STONE:     0.00,
+			}
+		GameManager.Age.FEUDAL:
+			target_fractions = {
+				ResourceNode.ResourceType.FOOD_HUNT: 0.40,
+				ResourceNode.ResourceType.WOOD:      0.30,
+				ResourceNode.ResourceType.GOLD:      0.25,
+				ResourceNode.ResourceType.STONE:     0.05,
+			}
+		GameManager.Age.CASTLE:
+			target_fractions = {
+				ResourceNode.ResourceType.FOOD_HUNT: 0.30,
+				ResourceNode.ResourceType.WOOD:      0.25,
+				ResourceNode.ResourceType.GOLD:      0.35,
+				ResourceNode.ResourceType.STONE:     0.10,
+			}
 
-	for rtype: ResourceNode.ResourceType in priority:
+	# Send the villager to whichever resource type is most below its target fraction
+	var best_node: ResourceNode = null
+	var best_deficit: float = -INF
+	# +1 so the unit being assigned is counted in the denominator
+	var total: float = float(assigned_total + 1)
+	for rtype: ResourceNode.ResourceType in target_fractions.keys():
+		var want: float = target_fractions[rtype] as float
+		if want <= 0.0:
+			continue
 		var node: ResourceNode = _find_nearest_resource(rtype, v.global_position)
-		if node != null:
-			var nearest_drop: Node2D = _find_nearest_drop_off(rtype)
-			v.order_gather(node, node.get_resource_name(), nearest_drop if nearest_drop != null else drop_off)
-			return
+		if node == null:
+			continue
+		var current_frac: float = float(counts.get(rtype, 0) as int) / total
+		var deficit: float = want - current_frac
+		if deficit > best_deficit:
+			best_deficit = deficit
+			best_node = node
+
+	if best_node == null:
+		return
+	var nearest_drop: Node2D = _find_nearest_drop_off(best_node.resource_type)
+	v.order_gather(best_node, best_node.get_resource_name(), nearest_drop if nearest_drop != null else drop_off)
 
 # ── Economy buildings ─────────────────────────────────────────────────────────
 
@@ -384,6 +431,8 @@ func _check_zone_threat() -> void:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) == player_id:
 			continue
+		if unit.get("is_cloaked") == true:
+			continue
 		if (unit as Node2D).global_position.distance_to(town_center.global_position) <= CONTROL_ZONE_RADIUS:
 			_escalate_aggression(AggressionLevel.AGGRESSIVE)
 			_defend_base()
@@ -409,6 +458,8 @@ func _defend_base() -> void:
 			continue
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) == player_id:
+			continue
+		if unit.get("is_cloaked") == true:
 			continue
 		var d: float = (unit as Node2D).global_position.distance_to(town_center.global_position)
 		if d < best_dist:
@@ -685,6 +736,35 @@ func _find_shore_position() -> Vector2:
 					if _build_pos_clear(candidate):
 						return candidate
 	return Vector2.ZERO
+
+func _attack_with_idle_land_units() -> void:
+	var etc: Node2D = _get_primary_enemy_tc()
+	if etc == null:
+		return
+	if not is_instance_valid(town_center):
+		return
+	var own_origin: Vector2 = town_center.global_position
+	var enemy_origin: Vector2 = etc.global_position
+	var target: Node = _find_nearest_enemy_building()
+	if target == null:
+		target = etc
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		if not (unit is Militia or unit is Archer or unit is Pikeman):
+			continue
+		var ustate: Variant = unit.get("current_state")
+		if ustate == null or (ustate as int) != UnitBase.UnitState.IDLE:
+			continue
+		var upos: Vector2 = (unit as Node2D).global_position
+		# Only order attack if the unit is closer to the enemy TC than to our own TC,
+		# meaning it has already crossed the water onto the enemy island.
+		if upos.distance_to(enemy_origin) < upos.distance_to(own_origin):
+			if unit.has_method("order_attack"):
+				unit.order_attack(target)
 
 func _find_own_dock() -> Node:
 	for building: Node in buildings_layer.get_children():

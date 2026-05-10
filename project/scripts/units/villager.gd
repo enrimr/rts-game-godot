@@ -335,24 +335,18 @@ func _resolve_drop_off() -> Node:
 	return _find_nearest_drop_off()
 
 func _find_nearest_drop_off() -> Node:
-	var root: Node = get_tree().root
 	var best: Node = null
 	var best_dist: float = INF
-	var queue: Array[Node] = [root]
-	var idx: int = 0
-	while idx < queue.size():
-		var current: Node = queue[idx]
-		idx += 1
-		if current is DropOffBuilding:
-			var drop: DropOffBuilding = current as DropOffBuilding
-			if drop.player_id == player_id:
-				var pos_node: Node2D = current as Node2D
-				var d: float = global_position.distance_to(pos_node.global_position)
-				if d < best_dist:
-					best_dist = d
-					best = current
-		for child: Node in current.get_children():
-			queue.append(child)
+	for node: Node in get_tree().get_nodes_in_group("drop_off_buildings"):
+		if not is_instance_valid(node):
+			continue
+		var drop: DropOffBuilding = node as DropOffBuilding
+		if drop.player_id != player_id:
+			continue
+		var d: float = global_position.distance_to((node as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = node
 	return best
 
 func _on_construction_complete() -> void:

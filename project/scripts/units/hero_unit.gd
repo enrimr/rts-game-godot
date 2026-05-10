@@ -72,6 +72,7 @@ func _ready() -> void:
 			label_node.set("text", initials.left(2))
 
 func die() -> void:
+	_end_ability()
 	if unit_data:
 		EventBus.hero_died.emit(player_id, unit_data)
 	super.die()
@@ -128,8 +129,8 @@ func _trigger_ability() -> void:
 			_convert_nearest_native(duration)
 		Ability.PLUNDER:
 			duration = 20.0
-			# Handled in die() override on nearby units via EventBus connection
-			EventBus.unit_died.connect(_on_plunder_kill)
+			if not EventBus.unit_died.is_connected(_on_plunder_kill):
+				EventBus.unit_died.connect(_on_plunder_kill)
 		Ability.KNIGHT_ERRANT_CHARGE:
 			duration = 0.0   # instant — runs the charge, no lingering state
 			_do_charge()
@@ -277,19 +278,42 @@ func _do_charge() -> void:
 		ability_used.emit(self)
 	)
 
+const CALIMA_RADIUS: float = 120.0
+
 func _spawn_calima_cloud(duration: float) -> void:
-	# Spawns a semi-transparent ColorRect that acts as local fog for allies.
 	var cloud: ColorRect = ColorRect.new()
 	cloud.color = Color(0.85, 0.78, 0.60, 0.45)
-	cloud.size = Vector2(200.0, 200.0)
-	cloud.position = global_position - Vector2(100.0, 100.0)
+	var diameter: float = CALIMA_RADIUS * 2.0
+	cloud.size = Vector2(diameter, diameter)
+	cloud.position = global_position - Vector2(CALIMA_RADIUS, CALIMA_RADIUS)
 	cloud.z_index = 50
 	cloud.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	get_tree().current_scene.add_child(cloud)
-	var tw: SceneTreeTimer = get_tree().create_timer(duration)
-	tw.timeout.connect(func() -> void:
+
+	# Apply cloak to all allied units inside the radius
+	var cloaked_units: Array[Node] = []
+	var units_layer: Node = get_parent()
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit) or not (unit is UnitBase):
+			continue
+		var uid: Variant = unit.get("player_id")
+		if uid == null or (uid as int) != player_id:
+			continue
+		if (unit as Node2D).global_position.distance_to(global_position) > CALIMA_RADIUS:
+			continue
+		unit.set("is_cloaked", true)
+		# Dim AI units so the player can barely see them; keep player units at full opacity
+		if player_id != 0:
+			(unit as Node2D).modulate.a = 0.25
+		cloaked_units.append(unit)
+
+	get_tree().create_timer(duration).timeout.connect(func() -> void:
 		if is_instance_valid(cloud):
 			cloud.queue_free()
+		for unit: Node in cloaked_units:
+			if is_instance_valid(unit):
+				unit.set("is_cloaked", false)
+				(unit as Node2D).modulate.a = 1.0
 	)
 
 func _activate_trade_route(duration: float) -> void:

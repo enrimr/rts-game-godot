@@ -49,7 +49,7 @@ func can_advance(player_id: int) -> bool:
 	var mult: float = CivBonusManager.get_age_advance_cost_multiplier(player_id)
 	var adjusted_costs: Dictionary = {}
 	for k: String in ADVANCE_COSTS[target]:
-		adjusted_costs[k] = int(ADVANCE_COSTS[target][k] * mult)
+		adjusted_costs[k] = maxi(1, roundi(ADVANCE_COSTS[target][k] * mult))
 	return ResourceManager.can_afford(player_id, adjusted_costs)
 
 func start_advance(player_id: int) -> bool:
@@ -59,7 +59,7 @@ func start_advance(player_id: int) -> bool:
 	var mult: float = CivBonusManager.get_age_advance_cost_multiplier(player_id)
 	var adjusted_costs: Dictionary = {}
 	for k: String in ADVANCE_COSTS[target]:
-		adjusted_costs[k] = int(ADVANCE_COSTS[target][k] * mult)
+		adjusted_costs[k] = maxi(1, roundi(ADVANCE_COSTS[target][k] * mult))
 	if not ResourceManager.spend_resource(player_id, adjusted_costs):
 		return false
 	_advancing[player_id] = true

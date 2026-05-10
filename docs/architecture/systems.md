@@ -71,7 +71,7 @@ Technologies are defined as `TechnologyResource` `.tres` files under `resources/
 
 `AIPlayer` runs on a 1-second tick rather than every frame. Strategy enum controls economic vs. military priorities. Difficulty scales timings and reaction windows.
 
-The AI builds lumber camps, mining camps, farms, and multiple barracks as its economy grows. On **Islands** maps the AI also builds a Dock, trains fishing boats, war galleys, and a transport ship. The naval assault sequence boards military units onto the transport ship and sails to the enemy shore. The AI attacks the nearest enemy building rather than always targeting the Town Center.
+The AI builds lumber camps, mining camps, farms, and multiple barracks as its economy grows. On **Islands** maps the AI also builds a Dock, trains fishing boats, war galleys, and a transport ship. The naval assault sequence boards idle military units onto the transport ship and calls `order_move_then_unload` toward the enemy TC; on arrival the ship positions each unit at the nearest passable land tile without issuing a move order. Every tick on naval maps, `_attack_with_idle_land_units()` scans for idle military units that are already on the enemy island (closer to the enemy TC than to the AI's own TC) and orders them to attack the nearest enemy building. The AI attacks the nearest enemy building rather than always targeting the Town Center.
 
 ## UI / HUD System
 
@@ -111,7 +111,7 @@ All naval units extend `ShipBase` (`scripts/units/ship_base.gd`), which itself e
 | Unit | Script | Age | Cost | Notes |
 |---|---|---|---|---|
 | Fishing Boat | `scripts/units/fishing_boat.gd` | Dark | 75W | Gathers `FOOD_FISH` from ocean nodes; returns food to nearest friendly Dock |
-| Transport Ship | `scripts/units/transport_ship.gd` | Feudal | 125W | No combat; boards military units (Militia, Archer, Pikeman, Scout, Hero) — Villagers cannot board |
+| Transport Ship | `scripts/units/transport_ship.gd` | Feudal | 125W | No combat; capacity 8; boards military units (Militia, Archer, Pikeman, Scout, Hero) — Villagers cannot board; unloads units at nearest passable shore position via `TerrainManager.nearest_passable` |
 | War Galley | `scripts/units/war_galley.gd` | Feudal | 75W + 35G | Ranged naval combat: 6 attack, 5.5 range, 120 HP |
 
 ### Dock building

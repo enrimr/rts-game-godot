@@ -20,7 +20,7 @@ Calima Kingdoms: Flames of the Atlantic is a 2D real-time strategy game built in
 | Dock | `scripts/buildings/dock.gd` | Coastal building that trains naval units and accepts fish drop-offs (scene: `scenes/buildings/dock.tscn`) |
 | ShipBase | `scripts/units/ship_base.gd` | Base class for all naval units; marks ocean as passable via `civ_id` |
 | Fishing Boat | `scripts/units/fishing_boat.gd` | Gathers FOOD_FISH from ocean nodes, returns to Dock |
-| Transport Ship | `scripts/units/transport_ship.gd` | Ocean movement unit (garrison milestone) |
+| Transport Ship | `scripts/units/transport_ship.gd` | Carries up to 8 military units across water; unloads them at the nearest passable shore position |
 | War Galley | `scripts/units/war_galley.gd` | Ranged naval combat unit |
 
 ## Autoloads (Singletons)

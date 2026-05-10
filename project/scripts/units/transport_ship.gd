@@ -108,8 +108,6 @@ func unload_all() -> void:
 		unit.set_physics_process(true)
 		unit.visible = true
 		(unit as Node2D).global_position = land_pos
-		if unit.has_method("order_move"):
-			unit.call("order_move", land_pos)
 	_garrison.clear()
 	EventBus.garrison_changed.emit(self, 0, CAPACITY)
 
@@ -131,9 +129,17 @@ func unload_one(index: int) -> void:
 	unit.set_physics_process(true)
 	unit.visible = true
 	(unit as Node2D).global_position = land_pos
-	if unit.has_method("order_move"):
-		unit.call("order_move", land_pos)
 	EventBus.garrison_changed.emit(self, _garrison.size(), CAPACITY)
+
+func die() -> void:
+	for unit: Node in _garrison:
+		if is_instance_valid(unit):
+			if unit.has_method("die"):
+				unit.call("die")
+			else:
+				unit.queue_free()
+	_garrison.clear()
+	super.die()
 
 func get_garrison() -> Array:
 	return _garrison.duplicate()
