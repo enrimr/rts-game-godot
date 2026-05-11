@@ -1245,10 +1245,6 @@ func _on_game_over(winner_player_id: int) -> void:
 	var _blank: Label = Label.new()
 	grid.add_child(_blank)
 
-	var rival_colors: Array[Color] = [
-		Color(1.0, 0.45, 0.45), Color(1.0, 0.75, 0.25), Color(0.65, 0.45, 1.0),
-	]
-
 	# Player column
 	var player_col: VBoxContainer = VBoxContainer.new()
 	player_col.add_theme_constant_override("separation", 1)
@@ -1256,13 +1252,13 @@ func _on_game_over(winner_player_id: int) -> void:
 	ph.text = tr("GAMEOVER_PLAYER")
 	ph.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	ph.add_theme_font_size_override("font_size", 13)
-	ph.add_theme_color_override("font_color", Color(0.40, 0.70, 1.0))
+	ph.add_theme_color_override("font_color", PlayerColors.get_color(local_player_id))
 	player_col.add_child(ph)
 	var pc: Label = Label.new()
 	pc.text = _get_civ_display.call(MatchConfig.player_civ_id) as String
 	pc.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	pc.add_theme_font_size_override("font_size", 11)
-	pc.add_theme_color_override("font_color", Color(0.40, 0.70, 1.0).lightened(0.3))
+	pc.add_theme_color_override("font_color", PlayerColors.get_color(local_player_id).lightened(0.3))
 	player_col.add_child(pc)
 	grid.add_child(player_col)
 
@@ -1277,7 +1273,7 @@ func _on_game_over(winner_player_id: int) -> void:
 		rh.text = rival_label
 		rh.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		rh.add_theme_font_size_override("font_size", 13)
-		var rcol_color: Color = rival_colors[mini(ri, rival_colors.size() - 1)]
+		var rcol_color: Color = PlayerColors.get_color(rid)
 		rh.add_theme_color_override("font_color", rcol_color)
 		rcol.add_child(rh)
 		var rcc: Label = Label.new()
@@ -1460,12 +1456,6 @@ func _show_charts_panel(parent: Node) -> void:
 	vbox.add_child(title_lbl)
 
 	var rival_ids: Array[int] = MatchConfig.get_rival_player_ids()
-	const RIVAL_COLORS: Array[Color] = [
-		Color(1.0,  0.45, 0.45),
-		Color(1.0,  0.75, 0.25),
-		Color(0.65, 0.45, 1.0),
-		Color(0.30, 0.90, 0.55),
-	]
 
 	# Legend row
 	var legend: HBoxContainer = HBoxContainer.new()
@@ -1473,11 +1463,11 @@ func _show_charts_panel(parent: Node) -> void:
 	legend.add_theme_constant_override("separation", 24)
 	vbox.add_child(legend)
 
-	var legend_entries: Array = [[tr("GAMEOVER_PLAYER"), Color(0.40, 0.70, 1.0)]]
+	var legend_entries: Array = [[tr("GAMEOVER_PLAYER"), PlayerColors.get_color(local_player_id)]]
 	for ri: int in range(rival_ids.size()):
 		var label_text: String = tr("GAMEOVER_RIVAL") if rival_ids.size() == 1 \
 			else tr("GAMEOVER_RIVAL") + " %d" % (ri + 1)
-		legend_entries.append([label_text, RIVAL_COLORS[mini(ri, RIVAL_COLORS.size() - 1)]])
+		legend_entries.append([label_text, PlayerColors.get_color(rival_ids[ri])])
 
 	for ldata: Array in legend_entries:
 		var row: HBoxContainer = HBoxContainer.new()
@@ -1514,7 +1504,7 @@ func _show_charts_panel(parent: Node) -> void:
 		extra_res.append(_snap_res_rivals.get(rid, []))
 		extra_age.append(_snap_age_rivals.get(rid, []))
 		extra_kills.append(_snap_kills_rivals.get(rid, []))
-		extra_cols.append(RIVAL_COLORS[mini(ri, RIVAL_COLORS.size() - 1)])
+		extra_cols.append(PlayerColors.get_color(rid))
 
 	# Charts definition: [title, series_a, series_b, extra_series, extra_colors, spikes_a, spikes_b, mode]
 	var chart_defs: Array = [
@@ -1535,6 +1525,8 @@ func _show_charts_panel(parent: Node) -> void:
 		chart.spikes_b      = cdef[6] as Array
 		chart.mode          = cdef[7] as int
 		chart.total_time    = _elapsed_seconds
+		chart.color_a       = PlayerColors.get_color(local_player_id)
+		chart.color_b       = PlayerColors.get_color(first_rid)
 		chart.custom_minimum_size = Vector2(0.0, 90.0)
 		chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vbox.add_child(chart)
