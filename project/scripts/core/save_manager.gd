@@ -185,10 +185,13 @@ func _collect(world: Node) -> Dictionary:
 				units_arr.append(u)
 	data["units"] = units_arr
 
-	var buildings_arr: Array = []
+	# Player TC is saved separately — it always exists as DropOffNode in the scene
+	# and doesn't need a class check.
 	var drop_off: Node = world.get_node_or_null("DropOffNode")
 	if is_instance_valid(drop_off):
-		buildings_arr.append(_collect_building(drop_off, "PlayerTC"))
+		data["player_tc"] = _collect_tc_state(drop_off)
+
+	var buildings_arr: Array = []
 	var buildings_layer: Node = world.get_node_or_null("BuildingsLayer")
 	if buildings_layer != null:
 		for bld: Node in buildings_layer.get_children():
@@ -217,6 +220,28 @@ func _collect(world: Node) -> Dictionary:
 		data["fog_cells"] = Marshalls.raw_to_base64(fog._cells)
 
 	return data
+
+func _collect_tc_state(tc: Node) -> Dictionary:
+	var d: Dictionary = {
+		"health":      _float_or(tc.get("health"), 2000.0),
+		"max_health":  _float_or(tc.get("max_health"), 2000.0),
+		"rally_point": _v2(_vec_or(tc.get("rally_point"), Vector2.ZERO)),
+	}
+	if tc.has_method("get_queue"):
+		var q: Array = tc.call("get_queue") as Array
+		var queue_arr: Array = []
+		for entry: Variant in q:
+			var qe: Dictionary = entry as Dictionary
+			queue_arr.append({
+				"unit_id":    str(qe.get("unit_id", "")),
+				"train_time": qe.get("train_time", 0.0) as float,
+				"label":      str(qe.get("label", "")),
+				"costs":      (qe.get("costs", {}) as Dictionary).duplicate(),
+				"scene":      str(qe.get("scene", "")),
+			})
+		d["train_queue"] = queue_arr
+		d["train_timer"] = _float_or(tc.get("_train_timer"), 0.0)
+	return d
 
 func _collect_unit(unit: Node) -> Dictionary:
 	var cn: String = _class_name_of(unit)
@@ -384,6 +409,11 @@ func _restore_buildings(world: Node, data: Dictionary) -> void:
 	var buildings_layer: Node = world.get_node_or_null("BuildingsLayer")
 	var drop_off: Node        = world.get_node_or_null("DropOffNode")
 
+	# Restore player TC from its dedicated key
+	var tc_data: Variant = data.get("player_tc")
+	if tc_data != null and is_instance_valid(drop_off):
+		_apply_building_state(drop_off, tc_data as Dictionary)
+
 	# Remove buildings spawned by _setup_ai_node_only (the AI TCs)
 	if buildings_layer != null:
 		for child: Node in buildings_layer.get_children().duplicate():
@@ -391,13 +421,7 @@ func _restore_buildings(world: Node, data: Dictionary) -> void:
 
 	for entry: Variant in (data.get("buildings", []) as Array):
 		var b: Dictionary = entry as Dictionary
-		var role: String = str(b.get("role", ""))
 		var cn: String   = str(b.get("class", ""))
-
-		if role == "PlayerTC":
-			if is_instance_valid(drop_off):
-				_apply_building_state(drop_off, b)
-			continue
 
 		var scene_path: String = BUILDING_SCENES.get(cn, "") as String
 		if scene_path.is_empty() or buildings_layer == null:
