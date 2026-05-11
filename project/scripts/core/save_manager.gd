@@ -214,7 +214,7 @@ func _collect(world: Node) -> Dictionary:
 
 	var fog: FogOfWar = _find_fog(world)
 	if fog != null:
-		data["fog_cells"] = fog._cells.hex_encode()
+		data["fog_cells"] = Marshalls.raw_to_base64(fog._cells)
 
 	return data
 
@@ -489,7 +489,7 @@ func _restore_fog(world: Node, data: Dictionary) -> void:
 	var fog: FogOfWar = _find_fog(world)
 	if fog == null:
 		return
-	var decoded: PackedByteArray = PackedByteArray.hex_decode(str(hex))
+	var decoded: PackedByteArray = Marshalls.base64_to_raw(str(hex))
 	if decoded.size() == fog._cells.size():
 		fog._cells = decoded
 		fog._dirty_cells.fill(1)
