@@ -485,6 +485,12 @@ func _on_game_started() -> void:
 	_last_resources = starting.duplicate()
 	for rival_id: int in MatchConfig.get_rival_player_ids():
 		_init_rival_stats(rival_id)
+		_snap_pop_rivals[rival_id]          = []
+		_snap_res_rivals[rival_id]          = []
+		_snap_age_rivals[rival_id]          = []
+		_snap_kills_rivals[rival_id]        = []
+		_snap_kills_rivals_prev[rival_id]   = 0
+		_offense_snaps_rivals[rival_id]     = []
 
 func _on_resource_changed(player_id: int, resource: String, amount: int) -> void:
 	if player_id != local_player_id:
@@ -1063,51 +1069,63 @@ const SNAPSHOT_INTERVAL: float = 15.0
 var _snapshot_timer: float = 0.0
 
 var _snap_pop_a:       Array = []   # player population
-var _snap_pop_b:       Array = []   # AI population
 var _snap_res_a:       Array = []   # player total resources gathered
-var _snap_res_b:       Array = []   # AI total resources gathered
 var _snap_age_a:       Array = []   # player age (0-3)
-var _snap_age_b:       Array = []   # AI age (0-3)
-
-var _snap_kills_a_prev: int = 0     # enemies killed at last snapshot
-var _snap_kills_b_prev: int = 0
 var _snap_kills_a:      Array = []  # kills per interval
-var _snap_kills_b:      Array = []
-
-# indices (in the above arrays) where an offensive happened (kills delta > threshold)
+var _snap_kills_a_prev: int = 0
 var _offense_snaps_a: Array = []
-var _offense_snaps_b: Array = []
+
+# Per-rival snapshot data: rival_id (int) → Array[float]
+var _snap_pop_rivals:    Dictionary = {}
+var _snap_res_rivals:    Dictionary = {}
+var _snap_age_rivals:    Dictionary = {}
+var _snap_kills_rivals:  Dictionary = {}
+var _snap_kills_rivals_prev: Dictionary = {}
+var _offense_snaps_rivals:   Dictionary = {}
 
 const OFFENSE_THRESHOLD: int = 2   # kills in one interval to count as an offensive
 
 func _take_snapshot() -> void:
+	# Player
 	var pop_a: Dictionary = PopulationManager.get_population(local_player_id)
-	var pop_b: Dictionary = PopulationManager.get_population(1)
 	_snap_pop_a.append(float(pop_a.get("current", 0) as int))
-	_snap_pop_b.append(float(pop_b.get("current", 0) as int))
-
 	var total_a: int = 0
-	var total_b: int = 0
 	for k: String in ["food", "wood", "gold", "stone"]:
 		total_a += _stat_resources_gathered.get(k, 0) as int
-		total_b += _ai_stat_resources_gathered.get(k, 0) as int
 	_snap_res_a.append(float(total_a))
-	_snap_res_b.append(float(total_b))
-
 	_snap_age_a.append(float(AgeManager.get_age(local_player_id)))
-	_snap_age_b.append(float(AgeManager.get_age(1)))
-
 	var kills_delta_a: int = _stat_enemies_killed - _snap_kills_a_prev
-	var kills_delta_b: int = _ai_stat_units_lost   - _snap_kills_b_prev
 	_snap_kills_a.append(float(kills_delta_a))
-	_snap_kills_b.append(float(kills_delta_b))
 	var snap_idx: int = _snap_kills_a.size() - 1
 	if kills_delta_a >= OFFENSE_THRESHOLD:
 		_offense_snaps_a.append(snap_idx)
-	if kills_delta_b >= OFFENSE_THRESHOLD:
-		_offense_snaps_b.append(snap_idx)
 	_snap_kills_a_prev = _stat_enemies_killed
-	_snap_kills_b_prev = _ai_stat_units_lost
+
+	# Per-rival
+	for rival_id: int in MatchConfig.get_rival_player_ids():
+		var pop_r: Dictionary = PopulationManager.get_population(rival_id)
+		(_snap_pop_rivals[rival_id] as Array).append(float(pop_r.get("current", 0) as int))
+
+		var rival_res_dict: Dictionary = {}
+		if _rival_stats.has(rival_id):
+			rival_res_dict = (_rival_stats[rival_id] as Dictionary).get("resources", {}) as Dictionary
+		var total_r: int = 0
+		for k: String in ["food", "wood", "gold", "stone"]:
+			total_r += rival_res_dict.get(k, 0) as int
+		(_snap_res_rivals[rival_id] as Array).append(float(total_r))
+
+		(_snap_age_rivals[rival_id] as Array).append(float(AgeManager.get_age(rival_id)))
+
+		var prev_kills_r: int = _snap_kills_rivals_prev.get(rival_id, 0) as int
+		var rival_lost: int = 0
+		if _rival_stats.has(rival_id):
+			rival_lost = (_rival_stats[rival_id] as Dictionary).get("units_lost", 0) as int
+		var kills_delta_r: int = rival_lost - prev_kills_r
+		(_snap_kills_rivals[rival_id] as Array).append(float(kills_delta_r))
+		var snap_idx_r: int = (_snap_kills_rivals[rival_id] as Array).size() - 1
+		if kills_delta_r >= OFFENSE_THRESHOLD:
+			(_offense_snaps_rivals[rival_id] as Array).append(snap_idx_r)
+		_snap_kills_rivals_prev[rival_id] = rival_lost
 
 func _on_stat_resources_updated(player_id: int, resources: Dictionary) -> void:
 	for res: String in ["food", "wood", "gold", "stone"]:
@@ -1441,12 +1459,27 @@ func _show_charts_panel(parent: Node) -> void:
 	title_lbl.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title_lbl)
 
+	var rival_ids: Array[int] = MatchConfig.get_rival_player_ids()
+	const RIVAL_COLORS: Array[Color] = [
+		Color(1.0,  0.45, 0.45),
+		Color(1.0,  0.75, 0.25),
+		Color(0.65, 0.45, 1.0),
+		Color(0.30, 0.90, 0.55),
+	]
+
 	# Legend row
 	var legend: HBoxContainer = HBoxContainer.new()
 	legend.alignment = BoxContainer.ALIGNMENT_CENTER
 	legend.add_theme_constant_override("separation", 24)
 	vbox.add_child(legend)
-	for ldata: Array in [[tr("GAMEOVER_PLAYER"), Color(0.40, 0.70, 1.0)], [tr("GAMEOVER_RIVAL"), Color(1.0, 0.45, 0.45)]]:
+
+	var legend_entries: Array = [[tr("GAMEOVER_PLAYER"), Color(0.40, 0.70, 1.0)]]
+	for ri: int in range(rival_ids.size()):
+		var label_text: String = tr("GAMEOVER_RIVAL") if rival_ids.size() == 1 \
+			else tr("GAMEOVER_RIVAL") + " %d" % (ri + 1)
+		legend_entries.append([label_text, RIVAL_COLORS[mini(ri, RIVAL_COLORS.size() - 1)]])
+
+	for ldata: Array in legend_entries:
 		var row: HBoxContainer = HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
 		legend.add_child(row)
@@ -1462,23 +1495,46 @@ func _show_charts_panel(parent: Node) -> void:
 
 	vbox.add_child(HSeparator.new())
 
-	# Charts definition: [title_key, series_a, series_b, spikes_a, spikes_b, mode]
+	# Build series_b (first rival) and extra_series (remaining rivals)
+	var first_rid: int = rival_ids[0] if rival_ids.size() > 0 else 1
+	var series_b_pop:    Array = _snap_pop_rivals.get(first_rid, []) as Array
+	var series_b_res:    Array = _snap_res_rivals.get(first_rid, []) as Array
+	var series_b_age:    Array = _snap_age_rivals.get(first_rid, []) as Array
+	var series_b_kills:  Array = _snap_kills_rivals.get(first_rid, []) as Array
+	var spikes_b_kills:  Array = _offense_snaps_rivals.get(first_rid, []) as Array
+
+	var extra_pop:   Array = []
+	var extra_res:   Array = []
+	var extra_age:   Array = []
+	var extra_kills: Array = []
+	var extra_cols:  Array = []
+	for ri: int in range(1, rival_ids.size()):
+		var rid: int = rival_ids[ri]
+		extra_pop.append(_snap_pop_rivals.get(rid, []))
+		extra_res.append(_snap_res_rivals.get(rid, []))
+		extra_age.append(_snap_age_rivals.get(rid, []))
+		extra_kills.append(_snap_kills_rivals.get(rid, []))
+		extra_cols.append(RIVAL_COLORS[mini(ri, RIVAL_COLORS.size() - 1)])
+
+	# Charts definition: [title, series_a, series_b, extra_series, extra_colors, spikes_a, spikes_b, mode]
 	var chart_defs: Array = [
-		[tr("CHART_POPULATION"), _snap_pop_a, _snap_pop_b, [], [], MatchChart.Mode.LINES],
-		[tr("CHART_RESOURCES"),  _snap_res_a, _snap_res_b, [], [], MatchChart.Mode.LINES],
-		[tr("CHART_AGE"),        _snap_age_a, _snap_age_b, [], [], MatchChart.Mode.STEPS],
-		[tr("CHART_OFFENSIVES"), _snap_kills_a, _snap_kills_b, _offense_snaps_a, _offense_snaps_b, MatchChart.Mode.BARS],
+		[tr("CHART_POPULATION"), _snap_pop_a,   series_b_pop,   extra_pop,   extra_cols, [],              [],             MatchChart.Mode.LINES],
+		[tr("CHART_RESOURCES"),  _snap_res_a,   series_b_res,   extra_res,   extra_cols, [],              [],             MatchChart.Mode.LINES],
+		[tr("CHART_AGE"),        _snap_age_a,   series_b_age,   extra_age,   extra_cols, [],              [],             MatchChart.Mode.STEPS],
+		[tr("CHART_OFFENSIVES"), _snap_kills_a, series_b_kills, extra_kills, extra_cols, _offense_snaps_a, spikes_b_kills, MatchChart.Mode.BARS],
 	]
 
 	for cdef: Array in chart_defs:
 		var chart: MatchChart = MatchChart.new()
-		chart.chart_title  = cdef[0] as String
-		chart.series_a     = cdef[1] as Array
-		chart.series_b     = cdef[2] as Array
-		chart.spikes_a     = cdef[3] as Array
-		chart.spikes_b     = cdef[4] as Array
-		chart.mode         = cdef[5] as int
-		chart.total_time   = _elapsed_seconds
+		chart.chart_title   = cdef[0] as String
+		chart.series_a      = cdef[1] as Array
+		chart.series_b      = cdef[2] as Array
+		chart.extra_series  = cdef[3] as Array
+		chart.extra_colors  = cdef[4] as Array
+		chart.spikes_a      = cdef[5] as Array
+		chart.spikes_b      = cdef[6] as Array
+		chart.mode          = cdef[7] as int
+		chart.total_time    = _elapsed_seconds
 		chart.custom_minimum_size = Vector2(0.0, 90.0)
 		chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vbox.add_child(chart)

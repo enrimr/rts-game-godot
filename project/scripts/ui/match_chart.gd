@@ -7,13 +7,16 @@ enum Mode { LINES, STEPS, BARS }
 
 var mode: Mode = Mode.LINES
 var series_a: Array = []         # Array of float — player (blue)
-var series_b: Array = []         # Array of float — AI rival (red)
+var series_b: Array = []         # Array of float — first rival (red, legacy)
 var spikes_a: Array = []         # snapshot indices where player launched an offensive
-var spikes_b: Array = []         # snapshot indices where AI launched an offensive
+var spikes_b: Array = []         # snapshot indices where first rival launched an offensive
 var color_a: Color = Color(0.40, 0.70, 1.0)
 var color_b: Color = Color(1.0,  0.45, 0.45)
 var total_time: float = 1.0
 var chart_title: String = ""
+# Additional rival series: parallel arrays of (Array[float], Color)
+var extra_series: Array = []     # Array of Array[float] — one per extra rival
+var extra_colors: Array = []     # Array of Color — matching extra_series
 
 const _PL: float = 40.0   # left padding  (y labels)
 const _PR: float = 8.0
@@ -52,6 +55,9 @@ func _draw() -> void:
 	match mode:
 		Mode.LINES, Mode.STEPS:
 			_draw_polyline(series_b, color_b, pw, ph, max_v, false)
+			for ei: int in range(extra_series.size()):
+				var ecol: Color = extra_colors[ei] as Color if ei < extra_colors.size() else Color(0.6, 0.6, 0.6)
+				_draw_polyline(extra_series[ei] as Array, ecol, pw, ph, max_v, false)
 			_draw_polyline(series_a, color_a, pw, ph, max_v, mode == Mode.STEPS)
 		Mode.BARS:
 			_draw_bars(pw, ph, max_v)
@@ -72,6 +78,10 @@ func _max_value() -> float:
 	for v: Variant in series_b:
 		if (v as float) > mv:
 			mv = v as float
+	for s: Variant in extra_series:
+		for v: Variant in (s as Array):
+			if (v as float) > mv:
+				mv = v as float
 	return mv
 
 func _draw_band(idx: int, n: int, pw: float, ph: float, col: Color) -> void:
