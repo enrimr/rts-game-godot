@@ -24,11 +24,18 @@ var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 var _farm_gathered: float = 0.0
 
+# Transport embark state — set when villager needs to cross water to reach target
+var _pending_transport_target: Node = null      # resource node to reach after crossing
+var _pending_transport_resource: String = ""    # resource type for the pending gather
+var _pending_transport_drop_off: Node = null    # drop-off for the pending gather
+var _boarding_ship: Node = null                 # ship we're walking toward to board
+
 const BUILD_RANGE: float = 60.0
 const DROP_OFF_RANGE: float = 72.0
 const GATHER_RANGE: float = 48.0
 const FALLBACK_RESOURCE_RANGE: float = 400.0
 const REPAIR_RATE: float = 10.0  # HP per second restored when repairing
+const BOARD_APPROACH_RANGE: float = 60.0
 
 func _ready() -> void:
 	super._ready()
@@ -41,6 +48,9 @@ func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
 
 func _physics_process(delta: float) -> void:
+	if is_instance_valid(_boarding_ship):
+		_handle_boarding_approach(delta)
+		return
 	match current_state:
 		UnitState.MOVING:
 			_handle_movement(delta)
@@ -57,12 +67,17 @@ func _physics_process(delta: float) -> void:
 
 func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
 	_unregister_from_build_target()
+	_boarding_ship = null
+	_pending_transport_target = null
 	gather_target = target
 	carried_resource = resource_type
 	drop_off_target = drop_off
 	build_target = null
 	attack_target = null
 	_farm_gathered = 0.0
+	if _needs_transport_to((target as Node2D).global_position):
+		_try_board_transport(target, resource_type, drop_off)
+		return
 	_destination_state = UnitState.GATHERING
 	_start_move_to((target as Node2D).global_position)
 
@@ -313,6 +328,90 @@ func _handle_attacking(delta: float) -> void:
 			attack_target.take_damage(_get_effective_attack() - _get_target_armor(attack_target), self)
 			AudioManager.play("hit_melee", -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
+
+func _needs_transport_to(target_pos: Vector2) -> bool:
+	if not MatchConfig.map_type == MatchConfig.MapType.ISLANDS:
+		return false
+	if TerrainManager.is_ocean(global_position):
+		return false
+	if not TerrainManager.is_ocean(target_pos):
+		return false
+	# Confirm there's no land path by checking a midpoint sample
+	var mid: Vector2 = global_position.lerp(target_pos, 0.5)
+	return TerrainManager.is_ocean(mid)
+
+func _find_allied_transport() -> Node:
+	var best: Node = null
+	var best_dist: float = INF
+	for unit: Node in get_parent().get_children():
+		if not is_instance_valid(unit) or not (unit is TransportShip):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		if (unit as TransportShip).is_full():
+			continue
+		var d: float = global_position.distance_to((unit as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = unit
+	return best
+
+func _try_board_transport(target: Node, resource_type: String, drop_off: Node) -> bool:
+	var transport: Node = _find_allied_transport()
+	if transport == null:
+		return false
+	_pending_transport_target   = target
+	_pending_transport_resource = resource_type
+	_pending_transport_drop_off = drop_off
+	_boarding_ship = transport
+	_destination_state = UnitState.IDLE
+	_start_move_to((transport as Node2D).global_position)
+	return true
+
+func _handle_boarding_approach(delta: float) -> void:
+	if not is_instance_valid(_boarding_ship):
+		_boarding_ship = null
+		_pending_transport_target = null
+		current_state = UnitState.IDLE
+		return
+	var dist: float = global_position.distance_to((_boarding_ship as Node2D).global_position)
+	if dist <= BOARD_APPROACH_RANGE:
+		var boarded: bool = (_boarding_ship as TransportShip).board(self)
+		if boarded:
+			# After unloading the ship calls set_process(true) and restores position.
+			# Connect to garrison_changed to detect when we've been dropped off.
+			if not EventBus.garrison_changed.is_connected(_on_transport_garrison_changed):
+				EventBus.garrison_changed.connect(_on_transport_garrison_changed)
+		else:
+			# Ship full — abort transport, try direct path
+			_boarding_ship = null
+			_pending_transport_target = null
+		return
+	if _advance_stuck(delta):
+		_jitter_repath()
+		return
+	nav_agent.set_velocity(_nav_velocity())
+
+func _on_transport_garrison_changed(ship: Node, _current_size: int, _capacity: int) -> void:
+	if ship != _boarding_ship:
+		return
+	# Detect unload: we are visible again and no longer in the garrison
+	if not visible:
+		return
+	var garrison: Array = (_boarding_ship as TransportShip).get_garrison()
+	if garrison.has(self):
+		return
+	EventBus.garrison_changed.disconnect(_on_transport_garrison_changed)
+	var target: Node = _pending_transport_target
+	var res:    String = _pending_transport_resource
+	var drop:   Node = _pending_transport_drop_off
+	_boarding_ship              = null
+	_pending_transport_target   = null
+	_pending_transport_resource = ""
+	_pending_transport_drop_off = null
+	if is_instance_valid(target) and not res.is_empty():
+		order_gather(target, res, drop)
 
 func _find_nearest_same_resource() -> Node:
 	if carried_resource.is_empty():

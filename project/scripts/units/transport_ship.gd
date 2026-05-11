@@ -71,14 +71,13 @@ func _is_near_shore() -> bool:
 	return false
 
 # Called by game_world when a land unit right-clicks this ship.
-# Only military units (Militia, Archer, Pikeman, Scout, HeroUnit) may board.
-# Villagers and ships are excluded.
+# Ships and fishing boats may not board; all land units (including villagers) can.
 func board(unit: Node) -> bool:
 	if _garrison.size() >= CAPACITY:
 		return false
 	if not is_instance_valid(unit):
 		return false
-	if unit is Villager or unit is ShipBase or unit is FishingBoat:
+	if unit is ShipBase or unit is FishingBoat:
 		return false
 	_garrison.append(unit)
 	unit.set_process(false)
