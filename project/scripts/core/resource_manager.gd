@@ -26,14 +26,18 @@ func get_nearest_resource(resource_name: String, from: Vector2, max_range: float
 	var best: ResourceNode = null
 	var best_dist: float = max_range
 	var nodes: Array = _resource_cache.get(resource_name, []) as Array
+	var stale: Array = []
 	for n: Variant in nodes:
-		var node: ResourceNode = n as ResourceNode
-		if not is_instance_valid(node):
+		if not is_instance_valid(n):
+			stale.append(n)
 			continue
+		var node: ResourceNode = n as ResourceNode
 		var d: float = from.distance_to((node as Node2D).global_position)
 		if d < best_dist:
 			best_dist = d
 			best = node
+	for s: Variant in stale:
+		nodes.erase(s)
 	return best
 
 func reset_resource_cache() -> void:
