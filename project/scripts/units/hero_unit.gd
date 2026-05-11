@@ -279,11 +279,12 @@ func _convert_nearest_native(_duration: float) -> void:
 			best = u
 	if best == null:
 		return
+	var original_pid: int = best.get("player_id") as int
 	best.set("player_id", player_id)
 	var tw: SceneTreeTimer = get_tree().create_timer(_duration)
 	tw.timeout.connect(func() -> void:
 		if is_instance_valid(best):
-			best.set("player_id", 1 - player_id)
+			best.set("player_id", original_pid)
 	)
 
 func _on_plunder_kill(unit: Node, killed_player_id: int) -> void:
