@@ -416,19 +416,7 @@ func _on_transport_garrison_changed(ship: Node, _current_size: int, _capacity: i
 func _find_nearest_same_resource() -> Node:
 	if carried_resource.is_empty():
 		return null
-	var best: Node = null
-	var best_dist: float = FALLBACK_RESOURCE_RANGE
-	for node: Node in get_tree().get_nodes_in_group("resource_nodes"):
-		if not is_instance_valid(node):
-			continue
-		var rn: ResourceNode = node as ResourceNode
-		if rn.get_resource_name() != carried_resource:
-			continue
-		var d: float = global_position.distance_to((rn as Node2D).global_position)
-		if d < best_dist:
-			best_dist = d
-			best = rn
-	return best
+	return ResourceManager.get_nearest_resource(carried_resource, global_position, FALLBACK_RESOURCE_RANGE)
 
 func _resolve_drop_off() -> Node:
 	return _find_nearest_drop_off()

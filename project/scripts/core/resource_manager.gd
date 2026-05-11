@@ -6,6 +6,39 @@ signal resources_updated(player_id: int, resources: Dictionary)
 
 var _player_resources: Dictionary = {}
 
+# Spatial cache: resource_name (String) → Array[ResourceNode]
+# Populated by ResourceNode._ready() via register_node(), pruned on depletion.
+var _resource_cache: Dictionary = {}
+
+func register_node(node: ResourceNode) -> void:
+	var key: String = node.get_resource_name()
+	if not _resource_cache.has(key):
+		_resource_cache[key] = []
+	(_resource_cache[key] as Array).append(node)
+	node.depleted.connect(_on_node_depleted.bind(node))
+
+func _on_node_depleted(node: ResourceNode) -> void:
+	var key: String = node.get_resource_name()
+	if _resource_cache.has(key):
+		(_resource_cache[key] as Array).erase(node)
+
+func get_nearest_resource(resource_name: String, from: Vector2, max_range: float) -> ResourceNode:
+	var best: ResourceNode = null
+	var best_dist: float = max_range
+	var nodes: Array = _resource_cache.get(resource_name, []) as Array
+	for n: Variant in nodes:
+		var node: ResourceNode = n as ResourceNode
+		if not is_instance_valid(node):
+			continue
+		var d: float = from.distance_to((node as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = node
+	return best
+
+func reset_resource_cache() -> void:
+	_resource_cache.clear()
+
 func init_player(player_id: int, starting_resources: Dictionary = {}) -> void:
 	_player_resources[player_id] = {
 		"food": starting_resources.get("food", 200),
