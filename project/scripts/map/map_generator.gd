@@ -1037,16 +1037,30 @@ func _spawn_forest_zone(parent: Node2D, zone_center: Vector2,
 
 func _create_resource_node(parent: Node2D, pos: Vector2,
 		rtype: ResourceNode.ResourceType, amount: float) -> void:
+	MapGenerator.create_resource_node(parent, pos, rtype, amount, _rng,
+		load("res://scripts/economy/resource_node.gd") as Script)
+
+## Public static factory — call this from SaveManager when restoring nodes.
+## Pass a seeded RNG (or null for fixed-size defaults).
+static func create_resource_node(parent: Node2D, pos: Vector2,
+		rtype: ResourceNode.ResourceType, amount: float,
+		rng: RandomNumberGenerator = null,
+		res_script: Script = null) -> void:
 	var node: Node2D = Node2D.new()
-	node.set_script(_res_node_script)
+	if res_script == null:
+		res_script = load("res://scripts/economy/resource_node.gd") as Script
+	node.set_script(res_script)
 	node.set("resource_type", rtype)
 	node.set("initial_amount", amount)
 	parent.add_child(node)
 	node.global_position = pos
 
 	var is_wood: bool = rtype == ResourceNode.ResourceType.WOOD
-	var w: float = (12.0 if not is_wood else 16.0) + _rng.randf_range(-2.0, 4.0)
-	var h: float = (w if not is_wood else w * 1.6) + _rng.randf_range(0.0, 6.0)
+	var w: float = (12.0 if not is_wood else 16.0)
+	var h: float = (w if not is_wood else w * 1.6)
+	if rng != null:
+		w += rng.randf_range(-2.0, 4.0)
+		h += rng.randf_range(0.0, 6.0)
 
 	var rect: ColorRect = ColorRect.new()
 	rect.color = RES_COLORS.get(rtype, Color(1, 1, 1)) as Color

@@ -468,19 +468,24 @@ func _restore_resource_nodes(world: Node, data: Dictionary) -> void:
 			child.queue_free()
 	ResourceManager.reset_resource_cache()
 
-	var rn_script: Script = load("res://scripts/economy/resource_node.gd") as Script
+	# Use a deterministic RNG seeded from the world's saved seed so visuals
+	# are consistent across save/load cycles.
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	var seed_var: Variant = world.get("_saved_rng_seed")
+	rng.seed = (seed_var as int) if seed_var != null else 0
+
+	var res_script: Script = load("res://scripts/economy/resource_node.gd") as Script
 	for entry: Variant in (data.get("resource_nodes", []) as Array):
 		var rnd: Dictionary = entry as Dictionary
-		var rn: Node2D = Node2D.new()
-		rn.set_script(rn_script)
-		rn.set("resource_type",  rnd.get("resource_type", 0)     as int)
-		rn.set("initial_amount", rnd.get("initial_amount", 100.0) as float)
+		var rtype: ResourceNode.ResourceType = rnd.get("resource_type", 0) as ResourceNode.ResourceType
+		var initial: float = rnd.get("initial_amount", 100.0) as float
 		var pos_arr: Array = rnd.get("position", [0.0, 0.0]) as Array
-		rn.global_position = Vector2(pos_arr[0] as float, pos_arr[1] as float)
-		world.add_child(rn)
-		# _ready() ran synchronously; override remaining amount
-		rn.set("remaining_amount", rnd.get("remaining_amount",
-			rnd.get("initial_amount", 100.0)) as float)
+		var pos: Vector2 = Vector2(pos_arr[0] as float, pos_arr[1] as float)
+		MapGenerator.create_resource_node(world as Node2D, pos, rtype, initial, rng, res_script)
+		# _ready() ran synchronously; override remaining amount on the just-added node
+		var rn: Node = world.get_children().back()
+		if rn is ResourceNode:
+			rn.set("remaining_amount", rnd.get("remaining_amount", initial) as float)
 
 func _restore_fog(world: Node, data: Dictionary) -> void:
 	var hex: Variant = data.get("fog_cells")
