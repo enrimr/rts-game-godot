@@ -33,6 +33,7 @@ MatchConfig="*res://scripts/core/match_config.gd"
 TerrainManager="*res://scripts/core/terrain_manager.gd"
 CivBonusManager="*res://scripts/core/civ_bonus_manager.gd"
 TechManager="*res://scripts/core/tech_manager.gd"
+SaveManager="*res://scripts/core/save_manager.gd"
 
 [display]
 

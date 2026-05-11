@@ -16,6 +16,7 @@ const HERO_DATA_BY_CIV: Dictionary = {
 }
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _saved_rng_seed: int = 0
 
 const BUILDING_SCENES: Dictionary = {
 	"house":         "res://scenes/buildings/house.tscn",
@@ -91,8 +92,9 @@ var _pending_action: String = ""
 var _drag_overlay: Node2D = null
 
 func _ready() -> void:
+	add_to_group("world")
+	# Init all players — for a load, SaveManager will overwrite afterwards
 	var starting_res: Dictionary = MatchConfig.get_starting_resources()
-	# Init player 0 and all rivals
 	ResourceManager.init_player(0, starting_res)
 	PopulationManager.init_player(0)
 	AgeManager.init_player(0, MatchConfig.starting_age)
@@ -103,7 +105,15 @@ func _ready() -> void:
 
 	_apply_civilization()
 
-	_rng.randomize()
+	# Deterministic seed: when loading a save we re-use the stored seed so the
+	# map generator produces the exact same layout.
+	if SaveManager.pending_load:
+		_rng.seed = SaveManager.get_saved_rng_seed()
+		_saved_rng_seed = _rng.seed
+	else:
+		_rng.randomize()
+		_saved_rng_seed = _rng.seed
+
 	var map_data: Dictionary = MapGenerator.generate(self, units_layer, _rng)
 	var tc_positions: Array[Vector2] = map_data["tc_positions"] as Array[Vector2]
 
@@ -111,34 +121,43 @@ func _ready() -> void:
 	drop_off.global_position = tc_positions[0]
 	camera.position = drop_off.global_position
 
-	for i: int in range(3):
-		var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
-		units_layer.add_child(v)
-		v.global_position = drop_off.global_position + Vector2(i * 40 - 40, 60.0)
-		v.set("player_id", 0)
-		v.set("civ_id", MatchConfig.player_civ_id)
+	if SaveManager.pending_load:
+		# AI node structure must still exist for signals / victory checks.
+		for rival_id: int in MatchConfig.get_rival_player_ids():
+			var tc_pos: Vector2 = tc_positions[rival_id] if rival_id < tc_positions.size() \
+				else tc_positions[tc_positions.size() - 1]
+			_setup_ai_node_only(rival_id, tc_pos)
+		if _ai_town_centers.size() > 0:
+			_ai_town_center = _ai_town_centers[1]
+	else:
+		for i: int in range(3):
+			var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
+			units_layer.add_child(v)
+			v.global_position = drop_off.global_position + Vector2(i * 40 - 40, 60.0)
+			v.set("player_id", 0)
+			v.set("civ_id", MatchConfig.player_civ_id)
+			PopulationManager.add_unit(0)
+			EventBus.unit_spawned.emit(v, 0)
+
+		var scout0: CharacterBody2D = SCOUT_SCENE.instantiate()
+		units_layer.add_child(scout0)
+		scout0.global_position = drop_off.global_position + Vector2(80.0, -60.0)
+		scout0.set("player_id", 0)
+		scout0.set("civ_id", MatchConfig.player_civ_id)
 		PopulationManager.add_unit(0)
-		EventBus.unit_spawned.emit(v, 0)
+		EventBus.unit_spawned.emit(scout0, 0)
 
-	var scout0: CharacterBody2D = SCOUT_SCENE.instantiate()
-	units_layer.add_child(scout0)
-	scout0.global_position = drop_off.global_position + Vector2(80.0, -60.0)
-	scout0.set("player_id", 0)
-	scout0.set("civ_id", MatchConfig.player_civ_id)
-	PopulationManager.add_unit(0)
-	EventBus.unit_spawned.emit(scout0, 0)
+		_spawn_hero(0, drop_off.global_position)
 
-	_spawn_hero(0, drop_off.global_position)
+		# Spawn one AI per rival
+		for rival_id: int in MatchConfig.get_rival_player_ids():
+			var tc_pos: Vector2 = tc_positions[rival_id] if rival_id < tc_positions.size() \
+				else tc_positions[tc_positions.size() - 1]
+			_setup_ai(rival_id, tc_pos)
 
-	# Spawn one AI per rival
-	for rival_id: int in MatchConfig.get_rival_player_ids():
-		var tc_pos: Vector2 = tc_positions[rival_id] if rival_id < tc_positions.size() \
-			else tc_positions[tc_positions.size() - 1]
-		_setup_ai(rival_id, tc_pos)
-
-	# Legacy alias points at the first rival TC for backwards-compat references
-	if _ai_town_centers.size() > 0:
-		_ai_town_center = _ai_town_centers[1]
+		# Legacy alias points at the first rival TC
+		if _ai_town_centers.size() > 0:
+			_ai_town_center = _ai_town_centers[1]
 
 	hud.action_requested.connect(_on_action_requested)
 	hud.follow_requested.connect(toggle_follow)
@@ -172,6 +191,10 @@ func _ready() -> void:
 	GameManager.start_game(player_list)
 	AudioManager.play_music()
 	GameManager.game_over.connect(_on_game_over)
+
+	# Restore dynamic state from save (must be after start_game so GameState is PLAYING)
+	if SaveManager.pending_load:
+		SaveManager.restore_world(self)
 
 func _apply_civilization() -> void:
 	var civ_path: String = "res://resources/civilizations/%s.tres" % MatchConfig.player_civ_id
@@ -210,6 +233,20 @@ func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	hero.global_position = tc_pos + Vector2(-80.0, -60.0)
 	units_layer.add_child(hero)
 	EventBus.unit_spawned.emit(hero, player_id)
+
+func _setup_ai_node_only(rival_id: int, _tc_pos: Vector2) -> void:
+	# Creates only the AI controller node; buildings are restored by SaveManager.
+	# town_center will be wired up in restore_world() after buildings are recreated.
+	var ai: Node = Node.new()
+	ai.set_script(load("res://scripts/ai/ai_player.gd"))
+	ai.set("player_id", rival_id)
+	ai.set_name("AIPlayer_%d" % rival_id)
+	add_child(ai)
+	ai.set("town_center", null)
+	ai.set("units_layer", units_layer)
+	ai.set("buildings_layer", buildings_layer)
+	ai.set("drop_off", drop_off)
+	ai.set("enemy_town_center", drop_off)
 
 func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	var rival_civ: String = MatchConfig.get_rival_civ_id(rival_id)

@@ -102,12 +102,16 @@ CHART_RESOURCES,Resources Gathered,Recursos Recolectados
 CHART_AGE,Age Progression,Progresión de Edad
 CHART_OFFENSIVES,Offensives (kills/interval),Ofensivas (bajas/intervalo)
 PAUSEMENU_RESUME,Resume,Continuar
+PAUSEMENU_SAVE,Save Game,Guardar Partida
 PAUSEMENU_SURRENDER,Surrender,Rendirse
 PAUSEMENU_QUIT,Exit Game,Salir del Juego
 MENU_PLAY,Play,Jugar
+MENU_CONTINUE,Continue,Continuar Partida
 MENU_SETTINGS,Settings,Ajustes
 MENU_QUIT,Quit,Salir
 MENU_LOADING,Preparing the world...,Preparando el mundo...
+SAVE_SUCCESS,Game saved!,¡Partida guardada!
+SAVE_FAILED,Save failed!,¡Error al guardar!
 SETTINGS_TITLE,Settings,Ajustes
 SETTINGS_MUSIC,Music,Música
 SETTINGS_SFX,Sound Effects,Efectos de sonido

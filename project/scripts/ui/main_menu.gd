@@ -12,6 +12,36 @@ func _ready() -> void:
 	_play_button.pressed.connect(_on_play_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_build_settings_button()
+	_build_continue_button()
+
+# --- Continue button (shown only when a save exists) ---
+
+var _continue_button: Button = null
+
+func _build_continue_button() -> void:
+	if not SaveManager.has_save():
+		return
+	var btn: Button = Button.new()
+	btn.text = tr("MENU_CONTINUE")
+	btn.custom_minimum_size = Vector2(160, 40)
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.focus_mode = Control.FOCUS_NONE
+	var container: Node = _play_button.get_parent()
+	container.add_child(btn)
+	container.move_child(btn, 0)   # Continue appears above Play
+	_continue_button = btn
+	btn.pressed.connect(_on_continue_pressed)
+
+func _on_continue_pressed() -> void:
+	if not SaveManager.load_game():
+		return
+	_play_button.disabled = true
+	if is_instance_valid(_continue_button):
+		_continue_button.disabled = true
+	_show_loading_screen()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
 
 # --- Settings button ---
 
@@ -283,10 +313,12 @@ func _make_slider(initial: float) -> HSlider:
 func _refresh_menu_texts() -> void:
 	_play_button.text = tr("MENU_PLAY")
 	_quit_button.text = tr("MENU_QUIT")
-	# Update the Settings button (third child of the same container)
+	if is_instance_valid(_continue_button):
+		_continue_button.text = tr("MENU_CONTINUE")
 	var container: Node = _play_button.get_parent()
 	for child: Node in container.get_children():
-		if child is Button and child != _play_button and child != _quit_button:
+		if child is Button and child != _play_button and child != _quit_button \
+				and child != _continue_button:
 			(child as Button).text = tr("MENU_SETTINGS")
 			break
 

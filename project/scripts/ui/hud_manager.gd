@@ -1628,6 +1628,10 @@ func _open_pause_menu() -> void:
 	settings_btn.pressed.connect(_open_ingame_settings)
 	vbox.add_child(settings_btn)
 
+	var save_btn: Button = _make_pause_btn(tr("PAUSEMENU_SAVE"), Color(0.16, 0.28, 0.44, 0.95), Color(0.24, 0.42, 0.62, 0.95))
+	save_btn.pressed.connect(_on_save_game)
+	vbox.add_child(save_btn)
+
 	vbox.add_child(HSeparator.new())
 
 	var surrender_btn: Button = _make_pause_btn(tr("PAUSEMENU_SURRENDER"), Color(0.48, 0.12, 0.08, 0.95), Color(0.65, 0.18, 0.10, 0.95))
@@ -1644,6 +1648,33 @@ func _close_pause_menu() -> void:
 		_pause_menu = null
 	if GameManager.state == GameManager.GameState.PAUSED:
 		GameManager.toggle_pause()
+
+func _on_save_game() -> void:
+	var world: Node = get_tree().get_nodes_in_group("world").front()
+	if world == null:
+		# Fallback: find the game world by scene root
+		world = get_tree().current_scene
+	var ok: bool = SaveManager.save_game(world)
+	_close_pause_menu()
+	_show_save_notification(ok)
+
+func _show_save_notification(success: bool) -> void:
+	var lbl: Label = Label.new()
+	lbl.text = tr("SAVE_SUCCESS") if success else tr("SAVE_FAILED")
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_color_override("font_color",
+		Color(0.4, 1.0, 0.5) if success else Color(1.0, 0.4, 0.4))
+	lbl.position = Vector2(get_viewport().get_visible_rect().size.x * 0.5 - 150.0, 80.0)
+	lbl.custom_minimum_size = Vector2(300.0, 0.0)
+	add_child(lbl)
+	var tw: Tween = create_tween()
+	tw.tween_interval(1.8)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(func() -> void:
+		if is_instance_valid(lbl):
+			lbl.queue_free()
+	)
 
 func _open_ingame_settings() -> void:
 	var overlay: ColorRect = ColorRect.new()
