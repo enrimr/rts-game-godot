@@ -37,6 +37,7 @@ const BUILDABLE: Array[bool] = [
 
 # Each zone: { center: Vector2, radius: float, type: TerrainType }
 var _zones: Array[Dictionary] = []
+var _civ_cache: Dictionary = {}  # civ_id -> CivilizationResource
 
 # Ocean polygon points (Islands map only) — Array of PackedVector2Array outlines
 # A position is "ocean" if it falls outside all land polygons.
@@ -49,8 +50,17 @@ var minimap_texture: ImageTexture = null
 func reset() -> void:
 	_zones.clear()
 	_land_polys.clear()
+	_civ_cache.clear()
 	_is_island_map = false
 	minimap_texture = null
+
+func _get_civ(civ_id: String) -> CivilizationResource:
+	if _civ_cache.has(civ_id):
+		return _civ_cache[civ_id] as CivilizationResource
+	var path: String = "res://resources/civilizations/%s.tres" % civ_id
+	var civ: CivilizationResource = load(path) as CivilizationResource
+	_civ_cache[civ_id] = civ
+	return civ
 
 func add_zone(center: Vector2, radius: float, type: TerrainType) -> void:
 	_zones.append({"center": center, "radius": radius, "type": type})
@@ -74,17 +84,18 @@ func get_terrain(world_pos: Vector2) -> TerrainType:
 # Speed multiplier for a unit at world_pos, taking civ immunity into account.
 func get_speed_mult(world_pos: Vector2, civ_id: String) -> float:
 	var t: TerrainType = get_terrain(world_pos)
+	var civ: CivilizationResource = _get_civ(civ_id)
 	match t:
 		TerrainType.MALPAIS:
-			if civ_id == "guanches":
+			if civ != null and civ.can_traverse_malpais:
 				return 1.0
 			return SPEED_MULT[TerrainType.MALPAIS]
 		TerrainType.DUNE:
-			if civ_id == "mahos":
+			if civ != null and civ.can_traverse_dune:
 				return 1.0
 			return SPEED_MULT[TerrainType.DUNE]
 		TerrainType.OCEAN:
-			if civ_id == "atlantes":
+			if civ != null and civ.can_traverse_ocean:
 				return 0.60   # slowed but not blocked
 			return 0.0
 		_:
@@ -100,13 +111,14 @@ func is_ocean(world_pos: Vector2) -> bool:
 # Returns true if a unit with given civ_id cannot enter world_pos at all.
 func is_impassable_for(world_pos: Vector2, civ_id: String) -> bool:
 	var t: TerrainType = get_terrain(world_pos)
+	var civ: CivilizationResource = _get_civ(civ_id)
 	match t:
 		TerrainType.OCEAN:
-			return civ_id != "atlantes"
+			return civ == null or not civ.can_traverse_ocean
 		TerrainType.RISCO, TerrainType.CALDERA:
 			return true
 		TerrainType.MALPAIS:
-			return civ_id != "guanches"
+			return civ == null or not civ.can_traverse_malpais
 		_:
 			return false
 

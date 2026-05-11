@@ -44,21 +44,25 @@ var _ability: Ability = Ability.NONE
 var _cooldown_remaining: float = 0.0
 var _ability_active: bool = false
 var _ability_timer: float = 0.0
+var _trade_route_timer: Timer = null
+var _taunt_target: Node = null
 
 # Visual ring showing the hero is a hero (gold circle)
 var _hero_ring: Node2D = null
 
 # Rocinante passive (Don Quijote): base speed stored to apply delay on attack
 var _quijote_attack_delay: float = 0.0
+var _quijote_post_attack_penalty: float = 0.0
 
 func _ready() -> void:
 	super._ready()
 	if unit_data and not unit_data.hero_ability_id.is_empty():
 		_ability = ABILITY_MAP.get(unit_data.hero_ability_id, Ability.NONE) as Ability
-	# Rocinante passive
+	# Rocinante passive: faster movement but a post-attack stumble delay
 	if _ability == Ability.KNIGHT_ERRANT_CHARGE and unit_data:
 		unit_data = unit_data.duplicate() as UnitResource
 		unit_data.move_speed *= 1.15
+		_quijote_attack_delay = 1.2
 	_build_hero_ring()
 	# Update portrait label to hero initials instead of the militia default "M"
 	if unit_data:
@@ -155,6 +159,51 @@ func _end_ability() -> void:
 		Ability.PLUNDER:
 			if EventBus.unit_died.is_connected(_on_plunder_kill):
 				EventBus.unit_died.disconnect(_on_plunder_kill)
+		Ability.CHALLENGE:
+			if is_instance_valid(_taunt_target):
+				_taunt_target.set("is_taunted", false)
+				_taunt_target.set("taunt_source", null)
+				_taunt_target.set("attack_target", null)
+				_taunt_target.set("current_state", UnitBase.UnitState.IDLE)
+			_taunt_target = null
+		Ability.TRADE_ROUTE:
+			if is_instance_valid(_trade_route_timer):
+				_trade_route_timer.stop()
+				_trade_route_timer.queue_free()
+			_trade_route_timer = null
+
+func _handle_attacking(delta: float) -> void:
+	if _quijote_attack_delay <= 0.0:
+		super._handle_attacking(delta)
+		return
+	# Rocinante passive: after each hit, _quijote_post_attack_penalty counts down
+	# before the attack timer resumes, making consecutive swings slower.
+	if _quijote_post_attack_penalty > 0.0:
+		_quijote_post_attack_penalty -= delta
+		return
+	if not is_instance_valid(attack_target):
+		attack_target = null
+		current_state = UnitState.IDLE
+		_scan_area_for_target()
+		return
+	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
+	var attack_reach: float = _attack_reach_to(attack_target)
+	if dist > attack_reach:
+		nav_agent.target_position = _nav_target_for(attack_target)
+		if _advance_stuck(delta):
+			_unstick()
+			return
+		nav_agent.set_velocity(_nav_velocity())
+		return
+	nav_agent.set_velocity(Vector2.ZERO)
+	_attack_timer += delta
+	if _attack_timer >= 1.0 / unit_data.attack_speed:
+		_attack_timer = 0.0
+		_quijote_post_attack_penalty = _quijote_attack_delay
+		if attack_target.has_method("take_damage"):
+			attack_target.take_damage(_get_effective_attack() - _get_target_armor(attack_target), self)
+			AudioManager.play("hit_melee", -4.0)
+			EventBus.unit_attacked.emit(self, attack_target)
 
 # --- Ability implementations ---
 
@@ -199,14 +248,19 @@ func _taunt_nearest_enemy(duration: float) -> void:
 			best = u
 	if best == null:
 		return
-	# Force the target to attack only this hero
+	_taunt_target = best
+	best.set("is_taunted", true)
+	best.set("taunt_source", self)
 	if best.has_method("order_attack"):
 		best.call("order_attack", self)
 	var tw: SceneTreeTimer = get_tree().create_timer(duration)
 	tw.timeout.connect(func() -> void:
 		if is_instance_valid(best):
+			best.set("is_taunted", false)
+			best.set("taunt_source", null)
 			best.set("attack_target", null)
 			best.set("current_state", UnitBase.UnitState.IDLE)
+		_taunt_target = null
 	)
 
 func _convert_nearest_native(_duration: float) -> void:
@@ -318,17 +372,17 @@ func _spawn_calima_cloud(duration: float) -> void:
 	)
 
 func _activate_trade_route(duration: float) -> void:
-	# Generates gold passively for the player for the duration.
 	var ticks: int = int(duration)
 	var tick_count: int = 0
-	var timer: Timer = Timer.new()
-	timer.wait_time = 1.0
-	timer.autostart = true
-	add_child(timer)
-	timer.timeout.connect(func() -> void:
+	_trade_route_timer = Timer.new()
+	_trade_route_timer.wait_time = 1.0
+	_trade_route_timer.autostart = true
+	add_child(_trade_route_timer)
+	_trade_route_timer.timeout.connect(func() -> void:
+		if not is_instance_valid(_trade_route_timer):
+			return
 		ResourceManager.add_resource(player_id, "gold", 8.0)
 		tick_count += 1
 		if tick_count >= ticks:
-			timer.stop()
-			timer.queue_free()
+			_end_ability()
 	)

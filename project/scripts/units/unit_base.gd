@@ -12,6 +12,8 @@ var health: float = 0.0
 var is_selected: bool = false
 var civ_id: String = ""   # set at spawn time from MatchConfig for player units
 var is_cloaked: bool = false
+var is_taunted: bool = false
+var taunt_source: Node = null
 # True while unit is executing an attack-move order: auto-attacks enemies spotted
 # during movement rather than ignoring them.
 var _attack_move_active: bool = false

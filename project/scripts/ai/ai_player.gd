@@ -42,6 +42,8 @@ var _threat_timer: float  = 0.0
 
 # Track which building types have been built (counts)
 var _built: Dictionary = {"barracks": 0, "house": 0, "lumber_camp": 0, "mining_camp": 0, "farm": 0, "dock": 0}
+var _build_fail_counts: Dictionary = {}   # building_id -> int fail streak
+var _build_cooldowns: Dictionary = {}     # building_id -> float time_remaining
 
 # Naval state
 var _naval_transport: Node = null   # active transport ship reference
@@ -70,6 +72,11 @@ func _process(delta: float) -> void:
 	_timer        += delta
 	_attack_timer += delta
 	_threat_timer += delta
+	for key: String in _build_cooldowns.keys():
+		_build_cooldowns[key] = (_build_cooldowns[key] as float) - delta
+		if (_build_cooldowns[key] as float) <= 0.0:
+			_build_cooldowns.erase(key)
+			_build_fail_counts.erase(key)
 
 	if _aggression > AggressionLevel.PASSIVE:
 		_aggression_timer += delta
@@ -356,6 +363,29 @@ func _manage_age_advance() -> void:
 
 # ── Attack & Defense ──────────────────────────────────────────────────────────
 
+func _find_enemy_building_targets(max_count: int) -> Array[Node]:
+	var origin: Vector2 = town_center.global_position if is_instance_valid(town_center) else Vector2.ZERO
+	var candidates: Array[Node] = []
+	var etc: Node2D = _get_primary_enemy_tc()
+	if etc != null:
+		candidates.append(etc)
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building):
+			continue
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		var sv: Variant = building.get("state")
+		if sv != null and (sv as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
+			continue
+		if not candidates.has(building):
+			candidates.append(building)
+	candidates.sort_custom(func(a: Node, b: Node) -> bool:
+		return origin.distance_to((a as Node2D).global_position) < \
+			   origin.distance_to((b as Node2D).global_position)
+	)
+	return candidates.slice(0, max_count) as Array[Node]
+
 func _launch_attack() -> void:
 	var etc: Node2D = _get_primary_enemy_tc()
 	if etc == null:
@@ -367,19 +397,34 @@ func _launch_attack() -> void:
 	if mcount < min_units:
 		return
 
-	var target: Node = _find_nearest_enemy_building()
-	if target == null:
-		target = etc
+	var targets: Array[Node] = _find_enemy_building_targets(3)
+	if targets.is_empty():
+		targets.append(etc)
+	var target_count: int = targets.size()
 
+	# Collect military units that are not already engaged with a valid target
+	var idle_attackers: Array[Node] = []
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
 			continue
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if unit is Militia or unit is Archer or unit is Pikeman:
-			if unit.has_method("order_attack"):
-				unit.order_attack(target)
+		if not (unit is Militia or unit is Archer or unit is Pikeman):
+			continue
+		# Skip units already attacking a valid enemy target
+		var existing_target: Variant = unit.get("attack_target")
+		if existing_target != null and is_instance_valid(existing_target as Node):
+			var tpid: Variant = (existing_target as Node).get("player_id")
+			if tpid != null and (tpid as int) != player_id:
+				continue
+		idle_attackers.append(unit)
+
+	# Distribute idle attackers across targets in round-robin order
+	for i: int in range(idle_attackers.size()):
+		var target: Node = targets[i % target_count]
+		if idle_attackers[i].has_method("order_attack"):
+			idle_attackers[i].order_attack(target)
 
 # Returns the nearest valid enemy town center (any player that isn't us).
 func _get_primary_enemy_tc() -> Node2D:
@@ -606,6 +651,31 @@ func _find_ocean_build_pos(origin: Vector2, min_r: float, max_r: float) -> Vecto
 			return pos
 	return Vector2.ZERO
 
+const GALLEY_RETREAT_HP_RATIO: float = 0.30
+const GALLEY_REJOIN_HP_RATIO:  float = 0.65
+
+func _galley_needs_retreat(wg: WarGalley) -> bool:
+	var max_hp: float = wg.get("max_health") as float
+	if max_hp <= 0.0:
+		return false
+	return (wg.get("current_health") as float) / max_hp < GALLEY_RETREAT_HP_RATIO
+
+func _galley_is_recovering(wg: WarGalley) -> bool:
+	var max_hp: float = wg.get("max_health") as float
+	if max_hp <= 0.0:
+		return false
+	return (wg.get("current_health") as float) / max_hp < GALLEY_REJOIN_HP_RATIO
+
+func _retreat_galley(wg: WarGalley) -> void:
+	var dock: Node = _find_own_dock()
+	if dock == null:
+		return
+	var dock_pos: Vector2 = (dock as Node2D).global_position
+	var jitter: Vector2 = Vector2(randf_range(-60.0, 60.0), randf_range(-60.0, 60.0))
+	var dest: Vector2 = dock_pos + jitter
+	if TerrainManager.is_ocean(dest):
+		wg.order_move(dest)
+
 func _manage_naval_patrol() -> void:
 	var etc: Node2D = _get_primary_enemy_tc()
 	if etc == null:
@@ -617,6 +687,12 @@ func _manage_naval_patrol() -> void:
 		if pid == null or (pid as int) != player_id:
 			continue
 		var wg: WarGalley = unit as WarGalley
+		if _galley_needs_retreat(wg):
+			if wg.current_state != UnitBase.UnitState.MOVING:
+				_retreat_galley(wg)
+			continue
+		if _galley_is_recovering(wg):
+			continue
 		if wg.current_state != UnitBase.UnitState.IDLE:
 			continue
 		var toward: Vector2 = etc.global_position
@@ -637,6 +713,12 @@ func _launch_naval_assault() -> void:
 		if pid == null or (pid as int) != player_id:
 			continue
 		var wg: WarGalley = unit as WarGalley
+		if _galley_needs_retreat(wg):
+			if wg.current_state != UnitBase.UnitState.MOVING:
+				_retreat_galley(wg)
+			continue
+		if _galley_is_recovering(wg):
+			continue
 		var enemy_ship: Node = _find_nearest_enemy_ship(wg.global_position)
 		if enemy_ship != null:
 			wg.order_attack(enemy_ship)
@@ -804,16 +886,38 @@ func _count_naval(type_name: String) -> int:
 
 # ── Building placement ────────────────────────────────────────────────────────
 
+const BUILD_FAIL_WIDEN_THRESHOLD: int  = 3   # fails before expanding radius
+const BUILD_FAIL_SKIP_THRESHOLD: int   = 6   # fails before cooling down
+const BUILD_FAIL_COOLDOWN: float       = 30.0
+
+func _record_build_fail(building_id: String) -> void:
+	var count: int = (_build_fail_counts.get(building_id, 0) as int) + 1
+	_build_fail_counts[building_id] = count
+	if count >= BUILD_FAIL_SKIP_THRESHOLD:
+		_build_cooldowns[building_id] = BUILD_FAIL_COOLDOWN
+		_build_fail_counts.erase(building_id)
+
+func _build_radius_for(building_id: String, base_max: float) -> float:
+	var fails: int = _build_fail_counts.get(building_id, 0) as int
+	if fails >= BUILD_FAIL_WIDEN_THRESHOLD:
+		return base_max * (1.0 + 0.3 * float(fails - BUILD_FAIL_WIDEN_THRESHOLD + 1))
+	return base_max
+
 func _build(building_id: String) -> void:
+	if _build_cooldowns.has(building_id):
+		return
 	var scene_path: String = BUILDING_SCENES.get(building_id, "") as String
 	if scene_path.is_empty() or not is_instance_valid(town_center):
 		return
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
 		return
-	var pos: Vector2 = _find_build_pos(town_center.global_position, 80.0, 220.0)
+	var max_r: float = _build_radius_for(building_id, 220.0)
+	var pos: Vector2 = _find_build_pos(town_center.global_position, 80.0, max_r)
 	if pos == Vector2.INF:
+		_record_build_fail(building_id)
 		return
+	_build_fail_counts.erase(building_id)
 	var b: Node2D = packed.instantiate() as Node2D
 	b.global_position = pos
 	b.set("player_id", player_id)
@@ -825,6 +929,8 @@ func _build(building_id: String) -> void:
 	_built[building_id] = (_built.get(building_id, 0) as int) + 1
 
 func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType) -> void:
+	if _build_cooldowns.has(building_id):
+		return
 	var nearest: ResourceNode = _find_nearest_resource(rtype,
 		town_center.global_position if is_instance_valid(town_center) else Vector2.ZERO)
 	if nearest == null:
@@ -836,9 +942,12 @@ func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType)
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
 		return
-	var pos: Vector2 = _find_build_pos(nearest.global_position, 50.0, 140.0)
+	var max_r: float = _build_radius_for(building_id, 140.0)
+	var pos: Vector2 = _find_build_pos(nearest.global_position, 50.0, max_r)
 	if pos == Vector2.INF:
+		_record_build_fail(building_id)
 		return
+	_build_fail_counts.erase(building_id)
 	var b: Node2D = packed.instantiate() as Node2D
 	b.global_position = pos
 	b.set("player_id", player_id)

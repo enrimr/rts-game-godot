@@ -13,3 +13,4 @@ starting_bonuses = {}
 stat_multipliers = {"building_wood_cost": 0.70, "scout_speed": 1.25, "light_cavalry_speed": 1.25}
 missing_units = ["heavy_cavalry_upgrades"]
 missing_technologies = []
+can_traverse_dune = true

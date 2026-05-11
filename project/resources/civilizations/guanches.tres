@@ -13,3 +13,4 @@ starting_bonuses = {}
 stat_multipliers = {"stone_building_hp": 1.20, "spear_available_dark_age": 1.0}
 missing_units = ["cavalry", "gunpowder"]
 missing_technologies = []
+can_traverse_malpais = true

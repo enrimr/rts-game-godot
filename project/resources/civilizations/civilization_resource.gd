@@ -19,3 +19,8 @@ class_name CivilizationResource
 ## Which unit lines are unavailable for this civilization.
 @export var missing_units: Array[String] = []
 @export var missing_technologies: Array[String] = []
+
+## Terrain traversal flags — replace hardcoded civ_id string checks in TerrainManager.
+@export var can_traverse_malpais: bool = false   # volcanic rock (default: impassable)
+@export var can_traverse_dune: bool = false      # desert dunes at full speed
+@export var can_traverse_ocean: bool = false     # ocean tiles (ships set this via civ_id="atlantes")

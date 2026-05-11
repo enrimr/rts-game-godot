@@ -11,6 +11,8 @@ func _ready() -> void:
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _on_auto_attack_target(target: Node) -> void:
+	if is_taunted and is_instance_valid(taunt_source):
+		return
 	order_attack(target)
 
 func _physics_process(delta: float) -> void:
@@ -28,6 +30,8 @@ func order_move(destination: Vector2) -> void:
 	current_state = UnitState.MOVING
 
 func order_attack(target: Node) -> void:
+	if is_taunted and is_instance_valid(taunt_source) and target != taunt_source:
+		return
 	attack_target = target
 	_destination_state = UnitState.ATTACKING
 	_move_destination = _nav_target_for(target)
@@ -88,6 +92,9 @@ func _handle_attacking(delta: float) -> void:
 			EventBus.unit_attacked.emit(self, attack_target)
 
 func _scan_area_for_target() -> void:
+	if is_taunted and is_instance_valid(taunt_source):
+		order_attack(taunt_source)
+		return
 	if not is_instance_valid(attack_range_area):
 		return
 	for body: Node in attack_range_area.get_overlapping_bodies():
