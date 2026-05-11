@@ -18,6 +18,7 @@ const COLOR_VISIBLE: Color = Color(0.0, 0.0, 0.0, 0.0)
 const UPDATE_INTERVAL: float = 0.12
 
 var _cells: PackedByteArray
+var _dirty_cells: PackedByteArray
 var _image: Image
 var _texture: ImageTexture
 var _sprite: Sprite2D
@@ -33,6 +34,10 @@ func _ready() -> void:
 	_cells = PackedByteArray()
 	_cells.resize(GRID_W * GRID_H)
 	_cells.fill(STATE_UNEXPLORED)
+
+	_dirty_cells = PackedByteArray()
+	_dirty_cells.resize(GRID_W * GRID_H)
+	_dirty_cells.fill(0)
 
 	_image = Image.create(GRID_W, GRID_H, false, Image.FORMAT_RGBA8)
 	_image.fill(COLOR_UNEXPLORED)
@@ -56,6 +61,7 @@ func setup(units: Node, buildings: Node, drop_off: Node, world: Node = null) -> 
 
 func reveal_all() -> void:
 	_cells.fill(STATE_VISIBLE)
+	_dirty_cells.fill(1)
 	_render()
 	_sprite.visible = false
 	# Make all previously hidden enemy units and buildings visible
@@ -86,6 +92,7 @@ func _tick() -> void:
 	for i: int in range(_cells.size()):
 		if _cells[i] == STATE_VISIBLE:
 			_cells[i] = STATE_EXPLORED
+			_dirty_cells[i] = 1
 
 	_reveal_from_units()
 	_reveal_from_buildings()
@@ -152,19 +159,28 @@ func _mark_circle(world_pos: Vector2, radius_px: float) -> void:
 			var nx: int = cell.x + dx
 			if nx < 0 or nx >= GRID_W:
 				continue
-			_cells[ny * GRID_W + nx] = STATE_VISIBLE
+			var idx: int = ny * GRID_W + nx
+			_cells[idx] = STATE_VISIBLE
+			_dirty_cells[idx] = 1
 
 func _render() -> void:
-	for y: int in range(GRID_H):
-		for x: int in range(GRID_W):
-			match _cells[y * GRID_W + x]:
-				STATE_UNEXPLORED:
-					_image.set_pixel(x, y, COLOR_UNEXPLORED)
-				STATE_EXPLORED:
-					_image.set_pixel(x, y, COLOR_EXPLORED)
-				_:
-					_image.set_pixel(x, y, COLOR_VISIBLE)
-	_texture.update(_image)
+	var any_updated: bool = false
+	for i: int in range(_dirty_cells.size()):
+		if _dirty_cells[i] == 0:
+			continue
+		_dirty_cells[i] = 0
+		any_updated = true
+		var x: int = i % GRID_W
+		var y: int = i / GRID_W
+		match _cells[i]:
+			STATE_UNEXPLORED:
+				_image.set_pixel(x, y, COLOR_UNEXPLORED)
+			STATE_EXPLORED:
+				_image.set_pixel(x, y, COLOR_EXPLORED)
+			_:
+				_image.set_pixel(x, y, COLOR_VISIBLE)
+	if any_updated:
+		_texture.update(_image)
 
 func _apply_visibility() -> void:
 	# Enemy units and animals: only visible when in a currently visible cell
