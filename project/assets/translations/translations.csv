@@ -47,6 +47,13 @@ ACTION_FISHING_BOAT,Fishing Boat,Barco Pesquero
 UI_UNLOAD,Unload,Desembarcar
 UI_GARRISON_STATUS,Garrison: %d / %d,Tripulación: %d / %d
 ACTION_FISH_TRAP,Fish Trap,Trampa de Peces
+ACTION_BLACKSMITH,Blacksmith\n150W,Herrería\n150M
+ACTION_STABLE,Stable\n175W,Cuadra\n175M
+ACTION_UNIVERSITY,University\n200W,Universidad\n200M
+ACTION_MARKET,Market\n175W,Mercado\n175M
+ACTION_TEMPLE,Temple\n175W,Templo\n175M
+ACTION_HEAVY_SCOUT,Heavy Scout\n80F 30G,Explorador Pesado\n80C 30O
+ACTION_KNIGHT,Knight\n60F 75G,Caballero\n60C 75O
 ACTION_TRANSPORT_SHIP,Transport Ship,Barco de Transporte
 ACTION_WAR_GALLEY,War Galley,Galera de Guerra
 NOTIF_UNIT_ATTACK,Your units are under attack!,¡Tus unidades están bajo ataque!
