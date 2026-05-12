@@ -10,6 +10,9 @@ func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
+func _add_player_color_stripe() -> void:
+	PlayerColors.apply_color_stripe(self, player_id, 26.0, 8.0)
+
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
 

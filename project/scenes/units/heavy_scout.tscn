@@ -4,8 +4,8 @@
 [ext_resource type="Resource" uid="uid://heavy_scout_data" path="res://resources/units/heavy_scout_data.tres" id="2_hsdat"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]
-radius = 12.0
-height = 24.0
+radius = 13.0
+height = 26.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
 radius = 56.0
@@ -16,23 +16,33 @@ unit_data = ExtResource("2_hsdat")
 collision_layer = 1
 collision_mask = 1
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -10.0
-offset_top = -20.0
-offset_right = 10.0
-offset_bottom = 4.0
+[node name="Body" type="Node2D" parent="."]
+
+[node name="HorseBody" type="Polygon2D" parent="Body"]
 color = Color(0.55, 0.40, 0.15, 1.0)
-mouse_filter = 2
+polygon = PackedVector2Array(-13, 4, -15, 0, -13, -4, -7, -6, 0, -7, 7, -6, 13, -4, 15, 0, 13, 4, 7, 6, 0, 7, -7, 6)
+
+[node name="HorseNeck" type="Polygon2D" parent="Body"]
+color = Color(0.60, 0.46, 0.20, 1.0)
+polygon = PackedVector2Array(-3, -7, 0, -15, 3, -7)
+
+[node name="HorseHead" type="Polygon2D" parent="Body"]
+color = Color(0.55, 0.40, 0.15, 1.0)
+polygon = PackedVector2Array(-3, -15, -2, -21, 2, -21, 3, -15)
+
+[node name="RiderBody" type="Polygon2D" parent="Body"]
+color = Color(0.85, 0.70, 0.35, 1.0)
+polygon = PackedVector2Array(-4, -7, -4, -13, 4, -13, 4, -7)
 
 [node name="UnitLabel" type="Label" parent="."]
-offset_left = -10.0
-offset_top = -18.0
-offset_right = 10.0
-offset_bottom = 2.0
+offset_left = -13.0
+offset_top = -4.0
+offset_right = 13.0
+offset_bottom = 7.0
 text = "HS"
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 9
 theme_override_colors/font_color = Color(1.0, 0.95, 0.80, 1.0)
 mouse_filter = 2
 
@@ -50,7 +60,7 @@ visible = false
 
 [node name="SelectionCircle" type="Polygon2D" parent="SelectionIndicator"]
 color = Color(0, 1, 0, 0.7)
-polygon = PackedVector2Array(16.0, 0.0, 15.39, 3.92, 13.86, 7.65, 11.31, 11.31, 7.65, 13.86, 3.92, 15.39, 0.0, 16.0, -3.92, 15.39, -7.65, 13.86, -11.31, 11.31, -13.86, 7.65, -15.39, 3.92, -16.0, 0.0, -15.39, -3.92, -13.86, -7.65, -11.31, -11.31, -7.65, -13.86, -3.92, -15.39, 0.0, -16.0, 3.92, -15.39, 7.65, -13.86, 11.31, -11.31, 13.86, -7.65, 15.39, -3.92)
+polygon = PackedVector2Array(19.0, 0.0, 18.35, 4.92, 16.52, 9.51, 13.44, 13.44, 9.51, 16.52, 4.92, 18.35, 0.0, 19.0, -4.92, 18.35, -9.51, 16.52, -13.44, 13.44, -16.52, 9.51, -18.35, 4.92, -19.0, 0.0, -18.35, -4.92, -16.52, -9.51, -13.44, -13.44, -9.51, -16.52, -4.92, -18.35, 0.0, -19.0, 4.92, -18.35, 9.51, -16.52, 13.44, -13.44, 16.52, -9.51, 18.35, -4.92)
 
 [node name="HealthBar" type="ProgressBar" parent="."]
 offset_left = -20.0
