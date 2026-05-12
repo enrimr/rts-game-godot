@@ -117,6 +117,11 @@ func _get_target_armor(target: Node) -> float:
 	var udata: Variant = target.get("unit_data")
 	if udata is UnitResource:
 		base_armor = (udata as UnitResource).armor_melee
+		# Archers gain additional pierce armor from padded_archer_armor tech
+		if (udata as UnitResource).id == "archer":
+			var target_pid: Variant = target.get("player_id")
+			if target_pid != null:
+				base_armor += CivBonusManager.get_archer_armor_pierce_bonus(target_pid as int)
 	else:
 		var bdata: Variant = target.get("building_data")
 		if bdata is BuildingResource:
@@ -190,7 +195,10 @@ func _nav_velocity() -> Vector2:
 	var dir: Vector2 = next - global_position
 	if dir.length_squared() < 1.0:
 		return Vector2.ZERO
-	return dir.normalized() * unit_data.move_speed * CivBonusManager.get_unit_speed_multiplier(player_id, unit_data.id)
+	var spd: float = unit_data.move_speed \
+		* CivBonusManager.get_unit_speed_multiplier(player_id, unit_data.id) \
+		* CivBonusManager.get_unit_move_speed_multiplier(player_id)
+	return dir.normalized() * spd
 
 # Tracks movement over time. Returns true once per stuck period so the
 # caller can take corrective action. On each trigger _stuck_retries increments

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_ironcast"]
+
+[resource]
+script = ExtResource("1_ironcast")
+id = "iron_casting"
+display_name = "Iron Casting"
+description = "Superior alloys improve all unit attack."
+required_age = 2
+research_building = 0
+research_time = 55.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 150
+effects = {"unit_attack": 1.20}
+prerequisites = ["forging"]

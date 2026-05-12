@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_tech"]
+
+[resource]
+script = ExtResource("1_tech")
+id = "chemistry"
+display_name = "Chemistry"
+description = "Improved propellants increase all ranged attack damage."
+required_age = 3
+research_building = 1
+research_time = 70.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 300
+effects = {"archer_attack": 1.15}
+prerequisites = ["ballistics"]

@@ -6,21 +6,31 @@ extends Node
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const BUILDING_SCENES: Dictionary = {
 	"barracks":    "res://scenes/buildings/barracks.tscn",
+	"blacksmith":  "res://scenes/buildings/blacksmith.tscn",
+	"stable":      "res://scenes/buildings/stable.tscn",
 	"house":       "res://scenes/buildings/house.tscn",
 	"lumber_camp": "res://scenes/buildings/lumber_camp.tscn",
 	"mining_camp": "res://scenes/buildings/mining_camp.tscn",
 	"farm":        "res://scenes/buildings/farm.tscn",
 	"dock":        "res://scenes/buildings/dock.tscn",
 	"fish_trap":   "res://scenes/buildings/fish_trap.tscn",
+	"university":  "res://scenes/buildings/university.tscn",
+	"market":      "res://scenes/buildings/market.tscn",
+	"temple":      "res://scenes/buildings/temple.tscn",
 }
 const BUILDING_COSTS: Dictionary = {
 	"barracks":    {"wood": 175},
+	"blacksmith":  {"wood": 150},
+	"stable":      {"wood": 175},
 	"house":       {"wood": 25},
 	"lumber_camp": {"wood": 100},
 	"mining_camp": {"wood": 100},
 	"farm":        {"wood": 60},
 	"dock":        {"wood": 150},
 	"fish_trap":   {"wood": 75},
+	"university":  {"wood": 200},
+	"market":      {"wood": 175},
+	"temple":      {"wood": 175},
 }
 
 const TICK_INTERVAL: float        = 2.0
@@ -41,7 +51,7 @@ var _attack_timer: float  = 0.0
 var _threat_timer: float  = 0.0
 
 # Track which building types have been built (counts)
-var _built: Dictionary = {"barracks": 0, "house": 0, "lumber_camp": 0, "mining_camp": 0, "farm": 0, "dock": 0}
+var _built: Dictionary = {"barracks": 0, "blacksmith": 0, "stable": 0, "house": 0, "lumber_camp": 0, "mining_camp": 0, "farm": 0, "dock": 0, "university": 0, "market": 0, "temple": 0}
 var _build_fail_counts: Dictionary = {}   # building_id -> int fail streak
 var _build_cooldowns: Dictionary = {}     # building_id -> float time_remaining
 
@@ -111,6 +121,7 @@ func _run_tick() -> void:
 	_manage_villagers()
 	_manage_economy_buildings()
 	_manage_military_buildings()
+	_manage_advanced_buildings()
 	_manage_military()
 	_manage_age_advance()
 	if _is_naval_map():
@@ -263,6 +274,53 @@ func _manage_military_buildings() -> void:
 			and ResourceManager.can_afford(player_id, BUILDING_COSTS["barracks"]):
 		_build("barracks")
 
+# ── Advanced buildings ────────────────────────────────────────────────────────
+
+func _manage_advanced_buildings() -> void:
+	var age: int = AgeManager.get_age(player_id)
+	if age < GameManager.Age.FEUDAL:
+		return
+	var barracks_count: int = _built.get("barracks", 0) as int
+	if barracks_count == 0:
+		return
+	if _built.get("blacksmith", 0) as int == 0 \
+			and ResourceManager.can_afford(player_id, BUILDING_COSTS["blacksmith"]):
+		_build("blacksmith")
+	if _built.get("stable", 0) as int == 0 \
+			and ResourceManager.can_afford(player_id, BUILDING_COSTS["stable"]):
+		_build("stable")
+	if age >= GameManager.Age.CASTLE:
+		if _built.get("university", 0) as int == 0 \
+				and ResourceManager.can_afford(player_id, BUILDING_COSTS["university"]):
+			_build("university")
+		if _built.get("temple", 0) as int == 0 \
+				and ResourceManager.can_afford(player_id, BUILDING_COSTS["temple"]):
+			_build("temple")
+	if _built.get("market", 0) as int == 0 \
+			and ResourceManager.can_afford(player_id, BUILDING_COSTS["market"]):
+		_build("market")
+	_manage_stable_training()
+
+func _manage_stable_training() -> void:
+	if _built.get("stable", 0) as int == 0:
+		return
+	var age: int = AgeManager.get_age(player_id)
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building) or not (building is Stable):
+			continue
+		var st: Stable = building as Stable
+		if st.player_id != player_id:
+			continue
+		if st.state != BuildingBase.BuildingState.COMPLETE:
+			continue
+		if st.get_queue().size() >= st.get_max_queue():
+			continue
+		if age >= GameManager.Age.CASTLE and ResourceManager.can_afford(player_id, {"food": 60, "gold": 75}):
+			st.order_train("knight")
+		elif age >= GameManager.Age.FEUDAL and ResourceManager.can_afford(player_id, {"food": 80, "gold": 30}):
+			st.order_train("heavy_scout")
+		break
+
 # ── Military training ─────────────────────────────────────────────────────────
 
 func _manage_military() -> void:
@@ -410,7 +468,7 @@ func _launch_attack() -> void:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if not (unit is Militia or unit is Archer or unit is Pikeman):
+		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight):
 			continue
 		# Skip units already attacking a valid enemy target
 		var existing_target: Variant = unit.get("attack_target")
@@ -518,7 +576,7 @@ func _defend_base() -> void:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if (unit is Militia or unit is Archer or unit is Pikeman) and unit.has_method("order_attack"):
+		if (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight) and unit.has_method("order_attack"):
 			unit.order_attack(best_enemy)
 
 # ── Naval AI ─────────────────────────────────────────────────────────────────
@@ -755,7 +813,7 @@ func _launch_naval_assault() -> void:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if not (unit is Militia or unit is Archer or unit is Pikeman):
+		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight):
 			continue
 		if unit.get("current_state") as int == UnitBase.UnitState.IDLE:
 			ts.board(unit)
@@ -836,7 +894,7 @@ func _attack_with_idle_land_units() -> void:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if not (unit is Militia or unit is Archer or unit is Pikeman):
+		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight):
 			continue
 		var ustate: Variant = unit.get("current_state")
 		if ustate == null or (ustate as int) != UnitBase.UnitState.IDLE:
@@ -1103,11 +1161,14 @@ func _count_of_type(type_name: String) -> int:
 		if pid == null or (pid as int) != player_id:
 			continue
 		match type_name:
-			"Villager": if unit is Villager:  count += 1
-			"Militia":  if unit is Militia:   count += 1
-			"Archer":   if unit is Archer:    count += 1
-			"Pikeman":  if unit is Pikeman:   count += 1
+			"Villager":   if unit is Villager:    count += 1
+			"Militia":    if unit is Militia:     count += 1
+			"Archer":     if unit is Archer:      count += 1
+			"Pikeman":    if unit is Pikeman:     count += 1
+			"HeavyScout": if unit is HeavyScout:  count += 1
+			"Knight":     if unit is Knight:      count += 1
 	return count
 
 func _count_military() -> int:
-	return _count_of_type("Militia") + _count_of_type("Archer") + _count_of_type("Pikeman")
+	return _count_of_type("Militia") + _count_of_type("Archer") + _count_of_type("Pikeman") \
+		+ _count_of_type("HeavyScout") + _count_of_type("Knight")

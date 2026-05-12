@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_tech"]
+
+[resource]
+script = ExtResource("1_tech")
+id = "fervor"
+display_name = "Fervor"
+description = "Spiritual discipline increases all unit movement speed."
+required_age = 2
+research_building = 2
+research_time = 50.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 150
+effects = {"unit_move_speed": 1.10}
+prerequisites = []

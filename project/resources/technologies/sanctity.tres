@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_tech"]
+
+[resource]
+script = ExtResource("1_tech")
+id = "sanctity"
+display_name = "Sanctity"
+description = "Blessed warriors gain extra health."
+required_age = 2
+research_building = 2
+research_time = 40.0
+cost_food = 100
+cost_wood = 0
+cost_gold = 0
+effects = {"swordsman_hp": 1.15}
+prerequisites = []

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_forging"]
+
+[resource]
+script = ExtResource("1_forging")
+id = "forging"
+display_name = "Forging"
+description = "Improves infantry melee attack."
+required_age = 1
+research_building = 0
+research_time = 40.0
+cost_food = 75
+cost_wood = 0
+cost_gold = 0
+effects = {"unit_attack": 1.15}
+prerequisites = []

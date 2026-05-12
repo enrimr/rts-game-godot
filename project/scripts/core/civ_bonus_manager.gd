@@ -19,7 +19,7 @@ func get_multiplier(player_id: int, key: String) -> float:
 		return 0.0 if key in _ADDITIVE_KEYS else 1.0
 	return val as float
 
-const _ADDITIVE_KEYS: Array[String] = ["unit_armor_melee"]
+const _ADDITIVE_KEYS: Array[String] = ["unit_armor_melee", "archer_armor_pierce"]
 
 func apply_tech_effect(player_id: int, effect_key: String, value: float) -> void:
 	if not _multipliers.has(player_id):
@@ -95,7 +95,15 @@ func get_attack_speed_multiplier(player_id: int, unit_id: String) -> float:
 		if britons_mult != 1.0:
 			return britons_mult
 		return atlantes_mult
+	if unit_id == "archer":
+		return get_multiplier(player_id, "archer_attack_speed")
 	return 1.0
+
+func get_archer_armor_pierce_bonus(player_id: int) -> float:
+	return get_multiplier(player_id, "archer_armor_pierce")
+
+func get_unit_move_speed_multiplier(player_id: int) -> float:
+	return get_multiplier(player_id, "unit_move_speed")
 
 func get_building_hp_multiplier(player_id: int, building_id: String) -> float:
 	# guanches stone_building_hp for wall_segment and mining_camp

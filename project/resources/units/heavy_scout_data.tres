@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://heavy_scout_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "heavy_scout"
+display_name = "Heavy Scout"
+description = "Faster scouting cavalry with improved combat ability."
+max_health = 80.0
+move_speed = 130.0
+line_of_sight = 7.0
+population_cost = 1
+attack = 6.0
+attack_range = 1.5
+attack_speed = 1.2
+armor_melee = 1.0
+armor_pierce = 0.0
+age_required = 1
+train_time = 30.0
+cost_food = 80
+cost_wood = 0
+cost_gold = 30

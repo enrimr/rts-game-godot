@@ -130,6 +130,8 @@ const UNIT_SCENES: Dictionary = {
 	"Scout":         "res://scenes/units/scout.tscn",
 	"Archer":        "res://scenes/units/archer.tscn",
 	"Pikeman":       "res://scenes/units/pikeman.tscn",
+	"HeavyScout":    "res://scenes/units/heavy_scout.tscn",
+	"Knight":        "res://scenes/units/knight.tscn",
 	"WarGalley":     "res://scenes/units/war_galley.tscn",
 	"FishingBoat":   "res://scenes/units/fishing_boat.tscn",
 	"TransportShip": "res://scenes/units/transport_ship.tscn",
@@ -141,6 +143,8 @@ const BUILDING_SCENES: Dictionary = {
 	"TownCenterBuilding": "res://scenes/buildings/town_center_ai.tscn",
 	"House":         "res://scenes/buildings/house.tscn",
 	"Barracks":      "res://scenes/buildings/barracks.tscn",
+	"Blacksmith":    "res://scenes/buildings/blacksmith.tscn",
+	"Stable":        "res://scenes/buildings/stable.tscn",
 	"LumberCamp":    "res://scenes/buildings/lumber_camp.tscn",
 	"MiningCamp":    "res://scenes/buildings/mining_camp.tscn",
 	"Farm":          "res://scenes/buildings/farm.tscn",
@@ -148,6 +152,9 @@ const BUILDING_SCENES: Dictionary = {
 	"Gate":          "res://scenes/buildings/gate.tscn",
 	"Dock":          "res://scenes/buildings/dock.tscn",
 	"FishTrap":      "res://scenes/buildings/fish_trap.tscn",
+	"University":    "res://scenes/buildings/university.tscn",
+	"Market":        "res://scenes/buildings/market.tscn",
+	"Temple":        "res://scenes/buildings/temple.tscn",
 }
 
 func get_saved_rng_seed() -> int:
@@ -644,6 +651,8 @@ func _class_name_of(node: Node) -> String:
 	if node is Archer:            return "Archer"
 	if node is Pikeman:           return "Pikeman"
 	if node is Scout:             return "Scout"
+	if node is HeavyScout:        return "HeavyScout"
+	if node is Knight:            return "Knight"
 	if node is WarGalley:         return "WarGalley"
 	if node is FishingBoat:       return "FishingBoat"
 	if node is TransportShip:     return "TransportShip"
@@ -652,6 +661,11 @@ func _class_name_of(node: Node) -> String:
 	if node is TownCenter:        return "TownCenter"
 	if node is TownCenterBuilding:return "TownCenterBuilding"
 	if node is Barracks:          return "Barracks"
+	if node is Blacksmith:        return "Blacksmith"
+	if node is Stable:            return "Stable"
+	if node is University:        return "University"
+	if node is Market:            return "Market"
+	if node is Temple:            return "Temple"
 	if node is Dock:              return "Dock"
 	if node is Farm:              return "Farm"
 	if node is FishTrap:          return "FishTrap"

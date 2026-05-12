@@ -1,6 +1,6 @@
 extends UnitBase
 
-class_name Archer
+class_name HeavyScout
 
 var attack_target: Node = null
 var _attack_timer: float = 0.0
@@ -15,8 +15,10 @@ func _on_auto_attack_target(target: Node) -> void:
 
 func _physics_process(delta: float) -> void:
 	match current_state:
-		UnitState.MOVING:   _handle_movement(delta)
-		UnitState.ATTACKING: _handle_attacking(delta)
+		UnitState.MOVING:
+			_handle_movement(delta)
+		UnitState.ATTACKING:
+			_handle_attacking(delta)
 
 func order_move(destination: Vector2) -> void:
 	_attack_move_active = false
@@ -39,14 +41,17 @@ func _handle_movement(delta: float) -> void:
 			_destination_state = UnitState.IDLE
 			nav_agent.set_velocity(Vector2.ZERO)
 			return
+
 	if nav_agent.is_navigation_finished():
 		current_state = _destination_state
 		_destination_state = UnitState.IDLE
 		nav_agent.set_velocity(Vector2.ZERO)
 		return
+
 	if _advance_stuck(delta):
 		_unstick()
 		return
+
 	nav_agent.set_velocity(_nav_velocity())
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
@@ -59,20 +64,11 @@ func _handle_attacking(delta: float) -> void:
 	if not is_instance_valid(attack_target):
 		attack_target = null
 		current_state = UnitState.IDLE
-		_scan_for_target()
 		return
 
 	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
-	var reach: float = _attack_reach_to(attack_target)
-
-	# Archers keep distance — back away if target gets too close
-	if dist < reach * 0.4:
-		var away: Vector2 = global_position + (global_position - (attack_target as Node2D).global_position).normalized() * 80.0
-		nav_agent.target_position = away
-		nav_agent.set_velocity(_nav_velocity())
-		return
-
-	if dist > reach:
+	var attack_reach: float = _attack_reach_to(attack_target)
+	if dist > attack_reach:
 		nav_agent.target_position = _nav_target_for(attack_target)
 		if _advance_stuck(delta):
 			_unstick()
@@ -82,22 +78,8 @@ func _handle_attacking(delta: float) -> void:
 
 	nav_agent.set_velocity(Vector2.ZERO)
 	_attack_timer += delta
-	var effective_speed: float = unit_data.attack_speed * CivBonusManager.get_attack_speed_multiplier(player_id, unit_data.id)
-	if _attack_timer >= 1.0 / effective_speed:
+	if _attack_timer >= 1.0 / unit_data.attack_speed:
 		_attack_timer = 0.0
 		if attack_target.has_method("take_damage"):
 			attack_target.take_damage(_get_effective_attack() - _get_target_armor(attack_target), self)
-			AudioManager.play("hit_ranged", -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
-
-func _scan_for_target() -> void:
-	if not is_instance_valid(attack_range_area):
-		return
-	for body: Node in attack_range_area.get_overlapping_bodies():
-		var pid: Variant = body.get("player_id")
-		if pid == null or (pid as int) == player_id:
-			continue
-		if body.get("unit_data") == null and not (body is Animal):
-			continue
-		order_attack(body)
-		return

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_padded"]
+
+[resource]
+script = ExtResource("1_padded")
+id = "padded_archer_armor"
+display_name = "Padded Archer Armor"
+description = "Improves archer pierce armor."
+required_age = 1
+research_building = 0
+research_time = 35.0
+cost_food = 100
+cost_wood = 0
+cost_gold = 0
+effects = {"archer_armor_pierce": 1.0}
+prerequisites = []

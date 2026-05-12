@@ -22,6 +22,8 @@ var _saved_tc_position: Vector2 = Vector2.ZERO
 const BUILDING_SCENES: Dictionary = {
 	"house":         "res://scenes/buildings/house.tscn",
 	"barracks":      "res://scenes/buildings/barracks.tscn",
+	"blacksmith":    "res://scenes/buildings/blacksmith.tscn",
+	"stable":        "res://scenes/buildings/stable.tscn",
 	"lumber_camp":   "res://scenes/buildings/lumber_camp.tscn",
 	"mining_camp":   "res://scenes/buildings/mining_camp.tscn",
 	"farm":          "res://scenes/buildings/farm.tscn",
@@ -29,11 +31,16 @@ const BUILDING_SCENES: Dictionary = {
 	"gate":          "res://scenes/buildings/gate.tscn",
 	"dock":          "res://scenes/buildings/dock.tscn",
 	"fish_trap":     "res://scenes/buildings/fish_trap.tscn",
+	"university":    "res://scenes/buildings/university.tscn",
+	"market":        "res://scenes/buildings/market.tscn",
+	"temple":        "res://scenes/buildings/temple.tscn",
 }
 
 const BUILDING_COSTS: Dictionary = {
 	"house":         {"wood": 25},
 	"barracks":      {"wood": 175},
+	"blacksmith":    {"wood": 150},
+	"stable":        {"wood": 175},
 	"lumber_camp":   {"wood": 100},
 	"mining_camp":   {"wood": 100},
 	"farm":          {"wood": 60},
@@ -1232,6 +1239,17 @@ func _on_action_requested(action_id: String) -> void:
 		if is_instance_valid(_selected_building):
 			TechManager.start_research(0, tech_id, _selected_building)
 		return
+	if action_id.begins_with("market:"):
+		if is_instance_valid(_selected_building) and _selected_building is Market:
+			var parts: PackedStringArray = action_id.split(":")
+			if parts.size() == 3:
+				var op: String = parts[1]
+				var res: String = parts[2]
+				if op == "sell":
+					(_selected_building as Market).sell_lot(0, res)
+				elif op == "buy":
+					(_selected_building as Market).buy_lot(0, res)
+		return
 	match action_id:
 		"gather_wood":
 			_order_gather_nearest_resource(ResourceNode.ResourceType.WOOD)
@@ -1254,6 +1272,9 @@ func _on_action_requested(action_id: String) -> void:
 		"train:pikeman":
 			if is_instance_valid(_selected_building) and _selected_building is Barracks:
 				(_selected_building as Barracks).order_train("pikeman")
+		"train:heavy_scout", "train:knight":
+			if is_instance_valid(_selected_building) and _selected_building is Stable:
+				(_selected_building as Stable).order_train(action_id.trim_prefix("train:"))
 		"train:fishing_boat", "train:transport_ship", "train:war_galley":
 			if is_instance_valid(_selected_building) and _selected_building is Dock:
 				(_selected_building as Dock).order_train(action_id.trim_prefix("train:"))

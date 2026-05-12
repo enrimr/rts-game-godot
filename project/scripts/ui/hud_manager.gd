@@ -38,15 +38,25 @@ const VILLAGER_ACTIONS: Array = [
 ]
 
 const BUILD_ACTIONS: Array = [
-	{"id": "build:house",         "label": "ACTION_HOUSE",      "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H},
-	{"id": "build:barracks",      "label": "ACTION_BARRACKS",   "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B},
-	{"id": "build:lumber_camp",   "label": "ACTION_LUMBER",     "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L},
-	{"id": "build:mining_camp",   "label": "ACTION_MINING",     "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N},
-	{"id": "build:farm",          "label": "ACTION_FARM",       "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F},
-	{"id": "build:wall_segment",  "label": "ACTION_WALL",       "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_W},
-	{"id": "build:gate",          "label": "ACTION_GATE",       "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G},
-	{"id": "build:dock",          "label": "ACTION_DOCK",       "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D},
-	{"id": "back",                "label": "ACTION_BACK",       "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE},
+	{"id": "build:house",         "label": "ACTION_HOUSE",        "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H},
+	{"id": "build:barracks",      "label": "ACTION_BARRACKS",     "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B},
+	{"id": "build:blacksmith",    "label": "ACTION_BLACKSMITH",   "color": Color(0.55, 0.40, 0.20), "cost": {"wood": 150}, "key": KEY_K},
+	{"id": "build:stable",        "label": "ACTION_STABLE",       "color": Color(0.40, 0.30, 0.15), "cost": {"wood": 175}, "key": KEY_S},
+	{"id": "build:lumber_camp",   "label": "ACTION_LUMBER",       "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L},
+	{"id": "build:mining_camp",   "label": "ACTION_MINING",       "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N},
+	{"id": "build:farm",          "label": "ACTION_FARM",         "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F},
+	{"id": "build:wall_segment",  "label": "ACTION_WALL",         "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_W},
+	{"id": "build:gate",          "label": "ACTION_GATE",         "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G},
+	{"id": "build:dock",          "label": "ACTION_DOCK",         "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D},
+	{"id": "build:university",    "label": "ACTION_UNIVERSITY",   "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U},
+	{"id": "build:market",        "label": "ACTION_MARKET",       "color": Color(0.65, 0.50, 0.10), "cost": {"wood": 175}, "key": KEY_R},
+	{"id": "build:temple",        "label": "ACTION_TEMPLE",       "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175}, "key": KEY_T},
+	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE},
+]
+
+const STABLE_UNIT_DEFS: Array[Dictionary] = [
+	{"id": "heavy_scout", "label": "ACTION_HEAVY_SCOUT", "color": Color(0.55, 0.40, 0.15), "cost": {"food": 80, "gold": 30}, "age": 1},
+	{"id": "knight",      "label": "ACTION_KNIGHT",      "color": Color(0.25, 0.30, 0.55), "cost": {"food": 60, "gold": 75}, "age": 2},
 ]
 
 const TOWN_CENTER_ACTIONS: Array = [
@@ -439,6 +449,8 @@ func _on_action_button_pressed(action_id: String) -> void:
 		AudioManager.play("age_advance")
 	elif action_id.begins_with("research:"):
 		AudioManager.play("ui_click")
+	elif action_id.begins_with("market:"):
+		AudioManager.play("ui_click")
 	else:
 		AudioManager.play("ui_click")
 	action_requested.emit(action_id)
@@ -560,6 +572,21 @@ func _on_building_selected(building: Node) -> void:
 		_populate_tc_actions()
 		if building.has_method("get_queue"):
 			_on_train_queue_changed(building, building.get_queue() as Array, building.get_max_queue() as int)
+	elif building is Blacksmith:
+		_populate_blacksmith_actions(building as Blacksmith)
+		_build_research_bar(building)
+	elif building is Stable:
+		_populate_stable_actions(building as Stable)
+		var st: Stable = building as Stable
+		_on_train_queue_changed(building, st.get_queue(), st.get_max_queue())
+	elif building is University:
+		_populate_research_only_actions(building, TechnologyResource.ResearchBuilding.UNIVERSITY)
+		_build_research_bar(building)
+	elif building is Market:
+		_populate_market_actions(building as Market)
+	elif building is Temple:
+		_populate_research_only_actions(building, TechnologyResource.ResearchBuilding.MONASTERY)
+		_build_research_bar(building)
 	elif building is Barracks:
 		_populate_barracks_actions(building as Barracks)
 		var br: Barracks = building as Barracks
@@ -630,6 +657,17 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 	if is_instance_valid(_selected_building):
 		if is_instance_valid(_selected_building) and _selected_building.has_method("is_respawning_hero"):
 			_populate_tc_actions()
+		elif _selected_building is Blacksmith:
+			_populate_blacksmith_actions(_selected_building as Blacksmith)
+			_build_research_bar(_selected_building)
+		elif _selected_building is Stable:
+			_populate_stable_actions(_selected_building as Stable)
+		elif _selected_building is University:
+			_populate_research_only_actions(_selected_building, TechnologyResource.ResearchBuilding.UNIVERSITY)
+			_build_research_bar(_selected_building)
+		elif _selected_building is Temple:
+			_populate_research_only_actions(_selected_building, TechnologyResource.ResearchBuilding.MONASTERY)
+			_build_research_bar(_selected_building)
 		elif _selected_building is Barracks:
 			_populate_barracks_actions(_selected_building as Barracks)
 		elif _selected_building is Dock:
@@ -770,6 +808,89 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
 	_build_research_bar(barracks)
+
+func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
+	var actions: Array = []
+	var techs: Array[TechnologyResource] = TechManager.get_available_techs(local_player_id, TechnologyResource.ResearchBuilding.BLACKSMITH)
+	for tech: TechnologyResource in techs:
+		var cost_str: String = ""
+		if tech.cost_food > 0: cost_str += "\n%dF" % tech.cost_food
+		if tech.cost_wood > 0: cost_str += "\n%dW" % tech.cost_wood
+		if tech.cost_gold > 0: cost_str += "\n%dG" % tech.cost_gold
+		var tech_costs: Dictionary = {}
+		if tech.cost_food > 0: tech_costs["food"] = tech.cost_food
+		if tech.cost_wood > 0: tech_costs["wood"] = tech.cost_wood
+		if tech.cost_gold > 0: tech_costs["gold"] = tech.cost_gold
+		actions.append({
+			"id": "research:%s" % tech.id,
+			"label": tech.display_name + cost_str,
+			"color": Color(0.25, 0.45, 0.55),
+			"cost": tech_costs,
+			"key": 0,
+			"raw_label": true,
+		})
+	actions.append(DESTROY_ACTION)
+	_populate_buttons(actions)
+
+func _populate_stable_actions(stable: Stable) -> void:
+	var actions: Array = []
+	for def: Dictionary in stable.get_available_units():
+		var uid: String = def["id"] as String
+		var data: UnitResource = load(def["data"] as String) as UnitResource
+		var cost_parts: Array[String] = []
+		if data.cost_food  > 0: cost_parts.append("%dF" % data.cost_food)
+		if data.cost_wood  > 0: cost_parts.append("%dW" % data.cost_wood)
+		if data.cost_gold  > 0: cost_parts.append("%dG" % data.cost_gold)
+		var cost_label: String = " ".join(PackedStringArray(cost_parts))
+		var costs: Dictionary = {}
+		if data.cost_food  > 0: costs["food"] = data.cost_food
+		if data.cost_wood  > 0: costs["wood"] = data.cost_wood
+		if data.cost_gold  > 0: costs["gold"] = data.cost_gold
+		var key_map: Dictionary = {"heavy_scout": KEY_H, "knight": KEY_K}
+		actions.append({
+			"id": "train:" + uid,
+			"label": data.display_name + "\n" + cost_label,
+			"color": def["color"] as Color,
+			"cost": costs,
+			"key": key_map.get(uid, KEY_NONE) as Key,
+		})
+	actions.append(DESTROY_ACTION)
+	_populate_buttons(actions)
+
+func _populate_research_only_actions(building: Node, research_type: TechnologyResource.ResearchBuilding) -> void:
+	var actions: Array = []
+	var techs: Array[TechnologyResource] = TechManager.get_available_techs(local_player_id, research_type)
+	for tech: TechnologyResource in techs:
+		var cost_str: String = ""
+		if tech.cost_food > 0: cost_str += "\n%dF" % tech.cost_food
+		if tech.cost_wood > 0: cost_str += "\n%dW" % tech.cost_wood
+		if tech.cost_gold > 0: cost_str += "\n%dG" % tech.cost_gold
+		var tech_costs: Dictionary = {}
+		if tech.cost_food > 0: tech_costs["food"] = tech.cost_food
+		if tech.cost_wood > 0: tech_costs["wood"] = tech.cost_wood
+		if tech.cost_gold > 0: tech_costs["gold"] = tech.cost_gold
+		actions.append({
+			"id": "research:%s" % tech.id,
+			"label": tech.display_name + cost_str,
+			"color": Color(0.25, 0.42, 0.55),
+			"cost": tech_costs,
+			"key": 0,
+			"raw_label": true,
+		})
+	actions.append(DESTROY_ACTION)
+	_populate_buttons(actions)
+
+func _populate_market_actions(market: Market) -> void:
+	var actions: Array = [
+		{"id": "market:sell:food",  "label": "Sell Food\n(%d→1G)" % Market.SELL_RATE,  "color": Color(0.60, 0.30, 0.15), "cost": {"food":  Market.SELL_RATE}, "key": KEY_NONE, "raw_label": true},
+		{"id": "market:sell:wood",  "label": "Sell Wood\n(%d→1G)" % Market.SELL_RATE,  "color": Color(0.30, 0.55, 0.20), "cost": {"wood":  Market.SELL_RATE}, "key": KEY_NONE, "raw_label": true},
+		{"id": "market:sell:stone", "label": "Sell Stone\n(%d→1G)" % Market.SELL_RATE, "color": Color(0.55, 0.55, 0.55), "cost": {"stone": Market.SELL_RATE}, "key": KEY_NONE, "raw_label": true},
+		{"id": "market:buy:food",   "label": "Buy Food\n(1G→%d)" % Market.BUY_RATE,    "color": Color(0.65, 0.20, 0.10), "cost": {"gold": 1},                  "key": KEY_NONE, "raw_label": true},
+		{"id": "market:buy:wood",   "label": "Buy Wood\n(1G→%d)" % Market.BUY_RATE,    "color": Color(0.20, 0.45, 0.15), "cost": {"gold": 1},                  "key": KEY_NONE, "raw_label": true},
+		{"id": "market:buy:stone",  "label": "Buy Stone\n(1G→%d)" % Market.BUY_RATE,   "color": Color(0.45, 0.45, 0.45), "cost": {"gold": 1},                  "key": KEY_NONE, "raw_label": true},
+		DESTROY_ACTION,
+	]
+	_populate_buttons(actions)
 
 func _populate_dock_actions(dock: Dock) -> void:
 	var current_age: int = AgeManager.get_age(local_player_id)
