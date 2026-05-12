@@ -24,6 +24,7 @@ signal building_destroyed(building: Node)
 var _selection_line: Line2D = null
 var rally_point: Vector2 = Vector2.ZERO
 var _rally_marker: Node2D = null
+var _hit_tween: Tween = null
 
 func set_rally_point(world_pos: Vector2) -> void:
 	rally_point = world_pos
@@ -152,12 +153,20 @@ func _apply_player_color_stripe() -> void:
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
 	EventBus.damage_dealt.emit(self, amount, source)
+	_flash_hit()
 	if source != null and is_instance_valid(source):
 		var src_pid: Variant = source.get("player_id")
 		if src_pid != null and (src_pid as int) != player_id and player_id != 0:
 			EventBus.ai_unit_under_attack.emit(player_id)
 	if health <= 0.0:
 		_destroy()
+
+func _flash_hit() -> void:
+	if is_instance_valid(_hit_tween):
+		_hit_tween.kill()
+	modulate = Color(1.0, 0.2, 0.2, 1.0)
+	_hit_tween = create_tween()
+	_hit_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
 
 func _destroy() -> void:
 	state = BuildingState.DESTROYED
