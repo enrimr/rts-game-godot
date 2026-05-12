@@ -17,6 +17,7 @@ const HERO_DATA_BY_CIV: Dictionary = {
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _saved_rng_seed: int = 0
+var _saved_tc_position: Vector2 = Vector2.ZERO
 
 const BUILDING_SCENES: Dictionary = {
 	"house":         "res://scenes/buildings/house.tscn",
@@ -119,6 +120,7 @@ func _ready() -> void:
 
 	# Place player TC at tc_positions[0]
 	drop_off.global_position = tc_positions[0]
+	_saved_tc_position = tc_positions[0]
 	camera.position = drop_off.global_position
 
 	if SaveManager.pending_load:
@@ -195,6 +197,7 @@ func _ready() -> void:
 	# Restore dynamic state from save (must be after start_game so GameState is PLAYING)
 	if SaveManager.pending_load:
 		SaveManager.restore_world(self)
+		camera.position = drop_off.global_position
 
 func _apply_civilization() -> void:
 	var civ_path: String = "res://resources/civilizations/%s.tres" % MatchConfig.player_civ_id

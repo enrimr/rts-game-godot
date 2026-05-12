@@ -53,6 +53,15 @@ func test_spend_resource_deducts_correctly() -> void:
 4. Write the test file using GUT conventions above.
 5. Note any code that is hard to test and explain why.
 
+## Workflow when a feature is implemented or modified
+
+Whenever the developer agent (or any code change) touches a `.gd` file that already has a corresponding test file in `tests/unit/` or `tests/integration/`:
+
+1. **Check** whether the changed public API, state transitions, or data shapes affect any existing tests.
+2. **Run** the relevant test file mentally (or note which assertions will break) and update them to match the new expected behavior.
+3. If the change introduces a regression (old behavior was correct and the new code breaks it), flag it explicitly rather than silently updating the test.
+4. If new behavior was added, add new test cases for it alongside the updated ones.
+
 ## What NOT to test
 
 - Godot engine internals (rendering, physics collisions) — those are engine responsibilities.

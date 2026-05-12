@@ -1,19 +1,127 @@
 extends Node
 
 ## SaveManager — serialises and restores a complete game snapshot.
-## Save format is JSON stored in user://saves/autosave.json.
+## Saves are stored in user://saves/save_NN.json (NN = 01..99).
 ## Restoration happens in two phases:
 ##   1. game_world._ready() regenerates the same map (same RNG seed) but
 ##      skips fresh spawning, then calls SaveManager.restore_world().
 ##   2. All autoloads (resources, ages, techs, pop) are restored here, then
 ##      all units, buildings and resource nodes are re-created from save data.
 
-const SAVE_PATH: String = "user://saves/autosave.json"
+const SAVE_DIR: String  = "user://saves/"
+const MAX_SLOTS: int    = 99
 const SCHEMA_VERSION: int = 1
 
 # When true, game_world skips fresh spawning and calls restore_world() instead.
 var pending_load: bool = false
 var _save_data: Dictionary = {}
+
+## One entry per existing save, sorted newest-first.
+## Each dict: { slot, display_name, timestamp, civ, map_type, play_time_sec }
+func list_saves() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
+	var dir: DirAccess = DirAccess.open(SAVE_DIR)
+	if dir == null:
+		return result
+	dir.list_dir_begin()
+	var fname: String = dir.get_next()
+	while not fname.is_empty():
+		if fname.begins_with("save_") and fname.ends_with(".json"):
+			var slot_str: String = fname.trim_prefix("save_").trim_suffix(".json")
+			if slot_str.is_valid_int():
+				var meta: Dictionary = _read_meta(SAVE_DIR + fname)
+				if not meta.is_empty():
+					meta["slot"] = slot_str.to_int()
+					result.append(meta)
+		fname = dir.get_next()
+	dir.list_dir_end()
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return (a.get("timestamp", 0) as int) > (b.get("timestamp", 0) as int))
+	return result
+
+func has_any_save() -> bool:
+	return not list_saves().is_empty()
+
+## Kept for backwards compatibility — returns true if any slot exists.
+func has_save() -> bool:
+	return has_any_save()
+
+func _slot_path(slot: int) -> String:
+	return SAVE_DIR + "save_%02d.json" % slot
+
+func _next_free_slot() -> int:
+	for i: int in range(1, MAX_SLOTS + 1):
+		if not FileAccess.file_exists(_slot_path(i)):
+			return i
+	return 1   # overwrite slot 1 if all full
+
+func _read_meta(path: String) -> Dictionary:
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var txt: String = file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(txt)
+	if parsed == null or not (parsed is Dictionary):
+		return {}
+	var d: Dictionary = parsed as Dictionary
+	var mc: Dictionary = d.get("match_config", {}) as Dictionary
+	return {
+		"display_name": str(d.get("display_name", "")),
+		"timestamp":    d.get("timestamp", 0) as int,
+		"civ":          str(mc.get("player_civ_id", "?")),
+		"map_type":     mc.get("map_type", 0) as int,
+		"play_time_sec":d.get("play_time_sec", 0) as int,
+	}
+
+func save_game(world: Node, slot: int = -1) -> bool:
+	if slot < 1:
+		slot = _next_free_slot()
+	var data: Dictionary = _collect(world)
+	data["timestamp"]    = int(Time.get_unix_time_from_system())
+	data["display_name"] = _make_display_name(data)
+	var json: String = JSON.stringify(data, "\t")
+	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
+	var file: FileAccess = FileAccess.open(_slot_path(slot), FileAccess.WRITE)
+	if file == null:
+		push_error("SaveManager: cannot open slot %d for writing" % slot)
+		return false
+	file.store_string(json)
+	file.close()
+	return true
+
+func _make_display_name(data: Dictionary) -> String:
+	var mc: Dictionary = data.get("match_config", {}) as Dictionary
+	var civ: String = str(mc.get("player_civ_id", "?")).capitalize()
+	var ts: int = data.get("timestamp", 0) as int
+	var dt: Dictionary = Time.get_datetime_dict_from_unix_time(ts)
+	return "%s — %02d/%02d %02d:%02d" % [
+		civ, dt.get("day", 0), dt.get("month", 0),
+		dt.get("hour", 0), dt.get("minute", 0)]
+
+func load_game(slot: int) -> bool:
+	var path: String = _slot_path(slot)
+	if not FileAccess.file_exists(path):
+		return false
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return false
+	var json_text: String = file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(json_text)
+	if parsed == null or not (parsed is Dictionary):
+		push_error("SaveManager: corrupt save in slot %d" % slot)
+		return false
+	_save_data = parsed as Dictionary
+	pending_load = true
+	_restore_match_config(_save_data)
+	return true
+
+func delete_save(slot: int) -> void:
+	var path: String = _slot_path(slot)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
 
 const UNIT_SCENES: Dictionary = {
 	"Villager":      "res://scenes/units/villager.tscn",
@@ -41,40 +149,6 @@ const BUILDING_SCENES: Dictionary = {
 	"Dock":          "res://scenes/buildings/dock.tscn",
 	"FishTrap":      "res://scenes/buildings/fish_trap.tscn",
 }
-
-# ── Public API ──────────────────────────────────────────────────────────────
-
-func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
-
-func save_game(world: Node) -> bool:
-	var data: Dictionary = _collect(world)
-	var json: String = JSON.stringify(data, "\t")
-	DirAccess.make_dir_recursive_absolute("user://saves")
-	var file: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if file == null:
-		push_error("SaveManager: cannot open %s for writing" % SAVE_PATH)
-		return false
-	file.store_string(json)
-	file.close()
-	return true
-
-func load_game() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return false
-	var file: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if file == null:
-		return false
-	var json_text: String = file.get_as_text()
-	file.close()
-	var parsed: Variant = JSON.parse_string(json_text)
-	if parsed == null or not (parsed is Dictionary):
-		push_error("SaveManager: corrupt save file")
-		return false
-	_save_data = parsed as Dictionary
-	pending_load = true
-	_restore_match_config(_save_data)
-	return true
 
 func get_saved_rng_seed() -> int:
 	return _save_data.get("rng_seed", 0) as int
@@ -189,7 +263,13 @@ func _collect(world: Node) -> Dictionary:
 	# and doesn't need a class check.
 	var drop_off: Node = world.get_node_or_null("DropOffNode")
 	if is_instance_valid(drop_off):
-		data["player_tc"] = _collect_tc_state(drop_off)
+		var tc_state: Dictionary = _collect_tc_state(drop_off)
+		# Use the authoritatively stored TC position (set from map_data at spawn time)
+		# to avoid capturing a stale or camera-influenced position.
+		var stored_pos: Variant = world.get("_saved_tc_position")
+		if stored_pos != null and (stored_pos as Vector2) != Vector2.ZERO:
+			tc_state["position"] = _v2(stored_pos as Vector2)
+		data["player_tc"] = tc_state
 
 	var buildings_arr: Array = []
 	var buildings_layer: Node = world.get_node_or_null("BuildingsLayer")
@@ -226,6 +306,7 @@ func _collect_tc_state(tc: Node) -> Dictionary:
 		"health":      _float_or(tc.get("health"), 2000.0),
 		"max_health":  _float_or(tc.get("max_health"), 2000.0),
 		"rally_point": _v2(_vec_or(tc.get("rally_point"), Vector2.ZERO)),
+		"position":    _v2((tc as Node2D).global_position),
 	}
 	if tc.has_method("get_queue"):
 		var q: Array = tc.call("get_queue") as Array
@@ -412,7 +493,11 @@ func _restore_buildings(world: Node, data: Dictionary) -> void:
 	# Restore player TC from its dedicated key
 	var tc_data: Variant = data.get("player_tc")
 	if tc_data != null and is_instance_valid(drop_off):
-		_apply_building_state(drop_off, tc_data as Dictionary)
+		var tcd: Dictionary = tc_data as Dictionary
+		if tcd.has("position"):
+			var pos_arr: Array = tcd.get("position") as Array
+			(drop_off as Node2D).global_position = Vector2(pos_arr[0] as float, pos_arr[1] as float)
+		_apply_tc_state(drop_off, tcd)
 
 	# Remove buildings spawned by _setup_ai_node_only (the AI TCs)
 	if buildings_layer != null:
@@ -485,6 +570,33 @@ func _apply_building_state(bld: Node, b: Dictionary) -> void:
 		farm._is_depleted = b.get("is_depleted", false) as bool
 	elif bld is FishTrap:
 		bld.set("_remaining", b.get("remaining", 0.0) as float)
+
+func _apply_tc_state(tc: Node, d: Dictionary) -> void:
+	var hp: float = d.get("health", -1.0) as float
+	if hp >= 0.0:
+		tc.set("health", hp)
+	var mhp: float = d.get("max_health", -1.0) as float
+	if mhp >= 0.0:
+		tc.set("max_health", mhp)
+	var rp_arr: Array = d.get("rally_point", [0.0, 0.0]) as Array
+	var rp: Vector2 = Vector2(rp_arr[0] as float, rp_arr[1] as float)
+	if rp != Vector2.ZERO and tc.has_method("set_rally_point"):
+		tc.call("set_rally_point", rp)
+	var queue_arr: Variant = d.get("train_queue")
+	if queue_arr != null and tc.has_method("get_queue"):
+		var train_q: Array = []
+		for qentry: Variant in (queue_arr as Array):
+			var qe: Dictionary = qentry as Dictionary
+			train_q.append({
+				"unit_id":    str(qe.get("unit_id", "")),
+				"train_time": qe.get("train_time", 30.0) as float,
+				"label":      str(qe.get("label", "")),
+				"color":      Color.WHITE,
+				"costs":      (qe.get("costs", {}) as Dictionary).duplicate(),
+				"scene":      str(qe.get("scene", "")),
+			})
+		tc.set("_train_queue", train_q)
+		tc.set("_train_timer", d.get("train_timer", 0.0) as float)
 
 func _restore_resource_nodes(world: Node, data: Dictionary) -> void:
 	for child: Node in world.get_children().duplicate():

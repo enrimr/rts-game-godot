@@ -112,6 +112,12 @@ MENU_QUIT,Quit,Salir
 MENU_LOADING,Preparing the world...,Preparando el mundo...
 SAVE_SUCCESS,Game saved!,¡Partida guardada!
 SAVE_FAILED,Save failed!,¡Error al guardar!
+SAVE_PICKER_TITLE,Save Game,Guardar Partida
+SAVE_NEW_SLOT,+ New Save,+ Nueva ranura
+SAVE_CANCEL,Cancel,Cancelar
+SAVE_DELETE,X,X
+LOAD_PICKER_TITLE,Load Game,Cargar Partida
+SAVE_NO_SAVES,No saved games found,No hay partidas guardadas
 SETTINGS_TITLE,Settings,Ajustes
 SETTINGS_MUSIC,Music,Música
 SETTINGS_SFX,Sound Effects,Efectos de sonido

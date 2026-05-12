@@ -11,37 +11,200 @@ func _ready() -> void:
 	_quit_button.text = tr("MENU_QUIT")
 	_play_button.pressed.connect(_on_play_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
+	_style_play_button()
 	_build_settings_button()
 	_build_continue_button()
+
+func _style_play_button() -> void:
+	var normal: StyleBoxFlat = StyleBoxFlat.new()
+	normal.bg_color = Color(0.18, 0.42, 0.18, 0.95)
+	normal.corner_radius_top_left    = 6
+	normal.corner_radius_top_right   = 6
+	normal.corner_radius_bottom_left = 6
+	normal.corner_radius_bottom_right = 6
+	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
+	hover.bg_color = Color(0.26, 0.58, 0.26, 0.95)
+	var pressed: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
+	pressed.bg_color = Color(0.14, 0.32, 0.14, 0.95)
+	_play_button.add_theme_stylebox_override("normal",  normal)
+	_play_button.add_theme_stylebox_override("hover",   hover)
+	_play_button.add_theme_stylebox_override("pressed", pressed)
+	_play_button.add_theme_color_override("font_color", Color(0.92, 1.0, 0.88))
 
 # --- Continue button (shown only when a save exists) ---
 
 var _continue_button: Button = null
 
 func _build_continue_button() -> void:
-	if not SaveManager.has_save():
-		return
 	var btn: Button = Button.new()
 	btn.text = tr("MENU_CONTINUE")
 	btn.custom_minimum_size = Vector2(160, 40)
 	btn.add_theme_font_size_override("font_size", 18)
 	btn.focus_mode = Control.FOCUS_NONE
+	btn.disabled = not SaveManager.has_any_save()
 	var container: Node = _play_button.get_parent()
 	container.add_child(btn)
-	container.move_child(btn, 0)   # Continue appears above Play
+	container.move_child(btn, _play_button.get_index() + 1)
 	_continue_button = btn
-	btn.pressed.connect(_on_continue_pressed)
+	btn.pressed.connect(_open_load_picker)
 
-func _on_continue_pressed() -> void:
-	if not SaveManager.load_game():
-		return
-	_play_button.disabled = true
-	if is_instance_valid(_continue_button):
-		_continue_button.disabled = true
-	_show_loading_screen()
-	await get_tree().process_frame
-	await get_tree().process_frame
-	get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
+func _open_load_picker() -> void:
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
+	overlay.add_child(center)
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(480, 0)
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.08, 0.12, 0.97)
+	style.corner_radius_top_left    = 8
+	style.corner_radius_top_right   = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	card.add_theme_stylebox_override("panel", style)
+	center.add_child(card)
+
+	var margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 28)
+	card.add_child(margin)
+
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+
+	var title: Label = Label.new()
+	title.text = tr("LOAD_PICKER_TITLE")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
+	vbox.add_child(title)
+	vbox.add_child(HSeparator.new())
+
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 260)
+	vbox.add_child(scroll)
+
+	var slot_list: VBoxContainer = VBoxContainer.new()
+	slot_list.add_theme_constant_override("separation", 6)
+	slot_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(slot_list)
+
+	var _rebuild: Callable
+	_rebuild = func() -> void:
+		if not is_instance_valid(slot_list):
+			return
+		for c: Node in slot_list.get_children():
+			c.queue_free()
+		var saves: Array[Dictionary] = SaveManager.list_saves()
+		if saves.is_empty():
+			var empty_lbl: Label = Label.new()
+			empty_lbl.text = tr("SAVE_NO_SAVES")
+			empty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			empty_lbl.add_theme_color_override("font_color", Color(0.60, 0.60, 0.60))
+			slot_list.add_child(empty_lbl)
+			return
+		for meta: Dictionary in saves:
+			var slot: int = meta.get("slot", 0) as int
+			var row: HBoxContainer = HBoxContainer.new()
+			row.add_theme_constant_override("separation", 6)
+			slot_list.add_child(row)
+
+			var load_btn: Button = Button.new()
+			load_btn.text = _format_save_label(meta)
+			load_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			load_btn.focus_mode = Control.FOCUS_NONE
+			load_btn.add_theme_font_size_override("font_size", 14)
+			var btn_style: StyleBoxFlat = StyleBoxFlat.new()
+			btn_style.bg_color = Color(0.16, 0.20, 0.32, 0.95)
+			btn_style.corner_radius_top_left    = 4
+			btn_style.corner_radius_top_right   = 4
+			btn_style.corner_radius_bottom_left = 4
+			btn_style.corner_radius_bottom_right = 4
+			var btn_hover: StyleBoxFlat = btn_style.duplicate() as StyleBoxFlat
+			btn_hover.bg_color = Color(0.24, 0.32, 0.50, 0.95)
+			load_btn.add_theme_stylebox_override("normal", btn_style)
+			load_btn.add_theme_stylebox_override("hover",  btn_hover)
+			row.add_child(load_btn)
+
+			var captured_slot: int = slot
+			load_btn.pressed.connect(func() -> void:
+				if not SaveManager.load_game(captured_slot):
+					return
+				_play_button.disabled = true
+				if is_instance_valid(_continue_button):
+					_continue_button.disabled = true
+				overlay.queue_free()
+				_show_loading_screen()
+				await get_tree().process_frame
+				await get_tree().process_frame
+				get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
+			)
+
+			var del_btn: Button = Button.new()
+			del_btn.text = tr("SAVE_DELETE")
+			del_btn.custom_minimum_size = Vector2(36, 0)
+			del_btn.focus_mode = Control.FOCUS_NONE
+			del_btn.add_theme_font_size_override("font_size", 14)
+			var del_style: StyleBoxFlat = StyleBoxFlat.new()
+			del_style.bg_color = Color(0.38, 0.10, 0.10, 0.95)
+			del_style.corner_radius_top_left    = 4
+			del_style.corner_radius_top_right   = 4
+			del_style.corner_radius_bottom_left = 4
+			del_style.corner_radius_bottom_right = 4
+			var del_hover: StyleBoxFlat = del_style.duplicate() as StyleBoxFlat
+			del_hover.bg_color = Color(0.60, 0.15, 0.15, 0.95)
+			del_btn.add_theme_stylebox_override("normal", del_style)
+			del_btn.add_theme_stylebox_override("hover",  del_hover)
+			row.add_child(del_btn)
+			del_btn.pressed.connect(func() -> void:
+				SaveManager.delete_save(captured_slot)
+				if is_instance_valid(slot_list) and slot_list.has_meta("rebuild"):
+					(slot_list.get_meta("rebuild") as Callable).call()
+				if is_instance_valid(_continue_button):
+					_continue_button.disabled = not SaveManager.has_any_save()
+			)
+
+	slot_list.set_meta("rebuild", _rebuild)
+	_rebuild.call()
+
+	vbox.add_child(HSeparator.new())
+	var cancel_btn: Button = Button.new()
+	cancel_btn.text = tr("SAVE_CANCEL")
+	cancel_btn.custom_minimum_size = Vector2(200, 40)
+	cancel_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cancel_btn.focus_mode = Control.FOCUS_NONE
+	cancel_btn.add_theme_font_size_override("font_size", 16)
+	var cancel_style: StyleBoxFlat = StyleBoxFlat.new()
+	cancel_style.bg_color = Color(0.22, 0.10, 0.10, 0.95)
+	cancel_style.corner_radius_top_left    = 4
+	cancel_style.corner_radius_top_right   = 4
+	cancel_style.corner_radius_bottom_left = 4
+	cancel_style.corner_radius_bottom_right = 4
+	var cancel_hover: StyleBoxFlat = cancel_style.duplicate() as StyleBoxFlat
+	cancel_hover.bg_color = Color(0.38, 0.15, 0.12, 0.95)
+	cancel_btn.add_theme_stylebox_override("normal", cancel_style)
+	cancel_btn.add_theme_stylebox_override("hover", cancel_hover)
+	cancel_btn.pressed.connect(func() -> void: overlay.queue_free())
+	vbox.add_child(cancel_btn)
+
+func _format_save_label(meta: Dictionary) -> String:
+	var name: String = str(meta.get("display_name", ""))
+	if name.is_empty():
+		var civ: String = str(meta.get("civ", "?")).capitalize()
+		var ts: int = meta.get("timestamp", 0) as int
+		var dt: Dictionary = Time.get_datetime_dict_from_unix_time(ts)
+		name = "%s — %02d/%02d %02d:%02d" % [civ,
+			dt.get("day", 0), dt.get("month", 0),
+			dt.get("hour", 0), dt.get("minute", 0)]
+	return name
 
 # --- Settings button ---
 
