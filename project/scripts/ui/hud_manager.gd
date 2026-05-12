@@ -354,6 +354,8 @@ func _key_label(keycode: int) -> String:
 func _populate_buttons(actions: Array) -> void:
 	_clear_action_buttons()
 	_active_actions = actions
+	var n: int = actions.size()
+	_action_grid.columns = ceili(n / 2.0) if n > 4 else 4
 	for entry: Variant in actions:
 		var data: Dictionary = entry as Dictionary
 		var btn: ActionButton = ActionButton.new()

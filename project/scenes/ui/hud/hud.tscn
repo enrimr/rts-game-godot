@@ -143,7 +143,7 @@ theme_override_constants/separation = 0
 [node name="SelectionPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(600, 160)
+custom_minimum_size = Vector2(700, 160)
 mouse_filter = 2
 
 [node name="SelectionVBox" type="VBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel"]
@@ -209,7 +209,7 @@ unique_name_in_owner = true
 
 [node name="ActionButtonsGrid" type="GridContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/BottomRow"]
 layout_mode = 2
-size_flags_horizontal = 0
+size_flags_horizontal = 3
 size_flags_vertical = 2
 columns = 4
 unique_name_in_owner = true
