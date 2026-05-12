@@ -66,6 +66,7 @@ func spend_resource(player_id: int, costs: Dictionary) -> bool:
 		return false
 	for resource in costs:
 		_player_resources[player_id][resource] -= costs[resource]
+		EventBus.resource_changed.emit(player_id, resource, _player_resources[player_id][resource])
 	resources_updated.emit(player_id, _player_resources[player_id])
 	return true
 
