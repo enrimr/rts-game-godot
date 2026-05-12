@@ -133,12 +133,20 @@ func _get_target_armor(target: Node) -> float:
 	return base_armor
 
 func _get_effective_attack() -> float:
-	return unit_data.attack * CivBonusManager.get_unit_attack_multiplier(player_id, unit_data.id)
+	var base: float = unit_data.attack * CivBonusManager.get_unit_attack_multiplier(player_id, unit_data.id)
+	return base
+
+func _get_effective_attack_vs(target: Node) -> float:
+	var base: float = _get_effective_attack()
+	if target is BuildingBase or target is StaticBody2D:
+		base *= CivBonusManager.get_siege_attack_bonus(player_id)
+	return base
 
 # Effective attack reach toward a target, extended by half the target's
 # footprint so units stop and fight at the edge rather than trying to reach center.
 func _attack_reach_to(target: Node) -> float:
-	var base: float = unit_data.attack_range * 32.0
+	var range_mult: float = CivBonusManager.get_archer_range_multiplier(player_id) if unit_data.id == "archer" else 1.0
+	var base: float = unit_data.attack_range * 32.0 * range_mult
 	if not is_instance_valid(target):
 		return base
 	# Prefer CollisionShape2D rectangle (buildings with StaticBody2D)

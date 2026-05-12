@@ -59,10 +59,12 @@ func get_age_advance_cost_multiplier(player_id: int) -> float:
 func get_unit_hp_multiplier(player_id: int, unit_id: String) -> float:
 	if unit_id == "villager":
 		return get_multiplier(player_id, "villager_hp")
-	if unit_id == "scout":
+	if unit_id == "scout" or unit_id == "heavy_scout" or unit_id == "knight":
 		return get_multiplier(player_id, "cavalry_hp")
 	if unit_id == "militia" or unit_id == "pikeman":
 		return get_multiplier(player_id, "swordsman_hp")
+	if unit_id == "fishing_boat" or unit_id == "transport_ship" or unit_id == "war_galley":
+		return get_multiplier(player_id, "ship_hp")
 	return 1.0
 
 func get_unit_speed_multiplier(player_id: int, unit_id: String) -> float:
@@ -79,7 +81,18 @@ func get_unit_attack_multiplier(player_id: int, unit_id: String) -> float:
 		var base: float = get_multiplier(player_id, "archer_attack")
 		var global_mult: float = get_multiplier(player_id, "unit_attack")
 		return base * global_mult
+	if unit_id == "war_galley":
+		return get_multiplier(player_id, "ship_attack") * get_multiplier(player_id, "unit_attack")
 	return get_multiplier(player_id, "unit_attack")
+
+func get_archer_range_multiplier(player_id: int) -> float:
+	return get_multiplier(player_id, "archer_range")
+
+func get_siege_attack_bonus(player_id: int) -> float:
+	return get_multiplier(player_id, "siege_attack_bonus")
+
+func get_ship_cost_multiplier(player_id: int) -> float:
+	return get_multiplier(player_id, "ship_cost")
 
 func get_unit_armor_bonus(player_id: int) -> float:
 	# unit_armor_melee is stored as a multiplier but used additively as extra armor

@@ -67,10 +67,11 @@ func order_train(unit_id: String) -> bool:
 	if def.is_empty():
 		return false
 	var unit_data: UnitResource = load(def["data"] as String) as UnitResource
+	var ship_mult: float = CivBonusManager.get_ship_cost_multiplier(player_id)
 	var costs: Dictionary = {}
-	if unit_data.cost_food > 0: costs["food"] = unit_data.cost_food
-	if unit_data.cost_wood > 0: costs["wood"] = unit_data.cost_wood
-	if unit_data.cost_gold > 0: costs["gold"] = unit_data.cost_gold
+	if unit_data.cost_food > 0: costs["food"] = unit_data.cost_food * ship_mult
+	if unit_data.cost_wood > 0: costs["wood"] = unit_data.cost_wood * ship_mult
+	if unit_data.cost_gold > 0: costs["gold"] = unit_data.cost_gold * ship_mult
 	if not ResourceManager.spend_resource(player_id, costs):
 		return false
 	_train_queue.append({
