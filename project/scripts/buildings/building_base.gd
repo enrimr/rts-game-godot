@@ -25,6 +25,8 @@ var _selection_line: Line2D = null
 var rally_point: Vector2 = Vector2.ZERO
 var _rally_marker: Node2D = null
 var _hit_tween: Tween = null
+var _under_attack_timer: float = 0.0
+var _blink_phase: float = 0.0
 
 func set_rally_point(world_pos: Vector2) -> void:
 	rally_point = world_pos
@@ -162,11 +164,28 @@ func take_damage(amount: float, source: Node = null) -> void:
 		_destroy()
 
 func _flash_hit() -> void:
+	_under_attack_timer = 3.0
 	if is_instance_valid(_hit_tween):
 		_hit_tween.kill()
 	modulate = Color(1.0, 0.2, 0.2, 1.0)
 	_hit_tween = create_tween()
 	_hit_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
+
+func _process(delta: float) -> void:
+	if _under_attack_timer <= 0.0:
+		return
+	_under_attack_timer -= delta
+	# Let the sharp hit-flash finish before the slow pulse takes over
+	if is_instance_valid(_hit_tween) and _hit_tween.is_running():
+		return
+	_blink_phase += delta * 4.0
+	var t: float = (sin(_blink_phase) * 0.5 + 0.5)  # 0..1
+	var r: float = lerpf(1.0, 1.0, t)
+	var g: float = lerpf(0.35, 1.0, t)
+	var b: float = lerpf(0.35, 1.0, t)
+	modulate = Color(r, g, b, 1.0)
+	if _under_attack_timer <= 0.0:
+		modulate = Color(1.0, 1.0, 1.0, 1.0)
 
 func _destroy() -> void:
 	state = BuildingState.DESTROYED
