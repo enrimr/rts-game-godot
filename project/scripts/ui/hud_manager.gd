@@ -1720,9 +1720,24 @@ func _on_tutorial_unit_selected(units: Array) -> void:
 func _on_tutorial_unit_command(_units: Array, _cmd: Dictionary) -> void:
 	_tutorial_notify("unit_moved")
 
+const _TUTORIAL_MINIMUMS: Dictionary = {
+	"resource_gathered":   {"wood": 0},
+	"camp_built":          {"wood": 100},
+	"house_built":         {"wood": 25},
+	"barracks_built":      {"wood": 175},
+	"age_advance_started": {"food": 500},
+	"unit_attacked":       {"food": 60, "wood": 20},
+}
+
 func _on_tutorial_step_changed(_step: int, condition: String) -> void:
 	if condition == "resource_gathered":
 		_tutorial_res_baseline = ResourceManager.get_resources(local_player_id).duplicate()
+	var minimums: Dictionary = _TUTORIAL_MINIMUMS.get(condition, {}) as Dictionary
+	for res: String in minimums:
+		var needed: int = minimums[res] as int
+		var have: int = ResourceManager.get_resources(local_player_id).get(res, 0) as int
+		if have < needed:
+			ResourceManager.add_resource(local_player_id, res, needed - have)
 
 func _on_tutorial_resource_changed(player_id: int, res: String, amt: int) -> void:
 	if player_id != local_player_id:
