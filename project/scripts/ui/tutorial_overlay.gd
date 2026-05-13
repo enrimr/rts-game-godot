@@ -51,6 +51,7 @@ func _build_card() -> void:
 	var pad: MarginContainer = MarginContainer.new()
 	pad.add_theme_constant_override("margin_left",   24)
 	pad.add_theme_constant_override("margin_right",  24)
+	pad.add_theme_constant_override("margin_top",    24)
 	pad.add_theme_constant_override("margin_bottom", 24)
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(pad)
