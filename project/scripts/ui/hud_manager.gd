@@ -1704,6 +1704,7 @@ func _wire_tutorial_signals() -> void:
 	EventBus.building_placed.connect(_on_tutorial_building_placed)
 	EventBus.age_advance_started.connect(_on_tutorial_age_advance)
 	EventBus.hero_ability_used.connect(_on_tutorial_hero_ability)
+	EventBus.enemy_unit_spotted.connect(_on_tutorial_enemy_spotted)
 	EventBus.unit_attacked.connect(_on_tutorial_unit_attacked)
 
 func _tutorial_notify(condition: String) -> void:
@@ -1784,6 +1785,9 @@ func _on_tutorial_age_advance(player_id: int, _target: int) -> void:
 func _on_tutorial_hero_ability(player_id: int) -> void:
 	if player_id == local_player_id:
 		_tutorial_notify("hero_ability_used")
+
+func _on_tutorial_enemy_spotted(_unit: Node) -> void:
+	_tutorial_notify("enemy_spotted")
 
 func _on_tutorial_unit_attacked(attacker: Node, _target: Node) -> void:
 	var pid: Variant = attacker.get("player_id")

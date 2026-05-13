@@ -256,13 +256,17 @@ func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	EventBus.unit_spawned.emit(hero, player_id)
 
 func _on_tutorial_spawn_enemy_scout(near_pos: Vector2) -> void:
-	var scout: CharacterBody2D = SCOUT_SCENE.instantiate() as CharacterBody2D
-	scout.set("player_id", 1)
-	scout.set("civ_id", MatchConfig.get_rival_civ_id(1))
-	scout.global_position = near_pos + Vector2(220.0, 0.0)
-	units_layer.add_child(scout)
+	var militia_scene: PackedScene = load("res://scenes/units/militia.tscn") as PackedScene
+	if militia_scene == null:
+		return
+	var militia: CharacterBody2D = militia_scene.instantiate() as CharacterBody2D
+	militia.set("player_id", 1)
+	militia.set("civ_id", MatchConfig.get_rival_civ_id(1))
+	# Place clearly to the right of the TC with generous spacing so it's easy to spot and click
+	militia.global_position = near_pos + Vector2(320.0, 0.0)
+	units_layer.add_child(militia)
 	PopulationManager.add_unit(1)
-	EventBus.unit_spawned.emit(scout, 1)
+	EventBus.unit_spawned.emit(militia, 1)
 
 func _setup_ai_node_only(rival_id: int, _tc_pos: Vector2) -> void:
 	# Creates only the AI controller node; buildings are restored by SaveManager.

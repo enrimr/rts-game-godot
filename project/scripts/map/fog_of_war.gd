@@ -192,8 +192,12 @@ func _apply_visibility() -> void:
 			var is_own: bool = pid != null and (pid as int) == 0
 			if is_own:
 				continue
+			var was_visible: bool = (unit as Node2D).visible
 			var state: int = get_cell_state((unit as Node2D).global_position)
-			(unit as Node2D).visible = (state == STATE_VISIBLE)
+			var now_visible: bool = (state == STATE_VISIBLE)
+			(unit as Node2D).visible = now_visible
+			if now_visible and not was_visible:
+				EventBus.enemy_unit_spotted.emit(unit)
 
 	# Enemy buildings: remembered once explored (stay visible under grey shroud)
 	# Own buildings are always visible — skip them
