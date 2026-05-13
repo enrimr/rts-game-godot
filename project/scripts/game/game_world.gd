@@ -305,6 +305,8 @@ func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	# AI targets player TC initially; will switch dynamically in Fase 4
 	ai.set("enemy_town_center", drop_off)
 
+	_spawn_hero(rival_id, tc_pos)
+
 func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void:
 	if building is Wonder:
 		EventBus.wonder_destroyed.emit(owner_id)
