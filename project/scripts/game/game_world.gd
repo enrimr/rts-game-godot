@@ -49,7 +49,7 @@ const BUILDING_COSTS: Dictionary = {
 	"gate":          {"wood": 30},
 	"dock":          {"wood": 150},
 	"fish_trap":     {"wood": 75},
-	"wonder":        {"wood": 1000, "stone": 1000, "gold": 1000},
+	"wonder":        {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000},
 }
 
 # Buildings that must be placed adjacent to water (at least one edge in ocean terrain).

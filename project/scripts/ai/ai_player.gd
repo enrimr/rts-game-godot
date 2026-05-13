@@ -32,7 +32,7 @@ const BUILDING_COSTS: Dictionary = {
 	"university":  {"wood": 200},
 	"market":      {"wood": 175},
 	"temple":      {"wood": 175},
-	"wonder":      {"wood": 1000, "stone": 1000, "gold": 1000},
+	"wonder":      {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000},
 }
 
 const TICK_INTERVAL: float        = 2.0

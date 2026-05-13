@@ -51,7 +51,7 @@ const BUILD_ACTIONS: Array = [
 	{"id": "build:university",    "label": "ACTION_UNIVERSITY",   "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U},
 	{"id": "build:market",        "label": "ACTION_MARKET",       "color": Color(0.65, 0.50, 0.10), "cost": {"wood": 175}, "key": KEY_R},
 	{"id": "build:temple",        "label": "ACTION_TEMPLE",       "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175},                             "key": KEY_T},
-	{"id": "build:wonder",        "label": "ACTION_WONDER",       "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 1000, "stone": 1000, "gold": 1000}, "key": KEY_V},
+	{"id": "build:wonder",        "label": "ACTION_WONDER",       "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000}, "key": KEY_V},
 	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},                                           "key": KEY_ESCAPE},
 ]
 

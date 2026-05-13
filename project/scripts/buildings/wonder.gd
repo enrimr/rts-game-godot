@@ -2,6 +2,10 @@ extends BuildingBase
 
 class_name Wonder
 
+# One villager at build_rate=25 fills 100 pts → 4s normally.
+# Scale factor 150 → 4 * 150 = 600s (10 min) solo; multiple villagers cut it down.
+const BUILD_TIME_SCALE: float = 150.0
+
 func _ready() -> void:
 	super._ready()
 	if building_data == null:
@@ -11,3 +15,6 @@ func _ready() -> void:
 		if is_instance_valid(hbar):
 			hbar.max_value = max_health
 			hbar.value = health
+
+func add_construction(base_amount: float) -> void:
+	super.add_construction(base_amount / BUILD_TIME_SCALE)
