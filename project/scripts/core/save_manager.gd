@@ -226,6 +226,7 @@ func _collect(world: Node) -> Dictionary:
 		"starting_age":  MatchConfig.starting_age,
 		"rival_count":   MatchConfig.rival_count,
 		"rival_civ_ids": Array(MatchConfig.rival_civ_ids),
+		"victory_mode":  MatchConfig.victory_mode,
 	}
 
 	var player_ids: Array[int] = [0]
@@ -407,6 +408,7 @@ func _restore_match_config(data: Dictionary) -> void:
 		MatchConfig.rival_civ_ids.clear()
 		for cid: Variant in (rcids as Array):
 			MatchConfig.rival_civ_ids.append(str(cid))
+	MatchConfig.victory_mode = mc.get("victory_mode", MatchConfig.victory_mode) as int
 
 func _restore_autoloads(data: Dictionary) -> void:
 	var res_map: Dictionary = data.get("resources", {}) as Dictionary

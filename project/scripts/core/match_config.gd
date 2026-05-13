@@ -3,9 +3,10 @@ extends Node
 ## MatchConfig — holds the settings chosen in the lobby screen.
 ## Written before loading game_world, read during _ready().
 
-enum MapSize   { SMALL = 0, MEDIUM = 1, LARGE = 2 }
-enum Resources { SCARCE = 0, NORMAL = 1, ABUNDANT = 2, FULL_COMBAT = 3 }
-enum MapType   { PLAINS = 0, STANDARD = 1, VOLCANIC_COAST = 2, DESERT_COAST = 3, ISLANDS = 4 }
+enum MapSize      { SMALL = 0, MEDIUM = 1, LARGE = 2 }
+enum Resources    { SCARCE = 0, NORMAL = 1, ABUNDANT = 2, FULL_COMBAT = 3 }
+enum MapType      { PLAINS = 0, STANDARD = 1, VOLCANIC_COAST = 2, DESERT_COAST = 3, ISLANDS = 4 }
+enum VictoryMode  { CONQUEST = 0, REGICIDE = 1 }
 
 # Chosen by the player in the lobby
 var map_size:        int    = MapSize.MEDIUM
@@ -13,6 +14,7 @@ var resources:       int    = Resources.NORMAL
 var map_type:        int    = MapType.PLAINS
 var player_civ_id:   String = "guanches"
 var starting_age:    int    = 0           # GameManager.Age
+var victory_mode:    int    = VictoryMode.CONQUEST
 
 # Multi-rival support: rival_civ_ids[0] = first rival, etc.
 var rival_count:    int            = 1

@@ -182,6 +182,14 @@ func _build() -> void:
 
 	vbox.add_child(_make_sep())
 
+	# Victory mode
+	vbox.add_child(_make_label(tr("LOBBY_VICTORY_MODE")))
+	var victory_opts: Array[String] = [tr("LOBBY_VICTORY_CONQUEST"), tr("LOBBY_VICTORY_REGICIDE")]
+	vbox.add_child(_make_option_row(victory_opts, MatchConfig.victory_mode,
+		func(i: int) -> void: MatchConfig.victory_mode = i))
+
+	vbox.add_child(_make_sep())
+
 	# Bottom buttons
 	var btn_row: HBoxContainer = HBoxContainer.new()
 	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER

@@ -28,6 +28,8 @@ func start_game(player_configs: Array) -> void:
 	players = player_configs
 	state = GameState.PLAYING
 	game_started.emit()
+	if MatchConfig.victory_mode == MatchConfig.VictoryMode.REGICIDE:
+		EventBus.hero_died.connect(_on_hero_died_regicide)
 
 func toggle_pause() -> void:
 	if state == GameState.PLAYING:
@@ -43,4 +45,18 @@ func declare_winner(winner_id: int) -> void:
 	if state != GameState.PLAYING:
 		return
 	state = GameState.GAME_OVER
+	if EventBus.hero_died.is_connected(_on_hero_died_regicide):
+		EventBus.hero_died.disconnect(_on_hero_died_regicide)
 	game_over.emit(winner_id)
+
+func _on_hero_died_regicide(dead_player_id: int, _hero_data: UnitResource) -> void:
+	if state != GameState.PLAYING:
+		return
+	# Find any surviving player that is not the one who lost their hero
+	var winner_id: int = -1
+	for i: int in range(players.size()):
+		var pid: int = i  # player 0 = human, 1.. = AI
+		if pid != dead_player_id:
+			winner_id = pid
+			break
+	declare_winner(winner_id)

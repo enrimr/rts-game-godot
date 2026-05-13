@@ -155,6 +155,9 @@ LOBBY_CIVILIZATION,Your Civilization,Tu Civilización
 LOBBY_STARTING_AGE,Starting Age,Edad de Inicio
 LOBBY_RIVAL_COUNT,Number of Rivals,Número de Rivales
 LOBBY_RIVAL,Rival,Rival
+LOBBY_VICTORY_MODE,Victory Condition,Condición de Victoria
+LOBBY_VICTORY_CONQUEST,Conquest,Conquista
+LOBBY_VICTORY_REGICIDE,Regicide,Regicidio
 LOBBY_START,Start Game,Iniciar Partida
 LOBBY_BACK,← Back,← Volver
 CIV_GUANCHES_NAME,Guanches,Guanches
