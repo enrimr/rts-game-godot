@@ -18,6 +18,7 @@ var taunt_source: Node = null
 # during movement rather than ignoring them.
 var _attack_move_active: bool = false
 
+var _hit_tween: Tween = null
 var _stuck_timer: float = 0.0
 var _stuck_retries: int = 0
 var _last_position: Vector2 = Vector2.ZERO
@@ -60,6 +61,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
 	EventBus.damage_dealt.emit(self, amount, source)
 	health_bar.value = health
+	_flash_hit()
 	if health <= 0.0:
 		die()
 		return
@@ -81,6 +83,13 @@ func die() -> void:
 		attack_range_area.monitoring = false
 	EventBus.unit_died.emit(self, player_id)
 	queue_free()
+
+func _flash_hit() -> void:
+	if is_instance_valid(_hit_tween):
+		_hit_tween.kill()
+	modulate = Color(1.0, 0.2, 0.2, 1.0)
+	_hit_tween = create_tween()
+	_hit_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
 
 ## Called when any body enters the attack-range Area2D.
 ## Triggers auto-attack only from IDLE, or from MOVING when attack-move is active.

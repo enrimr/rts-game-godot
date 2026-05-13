@@ -22,6 +22,7 @@ var current_state: AnimalState = AnimalState.WILD
 var _wander_timer: float = 0.0
 var _flee_timer: float = 0.0
 var _origin: Vector2 = Vector2.ZERO
+var _hit_tween: Tween = null
 
 @onready var _health_bar: ProgressBar = $HealthBar
 @onready var _selection_indicator: Node2D = $SelectionIndicator
@@ -51,6 +52,11 @@ func take_damage(amount: float, source: Node = null) -> void:
 		return
 	health -= amount
 	_health_bar.value = (health / max_health) * 100.0
+	if is_instance_valid(_hit_tween):
+		_hit_tween.kill()
+	modulate = Color(1.0, 0.2, 0.2, 1.0)
+	_hit_tween = create_tween()
+	_hit_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
 	if health <= 0.0:
 		_die()
 		return
