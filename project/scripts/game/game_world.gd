@@ -629,9 +629,6 @@ func _finish_selection(release_pos: Vector2) -> void:
 				continue
 			var b2d: Node2D = building as Node2D
 			if _drag_start.distance_to(b2d.global_position) < BUILDING_CLICK_RADIUS:
-				var bpid: Variant = building.get("player_id")
-				if bpid != null and (bpid as int) != 0:
-					continue
 				_selected_building = building
 				EventBus.building_selected.emit(building)
 				return

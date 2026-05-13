@@ -559,13 +559,21 @@ func _on_building_selected(building: Node) -> void:
 
 	var hp_v: Variant = building.get("health")
 	var hp: float = hp_v as float if hp_v != null else 0.0
-	var max_hp: float = 100.0
+	var max_hp: float = 0.0
 	if bdata != null:
 		var mhp_v: Variant = (bdata as Resource).get("max_health")
 		if mhp_v != null:
 			max_hp = mhp_v as float
+	if max_hp <= 0.0:
+		var mhp_direct: Variant = building.get("max_health")
+		if mhp_direct != null:
+			max_hp = mhp_direct as float
 	if max_hp > 0.0:
 		_unit_hp_bar.value = (hp / max_hp) * 100.0
+
+	var bpid: Variant = building.get("player_id")
+	if bpid != null and (bpid as int) != 0:
+		return
 
 	if building.has_method("is_respawning_hero"):
 		_unit_name_label.text = tr("UI_TOWN_CENTER")
