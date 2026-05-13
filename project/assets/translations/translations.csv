@@ -52,6 +52,7 @@ ACTION_STABLE,Stable\n175W,Cuadra\n175M
 ACTION_UNIVERSITY,University\n200W,Universidad\n200M
 ACTION_MARKET,Market\n175W,Mercado\n175M
 ACTION_TEMPLE,Temple\n175W,Templo\n175M
+ACTION_WONDER,Wonder\n1000W 1000S 1000G,Maravilla\n1000M 1000P 1000O
 ACTION_HEAVY_SCOUT,Heavy Scout\n80F 30G,Explorador Pesado\n80C 30O
 ACTION_KNIGHT,Knight\n60F 75G,Caballero\n60C 75O
 ACTION_TRANSPORT_SHIP,Transport Ship,Barco de Transporte
@@ -84,6 +85,8 @@ GAMEOVER_RIVAL,Rival,Rival
 HERO_ABILITY,Use Ability,Usar Habilidad
 UI_HERO_RESPAWNING,Respawning: %ds,Reapareciendo: %ds
 UI_HERO_READY,Hero Ready!,¡Héroe listo!
+WONDER_TIMER_YOU,Your Wonder,Tu Maravilla
+WONDER_TIMER_ENEMY,Enemy Wonder,Maravilla Enemiga
 HERO_ABILITY_READY,Ready,Lista
 HERO_ABILITY_COOLDOWN,Cooldown: %ds,Recarga: %ds
 HERO_BENCOMO_ABILITY,Mencey's Charge,Ímpetu del Mencey
@@ -158,6 +161,7 @@ LOBBY_RIVAL,Rival,Rival
 LOBBY_VICTORY_MODE,Victory Condition,Condición de Victoria
 LOBBY_VICTORY_CONQUEST,Conquest,Conquista
 LOBBY_VICTORY_REGICIDE,Regicide,Regicidio
+LOBBY_VICTORY_WONDER,Wonder,Maravilla
 LOBBY_START,Start Game,Iniciar Partida
 LOBBY_BACK,← Back,← Volver
 CIV_GUANCHES_NAME,Guanches,Guanches

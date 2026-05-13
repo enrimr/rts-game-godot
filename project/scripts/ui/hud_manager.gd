@@ -50,8 +50,9 @@ const BUILD_ACTIONS: Array = [
 	{"id": "build:dock",          "label": "ACTION_DOCK",         "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D},
 	{"id": "build:university",    "label": "ACTION_UNIVERSITY",   "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U},
 	{"id": "build:market",        "label": "ACTION_MARKET",       "color": Color(0.65, 0.50, 0.10), "cost": {"wood": 175}, "key": KEY_R},
-	{"id": "build:temple",        "label": "ACTION_TEMPLE",       "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175}, "key": KEY_T},
-	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE},
+	{"id": "build:temple",        "label": "ACTION_TEMPLE",       "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175},                             "key": KEY_T},
+	{"id": "build:wonder",        "label": "ACTION_WONDER",       "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 1000, "stone": 1000, "gold": 1000}, "key": KEY_V},
+	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},                                           "key": KEY_ESCAPE},
 ]
 
 const STABLE_UNIT_DEFS: Array[Dictionary] = [
@@ -111,6 +112,7 @@ var _hero_respawn_label: Label = null
 var _research_bar: ProgressBar = null
 var _research_label: Label = null
 var _pause_menu: Control = null
+var _wonder_label: Label = null
 
 # --- Stats tracking ---
 var _stat_units_trained: int = 0
@@ -433,7 +435,7 @@ func _on_action_button_pressed(action_id: String) -> void:
 	if action_id == "build_menu":
 		AudioManager.play("ui_click")
 		_in_build_menu = true
-		_populate_buttons(BUILD_ACTIONS)
+		_populate_buttons(_filtered_build_actions())
 		return
 	if action_id == "back":
 		AudioManager.play("ui_click")
@@ -2070,3 +2072,39 @@ func _make_pause_btn(label_text: String, normal_col: Color, hover_col: Color) ->
 	var hs: StyleBoxFlat = _make_panel_style(hover_col)
 	btn.add_theme_stylebox_override("hover", hs)
 	return btn
+
+func _filtered_build_actions() -> Array:
+	var wonder_visible: bool = MatchConfig.victory_mode == MatchConfig.VictoryMode.WONDER \
+		and AgeManager.get_age(local_player_id) >= GameManager.Age.IMPERIAL
+	var result: Array = []
+	for entry: Variant in BUILD_ACTIONS:
+		var data: Dictionary = entry as Dictionary
+		if (data.get("id", "") as String) == "build:wonder" and not wonder_visible:
+			continue
+		result.append(data)
+	return result
+
+func show_wonder_timer(owner_pid: int) -> void:
+	if not is_instance_valid(_wonder_label):
+		_wonder_label = Label.new()
+		_wonder_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_wonder_label.add_theme_font_size_override("font_size", 22)
+		_wonder_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.20))
+		_wonder_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		_wonder_label.offset_top = 8.0
+		_wonder_label.offset_bottom = 40.0
+		add_child(_wonder_label)
+	var who: String = tr("WONDER_TIMER_YOU") if owner_pid == 0 else tr("WONDER_TIMER_ENEMY")
+	_wonder_label.text = who + " — 4:00"
+
+func hide_wonder_timer() -> void:
+	if is_instance_valid(_wonder_label):
+		_wonder_label.queue_free()
+		_wonder_label = null
+
+func update_wonder_timer(seconds_left: float) -> void:
+	if not is_instance_valid(_wonder_label):
+		return
+	var mins: int = int(seconds_left) / 60
+	var secs: int = int(seconds_left) % 60
+	_wonder_label.text = _wonder_label.text.split(" — ")[0] + " — %d:%02d" % [mins, secs]

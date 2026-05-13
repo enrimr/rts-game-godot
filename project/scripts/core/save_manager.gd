@@ -155,6 +155,7 @@ const BUILDING_SCENES: Dictionary = {
 	"University":    "res://scenes/buildings/university.tscn",
 	"Market":        "res://scenes/buildings/market.tscn",
 	"Temple":        "res://scenes/buildings/temple.tscn",
+	"Wonder":        "res://scenes/buildings/wonder.tscn",
 }
 
 func get_saved_rng_seed() -> int:
@@ -668,6 +669,7 @@ func _class_name_of(node: Node) -> String:
 	if node is University:        return "University"
 	if node is Market:            return "Market"
 	if node is Temple:            return "Temple"
+	if node is Wonder:            return "Wonder"
 	if node is Dock:              return "Dock"
 	if node is Farm:              return "Farm"
 	if node is FishTrap:          return "FishTrap"

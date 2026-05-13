@@ -184,7 +184,7 @@ func _build() -> void:
 
 	# Victory mode
 	vbox.add_child(_make_label(tr("LOBBY_VICTORY_MODE")))
-	var victory_opts: Array[String] = [tr("LOBBY_VICTORY_CONQUEST"), tr("LOBBY_VICTORY_REGICIDE")]
+	var victory_opts: Array[String] = [tr("LOBBY_VICTORY_CONQUEST"), tr("LOBBY_VICTORY_REGICIDE"), tr("LOBBY_VICTORY_WONDER")]
 	vbox.add_child(_make_option_row(victory_opts, MatchConfig.victory_mode,
 		func(i: int) -> void: MatchConfig.victory_mode = i))
 

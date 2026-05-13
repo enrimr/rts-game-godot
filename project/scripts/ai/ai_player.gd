@@ -17,6 +17,7 @@ const BUILDING_SCENES: Dictionary = {
 	"university":  "res://scenes/buildings/university.tscn",
 	"market":      "res://scenes/buildings/market.tscn",
 	"temple":      "res://scenes/buildings/temple.tscn",
+	"wonder":      "res://scenes/buildings/wonder.tscn",
 }
 const BUILDING_COSTS: Dictionary = {
 	"barracks":    {"wood": 175},
@@ -31,6 +32,7 @@ const BUILDING_COSTS: Dictionary = {
 	"university":  {"wood": 200},
 	"market":      {"wood": 175},
 	"temple":      {"wood": 175},
+	"wonder":      {"wood": 1000, "stone": 1000, "gold": 1000},
 }
 
 const TICK_INTERVAL: float        = 2.0
@@ -51,7 +53,7 @@ var _attack_timer: float  = 0.0
 var _threat_timer: float  = 0.0
 
 # Track which building types have been built (counts)
-var _built: Dictionary = {"barracks": 0, "blacksmith": 0, "stable": 0, "house": 0, "lumber_camp": 0, "mining_camp": 0, "farm": 0, "dock": 0, "university": 0, "market": 0, "temple": 0}
+var _built: Dictionary = {"barracks": 0, "blacksmith": 0, "stable": 0, "house": 0, "lumber_camp": 0, "mining_camp": 0, "farm": 0, "dock": 0, "university": 0, "market": 0, "temple": 0, "wonder": 0}
 var _build_fail_counts: Dictionary = {}   # building_id -> int fail streak
 var _build_cooldowns: Dictionary = {}     # building_id -> float time_remaining
 
@@ -299,6 +301,11 @@ func _manage_advanced_buildings() -> void:
 	if _built.get("market", 0) as int == 0 \
 			and ResourceManager.can_afford(player_id, BUILDING_COSTS["market"]):
 		_build("market")
+	if MatchConfig.victory_mode == MatchConfig.VictoryMode.WONDER \
+			and age >= GameManager.Age.IMPERIAL \
+			and _built.get("wonder", 0) as int == 0 \
+			and ResourceManager.can_afford(player_id, BUILDING_COSTS["wonder"]):
+		_build("wonder")
 	_manage_stable_training()
 
 func _manage_stable_training() -> void:

@@ -34,6 +34,7 @@ const BUILDING_SCENES: Dictionary = {
 	"university":    "res://scenes/buildings/university.tscn",
 	"market":        "res://scenes/buildings/market.tscn",
 	"temple":        "res://scenes/buildings/temple.tscn",
+	"wonder":        "res://scenes/buildings/wonder.tscn",
 }
 
 const BUILDING_COSTS: Dictionary = {
@@ -48,6 +49,7 @@ const BUILDING_COSTS: Dictionary = {
 	"gate":          {"wood": 30},
 	"dock":          {"wood": 150},
 	"fish_trap":     {"wood": 75},
+	"wonder":        {"wood": 1000, "stone": 1000, "gold": 1000},
 }
 
 # Buildings that must be placed adjacent to water (at least one edge in ocean terrain).
@@ -95,6 +97,10 @@ var _ghost_rotation: float = 0.0
 
 # Pending action waiting for a map click ("move_to" or "attack_move")
 var _pending_action: String = ""
+
+var _wonder_timer: float = 0.0
+var _wonder_owner: int = -1
+var _wonder_node: Node = null
 
 # Drag-select rectangle overlay
 var _drag_overlay: Node2D = null
@@ -174,6 +180,9 @@ func _ready() -> void:
 	hud.pending_action_cancelled.connect(func() -> void: _pending_action = "")
 	EventBus.unit_spawned.connect(_on_unit_spawned)
 	EventBus.building_destroyed.connect(_on_building_destroyed_check_victory)
+	EventBus.building_construction_complete.connect(_on_building_construction_complete)
+	EventBus.wonder_built.connect(_on_wonder_built)
+	EventBus.wonder_destroyed.connect(_on_wonder_destroyed)
 	EventBus.minimap_move_order.connect(func(p: Vector2) -> void:
 		_following = false
 		_order_move_all(p)
@@ -296,7 +305,10 @@ func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	# AI targets player TC initially; will switch dynamically in Fase 4
 	ai.set("enemy_town_center", drop_off)
 
-func _on_building_destroyed_check_victory(building: Node, _owner_id: int) -> void:
+func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void:
+	if building is Wonder:
+		EventBus.wonder_destroyed.emit(owner_id)
+
 	# Check if the player's TC was destroyed
 	if building == drop_off:
 		# Find any surviving AI to declare as winner
@@ -331,7 +343,41 @@ func _on_building_destroyed_check_victory(building: Node, _owner_id: int) -> voi
 	if remaining_rivals == 0:
 		GameManager.declare_winner(0)
 
+func _on_building_construction_complete(building: Node) -> void:
+	if building is Wonder:
+		EventBus.wonder_built.emit(building.get("player_id") as int)
+
+func _on_wonder_built(pid: int) -> void:
+	if MatchConfig.victory_mode != MatchConfig.VictoryMode.WONDER:
+		return
+	_wonder_owner = pid
+	_wonder_timer = 240.0
+	for b: Node in buildings_layer.get_children():
+		if b is Wonder and b.get("player_id") == pid:
+			_wonder_node = b
+			break
+	var hud_mgr: Node = hud.get_node_or_null("HudManager")
+	if is_instance_valid(hud_mgr) and hud_mgr.has_method("show_wonder_timer"):
+		hud_mgr.call("show_wonder_timer", _wonder_owner)
+
+func _on_wonder_destroyed(pid: int) -> void:
+	if _wonder_owner != pid:
+		return
+	_wonder_timer = 0.0
+	_wonder_owner = -1
+	_wonder_node = null
+	var hud_mgr: Node = hud.get_node_or_null("HudManager")
+	if is_instance_valid(hud_mgr) and hud_mgr.has_method("hide_wonder_timer"):
+		hud_mgr.call("hide_wonder_timer")
+
 func _process(delta: float) -> void:
+	if _wonder_timer > 0.0:
+		_wonder_timer -= delta
+		var hud_mgr: Node = hud.get_node_or_null("HudManager")
+		if is_instance_valid(hud_mgr) and hud_mgr.has_method("update_wonder_timer"):
+			hud_mgr.call("update_wonder_timer", _wonder_timer)
+		if _wonder_timer <= 0.0:
+			GameManager.declare_winner(_wonder_owner)
 	_handle_camera(delta)
 	_handle_follow()
 	if _placing_building and is_instance_valid(_ghost):

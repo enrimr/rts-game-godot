@@ -30,6 +30,8 @@ signal building_placed(building: Node, player_id: int)
 signal building_destroyed(building: Node, player_id: int)
 signal building_construction_complete(building: Node)
 signal building_selected(building: Node)
+signal wonder_built(player_id: int)
+signal wonder_destroyed(player_id: int)
 
 # Research
 signal technology_researched(player_id: int, tech_id: String)

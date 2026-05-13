@@ -6,7 +6,7 @@ extends Node
 enum MapSize      { SMALL = 0, MEDIUM = 1, LARGE = 2 }
 enum Resources    { SCARCE = 0, NORMAL = 1, ABUNDANT = 2, FULL_COMBAT = 3 }
 enum MapType      { PLAINS = 0, STANDARD = 1, VOLCANIC_COAST = 2, DESERT_COAST = 3, ISLANDS = 4 }
-enum VictoryMode  { CONQUEST = 0, REGICIDE = 1 }
+enum VictoryMode  { CONQUEST = 0, REGICIDE = 1, WONDER = 2 }
 
 # Chosen by the player in the lobby
 var map_size:        int    = MapSize.MEDIUM
