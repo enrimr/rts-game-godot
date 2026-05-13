@@ -2,15 +2,16 @@ class_name TutorialOverlay
 extends Control
 
 signal finished
+signal step_changed(step: int, condition: String)
 
 ## Each step has a title/body key and an optional condition tag.
 ## Steps with condition = "" unlock immediately on arrival.
 const STEPS: Array[Dictionary] = [
 	{"title": "TUTORIAL_STEP0_TITLE",  "body": "TUTORIAL_STEP0_BODY",  "condition": ""},
 	{"title": "TUTORIAL_STEP1_TITLE",  "body": "TUTORIAL_STEP1_BODY",  "condition": "camera_moved"},
-	{"title": "TUTORIAL_STEP2_TITLE",  "body": "TUTORIAL_STEP2_BODY",  "condition": "unit_selected"},
+	{"title": "TUTORIAL_STEP2_TITLE",  "body": "TUTORIAL_STEP2_BODY",  "condition": "resource_gathered"},
 	{"title": "TUTORIAL_STEP3_TITLE",  "body": "TUTORIAL_STEP3_BODY",  "condition": "unit_moved"},
-	{"title": "TUTORIAL_STEP4_TITLE",  "body": "TUTORIAL_STEP4_BODY",  "condition": "resource_gathered"},
+	{"title": "TUTORIAL_STEP4_TITLE",  "body": "TUTORIAL_STEP4_BODY",  "condition": ""},
 	{"title": "TUTORIAL_STEP5_TITLE",  "body": "TUTORIAL_STEP5_BODY",  "condition": "town_center_opened"},
 	{"title": "TUTORIAL_STEP5B_TITLE", "body": "TUTORIAL_STEP5B_BODY", "condition": "barracks_built"},
 	{"title": "TUTORIAL_STEP6_TITLE",  "body": "TUTORIAL_STEP6_BODY",  "condition": "age_advance_started"},
@@ -186,6 +187,7 @@ func _go_to(step: int) -> void:
 	_step_unlocked = not needs_action
 	_next_btn.disabled = needs_action
 	_lock_label.visible = needs_action
+	step_changed.emit(_current_step, condition)
 
 func _on_next_pressed() -> void:
 	if _current_step >= STEPS.size() - 1:

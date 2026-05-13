@@ -1684,11 +1684,13 @@ func _show_charts_panel(parent: Node) -> void:
 # ── In-game pause menu ──────────────────────────────────────────────────────
 
 var _tutorial_overlay: TutorialOverlay = null
+var _tutorial_res_baseline: Dictionary = {}
 
 func _start_tutorial() -> void:
 	_tutorial_overlay = TutorialOverlay.new()
 	get_node("HUDRoot").add_child(_tutorial_overlay)
 	_tutorial_overlay.finished.connect(func() -> void: _tutorial_overlay = null)
+	_tutorial_overlay.step_changed.connect(_on_tutorial_step_changed)
 	_tutorial_overlay.start()
 	_wire_tutorial_signals()
 
@@ -1718,11 +1720,15 @@ func _on_tutorial_unit_selected(units: Array) -> void:
 func _on_tutorial_unit_command(_units: Array, _cmd: Dictionary) -> void:
 	_tutorial_notify("unit_moved")
 
+func _on_tutorial_step_changed(_step: int, condition: String) -> void:
+	if condition == "resource_gathered":
+		_tutorial_res_baseline = ResourceManager.get_resources(local_player_id).duplicate()
+
 func _on_tutorial_resource_changed(player_id: int, res: String, amt: int) -> void:
 	if player_id != local_player_id:
 		return
-	var prev: float = _last_resources.get(res, 0.0) as float
-	if (amt as float) > prev:
+	var baseline: float = _tutorial_res_baseline.get(res, -1.0) as float
+	if baseline >= 0.0 and (amt as float) > baseline:
 		_tutorial_notify("resource_gathered")
 
 func _on_tutorial_building_selected(building: Node) -> void:
