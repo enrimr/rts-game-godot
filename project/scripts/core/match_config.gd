@@ -9,12 +9,13 @@ enum MapType      { PLAINS = 0, STANDARD = 1, VOLCANIC_COAST = 2, DESERT_COAST =
 enum VictoryMode  { CONQUEST = 0, REGICIDE = 1, WONDER = 2 }
 
 # Chosen by the player in the lobby
-var map_size:        int    = MapSize.MEDIUM
-var resources:       int    = Resources.NORMAL
-var map_type:        int    = MapType.PLAINS
-var player_civ_id:   String = "guanches"
-var starting_age:    int    = 0           # GameManager.Age
-var victory_mode:    int    = VictoryMode.CONQUEST
+var map_size:          int    = MapSize.MEDIUM
+var resources:         int    = Resources.NORMAL
+var map_type:          int    = MapType.PLAINS
+var player_civ_id:     String = "guanches"
+var starting_age:      int    = 0           # GameManager.Age
+var victory_mode:      int    = VictoryMode.CONQUEST
+var launch_tutorial:   bool   = false
 
 # Multi-rival support: rival_civ_ids[0] = first rival, etc.
 var rival_count:    int            = 1

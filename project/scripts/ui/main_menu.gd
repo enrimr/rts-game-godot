@@ -5,6 +5,8 @@ extends Control
 @onready var _logo: TextureRect = %LogoImage
 
 var _settings_panel: Control = null
+var _settings_button: Button = null
+var _how_to_play_button: Button = null
 
 func _ready() -> void:
 	GameSettings.apply_language()
@@ -14,9 +16,12 @@ func _ready() -> void:
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_style_play_button()
 	_build_settings_button()
+	_build_how_to_play_button()
 	_build_continue_button()
 	_adapt_to_viewport()
 	get_viewport().size_changed.connect(_adapt_to_viewport)
+	if not GameSettings.tutorial_seen:
+		_prompt_tutorial()
 
 func _adapt_to_viewport() -> void:
 	var vp: Vector2 = get_viewport().get_visible_rect().size
@@ -239,7 +244,29 @@ func _build_settings_button() -> void:
 	container.add_child(btn)
 	container.move_child(btn, idx)
 
+	_settings_button = btn
 	btn.pressed.connect(_open_settings)
+
+# --- How to Play button ---
+
+func _build_how_to_play_button() -> void:
+	var btn: Button = Button.new()
+	btn.text = tr("MENU_HOW_TO_PLAY")
+	btn.custom_minimum_size = Vector2(160, 40)
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.focus_mode = Control.FOCUS_NONE
+
+	# Insert after Settings button
+	var container: Node = _play_button.get_parent()
+	if is_instance_valid(_settings_button):
+		var idx: int = _settings_button.get_index() + 1
+		container.add_child(btn)
+		container.move_child(btn, idx)
+	else:
+		container.add_child(btn)
+
+	_how_to_play_button = btn
+	btn.pressed.connect(_launch_tutorial_game)
 
 # --- Play / Quit ---
 
@@ -473,6 +500,115 @@ func _open_settings() -> void:
 		_settings_panel = null
 	)
 
+# --- Tutorial prompt ---
+
+func _prompt_tutorial() -> void:
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
+	overlay.add_child(center)
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(440, 0)
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.08, 0.12, 0.97)
+	style.corner_radius_top_left    = 8
+	style.corner_radius_top_right   = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	card.add_theme_stylebox_override("panel", style)
+	center.add_child(card)
+
+	var margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 32)
+	card.add_child(margin)
+
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	margin.add_child(vbox)
+
+	var title: Label = Label.new()
+	title.text = tr("TUTORIAL_PROMPT_TITLE")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
+	vbox.add_child(title)
+
+	vbox.add_child(HSeparator.new())
+
+	var body: Label = Label.new()
+	body.text = tr("TUTORIAL_PROMPT_BODY")
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_theme_font_size_override("font_size", 15)
+	body.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
+	vbox.add_child(body)
+
+	vbox.add_child(HSeparator.new())
+
+	var btn_row: HBoxContainer = HBoxContainer.new()
+	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_row.add_theme_constant_override("separation", 16)
+	vbox.add_child(btn_row)
+
+	var yes_btn: Button = Button.new()
+	yes_btn.text = tr("TUTORIAL_PROMPT_YES")
+	yes_btn.custom_minimum_size = Vector2(180, 40)
+	yes_btn.focus_mode = Control.FOCUS_NONE
+	yes_btn.add_theme_font_size_override("font_size", 16)
+	var yes_style: StyleBoxFlat = StyleBoxFlat.new()
+	yes_style.bg_color = Color(0.18, 0.42, 0.18, 0.95)
+	yes_style.corner_radius_top_left    = 4
+	yes_style.corner_radius_top_right   = 4
+	yes_style.corner_radius_bottom_left = 4
+	yes_style.corner_radius_bottom_right = 4
+	yes_btn.add_theme_stylebox_override("normal", yes_style)
+	var yes_hover: StyleBoxFlat = yes_style.duplicate() as StyleBoxFlat
+	yes_hover.bg_color = Color(0.26, 0.58, 0.26, 0.95)
+	yes_btn.add_theme_stylebox_override("hover", yes_hover)
+	btn_row.add_child(yes_btn)
+	yes_btn.pressed.connect(func() -> void:
+		overlay.queue_free()
+		_launch_tutorial_game()
+	)
+
+	var skip_btn: Button = Button.new()
+	skip_btn.text = tr("TUTORIAL_PROMPT_SKIP")
+	skip_btn.custom_minimum_size = Vector2(140, 40)
+	skip_btn.focus_mode = Control.FOCUS_NONE
+	skip_btn.add_theme_font_size_override("font_size", 16)
+	var skip_style: StyleBoxFlat = StyleBoxFlat.new()
+	skip_style.bg_color = Color(0.22, 0.10, 0.10, 0.95)
+	skip_style.corner_radius_top_left    = 4
+	skip_style.corner_radius_top_right   = 4
+	skip_style.corner_radius_bottom_left = 4
+	skip_style.corner_radius_bottom_right = 4
+	skip_btn.add_theme_stylebox_override("normal", skip_style)
+	var skip_hover: StyleBoxFlat = skip_style.duplicate() as StyleBoxFlat
+	skip_hover.bg_color = Color(0.38, 0.15, 0.12, 0.95)
+	skip_btn.add_theme_stylebox_override("hover", skip_hover)
+	btn_row.add_child(skip_btn)
+	skip_btn.pressed.connect(func() -> void: overlay.queue_free())
+
+func _launch_tutorial_game() -> void:
+	MatchConfig.map_type        = MatchConfig.MapType.PLAINS
+	MatchConfig.map_size        = MatchConfig.MapSize.SMALL
+	MatchConfig.resources       = MatchConfig.Resources.FULL_COMBAT
+	MatchConfig.player_civ_id   = "guanches"
+	MatchConfig.starting_age    = 0
+	MatchConfig.rival_count     = 1
+	MatchConfig.rival_civ_ids   = ["castellanos"]
+	MatchConfig.victory_mode    = MatchConfig.VictoryMode.CONQUEST
+	MatchConfig.launch_tutorial = true
+	_on_lobby_start()
+
 # --- Helpers ---
 
 func _make_section_label(text: String) -> Label:
@@ -496,12 +632,10 @@ func _refresh_menu_texts() -> void:
 	_quit_button.text = tr("MENU_QUIT")
 	if is_instance_valid(_continue_button):
 		_continue_button.text = tr("MENU_CONTINUE")
-	var container: Node = _play_button.get_parent()
-	for child: Node in container.get_children():
-		if child is Button and child != _play_button and child != _quit_button \
-				and child != _continue_button:
-			(child as Button).text = tr("MENU_SETTINGS")
-			break
+	if is_instance_valid(_settings_button):
+		_settings_button.text = tr("MENU_SETTINGS")
+	if is_instance_valid(_how_to_play_button):
+		_how_to_play_button.text = tr("MENU_HOW_TO_PLAY")
 
 func _make_pct_label(initial: float) -> Label:
 	var lbl: Label = Label.new()

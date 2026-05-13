@@ -169,6 +169,9 @@ func _ready() -> void:
 	_build_follow_button()
 	_build_notifications()
 	_build_pause_menu_button()
+	if MatchConfig.launch_tutorial:
+		MatchConfig.launch_tutorial = false
+		call_deferred("_start_tutorial")
 
 func _process(delta: float) -> void:
 	if _clock_running:
@@ -1680,6 +1683,11 @@ func _show_charts_panel(parent: Node) -> void:
 
 # ── In-game pause menu ──────────────────────────────────────────────────────
 
+func _start_tutorial() -> void:
+	var overlay: TutorialOverlay = TutorialOverlay.new()
+	get_node("HUDRoot").add_child(overlay)
+	overlay.start()
+
 func _build_pause_menu_button() -> void:
 	var hud_root: Control = get_node_or_null("HUDRoot") as Control
 	if hud_root == null:
@@ -1760,6 +1768,13 @@ func _open_pause_menu() -> void:
 	var settings_btn: Button = _make_pause_btn(tr("MENU_SETTINGS"), Color(0.20, 0.20, 0.28, 0.95), Color(0.32, 0.32, 0.45, 0.95))
 	settings_btn.pressed.connect(_open_ingame_settings)
 	vbox.add_child(settings_btn)
+
+	var how_to_play_btn: Button = _make_pause_btn(tr("MENU_HOW_TO_PLAY"), Color(0.22, 0.35, 0.45, 0.95), Color(0.32, 0.50, 0.62, 0.95))
+	how_to_play_btn.pressed.connect(func() -> void:
+		_close_pause_menu()
+		_start_tutorial()
+	)
+	vbox.add_child(how_to_play_btn)
 
 	var save_btn: Button = _make_pause_btn(tr("PAUSEMENU_SAVE"), Color(0.16, 0.28, 0.44, 0.95), Color(0.24, 0.42, 0.62, 0.95))
 	save_btn.pressed.connect(_on_save_game)
