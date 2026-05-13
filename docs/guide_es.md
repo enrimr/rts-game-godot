@@ -231,6 +231,153 @@ El archipiélago no es llano. Cada tipo de casilla cambia cómo se mueven y comb
 
 ---
 
+## Recursos y economía
+
+Cuatro recursos impulsan todo en *Calima Kingdoms*. Empiezas con 200 de Comida, 75 de Madera y 50 de Oro (la Piedra comienza en 0). El modo Normal usa estos valores por defecto; Abundante multiplica los depósitos del mapa; Combate Total establece los cuatro en 9999.
+
+### Los cuatro recursos
+
+| Recurso | Cómo recolectarlo |
+|---|---|
+| **Comida** | Envía Aldeanos a arbustos de bayas, caza de animales o construye Granjas. En mapas de Islas, las Barcas Pesqueras extraen comida de nodos oceánicos y las Trampas de Pesca ofrecen un flujo pasivo. |
+| **Madera** | Ordena a los Aldeanos que talen árboles. Construye un Campamento Maderero cerca del bosque — actúa como punto de entrega. |
+| **Oro** | Extrae depósitos de oro. Construye un Campamento Minero cercano. El Mercado también convierte otros recursos en oro. |
+| **Piedra** | Extrae canteras de piedra. Misma lógica de entrega que el oro: se necesita Campamento Minero. Controlar una casilla de caldera volcánica proporciona ingresos pasivos de piedra. |
+
+Los Aldeanos transportan hasta **10 unidades** de cualquier recurso antes de regresar a entregar. Construye puntos de entrega cerca de los nodos de recursos para reducir el tiempo de desplazamiento.
+
+### Población
+
+Comienzas con un límite de **15**. Cada **Casa** completada aumenta el límite en **5**. Si alcanzas el tope, las colas de entrenamiento se detienen — no se entrena nada hasta que el conteo baje o construyas más Casas.
+
+### Comercio en el Mercado
+
+El Mercado te permite vender comida, madera o piedra a cambio de oro, o comprar recursos. Constrúyelo en la Edad Feudal (antes si eres Fenicios). Úsalo cuando un almacén esté lleno y otro en críticos.
+
+---
+
+## Progresión de edades
+
+Avanzar de edad es la columna vertebral del juego. Cada Era desbloquea nuevas unidades, edificios y tecnologías. Avanzas desde el Centro Urbano cuando puedes pagar el coste.
+
+| Edad | Coste de avance | Tiempo de investigación | Qué se desbloquea |
+|---|---|---|---|
+| **Edad Oscura** | — (edad inicial) | — | Aldeano, Milicia, Explorador, edificios básicos, Muelle, Barca Pesquera |
+| **Edad Feudal** | 500 Comida | ~2 min 10 s | Arquero, Explorador Pesado, Herrería, Caballeriza, Mercado, Galera de Guerra, Barco de Transporte |
+| **Edad Castillo** | 800 Comida + 200 Oro | ~2 min 40 s | Piquero, Caballero, Universidad, Templo, tecnologías avanzadas |
+| **Edad Imperial** | 1000 Comida + 800 Oro | ~3 min 10 s | Maravilla, Química, Expiación, Alto Horno, Armadura de Placas |
+
+Los **Francos** avanzan un 15% más barato. Los **Castellanos** reciben una tecnología de Herrería gratuita cada vez que avanzan.
+
+---
+
+## Unidades terrestres
+
+| Unidad | Edad | Edificio de entrenamiento | Coste | Función |
+|---|---|---|---|---|
+| **Aldeano** | Oscura | Centro Urbano | 50 Comida | Recolecta los cuatro recursos; construye edificios |
+| **Explorador** | Oscura | Centro Urbano (dado gratis al inicio) | 80 Comida | Exploración rápida; débil en combate; mejor para visión del mapa |
+| **Milicia** | Oscura | Cuartel | 60 Comida + 20 Madera | Infantería melee básica; barata y disponible desde el inicio |
+| **Arquero** | Feudal | Cuartel | 25 Madera + 45 Oro | Infantería a distancia; frágil pero poderosa a distancia |
+| **Explorador Pesado** | Feudal | Caballeriza | 80 Comida + 30 Oro | Caballería melee rápida; buen saqueador |
+| **Piquero** | Castillo | Cuartel | 60 Comida + 30 Oro | Infantería pesada; alta armadura; contrarrestar caballería |
+| **Caballero** | Castillo | Caballeriza | 60 Comida + 75 Oro | Caballería pesada; alto PV; unidad terrestre dominante en Era Castillo |
+| **Héroe** | Oscura (dado gratis) | Centro Urbano (solo reaparición) | Gratis | Único por civilización; habilidad poderosa; reaparece tras 2 minutos si muere |
+
+Los héroes no se entrenan — cada civilización empieza con uno, sin coste. Si un héroe muere, reaparece en el Centro Urbano tras un retraso de **2 minutos**. La excepción es el modo **Regicidio**, donde la muerte del héroe supone la derrota inmediata.
+
+---
+
+## Edificios
+
+### Producción
+
+| Edificio | Coste | Notas |
+|---|---|---|
+| **Centro Urbano** | Edificio inicial | Entrena Aldeanos (50 Comida cada uno); gestiona la reaparición del héroe; botón de avance de edad |
+| **Cuartel** | 175 Madera | Entrena Milicia (Oscura), Arquero (Feudal), Piquero (Castillo); cola máxima 5 |
+| **Caballeriza** | 175 Madera | Entrena Explorador Pesado (Feudal), Caballero (Castillo); cola máxima 5 |
+| **Muelle** | 150 Madera | Debe estar adyacente al agua; entrena Barca Pesquera, Barco de Transporte, Galera de Guerra; cola máxima 5 |
+
+### Economía
+
+| Edificio | Coste | Notas |
+|---|---|---|
+| **Campamento Maderero** | 100 Madera | Punto de entrega de madera; colócalo cerca de los árboles |
+| **Campamento Minero** | 100 Madera | Punto de entrega de oro y piedra |
+| **Granja** | 60 Madera | Fuente de comida continua; un Aldeano la trabaja pasivamente |
+| **Trampa de Pesca** | 75 Madera | Construida en casillas oceánicas por Barcas Pesqueras; comida pasiva sin desplazamiento |
+| **Mercado** | 175 Madera | Vende/compra recursos a cambio de oro; requiere Edad Feudal (los Fenicios pueden construirlo desde la Edad Oscura) |
+
+### Investigación
+
+| Edificio | Coste | Notas |
+|---|---|---|
+| **Herrería** | 150 Madera | Mejoras de armas y armaduras; disponible desde la Edad Feudal |
+| **Universidad** | 200 Madera | Tecnología militar avanzada; disponible desde la Edad Castillo |
+| **Templo** | 175 Madera | Mejoras de moral y caballería; disponible desde la Edad Castillo |
+
+### Defensa
+
+| Edificio | Coste | Notas |
+|---|---|---|
+| **Casa** | 25 Madera | +5 al límite de población al completar la construcción |
+| **Muro** | 5 Piedra por segmento | Bloquea el paso; coste bajo en piedra |
+| **Puerta** | 30 Madera | Permite el paso de unidades amigas por la línea de muros |
+
+### Especial
+
+| Edificio | Coste | Notas |
+|---|---|---|
+| **Maravilla** | 2500 Madera + 2500 Comida + 2500 Piedra + 5000 Oro | Solo Edad Imperial; activa una cuenta regresiva de 4 minutos para la victoria en modo Maravilla |
+
+---
+
+## Investigación (Árbol tecnológico)
+
+Tres edificios gestionan la investigación: la **Herrería** (armas y armaduras), la **Universidad** (tecnología militar avanzada y asedio) y el **Templo** (moral y caballería). Cada tecnología ocupa el edificio durante todo el tiempo de investigación — solo puedes investigar una tecnología por edificio a la vez.
+
+Las tecnologías se aplican globalmente a todas las unidades coincidentes del jugador que las investiga. Varias tienen requisitos previos: debes completar la tecnología anterior antes de que la siguiente esté disponible.
+
+| Tecnología | Edificio | Edad | Coste | Efecto |
+|---|---|---|---|---|
+| **Telar** | Cuartel | Oscura | 50 Comida | PV del Aldeano +15% |
+| **Forja** | Herrería | Feudal | 75 Comida | Ataque de todas las unidades +15% |
+| **Armadura de Escamas** | Cuartel | Feudal | 100 Comida + 50 Oro | Mejora armadura cuerpo a cuerpo |
+| **Flechado** | Cuartel | Feudal | 100 Oro | Ataque del Arquero +20% |
+| **Armadura Acolchada** | Herrería | Feudal | 100 Comida | Mejora armadura perforante del Arquero |
+| **Maestro Carpintero Naval** | Cuartel | Feudal | 200 Madera + 60 Oro | PV de los barcos +15%; coste de barcos −15% |
+| **Fundición de Hierro** | Herrería | Castillo | 150 Oro | Ataque de todas las unidades +20% (requiere Forja) |
+| **Armadura de Mallas** | Cuartel | Castillo | 200 Comida + 100 Oro | Mejora armadura cuerpo a cuerpo (requiere Armadura de Escamas) |
+| **Flecha Bodkin** | Cuartel | Castillo | 100 Comida + 150 Oro | Ataque del Arquero +20%, alcance +10% (requiere Flechado) |
+| **Balística** | Universidad | Castillo | 175 Oro | Velocidad de ataque del Arquero +20% (requiere Flechado) |
+| **Ingeniería de Asedio** | Universidad | Castillo | 200 Oro | Todas las unidades causan +20% de daño a los edificios |
+| **Santidad** | Templo | Castillo | 100 Comida | PV del Espadachín +15% |
+| **Fervor** | Templo | Castillo | 150 Oro | Velocidad de movimiento de todas las unidades +10% |
+| **Alto Horno** | Cuartel | Imperial | 275 Comida + 225 Oro | Ataque de todas las unidades +15% |
+| **Armadura de Placas** | Cuartel | Imperial | 300 Comida + 200 Oro | Mejora armadura cuerpo a cuerpo (requiere Armadura de Mallas) |
+| **Química** | Universidad | Imperial | 300 Oro | Ataque del Arquero +15% (requiere Balística) |
+| **Expiación** | Templo | Imperial | 150 Comida + 100 Oro | PV de la Caballería +20% (requiere Santidad) |
+
+---
+
+## Condiciones de victoria
+
+Hay tres modos disponibles; elige uno en la configuración de la partida antes de que empiece el juego.
+
+### Conquista
+Destruye **todas** las unidades y edificios enemigos. La última civilización con estructuras en pie gana. Es el modo por defecto y el más directo — no hay temporizador ni objetivo especial. La presión importa, pero también la paciencia.
+
+### Regicidio
+Tu **héroe** es tu línea de vida. Si tu héroe muere, pierdes en el acto — sin reaparición, sin recuperación. Tus oponentes comparten la misma condición. Mantén a tu héroe con vida a toda costa; retíralo del frente antes de que una batalla parezca peligrosa. Del mismo modo, atacar al héroe enemigo siempre merece el esfuerzo.
+
+### Maravilla
+Construye la **Maravilla** (2500 Madera + 2500 Comida + 2500 Piedra + 5000 Oro) — disponible solo en la **Edad Imperial**. Una vez completada la Maravilla, comienza una **cuenta regresiva de 4 minutos**. Si sobrevive esos cuatro minutos, ganas.
+
+Los enemigos pueden destruir la Maravilla para cancelar la cuenta regresiva. Si la Maravilla del propietario es destruida, pierde. La dinámica estratégica es sencilla: una vez que alguien la construye, todos los demás tienen cuatro minutos para destruirla.
+
+---
+
 ## Unidades navales
 
 En los mapas de tipo **Islas** el océano no es solo una barrera — es un teatro de operaciones. Construye un **Muelle** para acceder a unidades navales y abrir una segunda economía mediante la pesca.
@@ -270,6 +417,7 @@ Las Barcas Pesqueras también pueden construir **Trampas de Pesca** directamente
 
 | Mapa | Descripción | Nota estratégica |
 |---|---|---|
+| **Llanuras** | Tierra llana, sin terreno especial | Ideal para principiantes; sin penalizaciones de terreno |
 | **Estándar** | Terreno variado en tierra | Juego general |
 | **Costa Volcánica** | Franja costera con caldera impasable en el centro | Divide el mapa en dos corredores; Guanches con ventaja |
 | **Costa Desértica** | Árido, escaso en madera, océano al oeste | Mahos con ventaja; Castellanos sufren sin madera |
@@ -282,17 +430,21 @@ Las Barcas Pesqueras también pueden construir **Trampas de Pesca** directamente
 Antes de iniciar una escaramuza eliges:
 
 - **Tamaño del mapa** — Pequeño, Mediano o Grande
-- **Tipo de mapa** — Estándar / Costa Volcánica / Costa Desértica / Islas
+- **Tipo de mapa** — Llanuras / Estándar / Costa Volcánica / Costa Desértica / Islas
 - **Recursos iniciales** — Escasos / Normales / Abundantes / **Combate Total** (todos los recursos a 9999)
 - **Civilización** — una de las ocho
 - **Edad de inicio** — Oscura, Feudal, Castillo o Imperial
+- **Número de rivales** — 1 a 3 oponentes controlados por la IA
+- **Condición de victoria** — Conquista / Regicidio / Maravilla
 
 ---
 
 ## Consejos
 
 - **Los exploradores revelan el terreno** — manda tu explorador inmediatamente. La caldera, los bosques de laurisilva, las posiciones de oro — saber dónde están es tu primera ventaja.
-- **Los héroes son irreemplazables** — mantén a tu héroe con vida. Son poderosos pero finitos. Si Bencomo muere, no vuelve.
+- **Los héroes reaparecen — salvo en Regicidio** — si tu héroe muere en una partida normal de Conquista o Maravilla, regresa al Centro Urbano tras 2 minutos. No entres en pánico, pero protege tu Centro Urbano. En el modo Regicidio, la muerte del héroe termina tu partida en el acto.
 - **El terreno es un arma** — si juegas con Guanches, arrastra a los enemigos al malpaís antes de enfrentarte a ellos. Si juegas con Mahos, combate desde terreno de dunas donde tus exploradores son invisibles y tus edificios son baratos.
 - **El timing de edad importa** — un jugador Franco que llega a la Edad Feudal mientras tú estás aún en la Oscura golpeará tu base antes de que tengas muros. Explora, reacciona, adáptate.
+- **Investiga en cuanto avances de edad** — no dejes la Herrería vacía. La Forja en Edad Feudal da a todas las unidades +15% de ataque por solo 75 de Comida. El Flechado por 100 de Oro duplica el valor de tus arqueros. Las pequeñas inversiones se multiplican rápidamente.
 - **La caldera genera piedra** — si hay una caldera volcánica en el mapa, el equipo que controla la zona a su alrededor obtiene piedra gratis. No la ignores.
+- **El modo Maravilla es una carrera** — si vas ganando, avanza a la Edad Imperial y constrúyela antes de que tu rival pueda hacerlo. Si tu oponente la construye primero, tienes exactamente 4 minutos para destruirla. Deja todo y ataca de inmediato.

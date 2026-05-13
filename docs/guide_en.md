@@ -231,6 +231,153 @@ The archipelago is not flat. Every tile type changes how units move and fight.
 
 ---
 
+## Resources & Economy
+
+Four resources drive everything in *Calima Kingdoms*. You start with 200 Food, 75 Wood, and 50 Gold (Stone starts at 0). Normal mode uses these defaults; Abundant multiplies map deposits; Full Combat sets all four to 9999.
+
+### The four resources
+
+| Resource | How to gather |
+|---|---|
+| **Food** | Send Villagers to berry bushes, hunt animals, or build Farms. On Islands maps, Fishing Boats pull food from ocean nodes and Fish Traps provide a passive stream. |
+| **Wood** | Order Villagers to chop trees. Build a Lumber Camp close to the forest — it acts as the drop-off point. |
+| **Gold** | Mine gold deposits. Build a Mining Camp nearby. The Market also converts other resources to gold. |
+| **Stone** | Mine stone quarries. Same drop-off logic as gold: Mining Camp required. Controlling a volcanic caldera tile provides passive stone income. |
+
+Villagers carry up to **10 units** of any resource before returning to drop off. Build drop-off buildings close to resource nodes to reduce travel time.
+
+### Population
+
+You start with a cap of **15**. Every completed **House** raises the cap by **5** (no limit stated). If you hit the cap, training queues pause — nothing is built until the count drops or you build more Houses.
+
+### Market trading
+
+The Market lets you sell food, wood, or stone for gold, or buy resources back. Build it in Feudal Age (or earlier if you are Fenicios). Use it when one stockpile is overflowing and another is critical.
+
+---
+
+## Age Progression
+
+Advancing Ages is the backbone of the game. Each Age unlocks new units, buildings, and techs. You advance from the Town Center once you can afford the cost.
+
+| Age | Advance cost | Research time | What becomes available |
+|---|---|---|---|
+| **Dark Age** | — (starting age) | — | Villager, Militia, Scout, basic buildings, Dock, Fishing Boat |
+| **Feudal Age** | 500 Food | ~2 min 10 s | Archer, Heavy Scout, Blacksmith, Stable, Market, War Galley, Transport Ship |
+| **Castle Age** | 800 Food + 200 Gold | ~2 min 40 s | Pikeman, Knight, University, Temple, advanced techs |
+| **Imperial Age** | 1000 Food + 800 Gold | ~3 min 10 s | Wonder, Chemistry, Atonement, Blast Furnace, Plate Barding |
+
+**Francos** advance 15% cheaper. **Castellanos** receive a free Blacksmith technology every time they advance.
+
+---
+
+## Land Units
+
+| Unit | Age | Training building | Cost | Role |
+|---|---|---|---|---|
+| **Villager** | Dark | Town Center | 50 Food | Gathers all four resources; constructs buildings |
+| **Scout** | Dark | Town Center (given free at start) | 80 Food | Fast explorer; weak in combat; best used for map awareness |
+| **Militia** | Dark | Barracks | 60 Food + 20 Wood | Basic melee infantry; cheap and available immediately |
+| **Archer** | Feudal | Barracks | 25 Wood + 45 Gold | Ranged infantry; fragile but powerful at distance |
+| **Heavy Scout** | Feudal | Stable | 80 Food + 30 Gold | Fast melee cavalry; good raider; upgrades from Scout role |
+| **Pikeman** | Castle | Barracks | 60 Food + 30 Gold | Heavy infantry; high armor; counters cavalry |
+| **Knight** | Castle | Stable | 60 Food + 75 Gold | Heavy cavalry; high HP; the dominant ground unit at Castle Age |
+| **Hero** | Dark (given free) | Town Center (respawn only) | Free | Unique per civilization; powerful ability; respawns after 2 minutes if killed |
+
+Heroes are not trained — each civilization starts with one, free of charge. If a hero dies, they respawn at the Town Center after a **2-minute** delay. The exception is **Regicide mode**, where hero death means instant defeat.
+
+---
+
+## Buildings
+
+### Production
+
+| Building | Cost | Notes |
+|---|---|---|
+| **Town Center** | Starting building | Trains Villagers (50 Food each); handles hero respawn; age advancement button |
+| **Barracks** | 175 Wood | Trains Militia (Dark), Archer (Feudal), Pikeman (Castle); queue cap 5 |
+| **Stable** | 175 Wood | Trains Heavy Scout (Feudal), Knight (Castle); queue cap 5 |
+| **Dock** | 150 Wood | Must be adjacent to water; trains Fishing Boat, Transport Ship, War Galley; queue cap 5 |
+
+### Economy
+
+| Building | Cost | Notes |
+|---|---|---|
+| **Lumber Camp** | 100 Wood | Wood drop-off point; place close to trees |
+| **Mining Camp** | 100 Wood | Gold and stone drop-off point |
+| **Farm** | 60 Wood | Continuous food source; Villager works it passively |
+| **Fish Trap** | 75 Wood | Built on ocean tiles by Fishing Boats; passive food without travel |
+| **Market** | 175 Wood | Sell/buy resources for gold; requires Feudal Age (Fenicios can build from Dark Age) |
+
+### Research
+
+| Building | Cost | Notes |
+|---|---|---|
+| **Blacksmith** | 150 Wood | Weapon and armor upgrades; available from Feudal Age |
+| **University** | 200 Wood | Advanced military technology; available from Castle Age |
+| **Temple** | 175 Wood | Morale and cavalry upgrades; available from Castle Age |
+
+### Defence
+
+| Building | Cost | Notes |
+|---|---|---|
+| **House** | 25 Wood | +5 population cap when construction completes |
+| **Wall** | 5 Stone per segment | Blocks passage; cheap stone cost |
+| **Gate** | 30 Wood | Allows friendly units through the wall line |
+
+### Special
+
+| Building | Cost | Notes |
+|---|---|---|
+| **Wonder** | 2500 Wood + 2500 Food + 2500 Stone + 5000 Gold | Imperial Age only; triggers a 4-minute countdown to victory in Wonder mode |
+
+---
+
+## Research (Tech Tree)
+
+Three buildings handle research: **Blacksmith** (weapons and armor), **University** (advanced military and siege), and **Temple** (morale and cavalry). Each tech occupies its building for the full research time — you can only research one tech per building at a time.
+
+Technologies apply globally to all matching units for the player who researches them. Several have prerequisites: you must complete the earlier tech before the later one becomes available.
+
+| Tech | Building | Age | Cost | Effect |
+|---|---|---|---|---|
+| **Loom** | Barracks | Dark | 50 Food | Villager HP +15% |
+| **Forging** | Blacksmith | Feudal | 75 Food | All unit attack +15% |
+| **Scale Barding** | Barracks | Feudal | 100 Food + 50 Gold | Unit melee armor upgrade |
+| **Fletching** | Barracks | Feudal | 100 Gold | Archer attack +20% |
+| **Padded Archer Armor** | Blacksmith | Feudal | 100 Food | Archer pierce armor upgrade |
+| **Shipwright** | Barracks | Feudal | 200 Wood + 60 Gold | Ship HP +15%; ship cost −15% |
+| **Iron Casting** | Blacksmith | Castle | 150 Gold | All unit attack +20% (requires Forging) |
+| **Chain Barding** | Barracks | Castle | 200 Food + 100 Gold | Unit melee armor upgrade (requires Scale Barding) |
+| **Bodkin Arrow** | Barracks | Castle | 100 Food + 150 Gold | Archer attack +20%, archer range +10% (requires Fletching) |
+| **Ballistics** | University | Castle | 175 Gold | Archer attack speed +20% (requires Fletching) |
+| **Siege Engineering** | University | Castle | 200 Gold | All units deal +20% damage to buildings |
+| **Sanctity** | Temple | Castle | 100 Food | Swordsman HP +15% |
+| **Fervor** | Temple | Castle | 150 Gold | All unit move speed +10% |
+| **Blast Furnace** | Barracks | Imperial | 275 Food + 225 Gold | All unit attack +15% |
+| **Plate Barding** | Barracks | Imperial | 300 Food + 200 Gold | Unit melee armor upgrade (requires Chain Barding) |
+| **Chemistry** | University | Imperial | 300 Gold | Archer attack +15% (requires Ballistics) |
+| **Atonement** | Temple | Imperial | 150 Food + 100 Gold | Cavalry HP +20% (requires Sanctity) |
+
+---
+
+## Victory Conditions
+
+Three modes are available; choose one in Match Setup before the game begins.
+
+### Conquest
+Destroy **all** enemy units and buildings. The last civilization with structures standing wins. This is the default mode and the most straightforward — there is no timer, no special objective. Pressure matters, but so does patience.
+
+### Regicide
+Your **hero** is your lifeline. If your hero dies, you lose instantly — no respawn, no recovery. Your opponents share the same condition. Keep your hero alive at all costs; drive it away from the front line before a fight looks dangerous. Conversely, targeting the enemy hero is always worth the effort.
+
+### Wonder
+Build the **Wonder** (2500 Wood + 2500 Food + 2500 Stone + 5000 Gold) — available only in **Imperial Age**. Once the Wonder is complete, a **4-minute countdown** begins. If it survives those four minutes, you win.
+
+Enemies can destroy the Wonder to cancel the countdown. If the Wonder owner's own Wonder is destroyed, they lose. The strategic dynamic is simple: once someone builds it, everyone else has four minutes to destroy it.
+
+---
+
 ## Naval Units
 
 On **Islands** maps the ocean is not just a barrier — it is a theatre of operations. Build a **Dock** to access naval units and open a second economy through fishing.
@@ -270,6 +417,7 @@ Fishing Boats can also build **Fish Traps** directly on ocean tiles. A Fish Trap
 
 | Map | Description | Strategic note |
 |---|---|---|
+| **Plains** | Flat land, no special terrain | Beginner-friendly; no terrain penalties |
 | **Standard** | Mixed land terrain | General-purpose play |
 | **Volcanic Coast** | Coastal strip with impassable caldera at center | Divides map into two corridors; Guanches advantaged |
 | **Desert Coast** | Arid, wood-scarce, ocean to the west | Mahos advantaged; Castellanos struggle without wood |
@@ -282,17 +430,21 @@ Fishing Boats can also build **Fish Traps** directly on ocean tiles. A Fish Trap
 Before starting a skirmish you choose:
 
 - **Map size** — Small, Medium, or Large
-- **Map type** — Standard / Volcanic Coast / Desert Coast / Islands
+- **Map type** — Plains / Standard / Volcanic Coast / Desert Coast / Islands
 - **Starting resources** — Scarce / Normal / Abundant / **Full Combat** (all resources 9999)
 - **Civilization** — one of the eight
 - **Starting Age** — Dark, Feudal, Castle, or Imperial
+- **Number of Rivals** — 1 to 3 AI opponents
+- **Victory Condition** — Conquest / Regicide / Wonder
 
 ---
 
 ## Tips
 
 - **Scouts reveal terrain** — send your scout out immediately. The caldera, the laurisilva wood patches, the gold positions — knowing where they are is your first advantage.
-- **Heroes are irreplaceable** — keep your hero alive. They are powerful but finite. If Bencomo dies, he does not come back.
+- **Heroes respawn — except in Regicide** — if your hero dies in a normal Conquest or Wonder match, they return at the Town Center after a 2-minute delay. Do not panic, but do protect your Town Center. In Regicide mode, hero death ends your game immediately.
 - **Terrain is a weapon** — if you are playing Guanches, pull enemies onto malpaís before you engage. If you are playing Mahos, fight from dune terrain where your scouts are invisible and your buildings are cheap.
 - **Age timing matters** — a Francos player who reaches Feudal Age while you are still in Dark Age will hit your base before you have walls. Scout, react, adapt.
+- **Research as you advance** — do not sit on an empty Blacksmith. Forging in Feudal Age gives every unit +15% attack for 75 Food. Fletching for 100 Gold doubles the value of your archers. Small investments compound fast.
 - **The caldera generates stone** — if there is a volcanic caldera on the map, the team that controls the zone around it gets free stone. Do not ignore it.
+- **Wonder mode is a race** — if you are winning, rush to Imperial Age and build it before your opponent can. If your opponent builds it first, you have exactly 4 minutes to destroy it. Drop everything and attack immediately.
