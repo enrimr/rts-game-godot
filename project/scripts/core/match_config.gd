@@ -51,7 +51,7 @@ func get_map_half() -> float:
 func get_resource_multiplier() -> float:
 	return RES_MULT_BY_LEVEL[clampi(resources, 0, 4)]
 
-const TUTORIAL_STARTING: Dictionary = {"wood": 125}
+const TUTORIAL_STARTING: Dictionary = {"wood": 300}
 
 func get_starting_resources() -> Dictionary:
 	if resources == Resources.FULL_COMBAT:

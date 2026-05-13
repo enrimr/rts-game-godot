@@ -22,6 +22,7 @@ const STEPS: Array[Dictionary] = [
 
 var _current_step: int = 0
 var _step_unlocked: bool = false
+var _completed: Array[bool] = []
 
 var _card: PanelContainer = null
 var _step_label: Label = null
@@ -155,6 +156,8 @@ func _build_card() -> void:
 	btn_row.add_child(_next_btn)
 
 func start() -> void:
+	_completed.resize(STEPS.size())
+	_completed.fill(false)
 	visible = true
 	_go_to(0)
 
@@ -169,6 +172,7 @@ func unlock_current() -> void:
 	if _step_unlocked:
 		return
 	_step_unlocked = true
+	_completed[_current_step] = true
 	_next_btn.disabled = false
 	_lock_label.visible = false
 
@@ -183,13 +187,15 @@ func _go_to(step: int) -> void:
 	_next_btn.text = tr("TUTORIAL_FINISH") if is_last else tr("TUTORIAL_NEXT")
 
 	var condition: String = STEPS[_current_step]["condition"] as String
-	var needs_action: bool = not condition.is_empty()
+	var already_done: bool = _completed[_current_step] if _completed.size() > _current_step else false
+	var needs_action: bool = not condition.is_empty() and not already_done
 	_step_unlocked = not needs_action
 	_next_btn.disabled = needs_action
 	_lock_label.visible = needs_action
-	step_changed.emit(_current_step, condition)
+	step_changed.emit(_current_step, condition if needs_action else "")
 
 func _on_next_pressed() -> void:
+	_completed[_current_step] = true
 	if _current_step >= STEPS.size() - 1:
 		close()
 	else:
