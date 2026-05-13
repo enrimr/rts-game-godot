@@ -106,8 +106,15 @@ func get_queue() -> Array:
 func get_max_queue() -> int:
 	return MAX_QUEUE
 
+var _hit_tween: Tween = null
+
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
+	if is_instance_valid(_hit_tween):
+		_hit_tween.kill()
+	modulate = Color(1.0, 0.2, 0.2, 1.0)
+	_hit_tween = create_tween()
+	_hit_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
 	if source != null and is_instance_valid(source):
 		var src_pid: Variant = source.get("player_id")
 		if src_pid != null and (src_pid as int) != player_id and player_id != 0:

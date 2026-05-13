@@ -48,9 +48,16 @@ func set_selected(value: bool) -> void:
 	if is_instance_valid(_rally_marker):
 		_rally_marker.visible = value and rally_point != Vector2.ZERO
 
+var _hit_tween: Tween = null
+
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
 	EventBus.damage_dealt.emit(self, amount, source)
+	if is_instance_valid(_hit_tween):
+		_hit_tween.kill()
+	modulate = Color(1.0, 0.2, 0.2, 1.0)
+	_hit_tween = create_tween()
+	_hit_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
 	if health <= 0.0:
 		EventBus.building_destroyed.emit(self, player_id)
 		queue_free()
