@@ -1742,6 +1742,7 @@ func _on_tutorial_building_selected(building: Node) -> void:
 func _on_tutorial_building_placed(building: Node, player_id: int) -> void:
 	if player_id != local_player_id:
 		return
+	_tutorial_notify("building_placed")
 	var script: Script = building.get_script() as Script
 	if script == null:
 		return

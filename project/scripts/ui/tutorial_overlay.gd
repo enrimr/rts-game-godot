@@ -10,7 +10,7 @@ const STEPS: Array[Dictionary] = [
 	{"title": "TUTORIAL_STEP0_TITLE",  "body": "TUTORIAL_STEP0_BODY",  "condition": ""},
 	{"title": "TUTORIAL_STEP1_TITLE",  "body": "TUTORIAL_STEP1_BODY",  "condition": "camera_moved"},
 	{"title": "TUTORIAL_STEP2_TITLE",  "body": "TUTORIAL_STEP2_BODY",  "condition": "resource_gathered"},
-	{"title": "TUTORIAL_STEP3_TITLE",  "body": "TUTORIAL_STEP3_BODY",  "condition": "unit_moved"},
+	{"title": "TUTORIAL_STEP3_TITLE",  "body": "TUTORIAL_STEP3_BODY",  "condition": "building_placed"},
 	{"title": "TUTORIAL_STEP4_TITLE",  "body": "TUTORIAL_STEP4_BODY",  "condition": ""},
 	{"title": "TUTORIAL_STEP5_TITLE",  "body": "TUTORIAL_STEP5_BODY",  "condition": "town_center_opened"},
 	{"title": "TUTORIAL_STEP5B_TITLE", "body": "TUTORIAL_STEP5B_BODY", "condition": "barracks_built"},
