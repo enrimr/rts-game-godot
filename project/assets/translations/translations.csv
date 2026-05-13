@@ -52,7 +52,7 @@ ACTION_STABLE,Stable\n175W,Cuadra\n175M
 ACTION_UNIVERSITY,University\n200W,Universidad\n200M
 ACTION_MARKET,Market\n175W,Mercado\n175M
 ACTION_TEMPLE,Temple\n175W,Templo\n175M
-ACTION_WONDER,Wonder\n1000W 1000S 1000G,Maravilla\n1000M 1000P 1000O
+ACTION_WONDER,Wonder\n2500W 2500F 2500S 5000G,Maravilla\n2500M 2500C 2500P 5000O
 ACTION_HEAVY_SCOUT,Heavy Scout\n80F 30G,Explorador Pesado\n80C 30O
 ACTION_KNIGHT,Knight\n60F 75G,Caballero\n60C 75O
 ACTION_TRANSPORT_SHIP,Transport Ship,Barco de Transporte
@@ -180,3 +180,35 @@ CIV_ATLANTES_NAME,Atlantes,Atlantes
 CIV_ATLANTES_DESC,Mysterious seafarers. Build on ocean tiles, move freely through shallow water and dominate the coast.,Navegantes misteriosos. Construyen sobre el océano, se mueven libremente por aguas poco profundas y dominan la costa.
 CIV_FENICIOS_NAME,Fenicios,Fenicios
 CIV_FENICIOS_DESC,Ancient traders. Market available from the start and merchant ships generate passive gold.,Comerciantes ancestrales. El mercado está disponible desde el inicio y los barcos mercantes generan oro pasivo.
+TOOLTIP_MOVE_TO,Move to a target location. [M],Mover a una posición objetivo. [M]
+TOOLTIP_ATTACK_MOVE,Move toward a position automatically attacking enemies in range. [A],Avanza hacia una posición atacando automáticamente a los enemigos en rango. [A]
+TOOLTIP_STOP,Cancel all orders and stand idle. [X],Cancela todas las órdenes y detén la unidad. [X]
+TOOLTIP_DESTROY,Permanently destroy the selected unit or building. Cannot be undone. [Del],Destruye permanentemente la unidad o edificio seleccionado. No se puede deshacer. [Supr]
+TOOLTIP_GATHER_WOOD,Send villagers to chop wood from nearby trees. [C],Envía aldeanos a talar madera de árboles cercanos. [C]
+TOOLTIP_GATHER_GOLD,Send villagers to mine gold from deposits. [G],Envía aldeanos a extraer oro de depósitos. [G]
+TOOLTIP_GATHER_STONE,Send villagers to quarry stone. [T],Envía aldeanos a extraer piedra de canteras. [T]
+TOOLTIP_GATHER_FOOD,Send villagers to gather food from farms hunted animals or berries. [H],Envía aldeanos a recolectar comida de granjas caza o bayas. [H]
+TOOLTIP_BUILD_MENU,Open the building menu to place structures. [B],Abre el menú de construcción para colocar edificios. [B]
+TOOLTIP_BUILD_HOUSE,Increases population cap by 5. Build more to support a larger army.,Aumenta el límite de población en 5. Construye más para mantener un ejército mayor.
+TOOLTIP_BUILD_BARRACKS,Trains infantry units: Militia Archer and Pikeman.,Entrena unidades de infantería: Milicia Arquero y Lancero.
+TOOLTIP_BUILD_BLACKSMITH,Research attack and armor upgrades for your units.,Investiga mejoras de ataque y armadura para tus unidades.
+TOOLTIP_BUILD_STABLE,Trains cavalry: Heavy Scout (Feudal Age) and Knight (Castle Age).,Entrena caballería: Explorador Pesado (Edad Feudal) y Caballero (Edad del Castillo).
+TOOLTIP_BUILD_LUMBER,Wood drop-off point. Villagers deposit gathered wood here.,Punto de entrega de madera. Los aldeanos depositan aquí la madera recolectada.
+TOOLTIP_BUILD_MINING,Drop-off point for gold and stone.,Punto de entrega de oro y piedra.
+TOOLTIP_BUILD_FARM,Generates food passively over time. No villager required.,Genera comida de forma pasiva con el tiempo. No requiere aldeanos.
+TOOLTIP_BUILD_WALL,Stone wall that blocks enemy movement. Chain walls to protect your base.,Muro de piedra que bloquea el movimiento enemigo. Enlaza muros para proteger tu base.
+TOOLTIP_BUILD_GATE,A wall section that can be opened closed or locked to control passage.,Una sección de muro que se puede abrir cerrar o bloquear para controlar el paso.
+TOOLTIP_BUILD_DOCK,Naval production building. Train ships and fishing boats.,Edificio de producción naval. Entrena barcos y botes de pesca.
+TOOLTIP_BUILD_UNIVERSITY,Research advanced technologies to improve your military.,Investiga tecnologías avanzadas para mejorar tu ejército.
+TOOLTIP_BUILD_MARKET,Trade surplus resources for gold. Buy or sell large quantities.,Intercambia recursos sobrantes por oro. Compra o vende en grandes cantidades.
+TOOLTIP_BUILD_TEMPLE,Research religious technologies that strengthen your units.,Investiga tecnologías religiosas que fortalecen tus unidades.
+TOOLTIP_BUILD_WONDER,In Wonder mode completing this building starts a 4-minute countdown to victory. Requires Imperial Age.,En modo Maravilla completar este edificio inicia una cuenta atrás de 4 minutos para la victoria. Requiere Era Imperial.
+TOOLTIP_BUILD_BACK,Return to the main action panel.,Volver al panel de acciones principal.
+TOOLTIP_TRAIN_VILLAGER,Train a villager to gather resources and construct buildings. Essential for your economy.,Entrena un aldeano para recolectar recursos y construir edificios. Esencial para tu economía.
+TOOLTIP_HEAVY_SCOUT,Fast cavalry available from Feudal Age. Effective for raiding and early pressure.,Caballería rápida disponible desde la Edad Feudal. Eficaz para incursiones y presión temprana.
+TOOLTIP_KNIGHT,Heavy cavalry with high attack and HP. The backbone of a Castle Age army.,Caballería pesada con alto ataque y vida. La columna vertebral de un ejército de la Edad del Castillo.
+TOOLTIP_FISHING_BOAT,Harvests fish from the water providing a steady food income.,Cosecha peces del agua proporcionando una fuente constante de comida.
+TOOLTIP_TRANSPORT_SHIP,Carries up to 8 units across water. Essential for attacking on island maps.,Transporta hasta 8 unidades a través del agua. Esencial para atacar en mapas de islas.
+TOOLTIP_WAR_GALLEY,Combat warship with ranged attack. Dominates coastal waters and can bombard shore buildings.,Barco de guerra con ataque a distancia. Domina las aguas costeras y puede bombardear edificios en la orilla.
+TOOLTIP_UNLOAD,Unload all garrisoned units from the transport ship at the current position.,Desembarca todas las unidades de la bodega en la posición actual.
+TOOLTIP_GATE_LOCK,Lock or unlock the gate to control passage. Locked gates block all units including allies.,Bloquea o desbloquea la puerta para controlar el paso. Las puertas bloqueadas impiden el paso a todas las unidades incluidas las aliadas.

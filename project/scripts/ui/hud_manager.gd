@@ -23,61 +23,61 @@ signal pending_action_cancelled()
 @onready var _train_queue_row: HBoxContainer = %TrainQueueRow
 @onready var _pause_overlay: ColorRect = %PauseOverlay
 
-const DESTROY_ACTION: Dictionary = {"id": "destroy", "label": "ACTION_DESTROY", "color": Color(0.55, 0.05, 0.05), "cost": {}, "key": KEY_DELETE}
+const DESTROY_ACTION: Dictionary = {"id": "destroy", "label": "ACTION_DESTROY", "color": Color(0.55, 0.05, 0.05), "cost": {}, "key": KEY_DELETE, "description": "TOOLTIP_DESTROY"}
 
 const VILLAGER_ACTIONS: Array = [
-	{"id": "gather_wood",  "label": "ACTION_WOOD",         "color": Color(0.20, 0.55, 0.15), "cost": {}, "key": KEY_C},
-	{"id": "gather_gold",  "label": "ACTION_GOLD",         "color": Color(0.75, 0.65, 0.10), "cost": {}, "key": KEY_G},
-	{"id": "gather_stone", "label": "ACTION_STONE",        "color": Color(0.55, 0.55, 0.55), "cost": {}, "key": KEY_T},
-	{"id": "gather_food",  "label": "ACTION_FOOD",         "color": Color(0.60, 0.20, 0.15), "cost": {}, "key": KEY_H},
-	{"id": "build_menu",   "label": "ACTION_BUILD",        "color": Color(0.20, 0.30, 0.60), "cost": {}, "key": KEY_B},
-	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M},
-	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A},
-	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
+	{"id": "gather_wood",  "label": "ACTION_WOOD",         "color": Color(0.20, 0.55, 0.15), "cost": {}, "key": KEY_C, "description": "TOOLTIP_GATHER_WOOD"},
+	{"id": "gather_gold",  "label": "ACTION_GOLD",         "color": Color(0.75, 0.65, 0.10), "cost": {}, "key": KEY_G, "description": "TOOLTIP_GATHER_GOLD"},
+	{"id": "gather_stone", "label": "ACTION_STONE",        "color": Color(0.55, 0.55, 0.55), "cost": {}, "key": KEY_T, "description": "TOOLTIP_GATHER_STONE"},
+	{"id": "gather_food",  "label": "ACTION_FOOD",         "color": Color(0.60, 0.20, 0.15), "cost": {}, "key": KEY_H, "description": "TOOLTIP_GATHER_FOOD"},
+	{"id": "build_menu",   "label": "ACTION_BUILD",        "color": Color(0.20, 0.30, 0.60), "cost": {}, "key": KEY_B, "description": "TOOLTIP_BUILD_MENU"},
+	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
+	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	DESTROY_ACTION,
 ]
 
 const BUILD_ACTIONS: Array = [
-	{"id": "build:house",         "label": "ACTION_HOUSE",        "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H},
-	{"id": "build:barracks",      "label": "ACTION_BARRACKS",     "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B},
-	{"id": "build:blacksmith",    "label": "ACTION_BLACKSMITH",   "color": Color(0.55, 0.40, 0.20), "cost": {"wood": 150}, "key": KEY_K},
-	{"id": "build:stable",        "label": "ACTION_STABLE",       "color": Color(0.40, 0.30, 0.15), "cost": {"wood": 175}, "key": KEY_S},
-	{"id": "build:lumber_camp",   "label": "ACTION_LUMBER",       "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L},
-	{"id": "build:mining_camp",   "label": "ACTION_MINING",       "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N},
-	{"id": "build:farm",          "label": "ACTION_FARM",         "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F},
-	{"id": "build:wall_segment",  "label": "ACTION_WALL",         "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_W},
-	{"id": "build:gate",          "label": "ACTION_GATE",         "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G},
-	{"id": "build:dock",          "label": "ACTION_DOCK",         "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D},
-	{"id": "build:university",    "label": "ACTION_UNIVERSITY",   "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U},
-	{"id": "build:market",        "label": "ACTION_MARKET",       "color": Color(0.65, 0.50, 0.10), "cost": {"wood": 175}, "key": KEY_R},
-	{"id": "build:temple",        "label": "ACTION_TEMPLE",       "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175},                             "key": KEY_T},
-	{"id": "build:wonder",        "label": "ACTION_WONDER",       "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000}, "key": KEY_V},
-	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},                                           "key": KEY_ESCAPE},
+	{"id": "build:house",         "label": "ACTION_HOUSE",        "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H, "description": "TOOLTIP_BUILD_HOUSE"},
+	{"id": "build:barracks",      "label": "ACTION_BARRACKS",     "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B, "description": "TOOLTIP_BUILD_BARRACKS"},
+	{"id": "build:blacksmith",    "label": "ACTION_BLACKSMITH",   "color": Color(0.55, 0.40, 0.20), "cost": {"wood": 150}, "key": KEY_K, "description": "TOOLTIP_BUILD_BLACKSMITH"},
+	{"id": "build:stable",        "label": "ACTION_STABLE",       "color": Color(0.40, 0.30, 0.15), "cost": {"wood": 175}, "key": KEY_S, "description": "TOOLTIP_BUILD_STABLE"},
+	{"id": "build:lumber_camp",   "label": "ACTION_LUMBER",       "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L, "description": "TOOLTIP_BUILD_LUMBER"},
+	{"id": "build:mining_camp",   "label": "ACTION_MINING",       "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N, "description": "TOOLTIP_BUILD_MINING"},
+	{"id": "build:farm",          "label": "ACTION_FARM",         "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F, "description": "TOOLTIP_BUILD_FARM"},
+	{"id": "build:wall_segment",  "label": "ACTION_WALL",         "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_W, "description": "TOOLTIP_BUILD_WALL"},
+	{"id": "build:gate",          "label": "ACTION_GATE",         "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G, "description": "TOOLTIP_BUILD_GATE"},
+	{"id": "build:dock",          "label": "ACTION_DOCK",         "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D, "description": "TOOLTIP_BUILD_DOCK"},
+	{"id": "build:university",    "label": "ACTION_UNIVERSITY",   "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U, "description": "TOOLTIP_BUILD_UNIVERSITY"},
+	{"id": "build:market",        "label": "ACTION_MARKET",       "color": Color(0.65, 0.50, 0.10), "cost": {"wood": 175}, "key": KEY_R, "description": "TOOLTIP_BUILD_MARKET"},
+	{"id": "build:temple",        "label": "ACTION_TEMPLE",       "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175},                             "key": KEY_T, "description": "TOOLTIP_BUILD_TEMPLE"},
+	{"id": "build:wonder",        "label": "ACTION_WONDER",       "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000}, "key": KEY_V, "description": "TOOLTIP_BUILD_WONDER"},
+	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},                                           "key": KEY_ESCAPE, "description": "TOOLTIP_BUILD_BACK"},
 ]
 
 const STABLE_UNIT_DEFS: Array[Dictionary] = [
-	{"id": "heavy_scout", "label": "ACTION_HEAVY_SCOUT", "color": Color(0.55, 0.40, 0.15), "cost": {"food": 80, "gold": 30}, "age": 1},
-	{"id": "knight",      "label": "ACTION_KNIGHT",      "color": Color(0.25, 0.30, 0.55), "cost": {"food": 60, "gold": 75}, "age": 2},
+	{"id": "heavy_scout", "label": "ACTION_HEAVY_SCOUT", "color": Color(0.55, 0.40, 0.15), "cost": {"food": 80, "gold": 30}, "age": 1, "description": "TOOLTIP_HEAVY_SCOUT"},
+	{"id": "knight",      "label": "ACTION_KNIGHT",      "color": Color(0.25, 0.30, 0.55), "cost": {"food": 60, "gold": 75}, "age": 2, "description": "TOOLTIP_KNIGHT"},
 ]
 
 const TOWN_CENTER_ACTIONS: Array = [
-	{"id": "train:villager", "label": "ACTION_VILLAGER", "color": Color(0.20, 0.45, 0.20), "cost": {"food": 50}, "key": KEY_V},
+	{"id": "train:villager", "label": "ACTION_VILLAGER", "color": Color(0.20, 0.45, 0.20), "cost": {"food": 50}, "key": KEY_V, "description": "TOOLTIP_TRAIN_VILLAGER"},
 ]
 
 const UNIT_ACTIONS: Array = [
-	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M},
-	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A},
-	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
+	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
+	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	DESTROY_ACTION,
 ]
 
 const ANIMAL_ACTIONS: Array = [
-	{"id": "move_to", "label": "ACTION_MOVE_TO", "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M},
+	{"id": "move_to", "label": "ACTION_MOVE_TO", "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
 ]
 
 const TRANSPORT_ACTIONS: Array = [
-	{"id": "unload",  "label": "UI_UNLOAD",      "color": Color(0.20, 0.45, 0.65), "cost": {}, "key": KEY_U},
-	{"id": "stop",    "label": "ACTION_STOP",    "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X},
+	{"id": "unload",  "label": "UI_UNLOAD",      "color": Color(0.20, 0.45, 0.65), "cost": {}, "key": KEY_U, "description": "TOOLTIP_UNLOAD"},
+	{"id": "stop",    "label": "ACTION_STOP",    "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	DESTROY_ACTION,
 ]
 
@@ -86,13 +86,13 @@ const BUILDING_ACTIONS: Array = [
 ]
 
 const DOCK_UNIT_DEFS: Array = [
-	{"id": "fishing_boat",   "label": "ACTION_FISHING_BOAT",   "color": Color(0.20, 0.50, 0.65), "cost": {"wood": 75},            "age": 0},
-	{"id": "transport_ship", "label": "ACTION_TRANSPORT_SHIP", "color": Color(0.55, 0.45, 0.20), "cost": {"wood": 125},           "age": 1},
-	{"id": "war_galley",     "label": "ACTION_WAR_GALLEY",     "color": Color(0.65, 0.18, 0.18), "cost": {"wood": 75, "gold": 35}, "age": 1},
+	{"id": "fishing_boat",   "label": "ACTION_FISHING_BOAT",   "color": Color(0.20, 0.50, 0.65), "cost": {"wood": 75},            "age": 0, "description": "TOOLTIP_FISHING_BOAT"},
+	{"id": "transport_ship", "label": "ACTION_TRANSPORT_SHIP", "color": Color(0.55, 0.45, 0.20), "cost": {"wood": 125},           "age": 1, "description": "TOOLTIP_TRANSPORT_SHIP"},
+	{"id": "war_galley",     "label": "ACTION_WAR_GALLEY",     "color": Color(0.65, 0.18, 0.18), "cost": {"wood": 75, "gold": 35}, "age": 1, "description": "TOOLTIP_WAR_GALLEY"},
 ]
 
 const GATE_ACTIONS: Array = [
-	{"id": "gate_lock", "label": "UI_GATE_LOCK", "color": Color(0.55, 0.15, 0.10), "cost": {}, "key": KEY_O},
+	{"id": "gate_lock", "label": "UI_GATE_LOCK", "color": Color(0.55, 0.15, 0.10), "cost": {}, "key": KEY_O, "description": "TOOLTIP_GATE_LOCK"},
 	DESTROY_ACTION,
 ]
 
@@ -387,7 +387,7 @@ func _populate_buttons(actions: Array) -> void:
 		btn.disabled = not can_pay
 		var desc: String = data.get("description", "") as String
 		if not desc.is_empty():
-			btn.tooltip_text = desc
+			btn.tooltip_text = tr(desc)
 		btn.action_pressed.connect(_on_action_button_pressed)
 		_action_grid.add_child(btn)
 
