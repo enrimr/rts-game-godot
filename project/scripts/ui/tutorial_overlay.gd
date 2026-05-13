@@ -2,6 +2,7 @@ class_name TutorialOverlay
 extends Control
 
 signal finished
+signal completed
 signal step_changed(step: int, condition: String)
 
 ## Each step has a title/body key and an optional condition tag.
@@ -197,6 +198,7 @@ func _go_to(step: int) -> void:
 func _on_next_pressed() -> void:
 	_completed[_current_step] = true
 	if _current_step >= STEPS.size() - 1:
+		completed.emit()
 		close()
 	else:
 		_go_to(_current_step + 1)

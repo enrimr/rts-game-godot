@@ -1690,6 +1690,7 @@ func _start_tutorial() -> void:
 	_tutorial_overlay = TutorialOverlay.new()
 	get_node("HUDRoot").add_child(_tutorial_overlay)
 	_tutorial_overlay.finished.connect(func() -> void: _tutorial_overlay = null)
+	_tutorial_overlay.completed.connect(func() -> void: _on_game_over(0))
 	_tutorial_overlay.step_changed.connect(_on_tutorial_step_changed)
 	_tutorial_overlay.start()
 	_wire_tutorial_signals()
