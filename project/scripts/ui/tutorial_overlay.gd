@@ -4,16 +4,17 @@ extends Control
 signal finished
 
 const STEPS: Array[Dictionary] = [
-	{"title": "TUTORIAL_STEP0_TITLE", "body": "TUTORIAL_STEP0_BODY"},
-	{"title": "TUTORIAL_STEP1_TITLE", "body": "TUTORIAL_STEP1_BODY"},
-	{"title": "TUTORIAL_STEP2_TITLE", "body": "TUTORIAL_STEP2_BODY"},
-	{"title": "TUTORIAL_STEP3_TITLE", "body": "TUTORIAL_STEP3_BODY"},
-	{"title": "TUTORIAL_STEP4_TITLE", "body": "TUTORIAL_STEP4_BODY"},
-	{"title": "TUTORIAL_STEP5_TITLE", "body": "TUTORIAL_STEP5_BODY"},
-	{"title": "TUTORIAL_STEP6_TITLE", "body": "TUTORIAL_STEP6_BODY"},
-	{"title": "TUTORIAL_STEP7_TITLE", "body": "TUTORIAL_STEP7_BODY"},
-	{"title": "TUTORIAL_STEP8_TITLE", "body": "TUTORIAL_STEP8_BODY"},
-	{"title": "TUTORIAL_STEP9_TITLE", "body": "TUTORIAL_STEP9_BODY"},
+	{"title": "TUTORIAL_STEP0_TITLE",  "body": "TUTORIAL_STEP0_BODY"},
+	{"title": "TUTORIAL_STEP1_TITLE",  "body": "TUTORIAL_STEP1_BODY"},
+	{"title": "TUTORIAL_STEP2_TITLE",  "body": "TUTORIAL_STEP2_BODY"},
+	{"title": "TUTORIAL_STEP3_TITLE",  "body": "TUTORIAL_STEP3_BODY"},
+	{"title": "TUTORIAL_STEP4_TITLE",  "body": "TUTORIAL_STEP4_BODY"},
+	{"title": "TUTORIAL_STEP5_TITLE",  "body": "TUTORIAL_STEP5_BODY"},
+	{"title": "TUTORIAL_STEP5B_TITLE", "body": "TUTORIAL_STEP5B_BODY"},
+	{"title": "TUTORIAL_STEP6_TITLE",  "body": "TUTORIAL_STEP6_BODY"},
+	{"title": "TUTORIAL_STEP7_TITLE",  "body": "TUTORIAL_STEP7_BODY"},
+	{"title": "TUTORIAL_STEP8_TITLE",  "body": "TUTORIAL_STEP8_BODY"},
+	{"title": "TUTORIAL_STEP9_TITLE",  "body": "TUTORIAL_STEP9_BODY"},
 ]
 
 var _current_step: int = 0
@@ -48,12 +49,14 @@ func _build_card() -> void:
 	outer.add_child(center)
 
 	var pad: MarginContainer = MarginContainer.new()
-	pad.add_theme_constant_override("margin_bottom", 12)
+	pad.add_theme_constant_override("margin_left",   24)
+	pad.add_theme_constant_override("margin_right",  24)
+	pad.add_theme_constant_override("margin_bottom", 24)
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(pad)
 
 	_card = PanelContainer.new()
-	_card.custom_minimum_size = Vector2(600.0, 0.0)
+	_card.custom_minimum_size = Vector2(640.0, 0.0)
 	_card.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var panel_style: StyleBoxFlat = StyleBoxFlat.new()
