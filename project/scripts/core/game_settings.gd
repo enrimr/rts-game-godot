@@ -5,7 +5,7 @@ extends Node
 
 const SAVE_PATH: String = "user://settings.cfg"
 
-enum Difficulty { EASY = 0, NORMAL = 1, HARD = 2 }
+enum Difficulty { EASY = 0, NORMAL = 1, HARD = 2, TUTORIAL = 3 }
 
 var music_volume:   float = 1.0    # 0.0 – 1.0 linear
 var sfx_volume:     float = 1.0    # 0.0 – 1.0 linear
@@ -23,26 +23,30 @@ func _ready() -> void:
 
 func get_ai_villager_target() -> int:
 	match difficulty:
-		Difficulty.EASY:   return 5
-		Difficulty.HARD:   return 12
+		Difficulty.TUTORIAL: return 2
+		Difficulty.EASY:     return 5
+		Difficulty.HARD:     return 12
 	return 8  # NORMAL
 
 func get_ai_military_target_passive() -> int:
 	match difficulty:
-		Difficulty.EASY:   return 3
-		Difficulty.HARD:   return 8
+		Difficulty.TUTORIAL: return 1
+		Difficulty.EASY:     return 3
+		Difficulty.HARD:     return 8
 	return 5
 
 func get_ai_attack_interval() -> float:
 	match difficulty:
-		Difficulty.EASY:   return 60.0
-		Difficulty.HARD:   return 18.0
+		Difficulty.TUTORIAL: return 180.0
+		Difficulty.EASY:     return 60.0
+		Difficulty.HARD:     return 18.0
 	return 30.0
 
 func get_ai_min_attack_units() -> int:
 	match difficulty:
-		Difficulty.EASY:   return 5
-		Difficulty.HARD:   return 2
+		Difficulty.TUTORIAL: return 10
+		Difficulty.EASY:     return 5
+		Difficulty.HARD:     return 2
 	return 3
 
 # ---------------------------------------------------------------------------

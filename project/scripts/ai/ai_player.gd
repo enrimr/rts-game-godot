@@ -249,7 +249,8 @@ func _manage_economy_buildings() -> void:
 	# Farms: build up to 2 farms in Feudal when food is low and we have wood spare
 	if age >= GameManager.Age.FEUDAL:
 		var farm_count: int = _built.get("farm", 0) as int
-		var max_farms: int = 2 if GameSettings.difficulty == GameSettings.Difficulty.EASY else 3
+		var _easy_mode: bool = GameSettings.difficulty == GameSettings.Difficulty.EASY or GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL
+		var max_farms: int = 2 if _easy_mode else 3
 		if farm_count < max_farms and wood > 120 \
 				and ResourceManager.can_afford(player_id, BUILDING_COSTS["farm"]):
 			_build("farm")
@@ -422,7 +423,8 @@ func _manage_age_advance() -> void:
 		return
 	# Only advance when economy is stable and we have a defensive force
 	var military: int = _count_military()
-	var min_mil: int = 2 if GameSettings.difficulty == GameSettings.Difficulty.EASY else 3
+	var _easy_mode: bool = GameSettings.difficulty == GameSettings.Difficulty.EASY or GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL
+	var min_mil: int = 2 if _easy_mode else 3
 	if military >= min_mil and AgeManager.can_advance(player_id):
 		AgeManager.start_advance(player_id)
 

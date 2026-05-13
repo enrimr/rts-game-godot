@@ -598,15 +598,22 @@ func _prompt_tutorial() -> void:
 	skip_btn.pressed.connect(func() -> void: overlay.queue_free())
 
 func _launch_tutorial_game() -> void:
+	var saved_difficulty: int = GameSettings.difficulty
 	MatchConfig.map_type        = MatchConfig.MapType.PLAINS
 	MatchConfig.map_size        = MatchConfig.MapSize.SMALL
-	MatchConfig.resources       = MatchConfig.Resources.FULL_COMBAT
+	MatchConfig.resources       = MatchConfig.Resources.TUTORIAL
 	MatchConfig.player_civ_id   = "guanches"
 	MatchConfig.starting_age    = 0
 	MatchConfig.rival_count     = 1
 	MatchConfig.rival_civ_ids.assign(["castellanos"])
 	MatchConfig.victory_mode    = MatchConfig.VictoryMode.CONQUEST
 	MatchConfig.launch_tutorial = true
+	GameSettings.difficulty     = GameSettings.Difficulty.TUTORIAL
+	# Restore player's real settings after the tutorial session ends
+	GameManager.game_over.connect(func(_winner: int) -> void:
+		GameSettings.difficulty = saved_difficulty
+		MatchConfig.resources   = MatchConfig.Resources.NORMAL
+	, CONNECT_ONE_SHOT)
 	_on_lobby_start()
 
 # --- Helpers ---

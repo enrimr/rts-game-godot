@@ -4,7 +4,7 @@ extends Node
 ## Written before loading game_world, read during _ready().
 
 enum MapSize      { SMALL = 0, MEDIUM = 1, LARGE = 2 }
-enum Resources    { SCARCE = 0, NORMAL = 1, ABUNDANT = 2, FULL_COMBAT = 3 }
+enum Resources    { SCARCE = 0, NORMAL = 1, ABUNDANT = 2, FULL_COMBAT = 3, TUTORIAL = 4 }
 enum MapType      { PLAINS = 0, STANDARD = 1, VOLCANIC_COAST = 2, DESERT_COAST = 3, ISLANDS = 4 }
 enum VictoryMode  { CONQUEST = 0, REGICIDE = 1, WONDER = 2 }
 
@@ -34,8 +34,8 @@ var rival_civ_id: String:
 # Map size → MAP_HALF px
 const MAP_HALF_BY_SIZE: Array[float] = [1200.0, 1800.0, 2600.0]
 
-# Resources multiplier on deposit count and amount (FULL_COMBAT uses same as ABUNDANT)
-const RES_MULT_BY_LEVEL: Array[float] = [0.65, 1.0, 1.5, 1.5]
+# Resources multiplier on deposit count and amount (FULL_COMBAT uses same as ABUNDANT; TUTORIAL is very sparse)
+const RES_MULT_BY_LEVEL: Array[float] = [0.65, 1.0, 1.5, 1.5, 0.35]
 
 # Starting stockpile for FULL_COMBAT — enough to train and build immediately
 const FULL_COMBAT_STARTING: Dictionary = {
@@ -49,7 +49,7 @@ func get_map_half() -> float:
 	return MAP_HALF_BY_SIZE[clampi(map_size, 0, 2)]
 
 func get_resource_multiplier() -> float:
-	return RES_MULT_BY_LEVEL[clampi(resources, 0, 3)]
+	return RES_MULT_BY_LEVEL[clampi(resources, 0, 4)]
 
 func get_starting_resources() -> Dictionary:
 	if resources == Resources.FULL_COMBAT:
