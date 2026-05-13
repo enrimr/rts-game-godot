@@ -1746,7 +1746,12 @@ func _on_tutorial_building_placed(building: Node, player_id: int) -> void:
 	var script: Script = building.get_script() as Script
 	if script == null:
 		return
-	if "barracks" in script.resource_path.to_lower():
+	var path: String = script.resource_path.to_lower()
+	if "lumber_camp" in path or "mining_camp" in path:
+		_tutorial_notify("camp_built")
+	if "house" in path:
+		_tutorial_notify("house_built")
+	if "barracks" in path:
 		_tutorial_notify("barracks_built")
 
 func _on_tutorial_age_advance(player_id: int, _target: int) -> void:
