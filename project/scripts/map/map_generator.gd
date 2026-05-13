@@ -10,7 +10,7 @@ const R_TC: float             = 130.0
 const R_UNIT: float           = 22.0
 const R_ANIMAL: float         = 28.0
 const R_RES_WOOD: float       = 22.0
-const R_RES_OTHER: float      = 30.0
+const R_RES_OTHER: float      = 32.0
 # Tighter packing radius for forest zones — trees placed at 26 px minimum spacing
 const FOREST_NODE_RADIUS: float = 13.0
 
@@ -670,9 +670,13 @@ func _spawn_player_resources(parent: Node2D, tc: Vector2,
 	var stone_angle: float = gold_angle + _rng.randf_range(PI * 0.55, PI * 0.85)
 
 	_spawn_deposit(parent, tc, ResourceNode.ResourceType.GOLD,
-		roundi(5.0 * _res_mult), 160.0 * _res_mult, gold_angle + angle_offset, 320.0, 480.0)
+		roundi(7.0 * _res_mult), 160.0 * _res_mult, gold_angle + angle_offset, 320.0, 480.0)
+	_spawn_deposit(parent, tc, ResourceNode.ResourceType.GOLD,
+		roundi(4.0 * _res_mult), 160.0 * _res_mult, gold_angle + angle_offset + PI * 0.5, 320.0, 480.0)
 	_spawn_deposit(parent, tc, ResourceNode.ResourceType.STONE,
-		roundi(5.0 * _res_mult), 180.0 * _res_mult, stone_angle + angle_offset, 360.0, 530.0)
+		roundi(7.0 * _res_mult), 180.0 * _res_mult, stone_angle + angle_offset, 360.0, 530.0)
+	_spawn_deposit(parent, tc, ResourceNode.ResourceType.STONE,
+		roundi(4.0 * _res_mult), 180.0 * _res_mult, stone_angle + angle_offset + PI * 0.5, 360.0, 530.0)
 
 	var forest_base: float = _rng.randf_range(0.0, TAU)
 	# Size variants: [tree_min, tree_max, zone_radius]
@@ -693,7 +697,7 @@ func _spawn_player_resources(parent: Node2D, tc: Vector2,
 
 	var food_angle: float = _rng.randf_range(0.0, TAU) + angle_offset
 	_spawn_deposit(parent, tc, ResourceNode.ResourceType.FOOD_HUNT,
-		roundi(3.0 * _res_mult), 110.0 * _res_mult, food_angle,            160.0, 280.0)
+		roundi(6.0 * _res_mult), 110.0 * _res_mult, food_angle,            160.0, 280.0)
 	_spawn_deposit(parent, tc, ResourceNode.ResourceType.FOOD_HUNT,
 		roundi(3.0 * _res_mult), 110.0 * _res_mult, food_angle + PI * 0.6, 180.0, 300.0)
 
@@ -704,10 +708,10 @@ func _spawn_player_resources_clamped(parent: Node2D, tc: Vector2,
 	var max_dist: float = island_radius * 0.65
 
 	_spawn_deposit_clamped(parent, tc, ResourceNode.ResourceType.GOLD,
-		roundi(4.0 * _res_mult), 140.0 * _res_mult,
+		roundi(8.0 * _res_mult), 140.0 * _res_mult,
 		_rng.randf_range(0.0, TAU) + angle_offset, 160.0, max_dist, island_center, island_radius)
 	_spawn_deposit_clamped(parent, tc, ResourceNode.ResourceType.STONE,
-		roundi(4.0 * _res_mult), 160.0 * _res_mult,
+		roundi(8.0 * _res_mult), 160.0 * _res_mult,
 		_rng.randf_range(0.0, TAU) + angle_offset, 160.0, max_dist, island_center, island_radius)
 
 	var forest_count: int = _rng.randi_range(6, 8)
@@ -723,7 +727,7 @@ func _spawn_player_resources_clamped(parent: Node2D, tc: Vector2,
 
 	var food_angle: float = _rng.randf_range(0.0, TAU) + angle_offset
 	_spawn_deposit_clamped(parent, tc, ResourceNode.ResourceType.FOOD_HUNT,
-		roundi(3.0 * _res_mult), 100.0 * _res_mult,
+		roundi(6.0 * _res_mult), 100.0 * _res_mult,
 		food_angle, 120.0, max_dist, island_center, island_radius)
 
 func _spawn_neutral_resources(parent: Node2D) -> void:
@@ -755,15 +759,15 @@ func _spawn_neutral_resources(parent: Node2D) -> void:
 ## keeping a minimum distance from any TC so they supplement (not replace) per-player
 ## resources and neutral clusters.
 func _spawn_scattered_resources(parent: Node2D, tc_positions: Array[Vector2]) -> void:
-	const MIN_FROM_TC: float   = 500.0
+	const MIN_FROM_TC: float   = 380.0
 	const AREA_FRAC:   float   = 0.85   # stay within 85 % of map half
 	const FOREST_SIZES: Array  = [[12, 18, 50], [22, 30, 75], [35, 45, 105]]
 
 	# Attempt to place groups; each group is at a random map position
 	# that passes the TC distance filter
-	var scatter_gold:   int = roundi(3.0 * _res_mult)
-	var scatter_stone:  int = roundi(2.0 * _res_mult)
-	var scatter_forest: int = roundi(6.0 * _res_mult)
+	var scatter_gold:   int = roundi(6.0 * _res_mult)
+	var scatter_stone:  int = roundi(5.0 * _res_mult)
+	var scatter_forest: int = roundi(10.0 * _res_mult)
 
 	# Gold deposits
 	var placed_gold: int = 0
@@ -976,7 +980,7 @@ func _spawn_deposit(parent: Node2D, center: Vector2,
 	for _i: int in range(MAX_PLACE_TRIES * count):
 		if placed >= count:
 			break
-		var pos: Vector2 = _find_free_near(deposit_center, 90.0, obj_r)
+		var pos: Vector2 = _find_free_near(deposit_center, 85.0, obj_r)
 		if pos == Vector2.INF or TerrainManager.is_ocean(pos):
 			continue
 		_register(pos, obj_r)
@@ -1009,7 +1013,7 @@ func _spawn_deposit_clamped(parent: Node2D, center: Vector2,
 	for _i: int in range(MAX_PLACE_TRIES * count):
 		if placed >= count:
 			break
-		var pos: Vector2 = _find_free_near(deposit_center, 80.0, obj_r)
+		var pos: Vector2 = _find_free_near(deposit_center, 85.0, obj_r)
 		if pos == Vector2.INF:
 			continue
 		if not TerrainManager._point_in_any_land(pos):
@@ -1105,7 +1109,7 @@ static func create_resource_node(parent: Node2D, pos: Vector2,
 		node.add_child(body)
 
 		var obstacle: NavigationObstacle2D = NavigationObstacle2D.new()
-		obstacle.radius = w + 10.0
+		obstacle.radius = w + 4.0
 		obstacle.avoidance_enabled = true
 		node.add_child(obstacle)
 

@@ -18,6 +18,7 @@ config/name="Calima Kingdoms: Flames of the Atlantic"
 config/description="A real-time strategy game inspired by Age of Empires II."
 run/main_scene="res://scenes/game/main_menu.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
+config/icon="res://assets/app/calima-fota.icon.180.png"
 
 [autoload]
 

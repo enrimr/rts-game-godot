@@ -57,8 +57,15 @@ docs/             ← Architecture and design documentation
 | `project/scripts/ui/hud_manager.gd` | CanvasLayer controller: wires EventBus/GameManager signals, drives all HUD child nodes |
 | `project/scripts/ui/resource_display.gd` | `ResourceDisplay` — HBoxContainer showing one resource icon + amount |
 | `project/scripts/ui/unit_portrait.gd` | `UnitPortrait` — PanelContainer showing unit name abbreviation and HP bar in selection grid |
-| `project/scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, and age-up costs |
+| `project/scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, age-up costs, move speed, and attack speed |
 | `project/scripts/core/tech_manager.gd` | Research queue, applies technology effects to units |
+| `project/scripts/buildings/blacksmith.gd` | `Blacksmith` — research-only building; hosts BLACKSMITH techs |
+| `project/scripts/buildings/university.gd` | `University` — research-only building; hosts UNIVERSITY techs |
+| `project/scripts/buildings/temple.gd` | `Temple` — research-only building; hosts MONASTERY techs |
+| `project/scripts/buildings/market.gd` | `Market` — resource trading: `sell_lot` / `buy_lot` and single-unit variants |
+| `project/scripts/buildings/stable.gd` | `Stable` — trains `HeavyScout` (Feudal) and `Knight` (Castle); queue cap 5 |
+| `project/scripts/units/heavy_scout.gd` | `HeavyScout` — Feudal Age cavalry; trained at Stable |
+| `project/scripts/units/knight.gd` | `Knight` — Castle Age heavy cavalry; trained at Stable |
 
 ## Coding Conventions
 

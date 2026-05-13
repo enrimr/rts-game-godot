@@ -34,7 +34,7 @@ Uses Godot's built-in `NavigationAgent2D` on each unit. Navigation regions are u
 **Integration points:**
 
 - `UnitBase` carries a `civ_id: String = ""` property. Its `_safe_destination(destination: Vector2) -> Vector2` helper calls `TerrainManager.nearest_passable` before any nav agent assignment.
-- All unit `order_move` implementations (`Militia`, `Archer`, `Pikeman`, `Scout`) and `Villager._start_move_to` call `_safe_destination` before setting `nav_agent.target_position`.
+- All unit `order_move` implementations (`Militia`, `Archer`, `Pikeman`, `Scout`, `HeavyScout`, `Knight`) and `Villager._start_move_to` call `_safe_destination` before setting `nav_agent.target_position`.
 - `Animal` nodes call `TerrainManager.nearest_passable(pos, "")` in `order_move`, `_pick_wander_target`, and `_start_flee` so fauna never path onto water or other impassable terrain.
 
 ## NavMesh Carving
@@ -52,18 +52,27 @@ Tracked per-player as a boolean grid. Revealed when any unit/building has line o
 
 ## Tech Tree System
 
-Technologies are defined as `TechnologyResource` `.tres` files under `resources/technologies/`. Eight technologies are currently implemented:
+Technologies are defined as `TechnologyResource` `.tres` files under `resources/technologies/`. Seventeen technologies are currently implemented:
 
-| Technology | Researched at | Cost | Effect |
-|---|---|---|---|
-| `loom` | Barracks | Food | Villager HP / armor |
-| `fletching` | Barracks | Food / Gold | Archer attack / range |
-| `scale_barding` | Barracks | Food / Gold | Cavalry armor |
-| `bodkin_arrow` | Barracks | Food / Gold | Archer attack |
-| `chain_barding` | Barracks | Food / Gold | Cavalry armor |
-| `blast_furnace` | Barracks | Food / Gold | Infantry attack |
-| `plate_barding` | Barracks | Food / Gold | Cavalry armor |
-| `shipwright` | Barracks | Food / Gold | Ship speed / cost |
+| Technology | Researched at | Effect |
+|---|---|---|
+| `loom` | Barracks | Villager HP / armor |
+| `fletching` | Barracks | Archer attack / range |
+| `scale_barding` | Barracks | Cavalry armor |
+| `bodkin_arrow` | Barracks | Archer attack |
+| `chain_barding` | Barracks | Cavalry armor |
+| `blast_furnace` | Barracks | Infantry attack |
+| `plate_barding` | Barracks | Cavalry armor |
+| `shipwright` | Barracks | Ship speed / cost |
+| `forging` | Blacksmith | Melee attack |
+| `padded_archer_armor` | Blacksmith | Archer pierce armor |
+| `iron_casting` | Blacksmith | Melee attack |
+| `siege_engineering` | University | Siege weapon effectiveness |
+| `ballistics` | University | Projectile accuracy |
+| `chemistry` | University | Projectile attack bonus |
+| `sanctity` | Temple | Monk HP |
+| `fervor` | Temple | Monk move speed |
+| `atonement` | Temple | Monks can convert buildings |
 
 `TechManager` (autoload) owns the research queue and applies effects when research completes. `CivBonusManager` (autoload) stores per-player multipliers derived from civilization bonuses and applied techs.
 
@@ -128,6 +137,55 @@ Fishing boats automatically return food to the nearest friendly Dock. Right-clic
 Fishing boats can also construct a **Fish Trap** on ocean tiles. Fish Traps are ocean buildings that regenerate food over time, providing a passive food source that does not require the boat to travel to a resource node.
 
 Map boundary walls (invisible `NavigationObstacle2D` nodes along the map edges) prevent ships from sailing outside the playable area.
+
+## Production Buildings
+
+### Stable
+
+`scripts/buildings/stable.gd` (`class_name Stable`) extends `BuildingBase`. Trains cavalry units with a queue cap of 5 (`MAX_QUEUE`). Available units are gated by `AgeManager.get_age(player_id)`:
+
+| Unit ID | Class | Age requirement | Cost source |
+|---|---|---|---|
+| `heavy_scout` | `HeavyScout` | Feudal (1) | `resources/units/heavy_scout_data.tres` |
+| `knight` | `Knight` | Castle (2) | `resources/units/knight_data.tres` |
+
+Training cost is read from `UnitResource` fields (`cost_food`, `cost_wood`, `cost_gold`) and modified by `CivBonusManager.get_unit_cost_multiplier`. Resources are refunded on `order_cancel_train`. The `EventBus.train_queue_changed` signal is emitted after every queue mutation. On spawn, `PopulationManager.add_unit` is called and `EventBus.unit_spawned` is emitted.
+
+### Research-only buildings
+
+`Blacksmith`, `University`, and `Temple` extend `BuildingBase` and add no new API beyond the base class. They exist as production-building nodes so that `TechManager` can gate technology research by building type.
+
+### Market
+
+`scripts/buildings/market.gd` (`class_name Market`) extends `BuildingBase`.
+
+Exchange rates (all operations require `BuildingState.COMPLETE`):
+
+| Method | Direction | Rate |
+|---|---|---|
+| `sell_resource(player_id, resource)` | resource → gold | 15 units of resource per 1 gold |
+| `buy_resource(player_id, resource)` | gold → resource | 1 gold per 20 units of resource |
+| `sell_lot(player_id, resource)` | 100 resource → gold | 100 / 15 ≈ 6 gold |
+| `buy_lot(player_id, resource)` | 5 gold → resource | 5 × 20 = 100 units |
+
+## Cavalry Units
+
+`HeavyScout` (`scripts/units/heavy_scout.gd`) and `Knight` (`scripts/units/knight.gd`) both extend `UnitBase`. Their movement and attack FSM pattern matches `Militia`: `MOVING` / `ATTACKING` states, `order_move` / `order_attack` entry points, avoidance via `NavigationAgent2D.velocity_computed`. Stats are defined entirely in their respective `UnitResource` `.tres` files.
+
+## CivBonusManager — Extended API
+
+Two new query methods were added to `CivBonusManager`:
+
+| Method | Signature | Description |
+|---|---|---|
+| `get_archer_armor_pierce_bonus` | `(player_id: int) -> float` | Returns additive pierce-armor bonus for archers; backed by `archer_armor_pierce` key in `_ADDITIVE_KEYS` |
+| `get_unit_move_speed_multiplier` | `(player_id: int) -> float` | Returns the `unit_move_speed` multiplier applied to every unit's nav velocity |
+
+`get_attack_speed_multiplier` now also handles `unit_id == "archer"` by returning the `archer_attack_speed` multiplier.
+
+`_ADDITIVE_KEYS` now includes `"archer_armor_pierce"` (alongside the existing `"unit_armor_melee"`). Additive keys accumulate flat points rather than multiplying.
+
+`UnitBase._nav_velocity` multiplies movement speed by `CivBonusManager.get_unit_move_speed_multiplier(player_id)`. `Archer` attack speed is scaled by `CivBonusManager.get_attack_speed_multiplier(player_id, "archer")`.
 
 ## Age Advancement
 

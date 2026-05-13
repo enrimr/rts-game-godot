@@ -2,6 +2,7 @@ extends Control
 
 @onready var _play_button: Button = %PlayButton
 @onready var _quit_button: Button = %QuitButton
+@onready var _logo: TextureRect = %LogoImage
 
 var _settings_panel: Control = null
 
@@ -14,6 +15,23 @@ func _ready() -> void:
 	_style_play_button()
 	_build_settings_button()
 	_build_continue_button()
+	_adapt_to_viewport()
+	get_viewport().size_changed.connect(_adapt_to_viewport)
+
+func _adapt_to_viewport() -> void:
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	var logo_w: float = clampf(vp.x * 0.45, 280.0, 720.0)
+	var logo_h: float = logo_w * 0.45
+	var btn_w: float  = clampf(vp.x * 0.18, 160.0, 320.0)
+	_logo.custom_minimum_size = Vector2(logo_w, logo_h)
+	_play_button.custom_minimum_size = Vector2(btn_w, 52.0)
+	_quit_button.custom_minimum_size = Vector2(btn_w, 44.0)
+	var container: Node = _play_button.get_parent()
+	(container as Control).custom_minimum_size = Vector2(maxf(logo_w, btn_w), 0.0)
+	# Resize dynamic buttons (Continue, Settings) created at runtime
+	for child: Node in container.get_children():
+		if child is Button and child != _play_button and child != _quit_button:
+			(child as Button).custom_minimum_size = Vector2(btn_w, 44.0)
 
 func _style_play_button() -> void:
 	var normal: StyleBoxFlat = StyleBoxFlat.new()
