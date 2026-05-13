@@ -84,9 +84,9 @@ func _build_card() -> void:
 	_step_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	header_row.add_child(_step_label)
 
-	var spacer: Control = Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header_row.add_child(spacer)
+	var header_spacer: Control = Control.new()
+	header_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_row.add_child(header_spacer)
 
 	_title_label = Label.new()
 	_title_label.add_theme_font_size_override("font_size", 20)
