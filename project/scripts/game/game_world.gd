@@ -363,12 +363,18 @@ func _on_wonder_built(pid: int) -> void:
 func _on_wonder_destroyed(pid: int) -> void:
 	if _wonder_owner != pid:
 		return
+	var loser: int = pid
 	_wonder_timer = 0.0
 	_wonder_owner = -1
 	_wonder_node = null
 	var hud_mgr: Node = hud.get_node_or_null("HudManager")
 	if is_instance_valid(hud_mgr) and hud_mgr.has_method("hide_wonder_timer"):
 		hud_mgr.call("hide_wonder_timer")
+	# The player whose Wonder was destroyed loses
+	if loser == 0:
+		GameManager.declare_winner(1)
+	else:
+		GameManager.declare_winner(0)
 
 func _process(delta: float) -> void:
 	if _wonder_timer > 0.0:

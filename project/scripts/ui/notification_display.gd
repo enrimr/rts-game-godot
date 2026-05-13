@@ -159,6 +159,8 @@ func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 # --- Helpers ---
 
 func _building_name(building: Node) -> String:
+	if building is Wonder:
+		return tr("ACTION_WONDER").split("\n")[0]
 	var bdata: Variant = building.get("building_data")
 	if bdata != null:
 		var dname: Variant = (bdata as Resource).get("display_name")
