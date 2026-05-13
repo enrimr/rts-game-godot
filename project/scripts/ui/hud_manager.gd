@@ -1738,6 +1738,13 @@ func _on_tutorial_step_changed(_step: int, condition: String) -> void:
 		var have: int = ResourceManager.get_resources(local_player_id).get(res, 0) as int
 		if have < needed:
 			ResourceManager.add_resource(local_player_id, res, needed - have)
+	if condition == "unit_attacked":
+		var world: Node = get_tree().get_nodes_in_group("world").front()
+		if world == null:
+			world = get_tree().current_scene
+		var tc_node: Node2D = world.get_node_or_null("DropOffNode") as Node2D
+		var tc_pos: Vector2 = tc_node.global_position if tc_node != null else Vector2.ZERO
+		EventBus.tutorial_spawn_enemy_scout.emit(tc_pos)
 
 func _on_tutorial_resource_changed(player_id: int, res: String, amt: int) -> void:
 	if player_id != local_player_id:

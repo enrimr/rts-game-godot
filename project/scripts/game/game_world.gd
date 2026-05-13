@@ -189,6 +189,7 @@ func _ready() -> void:
 		_order_move_all(p)
 	)
 	EventBus.unit_selected.connect(_on_unit_selected_follow)
+	EventBus.tutorial_spawn_enemy_scout.connect(_on_tutorial_spawn_enemy_scout)
 
 	_fog = FogOfWar.new()
 	add_child(_fog)
@@ -253,6 +254,15 @@ func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	hero.global_position = tc_pos + Vector2(-80.0, -60.0)
 	units_layer.add_child(hero)
 	EventBus.unit_spawned.emit(hero, player_id)
+
+func _on_tutorial_spawn_enemy_scout(near_pos: Vector2) -> void:
+	var scout: CharacterBody2D = SCOUT_SCENE.instantiate() as CharacterBody2D
+	scout.set("player_id", 1)
+	scout.set("civ_id", MatchConfig.get_rival_civ_id(1))
+	scout.global_position = near_pos + Vector2(220.0, 0.0)
+	units_layer.add_child(scout)
+	PopulationManager.add_unit(1)
+	EventBus.unit_spawned.emit(scout, 1)
 
 func _setup_ai_node_only(rival_id: int, _tc_pos: Vector2) -> void:
 	# Creates only the AI controller node; buildings are restored by SaveManager.
