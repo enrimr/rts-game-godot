@@ -169,9 +169,6 @@ func _ready() -> void:
 	_build_follow_button()
 	_build_notifications()
 	_build_pause_menu_button()
-	if MatchConfig.launch_tutorial:
-		MatchConfig.launch_tutorial = false
-		call_deferred("_start_tutorial")
 
 func _process(delta: float) -> void:
 	if _clock_running:
@@ -510,6 +507,9 @@ func _on_game_started() -> void:
 		_snap_kills_rivals[rival_id]        = []
 		_snap_kills_rivals_prev[rival_id]   = 0
 		_offense_snaps_rivals[rival_id]     = []
+	if MatchConfig.launch_tutorial:
+		MatchConfig.launch_tutorial = false
+		call_deferred("_start_tutorial")
 
 func _on_resource_changed(player_id: int, resource: String, amount: int) -> void:
 	if player_id != local_player_id:

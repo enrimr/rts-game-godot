@@ -604,7 +604,7 @@ func _launch_tutorial_game() -> void:
 	MatchConfig.player_civ_id   = "guanches"
 	MatchConfig.starting_age    = 0
 	MatchConfig.rival_count     = 1
-	MatchConfig.rival_civ_ids   = ["castellanos"]
+	MatchConfig.rival_civ_ids.assign(["castellanos"])
 	MatchConfig.victory_mode    = MatchConfig.VictoryMode.CONQUEST
 	MatchConfig.launch_tutorial = true
 	_on_lobby_start()
