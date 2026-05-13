@@ -51,9 +51,13 @@ func get_map_half() -> float:
 func get_resource_multiplier() -> float:
 	return RES_MULT_BY_LEVEL[clampi(resources, 0, 4)]
 
+const TUTORIAL_STARTING: Dictionary = {"wood": 125}
+
 func get_starting_resources() -> Dictionary:
 	if resources == Resources.FULL_COMBAT:
 		return FULL_COMBAT_STARTING
+	if resources == Resources.TUTORIAL:
+		return TUTORIAL_STARTING
 	return {}  # use ResourceManager defaults
 
 # Returns player_id list for all rival AIs: [1, 2, 3, ...]
