@@ -32,16 +32,29 @@ func _ready() -> void:
 	_build_card()
 
 func _build_card() -> void:
+	# Outer VBox fills the full rect: spacer pushes card to bottom-center
+	var outer: VBoxContainer = VBoxContainer.new()
+	outer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	outer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(outer)
+
+	var spacer: Control = Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	outer.add_child(spacer)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	outer.add_child(center)
+
+	var pad: MarginContainer = MarginContainer.new()
+	pad.add_theme_constant_override("margin_bottom", 12)
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.add_child(pad)
+
 	_card = PanelContainer.new()
-	_card.anchor_left   = 0.5
-	_card.anchor_right  = 0.5
-	_card.anchor_top    = 1.0
-	_card.anchor_bottom = 1.0
-	_card.offset_left   = -300.0
-	_card.offset_right  =  300.0
-	_card.offset_top    = -230.0
-	_card.offset_bottom =  -12.0
-	_card.mouse_filter  = Control.MOUSE_FILTER_STOP
+	_card.custom_minimum_size = Vector2(600.0, 0.0)
+	_card.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var panel_style: StyleBoxFlat = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.07, 0.07, 0.10, 0.93)
@@ -50,7 +63,7 @@ func _build_card() -> void:
 	panel_style.corner_radius_bottom_left  = 8
 	panel_style.corner_radius_bottom_right = 8
 	_card.add_theme_stylebox_override("panel", panel_style)
-	add_child(_card)
+	pad.add_child(_card)
 
 	var margin: MarginContainer = MarginContainer.new()
 	for side: String in ["left", "right", "top", "bottom"]:
