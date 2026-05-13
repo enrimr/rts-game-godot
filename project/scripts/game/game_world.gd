@@ -88,6 +88,7 @@ var _panning: bool = false
 var _pan_last_pos: Vector2 = Vector2.ZERO
 
 var _following: bool = false
+var _camera_moved_emitted: bool = false
 
 # Build placement state
 var _placing_building: bool = false
@@ -462,6 +463,9 @@ func _handle_camera(delta: float) -> void:
 			_following = false
 			EventBus.camera_follow_cancelled.emit()
 		camera.position += dir.normalized() * CAMERA_SPEED * delta
+		if not _camera_moved_emitted:
+			_camera_moved_emitted = true
+			EventBus.camera_moved.emit()
 
 func _is_mouse_over_hud() -> bool:
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
@@ -493,6 +497,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		var motion: InputEventMouseMotion = event as InputEventMouseMotion
 		camera.position -= motion.relative / camera.zoom.x
 		get_viewport().set_input_as_handled()
+		if not _camera_moved_emitted:
+			_camera_moved_emitted = true
+			EventBus.camera_moved.emit()
 		return
 
 	if event is InputEventMouseButton:
@@ -1119,6 +1126,7 @@ func _order_move_all(world_pos: Vector2) -> void:
 	var slots: Array[Vector2] = _formation_slots(world_pos, count)
 	for i: int in range(count):
 		valid_units[i].order_move(slots[i])
+	EventBus.unit_command_issued.emit(valid_units, {"type": "move", "pos": world_pos})
 
 ## Returns world-space positions for `count` units in concentric rings around `center`.
 ## The formation faces away from the average origin of the selected units (nearest ring

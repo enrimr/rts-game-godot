@@ -3,21 +3,24 @@ extends Control
 
 signal finished
 
+## Each step has a title/body key and an optional condition tag.
+## Steps with condition = "" unlock immediately on arrival.
 const STEPS: Array[Dictionary] = [
-	{"title": "TUTORIAL_STEP0_TITLE",  "body": "TUTORIAL_STEP0_BODY"},
-	{"title": "TUTORIAL_STEP1_TITLE",  "body": "TUTORIAL_STEP1_BODY"},
-	{"title": "TUTORIAL_STEP2_TITLE",  "body": "TUTORIAL_STEP2_BODY"},
-	{"title": "TUTORIAL_STEP3_TITLE",  "body": "TUTORIAL_STEP3_BODY"},
-	{"title": "TUTORIAL_STEP4_TITLE",  "body": "TUTORIAL_STEP4_BODY"},
-	{"title": "TUTORIAL_STEP5_TITLE",  "body": "TUTORIAL_STEP5_BODY"},
-	{"title": "TUTORIAL_STEP5B_TITLE", "body": "TUTORIAL_STEP5B_BODY"},
-	{"title": "TUTORIAL_STEP6_TITLE",  "body": "TUTORIAL_STEP6_BODY"},
-	{"title": "TUTORIAL_STEP7_TITLE",  "body": "TUTORIAL_STEP7_BODY"},
-	{"title": "TUTORIAL_STEP8_TITLE",  "body": "TUTORIAL_STEP8_BODY"},
-	{"title": "TUTORIAL_STEP9_TITLE",  "body": "TUTORIAL_STEP9_BODY"},
+	{"title": "TUTORIAL_STEP0_TITLE",  "body": "TUTORIAL_STEP0_BODY",  "condition": ""},
+	{"title": "TUTORIAL_STEP1_TITLE",  "body": "TUTORIAL_STEP1_BODY",  "condition": "camera_moved"},
+	{"title": "TUTORIAL_STEP2_TITLE",  "body": "TUTORIAL_STEP2_BODY",  "condition": "unit_selected"},
+	{"title": "TUTORIAL_STEP3_TITLE",  "body": "TUTORIAL_STEP3_BODY",  "condition": "unit_moved"},
+	{"title": "TUTORIAL_STEP4_TITLE",  "body": "TUTORIAL_STEP4_BODY",  "condition": "resource_gathered"},
+	{"title": "TUTORIAL_STEP5_TITLE",  "body": "TUTORIAL_STEP5_BODY",  "condition": "town_center_opened"},
+	{"title": "TUTORIAL_STEP5B_TITLE", "body": "TUTORIAL_STEP5B_BODY", "condition": "barracks_built"},
+	{"title": "TUTORIAL_STEP6_TITLE",  "body": "TUTORIAL_STEP6_BODY",  "condition": "age_advance_started"},
+	{"title": "TUTORIAL_STEP7_TITLE",  "body": "TUTORIAL_STEP7_BODY",  "condition": "hero_ability_used"},
+	{"title": "TUTORIAL_STEP8_TITLE",  "body": "TUTORIAL_STEP8_BODY",  "condition": "unit_attacked"},
+	{"title": "TUTORIAL_STEP9_TITLE",  "body": "TUTORIAL_STEP9_BODY",  "condition": ""},
 ]
 
 var _current_step: int = 0
+var _step_unlocked: bool = false
 
 var _card: PanelContainer = null
 var _step_label: Label = null
@@ -26,6 +29,7 @@ var _body_label: Label = null
 var _back_btn: Button = null
 var _skip_btn: Button = null
 var _next_btn: Button = null
+var _lock_label: Label = null
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -33,7 +37,6 @@ func _ready() -> void:
 	_build_card()
 
 func _build_card() -> void:
-	# Outer VBox fills the full rect: spacer pushes card to bottom-center
 	var outer: VBoxContainer = VBoxContainer.new()
 	outer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	outer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -107,6 +110,15 @@ func _build_card() -> void:
 	_body_label.custom_minimum_size = Vector2(0.0, 80.0)
 	vbox.add_child(_body_label)
 
+	# Lock hint shown while the step is waiting for player action
+	_lock_label = Label.new()
+	_lock_label.add_theme_font_size_override("font_size", 13)
+	_lock_label.add_theme_color_override("font_color", Color(0.65, 0.55, 0.25))
+	_lock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_lock_label.text = tr("TUTORIAL_DO_IT")
+	_lock_label.visible = false
+	vbox.add_child(_lock_label)
+
 	vbox.add_child(HSeparator.new())
 
 	# Buttons row
@@ -151,6 +163,14 @@ func close() -> void:
 	finished.emit()
 	queue_free()
 
+## Called by HudManager when the current step's condition is satisfied.
+func unlock_current() -> void:
+	if _step_unlocked:
+		return
+	_step_unlocked = true
+	_next_btn.disabled = false
+	_lock_label.visible = false
+
 func _go_to(step: int) -> void:
 	_current_step = clampi(step, 0, STEPS.size() - 1)
 	var total: int = STEPS.size()
@@ -161,11 +181,23 @@ func _go_to(step: int) -> void:
 	var is_last: bool = _current_step == total - 1
 	_next_btn.text = tr("TUTORIAL_FINISH") if is_last else tr("TUTORIAL_NEXT")
 
+	var condition: String = STEPS[_current_step]["condition"] as String
+	var needs_action: bool = not condition.is_empty()
+	_step_unlocked = not needs_action
+	_next_btn.disabled = needs_action
+	_lock_label.visible = needs_action
+
 func _on_next_pressed() -> void:
 	if _current_step >= STEPS.size() - 1:
 		close()
 	else:
 		_go_to(_current_step + 1)
+
+## Returns the condition tag of the current step, or "" if already unlocked.
+func current_condition() -> String:
+	if _step_unlocked:
+		return ""
+	return STEPS[_current_step]["condition"] as String
 
 func _make_btn_style(col: Color) -> StyleBoxFlat:
 	var s: StyleBoxFlat = StyleBoxFlat.new()

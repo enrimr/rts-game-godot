@@ -150,6 +150,7 @@ func _trigger_ability() -> void:
 	_ability_timer = duration
 	_cooldown_remaining = unit_data.hero_ability_cooldown if unit_data else 50.0
 	ability_used.emit(self)
+	EventBus.hero_ability_used.emit(player_id)
 
 func _end_ability() -> void:
 	_ability_active = false

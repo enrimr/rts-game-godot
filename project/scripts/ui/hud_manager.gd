@@ -1683,10 +1683,77 @@ func _show_charts_panel(parent: Node) -> void:
 
 # ── In-game pause menu ──────────────────────────────────────────────────────
 
+var _tutorial_overlay: TutorialOverlay = null
+
 func _start_tutorial() -> void:
-	var overlay: TutorialOverlay = TutorialOverlay.new()
-	get_node("HUDRoot").add_child(overlay)
-	overlay.start()
+	_tutorial_overlay = TutorialOverlay.new()
+	get_node("HUDRoot").add_child(_tutorial_overlay)
+	_tutorial_overlay.finished.connect(func() -> void: _tutorial_overlay = null)
+	_tutorial_overlay.start()
+	_wire_tutorial_signals()
+
+func _wire_tutorial_signals() -> void:
+	EventBus.camera_moved.connect(_on_tutorial_camera_moved)
+	EventBus.unit_selected.connect(_on_tutorial_unit_selected)
+	EventBus.unit_command_issued.connect(_on_tutorial_unit_command)
+	EventBus.resource_changed.connect(_on_tutorial_resource_changed)
+	EventBus.building_selected.connect(_on_tutorial_building_selected)
+	EventBus.building_placed.connect(_on_tutorial_building_placed)
+	EventBus.age_advance_started.connect(_on_tutorial_age_advance)
+	EventBus.hero_ability_used.connect(_on_tutorial_hero_ability)
+	EventBus.unit_attacked.connect(_on_tutorial_unit_attacked)
+
+func _tutorial_notify(condition: String) -> void:
+	if _tutorial_overlay == null or not is_instance_valid(_tutorial_overlay):
+		return
+	if _tutorial_overlay.current_condition() == condition:
+		_tutorial_overlay.unlock_current()
+
+func _on_tutorial_camera_moved() -> void:
+	_tutorial_notify("camera_moved")
+
+func _on_tutorial_unit_selected(units: Array) -> void:
+	_tutorial_notify("unit_selected")
+
+func _on_tutorial_unit_command(_units: Array, _cmd: Dictionary) -> void:
+	_tutorial_notify("unit_moved")
+
+func _on_tutorial_resource_changed(player_id: int, res: String, amt: int) -> void:
+	if player_id != local_player_id:
+		return
+	var prev: float = _last_resources.get(res, 0.0) as float
+	if (amt as float) > prev:
+		_tutorial_notify("resource_gathered")
+
+func _on_tutorial_building_selected(building: Node) -> void:
+	var script: Script = building.get_script() as Script
+	if script == null:
+		return
+	var path: String = script.resource_path
+	if "town_center" in path.to_lower():
+		_tutorial_notify("town_center_opened")
+
+func _on_tutorial_building_placed(building: Node, player_id: int) -> void:
+	if player_id != local_player_id:
+		return
+	var script: Script = building.get_script() as Script
+	if script == null:
+		return
+	if "barracks" in script.resource_path.to_lower():
+		_tutorial_notify("barracks_built")
+
+func _on_tutorial_age_advance(player_id: int, _target: int) -> void:
+	if player_id == local_player_id:
+		_tutorial_notify("age_advance_started")
+
+func _on_tutorial_hero_ability(player_id: int) -> void:
+	if player_id == local_player_id:
+		_tutorial_notify("hero_ability_used")
+
+func _on_tutorial_unit_attacked(attacker: Node, _target: Node) -> void:
+	var pid: Variant = attacker.get("player_id")
+	if pid != null and (pid as int) == local_player_id:
+		_tutorial_notify("unit_attacked")
 
 func _build_pause_menu_button() -> void:
 	var hud_root: Control = get_node_or_null("HUDRoot") as Control
