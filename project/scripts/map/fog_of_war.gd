@@ -16,6 +16,7 @@ const COLOR_EXPLORED: Color = Color(0.0, 0.0, 0.0, 0.6)
 const COLOR_VISIBLE: Color = Color(0.0, 0.0, 0.0, 0.0)
 
 const UPDATE_INTERVAL: float = 0.12
+const EXPLORE_THRESHOLD: int = 150  # cells newly revealed to satisfy tutorial
 
 var _cells: PackedByteArray
 var _dirty_cells: PackedByteArray
@@ -25,6 +26,8 @@ var _sprite: Sprite2D
 
 var _units_node: Node = null
 var _buildings_node: Node = null
+var _explore_baseline: int = -1   # -1 = not tracking
+var _explore_emitted: bool = false
 var _drop_off_node: Node = null
 var _world_node: Node = null
 
@@ -88,6 +91,18 @@ func _process(delta: float) -> void:
 		_update_timer = 0.0
 		_tick()
 
+## Call this when the tutorial exploration step activates to start counting new cells.
+func start_explore_tracking() -> void:
+	_explore_baseline = _count_explored_cells()
+	_explore_emitted = false
+
+func _count_explored_cells() -> int:
+	var count: int = 0
+	for i: int in range(_cells.size()):
+		if _cells[i] >= STATE_EXPLORED:
+			count += 1
+	return count
+
 func _tick() -> void:
 	for i: int in range(_cells.size()):
 		if _cells[i] == STATE_VISIBLE:
@@ -97,6 +112,11 @@ func _tick() -> void:
 	_reveal_from_units()
 	_reveal_from_buildings()
 	_render()
+	if _explore_baseline >= 0 and not _explore_emitted:
+		var newly_explored: int = _count_explored_cells() - _explore_baseline
+		if newly_explored >= EXPLORE_THRESHOLD:
+			_explore_emitted = true
+			EventBus.map_explored.emit(newly_explored)
 	_apply_visibility()
 
 func _reveal_from_units() -> void:

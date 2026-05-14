@@ -1706,6 +1706,7 @@ func _wire_tutorial_signals() -> void:
 	EventBus.age_advance_started.connect(_on_tutorial_age_advance)
 	EventBus.hero_ability_used.connect(_on_tutorial_hero_ability)
 	EventBus.enemy_unit_spotted.connect(_on_tutorial_enemy_spotted)
+	EventBus.map_explored.connect(_on_tutorial_map_explored)
 	EventBus.unit_attacked.connect(_on_tutorial_unit_attacked)
 
 func _tutorial_notify(condition: String) -> void:
@@ -1735,6 +1736,17 @@ const _TUTORIAL_MINIMUMS: Dictionary = {
 func _on_tutorial_step_changed(_step: int, condition: String) -> void:
 	if condition == "resource_gathered":
 		_tutorial_res_baseline = ResourceManager.get_resources(local_player_id).duplicate()
+	if condition == "map_explored":
+		var world: Node = get_tree().get_nodes_in_group("world").front()
+		if world == null:
+			world = get_tree().current_scene
+		var fog: FogOfWar = null
+		for child: Node in world.get_children():
+			if child is FogOfWar:
+				fog = child as FogOfWar
+				break
+		if fog != null:
+			fog.start_explore_tracking()
 	var minimums: Dictionary = _TUTORIAL_MINIMUMS.get(condition, {}) as Dictionary
 	for res: String in minimums:
 		var needed: int = minimums[res] as int
@@ -1799,6 +1811,9 @@ func _on_tutorial_hero_ability(player_id: int) -> void:
 
 func _on_tutorial_enemy_spotted(_unit: Node) -> void:
 	_tutorial_notify("enemy_spotted")
+
+func _on_tutorial_map_explored(_cells: int) -> void:
+	_tutorial_notify("map_explored")
 
 func _on_tutorial_unit_attacked(attacker: Node, _target: Node) -> void:
 	var pid: Variant = attacker.get("player_id")
