@@ -46,14 +46,19 @@ func _build_card() -> void:
 	outer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(outer)
 
-	var spacer: Control = Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	outer.add_child(spacer)
+	var spacer_top: Control = Control.new()
+	spacer_top.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	spacer_top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	outer.add_child(spacer_top)
 
 	var center: CenterContainer = CenterContainer.new()
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	outer.add_child(center)
+
+	var spacer_bottom: Control = Control.new()
+	spacer_bottom.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	spacer_bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	outer.add_child(spacer_bottom)
 
 	var pad: MarginContainer = MarginContainer.new()
 	pad.add_theme_constant_override("margin_left",   24)

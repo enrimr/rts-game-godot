@@ -22,14 +22,15 @@ var _container: VBoxContainer
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Anchor this node to the bottom of the screen
+	set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	offset_top    = -175.0 - 160.0  # grows upward: room for 4 messages
+	offset_bottom = -175.0          # just above the bottom action bar
 
 	_container = VBoxContainer.new()
 	_container.mouse_filter = MOUSE_FILTER_IGNORE
 	_container.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_container.add_theme_constant_override("separation", 6)
-	_container.offset_top    = 80.0   # below top bar
-	_container.offset_bottom = -200.0 # clear of bottom bar
 	add_child(_container)
 
 	EventBus.unit_attacked.connect(_on_unit_attacked)

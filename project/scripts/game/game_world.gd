@@ -190,6 +190,8 @@ func _ready() -> void:
 	)
 	EventBus.unit_selected.connect(_on_unit_selected_follow)
 	EventBus.tutorial_spawn_enemy_scout.connect(_on_tutorial_spawn_enemy_scout)
+	EventBus.tutorial_highlight_unit.connect(_on_tutorial_highlight_unit)
+	EventBus.tutorial_reset_camera_flag.connect(func() -> void: _camera_moved_emitted = false)
 
 	_fog = FogOfWar.new()
 	add_child(_fog)
@@ -294,6 +296,28 @@ func _find_tutorial_spawn_pos(near_pos: Vector2, civ_id: String) -> Vector2:
 				return passable
 	# Fallback: just use nearest_passable from default offset
 	return TerrainManager.nearest_passable(near_pos + Vector2(320.0, 0.0), civ_id)
+
+func _on_tutorial_highlight_unit(unit_type: String) -> void:
+	var target: Node2D = null
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		if unit.get("player_id") != 0:
+			continue
+		if unit_type == "hero" and unit is HeroUnit:
+			target = unit as Node2D
+			break
+		if unit_type == "scout" and unit is Scout:
+			target = unit as Node2D
+			break
+	if target == null:
+		return
+	camera.position = target.global_position
+	# Golden pulse: cycle modulate between white and gold several times
+	var tween: Tween = target.create_tween()
+	tween.set_loops(4)
+	tween.tween_property(target, "modulate", Color(1.0, 0.85, 0.1, 1.0), 0.25)
+	tween.tween_property(target, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
 
 func _setup_ai_node_only(rival_id: int, _tc_pos: Vector2) -> void:
 	# Creates only the AI controller node; buildings are restored by SaveManager.
@@ -483,7 +507,7 @@ func toggle_follow() -> void:
 func _on_unit_selected_follow(_units: Array) -> void:
 	_following = false
 
-const EDGE_SCROLL_MARGIN: float = 24.0
+const EDGE_SCROLL_MARGIN: float = 60.0
 
 func _handle_camera(delta: float) -> void:
 	var dir: Vector2 = Vector2.ZERO

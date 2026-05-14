@@ -38,6 +38,8 @@ func _ready() -> void:
 	if unit_data:
 		var hp_mult: float = CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
 		health = unit_data.max_health * hp_mult
+		if player_id != 0 and GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL:
+			health *= 0.5
 		health_bar.max_value = health
 		health_bar.value = health
 	_last_position = global_position

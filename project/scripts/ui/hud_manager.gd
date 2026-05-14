@@ -38,21 +38,21 @@ const VILLAGER_ACTIONS: Array = [
 ]
 
 const BUILD_ACTIONS: Array = [
-	{"id": "build:house",         "label": "ACTION_HOUSE",        "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H, "description": "TOOLTIP_BUILD_HOUSE"},
-	{"id": "build:barracks",      "label": "ACTION_BARRACKS",     "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B, "description": "TOOLTIP_BUILD_BARRACKS"},
-	{"id": "build:blacksmith",    "label": "ACTION_BLACKSMITH",   "color": Color(0.55, 0.40, 0.20), "cost": {"wood": 150}, "key": KEY_K, "description": "TOOLTIP_BUILD_BLACKSMITH"},
-	{"id": "build:stable",        "label": "ACTION_STABLE",       "color": Color(0.40, 0.30, 0.15), "cost": {"wood": 175}, "key": KEY_S, "description": "TOOLTIP_BUILD_STABLE"},
-	{"id": "build:lumber_camp",   "label": "ACTION_LUMBER",       "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L, "description": "TOOLTIP_BUILD_LUMBER"},
-	{"id": "build:mining_camp",   "label": "ACTION_MINING",       "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N, "description": "TOOLTIP_BUILD_MINING"},
-	{"id": "build:farm",          "label": "ACTION_FARM",         "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F, "description": "TOOLTIP_BUILD_FARM"},
-	{"id": "build:wall_segment",  "label": "ACTION_WALL",         "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_W, "description": "TOOLTIP_BUILD_WALL"},
-	{"id": "build:gate",          "label": "ACTION_GATE",         "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G, "description": "TOOLTIP_BUILD_GATE"},
-	{"id": "build:dock",          "label": "ACTION_DOCK",         "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D, "description": "TOOLTIP_BUILD_DOCK"},
-	{"id": "build:university",    "label": "ACTION_UNIVERSITY",   "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U, "description": "TOOLTIP_BUILD_UNIVERSITY"},
-	{"id": "build:market",        "label": "ACTION_MARKET",       "color": Color(0.65, 0.50, 0.10), "cost": {"wood": 175}, "key": KEY_R, "description": "TOOLTIP_BUILD_MARKET"},
-	{"id": "build:temple",        "label": "ACTION_TEMPLE",       "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175},                             "key": KEY_T, "description": "TOOLTIP_BUILD_TEMPLE"},
-	{"id": "build:wonder",        "label": "ACTION_WONDER",       "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000}, "key": KEY_V, "description": "TOOLTIP_BUILD_WONDER"},
-	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},                                           "key": KEY_ESCAPE, "description": "TOOLTIP_BUILD_BACK"},
+	{"id": "build:house",         "label": "ACTION_HOUSE",        "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H, "description": "TOOLTIP_BUILD_HOUSE",    "min_age": 0},
+	{"id": "build:barracks",      "label": "ACTION_BARRACKS",     "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B, "description": "TOOLTIP_BUILD_BARRACKS", "min_age": 0},
+	{"id": "build:blacksmith",    "label": "ACTION_BLACKSMITH",   "color": Color(0.55, 0.40, 0.20), "cost": {"wood": 150}, "key": KEY_K, "description": "TOOLTIP_BUILD_BLACKSMITH","min_age": 1},
+	{"id": "build:stable",        "label": "ACTION_STABLE",       "color": Color(0.40, 0.30, 0.15), "cost": {"wood": 175}, "key": KEY_S, "description": "TOOLTIP_BUILD_STABLE",   "min_age": 1},
+	{"id": "build:lumber_camp",   "label": "ACTION_LUMBER",       "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L, "description": "TOOLTIP_BUILD_LUMBER",   "min_age": 0},
+	{"id": "build:mining_camp",   "label": "ACTION_MINING",       "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N, "description": "TOOLTIP_BUILD_MINING",   "min_age": 0},
+	{"id": "build:farm",          "label": "ACTION_FARM",         "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F, "description": "TOOLTIP_BUILD_FARM",     "min_age": 0},
+	{"id": "build:wall_segment",  "label": "ACTION_WALL",         "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_W, "description": "TOOLTIP_BUILD_WALL",     "min_age": 0},
+	{"id": "build:gate",          "label": "ACTION_GATE",         "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G, "description": "TOOLTIP_BUILD_GATE",     "min_age": 0},
+	{"id": "build:dock",          "label": "ACTION_DOCK",         "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D, "description": "TOOLTIP_BUILD_DOCK",     "min_age": 0},
+	{"id": "build:market",        "label": "ACTION_MARKET",       "color": Color(0.65, 0.50, 0.10), "cost": {"wood": 175}, "key": KEY_R, "description": "TOOLTIP_BUILD_MARKET",   "min_age": 1},
+	{"id": "build:university",    "label": "ACTION_UNIVERSITY",   "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U, "description": "TOOLTIP_BUILD_UNIVERSITY","min_age": 2},
+	{"id": "build:temple",        "label": "ACTION_TEMPLE",       "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175}, "key": KEY_T, "description": "TOOLTIP_BUILD_TEMPLE",   "min_age": 2},
+	{"id": "build:wonder",        "label": "ACTION_WONDER",       "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000}, "key": KEY_V, "description": "TOOLTIP_BUILD_WONDER", "min_age": 3},
+	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE, "description": "TOOLTIP_BUILD_BACK"},
 ]
 
 const STABLE_UNIT_DEFS: Array[Dictionary] = [
@@ -314,6 +314,7 @@ func update_selection(units: Array) -> void:
 			_populate_transport_buttons(first as TransportShip)
 		elif first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
+			_apply_tutorial_villager_gates()
 		else:
 			_populate_buttons(UNIT_ACTIONS)
 
@@ -356,11 +357,11 @@ func _key_label(keycode: int) -> String:
 func _populate_buttons(actions: Array) -> void:
 	_clear_action_buttons()
 	_active_actions = actions
-	var n: int = actions.size()
-	_action_grid.columns = ceili(n / 2.0) if n > 4 else 4
+	_action_grid.columns = 4
 	for entry: Variant in actions:
 		var data: Dictionary = entry as Dictionary
 		var btn: ActionButton = ActionButton.new()
+		btn.custom_minimum_size = Vector2(64.0, 56.0)
 		btn.action_id = data["id"] as String
 		var key_int: int = data.get("key", -1) as int
 		var key_hint: String = ("[%s] " % _key_label(key_int)) if key_int > 0 else ""
@@ -373,7 +374,10 @@ func _populate_buttons(actions: Array) -> void:
 		btn.set_meta("base_color", color)
 		btn.set_meta("base_label", translated_label)
 		var can_pay: bool = cost.is_empty() or ResourceManager.can_afford(local_player_id, cost)
-		var effective_color: Color = color if can_pay else Color(0.25, 0.25, 0.25)
+		var locked: bool = (data.get("locked", false) as bool) \
+			or (btn.action_id == "destroy" and _tutorial_gates_active)
+		var enabled: bool = can_pay and not locked
+		var effective_color: Color = color if enabled else Color(0.25, 0.25, 0.25)
 		var style: StyleBoxFlat = StyleBoxFlat.new()
 		style.bg_color = effective_color
 		style.corner_radius_top_left = 4
@@ -384,7 +388,7 @@ func _populate_buttons(actions: Array) -> void:
 		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
 		hover_style.bg_color = effective_color.lightened(0.25)
 		btn.add_theme_stylebox_override("hover", hover_style)
-		btn.disabled = not can_pay
+		btn.disabled = not enabled
 		var desc: String = data.get("description", "") as String
 		if not desc.is_empty():
 			btn.tooltip_text = tr(desc)
@@ -441,6 +445,7 @@ func _on_action_button_pressed(action_id: String) -> void:
 		AudioManager.play("ui_click")
 		_in_build_menu = false
 		_populate_buttons(VILLAGER_ACTIONS)
+		_apply_tutorial_villager_gates()
 		return
 	# Actions that wait for a map click before executing
 	if action_id == "move_to" or action_id == "attack_move":
@@ -690,7 +695,12 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 
 func _populate_hero_buttons(hero: HeroUnit) -> void:
 	_clear_action_buttons()
-	var actions: Array = [DESTROY_ACTION]
+	var actions: Array = [
+		{"id": "move_to",     "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
+		{"id": "attack_move", "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+		{"id": "stop",        "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
+		DESTROY_ACTION,
+	]
 	var udata: UnitResource = hero.unit_data
 	if udata != null and not udata.hero_ability_id.is_empty():
 		var cd_frac: float = hero.get_cooldown_fraction()
@@ -751,7 +761,9 @@ func _populate_tc_actions() -> void:
 	var current_age: int = AgeManager.get_age(local_player_id)
 	var actions: Array = TOWN_CENTER_ACTIONS.duplicate()
 
-	if current_age < GameManager.Age.IMPERIAL and not AgeManager.is_advancing(local_player_id):
+	var is_tutorial: bool = _tutorial_gates_active
+	if current_age < GameManager.Age.IMPERIAL:
+		var advancing: bool = AgeManager.is_advancing(local_player_id)
 		var next_age: int = current_age + 1
 		var costs: Dictionary = AgeManager.ADVANCE_COSTS[next_age]
 		var cost_str: String = ""
@@ -762,13 +774,15 @@ func _populate_tc_actions() -> void:
 			1: advance_color = Color(0.65, 0.55, 0.20)
 			2: advance_color = Color(0.25, 0.40, 0.65)
 			_: advance_color = Color(0.55, 0.20, 0.55)
+		const AGE_NAME_KEYS: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
 		actions.append({
 			"id": "advance_age",
-			"label": tr("UI_ADVANCE") + "\n" + cost_str.strip_edges(),
+			"label": tr("UI_ADVANCE") + " " + tr(AGE_NAME_KEYS[next_age]) + "\n" + cost_str.strip_edges(),
 			"color": advance_color,
 			"cost": costs,
 			"key": KEY_A,
 			"raw_label": true,
+			"locked": advancing or (is_tutorial and _tutorial_step < 7),
 		})
 
 	actions.append(DESTROY_ACTION)
@@ -826,6 +840,7 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 
 func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
 	var actions: Array = []
+	var active_tech: TechnologyResource = TechManager.get_researching_tech(blacksmith)
 	var techs: Array[TechnologyResource] = TechManager.get_available_techs(local_player_id, TechnologyResource.ResearchBuilding.BLACKSMITH)
 	for tech: TechnologyResource in techs:
 		var cost_str: String = ""
@@ -836,6 +851,7 @@ func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
 		if tech.cost_food > 0: tech_costs["food"] = tech.cost_food
 		if tech.cost_wood > 0: tech_costs["wood"] = tech.cost_wood
 		if tech.cost_gold > 0: tech_costs["gold"] = tech.cost_gold
+		var is_active: bool = active_tech != null and active_tech.id == tech.id
 		actions.append({
 			"id": "research:%s" % tech.id,
 			"label": tech.display_name + cost_str,
@@ -843,6 +859,7 @@ func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
 			"cost": tech_costs,
 			"key": 0,
 			"raw_label": true,
+			"locked": is_active,
 		})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
@@ -874,6 +891,7 @@ func _populate_stable_actions(stable: Stable) -> void:
 
 func _populate_research_only_actions(building: Node, research_type: TechnologyResource.ResearchBuilding) -> void:
 	var actions: Array = []
+	var active_tech: TechnologyResource = TechManager.get_researching_tech(building)
 	var techs: Array[TechnologyResource] = TechManager.get_available_techs(local_player_id, research_type)
 	for tech: TechnologyResource in techs:
 		var cost_str: String = ""
@@ -884,6 +902,7 @@ func _populate_research_only_actions(building: Node, research_type: TechnologyRe
 		if tech.cost_food > 0: tech_costs["food"] = tech.cost_food
 		if tech.cost_wood > 0: tech_costs["wood"] = tech.cost_wood
 		if tech.cost_gold > 0: tech_costs["gold"] = tech.cost_gold
+		var is_active: bool = active_tech != null and active_tech.id == tech.id
 		actions.append({
 			"id": "research:%s" % tech.id,
 			"label": tech.display_name + cost_str,
@@ -891,6 +910,7 @@ func _populate_research_only_actions(building: Node, research_type: TechnologyRe
 			"cost": tech_costs,
 			"key": 0,
 			"raw_label": true,
+			"locked": is_active,
 		})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
@@ -1527,6 +1547,13 @@ func _on_game_over(winner_player_id: int) -> void:
 		overlay.queue_free()
 		center.queue_free()
 		hud_root.add_child(exit_btn)
+		var world: Node = get_tree().get_nodes_in_group("world").front()
+		if world == null:
+			world = get_tree().current_scene
+		for child: Node in world.get_children():
+			if child is FogOfWar:
+				(child as FogOfWar).reveal_all()
+				break
 	)
 	btn_row.add_child(map_btn)
 
@@ -1685,11 +1712,22 @@ func _show_charts_panel(parent: Node) -> void:
 
 var _tutorial_overlay: TutorialOverlay = null
 var _tutorial_res_baseline: Dictionary = {}
+var _tutorial_step: int = 0       # highest step reached; used to gate tutorial-mode actions
+var _tutorial_gates_active: bool = false  # true only in tutorial mode; false after skip
+
+# build ids unlocked per tutorial step (cumulative)
+const _TUTORIAL_BUILD_UNLOCK: Dictionary = {
+	3: ["build:lumber_camp", "build:mining_camp"],
+	4: ["build:house"],
+	6: ["build:barracks"],
+	7: [],  # all remaining buildings unlocked after age-advance step
+}
 
 func _start_tutorial() -> void:
+	_tutorial_gates_active = true
 	_tutorial_overlay = TutorialOverlay.new()
 	get_node("HUDRoot").add_child(_tutorial_overlay)
-	_tutorial_overlay.finished.connect(func() -> void: _tutorial_overlay = null)
+	_tutorial_overlay.finished.connect(_on_tutorial_finished)
 	_tutorial_overlay.completed.connect(func() -> void: _on_game_over(0))
 	_tutorial_overlay.step_changed.connect(_on_tutorial_step_changed)
 	_tutorial_overlay.start()
@@ -1710,6 +1748,20 @@ func _wire_tutorial_signals() -> void:
 	EventBus.map_explored.connect(_on_tutorial_map_explored)
 	EventBus.unit_attacked.connect(_on_tutorial_unit_attacked)
 
+func _on_tutorial_finished() -> void:
+	_tutorial_overlay = null
+	_tutorial_gates_active = false
+	# Refresh whichever panel is currently open
+	if _in_build_menu:
+		_populate_buttons(_filtered_build_actions())
+	elif is_instance_valid(_selected_building):
+		var scr: Script = _selected_building.get_script() as Script
+		if scr != null and "town_center" in (scr.resource_path as String).to_lower():
+			_populate_tc_actions()
+	elif is_instance_valid(_selected_unit) and _selected_unit.has_method("order_gather"):
+		_populate_buttons(VILLAGER_ACTIONS)
+		_apply_tutorial_villager_gates()
+
 func _tutorial_notify(condition: String) -> void:
 	if _tutorial_overlay == null or not is_instance_valid(_tutorial_overlay):
 		return
@@ -1729,12 +1781,25 @@ const _TUTORIAL_MINIMUMS: Dictionary = {
 	"resource_gathered":   {"wood": 0},
 	"camp_complete":        {"wood": 100},
 	"house_complete":       {"wood": 25},
-	"militia_trained":     {"wood": 195, "food": 60},
+	"militia_trained":     {"wood": 60, "food": 180},
 	"age_advance_complete": {"food": 500},
 	"unit_attacked":       {"food": 60, "wood": 20},
 }
 
-func _on_tutorial_step_changed(_step: int, condition: String) -> void:
+func _on_tutorial_step_changed(step: int, condition: String) -> void:
+	_tutorial_step = maxi(_tutorial_step, step)
+	# Refresh open panels so newly unlocked actions appear
+	if _in_build_menu:
+		_populate_buttons(_filtered_build_actions())
+	elif is_instance_valid(_selected_building):
+		var scr: Script = _selected_building.get_script() as Script
+		if scr != null and "town_center" in (scr.resource_path as String).to_lower():
+			_populate_tc_actions()
+	elif is_instance_valid(_selected_unit) and _selected_unit.has_method("order_gather"):
+		_populate_buttons(VILLAGER_ACTIONS)
+		_apply_tutorial_villager_gates()
+	if condition == "camera_moved":
+		EventBus.tutorial_reset_camera_flag.emit()
 	if condition == "resource_gathered":
 		_tutorial_res_baseline = ResourceManager.get_resources(local_player_id).duplicate()
 	if condition == "map_explored":
@@ -1761,6 +1826,10 @@ func _on_tutorial_step_changed(_step: int, condition: String) -> void:
 		var tc_node: Node2D = world.get_node_or_null("DropOffNode") as Node2D
 		var tc_pos: Vector2 = tc_node.global_position if tc_node != null else Vector2.ZERO
 		EventBus.tutorial_spawn_enemy_scout.emit(tc_pos)
+	if condition == "hero_ability_used":
+		EventBus.tutorial_highlight_unit.emit("hero")
+	if condition == "map_explored":
+		EventBus.tutorial_highlight_unit.emit("scout")
 
 func _on_tutorial_resource_changed(player_id: int, res: String, amt: int) -> void:
 	if player_id != local_player_id:
@@ -2245,15 +2314,57 @@ func _make_pause_btn(label_text: String, normal_col: Color, hover_col: Color) ->
 	return btn
 
 func _filtered_build_actions() -> Array:
+	var current_age: int = AgeManager.get_age(local_player_id)
 	var wonder_visible: bool = MatchConfig.victory_mode == MatchConfig.VictoryMode.WONDER \
-		and AgeManager.get_age(local_player_id) >= GameManager.Age.IMPERIAL
+		and current_age >= GameManager.Age.IMPERIAL
+	var is_tutorial: bool = _tutorial_gates_active
+
+	# Collect which build ids are unlocked so far in tutorial
+	var unlocked: Array[String] = []
+	if is_tutorial:
+		for step_key: Variant in _TUTORIAL_BUILD_UNLOCK:
+			if _tutorial_step >= (step_key as int):
+				for bid: Variant in (_TUTORIAL_BUILD_UNLOCK[step_key] as Array):
+					unlocked.append(bid as String)
+
 	var result: Array = []
 	for entry: Variant in BUILD_ACTIONS:
 		var data: Dictionary = entry as Dictionary
-		if (data.get("id", "") as String) == "build:wonder" and not wonder_visible:
+		var bid: String = data.get("id", "") as String
+		if bid == "back":
+			result.append(data)
 			continue
-		result.append(data)
+		# Wonder only shown in wonder-victory games at Imperial age
+		if bid == "build:wonder" and not wonder_visible:
+			continue
+		# Hide buildings that require a higher age than the player currently has
+		var min_age: int = data.get("min_age", 0) as int
+		if current_age < min_age:
+			continue
+		# In tutorial, lock buildings not yet introduced
+		if is_tutorial and _tutorial_step < 7 and bid not in unlocked:
+			result.append(data.merged({"locked": true}, true))
+		else:
+			result.append(data)
 	return result
+
+func _apply_tutorial_villager_gates() -> void:
+	if not _tutorial_gates_active:
+		return
+	for child: Node in _action_grid.get_children():
+		if not (child is ActionButton):
+			continue
+		var btn: ActionButton = child as ActionButton
+		if btn.action_id == "build_menu" and _tutorial_step < 3:
+			btn.disabled = true
+			var style: StyleBoxFlat = StyleBoxFlat.new()
+			style.bg_color = Color(0.25, 0.25, 0.25)
+			style.corner_radius_top_left = 4
+			style.corner_radius_top_right = 4
+			style.corner_radius_bottom_left = 4
+			style.corner_radius_bottom_right = 4
+			btn.add_theme_stylebox_override("normal", style)
+			btn.add_theme_stylebox_override("hover", style)
 
 func show_wonder_timer(owner_pid: int) -> void:
 	if not is_instance_valid(_wonder_label):
