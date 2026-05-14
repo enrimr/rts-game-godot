@@ -259,14 +259,41 @@ func _on_tutorial_spawn_enemy_scout(near_pos: Vector2) -> void:
 	var militia_scene: PackedScene = load("res://scenes/units/militia.tscn") as PackedScene
 	if militia_scene == null:
 		return
+	var civ_id: String = MatchConfig.get_rival_civ_id(1)
+	var spawn_pos: Vector2 = _find_tutorial_spawn_pos(near_pos, civ_id)
 	var militia: CharacterBody2D = militia_scene.instantiate() as CharacterBody2D
 	militia.set("player_id", 1)
-	militia.set("civ_id", MatchConfig.get_rival_civ_id(1))
-	# Place clearly to the right of the TC with generous spacing so it's easy to spot and click
-	militia.global_position = near_pos + Vector2(320.0, 0.0)
+	militia.set("civ_id", civ_id)
+	militia.global_position = spawn_pos
 	units_layer.add_child(militia)
 	PopulationManager.add_unit(1)
 	EventBus.unit_spawned.emit(militia, 1)
+
+# Returns a passable spawn position near near_pos, avoiding buildings and other units.
+# Tries candidate offsets at increasing distances until a clear spot is found.
+func _find_tutorial_spawn_pos(near_pos: Vector2, civ_id: String) -> Vector2:
+	const MIN_DIST: float = 280.0
+	const UNIT_CLEAR_RADIUS: float = 40.0
+	var angles: Array[float] = [0.0, PI * 0.5, PI, PI * 1.5, PI * 0.25, PI * 0.75, PI * 1.25, PI * 1.75]
+	for dist_mult: int in range(1, 6):
+		var dist: float = MIN_DIST + dist_mult * 60.0
+		for angle: float in angles:
+			var candidate: Vector2 = near_pos + Vector2(cos(angle), sin(angle)) * dist
+			var passable: Vector2 = TerrainManager.nearest_passable(candidate, civ_id)
+			if passable.distance_to(candidate) > 80.0:
+				continue  # snapped too far — terrain blocked the whole area
+			# Check no building overlaps
+			var blocked: bool = false
+			for b: Node in buildings_layer.get_children():
+				if not is_instance_valid(b):
+					continue
+				if (b as Node2D).global_position.distance_to(passable) < UNIT_CLEAR_RADIUS + 48.0:
+					blocked = true
+					break
+			if not blocked:
+				return passable
+	# Fallback: just use nearest_passable from default offset
+	return TerrainManager.nearest_passable(near_pos + Vector2(320.0, 0.0), civ_id)
 
 func _setup_ai_node_only(rival_id: int, _tc_pos: Vector2) -> void:
 	# Creates only the AI controller node; buildings are restored by SaveManager.
