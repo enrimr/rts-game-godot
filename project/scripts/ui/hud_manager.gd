@@ -1738,7 +1738,6 @@ func _wire_tutorial_signals() -> void:
 	EventBus.unit_selected.connect(_on_tutorial_unit_selected)
 	EventBus.unit_command_issued.connect(_on_tutorial_unit_command)
 	EventBus.resource_changed.connect(_on_tutorial_resource_changed)
-	EventBus.building_selected.connect(_on_tutorial_building_selected)
 	EventBus.building_placed.connect(_on_tutorial_building_placed)
 	EventBus.building_construction_complete.connect(_on_tutorial_building_complete)
 	EventBus.unit_spawned.connect(_on_tutorial_unit_spawned)
@@ -1838,14 +1837,6 @@ func _on_tutorial_resource_changed(player_id: int, res: String, amt: int) -> voi
 	if baseline >= 0.0 and (amt as float) > baseline:
 		_tutorial_notify("resource_gathered")
 
-func _on_tutorial_building_selected(building: Node) -> void:
-	var script: Script = building.get_script() as Script
-	if script == null:
-		return
-	var path: String = script.resource_path
-	if "town_center" in path.to_lower():
-		_tutorial_notify("town_center_opened")
-
 func _on_tutorial_building_placed(building: Node, player_id: int) -> void:
 	if player_id != local_player_id:
 		return
@@ -1868,8 +1859,13 @@ func _on_tutorial_unit_spawned(unit: Node, player_id: int) -> void:
 	if player_id != local_player_id:
 		return
 	var script: Script = unit.get_script() as Script
-	if script != null and "militia" in script.resource_path.to_lower():
+	if script == null:
+		return
+	var path: String = script.resource_path.to_lower()
+	if "militia" in path:
 		_tutorial_notify("militia_trained")
+	elif unit.has_method("order_gather"):
+		_tutorial_notify("villager_trained")
 
 func _on_tutorial_building_complete(building: Node) -> void:
 	var pid: Variant = building.get("player_id")
@@ -1987,6 +1983,7 @@ func _open_pause_menu() -> void:
 	vbox.add_child(settings_btn)
 
 	var how_to_play_btn: Button = _make_pause_btn(tr("MENU_HOW_TO_PLAY"), Color(0.22, 0.35, 0.45, 0.95), Color(0.32, 0.50, 0.62, 0.95))
+	how_to_play_btn.disabled = _tutorial_overlay != null and is_instance_valid(_tutorial_overlay)
 	how_to_play_btn.pressed.connect(func() -> void:
 		_close_pause_menu()
 		_start_tutorial()
