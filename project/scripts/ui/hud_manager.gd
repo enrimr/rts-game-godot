@@ -1727,7 +1727,7 @@ const _TUTORIAL_MINIMUMS: Dictionary = {
 	"resource_gathered":   {"wood": 0},
 	"camp_built":          {"wood": 100},
 	"house_built":         {"wood": 25},
-	"militia_trained":     {"wood": 175, "food": 60},
+	"militia_trained":     {"wood": 195, "food": 60},
 	"age_advance_started": {"food": 500},
 	"unit_attacked":       {"food": 60, "wood": 20},
 }
@@ -1768,15 +1768,18 @@ func _on_tutorial_building_placed(building: Node, player_id: int) -> void:
 	if player_id != local_player_id:
 		return
 	_tutorial_notify("building_placed")
-	var script: Script = building.get_script() as Script
-	if script == null:
-		return
-	var path: String = script.resource_path.to_lower()
-	if "lumber_camp" in path or "mining_camp" in path:
+	var bid: String = building.get_meta("building_id", "") as String
+	if bid.is_empty():
+		# Fallback: derive type from script path
+		var script: Script = building.get_script() as Script
+		if script != null:
+			bid = script.resource_path.to_lower()
+	bid = bid.to_lower()
+	if "lumber_camp" in bid or "mining_camp" in bid:
 		_tutorial_notify("camp_built")
-	if "house" in path:
+	if "house" in bid:
 		_tutorial_notify("house_built")
-	if "barracks" in path:
+	if "barracks" in bid:
 		_tutorial_notify("barracks_built")
 
 func _on_tutorial_unit_spawned(unit: Node, player_id: int) -> void:

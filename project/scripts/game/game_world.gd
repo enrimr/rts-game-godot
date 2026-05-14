@@ -1304,6 +1304,7 @@ func _confirm_placement(world_pos: Vector2) -> void:
 	building.rotation = _ghost_rotation
 	building.set("player_id", 0)
 	building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
+	building.set_meta("building_id", _placing_id)
 	buildings_layer.add_child(building)
 	AudioManager.play("build_place")
 	EventBus.building_placed.emit(building, 0)
