@@ -1702,6 +1702,7 @@ func _wire_tutorial_signals() -> void:
 	EventBus.resource_changed.connect(_on_tutorial_resource_changed)
 	EventBus.building_selected.connect(_on_tutorial_building_selected)
 	EventBus.building_placed.connect(_on_tutorial_building_placed)
+	EventBus.unit_spawned.connect(_on_tutorial_unit_spawned)
 	EventBus.age_advance_started.connect(_on_tutorial_age_advance)
 	EventBus.hero_ability_used.connect(_on_tutorial_hero_ability)
 	EventBus.enemy_unit_spotted.connect(_on_tutorial_enemy_spotted)
@@ -1726,7 +1727,7 @@ const _TUTORIAL_MINIMUMS: Dictionary = {
 	"resource_gathered":   {"wood": 0},
 	"camp_built":          {"wood": 100},
 	"house_built":         {"wood": 25},
-	"barracks_built":      {"wood": 175},
+	"militia_trained":     {"wood": 175, "food": 60},
 	"age_advance_started": {"food": 500},
 	"unit_attacked":       {"food": 60, "wood": 20},
 }
@@ -1777,6 +1778,13 @@ func _on_tutorial_building_placed(building: Node, player_id: int) -> void:
 		_tutorial_notify("house_built")
 	if "barracks" in path:
 		_tutorial_notify("barracks_built")
+
+func _on_tutorial_unit_spawned(unit: Node, player_id: int) -> void:
+	if player_id != local_player_id:
+		return
+	var script: Script = unit.get_script() as Script
+	if script != null and "militia" in script.resource_path.to_lower():
+		_tutorial_notify("militia_trained")
 
 func _on_tutorial_age_advance(player_id: int, _target: int) -> void:
 	if player_id == local_player_id:

@@ -14,7 +14,7 @@ const STEPS: Array[Dictionary] = [
 	{"title": "TUTORIAL_STEP3_TITLE",  "body": "TUTORIAL_STEP3_BODY",  "condition": "camp_built"},
 	{"title": "TUTORIAL_STEP4_TITLE",  "body": "TUTORIAL_STEP4_BODY",  "condition": "house_built"},
 	{"title": "TUTORIAL_STEP5_TITLE",  "body": "TUTORIAL_STEP5_BODY",  "condition": "town_center_opened"},
-	{"title": "TUTORIAL_STEP5B_TITLE", "body": "TUTORIAL_STEP5B_BODY", "condition": "barracks_built"},
+	{"title": "TUTORIAL_STEP5B_TITLE", "body": "TUTORIAL_STEP5B_BODY", "condition": "militia_trained"},
 	{"title": "TUTORIAL_STEP6_TITLE",  "body": "TUTORIAL_STEP6_BODY",  "condition": "age_advance_started"},
 	{"title": "TUTORIAL_STEP7_TITLE",  "body": "TUTORIAL_STEP7_BODY",  "condition": "hero_ability_used"},
 	{"title": "TUTORIAL_STEP7B_TITLE", "body": "TUTORIAL_STEP7B_BODY", "condition": "enemy_spotted"},
