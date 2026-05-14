@@ -89,6 +89,8 @@ var _pan_last_pos: Vector2 = Vector2.ZERO
 
 var _following: bool = false
 var _camera_moved_emitted: bool = false
+var _edge_scroll_timer: float = 0.0
+const EDGE_SCROLL_DELAY: float = 0.3
 
 # Build placement state
 var _placing_building: bool = false
@@ -510,18 +512,30 @@ func _on_unit_selected_follow(_units: Array) -> void:
 const EDGE_SCROLL_MARGIN: float = 60.0
 
 func _handle_camera(delta: float) -> void:
-	var dir: Vector2 = Vector2.ZERO
-	if Input.is_action_pressed("camera_pan_left"):  dir.x -= 1.0
-	if Input.is_action_pressed("camera_pan_right"): dir.x += 1.0
-	if Input.is_action_pressed("camera_pan_up"):    dir.y -= 1.0
-	if Input.is_action_pressed("camera_pan_down"):  dir.y += 1.0
+	# Keyboard input — immediate response
+	var key_dir: Vector2 = Vector2.ZERO
+	if Input.is_action_pressed("camera_pan_left"):  key_dir.x -= 1.0
+	if Input.is_action_pressed("camera_pan_right"): key_dir.x += 1.0
+	if Input.is_action_pressed("camera_pan_up"):    key_dir.y -= 1.0
+	if Input.is_action_pressed("camera_pan_down"):  key_dir.y += 1.0
 
+	# Edge scroll — only activates after EDGE_SCROLL_DELAY seconds in the margin
+	var edge_dir: Vector2 = Vector2.ZERO
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	var mp: Vector2 = get_viewport().get_mouse_position()
-	if mp.x < EDGE_SCROLL_MARGIN:               dir.x -= 1.0
-	elif mp.x > vp.x - EDGE_SCROLL_MARGIN:      dir.x += 1.0
-	if mp.y < EDGE_SCROLL_MARGIN:               dir.y -= 1.0
-	elif mp.y > vp.y - EDGE_SCROLL_MARGIN:      dir.y += 1.0
+	if mp.x < EDGE_SCROLL_MARGIN:          edge_dir.x -= 1.0
+	elif mp.x > vp.x - EDGE_SCROLL_MARGIN: edge_dir.x += 1.0
+	if mp.y < EDGE_SCROLL_MARGIN:          edge_dir.y -= 1.0
+	elif mp.y > vp.y - EDGE_SCROLL_MARGIN: edge_dir.y += 1.0
+
+	if edge_dir != Vector2.ZERO:
+		_edge_scroll_timer += delta
+	else:
+		_edge_scroll_timer = 0.0
+
+	var dir: Vector2 = key_dir
+	if _edge_scroll_timer >= EDGE_SCROLL_DELAY:
+		dir += edge_dir
 
 	if dir != Vector2.ZERO:
 		if _following:
