@@ -16,7 +16,7 @@ const COLOR_EXPLORED: Color = Color(0.0, 0.0, 0.0, 0.6)
 const COLOR_VISIBLE: Color = Color(0.0, 0.0, 0.0, 0.0)
 
 const UPDATE_INTERVAL: float = 0.12
-const EXPLORE_THRESHOLD: int = 150  # cells newly revealed to satisfy tutorial
+const EXPLORE_THRESHOLD: int = 350  # cells newly revealed to satisfy tutorial
 
 var _cells: PackedByteArray
 var _dirty_cells: PackedByteArray
