@@ -36,7 +36,7 @@ ACTION_DESTROY,Destroy,Destruir
 ACTION_BACK,← Back,← Volver
 ACTION_HOUSE,House\n25W,Casa\n25M
 ACTION_BARRACKS,Barracks\n175W,Cuartel\n175M
-ACTION_LUMBER,Lumber\n100W,Leñador\n100M
+ACTION_LUMBER,Lumber\n100W,Campamento Maderero\n100M
 ACTION_MINING,Mining\n100W,Minería\n100M
 ACTION_FARM,Farm\n60W,Granja\n60M
 ACTION_WALL,Wall\n5S,Muro\n5P
