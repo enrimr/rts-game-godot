@@ -15,7 +15,7 @@ func _ready() -> void:
 	_name_label = Label.new()
 	_name_label.name = "NameLabel"
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name_label.add_theme_font_size_override("font_size", 9)
+	_name_label.add_theme_font_size_override("font_size", 13)
 	layout.add_child(_name_label)
 
 	_hp_bar = ProgressBar.new()

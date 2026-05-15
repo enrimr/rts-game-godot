@@ -1006,7 +1006,7 @@ func _build_hero_respawn_bar() -> void:
 	if detail_panel == null:
 		return
 	_hero_respawn_label = Label.new()
-	_hero_respawn_label.add_theme_font_size_override("font_size", 11)
+	_hero_respawn_label.add_theme_font_size_override("font_size", 15)
 	_hero_respawn_label.add_theme_color_override("font_color", Color(0.90, 0.75, 0.25))
 	_hero_respawn_label.text = ""
 	detail_panel.add_child(_hero_respawn_label)
@@ -1032,7 +1032,7 @@ func _build_research_bar(building: Node) -> void:
 		return
 	if not is_instance_valid(_research_label):
 		_research_label = Label.new()
-		_research_label.add_theme_font_size_override("font_size", 11)
+		_research_label.add_theme_font_size_override("font_size", 15)
 		_research_label.add_theme_color_override("font_color", Color(0.55, 0.80, 0.90))
 		detail_panel.add_child(_research_label)
 	_research_label.text = tr("UI_RESEARCHING") % tech.display_name if tr("UI_RESEARCHING") != "UI_RESEARCHING" else ("Researching: " + tech.display_name)
@@ -1173,7 +1173,7 @@ func _build_follow_button() -> void:
 	_follow_btn.focus_mode = Control.FOCUS_NONE
 	_follow_btn.visible = false
 	_follow_btn.custom_minimum_size = Vector2(0, 24)
-	_follow_btn.add_theme_font_size_override("font_size", 11)
+	_follow_btn.add_theme_font_size_override("font_size", 15)
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0.15, 0.25, 0.45, 0.9)
 	style.corner_radius_top_left = 4
@@ -1391,7 +1391,7 @@ func _on_game_over(winner_player_id: int) -> void:
 	var title: Label = Label.new()
 	title.text = tr("GAMEOVER_VICTORY") if winner_player_id == 0 else tr("GAMEOVER_DEFEAT")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_font_size_override("font_size", 60)
 	var title_col: Color = Color(0.25, 1.0, 0.35) if winner_player_id == 0 else Color(1.0, 0.25, 0.25)
 	title.add_theme_color_override("font_color", title_col)
 	vbox.add_child(title)
@@ -1404,7 +1404,7 @@ func _on_game_over(winner_player_id: int) -> void:
 	var stats_header: Label = Label.new()
 	stats_header.text = tr("GAMEOVER_SUMMARY")
 	stats_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stats_header.add_theme_font_size_override("font_size", 18)
+	stats_header.add_theme_font_size_override("font_size", 22)
 	stats_header.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
 	vbox.add_child(stats_header)
 
@@ -1439,13 +1439,13 @@ func _on_game_over(winner_player_id: int) -> void:
 	var ph: Label = Label.new()
 	ph.text = tr("GAMEOVER_PLAYER")
 	ph.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	ph.add_theme_font_size_override("font_size", 13)
+	ph.add_theme_font_size_override("font_size", 17)
 	ph.add_theme_color_override("font_color", PlayerColors.get_color(local_player_id))
 	player_col.add_child(ph)
 	var pc: Label = Label.new()
 	pc.text = _get_civ_display.call(MatchConfig.player_civ_id) as String
 	pc.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	pc.add_theme_font_size_override("font_size", 11)
+	pc.add_theme_font_size_override("font_size", 15)
 	pc.add_theme_color_override("font_color", PlayerColors.get_color(local_player_id).lightened(0.3))
 	player_col.add_child(pc)
 	grid.add_child(player_col)
@@ -1460,14 +1460,14 @@ func _on_game_over(winner_player_id: int) -> void:
 			else tr("GAMEOVER_RIVAL") + " %d" % (ri + 1)
 		rh.text = rival_label
 		rh.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		rh.add_theme_font_size_override("font_size", 13)
+		rh.add_theme_font_size_override("font_size", 17)
 		var rcol_color: Color = PlayerColors.get_color(rid)
 		rh.add_theme_color_override("font_color", rcol_color)
 		rcol.add_child(rh)
 		var rcc: Label = Label.new()
 		rcc.text = _get_civ_display.call(MatchConfig.get_rival_civ_id(rid)) as String
 		rcc.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		rcc.add_theme_font_size_override("font_size", 11)
+		rcc.add_theme_font_size_override("font_size", 15)
 		rcc.add_theme_color_override("font_color", rcol_color.lightened(0.3))
 		rcol.add_child(rcc)
 		grid.add_child(rcol)
@@ -1523,13 +1523,13 @@ func _on_game_over(winner_player_id: int) -> void:
 	for stat: Dictionary in stat_defs:
 		var key_lbl: Label = Label.new()
 		key_lbl.text = stat["label"] as String
-		key_lbl.add_theme_font_size_override("font_size", 14)
+		key_lbl.add_theme_font_size_override("font_size", 18)
 		key_lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
 		grid.add_child(key_lbl)
 
 		var player_val: Label = Label.new()
 		player_val.text = stat["player"] as String
-		player_val.add_theme_font_size_override("font_size", 14)
+		player_val.add_theme_font_size_override("font_size", 18)
 		player_val.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 		player_val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		grid.add_child(player_val)
@@ -1537,7 +1537,7 @@ func _on_game_over(winner_player_id: int) -> void:
 		for rid: int in rival_ids:
 			var rival_val: Label = Label.new()
 			rival_val.text = (stat["rival_fn"] as Callable).call(rid) as String
-			rival_val.add_theme_font_size_override("font_size", 14)
+			rival_val.add_theme_font_size_override("font_size", 18)
 			rival_val.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 			rival_val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 			grid.add_child(rival_val)
@@ -1557,7 +1557,7 @@ func _on_game_over(winner_player_id: int) -> void:
 	var map_btn: Button = Button.new()
 	map_btn.text = tr("GAMEOVER_VIEW_MAP")
 	map_btn.custom_minimum_size = Vector2(150.0, 36.0)
-	map_btn.add_theme_font_size_override("font_size", 16)
+	map_btn.add_theme_font_size_override("font_size", 20)
 	map_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.15, 0.30, 0.50, 0.95)))
 	map_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.25, 0.45, 0.70, 0.95)))
 
@@ -1568,7 +1568,7 @@ func _on_game_over(winner_player_id: int) -> void:
 	exit_btn.offset_right  =    0.0
 	exit_btn.offset_top    =    8.0
 	exit_btn.offset_bottom =   40.0
-	exit_btn.add_theme_font_size_override("font_size", 14)
+	exit_btn.add_theme_font_size_override("font_size", 18)
 	exit_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.15, 0.15, 0.15, 0.92)))
 	exit_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.35, 0.15, 0.15, 0.92)))
 	exit_btn.pressed.connect(func() -> void:
@@ -1593,7 +1593,7 @@ func _on_game_over(winner_player_id: int) -> void:
 	var charts_btn: Button = Button.new()
 	charts_btn.text = tr("GAMEOVER_CHARTS")
 	charts_btn.custom_minimum_size = Vector2(150.0, 36.0)
-	charts_btn.add_theme_font_size_override("font_size", 16)
+	charts_btn.add_theme_font_size_override("font_size", 20)
 	charts_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.22, 0.20, 0.38, 0.95)))
 	charts_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.36, 0.32, 0.60, 0.95)))
 	charts_btn.pressed.connect(func() -> void:
@@ -1605,7 +1605,7 @@ func _on_game_over(winner_player_id: int) -> void:
 	var menu_btn: Button = Button.new()
 	menu_btn.text = tr("GAMEOVER_BACK_MENU")
 	menu_btn.custom_minimum_size = Vector2(150.0, 36.0)
-	menu_btn.add_theme_font_size_override("font_size", 16)
+	menu_btn.add_theme_font_size_override("font_size", 20)
 	menu_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.15, 0.15, 0.15, 0.95)))
 	menu_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.30, 0.30, 0.30, 0.95)))
 	menu_btn.pressed.connect(func() -> void:
@@ -1646,7 +1646,7 @@ func _show_charts_panel(parent: Node) -> void:
 	var title_lbl: Label = Label.new()
 	title_lbl.text = tr("GAMEOVER_CHARTS")
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_lbl.add_theme_font_size_override("font_size", 22)
+	title_lbl.add_theme_font_size_override("font_size", 26)
 	title_lbl.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title_lbl)
 
@@ -1674,7 +1674,7 @@ func _show_charts_panel(parent: Node) -> void:
 		row.add_child(swatch)
 		var ll: Label = Label.new()
 		ll.text = ldata[0] as String
-		ll.add_theme_font_size_override("font_size", 13)
+		ll.add_theme_font_size_override("font_size", 17)
 		ll.add_theme_color_override("font_color", ldata[1] as Color)
 		row.add_child(ll)
 
@@ -1734,7 +1734,7 @@ func _show_charts_panel(parent: Node) -> void:
 	close_btn.custom_minimum_size = Vector2(160.0, 36.0)
 	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.add_theme_font_size_override("font_size", 16)
+	close_btn.add_theme_font_size_override("font_size", 20)
 	close_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.20, 0.20, 0.25, 0.95)))
 	close_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.35, 0.35, 0.42, 0.95)))
 	close_btn.pressed.connect(func() -> void: ov.queue_free())
@@ -1941,7 +1941,7 @@ func _build_pause_menu_button() -> void:
 	btn.text = "☰"
 	btn.custom_minimum_size = Vector2(36, 36)
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", 22)
 	btn.tooltip_text = "Menu (Esc)"
 	# Anchor to top-right corner
 	btn.anchor_left   = 1.0
@@ -1973,7 +1973,7 @@ func _build_idle_villager_button() -> void:
 	_idle_villager_btn.text = "👷"
 	_idle_villager_btn.custom_minimum_size = Vector2(36, 36)
 	_idle_villager_btn.focus_mode = Control.FOCUS_NONE
-	_idle_villager_btn.add_theme_font_size_override("font_size", 18)
+	_idle_villager_btn.add_theme_font_size_override("font_size", 22)
 	_idle_villager_btn.tooltip_text = tr("UI_IDLE_VILLAGER")
 	# Anchor to bottom-right, above minimap top (220px), flush with minimap left edge (220px from right)
 	_idle_villager_btn.anchor_left   = 1.0
@@ -2046,7 +2046,7 @@ func _build_idle_military_button() -> void:
 	_idle_military_btn.text = "⚔"
 	_idle_military_btn.custom_minimum_size = Vector2(36, 36)
 	_idle_military_btn.focus_mode = Control.FOCUS_NONE
-	_idle_military_btn.add_theme_font_size_override("font_size", 18)
+	_idle_military_btn.add_theme_font_size_override("font_size", 22)
 	_idle_military_btn.tooltip_text = tr("UI_IDLE_MILITARY")
 	# Anchor to bottom-right, same row as villager button, 4px to the left of it
 	_idle_military_btn.anchor_left   = 1.0
@@ -2152,7 +2152,7 @@ func _build_dpad() -> void:
 		var row: int = entry["row"] as int
 		btn.position = Vector2(col * (CELL + GAP), row * (CELL + GAP))
 		btn.size     = Vector2(CELL, CELL)
-		btn.add_theme_font_size_override("font_size", 22)
+		btn.add_theme_font_size_override("font_size", 26)
 		var s: StyleBoxFlat = StyleBoxFlat.new()
 		s.bg_color = Color(0.12, 0.12, 0.18, 0.85)
 		s.corner_radius_top_left     = 6
@@ -2204,7 +2204,7 @@ func _open_pause_menu() -> void:
 	var title: Label = Label.new()
 	title.text = tr("MENU_SETTINGS")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title)
 	vbox.add_child(HSeparator.new())
@@ -2278,7 +2278,7 @@ func _open_save_slot_picker() -> void:
 	var title: Label = Label.new()
 	title.text = tr("SAVE_PICKER_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", 26)
 	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title)
 	vbox.add_child(HSeparator.new())
@@ -2310,7 +2310,7 @@ func _open_save_slot_picker() -> void:
 		new_btn.text = tr("SAVE_NEW_SLOT")
 		new_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		new_btn.focus_mode = Control.FOCUS_NONE
-		new_btn.add_theme_font_size_override("font_size", 15)
+		new_btn.add_theme_font_size_override("font_size", 19)
 		new_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.16, 0.30, 0.16, 0.95)))
 		new_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.24, 0.46, 0.24, 0.95)))
 		new_row.add_child(new_btn)
@@ -2331,7 +2331,7 @@ func _open_save_slot_picker() -> void:
 			slot_btn.text = _format_save_label(meta)
 			slot_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			slot_btn.focus_mode = Control.FOCUS_NONE
-			slot_btn.add_theme_font_size_override("font_size", 14)
+			slot_btn.add_theme_font_size_override("font_size", 18)
 			slot_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.16, 0.20, 0.32, 0.95)))
 			slot_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.24, 0.32, 0.50, 0.95)))
 			row.add_child(slot_btn)
@@ -2346,7 +2346,7 @@ func _open_save_slot_picker() -> void:
 			del_btn.text = tr("SAVE_DELETE")
 			del_btn.custom_minimum_size = Vector2(36, 0)
 			del_btn.focus_mode = Control.FOCUS_NONE
-			del_btn.add_theme_font_size_override("font_size", 14)
+			del_btn.add_theme_font_size_override("font_size", 18)
 			del_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.38, 0.10, 0.10, 0.95)))
 			del_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.60, 0.15, 0.15, 0.95)))
 			row.add_child(del_btn)
@@ -2379,7 +2379,7 @@ func _show_save_notification(success: bool) -> void:
 	var lbl: Label = Label.new()
 	lbl.text = tr("SAVE_SUCCESS") if success else tr("SAVE_FAILED")
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_font_size_override("font_size", 22)
 	lbl.add_theme_color_override("font_color",
 		Color(0.4, 1.0, 0.5) if success else Color(1.0, 0.4, 0.4))
 	lbl.position = Vector2(get_viewport().get_visible_rect().size.x * 0.5 - 150.0, 80.0)
@@ -2422,7 +2422,7 @@ func _open_ingame_settings() -> void:
 	var title: Label = Label.new()
 	title.text = tr("SETTINGS_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title)
 	vbox.add_child(HSeparator.new())
@@ -2430,7 +2430,7 @@ func _open_ingame_settings() -> void:
 	# Music
 	var music_lbl: Label = Label.new()
 	music_lbl.text = tr("SETTINGS_MUSIC")
-	music_lbl.add_theme_font_size_override("font_size", 15)
+	music_lbl.add_theme_font_size_override("font_size", 19)
 	music_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
 	vbox.add_child(music_lbl)
 	var music_slider: HSlider = _make_settings_slider(GameSettings.music_volume)
@@ -2446,7 +2446,7 @@ func _open_ingame_settings() -> void:
 	# SFX
 	var sfx_lbl: Label = Label.new()
 	sfx_lbl.text = tr("SETTINGS_SFX")
-	sfx_lbl.add_theme_font_size_override("font_size", 15)
+	sfx_lbl.add_theme_font_size_override("font_size", 19)
 	sfx_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
 	vbox.add_child(sfx_lbl)
 	var sfx_slider: HSlider = _make_settings_slider(GameSettings.sfx_volume)
@@ -2464,7 +2464,7 @@ func _open_ingame_settings() -> void:
 	# Language
 	var lang_lbl: Label = Label.new()
 	lang_lbl.text = tr("SETTINGS_LANGUAGE")
-	lang_lbl.add_theme_font_size_override("font_size", 15)
+	lang_lbl.add_theme_font_size_override("font_size", 19)
 	lang_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
 	vbox.add_child(lang_lbl)
 	var lang_row: HBoxContainer = HBoxContainer.new()
@@ -2478,7 +2478,7 @@ func _open_ingame_settings() -> void:
 		lb.text = lang_names[li]
 		lb.custom_minimum_size = Vector2(100, 36)
 		lb.focus_mode = Control.FOCUS_NONE
-		lb.add_theme_font_size_override("font_size", 15)
+		lb.add_theme_font_size_override("font_size", 19)
 		lang_row.add_child(lb)
 		lang_btns.append(lb)
 	var refresh_lang: Callable = func() -> void:
@@ -2501,7 +2501,7 @@ func _open_ingame_settings() -> void:
 
 	var ctrl_lbl: Label = Label.new()
 	ctrl_lbl.text = tr("SETTINGS_CONTROLS")
-	ctrl_lbl.add_theme_font_size_override("font_size", 15)
+	ctrl_lbl.add_theme_font_size_override("font_size", 19)
 	ctrl_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
 	vbox.add_child(ctrl_lbl)
 
@@ -2526,7 +2526,7 @@ func _open_ingame_settings() -> void:
 	close_btn.custom_minimum_size = Vector2(200, 40)
 	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.add_theme_font_size_override("font_size", 16)
+	close_btn.add_theme_font_size_override("font_size", 20)
 	close_btn.add_theme_stylebox_override("normal", _make_panel_style(Color(0.20, 0.35, 0.55, 0.95)))
 	close_btn.add_theme_stylebox_override("hover",  _make_panel_style(Color(0.30, 0.50, 0.75, 0.95)))
 	vbox.add_child(close_btn)
@@ -2542,13 +2542,13 @@ func _make_toggle_row(parent: VBoxContainer, label_text: String, initial: bool) 
 	var lbl: Label = Label.new()
 	lbl.text = label_text
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_font_size_override("font_size", 18)
 	lbl.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
 	row.add_child(lbl)
 	var btn: Button = Button.new()
 	btn.custom_minimum_size = Vector2(72, 32)
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.add_theme_font_size_override("font_size", 14)
+	btn.add_theme_font_size_override("font_size", 18)
 	_style_toggle_btn(btn, initial)
 	row.add_child(btn)
 	return btn
@@ -2578,7 +2578,7 @@ func _make_settings_slider(initial: float) -> HSlider:
 func _make_settings_pct_label(initial: float) -> Label:
 	var lbl: Label = Label.new()
 	lbl.text = "%d%%" % int(initial * 100.0)
-	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_font_size_override("font_size", 17)
 	lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
 	return lbl
 
@@ -2592,7 +2592,7 @@ func _make_pause_btn(label_text: String, normal_col: Color, hover_col: Color) ->
 	btn.custom_minimum_size = Vector2(240, 42)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.add_theme_font_size_override("font_size", 16)
+	btn.add_theme_font_size_override("font_size", 20)
 	btn.add_theme_stylebox_override("normal", _make_panel_style(normal_col))
 	var hs: StyleBoxFlat = _make_panel_style(hover_col)
 	btn.add_theme_stylebox_override("hover", hs)
@@ -2655,7 +2655,7 @@ func show_wonder_timer(owner_pid: int) -> void:
 	if not is_instance_valid(_wonder_label):
 		_wonder_label = Label.new()
 		_wonder_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_wonder_label.add_theme_font_size_override("font_size", 22)
+		_wonder_label.add_theme_font_size_override("font_size", 26)
 		_wonder_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.20))
 		_wonder_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
 		_wonder_label.offset_top = 8.0

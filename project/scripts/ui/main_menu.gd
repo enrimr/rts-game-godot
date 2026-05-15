@@ -62,7 +62,7 @@ func _build_continue_button() -> void:
 	var btn: Button = Button.new()
 	btn.text = tr("MENU_CONTINUE")
 	btn.custom_minimum_size = Vector2(160, 40)
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", 22)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.disabled = not SaveManager.has_any_save()
 	var container: Node = _play_button.get_parent()
@@ -106,7 +106,7 @@ func _open_load_picker() -> void:
 	var title: Label = Label.new()
 	title.text = tr("LOAD_PICKER_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", 26)
 	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title)
 	vbox.add_child(HSeparator.new())
@@ -144,7 +144,7 @@ func _open_load_picker() -> void:
 			load_btn.text = _format_save_label(meta)
 			load_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			load_btn.focus_mode = Control.FOCUS_NONE
-			load_btn.add_theme_font_size_override("font_size", 14)
+			load_btn.add_theme_font_size_override("font_size", 18)
 			var btn_style: StyleBoxFlat = StyleBoxFlat.new()
 			btn_style.bg_color = Color(0.16, 0.20, 0.32, 0.95)
 			btn_style.corner_radius_top_left    = 4
@@ -175,7 +175,7 @@ func _open_load_picker() -> void:
 			del_btn.text = tr("SAVE_DELETE")
 			del_btn.custom_minimum_size = Vector2(36, 0)
 			del_btn.focus_mode = Control.FOCUS_NONE
-			del_btn.add_theme_font_size_override("font_size", 14)
+			del_btn.add_theme_font_size_override("font_size", 18)
 			var del_style: StyleBoxFlat = StyleBoxFlat.new()
 			del_style.bg_color = Color(0.38, 0.10, 0.10, 0.95)
 			del_style.corner_radius_top_left    = 4
@@ -204,7 +204,7 @@ func _open_load_picker() -> void:
 	cancel_btn.custom_minimum_size = Vector2(200, 40)
 	cancel_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	cancel_btn.focus_mode = Control.FOCUS_NONE
-	cancel_btn.add_theme_font_size_override("font_size", 16)
+	cancel_btn.add_theme_font_size_override("font_size", 20)
 	var cancel_style: StyleBoxFlat = StyleBoxFlat.new()
 	cancel_style.bg_color = Color(0.22, 0.10, 0.10, 0.95)
 	cancel_style.corner_radius_top_left    = 4
@@ -235,7 +235,7 @@ func _build_settings_button() -> void:
 	var btn: Button = Button.new()
 	btn.text = tr("MENU_SETTINGS")
 	btn.custom_minimum_size = Vector2(160, 40)
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", 22)
 	btn.focus_mode = Control.FOCUS_NONE
 
 	# Insert after PlayButton inside its parent container
@@ -253,7 +253,7 @@ func _build_how_to_play_button() -> void:
 	var btn: Button = Button.new()
 	btn.text = tr("MENU_HOW_TO_PLAY")
 	btn.custom_minimum_size = Vector2(160, 40)
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", 22)
 	btn.focus_mode = Control.FOCUS_NONE
 
 	# Insert after Settings button
@@ -305,7 +305,7 @@ func _show_loading_screen() -> void:
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	lbl.add_theme_font_size_override("font_size", 28)
+	lbl.add_theme_font_size_override("font_size", 32)
 	lbl.add_theme_color_override("font_color", Color(0.85, 0.78, 0.50))
 	overlay.add_child(lbl)
 
@@ -356,7 +356,7 @@ func _open_settings() -> void:
 	var title: Label = Label.new()
 	title.text = tr("SETTINGS_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title)
 
@@ -400,7 +400,7 @@ func _open_settings() -> void:
 		db.text = diff_labels[d]
 		db.custom_minimum_size = Vector2(100, 36)
 		db.focus_mode = Control.FOCUS_NONE
-		db.add_theme_font_size_override("font_size", 15)
+		db.add_theme_font_size_override("font_size", 19)
 		diff_row.add_child(db)
 		diff_btns.append(db)
 
@@ -442,7 +442,7 @@ func _open_settings() -> void:
 		lb.text = lang_names[li]
 		lb.custom_minimum_size = Vector2(100, 36)
 		lb.focus_mode = Control.FOCUS_NONE
-		lb.add_theme_font_size_override("font_size", 15)
+		lb.add_theme_font_size_override("font_size", 19)
 		lang_row.add_child(lb)
 		lang_btns.append(lb)
 
@@ -497,7 +497,7 @@ func _open_settings() -> void:
 	close_btn.custom_minimum_size = Vector2(200, 40)
 	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.add_theme_font_size_override("font_size", 16)
+	close_btn.add_theme_font_size_override("font_size", 20)
 	var close_style: StyleBoxFlat = StyleBoxFlat.new()
 	close_style.bg_color = Color(0.20, 0.35, 0.55, 0.95)
 	close_style.corner_radius_top_left    = 4
@@ -553,7 +553,7 @@ func _prompt_tutorial() -> void:
 	var title: Label = Label.new()
 	title.text = tr("TUTORIAL_PROMPT_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title)
 
@@ -563,7 +563,7 @@ func _prompt_tutorial() -> void:
 	body.text = tr("TUTORIAL_PROMPT_BODY")
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.add_theme_font_size_override("font_size", 15)
+	body.add_theme_font_size_override("font_size", 19)
 	body.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
 	vbox.add_child(body)
 
@@ -578,7 +578,7 @@ func _prompt_tutorial() -> void:
 	yes_btn.text = tr("TUTORIAL_PROMPT_YES")
 	yes_btn.custom_minimum_size = Vector2(180, 40)
 	yes_btn.focus_mode = Control.FOCUS_NONE
-	yes_btn.add_theme_font_size_override("font_size", 16)
+	yes_btn.add_theme_font_size_override("font_size", 20)
 	var yes_style: StyleBoxFlat = StyleBoxFlat.new()
 	yes_style.bg_color = Color(0.18, 0.42, 0.18, 0.95)
 	yes_style.corner_radius_top_left    = 4
@@ -599,7 +599,7 @@ func _prompt_tutorial() -> void:
 	skip_btn.text = tr("TUTORIAL_PROMPT_SKIP")
 	skip_btn.custom_minimum_size = Vector2(140, 40)
 	skip_btn.focus_mode = Control.FOCUS_NONE
-	skip_btn.add_theme_font_size_override("font_size", 16)
+	skip_btn.add_theme_font_size_override("font_size", 20)
 	var skip_style: StyleBoxFlat = StyleBoxFlat.new()
 	skip_style.bg_color = Color(0.22, 0.10, 0.10, 0.95)
 	skip_style.corner_radius_top_left    = 4
@@ -637,7 +637,7 @@ func _launch_tutorial_game() -> void:
 func _make_section_label(text: String) -> Label:
 	var lbl: Label = Label.new()
 	lbl.text = text
-	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_font_size_override("font_size", 19)
 	lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
 	return lbl
 
@@ -664,7 +664,7 @@ func _make_pct_label(initial: float) -> Label:
 	var lbl: Label = Label.new()
 	lbl.text = "%d%%" % int(initial * 100.0)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_font_size_override("font_size", 17)
 	lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
 	return lbl
 
@@ -675,13 +675,13 @@ func _make_toggle_row(parent: VBoxContainer, label_text: String, initial: bool) 
 	var lbl: Label = Label.new()
 	lbl.text = label_text
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_font_size_override("font_size", 18)
 	lbl.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
 	row.add_child(lbl)
 	var btn: Button = Button.new()
 	btn.custom_minimum_size = Vector2(72, 32)
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.add_theme_font_size_override("font_size", 14)
+	btn.add_theme_font_size_override("font_size", 18)
 	_style_toggle_btn(btn, initial)
 	row.add_child(btn)
 	return btn

@@ -95,7 +95,7 @@ func _build_card() -> void:
 	vbox.add_child(header_row)
 
 	_step_label = Label.new()
-	_step_label.add_theme_font_size_override("font_size", 13)
+	_step_label.add_theme_font_size_override("font_size", 17)
 	_step_label.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
 	_step_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	header_row.add_child(_step_label)
@@ -105,7 +105,7 @@ func _build_card() -> void:
 	header_row.add_child(header_spacer)
 
 	_title_label = Label.new()
-	_title_label.add_theme_font_size_override("font_size", 20)
+	_title_label.add_theme_font_size_override("font_size", 24)
 	_title_label.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	_title_label.size_flags_horizontal = Control.SIZE_SHRINK_END
 	header_row.add_child(_title_label)
@@ -113,7 +113,7 @@ func _build_card() -> void:
 	vbox.add_child(HSeparator.new())
 
 	_body_label = Label.new()
-	_body_label.add_theme_font_size_override("font_size", 15)
+	_body_label.add_theme_font_size_override("font_size", 19)
 	_body_label.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
 	_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_body_label.custom_minimum_size = Vector2(0.0, 80.0)
@@ -121,7 +121,7 @@ func _build_card() -> void:
 
 	# Lock hint shown while the step is waiting for player action
 	_lock_label = Label.new()
-	_lock_label.add_theme_font_size_override("font_size", 13)
+	_lock_label.add_theme_font_size_override("font_size", 17)
 	_lock_label.add_theme_color_override("font_color", Color(0.65, 0.55, 0.25))
 	_lock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_lock_label.text = tr("TUTORIAL_DO_IT")
@@ -139,7 +139,7 @@ func _build_card() -> void:
 	_back_btn = Button.new()
 	_back_btn.text = tr("TUTORIAL_BACK")
 	_back_btn.focus_mode = Control.FOCUS_NONE
-	_back_btn.add_theme_font_size_override("font_size", 15)
+	_back_btn.add_theme_font_size_override("font_size", 19)
 	_back_btn.add_theme_stylebox_override("normal", _make_btn_style(Color(0.18, 0.18, 0.25, 0.92)))
 	_back_btn.add_theme_stylebox_override("hover",  _make_btn_style(Color(0.28, 0.28, 0.40, 0.95)))
 	_back_btn.pressed.connect(func() -> void: _go_to(_current_step - 1))
@@ -148,7 +148,7 @@ func _build_card() -> void:
 	_skip_btn = Button.new()
 	_skip_btn.text = tr("TUTORIAL_SKIP")
 	_skip_btn.focus_mode = Control.FOCUS_NONE
-	_skip_btn.add_theme_font_size_override("font_size", 15)
+	_skip_btn.add_theme_font_size_override("font_size", 19)
 	_skip_btn.add_theme_stylebox_override("normal", _make_btn_style(Color(0.35, 0.10, 0.10, 0.92)))
 	_skip_btn.add_theme_stylebox_override("hover",  _make_btn_style(Color(0.55, 0.15, 0.15, 0.95)))
 	_skip_btn.pressed.connect(close)
@@ -156,7 +156,7 @@ func _build_card() -> void:
 
 	_next_btn = Button.new()
 	_next_btn.focus_mode = Control.FOCUS_NONE
-	_next_btn.add_theme_font_size_override("font_size", 15)
+	_next_btn.add_theme_font_size_override("font_size", 19)
 	_next_btn.add_theme_stylebox_override("normal", _make_btn_style(Color(0.18, 0.42, 0.18, 0.95)))
 	_next_btn.add_theme_stylebox_override("hover",  _make_btn_style(Color(0.26, 0.58, 0.26, 0.95)))
 	_next_btn.pressed.connect(_on_next_pressed)

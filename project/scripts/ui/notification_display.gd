@@ -72,7 +72,7 @@ func push(text: String, color: Color = Color.WHITE, hold: float = 4.0) -> void:
 	lbl.text = text
 	lbl.mouse_filter = MOUSE_FILTER_IGNORE
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 16)
+	lbl.add_theme_font_size_override("font_size", 20)
 	lbl.add_theme_color_override("font_color", color)
 	panel.add_child(lbl)
 

@@ -102,7 +102,7 @@ func _build() -> void:
 	var title: Label = Label.new()
 	title.text = tr("LOBBY_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_font_size_override("font_size", 34)
 	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title)
 
@@ -166,7 +166,7 @@ func _build() -> void:
 
 	_player_civ_desc_label = Label.new()
 	_player_civ_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_player_civ_desc_label.add_theme_font_size_override("font_size", 13)
+	_player_civ_desc_label.add_theme_font_size_override("font_size", 17)
 	_player_civ_desc_label.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
 	_player_civ_desc_label.custom_minimum_size = Vector2(0, 32)
 	_player_civ_desc_label.text = tr((CIVS[_player_civ_index] as Dictionary)["desc_key"] as String)
@@ -203,7 +203,7 @@ func _build() -> void:
 
 	var start_btn: Button = _make_btn(tr("LOBBY_START"), Color(0.18, 0.38, 0.18, 0.95), Color(0.28, 0.55, 0.28, 0.95))
 	start_btn.custom_minimum_size = Vector2(180, 40)
-	start_btn.add_theme_font_size_override("font_size", 18)
+	start_btn.add_theme_font_size_override("font_size", 22)
 	start_btn.pressed.connect(func() -> void: start_requested.emit())
 	btn_row.add_child(start_btn)
 
@@ -241,7 +241,7 @@ func _rebuild_rivals_container() -> void:
 
 		var desc: Label = Label.new()
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		desc.add_theme_font_size_override("font_size", 13)
+		desc.add_theme_font_size_override("font_size", 17)
 		desc.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
 		desc.custom_minimum_size = Vector2(0, 28)
 		desc.text = tr((CIVS[_rival_civ_indices[ri]] as Dictionary)["desc_key"] as String)
@@ -263,7 +263,7 @@ func _make_civ_grid(btns_out: Array[Button], initial_idx: int, on_select: Callab
 		btn.custom_minimum_size = Vector2(128, 32)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.focus_mode = Control.FOCUS_NONE
-		btn.add_theme_font_size_override("font_size", 13)
+		btn.add_theme_font_size_override("font_size", 17)
 		grid.add_child(btn)
 		btns_out.append(btn)
 		var captured_i: int = i
@@ -294,7 +294,7 @@ func _make_option_row(labels: Array[String], initial: int, on_select: Callable) 
 		btn.text = labels[i]
 		btn.custom_minimum_size = Vector2(100, 32)
 		btn.focus_mode = Control.FOCUS_NONE
-		btn.add_theme_font_size_override("font_size", 14)
+		btn.add_theme_font_size_override("font_size", 18)
 		row.add_child(btn)
 		btns.append(btn)
 
@@ -327,7 +327,7 @@ func _apply_btn_styles(btns: Array[Button], selected: int) -> void:
 func _make_label(text: String) -> Label:
 	var lbl: Label = Label.new()
 	lbl.text = text
-	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_font_size_override("font_size", 19)
 	lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
 	return lbl
 
@@ -338,7 +338,7 @@ func _make_btn(text: String, normal_col: Color, hover_col: Color) -> Button:
 	var btn: Button = Button.new()
 	btn.text = text
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.add_theme_font_size_override("font_size", 16)
+	btn.add_theme_font_size_override("font_size", 20)
 	var s: StyleBoxFlat = StyleBoxFlat.new()
 	s.bg_color = normal_col
 	s.corner_radius_top_left    = 4
