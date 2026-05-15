@@ -90,7 +90,9 @@ var _pan_last_pos: Vector2 = Vector2.ZERO
 var _following: bool = false
 var _camera_moved_emitted: bool = false
 var _edge_scroll_timer: float = 0.0
+var _edge_scroll_last_mouse: Vector2 = Vector2.ZERO
 const EDGE_SCROLL_DELAY: float = 0.3
+const EDGE_SCROLL_MOUSE_THRESHOLD: float = 4.0  # px — movement above this resets the timer
 
 # Build placement state
 var _placing_building: bool = false
@@ -191,6 +193,7 @@ func _ready() -> void:
 		_order_move_all(p)
 	)
 	EventBus.unit_selected.connect(_on_unit_selected_follow)
+	SelectionManager.selection_changed.connect(_on_selection_manager_changed)
 	EventBus.tutorial_spawn_enemy_scout.connect(_on_tutorial_spawn_enemy_scout)
 	EventBus.tutorial_highlight_unit.connect(_on_tutorial_highlight_unit)
 	EventBus.tutorial_reset_camera_flag.connect(func() -> void: _camera_moved_emitted = false)
@@ -509,15 +512,22 @@ func toggle_follow() -> void:
 func _on_unit_selected_follow(_units: Array) -> void:
 	_following = false
 
+func _on_selection_manager_changed(units: Array) -> void:
+	_selected_units.clear()
+	for u: Node in units:
+		if is_instance_valid(u):
+			_selected_units.append(u)
+
 const EDGE_SCROLL_MARGIN: float = 60.0
 
 func _handle_camera(delta: float) -> void:
 	# Keyboard input — immediate response
+	# Use is_physical_key_pressed to bypass UI focus interception of arrow keys
 	var key_dir: Vector2 = Vector2.ZERO
-	if Input.is_action_pressed("camera_pan_left"):  key_dir.x -= 1.0
-	if Input.is_action_pressed("camera_pan_right"): key_dir.x += 1.0
-	if Input.is_action_pressed("camera_pan_up"):    key_dir.y -= 1.0
-	if Input.is_action_pressed("camera_pan_down"):  key_dir.y += 1.0
+	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):  key_dir.x -= 1.0
+	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): key_dir.x += 1.0
+	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):    key_dir.y -= 1.0
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):  key_dir.y += 1.0
 
 	# Edge scroll — only activates after EDGE_SCROLL_DELAY seconds in the margin
 	var edge_dir: Vector2 = Vector2.ZERO
@@ -529,9 +539,14 @@ func _handle_camera(delta: float) -> void:
 	elif mp.y > vp.y - EDGE_SCROLL_MARGIN: edge_dir.y += 1.0
 
 	if edge_dir != Vector2.ZERO:
-		_edge_scroll_timer += delta
+		# Reset timer if the mouse is still moving — only count time while stationary in the margin
+		if mp.distance_to(_edge_scroll_last_mouse) > EDGE_SCROLL_MOUSE_THRESHOLD:
+			_edge_scroll_timer = 0.0
+		else:
+			_edge_scroll_timer += delta
 	else:
 		_edge_scroll_timer = 0.0
+	_edge_scroll_last_mouse = mp
 
 	var dir: Vector2 = key_dir
 	if _edge_scroll_timer >= EDGE_SCROLL_DELAY:

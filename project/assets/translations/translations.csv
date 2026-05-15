@@ -24,6 +24,8 @@ UI_GATE_CLOSED,Closed,Cerrada
 UI_GATE_LOCK,Lock,Bloquear
 UI_GATE_UNLOCK,Unlock,Desbloquear
 UI_ADVANCE,Advance,Avanzar
+UI_IDLE_VILLAGER,Idle Villager,Aldeano Inactivo
+UI_IDLE_MILITARY,Idle Military,Militar Inactivo
 ACTION_WOOD,Wood,Madera
 ACTION_GOLD,Gold,Oro
 ACTION_STONE,Stone,Piedra

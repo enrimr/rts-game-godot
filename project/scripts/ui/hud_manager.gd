@@ -98,6 +98,7 @@ const GATE_ACTIONS: Array = [
 
 var _elapsed_seconds: float = 0.0
 var _clock_running: bool = false
+var _idle_villager_check_timer: float = 0.0
 var _in_build_menu: bool = false
 var _selected_building: Node = null
 var _selected_unit: Node = null   # tracked for transport garrison refresh
@@ -105,6 +106,10 @@ var _status_unit: Node = null
 var _active_actions: Array = []
 var _follow_btn: Button = null
 var _following: bool = false
+var _idle_villager_btn: Button = null
+var _idle_villager_index: int = 0  # cycles through idle villagers on repeated presses
+var _idle_military_btn: Button = null
+var _idle_military_index: int = 0
 var _pending_action: String = ""  # action waiting for a map click
 var _age_advance_bar: ProgressBar = null
 var _hero_respawn_bar: ProgressBar = null
@@ -169,8 +174,15 @@ func _ready() -> void:
 	_build_follow_button()
 	_build_notifications()
 	_build_pause_menu_button()
+	_build_idle_villager_button()
+	_build_idle_military_button()
 
 func _process(delta: float) -> void:
+	_idle_villager_check_timer += delta
+	if _idle_villager_check_timer >= 0.5:
+		_idle_villager_check_timer = 0.0
+		_update_idle_villager_button()
+		_update_idle_military_button()
 	if _clock_running:
 		_elapsed_seconds += delta
 		var total_secs: int = int(_elapsed_seconds)
@@ -1916,10 +1928,10 @@ func _build_pause_menu_button() -> void:
 	btn.anchor_top    = 0.0
 	btn.anchor_right  = 1.0
 	btn.anchor_bottom = 0.0
-	btn.offset_left   = -44.0
-	btn.offset_top    =   6.0
-	btn.offset_right  =  -6.0
-	btn.offset_bottom =  42.0
+	btn.offset_left   = -69.0
+	btn.offset_top    =  31.0
+	btn.offset_right  = -31.0
+	btn.offset_bottom =  67.0
 	var s: StyleBoxFlat = StyleBoxFlat.new()
 	s.bg_color = Color(0.12, 0.12, 0.18, 0.92)
 	s.corner_radius_top_left = 4
@@ -1932,6 +1944,156 @@ func _build_pause_menu_button() -> void:
 	btn.add_theme_stylebox_override("hover", sh)
 	btn.pressed.connect(_open_pause_menu)
 	hud_root.add_child(btn)
+
+func _build_idle_villager_button() -> void:
+	var hud_root: Control = get_node_or_null("HUDRoot") as Control
+	if hud_root == null:
+		return
+	_idle_villager_btn = Button.new()
+	_idle_villager_btn.text = "👷"
+	_idle_villager_btn.custom_minimum_size = Vector2(36, 36)
+	_idle_villager_btn.focus_mode = Control.FOCUS_NONE
+	_idle_villager_btn.add_theme_font_size_override("font_size", 18)
+	_idle_villager_btn.tooltip_text = tr("UI_IDLE_VILLAGER")
+	# Anchor to bottom-right, above minimap top (220px), flush with minimap left edge (220px from right)
+	_idle_villager_btn.anchor_left   = 1.0
+	_idle_villager_btn.anchor_top    = 1.0
+	_idle_villager_btn.anchor_right  = 1.0
+	_idle_villager_btn.anchor_bottom = 1.0
+	_idle_villager_btn.offset_left   = -256.0
+	_idle_villager_btn.offset_top    = -260.0
+	_idle_villager_btn.offset_right  = -220.0
+	_idle_villager_btn.offset_bottom = -224.0
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.bg_color = Color(0.20, 0.40, 0.12, 0.92)
+	s.corner_radius_top_left = 4
+	s.corner_radius_top_right = 4
+	s.corner_radius_bottom_left = 4
+	s.corner_radius_bottom_right = 4
+	_idle_villager_btn.add_theme_stylebox_override("normal", s)
+	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
+	sh.bg_color = Color(0.32, 0.58, 0.18, 0.97)
+	_idle_villager_btn.add_theme_stylebox_override("hover", sh)
+	_idle_villager_btn.pressed.connect(_on_idle_villager_pressed)
+	hud_root.add_child(_idle_villager_btn)
+
+func _get_idle_villagers() -> Array[Node]:
+	var world: Node = get_tree().get_nodes_in_group("world").front()
+	if world == null:
+		return []
+	var units_layer: Node = world.get_node_or_null("UnitsLayer")
+	if units_layer == null:
+		return []
+	var result: Array[Node] = []
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		if unit.get("player_id") != local_player_id:
+			continue
+		if not unit.has_method("order_gather"):
+			continue
+		var state: Variant = unit.get("current_state")
+		if state != null and (state as int) == UnitBase.UnitState.IDLE:
+			result.append(unit)
+	return result
+
+func _update_idle_villager_button() -> void:
+	if not is_instance_valid(_idle_villager_btn):
+		return
+	var idle: Array[Node] = _get_idle_villagers()
+	_idle_villager_btn.disabled = idle.is_empty()
+	_idle_villager_btn.tooltip_text = tr("UI_IDLE_VILLAGER") + " (%d)" % idle.size()
+
+func _on_idle_villager_pressed() -> void:
+	var idle: Array[Node] = _get_idle_villagers()
+	if idle.is_empty():
+		return
+	_idle_villager_index = _idle_villager_index % idle.size()
+	var villager: Node = idle[_idle_villager_index]
+	_idle_villager_index = (_idle_villager_index + 1) % idle.size()
+	SelectionManager.select([villager])
+	var world: Node = get_tree().get_nodes_in_group("world").front()
+	if world != null:
+		var cam: Camera2D = world.get_node_or_null("Camera2D") as Camera2D
+		if cam != null:
+			cam.position = (villager as Node2D).global_position
+
+func _build_idle_military_button() -> void:
+	var hud_root: Control = get_node_or_null("HUDRoot") as Control
+	if hud_root == null:
+		return
+	_idle_military_btn = Button.new()
+	_idle_military_btn.text = "⚔"
+	_idle_military_btn.custom_minimum_size = Vector2(36, 36)
+	_idle_military_btn.focus_mode = Control.FOCUS_NONE
+	_idle_military_btn.add_theme_font_size_override("font_size", 18)
+	_idle_military_btn.tooltip_text = tr("UI_IDLE_MILITARY")
+	# Anchor to bottom-right, same row as villager button, 4px to the left of it
+	_idle_military_btn.anchor_left   = 1.0
+	_idle_military_btn.anchor_top    = 1.0
+	_idle_military_btn.anchor_right  = 1.0
+	_idle_military_btn.anchor_bottom = 1.0
+	_idle_military_btn.offset_left   = -296.0
+	_idle_military_btn.offset_top    = -260.0
+	_idle_military_btn.offset_right  = -260.0
+	_idle_military_btn.offset_bottom = -224.0
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.bg_color = Color(0.40, 0.12, 0.12, 0.92)
+	s.corner_radius_top_left = 4
+	s.corner_radius_top_right = 4
+	s.corner_radius_bottom_left = 4
+	s.corner_radius_bottom_right = 4
+	_idle_military_btn.add_theme_stylebox_override("normal", s)
+	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
+	sh.bg_color = Color(0.60, 0.18, 0.18, 0.97)
+	_idle_military_btn.add_theme_stylebox_override("hover", sh)
+	_idle_military_btn.pressed.connect(_on_idle_military_pressed)
+	hud_root.add_child(_idle_military_btn)
+
+func _get_idle_military() -> Array[Node]:
+	var world: Node = get_tree().get_nodes_in_group("world").front()
+	if world == null:
+		return []
+	var units_layer: Node = world.get_node_or_null("UnitsLayer")
+	if units_layer == null:
+		return []
+	var result: Array[Node] = []
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		if unit.get("player_id") != local_player_id:
+			continue
+		if unit.get("unit_data") == null:
+			continue
+		if unit.has_method("order_gather"):
+			continue
+		if unit is Animal or unit is ShipBase:
+			continue
+		var state: Variant = unit.get("current_state")
+		if state != null and (state as int) == UnitBase.UnitState.IDLE:
+			result.append(unit)
+	return result
+
+func _update_idle_military_button() -> void:
+	if not is_instance_valid(_idle_military_btn):
+		return
+	var idle: Array[Node] = _get_idle_military()
+	_idle_military_btn.disabled = idle.is_empty()
+	_idle_military_btn.tooltip_text = tr("UI_IDLE_MILITARY") + " (%d)" % idle.size()
+
+func _on_idle_military_pressed() -> void:
+	var idle: Array[Node] = _get_idle_military()
+	if idle.is_empty():
+		return
+	_idle_military_index = _idle_military_index % idle.size()
+	var unit: Node = idle[_idle_military_index]
+	_idle_military_index = (_idle_military_index + 1) % idle.size()
+	SelectionManager.select([unit])
+	var world: Node = get_tree().get_nodes_in_group("world").front()
+	if world != null:
+		var cam: Camera2D = world.get_node_or_null("Camera2D") as Camera2D
+		if cam != null:
+			cam.position = (unit as Node2D).global_position
 
 func _open_pause_menu() -> void:
 	if is_instance_valid(_pause_menu):
