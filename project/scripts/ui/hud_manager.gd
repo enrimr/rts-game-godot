@@ -2152,7 +2152,7 @@ func _build_dpad() -> void:
 		var row: int = entry["row"] as int
 		btn.position = Vector2(col * (CELL + GAP), row * (CELL + GAP))
 		btn.size     = Vector2(CELL, CELL)
-		btn.add_theme_font_size_override("font_size", 20)
+		btn.add_theme_font_size_override("font_size", 22)
 		var s: StyleBoxFlat = StyleBoxFlat.new()
 		s.bg_color = Color(0.12, 0.12, 0.18, 0.85)
 		s.corner_radius_top_left     = 6
