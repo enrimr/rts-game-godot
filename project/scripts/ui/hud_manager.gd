@@ -2137,10 +2137,10 @@ func _build_dpad() -> void:
 	hud_root.add_child(_dpad)
 
 	var dirs: Array[Dictionary] = [
-		{"label": "▲", "row": 0, "col": 1, "dir": Vector2(0.0, -1.0)},
-		{"label": "◀", "row": 1, "col": 0, "dir": Vector2(-1.0, 0.0)},
-		{"label": "▶", "row": 1, "col": 2, "dir": Vector2(1.0, 0.0)},
-		{"label": "▼", "row": 2, "col": 1, "dir": Vector2(0.0, 1.0)},
+		{"label": "↑", "row": 0, "col": 1, "dir": Vector2(0.0, -1.0)},
+		{"label": "←", "row": 1, "col": 0, "dir": Vector2(-1.0, 0.0)},
+		{"label": "→", "row": 1, "col": 2, "dir": Vector2(1.0, 0.0)},
+		{"label": "↓", "row": 2, "col": 1, "dir": Vector2(0.0, 1.0)},
 	]
 	for entry: Dictionary in dirs:
 		var btn: Button = Button.new()
