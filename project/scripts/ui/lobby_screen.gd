@@ -18,6 +18,9 @@ const CIVS: Array[Dictionary] = [
 
 const AGE_KEYS: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
 const DEFAULT_RIVAL_CIVS: Array[String] = ["castellanos", "franks", "atlantes"]
+const MAX_RIVALS: int = 3
+# Height reserved for rivals section: MAX_RIVALS × (label_h + dropdown_h + gap) = 3 × (24+34+8) = 198
+const RIVALS_FIXED_H: float = 198.0
 
 var _player_civ_index: int = 0
 var _player_civ_btns: Array[Button] = []
@@ -25,7 +28,6 @@ var _player_civ_desc_label: Label = null
 
 var _rival_civ_indices: Array[int] = [0, 0, 0]
 var _rivals_section: VBoxContainer = null
-var _scroll: ScrollContainer = null
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
@@ -57,15 +59,15 @@ func _build() -> void:
 	bg.mouse_filter = MOUSE_FILTER_PASS
 	add_child(bg)
 
-	_scroll = ScrollContainer.new()
-	_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(_scroll)
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
 
-	var outer_center: CenterContainer = CenterContainer.new()
-	outer_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	outer_center.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	_scroll.add_child(outer_center)
+	var outer: CenterContainer = CenterContainer.new()
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	scroll.add_child(outer)
 
 	var card: PanelContainer = PanelContainer.new()
 	card.custom_minimum_size = Vector2(860, 0)
@@ -76,7 +78,7 @@ func _build() -> void:
 	sty.corner_radius_bottom_left = 8
 	sty.corner_radius_bottom_right = 8
 	card.add_theme_stylebox_override("panel", sty)
-	outer_center.add_child(card)
+	outer.add_child(card)
 
 	var margin: MarginContainer = MarginContainer.new()
 	for side: String in ["left", "right", "top", "bottom"]:
@@ -101,61 +103,72 @@ func _build() -> void:
 	columns.add_theme_constant_override("separation", 32)
 	vbox.add_child(columns)
 
-	# ── Left column: game settings ──────────────────────────────────────────
+	# ── Left column ─────────────────────────────────────────────────────────
 	var left: VBoxContainer = VBoxContainer.new()
 	left.add_theme_constant_override("separation", 12)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(left)
 
+	# Map type
+	left.add_child(_make_label(tr("LOBBY_MAP_TYPE")))
 	var type_opts: Array[String] = [
 		tr("LOBBY_MAPTYPE_PLAINS"), tr("LOBBY_MAPTYPE_STANDARD"),
 		tr("LOBBY_MAPTYPE_VOLCANIC"), tr("LOBBY_MAPTYPE_DESERT"), tr("LOBBY_MAPTYPE_ISLANDS"),
 	]
-	left.add_child(_make_inline_row(tr("LOBBY_MAP_TYPE"),
-		_make_option_row(type_opts, MatchConfig.map_type,
-			func(i: int) -> void: MatchConfig.map_type = i)))
+	left.add_child(_make_option_row(type_opts, MatchConfig.map_type,
+		func(i: int) -> void: MatchConfig.map_type = i))
 
+	# Map size
+	left.add_child(_make_label(tr("LOBBY_MAP_SIZE")))
 	var size_opts: Array[String] = [tr("LOBBY_MAP_SMALL"), tr("LOBBY_MAP_MEDIUM"), tr("LOBBY_MAP_LARGE")]
-	left.add_child(_make_inline_row(tr("LOBBY_MAP_SIZE"),
-		_make_option_row(size_opts, MatchConfig.map_size,
-			func(i: int) -> void: MatchConfig.map_size = i)))
+	left.add_child(_make_option_row(size_opts, MatchConfig.map_size,
+		func(i: int) -> void: MatchConfig.map_size = i))
 
+	# Starting resources
+	left.add_child(_make_label(tr("LOBBY_RESOURCES")))
 	var res_opts: Array[String] = [tr("LOBBY_RES_SCARCE"), tr("LOBBY_RES_NORMAL"), tr("LOBBY_RES_ABUNDANT"), tr("LOBBY_RES_FULL_COMBAT")]
-	left.add_child(_make_inline_row(tr("LOBBY_RESOURCES"),
-		_make_option_row(res_opts, MatchConfig.resources,
-			func(i: int) -> void: MatchConfig.resources = i)))
+	left.add_child(_make_option_row(res_opts, MatchConfig.resources,
+		func(i: int) -> void: MatchConfig.resources = i))
 
+	# Starting age
+	left.add_child(_make_label(tr("LOBBY_STARTING_AGE")))
 	var age_opts: Array[String] = []
 	for k: String in AGE_KEYS:
 		age_opts.append(tr(k))
-	left.add_child(_make_inline_row(tr("LOBBY_STARTING_AGE"),
-		_make_option_row(age_opts, MatchConfig.starting_age,
-			func(i: int) -> void: MatchConfig.starting_age = i)))
+	left.add_child(_make_option_row(age_opts, MatchConfig.starting_age,
+		func(i: int) -> void: MatchConfig.starting_age = i))
+
+	# Victory condition
+	left.add_child(_make_label(tr("LOBBY_VICTORY_MODE")))
+	var victory_opts: Array[String] = [tr("LOBBY_VICTORY_CONQUEST"), tr("LOBBY_VICTORY_REGICIDE"), tr("LOBBY_VICTORY_WONDER")]
+	left.add_child(_make_option_row(victory_opts, MatchConfig.victory_mode,
+		func(i: int) -> void: MatchConfig.victory_mode = i))
 
 	left.add_child(_make_sep())
 
+	# Rival count
+	left.add_child(_make_label(tr("LOBBY_RIVAL_COUNT")))
 	var rival_opts: Array[String] = ["1", "2", "3"]
-	left.add_child(_make_inline_row(tr("LOBBY_RIVAL_COUNT"),
-		_make_option_row(rival_opts, MatchConfig.rival_count - 1,
-			func(i: int) -> void:
-				MatchConfig.rival_count = i + 1
-				_sync_rival_config_to_match()
-				_rebuild_rivals_section())))
+	left.add_child(_make_option_row(rival_opts, MatchConfig.rival_count - 1,
+		func(i: int) -> void:
+			MatchConfig.rival_count = i + 1
+			_sync_rival_config_to_match()
+			_rebuild_rivals_section()))
 
-	# Rivals dropdowns (dynamic, compact)
+	# Rivals section — fixed height so the card doesn't resize
+	var rivals_clip: Control = Control.new()
+	rivals_clip.custom_minimum_size = Vector2(0, RIVALS_FIXED_H)
+	rivals_clip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rivals_clip.clip_contents = true
+	left.add_child(rivals_clip)
+
 	_rivals_section = VBoxContainer.new()
 	_rivals_section.add_theme_constant_override("separation", 8)
-	left.add_child(_rivals_section)
+	_rivals_section.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	rivals_clip.add_child(_rivals_section)
 	_rebuild_rivals_section()
 
-	left.add_child(_make_sep())
-
-	var victory_opts: Array[String] = [tr("LOBBY_VICTORY_CONQUEST"), tr("LOBBY_VICTORY_REGICIDE"), tr("LOBBY_VICTORY_WONDER")]
-	left.add_child(_make_inline_row(tr("LOBBY_VICTORY_MODE"),
-		_make_option_row(victory_opts, MatchConfig.victory_mode,
-			func(i: int) -> void: MatchConfig.victory_mode = i)))
-
-	# ── Right column: player civilization ───────────────────────────────────
+	# ── Right column: player civ ─────────────────────────────────────────────
 	var right: VBoxContainer = VBoxContainer.new()
 	right.add_theme_constant_override("separation", 10)
 	right.custom_minimum_size = Vector2(280, 0)
@@ -167,7 +180,6 @@ func _build() -> void:
 	civ_header.add_theme_font_size_override("font_size", 21)
 	right.add_child(civ_header)
 
-	# 4-column grid of civ buttons
 	var grid: GridContainer = GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 6)
@@ -195,8 +207,9 @@ func _build() -> void:
 
 	_refresh_civ_highlight(_player_civ_btns, _player_civ_index)
 
-	# Description panel for selected civ
+	# Description panel
 	var desc_panel: PanelContainer = PanelContainer.new()
+	desc_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var desc_sty: StyleBoxFlat = StyleBoxFlat.new()
 	desc_sty.bg_color = Color(0.12, 0.12, 0.18, 0.85)
 	desc_sty.corner_radius_top_left    = 5
@@ -215,7 +228,6 @@ func _build() -> void:
 	_player_civ_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_player_civ_desc_label.add_theme_font_size_override("font_size", 15)
 	_player_civ_desc_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
-	_player_civ_desc_label.custom_minimum_size = Vector2(0, 60)
 	_player_civ_desc_label.text = tr((CIVS[_player_civ_index] as Dictionary)["desc_key"] as String)
 	desc_margin.add_child(_player_civ_desc_label)
 
@@ -244,13 +256,14 @@ func _rebuild_rivals_section() -> void:
 	for child: Node in _rivals_section.get_children():
 		child.queue_free()
 	for ri: int in range(MatchConfig.rival_count):
+		var lbl: Label = _make_label(tr("LOBBY_RIVAL") + " %d" % (ri + 1))
+		lbl.add_theme_color_override("font_color", Color(1.0, 0.55, 0.35))
+		_rivals_section.add_child(lbl)
 		var captured_ri: int = ri
-		var dropdown: OptionButton = _make_civ_dropdown(_rival_civ_indices[ri],
+		_rivals_section.add_child(_make_civ_dropdown(_rival_civ_indices[ri],
 			func(i: int) -> void:
 				_rival_civ_indices[captured_ri] = i
-				_sync_rival_config_to_match())
-		_rivals_section.add_child(_make_inline_row(
-			tr("LOBBY_RIVAL") + " %d" % (ri + 1), dropdown))
+				_sync_rival_config_to_match()))
 
 # --- Helpers ---
 
@@ -264,17 +277,6 @@ func _make_civ_dropdown(initial_idx: int, on_select: Callable) -> OptionButton:
 	opt.select(initial_idx)
 	opt.item_selected.connect(func(i: int) -> void: on_select.call(i))
 	return opt
-
-func _make_inline_row(label_text: String, control: Control) -> HBoxContainer:
-	var row: HBoxContainer = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	var lbl: Label = _make_label(label_text)
-	lbl.custom_minimum_size = Vector2(130, 0)
-	lbl.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	row.add_child(lbl)
-	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(control)
-	return row
 
 func _make_option_row(labels: Array[String], initial: int, on_select: Callable) -> HBoxContainer:
 	var row: HBoxContainer = HBoxContainer.new()
