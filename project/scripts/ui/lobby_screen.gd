@@ -19,8 +19,8 @@ const CIVS: Array[Dictionary] = [
 const AGE_KEYS: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
 const DEFAULT_RIVAL_CIVS: Array[String] = ["castellanos", "franks", "atlantes"]
 const MAX_RIVALS: int = 3
-# Height reserved for rivals section: MAX_RIVALS × (label_h + dropdown_h + gap) = 3 × (24+34+8) = 198
-const RIVALS_FIXED_H: float = 198.0
+# Height reserved for rivals section: MAX_RIVALS × (row_h + gap) = 3 × (38+8) = 138
+const RIVALS_FIXED_H: float = 138.0
 
 var _player_civ_index: int = 0
 var _player_civ_btns: Array[Button] = []
@@ -256,14 +256,19 @@ func _rebuild_rivals_section() -> void:
 	for child: Node in _rivals_section.get_children():
 		child.queue_free()
 	for ri: int in range(MatchConfig.rival_count):
-		var lbl: Label = _make_label(tr("LOBBY_RIVAL") + " %d" % (ri + 1))
+		var row: HBoxContainer = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		_rivals_section.add_child(row)
+		var lbl: Label = _make_label(tr("LOBBY_RIVAL") + " %d:" % (ri + 1))
 		lbl.add_theme_color_override("font_color", Color(1.0, 0.55, 0.35))
-		_rivals_section.add_child(lbl)
+		lbl.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		row.add_child(lbl)
 		var captured_ri: int = ri
-		_rivals_section.add_child(_make_civ_dropdown(_rival_civ_indices[ri],
+		var dropdown: OptionButton = _make_civ_dropdown(_rival_civ_indices[ri],
 			func(i: int) -> void:
 				_rival_civ_indices[captured_ri] = i
-				_sync_rival_config_to_match()))
+				_sync_rival_config_to_match())
+		row.add_child(dropdown)
 
 # --- Helpers ---
 
