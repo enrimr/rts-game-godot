@@ -139,6 +139,11 @@ SETTINGS_NORMAL,Normal,Normal
 SETTINGS_HARD,Hard,Difícil
 SETTINGS_SAVE,Save & Close,Guardar y cerrar
 SETTINGS_LANGUAGE,Language,Idioma
+SETTINGS_CONTROLS,Controls,Controles
+SETTINGS_SHOW_DPAD,Show D-Pad,Mostrar cruceta
+SETTINGS_EDGE_SCROLL,Edge Scroll,Desplazamiento por bordes
+SETTINGS_ON,ON,Activado
+SETTINGS_OFF,OFF,Desactivado
 MENU_NEW_GAME,New Game,Nueva Partida
 LOBBY_TITLE,Match Setup,Configuración de Partida
 LOBBY_MAP_TYPE,Map Type,Tipo de Mapa

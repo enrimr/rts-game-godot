@@ -110,6 +110,8 @@ var _idle_villager_btn: Button = null
 var _idle_villager_index: int = 0  # cycles through idle villagers on repeated presses
 var _idle_military_btn: Button = null
 var _idle_military_index: int = 0
+var _dpad: Control = null
+var _dpad_dir: Vector2 = Vector2.ZERO
 var _pending_action: String = ""  # action waiting for a map click
 var _age_advance_bar: ProgressBar = null
 var _hero_respawn_bar: ProgressBar = null
@@ -176,6 +178,7 @@ func _ready() -> void:
 	_build_pause_menu_button()
 	_build_idle_villager_button()
 	_build_idle_military_button()
+	_build_dpad()
 
 func _process(delta: float) -> void:
 	_idle_villager_check_timer += delta
@@ -183,6 +186,12 @@ func _process(delta: float) -> void:
 		_idle_villager_check_timer = 0.0
 		_update_idle_villager_button()
 		_update_idle_military_button()
+	if _dpad_dir != Vector2.ZERO:
+		var world: Node = get_tree().get_nodes_in_group("world").front()
+		if world != null:
+			var cam: Camera2D = world.get_node_or_null("Camera2D") as Camera2D
+			if cam != null:
+				cam.position += _dpad_dir * 600.0 * delta
 	if _clock_running:
 		_elapsed_seconds += delta
 		var total_secs: int = int(_elapsed_seconds)
@@ -2106,6 +2115,59 @@ func _on_idle_military_pressed() -> void:
 		if cam != null:
 			cam.position = (unit as Node2D).global_position
 
+func _build_dpad() -> void:
+	var hud_root: Control = get_node_or_null("HUDRoot") as Control
+	if hud_root == null:
+		return
+	_dpad = Control.new()
+	_dpad.anchor_left   = 0.0
+	_dpad.anchor_top    = 1.0
+	_dpad.anchor_right  = 0.0
+	_dpad.anchor_bottom = 1.0
+	const OFFSET_BOTTOM: float = -(175.0 + 8.0)
+	const CELL: float = 48.0
+	const GAP: float = 4.0
+	const GRID_W: float = CELL * 3.0 + GAP * 2.0   # 152
+	const GRID_H: float = CELL * 3.0 + GAP * 2.0   # 152
+	_dpad.offset_left   = 8.0
+	_dpad.offset_bottom = OFFSET_BOTTOM
+	_dpad.offset_right  = 8.0 + GRID_W
+	_dpad.offset_top    = OFFSET_BOTTOM - GRID_H
+	_dpad.visible       = GameSettings.show_dpad
+	hud_root.add_child(_dpad)
+
+	var dirs: Array[Dictionary] = [
+		{"label": "▲", "row": 0, "col": 1, "dir": Vector2(0.0, -1.0)},
+		{"label": "◀", "row": 1, "col": 0, "dir": Vector2(-1.0, 0.0)},
+		{"label": "▶", "row": 1, "col": 2, "dir": Vector2(1.0, 0.0)},
+		{"label": "▼", "row": 2, "col": 1, "dir": Vector2(0.0, 1.0)},
+	]
+	for entry: Dictionary in dirs:
+		var btn: Button = Button.new()
+		btn.text             = entry["label"] as String
+		btn.focus_mode       = Control.FOCUS_NONE
+		btn.mouse_filter     = Control.MOUSE_FILTER_STOP
+		btn.custom_minimum_size = Vector2(CELL, CELL)
+		var col: int = entry["col"] as int
+		var row: int = entry["row"] as int
+		btn.position = Vector2(col * (CELL + GAP), row * (CELL + GAP))
+		btn.size     = Vector2(CELL, CELL)
+		btn.add_theme_font_size_override("font_size", 20)
+		var s: StyleBoxFlat = StyleBoxFlat.new()
+		s.bg_color = Color(0.12, 0.12, 0.18, 0.85)
+		s.corner_radius_top_left     = 6
+		s.corner_radius_top_right    = 6
+		s.corner_radius_bottom_left  = 6
+		s.corner_radius_bottom_right = 6
+		btn.add_theme_stylebox_override("normal", s)
+		var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
+		sh.bg_color = Color(0.22, 0.22, 0.32, 0.95)
+		btn.add_theme_stylebox_override("hover", sh)
+		_dpad.add_child(btn)
+		var move_dir: Vector2 = entry["dir"] as Vector2
+		btn.button_down.connect(func() -> void: _dpad_dir += move_dir)
+		btn.button_up.connect(func() -> void: _dpad_dir -= move_dir)
+
 func _open_pause_menu() -> void:
 	if is_instance_valid(_pause_menu):
 		return
@@ -2437,6 +2499,28 @@ func _open_ingame_settings() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	var ctrl_lbl: Label = Label.new()
+	ctrl_lbl.text = tr("SETTINGS_CONTROLS")
+	ctrl_lbl.add_theme_font_size_override("font_size", 15)
+	ctrl_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
+	vbox.add_child(ctrl_lbl)
+
+	var dpad_row: Button = _make_toggle_row(vbox, tr("SETTINGS_SHOW_DPAD"), GameSettings.show_dpad)
+	dpad_row.pressed.connect(func() -> void:
+		GameSettings.show_dpad = not GameSettings.show_dpad
+		_style_toggle_btn(dpad_row, GameSettings.show_dpad)
+		if is_instance_valid(_dpad):
+			_dpad.visible = GameSettings.show_dpad
+	)
+
+	var edge_row: Button = _make_toggle_row(vbox, tr("SETTINGS_EDGE_SCROLL"), GameSettings.edge_scroll_enabled)
+	edge_row.pressed.connect(func() -> void:
+		GameSettings.edge_scroll_enabled = not GameSettings.edge_scroll_enabled
+		_style_toggle_btn(edge_row, GameSettings.edge_scroll_enabled)
+	)
+
+	vbox.add_child(HSeparator.new())
+
 	var close_btn: Button = Button.new()
 	close_btn.text = tr("SETTINGS_SAVE")
 	close_btn.custom_minimum_size = Vector2(200, 40)
@@ -2450,6 +2534,37 @@ func _open_ingame_settings() -> void:
 		GameSettings.save_settings()
 		overlay.queue_free()
 	)
+
+func _make_toggle_row(parent: VBoxContainer, label_text: String, initial: bool) -> Button:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	var lbl: Label = Label.new()
+	lbl.text = label_text
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
+	row.add_child(lbl)
+	var btn: Button = Button.new()
+	btn.custom_minimum_size = Vector2(72, 32)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 14)
+	_style_toggle_btn(btn, initial)
+	row.add_child(btn)
+	return btn
+
+func _style_toggle_btn(btn: Button, active: bool) -> void:
+	btn.text = tr("SETTINGS_ON") if active else tr("SETTINGS_OFF")
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.bg_color = Color(0.22, 0.45, 0.22, 0.95) if active else Color(0.35, 0.12, 0.12, 0.92)
+	s.corner_radius_top_left     = 4
+	s.corner_radius_top_right    = 4
+	s.corner_radius_bottom_left  = 4
+	s.corner_radius_bottom_right = 4
+	btn.add_theme_stylebox_override("normal", s)
+	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
+	sh.bg_color = s.bg_color.lightened(0.2)
+	btn.add_theme_stylebox_override("hover", sh)
 
 func _make_settings_slider(initial: float) -> HSlider:
 	var s: HSlider = HSlider.new()

@@ -472,6 +472,22 @@ func _open_settings() -> void:
 			_open_settings()
 		)
 
+	# Controls section
+	vbox.add_child(HSeparator.new())
+	vbox.add_child(_make_section_label(tr("SETTINGS_CONTROLS")))
+
+	var dpad_row: Button = _make_toggle_row(vbox, tr("SETTINGS_SHOW_DPAD"), GameSettings.show_dpad)
+	dpad_row.pressed.connect(func() -> void:
+		GameSettings.show_dpad = not GameSettings.show_dpad
+		_style_toggle_btn(dpad_row, GameSettings.show_dpad)
+	)
+
+	var edge_row: Button = _make_toggle_row(vbox, tr("SETTINGS_EDGE_SCROLL"), GameSettings.edge_scroll_enabled)
+	edge_row.pressed.connect(func() -> void:
+		GameSettings.edge_scroll_enabled = not GameSettings.edge_scroll_enabled
+		_style_toggle_btn(edge_row, GameSettings.edge_scroll_enabled)
+	)
+
 	# Spacer + close button
 	var sep2: HSeparator = HSeparator.new()
 	vbox.add_child(sep2)
@@ -651,3 +667,34 @@ func _make_pct_label(initial: float) -> Label:
 	lbl.add_theme_font_size_override("font_size", 13)
 	lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
 	return lbl
+
+func _make_toggle_row(parent: VBoxContainer, label_text: String, initial: bool) -> Button:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	var lbl: Label = Label.new()
+	lbl.text = label_text
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
+	row.add_child(lbl)
+	var btn: Button = Button.new()
+	btn.custom_minimum_size = Vector2(72, 32)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 14)
+	_style_toggle_btn(btn, initial)
+	row.add_child(btn)
+	return btn
+
+func _style_toggle_btn(btn: Button, active: bool) -> void:
+	btn.text = tr("SETTINGS_ON") if active else tr("SETTINGS_OFF")
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.bg_color = Color(0.22, 0.45, 0.22, 0.95) if active else Color(0.35, 0.12, 0.12, 0.92)
+	s.corner_radius_top_left     = 4
+	s.corner_radius_top_right    = 4
+	s.corner_radius_bottom_left  = 4
+	s.corner_radius_bottom_right = 4
+	btn.add_theme_stylebox_override("normal", s)
+	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
+	sh.bg_color = s.bg_color.lightened(0.2)
+	btn.add_theme_stylebox_override("hover", sh)
