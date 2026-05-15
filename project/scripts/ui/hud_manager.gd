@@ -2125,10 +2125,10 @@ func _build_dpad() -> void:
 	_dpad.anchor_right  = 0.0
 	_dpad.anchor_bottom = 1.0
 	const OFFSET_BOTTOM: float = -(175.0 + 8.0)
-	const CELL: float = 48.0
-	const GAP: float = 4.0
-	const GRID_W: float = CELL * 3.0 + GAP * 2.0   # 152
-	const GRID_H: float = CELL * 3.0 + GAP * 2.0   # 152
+	const CELL: float = 96.0
+	const GAP: float = 6.0
+	const GRID_W: float = CELL * 3.0 + GAP * 2.0
+	const GRID_H: float = CELL * 3.0 + GAP * 2.0
 	_dpad.offset_left   = 8.0
 	_dpad.offset_bottom = OFFSET_BOTTOM
 	_dpad.offset_right  = 8.0 + GRID_W
@@ -2152,7 +2152,7 @@ func _build_dpad() -> void:
 		var row: int = entry["row"] as int
 		btn.position = Vector2(col * (CELL + GAP), row * (CELL + GAP))
 		btn.size     = Vector2(CELL, CELL)
-		btn.add_theme_font_size_override("font_size", 26)
+		btn.add_theme_font_size_override("font_size", 40)
 		var s: StyleBoxFlat = StyleBoxFlat.new()
 		s.bg_color = Color(0.12, 0.12, 0.18, 0.85)
 		s.corner_radius_top_left     = 6
