@@ -143,6 +143,12 @@ func get_queue() -> Array:
 func get_max_queue() -> int:
 	return MAX_QUEUE
 
+func get_train_progress() -> float:
+	if _train_queue.is_empty():
+		return 0.0
+	var t: float = VILLAGER_DATA.train_time
+	return _train_timer / t if t > 0.0 else 0.0
+
 func _spawn_villager() -> void:
 	var unit: Node2D = VILLAGER_SCENE.instantiate() as Node2D
 	unit.set("player_id", player_id)

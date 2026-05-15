@@ -195,6 +195,7 @@ func _process(delta: float) -> void:
 		_unit_status_label.text = _get_unit_status(_status_unit)
 	if is_instance_valid(_age_advance_bar):
 		_age_advance_bar.value = AgeManager.get_advance_progress(local_player_id) * 100.0
+	_update_train_queue_progress()
 	if is_instance_valid(_research_bar) and is_instance_valid(_selected_building):
 		_research_bar.value = TechManager.get_research_progress(_selected_building) * 100.0
 		if TechManager.get_researching_tech(_selected_building) == null:
@@ -1129,6 +1130,16 @@ func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> vo
 		_train_queue_row.add_child(slot)
 		slot.setup(i, entry["label"] as String, entry["color"] as Color, i == 0, i == 0 and pop_blocked)
 		slot.cancel_requested.connect(_on_cancel_train_slot)
+
+func _update_train_queue_progress() -> void:
+	if not is_instance_valid(_selected_building):
+		return
+	if not _selected_building.has_method("get_train_progress"):
+		return
+	var p: float = _selected_building.get_train_progress() as float
+	var first_slot: Node = _train_queue_row.get_child(0) if _train_queue_row.get_child_count() > 0 else null
+	if first_slot is TrainQueueSlot:
+		(first_slot as TrainQueueSlot).set_progress(p)
 
 func _on_building_destroyed(building: Node, _player_id: int) -> void:
 	if building == _selected_building:

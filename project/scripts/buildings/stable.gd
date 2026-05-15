@@ -102,6 +102,12 @@ func get_queue() -> Array:
 func get_max_queue() -> int:
 	return MAX_QUEUE
 
+func get_train_progress() -> float:
+	if _train_queue.is_empty():
+		return 0.0
+	var t: float = (_train_queue[0] as Dictionary).get("train_time", 30.0) as float
+	return _train_timer / t if t > 0.0 else 0.0
+
 func get_available_units() -> Array[Dictionary]:
 	var current_age: int = AgeManager.get_age(player_id)
 	var result: Array[Dictionary] = []
