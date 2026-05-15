@@ -187,6 +187,18 @@ CIV_ATLANTES_NAME,Atlantes,Atlantes
 CIV_ATLANTES_DESC,Mysterious seafarers. Build on ocean tiles, move freely through shallow water and dominate the coast.,Navegantes misteriosos. Construyen sobre el océano, se mueven libremente por aguas poco profundas y dominan la costa.
 CIV_FENICIOS_NAME,Fenicios,Fenicios
 CIV_FENICIOS_DESC,Ancient traders. Market available from the start and merchant ships generate passive gold.,Comerciantes ancestrales. El mercado está disponible desde el inicio y los barcos mercantes generan oro pasivo.
+CIV_GUANCHES_UNIQUE_UNIT,Menceyes Guard,Guardia Menceyes
+CIV_CANARII_UNIQUE_UNIT,Ravine Archer,Arquero de Barranco
+CIV_MAHOS_UNIQUE_UNIT,Sand Raider,Corsario de Arena
+CIV_FRANKS_UNIQUE_UNIT,Chevalier Normand,Chevalier Normand
+CIV_BRITONS_UNIQUE_UNIT,Longbowman,Arquero de Arco Largo
+CIV_CASTELLANOS_UNIQUE_UNIT,Conquistador,Conquistador
+CIV_ATLANTES_UNIQUE_UNIT,Tidecaller,Invocador de Mareas
+CIV_FENICIOS_UNIQUE_UNIT,Trireme,Trirreme
+LOBBY_CIV_HERO,Hero,Héroe
+LOBBY_CIV_ABILITY,Ability,Habilidad
+LOBBY_CIV_UNIQUE,Unique Unit,Unidad Única
+LOBBY_CIV_BONUSES,Bonuses,Bonificaciones
 TOOLTIP_MOVE_TO,Move to a target location. [M],Mover a una posición objetivo. [M]
 TOOLTIP_ATTACK_MOVE,Move toward a position automatically attacking enemies in range. [A],Avanza hacia una posición atacando automáticamente a los enemigos en rango. [A]
 TOOLTIP_STOP,Cancel all orders and stand idle. [X],Cancela todas las órdenes y detén la unidad. [X]

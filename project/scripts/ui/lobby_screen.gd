@@ -16,6 +16,18 @@ const CIVS: Array[Dictionary] = [
 	{"id": "fenicios",    "name_key": "CIV_FENICIOS_NAME",    "desc_key": "CIV_FENICIOS_DESC"},
 ]
 
+# Hero name, ability name key, ability description, unique unit display name
+const CIV_DETAILS: Dictionary = {
+	"guanches":    {"hero": "Bencomo",               "ability": "HERO_BENCOMO_ABILITY",     "ability_desc": "Rallies nearby allies: +30% attack speed for 10s.",   "unique_unit": "CIV_GUANCHES_UNIQUE_UNIT"},
+	"canarii":     {"hero": "Doramas",               "ability": "HERO_DORAMAS_ABILITY",     "ability_desc": "Taunts nearest enemy, forcing it to attack Doramas for 6s.", "unique_unit": "CIV_CANARII_UNIQUE_UNIT"},
+	"mahos":       {"hero": "Guadarfía",             "ability": "HERO_GUADARFIA_ABILITY",   "ability_desc": "Becomes nearly invisible for 8s. Enemies cannot auto-attack.", "unique_unit": "CIV_MAHOS_UNIQUE_UNIT"},
+	"franks":      {"hero": "Jean de Béthencourt",   "ability": "HERO_BETHENCOURT_ABILITY", "ability_desc": "Converts nearest enemy unit to your side for 12s.",    "unique_unit": "CIV_FRANKS_UNIQUE_UNIT"},
+	"britons":     {"hero": "Francis Drake",         "ability": "HERO_DRAKE_ABILITY",       "ability_desc": "Earns 15 gold per enemy kill within range for 20s.",   "unique_unit": "CIV_BRITONS_UNIQUE_UNIT"},
+	"castellanos": {"hero": "Don Quijote",           "ability": "HERO_QUIJOTE_ABILITY",     "ability_desc": "Charges forward dealing heavy damage to all units in path.", "unique_unit": "CIV_CASTELLANOS_UNIQUE_UNIT"},
+	"atlantes":    {"hero": "Artaxerax",             "ability": "HERO_ARTAXERAX_ABILITY",   "ability_desc": "Cloaks nearby allies in calima for 12s. Cannot be targeted.", "unique_unit": "CIV_ATLANTES_UNIQUE_UNIT"},
+	"fenicios":    {"hero": "Hannón el Navegante",   "ability": "HERO_HANNO_ABILITY",       "ability_desc": "Establishes a trade route generating 50 gold over 30s.", "unique_unit": "CIV_FENICIOS_UNIQUE_UNIT"},
+}
+
 const AGE_KEYS: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
 const DEFAULT_RIVAL_CIVS: Array[String] = ["castellanos", "franks", "atlantes"]
 const MAX_RIVALS: int = 3
@@ -24,7 +36,7 @@ const RIVALS_FIXED_H: float = 138.0
 
 var _player_civ_index: int = 0
 var _player_civ_btns: Array[Button] = []
-var _player_civ_desc_label: Label = null
+var _player_civ_desc_label: Label = null  # kept for legacy reference, detail uses _rebuild_civ_detail
 
 var _rival_civ_indices: Array[int] = [0, 0, 0]
 var _rivals_section: VBoxContainer = null
@@ -171,8 +183,9 @@ func _build() -> void:
 	# ── Right column: player civ ─────────────────────────────────────────────
 	var right: VBoxContainer = VBoxContainer.new()
 	right.add_theme_constant_override("separation", 10)
-	right.custom_minimum_size = Vector2(280, 0)
+	right.custom_minimum_size = Vector2(300, 0)
 	right.size_flags_horizontal = Control.SIZE_SHRINK_END
+	right.size_flags_vertical = Control.SIZE_SHRINK_BEGIN  # align to top
 	columns.add_child(right)
 
 	var civ_header: Label = _make_label(tr("LOBBY_CIVILIZATION"))
@@ -186,6 +199,27 @@ func _build() -> void:
 	grid.add_theme_constant_override("v_separation", 6)
 	right.add_child(grid)
 	_player_civ_btns.clear()
+
+	# Detail panel — built first so we can reference it in btn callbacks
+	var detail_panel: PanelContainer = PanelContainer.new()
+	var detail_sty: StyleBoxFlat = StyleBoxFlat.new()
+	detail_sty.bg_color = Color(0.10, 0.10, 0.16, 0.90)
+	detail_sty.corner_radius_top_left    = 5
+	detail_sty.corner_radius_top_right   = 5
+	detail_sty.corner_radius_bottom_left = 5
+	detail_sty.corner_radius_bottom_right = 5
+	detail_panel.add_theme_stylebox_override("panel", detail_sty)
+
+	var detail_margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		detail_margin.add_theme_constant_override("margin_" + side, 12)
+	detail_panel.add_child(detail_margin)
+
+	var detail_vbox: VBoxContainer = VBoxContainer.new()
+	detail_vbox.add_theme_constant_override("separation", 8)
+	detail_margin.add_child(detail_vbox)
+
+	_player_civ_desc_label = Label.new()  # reused as the full detail block
 
 	for i: int in range(CIVS.size()):
 		var civ: Dictionary = CIVS[i] as Dictionary
@@ -202,34 +236,12 @@ func _build() -> void:
 			_player_civ_index = captured_i
 			MatchConfig.player_civ_id = (CIVS[captured_i] as Dictionary)["id"] as String
 			_refresh_civ_highlight(_player_civ_btns, captured_i)
-			if is_instance_valid(_player_civ_desc_label):
-				_player_civ_desc_label.text = tr((CIVS[captured_i] as Dictionary)["desc_key"] as String))
+			_rebuild_civ_detail(detail_vbox, captured_i))
 
 	_refresh_civ_highlight(_player_civ_btns, _player_civ_index)
 
-	# Description panel
-	var desc_panel: PanelContainer = PanelContainer.new()
-	desc_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var desc_sty: StyleBoxFlat = StyleBoxFlat.new()
-	desc_sty.bg_color = Color(0.12, 0.12, 0.18, 0.85)
-	desc_sty.corner_radius_top_left    = 5
-	desc_sty.corner_radius_top_right   = 5
-	desc_sty.corner_radius_bottom_left = 5
-	desc_sty.corner_radius_bottom_right = 5
-	desc_panel.add_theme_stylebox_override("panel", desc_sty)
-	right.add_child(desc_panel)
-
-	var desc_margin: MarginContainer = MarginContainer.new()
-	for side: String in ["left", "right", "top", "bottom"]:
-		desc_margin.add_theme_constant_override("margin_" + side, 10)
-	desc_panel.add_child(desc_margin)
-
-	_player_civ_desc_label = Label.new()
-	_player_civ_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_player_civ_desc_label.add_theme_font_size_override("font_size", 15)
-	_player_civ_desc_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
-	_player_civ_desc_label.text = tr((CIVS[_player_civ_index] as Dictionary)["desc_key"] as String)
-	desc_margin.add_child(_player_civ_desc_label)
+	right.add_child(detail_panel)
+	_rebuild_civ_detail(detail_vbox, _player_civ_index)
 
 	# Bottom buttons
 	vbox.add_child(_make_sep())
@@ -269,6 +281,58 @@ func _rebuild_rivals_section() -> void:
 				_rival_civ_indices[captured_ri] = i
 				_sync_rival_config_to_match())
 		row.add_child(dropdown)
+
+# --- Civ detail panel ---
+
+func _rebuild_civ_detail(vbox: VBoxContainer, civ_idx: int) -> void:
+	for child: Node in vbox.get_children():
+		child.queue_free()
+
+	var civ: Dictionary = CIVS[civ_idx] as Dictionary
+	var civ_id: String = civ["id"] as String
+	var details: Dictionary = CIV_DETAILS.get(civ_id, {}) as Dictionary
+
+	# Description
+	_add_detail_text(vbox, tr(civ["desc_key"] as String), Color(0.80, 0.80, 0.80))
+
+	vbox.add_child(HSeparator.new())
+
+	# Hero
+	if details.has("hero"):
+		_add_detail_row(vbox, tr("LOBBY_CIV_HERO"), details["hero"] as String, Color(1.0, 0.85, 0.40))
+		_add_detail_text(vbox, details["ability_desc"] as String, Color(0.68, 0.80, 0.95))
+
+	vbox.add_child(HSeparator.new())
+
+	# Unique unit
+	if details.has("unique_unit"):
+		_add_detail_row(vbox, tr("LOBBY_CIV_UNIQUE"), tr(details["unique_unit"] as String), Color(0.75, 0.95, 0.60))
+
+func _add_detail_row(vbox: VBoxContainer, label: String, value: String, val_color: Color) -> void:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	vbox.add_child(row)
+	var lbl: Label = Label.new()
+	lbl.text = label + ":"
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
+	lbl.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	row.add_child(lbl)
+	var val: Label = Label.new()
+	val.text = value
+	val.add_theme_font_size_override("font_size", 15)
+	val.add_theme_color_override("font_color", val_color)
+	val.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	val.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(val)
+
+func _add_detail_text(vbox: VBoxContainer, text: String, color: Color) -> void:
+	var lbl: Label = Label.new()
+	lbl.text = text
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", color)
+	vbox.add_child(lbl)
 
 # --- Helpers ---
 
