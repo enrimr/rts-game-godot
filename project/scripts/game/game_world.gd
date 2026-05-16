@@ -1307,8 +1307,6 @@ func _start_placement(building_id: String) -> void:
 	_ghost_params_cached = PhysicsShapeQueryParameters2D.new()
 	_ghost_params_cached.shape = _ghost_shape_cached
 	_ghost_params_cached.collision_mask = 1
-	_placement_valid = true
-	_placement_check_timer = 0.0
 
 func _placement_overlaps(world_pos: Vector2) -> bool:
 	if _ghost_params_cached == null or _ghost_shape_cached == null:
