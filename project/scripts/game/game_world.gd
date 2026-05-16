@@ -194,8 +194,10 @@ func _ready() -> void:
 	hud.pending_action_started.connect(func(id: String) -> void: _pending_action = id)
 	hud.pending_action_cancelled.connect(func() -> void: _pending_action = "")
 	EventBus.unit_spawned.connect(_on_unit_spawned)
+	EventBus.unit_died.connect(_on_unit_died_check_victory)
 	EventBus.building_destroyed.connect(_on_building_destroyed_check_victory)
 	EventBus.building_construction_complete.connect(_on_building_construction_complete)
+	EventBus.player_eliminated.connect(_on_player_eliminated)
 	EventBus.wonder_built.connect(_on_wonder_built)
 	EventBus.wonder_destroyed.connect(_on_wonder_destroyed)
 	EventBus.minimap_move_order.connect(func(p: Vector2) -> void:
@@ -396,17 +398,18 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 	if building is Wonder:
 		EventBus.wonder_destroyed.emit(owner_id)
 
-	# Check if the player's TC was destroyed
+	# Player's TC destroyed → check if player has any units left
 	if building == drop_off:
-		# Find any surviving AI to declare as winner
-		for rival_id: int in _ai_town_centers:
-			if is_instance_valid(_ai_town_centers[rival_id]):
-				GameManager.declare_winner(rival_id)
-				return
-		GameManager.declare_winner(1)
+		if not _has_any_units(0):
+			# Find any surviving AI to declare as winner
+			for rival_id: int in _ai_town_centers:
+				if is_instance_valid(_ai_town_centers[rival_id]):
+					GameManager.declare_winner(rival_id)
+					return
+			GameManager.declare_winner(1)
 		return
 
-	# Check if a rival TC was destroyed — if all rivals are gone, player wins
+	# Rival TC destroyed → notify that AI's TC is gone; AI handles rebuilding
 	var destroyed_rival: int = -1
 	for rival_id: int in _ai_town_centers:
 		if _ai_town_centers[rival_id] == building:
@@ -416,19 +419,69 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 	if destroyed_rival < 0:
 		return
 
-	# Remove destroyed TC from the active map
 	_ai_town_centers.erase(destroyed_rival)
 	if _ai_town_center == building:
 		_ai_town_center = null
 
-	# Check if any rival TCs remain
-	var remaining_rivals: int = 0
+	# The building_destroyed signal was already emitted above; the AI's _on_building_destroyed
+	# listener handles TC rebuild logic for rival_id.
+
+func _on_unit_died_check_victory(unit: Node, owner_id: int) -> void:
+	if GameManager.state != GameManager.GameState.PLAYING:
+		return
+	# Only check the player (owner_id == 0) and only when TC is already gone
+	if owner_id == 0 and not is_instance_valid(drop_off):
+		if not _has_any_units(0):
+			for rival_id: int in _ai_town_centers:
+				if is_instance_valid(_ai_town_centers[rival_id]):
+					GameManager.declare_winner(rival_id)
+					return
+			GameManager.declare_winner(1)
+
+func _on_player_eliminated(eliminated_id: int) -> void:
+	if GameManager.state != GameManager.GameState.PLAYING:
+		return
+	# Remove from active rivals list
+	if _ai_town_centers.has(eliminated_id):
+		_ai_town_centers.erase(eliminated_id)
+	if is_instance_valid(_ai_town_center) and _ai_town_center.get("player_id") == eliminated_id:
+		_ai_town_center = null
+	# Check if all rivals are eliminated
+	var any_rival_alive: bool = false
 	for rival_id: int in _ai_town_centers:
 		if is_instance_valid(_ai_town_centers[rival_id]):
-			remaining_rivals += 1
-
-	if remaining_rivals == 0:
+			any_rival_alive = true
+			break
+	if not any_rival_alive:
+		# Also check rivals with no TC but still units
+		for rival_id: int in MatchConfig.get_rival_player_ids():
+			if _has_any_units(rival_id) or _has_any_buildings(rival_id):
+				any_rival_alive = true
+				break
+	if not any_rival_alive:
 		GameManager.declare_winner(0)
+
+## Returns true if player_id has at least one living unit.
+func _has_any_units(pid: int) -> bool:
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var p: Variant = unit.get("player_id")
+		if p != null and (p as int) == pid:
+			return true
+	return false
+
+## Returns true if player_id has at least one standing building.
+func _has_any_buildings(pid: int) -> bool:
+	if pid == 0 and is_instance_valid(drop_off):
+		return true
+	for b: Node in buildings_layer.get_children():
+		if not is_instance_valid(b):
+			continue
+		var p: Variant = b.get("player_id")
+		if p != null and (p as int) == pid:
+			return true
+	return false
 
 func _on_building_construction_complete(building: Node) -> void:
 	if building is Wonder:

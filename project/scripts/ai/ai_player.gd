@@ -67,12 +67,17 @@ enum AggressionLevel { PASSIVE, ALERTED, AGGRESSIVE }
 var _aggression: AggressionLevel = AggressionLevel.PASSIVE
 var _aggression_timer: float = 0.0
 
+var _tc_rebuild_pending: bool = false   # true while a villager is building a new TC
+
 func _ready() -> void:
 	EventBus.ai_unit_under_attack.connect(_on_ai_unit_under_attack)
+	EventBus.building_destroyed.connect(_on_building_destroyed)
 
 func _exit_tree() -> void:
 	if EventBus.ai_unit_under_attack.is_connected(_on_ai_unit_under_attack):
 		EventBus.ai_unit_under_attack.disconnect(_on_ai_unit_under_attack)
+	if EventBus.building_destroyed.is_connected(_on_building_destroyed):
+		EventBus.building_destroyed.disconnect(_on_building_destroyed)
 
 func _on_ai_unit_under_attack(attacked_player_id: int) -> void:
 	if attacked_player_id != player_id:
@@ -134,6 +139,161 @@ func _run_tick() -> void:
 		_manage_fishing_boats()
 		_attack_with_idle_land_units()
 
+# ── TC loss / elimination ─────────────────────────────────────────────────────
+
+func _on_building_destroyed(building: Node, owner_id: int) -> void:
+	if owner_id != player_id:
+		return
+	# React to our own TC being destroyed (both the initial AI TC and any rebuilt one)
+	if building != town_center and not (building is TownCenterBuilding) and not (building is TownCenterBuildable):
+		return
+	town_center = null
+	_tc_rebuild_pending = false
+	# Give the game a tick to register the destruction, then attempt rebuild
+	get_tree().create_timer(0.5).timeout.connect(_attempt_tc_rebuild)
+
+func _attempt_tc_rebuild() -> void:
+	if GameManager.state != GameManager.GameState.PLAYING:
+		return
+	if is_instance_valid(town_center):
+		return  # already has a TC (e.g., TownCenterBuildable was already complete)
+
+	# If no villagers remain, the AI is eliminated
+	var villager: Villager = _find_safest_villager()
+	if villager == null:
+		_check_elimination()
+		return
+
+	if not ResourceManager.can_afford(player_id, {"wood": 275}):
+		# Try again in a few seconds — villagers are still gathering
+		get_tree().create_timer(8.0).timeout.connect(_attempt_tc_rebuild)
+		return
+
+	_build_new_tc(villager)
+
+func _find_safest_villager() -> Villager:
+	var best: Villager = null
+	var best_score: float = -INF
+	# Find the villager farthest from any enemy unit/building
+	var enemy_origin: Vector2 = Vector2.ZERO
+	var enemy_count: int = 0
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		enemy_origin += (unit as Node2D).global_position
+		enemy_count += 1
+	for b: Node in buildings_layer.get_children():
+		if not is_instance_valid(b):
+			continue
+		var pid: Variant = b.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		enemy_origin += (b as Node2D).global_position
+		enemy_count += 1
+	if enemy_count > 0:
+		enemy_origin /= float(enemy_count)
+
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit) or not (unit is Villager):
+			continue
+		var v: Villager = unit as Villager
+		if v.player_id != player_id:
+			continue
+		var score: float = 0.0
+		if enemy_count > 0:
+			score = v.global_position.distance_to(enemy_origin)
+		if score > best_score:
+			best_score = score
+			best = v
+	return best
+
+func _build_new_tc(builder: Villager) -> void:
+	if not ResourceManager.spend_resource(player_id, {"wood": 275}):
+		return
+	# Pick a safe position: away from enemies, near some resource
+	var build_origin: Vector2 = builder.global_position
+	var pos: Vector2 = _find_safe_tc_position(build_origin)
+	if pos == Vector2.INF:
+		ResourceManager.add_resource(player_id, "wood", 275.0)
+		get_tree().create_timer(10.0).timeout.connect(_attempt_tc_rebuild)
+		return
+	var packed: PackedScene = load("res://scenes/buildings/town_center_ai.tscn") as PackedScene
+	if packed == null:
+		ResourceManager.add_resource(player_id, "wood", 275.0)
+		return
+	var tc: Node2D = packed.instantiate() as Node2D
+	tc.global_position = pos
+	tc.set("player_id", player_id)
+	buildings_layer.add_child(tc)
+	town_center = tc
+	# Wire drop_off to the new TC's DropOff child
+	var new_drop: Node = tc.get_node_or_null("DropOff")
+	if new_drop != null:
+		drop_off = new_drop as Node2D
+	EventBus.building_placed.emit(tc, player_id)
+	_tc_rebuild_pending = true
+	builder.order_build(tc)
+
+func _find_safe_tc_position(origin: Vector2) -> Vector2:
+	# Find farthest passable position from enemy presence
+	var enemy_center: Vector2 = Vector2.ZERO
+	var enemy_count: int = 0
+	for b: Node in buildings_layer.get_children():
+		if not is_instance_valid(b):
+			continue
+		var pid: Variant = b.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		enemy_center += (b as Node2D).global_position
+		enemy_count += 1
+	# Try positions progressively farther from enemies (or just from origin if no enemies known)
+	var bias: Vector2 = Vector2.ZERO
+	if enemy_count > 0:
+		enemy_center /= float(enemy_count)
+		bias = (origin - enemy_center).normalized()  # flee direction
+	for _i: int in range(60):
+		var angle: float
+		if bias != Vector2.ZERO and randf() < 0.75:
+			angle = bias.angle() + randf_range(-PI / 3.0, PI / 3.0)
+		else:
+			angle = randf() * TAU
+		var dist: float = randf_range(200.0, 600.0)
+		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * dist
+		if _build_pos_clear(pos):
+			return pos
+	return Vector2.INF
+
+func _check_elimination() -> void:
+	if GameManager.state != GameManager.GameState.PLAYING:
+		return
+	# Eliminated when no TC, no villagers, and no military left to recover with
+	if is_instance_valid(town_center):
+		return
+	var has_any: bool = false
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		has_any = true
+		break
+	if has_any:
+		return  # still have units — not eliminated yet
+	for b: Node in buildings_layer.get_children():
+		if not is_instance_valid(b):
+			continue
+		var pid: Variant = b.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		has_any = true
+		break
+	if not has_any:
+		EventBus.player_eliminated.emit(player_id)
+
 # ── Population ───────────────────────────────────────────────────────────────
 
 func _manage_population() -> void:
@@ -147,6 +307,25 @@ func _manage_population() -> void:
 
 func _manage_villagers() -> void:
 	if not is_instance_valid(town_center):
+		# No TC: just keep assigning idle villagers to gather resources
+		var counts: Dictionary = {}
+		var assigned_total: int = 0
+		for unit: Node in units_layer.get_children():
+			if not is_instance_valid(unit) or not (unit is Villager):
+				continue
+			var vil: Villager = unit as Villager
+			if vil.player_id != player_id or not is_instance_valid(vil.gather_target) or not (vil.gather_target is ResourceNode):
+				continue
+			var rt: ResourceNode.ResourceType = (vil.gather_target as ResourceNode).resource_type
+			counts[rt] = (counts.get(rt, 0) as int) + 1
+			assigned_total += 1
+		for unit: Node in units_layer.get_children():
+			if not is_instance_valid(unit) or not (unit is Villager):
+				continue
+			var v: Villager = unit as Villager
+			if v.player_id != player_id or v.current_state != UnitBase.UnitState.IDLE:
+				continue
+			_assign_villager(v, counts, assigned_total)
 		return
 	var vcount: int = _count_of_type("Villager")
 	var target: int = GameSettings.get_ai_villager_target()
@@ -1143,6 +1322,8 @@ func _redirect_villagers_to_drop_off(new_drop: Node2D, rtype: ResourceNode.Resou
 # ── Spawn helpers ─────────────────────────────────────────────────────────────
 
 func _spawn_villager() -> void:
+	if not is_instance_valid(town_center):
+		return
 	if not ResourceManager.spend_resource(player_id, {"food": 50}):
 		return
 	var v: Node2D = VILLAGER_SCENE.instantiate() as Node2D
@@ -1213,7 +1394,8 @@ func _find_nearest_drop_off(rtype: ResourceNode.ResourceType) -> Node2D:
 			continue
 		if building.get("state") as int != BuildingBase.BuildingState.COMPLETE:
 			continue
-		var d: float = (building as Node2D).global_position.distance_to(town_center.global_position)
+		var tc_pos: Vector2 = town_center.global_position if is_instance_valid(town_center) else (building as Node2D).global_position
+		var d: float = (building as Node2D).global_position.distance_to(tc_pos)
 		if d < best_dist:
 			best_dist = d
 			best = building as Node2D
