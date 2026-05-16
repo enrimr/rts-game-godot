@@ -211,11 +211,11 @@ func _spawn_projectile(target_pos: Vector2) -> void:
 
 	var boulder: Polygon2D = Polygon2D.new()
 	boulder.color = Color(0.45, 0.35, 0.20, 1.0)
-	boulder.polygon = PackedVector2Array(
+	boulder.polygon = PackedVector2Array([
 		Vector2(5, 0), Vector2(3.5, 3.5), Vector2(0, 5),
 		Vector2(-3.5, 3.5), Vector2(-5, 0), Vector2(-3.5, -3.5),
 		Vector2(0, -5), Vector2(3.5, -3.5)
-	)
+	])
 	boulder.z_index = 10
 	parent.add_child(boulder)
 	boulder.global_position = global_position + Vector2(0.0, -30.0)
@@ -248,11 +248,11 @@ func _spawn_impact_flash(target_pos: Vector2) -> void:
 	var flash: Polygon2D = Polygon2D.new()
 	flash.color = Color(1.0, 0.6, 0.1, 0.85)
 	flash.z_index = 11
-	flash.polygon = PackedVector2Array(
+	flash.polygon = PackedVector2Array([
 		Vector2(12, 0), Vector2(8, 8), Vector2(0, 12),
 		Vector2(-8, 8), Vector2(-12, 0), Vector2(-8, -8),
 		Vector2(0, -12), Vector2(8, -8)
-	)
+	])
 	parent.add_child(flash)
 	flash.global_position = target_pos
 	var fade: Tween = create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
