@@ -43,6 +43,7 @@ signal unit_attacked(attacker: Node, target: Node)
 signal hero_ability_used(player_id: int)
 signal damage_dealt(target: Node, amount: float, attacker: Node)
 signal ai_unit_under_attack(player_id: int)
+signal player_entity_under_attack(world_pos: Vector2, attacker: Node)
 
 # Map
 signal fog_of_war_updated(player_id: int, revealed_cells: Array)

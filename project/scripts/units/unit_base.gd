@@ -28,6 +28,7 @@ var _move_destination: Vector2 = Vector2.ZERO
 const STUCK_TIMEOUT: float = 1.2
 const STUCK_THRESHOLD: float = 6.0
 const MAX_STUCK_RETRIES: int = 6
+const GUARD_RADIUS: float = 600.0
 
 @onready var nav_agent: NavigationAgent2D = $NavigationAgent2D
 @onready var health_bar: ProgressBar = $HealthBar
@@ -46,6 +47,8 @@ func _ready() -> void:
 	if is_instance_valid(attack_range_area):
 		attack_range_area.monitoring = true
 		attack_range_area.body_entered.connect(_on_enemy_entered_range)
+	if player_id == 0:
+		EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
 	call_deferred("_add_player_color_stripe")
 
 func _add_player_color_stripe() -> void:
@@ -74,6 +77,8 @@ func take_damage(amount: float, source: Node = null) -> void:
 		if src_pid != null and (src_pid as int) != player_id:
 			if player_id != 0:
 				EventBus.ai_unit_under_attack.emit(player_id)
+			else:
+				EventBus.player_entity_under_attack.emit(global_position, source)
 			if current_state == UnitState.IDLE:
 				_on_auto_attack_target(source)
 
@@ -81,6 +86,8 @@ func die() -> void:
 	current_state = UnitState.DEAD
 	if player_id == 0:
 		AudioManager.play("unit_die", -6.0)
+		if EventBus.player_entity_under_attack.is_connected(_on_player_entity_under_attack):
+			EventBus.player_entity_under_attack.disconnect(_on_player_entity_under_attack)
 	if is_instance_valid(attack_range_area):
 		attack_range_area.monitoring = false
 	EventBus.unit_died.emit(self, player_id)
@@ -92,6 +99,22 @@ func _flash_hit() -> void:
 	modulate = Color(1.0, 0.2, 0.2, 1.0)
 	_hit_tween = create_tween()
 	_hit_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
+
+## Guard response: react when a nearby allied unit or building is attacked.
+## Only fires for player-0 units that are IDLE and within GUARD_RADIUS of the event.
+func _on_player_entity_under_attack(world_pos: Vector2, attacker: Node) -> void:
+	if current_state != UnitState.IDLE:
+		return
+	if not is_instance_valid(attacker):
+		return
+	if global_position.distance_to(world_pos) > GUARD_RADIUS:
+		return
+	var att_pid: Variant = attacker.get("player_id")
+	if att_pid == null or (att_pid as int) == player_id:
+		return
+	if attacker.get("is_cloaked") == true:
+		return
+	_on_auto_attack_target(attacker)
 
 ## Called when any body enters the attack-range Area2D.
 ## Triggers auto-attack only from IDLE, or from MOVING when attack-move is active.

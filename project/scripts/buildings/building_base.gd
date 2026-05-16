@@ -159,8 +159,11 @@ func take_damage(amount: float, source: Node = null) -> void:
 	_flash_hit()
 	if source != null and is_instance_valid(source):
 		var src_pid: Variant = source.get("player_id")
-		if src_pid != null and (src_pid as int) != player_id and player_id != 0:
-			EventBus.ai_unit_under_attack.emit(player_id)
+		if src_pid != null and (src_pid as int) != player_id:
+			if player_id != 0:
+				EventBus.ai_unit_under_attack.emit(player_id)
+			else:
+				EventBus.player_entity_under_attack.emit(global_position, source)
 	if health <= 0.0:
 		_destroy()
 
