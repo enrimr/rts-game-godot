@@ -16,6 +16,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | TechManager | `scripts/core/tech_manager.gd` | Research queue, applies technology effects |
 | MapManager | `scripts/map/map_manager.gd` | Tile map, fog of war, pathfinding |
 | TerrainManager | `scripts/map/terrain_manager.gd` | Impassability queries and nearest-passable search for all units |
+| WeatherManager | `scripts/core/weather_manager.gd` | Procedural weather state machine; provides stat-modifier query API to all systems |
 | HUD | `scripts/ui/hud_manager.gd` | In-game overlay: resources, selection panel, age label, game clock, pause overlay (scene: `scenes/ui/hud/hud.tscn`) |
 | Dock | `scripts/buildings/dock.gd` | Coastal building that trains naval units and accepts fish drop-offs (scene: `scenes/buildings/dock.tscn`) |
 | Blacksmith | `scripts/buildings/blacksmith.gd` | Research-only building; hosts BLACKSMITH-category technologies (`forging`, `padded_archer_armor`, `iron_casting`) |
@@ -45,6 +46,7 @@ The following nodes are registered as autoloads in `project.godot`:
 - `CivBonusManager` → `scripts/core/civ_bonus_manager.gd`
 - `TechManager` → `scripts/core/tech_manager.gd`
 - `TerrainManager` → `scripts/map/terrain_manager.gd`
+- `WeatherManager` → `scripts/core/weather_manager.gd`
 
 ## Data Layer
 

@@ -266,3 +266,61 @@ Two new query methods were added to `CivBonusManager`:
 ## Age Advancement
 
 Ages: Dark (0) → Feudal (1) → Castle (2) → Imperial (3). Advancing costs resources and takes time. Certain units, buildings, and technologies are locked behind age requirements.
+
+## Weather System
+
+`WeatherManager` (autoload, `scripts/core/weather_manager.gd`) drives a global procedural weather cycle. Weather affects all players equally and is controlled by two `MatchConfig` settings: `weather_enabled: bool` and `weather_frequency: int` (0=Off, 1=Normal, 2=Frequent, 3=Extreme). Both are exposed in the lobby as a single "Weather" option row.
+
+### Weather types
+
+| ID | `WeatherType` | Effect summary |
+|---|---|---|
+| `calima` | `CALIMA` | Saharan dust haze — land speed −15%, gather rate (food/wood) −20%, vision −40% |
+| `atlantic_storm` | `ATLANTIC_STORM` | Rain & wind — naval speed −30%, fish gather −50%; projectile drift (crosswind) |
+| `sea_fog` | `SEA_FOG` | Coastal fog (≤400 px from coast) — vision −60%, enemy units cloaked when intensity ≥ 0.5 |
+| `trade_winds` | `TRADE_WINDS` | NE→SW wind — naval speed ±20% depending on heading; projectile drift along wind |
+| `volcanic_ash` | `VOLCANIC_ASH` | Central zone (≤800 px from origin) — gather −30%, vision −50%, buildings drain 2 HP/s |
+
+Map-type restrictions: `SEA_FOG` only spawns on ISLANDS / VOLCANIC_COAST / DESERT_COAST.
+
+### Phase state machine
+
+```
+CLEAR ──(timer)──► RAMP_IN (10 s) ──► PEAK (variable) ──► RAMP_OUT (10 s) ──► CLEAR
+```
+
+`intensity` is a 0..1 float that smoothly ramps in/out. All stat-modifier calls multiply by `intensity` so effects fade gracefully.
+
+### Stat-modifier query API
+
+| Method | Consumers |
+|---|---|
+| `get_move_speed_multiplier(world_pos)` | `UnitBase._nav_velocity` |
+| `get_naval_speed_multiplier(move_dir)` | `ShipBase._nav_velocity` |
+| `get_gather_rate_multiplier(resource, world_pos)` | `Villager` gather loop |
+| `get_vision_multiplier(world_pos)` | `FogOfWar._reveal_from_units/buildings` |
+| `get_projectile_drift() → Vector2` | `Trebuchet._spawn_projectile`, `Mangonel._fire_at` |
+| `is_unit_cloaked_by_weather(world_pos) → bool` | `FogOfWar._apply_visibility` |
+| `get_building_damage_rate(world_pos) → float` | `BuildingBase._process` |
+
+### Visual overlay
+
+`WeatherOverlay` (`scripts/ui/weather_overlay.gd`) is a `Node2D` child of `GameWorld` (z_index 15). It draws entirely in screen/viewport coordinates using `draw_set_transform_matrix(get_canvas_transform().affine_inverse())` at the start of `_draw()`, so the effect is camera-independent. Each weather type has dedicated particle arrays updated in `_process` and drawn in `_draw`:
+
+| Weather | Visual |
+|---|---|
+| ATLANTIC_STORM | Falling rain lines (`_rain_particles`, 60) |
+| TRADE_WINDS | Horizontal streak lines (`_wind_particles`, 30) |
+| CALIMA | Drifting dust circles (`_dust_particles`, 80) |
+| VOLCANIC_ASH | Falling ash circles (`_ash_particles`, 60) |
+| SEA_FOG | Concentric vignette rects at screen edges |
+
+All weather types also blend a full-screen color overlay that fades in/out with intensity.
+
+### HUD notification
+
+`GameWorld` listens to `WeatherManager.weather_changed` and `WeatherManager.weather_cleared` and calls `HudManager.show_weather(weather_id)` / `HudManager.hide_weather()`. The HUD creates a transient `Label` with the weather name that fades in over 0.8 s and fades out over 1.5 s.
+
+### Conquest victory condition
+
+Conquest mode (the default) no longer ends on Town Center destruction alone. A player is defeated only when they have **zero units AND zero buildings** remaining. When the AI's TC is destroyed, `AIPlayer` attempts to rebuild it using the safest available villager; if it has no villagers, no buildings, and no units it emits `EventBus.player_eliminated` and the match checks for an overall winner.

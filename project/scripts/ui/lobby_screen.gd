@@ -156,6 +156,18 @@ func _build() -> void:
 	left.add_child(_make_option_row(victory_opts, MatchConfig.victory_mode,
 		func(i: int) -> void: MatchConfig.victory_mode = i))
 
+	# Weather
+	left.add_child(_make_label(tr("LOBBY_WEATHER_FREQUENCY")))
+	var weather_opts: Array[String] = [
+		tr("LOBBY_WEATHER_OFF"), tr("LOBBY_WEATHER_NORMAL"),
+		tr("LOBBY_WEATHER_FREQUENT"), tr("LOBBY_WEATHER_EXTREME"),
+	]
+	var weather_initial: int = 0 if not MatchConfig.weather_enabled else MatchConfig.weather_frequency
+	left.add_child(_make_option_row(weather_opts, weather_initial,
+		func(i: int) -> void:
+			MatchConfig.weather_enabled = i > 0
+			MatchConfig.weather_frequency = i))
+
 	left.add_child(_make_sep())
 
 	# Rival count

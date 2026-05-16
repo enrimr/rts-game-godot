@@ -175,6 +175,11 @@ LOBBY_VICTORY_MODE,Victory Condition,Condición de Victoria
 LOBBY_VICTORY_CONQUEST,Conquest,Conquista
 LOBBY_VICTORY_REGICIDE,Regicide,Regicidio
 LOBBY_VICTORY_WONDER,Wonder,Maravilla
+LOBBY_WEATHER_FREQUENCY,Weather,Clima
+LOBBY_WEATHER_OFF,Off,Desactivado
+LOBBY_WEATHER_NORMAL,Normal,Normal
+LOBBY_WEATHER_FREQUENT,Frequent,Frecuente
+LOBBY_WEATHER_EXTREME,Extreme,Extremo
 LOBBY_START,Start Game,Iniciar Partida
 LOBBY_BACK,← Back,← Volver
 CIV_GUANCHES_NAME,Guanches,Guanches

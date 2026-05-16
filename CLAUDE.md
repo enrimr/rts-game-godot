@@ -36,7 +36,7 @@ docs/             ← Architecture and design documentation
 
 1. **EventBus pattern** — cross-system communication happens exclusively through signals on `EventBus` (autoload). Never call methods across system boundaries directly.
 2. **Data-driven resources** — all tuneable values live in `Resource` subclasses under `resources/`. Scripts read from resources; they do not hardcode stats.
-3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager` — access these by name anywhere.
+3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager`, `WeatherManager` — access these by name anywhere.
 4. **Type hints everywhere** — every GDScript function must declare parameter types and return type.
 
 ## Key Files
@@ -71,6 +71,9 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/mangonel.gd` | `Mangonel` — AoE ranged siege; 72 px splash via `PhysicsDirectSpaceState2D.intersect_shape`; minimum range mechanic |
 | `project/scripts/units/trebuchet.gd` | `Trebuchet` — long-range AoE siege; 48 px splash; must deploy/undeploy (3 s) before firing; auto-undeploys when ordered to move |
 | `project/scripts/buildings/town_center_buildable.gd` | `TownCenterBuildable` — player-built Town Center (Castle Age, 275 wood); trains villagers (50 food, queue 5); respawns hero; resource drop-off via `DropOff` child node; `is_respawning_hero()` lets HUD treat it identically to the main TC |
+| `project/scripts/core/weather_manager.gd` | `WeatherManager` autoload — procedural weather state machine (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash); provides stat-modifier query API consumed by units, buildings, fog-of-war, and projectiles |
+| `project/scripts/ui/weather_overlay.gd` | `WeatherOverlay` — screen-space `Node2D` child of GameWorld that renders rain, dust, ash, wind and fog vignette visual effects; driven by WeatherManager |
+| `project/scripts/core/match_config.gd` | `MatchConfig` — lobby settings (map size, resources, civs, weather frequency) written before loading game_world |
 
 ## Coding Conventions
 
