@@ -2840,17 +2840,15 @@ func show_weather(weather_id: String) -> void:
 	var text: String = WEATHER_LABELS.get(weather_id, weather_id) as String
 	var color: Color = WEATHER_COLORS.get(weather_id, Color.WHITE) as Color
 
-	# --- announcement banner ---
+	# CanvasLayer children must be positioned with absolute px coords, not anchors.
+	# --- announcement banner: full-width, centred vertically at ~130 px from top ---
 	if not is_instance_valid(_weather_banner):
 		_weather_banner = Label.new()
 		_weather_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_weather_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_weather_banner.add_theme_font_size_override("font_size", 36)
-		_weather_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
-		_weather_banner.set_anchor(SIDE_LEFT, 0.0)
-		_weather_banner.set_anchor(SIDE_RIGHT, 1.0)
-		_weather_banner.offset_top = 120.0
-		_weather_banner.offset_bottom = 170.0
+		_weather_banner.position = Vector2(0.0, 110.0)
+		_weather_banner.size = Vector2(1920.0, 60.0)
 		_weather_banner.modulate.a = 0.0
 		add_child(_weather_banner)
 	_weather_banner.text = text
@@ -2862,14 +2860,13 @@ func show_weather(weather_id: String) -> void:
 	_weather_banner_tween.tween_interval(3.0)
 	_weather_banner_tween.tween_property(_weather_banner, "modulate:a", 0.0, 1.2)
 
-	# --- persistent pill with countdown ---
+	# --- persistent pill: just below the top bar (~44 px) ---
 	if not is_instance_valid(_weather_pill):
 		_weather_pill = Label.new()
 		_weather_pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_weather_pill.add_theme_font_size_override("font_size", 15)
-		_weather_pill.set_anchors_preset(Control.PRESET_TOP_WIDE)
-		_weather_pill.offset_top = 44.0
-		_weather_pill.offset_bottom = 64.0
+		_weather_pill.position = Vector2(0.0, 44.0)
+		_weather_pill.size = Vector2(1920.0, 22.0)
 		_weather_pill.modulate.a = 0.0
 		add_child(_weather_pill)
 	_weather_pill.add_theme_color_override("font_color", color)
