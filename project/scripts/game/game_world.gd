@@ -104,6 +104,11 @@ var _placing_building: bool = false
 var _placing_id: String = ""
 var _ghost: Node2D = null
 var _ghost_rotation: float = 0.0
+var _ghost_shape_cached: RectangleShape2D = null
+var _ghost_params_cached: PhysicsShapeQueryParameters2D = null
+var _placement_valid: bool = true
+var _placement_check_timer: float = 0.0
+const PLACEMENT_CHECK_INTERVAL: float = 0.06
 
 # Pending action waiting for a map click ("move_to" or "attack_move")
 var _pending_action: String = ""
@@ -477,10 +482,14 @@ func _process(delta: float) -> void:
 	_handle_camera(delta)
 	_handle_follow()
 	if _placing_building and is_instance_valid(_ghost):
-		_ghost.global_position = get_global_mouse_position()
+		var mouse_pos: Vector2 = get_global_mouse_position()
+		_ghost.global_position = mouse_pos
 		_ghost.rotation = _ghost_rotation
-		var valid: bool = not _placement_overlaps(get_global_mouse_position())
-		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if valid else Color(1.0, 0.2, 0.2, 0.5)
+		_placement_check_timer -= delta
+		if _placement_check_timer <= 0.0:
+			_placement_check_timer = PLACEMENT_CHECK_INTERVAL
+			_placement_valid = not _placement_overlaps(mouse_pos)
+		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if _placement_valid else Color(1.0, 0.2, 0.2, 0.5)
 	if is_instance_valid(_drag_overlay):
 		var overlay: _DragOverlay = _drag_overlay as _DragOverlay
 		overlay.active = _dragging
@@ -1298,24 +1307,24 @@ func _start_placement(building_id: String) -> void:
 			(child as CollisionShape2D).disabled = true
 	buildings_layer.add_child(_ghost)
 
+	_ghost_shape_cached = _get_ghost_shape()
+	_ghost_params_cached = PhysicsShapeQueryParameters2D.new()
+	_ghost_params_cached.shape = _ghost_shape_cached
+	_ghost_params_cached.collision_mask = 1
+	_placement_valid = true
+	_placement_check_timer = 0.0
+
 func _placement_overlaps(world_pos: Vector2) -> bool:
-	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
-	var shape: RectangleShape2D = _get_ghost_shape()
-	if shape == null:
+	if _ghost_params_cached == null or _ghost_shape_cached == null:
 		return false
-	var params: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
-	params.shape = shape
-	params.transform = Transform2D(0.0, world_pos)
-	params.collision_mask = 1
-	params.exclude = []
-	var results: Array[Dictionary] = space.intersect_shape(params, 1)
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	_ghost_params_cached.transform = Transform2D(0.0, world_pos)
+	var results: Array[Dictionary] = space.intersect_shape(_ghost_params_cached, 1)
 	if results.size() > 0:
 		return true
-	# Coastal buildings require at least one adjacent tile to be ocean
-	if _placing_id in COASTAL_BUILDINGS and not _is_coastal(world_pos, shape):
+	if _placing_id in COASTAL_BUILDINGS and not _is_coastal(world_pos, _ghost_shape_cached):
 		return true
-	# Ocean buildings must be placed fully in ocean
-	if _placing_id in OCEAN_BUILDINGS and not _is_fully_ocean(world_pos, shape):
+	if _placing_id in OCEAN_BUILDINGS and not _is_fully_ocean(world_pos, _ghost_shape_cached):
 		return true
 	return false
 
@@ -1398,6 +1407,8 @@ func _cancel_placement() -> void:
 	if is_instance_valid(_ghost):
 		_ghost.queue_free()
 	_ghost = null
+	_ghost_shape_cached = null
+	_ghost_params_cached = null
 
 func _request_nav_rebake() -> void:
 	_nav_rebake_pending = true
