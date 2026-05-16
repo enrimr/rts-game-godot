@@ -236,6 +236,8 @@ TOOLTIP_BUILD_UNIVERSITY,Research advanced technologies to improve your military
 TOOLTIP_BUILD_MARKET,Trade surplus resources for gold. Buy or sell large quantities.,Intercambia recursos sobrantes por oro. Compra o vende en grandes cantidades.
 TOOLTIP_BUILD_TEMPLE,Research religious technologies that strengthen your units.,Investiga tecnologías religiosas que fortalecen tus unidades.
 TOOLTIP_BUILD_SIEGE_WORKSHOP,Trains siege units: Battering Ram Mangonel and Trebuchet. Available from Castle Age.,Entrena unidades de asedio: Ariete Mangonela y Trebuchet. Disponible desde la Edad del Castillo.
+ACTION_TOWN_CENTER,Town Center\n275W,Centro Urbano\n275M
+TOOLTIP_BUILD_TOWN_CENTER,Build an additional Town Center. Trains villagers and acts as a drop-off point. Available from Castle Age.,Construye un Centro Urbano adicional. Entrena aldeanos y sirve como punto de entrega. Disponible desde la Edad del Castillo.
 TOOLTIP_BUILD_WONDER,In Wonder mode completing this building starts a 4-minute countdown to victory. Requires Imperial Age.,En modo Maravilla completar este edificio inicia una cuenta atrás de 4 minutos para la victoria. Requiere Era Imperial.
 TOOLTIP_BUILD_BACK,Return to the main action panel.,Volver al panel de acciones principal.
 TOOLTIP_TRAIN_VILLAGER,Train a villager to gather resources and construct buildings. Essential for your economy.,Entrena un aldeano para recolectar recursos y construir edificios. Esencial para tu economía.

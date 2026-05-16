@@ -52,6 +52,7 @@ const BUILD_ACTIONS: Array = [
 	{"id": "build:university",      "label": "ACTION_UNIVERSITY",     "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U, "description": "TOOLTIP_BUILD_UNIVERSITY",    "min_age": 2},
 	{"id": "build:temple",          "label": "ACTION_TEMPLE",         "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175}, "key": KEY_T, "description": "TOOLTIP_BUILD_TEMPLE",       "min_age": 2},
 	{"id": "build:siege_workshop",  "label": "ACTION_SIEGE_WORKSHOP", "color": Color(0.42, 0.32, 0.18), "cost": {"wood": 200}, "key": KEY_I, "description": "TOOLTIP_BUILD_SIEGE_WORKSHOP","min_age": 2},
+	{"id": "build:town_center",     "label": "ACTION_TOWN_CENTER",    "color": Color(0.55, 0.18, 0.12), "cost": {"wood": 275}, "key": KEY_Y, "description": "TOOLTIP_BUILD_TOWN_CENTER",  "min_age": 2},
 	{"id": "build:wonder",          "label": "ACTION_WONDER",         "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000}, "key": KEY_V, "description": "TOOLTIP_BUILD_WONDER", "min_age": 3},
 	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE, "description": "TOOLTIP_BUILD_BACK"},
 ]
@@ -691,7 +692,7 @@ func _on_building_selected(building: Node) -> void:
 		_populate_buttons([DESTROY_ACTION])
 		return
 
-	if building.has_method("is_respawning_hero"):
+	if building.has_method("is_respawning_hero") or building is TownCenterBuildable:
 		_unit_name_label.text = tr("UI_TOWN_CENTER")
 		var tc_hp: Variant = building.get("health")
 		var tc_max: Variant = building.get("max_health")

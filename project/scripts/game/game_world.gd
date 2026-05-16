@@ -35,6 +35,7 @@ const BUILDING_SCENES: Dictionary = {
 	"market":        "res://scenes/buildings/market.tscn",
 	"temple":          "res://scenes/buildings/temple.tscn",
 	"siege_workshop":  "res://scenes/buildings/siege_workshop.tscn",
+	"town_center":     "res://scenes/buildings/town_center.tscn",
 	"wonder":          "res://scenes/buildings/wonder.tscn",
 }
 
@@ -51,6 +52,7 @@ const BUILDING_COSTS: Dictionary = {
 	"dock":          {"wood": 150},
 	"fish_trap":       {"wood": 75},
 	"siege_workshop":  {"wood": 200},
+	"town_center":     {"wood": 275},
 	"wonder":          {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000},
 }
 
