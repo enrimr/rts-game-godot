@@ -252,6 +252,7 @@ func _process(delta: float) -> void:
 					var cd_secs: int = int(udata.hero_ability_cooldown * cd_frac)
 					btn.text = key_hint + ability_name + "\n" + tr("HERO_ABILITY_COOLDOWN") % cd_secs
 					btn.modulate = Color(0.65, 0.65, 0.65)
+	_update_weather_pill()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
@@ -2812,8 +2813,12 @@ func update_wonder_timer(seconds_left: float) -> void:
 
 # ── Weather HUD ───────────────────────────────────────────────────────────────
 
-var _weather_label: Label = null
-var _weather_tween: Tween = null
+# Banner: big centered announcement that fades out after a few seconds
+var _weather_banner: Label = null
+var _weather_banner_tween: Tween = null
+
+# Persistent pill: small label under the top bar showing name + countdown
+var _weather_pill: Label = null
 
 const WEATHER_LABELS: Dictionary = {
 	"calima":          "☁ Calima",
@@ -2832,33 +2837,73 @@ const WEATHER_COLORS: Dictionary = {
 }
 
 func show_weather(weather_id: String) -> void:
-	if not is_instance_valid(_weather_label):
-		_weather_label = Label.new()
-		_weather_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_weather_label.add_theme_font_size_override("font_size", 18)
-		_weather_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
-		_weather_label.offset_top = 44.0
-		_weather_label.offset_bottom = 66.0
-		_weather_label.modulate.a = 0.0
-		add_child(_weather_label)
 	var text: String = WEATHER_LABELS.get(weather_id, weather_id) as String
 	var color: Color = WEATHER_COLORS.get(weather_id, Color.WHITE) as Color
-	_weather_label.text = text
-	_weather_label.add_theme_color_override("font_color", color)
-	if is_instance_valid(_weather_tween):
-		_weather_tween.kill()
-	_weather_tween = create_tween()
-	_weather_tween.tween_property(_weather_label, "modulate:a", 1.0, 0.8)
+
+	# --- announcement banner ---
+	if not is_instance_valid(_weather_banner):
+		_weather_banner = Label.new()
+		_weather_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_weather_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_weather_banner.add_theme_font_size_override("font_size", 36)
+		_weather_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		_weather_banner.set_anchor(SIDE_LEFT, 0.0)
+		_weather_banner.set_anchor(SIDE_RIGHT, 1.0)
+		_weather_banner.offset_top = 120.0
+		_weather_banner.offset_bottom = 170.0
+		_weather_banner.modulate.a = 0.0
+		add_child(_weather_banner)
+	_weather_banner.text = text
+	_weather_banner.add_theme_color_override("font_color", color)
+	if is_instance_valid(_weather_banner_tween):
+		_weather_banner_tween.kill()
+	_weather_banner_tween = create_tween()
+	_weather_banner_tween.tween_property(_weather_banner, "modulate:a", 1.0, 0.5)
+	_weather_banner_tween.tween_interval(3.0)
+	_weather_banner_tween.tween_property(_weather_banner, "modulate:a", 0.0, 1.2)
+
+	# --- persistent pill with countdown ---
+	if not is_instance_valid(_weather_pill):
+		_weather_pill = Label.new()
+		_weather_pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_weather_pill.add_theme_font_size_override("font_size", 15)
+		_weather_pill.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		_weather_pill.offset_top = 44.0
+		_weather_pill.offset_bottom = 64.0
+		_weather_pill.modulate.a = 0.0
+		add_child(_weather_pill)
+	_weather_pill.add_theme_color_override("font_color", color)
+	var tw: Tween = create_tween()
+	tw.tween_property(_weather_pill, "modulate:a", 1.0, 0.8)
 
 func hide_weather() -> void:
-	if not is_instance_valid(_weather_label):
+	# Banner: kill any pending tween and hide immediately (it may already be fading)
+	if is_instance_valid(_weather_banner):
+		if is_instance_valid(_weather_banner_tween):
+			_weather_banner_tween.kill()
+		var tw_b: Tween = create_tween()
+		tw_b.tween_property(_weather_banner, "modulate:a", 0.0, 0.6)
+		tw_b.tween_callback(func() -> void:
+			if is_instance_valid(_weather_banner):
+				_weather_banner.queue_free()
+				_weather_banner = null)
+
+	# Pill: fade out then free
+	if is_instance_valid(_weather_pill):
+		var tw_p: Tween = create_tween()
+		tw_p.tween_property(_weather_pill, "modulate:a", 0.0, 1.5)
+		tw_p.tween_callback(func() -> void:
+			if is_instance_valid(_weather_pill):
+				_weather_pill.queue_free()
+				_weather_pill = null)
+
+func _update_weather_pill() -> void:
+	if not is_instance_valid(_weather_pill):
 		return
-	if is_instance_valid(_weather_tween):
-		_weather_tween.kill()
-	_weather_tween = create_tween()
-	_weather_tween.tween_property(_weather_label, "modulate:a", 0.0, 1.5)
-	_weather_tween.tween_callback(func() -> void:
-		if is_instance_valid(_weather_label):
-			_weather_label.queue_free()
-			_weather_label = null
-	)
+	var secs: float = WeatherManager.get_remaining_seconds()
+	if secs <= 0.0:
+		return
+	var mins: int = int(secs) / 60
+	var s: int = int(secs) % 60
+	var name_text: String = WEATHER_LABELS.get(WeatherManager.get_weather_id(), "") as String
+	_weather_pill.text = "%s  %d:%02d" % [name_text, mins, s]

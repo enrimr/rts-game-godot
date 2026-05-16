@@ -73,6 +73,7 @@ var intensity: float = 0.0   # 0.0 → 1.0 (smoothly ramped)
 var _phase: String = "clear"   # "clear" | "ramp_in" | "peak" | "ramp_out"
 var _phase_timer: float = 0.0
 var _phase_duration: float = 0.0   # used for CLEAR and PEAK phases
+var _peak_duration: float = 0.0    # pre-generated when weather is picked; stable during ramp_in
 
 # Trade-wind drift vector (world space, changes each TRADE_WINDS event)
 var _wind_dir: Vector2 = Vector2.ZERO
@@ -97,10 +98,8 @@ func _process(delta: float) -> void:
 				intensity = 1.0
 				_phase = "peak"
 				_phase_timer = 0.0
-				_phase_duration = randf_range(
-					(PEAK_DURATION[current_weather] as Array)[0],
-					(PEAK_DURATION[current_weather] as Array)[1])
-				weather_changed.emit(_weather_id(), intensity)
+				_phase_duration = _peak_duration
+				weather_changed.emit(get_weather_id(), intensity)
 		"peak":
 			if _phase_timer >= _phase_duration:
 				_phase = "ramp_out"
@@ -147,6 +146,9 @@ func _pick_next_weather() -> void:
 			chosen = candidates[i]
 			break
 	current_weather = chosen
+	_peak_duration = randf_range(
+		(PEAK_DURATION[chosen] as Array)[0],
+		(PEAK_DURATION[chosen] as Array)[1])
 	if chosen == WeatherType.TRADE_WINDS:
 		var angle: float = randf_range(0.0, TAU)
 		_wind_dir = Vector2(cos(angle), sin(angle))
@@ -154,13 +156,25 @@ func _pick_next_weather() -> void:
 	_phase_timer = 0.0
 	intensity = 0.0
 
+## Seconds remaining in the current weather event (ramp_in + peak + ramp_out combined).
+## Returns 0.0 when weather is CLEAR.
+func get_remaining_seconds() -> float:
+	match _phase:
+		"ramp_in":
+			return (RAMP_TIME - _phase_timer) + _peak_duration + RAMP_TIME
+		"peak":
+			return (_phase_duration - _phase_timer) + RAMP_TIME
+		"ramp_out":
+			return maxf(RAMP_TIME - _phase_timer, 0.0)
+	return 0.0
+
 func _is_allowed_on_current_map(wtype: WeatherType) -> bool:
 	if not WEATHER_MAP_ALLOWED.has(wtype):
 		return true  # no restriction
 	var allowed: Array = WEATHER_MAP_ALLOWED[wtype] as Array
 	return allowed.has(MatchConfig.map_type)
 
-func _weather_id() -> String:
+func get_weather_id() -> String:
 	match current_weather:
 		WeatherType.CALIMA:          return "calima"
 		WeatherType.ATLANTIC_STORM:  return "atlantic_storm"
