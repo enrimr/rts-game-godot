@@ -661,9 +661,6 @@ func _find_enemy_building_targets(max_count: int) -> Array[Node]:
 	return candidates.slice(0, max_count) as Array[Node]
 
 func _launch_attack() -> void:
-	var etc: Node2D = _get_primary_enemy_tc()
-	if etc == null:
-		return
 	var mcount: int = _count_military()
 	var min_units: int = GameSettings.get_ai_min_attack_units()
 	if _aggression == AggressionLevel.AGGRESSIVE:
@@ -672,8 +669,17 @@ func _launch_attack() -> void:
 		return
 
 	var targets: Array[Node] = _find_enemy_building_targets(3)
-	if targets.is_empty():
+	var etc: Node2D = _get_primary_enemy_tc()
+	if etc != null and not targets.has(etc):
 		targets.append(etc)
+
+	# No buildings left — hunt enemy units (including villagers) to finish them off
+	if targets.is_empty():
+		var fallback: Node = _find_nearest_enemy_unit()
+		if fallback == null:
+			return
+		targets.append(fallback)
+
 	var target_count: int = targets.size()
 
 	# Collect military units that are not already engaged with a valid target
@@ -739,6 +745,24 @@ func _find_nearest_enemy_building() -> Node:
 		if d < best_dist:
 			best_dist = d
 			best = building
+	return best
+
+func _find_nearest_enemy_unit() -> Node:
+	var origin: Vector2 = town_center.global_position if is_instance_valid(town_center) else Vector2.ZERO
+	var best: Node = null
+	var best_dist: float = INF
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		if unit.get("is_cloaked") == true:
+			continue
+		var d: float = origin.distance_to((unit as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = unit
 	return best
 
 func _check_zone_threat() -> void:
@@ -1094,16 +1118,18 @@ func _find_shore_position() -> Vector2:
 	return Vector2.ZERO
 
 func _attack_with_idle_land_units() -> void:
-	var etc: Node2D = _get_primary_enemy_tc()
-	if etc == null:
-		return
 	if not is_instance_valid(town_center):
 		return
 	var own_origin: Vector2 = town_center.global_position
-	var enemy_origin: Vector2 = etc.global_position
+	var etc: Node2D = _get_primary_enemy_tc()
 	var target: Node = _find_nearest_enemy_building()
 	if target == null:
 		target = etc
+	if target == null:
+		target = _find_nearest_enemy_unit()
+	if target == null:
+		return
+	var enemy_origin: Vector2 = (target as Node2D).global_position
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
 			continue
