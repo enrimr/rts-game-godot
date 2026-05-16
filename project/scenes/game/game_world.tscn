@@ -7,11 +7,13 @@
 [ext_resource type="Script" path="res://scripts/buildings/town_center.gd" id="6_tc"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_1"]
+agent_radius = 18.0
 vertices = PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)
 polygons = [PackedInt32Array(0, 3, 2, 1)]
 outlines = [PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_2"]
+agent_radius = 18.0
 vertices = PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)
 polygons = [PackedInt32Array(0, 3, 2, 1)]
 outlines = [PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)]
