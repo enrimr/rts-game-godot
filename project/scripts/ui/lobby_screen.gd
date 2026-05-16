@@ -18,14 +18,14 @@ const CIVS: Array[Dictionary] = [
 
 # Hero name, ability name key, ability description, unique unit display name
 const CIV_DETAILS: Dictionary = {
-	"guanches":    {"hero": "Bencomo",               "ability": "HERO_BENCOMO_ABILITY",     "ability_desc": "Rallies nearby allies: +30% attack speed for 10s.",   "unique_unit": "CIV_GUANCHES_UNIQUE_UNIT"},
-	"canarii":     {"hero": "Doramas",               "ability": "HERO_DORAMAS_ABILITY",     "ability_desc": "Taunts nearest enemy, forcing it to attack Doramas for 6s.", "unique_unit": "CIV_CANARII_UNIQUE_UNIT"},
-	"mahos":       {"hero": "Guadarfía",             "ability": "HERO_GUADARFIA_ABILITY",   "ability_desc": "Becomes nearly invisible for 8s. Enemies cannot auto-attack.", "unique_unit": "CIV_MAHOS_UNIQUE_UNIT"},
-	"franks":      {"hero": "Jean de Béthencourt",   "ability": "HERO_BETHENCOURT_ABILITY", "ability_desc": "Converts nearest enemy unit to your side for 12s.",    "unique_unit": "CIV_FRANKS_UNIQUE_UNIT"},
-	"britons":     {"hero": "Francis Drake",         "ability": "HERO_DRAKE_ABILITY",       "ability_desc": "Earns 15 gold per enemy kill within range for 20s.",   "unique_unit": "CIV_BRITONS_UNIQUE_UNIT"},
-	"castellanos": {"hero": "Don Quijote",           "ability": "HERO_QUIJOTE_ABILITY",     "ability_desc": "Charges forward dealing heavy damage to all units in path.", "unique_unit": "CIV_CASTELLANOS_UNIQUE_UNIT"},
-	"atlantes":    {"hero": "Artaxerax",             "ability": "HERO_ARTAXERAX_ABILITY",   "ability_desc": "Cloaks nearby allies in calima for 12s. Cannot be targeted.", "unique_unit": "CIV_ATLANTES_UNIQUE_UNIT"},
-	"fenicios":    {"hero": "Hannón el Navegante",   "ability": "HERO_HANNO_ABILITY",       "ability_desc": "Establishes a trade route generating 50 gold over 30s.", "unique_unit": "CIV_FENICIOS_UNIQUE_UNIT"},
+	"guanches":    {"hero": "Bencomo",               "ability": "HERO_BENCOMO_ABILITY",     "ability_desc": "HERO_BENCOMO_ABILITY_DESC",     "unique_unit": "CIV_GUANCHES_UNIQUE_UNIT"},
+	"canarii":     {"hero": "Doramas",               "ability": "HERO_DORAMAS_ABILITY",     "ability_desc": "HERO_DORAMAS_ABILITY_DESC",     "unique_unit": "CIV_CANARII_UNIQUE_UNIT"},
+	"mahos":       {"hero": "Guadarfía",             "ability": "HERO_GUADARFIA_ABILITY",   "ability_desc": "HERO_GUADARFIA_ABILITY_DESC",   "unique_unit": "CIV_MAHOS_UNIQUE_UNIT"},
+	"franks":      {"hero": "Jean de Béthencourt",   "ability": "HERO_BETHENCOURT_ABILITY", "ability_desc": "HERO_BETHENCOURT_ABILITY_DESC", "unique_unit": "CIV_FRANKS_UNIQUE_UNIT"},
+	"britons":     {"hero": "Francis Drake",         "ability": "HERO_DRAKE_ABILITY",       "ability_desc": "HERO_DRAKE_ABILITY_DESC",       "unique_unit": "CIV_BRITONS_UNIQUE_UNIT"},
+	"castellanos": {"hero": "Don Quijote",           "ability": "HERO_QUIJOTE_ABILITY",     "ability_desc": "HERO_QUIJOTE_ABILITY_DESC",     "unique_unit": "CIV_CASTELLANOS_UNIQUE_UNIT"},
+	"atlantes":    {"hero": "Artaxerax",             "ability": "HERO_ARTAXERAX_ABILITY",   "ability_desc": "HERO_ARTAXERAX_ABILITY_DESC",   "unique_unit": "CIV_ATLANTES_UNIQUE_UNIT"},
+	"fenicios":    {"hero": "Hannón el Navegante",   "ability": "HERO_HANNO_ABILITY",       "ability_desc": "HERO_HANNO_ABILITY_DESC",       "unique_unit": "CIV_FENICIOS_UNIQUE_UNIT"},
 }
 
 const AGE_KEYS: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
@@ -300,7 +300,7 @@ func _rebuild_civ_detail(vbox: VBoxContainer, civ_idx: int) -> void:
 	# Hero
 	if details.has("hero"):
 		_add_detail_row(vbox, tr("LOBBY_CIV_HERO"), details["hero"] as String, Color(1.0, 0.85, 0.40))
-		_add_detail_text(vbox, details["ability_desc"] as String, Color(0.68, 0.80, 0.95))
+		_add_detail_text(vbox, tr(details["ability_desc"] as String), Color(0.68, 0.80, 0.95))
 
 	vbox.add_child(HSeparator.new())
 
@@ -378,6 +378,7 @@ func _refresh_civ_highlight(btns: Array[Button], selected: int) -> void:
 		s.corner_radius_bottom_left = 4
 		s.corner_radius_bottom_right = 4
 		btns[i].add_theme_stylebox_override("normal", s)
+		btns[i].add_theme_stylebox_override("hover", s)
 		btns[i].add_theme_stylebox_override("pressed", s)
 
 func _apply_btn_styles(btns: Array[Button], selected: int) -> void:
@@ -390,6 +391,7 @@ func _apply_btn_styles(btns: Array[Button], selected: int) -> void:
 		s.corner_radius_bottom_left = 4
 		s.corner_radius_bottom_right = 4
 		btns[j].add_theme_stylebox_override("normal", s)
+		btns[j].add_theme_stylebox_override("hover", s)
 		btns[j].add_theme_stylebox_override("pressed", s)
 
 func _make_label(text: String) -> Label:

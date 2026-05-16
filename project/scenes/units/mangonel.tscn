@@ -1,0 +1,87 @@
+[gd_scene load_steps=5 format=3 uid="uid://unit_mangonel"]
+
+[ext_resource type="Script" path="res://scripts/units/mangonel.gd" id="1_scr"]
+[ext_resource type="Resource" uid="uid://mangonel_data" path="res://resources/units/mangonel_data.tres" id="2_dat"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]
+radius = 14.0
+height = 28.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 224.0
+
+[node name="Mangonel" type="CharacterBody2D"]
+script = ExtResource("1_scr")
+unit_data = ExtResource("2_dat")
+collision_layer = 1
+collision_mask = 1
+
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Base" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.28, 0.12, 1.0)
+polygon = PackedVector2Array(-14, 8, -14, -8, 14, -8, 14, 8)
+
+[node name="Arm" type="Polygon2D" parent="Body"]
+color = Color(0.55, 0.38, 0.15, 1.0)
+polygon = PackedVector2Array(-2, 8, -2, -18, 2, -18, 2, 8)
+
+[node name="Sling" type="Polygon2D" parent="Body"]
+color = Color(0.65, 0.55, 0.30, 1.0)
+polygon = PackedVector2Array(-3, -18, 0, -24, 3, -18)
+
+[node name="WheelL" type="Polygon2D" parent="Body"]
+position = Vector2(-12, 8)
+color = Color(0.25, 0.18, 0.08, 1.0)
+polygon = PackedVector2Array(-4, 0, 0, -4, 4, 0, 0, 4)
+
+[node name="WheelR" type="Polygon2D" parent="Body"]
+position = Vector2(12, 8)
+color = Color(0.25, 0.18, 0.08, 1.0)
+polygon = PackedVector2Array(-4, 0, 0, -4, 4, 0, 0, 4)
+
+[node name="UnitLabel" type="Label" parent="."]
+offset_left = -14.0
+offset_top = -6.0
+offset_right = 14.0
+offset_bottom = 6.0
+text = "MG"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.95, 0.80, 0.50, 1.0)
+mouse_filter = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_1")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
+path_desired_distance = 16.0
+target_desired_distance = 24.0
+avoidance_enabled = true
+avoidance_priority = 0.3
+
+[node name="SelectionIndicator" type="Node2D" parent="."]
+visible = false
+
+[node name="SelectionCircle" type="Polygon2D" parent="SelectionIndicator"]
+color = Color(0, 1, 0, 0.7)
+polygon = PackedVector2Array(20.0, 0.0, 19.32, 5.18, 17.32, 10.0, 14.14, 14.14, 10.0, 17.32, 5.18, 19.32, 0.0, 20.0, -5.18, 19.32, -10.0, 17.32, -14.14, 14.14, -17.32, 10.0, -19.32, 5.18, -20.0, 0.0, -19.32, -5.18, -17.32, -10.0, -14.14, -14.14, -10.0, -17.32, -5.18, -19.32, 0.0, -20.0, 5.18, -19.32, 10.0, -17.32, 14.14, -14.14, 17.32, -10.0, 19.32, -5.18)
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = -22.0
+offset_top = -40.0
+offset_right = 22.0
+offset_bottom = -34.0
+min_value = 0.0
+max_value = 100.0
+value = 100.0
+show_percentage = false
+mouse_filter = 2
+
+[node name="AttackRange" type="Area2D" parent="."]
+collision_mask = 1
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackRange"]
+shape = SubResource("CircleShape2D_1")

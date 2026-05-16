@@ -57,6 +57,12 @@ ACTION_TEMPLE,Temple\n175W,Templo\n175M
 ACTION_WONDER,Wonder\n2500W 2500F 2500S 5000G,Maravilla\n2500M 2500C 2500P 5000O
 ACTION_HEAVY_SCOUT,Heavy Scout\n80F 30G,Explorador Pesado\n80C 30O
 ACTION_KNIGHT,Knight\n60F 75G,Caballero\n60C 75O
+ACTION_TREBUCHET_DEPLOY,[D] Deploy,Desplegar [D]
+ACTION_TREBUCHET_UNDEPLOY,[D] Pack Up,Replegar [D]
+ACTION_SIEGE_WORKSHOP,Siege Workshop\n200W,Taller de Asedio\n200M
+ACTION_BATTERING_RAM,Battering Ram\n160W,Ariete\n160M
+ACTION_MANGONEL,Mangonel\n160W 135G,Mangonela\n160M 135O
+ACTION_TREBUCHET,Trebuchet\n200W 200G,Trebuchet\n200M 200O
 ACTION_TRANSPORT_SHIP,Transport Ship,Barco de Transporte
 ACTION_WAR_GALLEY,War Galley,Galera de Guerra
 NOTIF_UNIT_ATTACK,Your units are under attack!,¡Tus unidades están bajo ataque!
@@ -199,6 +205,14 @@ LOBBY_CIV_HERO,Hero,Héroe
 LOBBY_CIV_ABILITY,Ability,Habilidad
 LOBBY_CIV_UNIQUE,Unique Unit,Unidad Única
 LOBBY_CIV_BONUSES,Bonuses,Bonificaciones
+HERO_BENCOMO_ABILITY_DESC,Rallies nearby allies: +30% attack speed for 10s.,Anima a los aliados cercanos: +30% velocidad de ataque durante 10s.
+HERO_DORAMAS_ABILITY_DESC,Taunts nearest enemy forcing it to attack Doramas for 6s.,Provoca al enemigo más cercano obligándolo a atacar a Doramas durante 6s.
+HERO_GUADARFIA_ABILITY_DESC,Becomes nearly invisible for 8s. Enemies cannot auto-attack.,Se vuelve casi invisible durante 8s. Los enemigos no pueden atacar automáticamente.
+HERO_BETHENCOURT_ABILITY_DESC,Converts nearest enemy unit to your side for 12s.,Convierte la unidad enemiga más cercana a tu bando durante 12s.
+HERO_DRAKE_ABILITY_DESC,Earns 15 gold per enemy kill within range for 20s.,Obtiene 15 de oro por cada enemigo eliminado en rango durante 20s.
+HERO_QUIJOTE_ABILITY_DESC,Charges forward dealing heavy damage to all units in path.,Carga hacia adelante infligiendo gran daño a todas las unidades en su camino.
+HERO_ARTAXERAX_ABILITY_DESC,Cloaks nearby allies in calima for 12s. Cannot be targeted.,Envuelve a los aliados cercanos en calima durante 12s. No pueden ser objetivo de ataques.
+HERO_HANNO_ABILITY_DESC,Establishes a trade route generating 50 gold over 30s.,Establece una ruta comercial que genera 50 de oro en 30s.
 TOOLTIP_MOVE_TO,Move to a target location. [M],Mover a una posición objetivo. [M]
 TOOLTIP_ATTACK_MOVE,Move toward a position automatically attacking enemies in range. [A],Avanza hacia una posición atacando automáticamente a los enemigos en rango. [A]
 TOOLTIP_STOP,Cancel all orders and stand idle. [X],Cancela todas las órdenes y detén la unidad. [X]
@@ -221,6 +235,7 @@ TOOLTIP_BUILD_DOCK,Naval production building. Train ships and fishing boats.,Edi
 TOOLTIP_BUILD_UNIVERSITY,Research advanced technologies to improve your military.,Investiga tecnologías avanzadas para mejorar tu ejército.
 TOOLTIP_BUILD_MARKET,Trade surplus resources for gold. Buy or sell large quantities.,Intercambia recursos sobrantes por oro. Compra o vende en grandes cantidades.
 TOOLTIP_BUILD_TEMPLE,Research religious technologies that strengthen your units.,Investiga tecnologías religiosas que fortalecen tus unidades.
+TOOLTIP_BUILD_SIEGE_WORKSHOP,Trains siege units: Battering Ram Mangonel and Trebuchet. Available from Castle Age.,Entrena unidades de asedio: Ariete Mangonela y Trebuchet. Disponible desde la Edad del Castillo.
 TOOLTIP_BUILD_WONDER,In Wonder mode completing this building starts a 4-minute countdown to victory. Requires Imperial Age.,En modo Maravilla completar este edificio inicia una cuenta atrás de 4 minutos para la victoria. Requiere Era Imperial.
 TOOLTIP_BUILD_BACK,Return to the main action panel.,Volver al panel de acciones principal.
 TOOLTIP_TRAIN_VILLAGER,Train a villager to gather resources and construct buildings. Essential for your economy.,Entrena un aldeano para recolectar recursos y construir edificios. Esencial para tu economía.

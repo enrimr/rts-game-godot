@@ -50,7 +50,7 @@ The game draws from three historical and mythological layers:
 |---|---|---|
 | 0 | **Dark Age** | Town Center, Houses, basic economy |
 | 1 | **Feudal Age** | Barracks, Archery Range, Blacksmith, Stable (HeavyScout), Market |
-| 2 | **Castle Age** | Castle, University, Stable (Knight), unique units, advanced tech |
+| 2 | **Castle Age** | Castle, University, Siege Workshop, Stable (Knight), unique units, advanced tech |
 | 3 | **Imperial Age** | Full tech tree, elite unique units |
 
 Advancing requires spending Food and Gold at the Town Center. Each civ may have bonuses that alter advancement cost or speed.
@@ -144,6 +144,18 @@ The Dock is the sole production building for naval units. Fishing Boats automati
 | **Transport Ship** | Feudal | 125W | — | — | — | Boards military units (Militia, Archer, Pikeman, Scout, Hero); Villagers blocked |
 | **War Galley** | Feudal | 75W + 35G | 120 | 6 | 5.5 | Ranged naval combat |
 
+## Siege Units
+
+Produced at the **Siege Workshop** (Castle Age, 200 Wood).
+
+| Unit | Age | Cost | HP | Attack | Range | Notes |
+|---|---|---|---|---|---|---|
+| **Battering Ram** | Castle | 160W | 180 | 40 (x3 vs buildings) | Melee | Auto-attacks buildings only; 0.2x damage vs units |
+| **Mangonel** | Castle | 160W + 135G | 90 | 35 | 7 | AoE 72 px splash; minimum range (35 % of max) |
+| **Trebuchet** | Imperial | 200W + 200G | 70 | 200 | 12 | AoE 48 px splash; must deploy (3 s) before firing; auto-undeploys on move orders; minimum range (40 % of max) |
+
+---
+
 ## Win Conditions
 
 - **Conquest**: destroy all enemy Town Centers and military production buildings
@@ -172,7 +184,7 @@ Players configure a skirmish before starting:
 |---|---|---|
 | M1 | Playable map with villagers gathering resources | Done |
 | M2 | Town Center, Barracks, walls, basic military | Done |
-| M3 | Full tech tree, naval gameplay, Islands map, 8 civilizations; Blacksmith / University / Temple / Market / Stable buildings; HeavyScout and Knight cavalry units; 17 technologies | In progress |
+| M3 | Full tech tree, naval gameplay, Islands map, 8 civilizations; Blacksmith / University / Temple / Market / Stable / Siege Workshop buildings; HeavyScout and Knight cavalry units; BatteringRam / Mangonel / Trebuchet siege units; 17 technologies | In progress |
 | M4 | AI opponent with naval assault on Islands | Done |
 | M5 | All 8 civilizations with unique content and hero units | Planned |
 | M6 | Custom terrain tiles (malpaís, dune, risco, laurisilva) | Planned |

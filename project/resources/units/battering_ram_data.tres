@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://battering_ram_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "battering_ram"
+display_name = "Battering Ram"
+description = "Slow melee siege unit with devastating damage against buildings."
+max_health = 180.0
+move_speed = 55.0
+line_of_sight = 4.0
+population_cost = 2
+attack = 40.0
+attack_range = 1.0
+attack_speed = 0.4
+armor_melee = 5.0
+armor_pierce = 5.0
+age_required = 2
+train_time = 60.0
+cost_food = 0
+cost_wood = 160
+cost_gold = 0

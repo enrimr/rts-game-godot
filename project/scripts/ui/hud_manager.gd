@@ -49,9 +49,10 @@ const BUILD_ACTIONS: Array = [
 	{"id": "build:gate",          "label": "ACTION_GATE",         "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G, "description": "TOOLTIP_BUILD_GATE",     "min_age": 0},
 	{"id": "build:dock",          "label": "ACTION_DOCK",         "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D, "description": "TOOLTIP_BUILD_DOCK",     "min_age": 0},
 	{"id": "build:market",        "label": "ACTION_MARKET",       "color": Color(0.65, 0.50, 0.10), "cost": {"wood": 175}, "key": KEY_R, "description": "TOOLTIP_BUILD_MARKET",   "min_age": 1},
-	{"id": "build:university",    "label": "ACTION_UNIVERSITY",   "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U, "description": "TOOLTIP_BUILD_UNIVERSITY","min_age": 2},
-	{"id": "build:temple",        "label": "ACTION_TEMPLE",       "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175}, "key": KEY_T, "description": "TOOLTIP_BUILD_TEMPLE",   "min_age": 2},
-	{"id": "build:wonder",        "label": "ACTION_WONDER",       "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000}, "key": KEY_V, "description": "TOOLTIP_BUILD_WONDER", "min_age": 3},
+	{"id": "build:university",      "label": "ACTION_UNIVERSITY",     "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U, "description": "TOOLTIP_BUILD_UNIVERSITY",    "min_age": 2},
+	{"id": "build:temple",          "label": "ACTION_TEMPLE",         "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175}, "key": KEY_T, "description": "TOOLTIP_BUILD_TEMPLE",       "min_age": 2},
+	{"id": "build:siege_workshop",  "label": "ACTION_SIEGE_WORKSHOP", "color": Color(0.42, 0.32, 0.18), "cost": {"wood": 200}, "key": KEY_I, "description": "TOOLTIP_BUILD_SIEGE_WORKSHOP","min_age": 2},
+	{"id": "build:wonder",          "label": "ACTION_WONDER",         "color": Color(0.75, 0.62, 0.12), "cost": {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000}, "key": KEY_V, "description": "TOOLTIP_BUILD_WONDER", "min_age": 3},
 	{"id": "back",                "label": "ACTION_BACK",         "color": Color(0.25, 0.25, 0.25), "cost": {},            "key": KEY_ESCAPE, "description": "TOOLTIP_BUILD_BACK"},
 ]
 
@@ -334,6 +335,8 @@ func update_selection(units: Array) -> void:
 			_populate_hero_buttons(first as HeroUnit)
 		elif first is TransportShip:
 			_populate_transport_buttons(first as TransportShip)
+		elif first is Trebuchet:
+			_populate_trebuchet_buttons(first as Trebuchet)
 		elif first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
 			_apply_tutorial_villager_gates()
@@ -637,6 +640,10 @@ func _on_building_selected(building: Node) -> void:
 		_populate_dock_actions(building as Dock)
 		var dk: Dock = building as Dock
 		_on_train_queue_changed(building, dk.get_queue(), dk.get_max_queue())
+	elif building is SiegeWorkshop:
+		_populate_siege_workshop_actions(building as SiegeWorkshop)
+		var sw: SiegeWorkshop = building as SiegeWorkshop
+		_on_train_queue_changed(building, sw.get_queue(), sw.get_max_queue())
 	elif building is Gate:
 		var gate: Gate = building as Gate
 		_populate_buttons(GATE_ACTIONS)
@@ -714,6 +721,8 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 			_populate_barracks_actions(_selected_building as Barracks)
 		elif _selected_building is Dock:
 			_populate_dock_actions(_selected_building as Dock)
+		elif _selected_building is SiegeWorkshop:
+			_populate_siege_workshop_actions(_selected_building as SiegeWorkshop)
 
 func _populate_hero_buttons(hero: HeroUnit) -> void:
 	_clear_action_buttons()
@@ -979,6 +988,43 @@ func _populate_dock_actions(dock: Dock) -> void:
 		"key": KEY_P,
 		"raw_label": true,
 	})
+	actions.append(DESTROY_ACTION)
+	_populate_buttons(actions)
+
+func _populate_trebuchet_buttons(treb: Trebuchet) -> void:
+	var deploy_label: String = tr("ACTION_TREBUCHET_UNDEPLOY") if treb.is_deployed else tr("ACTION_TREBUCHET_DEPLOY")
+	var deploy_color: Color = Color(0.20, 0.45, 0.20) if treb.is_deployed else Color(0.45, 0.35, 0.12)
+	var actions: Array = [
+		{"id": "move_to",        "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
+		{"id": "attack_move",    "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+		{"id": "stop",           "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
+		{"id": "trebuchet_deploy", "label": deploy_label, "color": deploy_color, "cost": {}, "key": KEY_D, "raw_label": true},
+		DESTROY_ACTION,
+	]
+	_populate_buttons(actions)
+
+func _populate_siege_workshop_actions(workshop: SiegeWorkshop) -> void:
+	var actions: Array = []
+	for def: Dictionary in workshop.get_available_units():
+		var uid: String = def["id"] as String
+		var data: UnitResource = load(def["data"] as String) as UnitResource
+		var cost_parts: Array[String] = []
+		if data.cost_food  > 0: cost_parts.append("%dF" % data.cost_food)
+		if data.cost_wood  > 0: cost_parts.append("%dW" % data.cost_wood)
+		if data.cost_gold  > 0: cost_parts.append("%dG" % data.cost_gold)
+		var cost_label: String = " ".join(PackedStringArray(cost_parts))
+		var costs: Dictionary = {}
+		if data.cost_food  > 0: costs["food"] = data.cost_food
+		if data.cost_wood  > 0: costs["wood"] = data.cost_wood
+		if data.cost_gold  > 0: costs["gold"] = data.cost_gold
+		var key_map: Dictionary = {"battering_ram": KEY_B, "mangonel": KEY_M, "trebuchet": KEY_T}
+		actions.append({
+			"id": "train:" + uid,
+			"label": data.display_name + "\n" + cost_label,
+			"color": def["color"] as Color,
+			"cost": costs,
+			"key": key_map.get(uid, KEY_NONE) as Key,
+		})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
 

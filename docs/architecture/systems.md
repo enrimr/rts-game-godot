@@ -172,6 +172,48 @@ Exchange rates (all operations require `BuildingState.COMPLETE`):
 
 `HeavyScout` (`scripts/units/heavy_scout.gd`) and `Knight` (`scripts/units/knight.gd`) both extend `UnitBase`. Their movement and attack FSM pattern matches `Militia`: `MOVING` / `ATTACKING` states, `order_move` / `order_attack` entry points, avoidance via `NavigationAgent2D.velocity_computed`. Stats are defined entirely in their respective `UnitResource` `.tres` files.
 
+## Siege Units
+
+Three siege unit classes extend `UnitBase` and are produced by `SiegeWorkshop`.
+
+### SiegeWorkshop
+
+`scripts/buildings/siege_workshop.gd` (`class_name SiegeWorkshop`) extends `BuildingBase`. Requires Castle Age (age 2). Queue cap 5 (`MAX_QUEUE`). Units available are gated by `AgeManager.get_age(player_id)`:
+
+| Unit ID | Class | Age requirement | Cost |
+|---|---|---|---|
+| `battering_ram` | `BatteringRam` | Castle (2) | 160W |
+| `mangonel` | `Mangonel` | Castle (2) | 160W + 135G |
+| `trebuchet` | `Trebuchet` | Imperial (3) | 200W + 200G |
+
+Training cost is read from `UnitResource` fields and resources are refunded on `order_cancel_train`. `EventBus.train_queue_changed` is emitted after every queue mutation.
+
+### BatteringRam
+
+`class_name BatteringRam`. Melee siege unit. Overrides `_on_enemy_entered_range` to skip auto-attack if the entering body does not have a `building_data` property — rams never chase units. `_get_effective_attack_vs` multiplies base attack by 3.0 against buildings (further scaled by `CivBonusManager.get_siege_attack_bonus`) and by 0.2 against units.
+
+### Mangonel and AoE splash
+
+`class_name Mangonel`. Ranged siege unit with `SPLASH_RADIUS = 72.0` px. On each attack tick, `_fire_at(target_pos)` creates a `PhysicsShapeQueryParameters2D` with a `CircleShape2D` of that radius, calls `PhysicsDirectSpaceState2D.intersect_shape(query, 32)` at the impact point, and applies damage to every resulting collider that belongs to an enemy. Armor is subtracted per-target with a floor of 1.
+
+Minimum range: `MIN_RANGE_RATIO = 0.35`. During `_handle_attacking`, if `dist < reach * MIN_RANGE_RATIO` the unit actively moves away from the target by 120 px. During `_handle_movement` the transition to `ATTACKING` only triggers when the target is inside `[reach * MIN_RANGE_RATIO, reach]`.
+
+### Trebuchet — deploy/undeploy mechanic
+
+`class_name Trebuchet`. Same AoE splash implementation as Mangonel but with `SPLASH_RADIUS = 48.0` px and `MIN_RANGE_RATIO = 0.40`.
+
+Trebuchet adds a two-state deploy system on top of the base FSM:
+
+| Bool flag | Meaning |
+|---|---|
+| `is_deployed` | Unit is unpacked and can fire |
+| `_deploying` | Transition to deployed in progress |
+| `_undeploying` | Transition to packed in progress |
+
+`DEPLOY_TIME = 3.0` seconds. While either `_deploying` or `_undeploying` is true, `_physics_process` routes to `_handle_deploy_animation(delta)` instead of the normal FSM. On completion of undeploying, if an `attack_target` is still valid the unit resumes movement toward it automatically.
+
+`order_move` and `order_attack` both call `_start_undeploy()` if `is_deployed` is true before issuing a nav target, ensuring the trebuchet never moves while packed. `_handle_movement` calls `_start_deploy()` when the target enters the valid firing band, replacing the direct `ATTACKING` state transition used by other ranged units.
+
 ## CivBonusManager — Extended API
 
 Two new query methods were added to `CivBonusManager`:

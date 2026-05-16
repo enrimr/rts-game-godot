@@ -25,6 +25,10 @@ Calima Kingdoms: Flames of the Atlantic is a 2D real-time strategy game built in
 | Stable | `scripts/buildings/stable.gd` | Trains cavalry units; queue cap 5; produces `HeavyScout` (Feudal Age) and `Knight` (Castle Age) |
 | HeavyScout | `scripts/units/heavy_scout.gd` | Feudal Age cavalry unit trained at Stable; melee attack, move/attack FSM mirrors Militia |
 | Knight | `scripts/units/knight.gd` | Castle Age heavy cavalry trained at Stable; higher stats than HeavyScout; same FSM pattern |
+| SiegeWorkshop | `scripts/buildings/siege_workshop.gd` | Trains siege units; queue cap 5; available from Castle Age; produces `BatteringRam` and `Mangonel` (Castle Age), `Trebuchet` (Imperial Age) |
+| BatteringRam | `scripts/units/battering_ram.gd` | Melee siege unit; x3 damage vs buildings, 0.2x vs units; overrides `_on_enemy_entered_range` to only auto-attack buildings |
+| Mangonel | `scripts/units/mangonel.gd` | AoE ranged siege; 72 px splash radius; minimum range = 35 % of max range; backed off when target is too close |
+| Trebuchet | `scripts/units/trebuchet.gd` | Long-range AoE siege; 48 px splash radius; minimum range = 40 % of max range; requires deploy/undeploy (3 s each); auto-undeploys on any move or attack order |
 | ShipBase | `scripts/units/ship_base.gd` | Base class for all naval units; marks ocean as passable via `civ_id` |
 | Fishing Boat | `scripts/units/fishing_boat.gd` | Gathers FOOD_FISH from ocean nodes, returns to Dock |
 | Transport Ship | `scripts/units/transport_ship.gd` | Carries up to 8 military units across water; unloads them at the nearest passable shore position |

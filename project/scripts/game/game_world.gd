@@ -33,8 +33,9 @@ const BUILDING_SCENES: Dictionary = {
 	"fish_trap":     "res://scenes/buildings/fish_trap.tscn",
 	"university":    "res://scenes/buildings/university.tscn",
 	"market":        "res://scenes/buildings/market.tscn",
-	"temple":        "res://scenes/buildings/temple.tscn",
-	"wonder":        "res://scenes/buildings/wonder.tscn",
+	"temple":          "res://scenes/buildings/temple.tscn",
+	"siege_workshop":  "res://scenes/buildings/siege_workshop.tscn",
+	"wonder":          "res://scenes/buildings/wonder.tscn",
 }
 
 const BUILDING_COSTS: Dictionary = {
@@ -48,8 +49,9 @@ const BUILDING_COSTS: Dictionary = {
 	"wall_segment":  {"stone": 5},
 	"gate":          {"wood": 30},
 	"dock":          {"wood": 150},
-	"fish_trap":     {"wood": 75},
-	"wonder":        {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000},
+	"fish_trap":       {"wood": 75},
+	"siege_workshop":  {"wood": 200},
+	"wonder":          {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000},
 }
 
 # Buildings that must be placed adjacent to water (at least one edge in ocean terrain).
@@ -1429,6 +1431,19 @@ func _on_action_requested(action_id: String) -> void:
 		"train:heavy_scout", "train:knight":
 			if is_instance_valid(_selected_building) and _selected_building is Stable:
 				(_selected_building as Stable).order_train(action_id.trim_prefix("train:"))
+		"train:battering_ram", "train:mangonel", "train:trebuchet":
+			if is_instance_valid(_selected_building) and _selected_building is SiegeWorkshop:
+				(_selected_building as SiegeWorkshop).order_train(action_id.trim_prefix("train:"))
+		"trebuchet_deploy":
+			for unit: Node in _selected_units:
+				if unit is Trebuchet:
+					var treb: Trebuchet = unit as Trebuchet
+					if treb.is_deployed:
+						treb.order_undeploy()
+					else:
+						treb.order_deploy()
+					hud.call_deferred("_populate_trebuchet_buttons", treb)
+					break
 		"train:fishing_boat", "train:transport_ship", "train:war_galley":
 			if is_instance_valid(_selected_building) and _selected_building is Dock:
 				(_selected_building as Dock).order_train(action_id.trim_prefix("train:"))

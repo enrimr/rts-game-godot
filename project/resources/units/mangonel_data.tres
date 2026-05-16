@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://mangonel_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "mangonel"
+display_name = "Mangonel"
+description = "Catapult that deals area-of-effect damage to clustered enemies."
+max_health = 90.0
+move_speed = 60.0
+line_of_sight = 8.0
+population_cost = 2
+attack = 35.0
+attack_range = 7.0
+attack_speed = 0.25
+armor_melee = 0.0
+armor_pierce = 6.0
+age_required = 2
+train_time = 60.0
+cost_food = 0
+cost_wood = 160
+cost_gold = 135
