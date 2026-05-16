@@ -24,6 +24,17 @@ func _ready() -> void:
 	remaining_amount = initial_amount
 	add_to_group("resource_nodes")
 	ResourceManager.register_node(self)
+	_setup_nav_obstacle()
+
+func _setup_nav_obstacle() -> void:
+	var obs: NavigationObstacle2D = NavigationObstacle2D.new()
+	obs.vertices = PackedVector2Array([
+		Vector2(-20.0, -20.0), Vector2(20.0, -20.0),
+		Vector2(20.0,  20.0), Vector2(-20.0,  20.0),
+	])
+	obs.avoidance_enabled = true
+	obs.affect_navigation_mesh = true
+	add_child(obs)
 
 func get_resource_name() -> String:
 	return RESOURCE_NAMES.get(resource_type, "food") as String

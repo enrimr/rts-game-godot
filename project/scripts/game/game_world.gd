@@ -73,6 +73,7 @@ const UNIT_CLICK_RADIUS: float = 32.0
 @onready var camera: Camera2D = $Camera2D
 @onready var drop_off: Node2D = $DropOffNode
 @onready var hud: CanvasLayer = $HUD
+@onready var _nav_region: NavigationRegion2D = $NavigationRegion2D
 
 # All AI town centers indexed by player_id
 var _ai_town_centers: Dictionary = {}   # int → Node2D
@@ -110,6 +111,9 @@ var _pending_action: String = ""
 var _wonder_timer: float = 0.0
 var _wonder_owner: int = -1
 var _wonder_node: Node = null
+var _nav_rebake_timer: float = 0.0
+var _nav_rebake_pending: bool = false
+const NAV_REBAKE_DELAY: float = 1.0
 
 # Drag-select rectangle overlay
 var _drag_overlay: Node2D = null
@@ -215,6 +219,10 @@ func _ready() -> void:
 	_drag_overlay = _DragOverlay.new()
 	_drag_overlay.z_index = 20
 	add_child(_drag_overlay)
+
+	EventBus.building_placed.connect(func(_b: Node, _pid: int) -> void: _request_nav_rebake())
+	EventBus.building_destroyed.connect(func(_b: Node, _pid: int) -> void: _request_nav_rebake())
+	_request_nav_rebake()
 
 	var player_list: Array[Dictionary] = [{"id": 0}]
 	for rival_id: int in MatchConfig.get_rival_player_ids():
@@ -454,6 +462,11 @@ func _on_wonder_destroyed(pid: int) -> void:
 		GameManager.declare_winner(0)
 
 func _process(delta: float) -> void:
+	if _nav_rebake_pending:
+		_nav_rebake_timer -= delta
+		if _nav_rebake_timer <= 0.0:
+			_nav_rebake_pending = false
+			_do_nav_rebake()
 	if _wonder_timer > 0.0:
 		_wonder_timer -= delta
 		var hud_mgr: Node = hud.get_node_or_null("HudManager")
@@ -1385,6 +1398,14 @@ func _cancel_placement() -> void:
 	if is_instance_valid(_ghost):
 		_ghost.queue_free()
 	_ghost = null
+
+func _request_nav_rebake() -> void:
+	_nav_rebake_pending = true
+	_nav_rebake_timer = NAV_REBAKE_DELAY
+
+func _do_nav_rebake() -> void:
+	if is_instance_valid(_nav_region):
+		_nav_region.bake_navigation_polygon(true)
 
 # --- HUD action buttons ---
 

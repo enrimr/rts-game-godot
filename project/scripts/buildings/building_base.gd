@@ -108,6 +108,7 @@ func _ready() -> void:
 		health = max_health
 	_refresh_visuals()
 	call_deferred("_apply_player_color_stripe")
+	_setup_nav_obstacle()
 
 func register_builder() -> void:
 	_active_builders += 1
@@ -186,6 +187,28 @@ func _process(delta: float) -> void:
 	modulate = Color(r, g, b, 1.0)
 	if _under_attack_timer <= 0.0:
 		modulate = Color(1.0, 1.0, 1.0, 1.0)
+
+func _setup_nav_obstacle() -> void:
+	var obs: NavigationObstacle2D = get_node_or_null("NavigationObstacle2D") as NavigationObstacle2D
+	if obs == null:
+		obs = NavigationObstacle2D.new()
+		obs.name = "NavigationObstacle2D"
+		add_child(obs)
+	var half: Vector2 = _nav_half_extents()
+	obs.vertices = PackedVector2Array([
+		Vector2(-half.x, -half.y),
+		Vector2( half.x, -half.y),
+		Vector2( half.x,  half.y),
+		Vector2(-half.x,  half.y),
+	])
+	obs.avoidance_enabled = true
+	obs.affect_navigation_mesh = true
+
+func _nav_half_extents() -> Vector2:
+	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if cs != null and cs.shape is RectangleShape2D:
+		return (cs.shape as RectangleShape2D).size * 0.5 + Vector2(6.0, 6.0)
+	return Vector2(44.0, 44.0)
 
 func _destroy() -> void:
 	state = BuildingState.DESTROYED
