@@ -106,9 +106,6 @@ var _ghost: Node2D = null
 var _ghost_rotation: float = 0.0
 var _ghost_shape_cached: RectangleShape2D = null
 var _ghost_params_cached: PhysicsShapeQueryParameters2D = null
-var _placement_valid: bool = true
-var _placement_check_timer: float = 0.0
-const PLACEMENT_CHECK_INTERVAL: float = 0.06
 
 # Pending action waiting for a map click ("move_to" or "attack_move")
 var _pending_action: String = ""
@@ -485,11 +482,10 @@ func _process(delta: float) -> void:
 		var mouse_pos: Vector2 = get_global_mouse_position()
 		_ghost.global_position = mouse_pos
 		_ghost.rotation = _ghost_rotation
-		_placement_check_timer -= delta
-		if _placement_check_timer <= 0.0:
-			_placement_check_timer = PLACEMENT_CHECK_INTERVAL
-			_placement_valid = not _placement_overlaps(mouse_pos)
-		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if _placement_valid else Color(1.0, 0.2, 0.2, 0.5)
+		var terrain_ok: bool = not TerrainManager.is_ocean(mouse_pos)
+		if _placing_id in OCEAN_BUILDINGS:
+			terrain_ok = TerrainManager.is_ocean(mouse_pos)
+		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if terrain_ok else Color(1.0, 0.2, 0.2, 0.5)
 	if is_instance_valid(_drag_overlay):
 		var overlay: _DragOverlay = _drag_overlay as _DragOverlay
 		overlay.active = _dragging
