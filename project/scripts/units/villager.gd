@@ -232,14 +232,19 @@ func _handle_gathering(delta: float) -> void:
 				_destination_state = UnitState.RETURNING
 				_start_move_to((drop_off as Node2D).global_position)
 			else:
-				ResourceManager.add_resource(player_id, carried_resource, carried_amount)
-				carried_amount = 0.0
-				_update_gather_indicator()
+				pass  # No drop-off exists — hold resources until one becomes available
 
 func _handle_returning(delta: float) -> void:
 	if not is_instance_valid(drop_off_target):
-		current_state = UnitState.IDLE
-		_play_animation(_get_animation_name())
+		var fallback: Node = _find_nearest_drop_off()
+		if fallback != null:
+			drop_off_target = fallback
+			_destination_state = UnitState.RETURNING
+			_start_move_to((fallback as Node2D).global_position)
+		else:
+			# No drop-off anywhere — stay idle retaining carried resources
+			current_state = UnitState.IDLE
+			_play_animation(_get_animation_name())
 		return
 
 	var dist: float = global_position.distance_to((drop_off_target as Node2D).global_position)
