@@ -561,6 +561,7 @@ func _on_action_button_pressed(action_id: String) -> void:
 		AudioManager.play("train_queue")
 	elif action_id == "advance_age":
 		AudioManager.play("age_advance")
+		_disable_action_button("advance_age")
 	elif action_id.begins_with("research:"):
 		AudioManager.play("ui_click")
 	elif action_id.begins_with("market:"):
@@ -580,6 +581,23 @@ func cancel_pending() -> void:
 	_pending_action = ""
 	_highlight_pending_button("")
 	pending_action_cancelled.emit()
+
+func _disable_action_button(target_id: String) -> void:
+	for child: Node in _action_grid.get_children():
+		if not (child is ActionButton):
+			continue
+		var btn: ActionButton = child as ActionButton
+		if btn.action_id == target_id:
+			btn.disabled = true
+			var grey: StyleBoxFlat = StyleBoxFlat.new()
+			grey.bg_color = Color(0.25, 0.25, 0.25)
+			grey.corner_radius_top_left = 4
+			grey.corner_radius_top_right = 4
+			grey.corner_radius_bottom_left = 4
+			grey.corner_radius_bottom_right = 4
+			btn.add_theme_stylebox_override("normal", grey)
+			btn.add_theme_stylebox_override("hover", grey)
+			break
 
 func _highlight_pending_button(active_id: String) -> void:
 	for child: Node in _action_grid.get_children():
