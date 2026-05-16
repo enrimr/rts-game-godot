@@ -99,7 +99,6 @@ func _process(delta: float) -> void:
 				_phase = "peak"
 				_phase_timer = 0.0
 				_phase_duration = _peak_duration
-				weather_changed.emit(get_weather_id(), intensity)
 		"peak":
 			if _phase_timer >= _phase_duration:
 				_phase = "ramp_out"
@@ -155,6 +154,7 @@ func _pick_next_weather() -> void:
 	_phase = "ramp_in"
 	_phase_timer = 0.0
 	intensity = 0.0
+	weather_changed.emit(get_weather_id(), 0.0)
 
 ## Seconds remaining in the current weather event (ramp_in + peak + ramp_out combined).
 ## Returns 0.0 when weather is CLEAR.
