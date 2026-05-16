@@ -175,6 +175,7 @@ func _ready() -> void:
 	EventBus.garrison_changed.connect(_on_garrison_changed)
 	EventBus.unit_spawned.connect(_on_stat_unit_spawned)
 	EventBus.building_construction_complete.connect(_on_stat_building_complete)
+	EventBus.building_construction_complete.connect(_on_building_construction_complete)
 	EventBus.unit_died.connect(_on_stat_unit_died)
 	ResourceManager.resources_updated.connect(_on_stat_resources_updated)
 	_pause_overlay.visible = false
@@ -683,6 +684,11 @@ func _on_building_selected(building: Node) -> void:
 
 	var bpid: Variant = building.get("player_id")
 	if bpid != null and (bpid as int) != 0:
+		return
+
+	var bstate: Variant = building.get("state")
+	if bstate != null and (bstate as int) != BuildingBase.BuildingState.COMPLETE:
+		_populate_buttons([DESTROY_ACTION])
 		return
 
 	if building.has_method("is_respawning_hero"):
@@ -1356,6 +1362,10 @@ func _on_stat_building_complete(building: Node) -> void:
 		if _rival_stats.has(pid as int):
 			(_rival_stats[pid as int] as Dictionary)["buildings_built"] = \
 				((_rival_stats[pid as int] as Dictionary)["buildings_built"] as int) + 1
+
+func _on_building_construction_complete(building: Node) -> void:
+	if is_instance_valid(_selected_building) and _selected_building == building:
+		_on_building_selected(building)
 
 func _on_stat_unit_died(unit: Node, player_id: int) -> void:
 	var udata: Variant = unit.get("unit_data")
