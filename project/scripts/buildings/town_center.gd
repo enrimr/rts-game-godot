@@ -74,6 +74,13 @@ func _ready() -> void:
 func _add_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, 80.0, 40.0)
 
+func get_nav_obstacle_polygon() -> PackedVector2Array:
+	const H: float = 60.0
+	return PackedVector2Array([
+		global_position + Vector2(-H, -H), global_position + Vector2(H, -H),
+		global_position + Vector2(H,  H),  global_position + Vector2(-H,  H),
+	])
+
 func get_hero_respawn_fraction() -> float:
 	if _pending_hero_data == null or HERO_RESPAWN_TIME <= 0.0:
 		return 0.0

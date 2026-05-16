@@ -202,13 +202,24 @@ func _setup_nav_obstacle() -> void:
 		Vector2(-half.x,  half.y),
 	])
 	obs.avoidance_enabled = true
-	obs.affect_navigation_mesh = true
+	obs.affect_navigation_mesh = false
 
 func _nav_half_extents() -> Vector2:
 	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if cs != null and cs.shape is RectangleShape2D:
-		return (cs.shape as RectangleShape2D).size * 0.5 + Vector2(6.0, 6.0)
-	return Vector2(44.0, 44.0)
+		# 20 px extra so RVO steering starts before the unit touches the building
+		return (cs.shape as RectangleShape2D).size * 0.5 + Vector2(20.0, 20.0)
+	return Vector2(50.0, 50.0)
+
+# Returns the world-space obstacle polygon (4 corners) used by the nav bake.
+func get_nav_obstacle_polygon() -> PackedVector2Array:
+	var half: Vector2 = _nav_half_extents()
+	return PackedVector2Array([
+		global_position + Vector2(-half.x, -half.y),
+		global_position + Vector2( half.x, -half.y),
+		global_position + Vector2( half.x,  half.y),
+		global_position + Vector2(-half.x,  half.y),
+	])
 
 func _destroy() -> void:
 	state = BuildingState.DESTROYED

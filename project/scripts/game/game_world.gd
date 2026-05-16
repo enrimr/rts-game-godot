@@ -1404,8 +1404,35 @@ func _request_nav_rebake() -> void:
 	_nav_rebake_timer = NAV_REBAKE_DELAY
 
 func _do_nav_rebake() -> void:
+	if not is_instance_valid(_nav_region):
+		return
+	var nav_poly: NavigationPolygon = _nav_region.navigation_polygon
+	if nav_poly == null:
+		return
+	var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
+	source.add_traversable_outline(PackedVector2Array([
+		Vector2(-3000.0, -3000.0), Vector2(3000.0, -3000.0),
+		Vector2(3000.0,  3000.0), Vector2(-3000.0,  3000.0),
+	]))
+	for b: Node in buildings_layer.get_children():
+		if not is_instance_valid(b) or not b.has_method("get_nav_obstacle_polygon"):
+			continue
+		var sv: Variant = b.get("state")
+		if sv != null and (sv as int) == BuildingBase.BuildingState.DESTROYED:
+			continue
+		source.add_obstruction_outline(b.call("get_nav_obstacle_polygon") as PackedVector2Array)
+	if is_instance_valid(drop_off) and drop_off.has_method("get_nav_obstacle_polygon"):
+		source.add_obstruction_outline(drop_off.call("get_nav_obstacle_polygon") as PackedVector2Array)
+	for rn: Node in get_tree().get_nodes_in_group("resource_nodes"):
+		if not is_instance_valid(rn) or not rn.has_method("get_nav_obstacle_polygon"):
+			continue
+		source.add_obstruction_outline(rn.call("get_nav_obstacle_polygon") as PackedVector2Array)
+	NavigationServer2D.bake_from_source_geometry_data_async(
+		nav_poly, source, Callable(self, "_on_nav_bake_done"))
+
+func _on_nav_bake_done() -> void:
 	if is_instance_valid(_nav_region):
-		_nav_region.bake_navigation_polygon(true)
+		_nav_region.navigation_polygon = _nav_region.navigation_polygon
 
 # --- HUD action buttons ---
 
