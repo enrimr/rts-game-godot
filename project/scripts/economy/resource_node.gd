@@ -28,16 +28,18 @@ func _ready() -> void:
 
 func _setup_nav_obstacle() -> void:
 	var obs: NavigationObstacle2D = NavigationObstacle2D.new()
+	# RVO radius: wide enough for units to start steering around resource nodes early
 	obs.vertices = PackedVector2Array([
-		Vector2(-22.0, -22.0), Vector2(22.0, -22.0),
-		Vector2(22.0,  22.0), Vector2(-22.0,  22.0),
+		Vector2(-20.0, -20.0), Vector2(20.0, -20.0),
+		Vector2(20.0,  20.0), Vector2(-20.0,  20.0),
 	])
 	obs.avoidance_enabled = true
 	obs.affect_navigation_mesh = false
 	add_child(obs)
 
 func get_nav_obstacle_polygon() -> PackedVector2Array:
-	const H: float = 22.0
+	# Bake footprint: tight so gatherers can still reach the node edge
+	const H: float = 14.0
 	return PackedVector2Array([
 		global_position + Vector2(-H, -H),
 		global_position + Vector2( H, -H),
