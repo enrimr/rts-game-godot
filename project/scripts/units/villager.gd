@@ -65,10 +65,17 @@ func _physics_process(delta: float) -> void:
 
 # --- Public API ---
 
-func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
-	_unregister_from_build_target()
+func _cancel_transport() -> void:
+	if EventBus.garrison_changed.is_connected(_on_transport_garrison_changed):
+		EventBus.garrison_changed.disconnect(_on_transport_garrison_changed)
 	_boarding_ship = null
 	_pending_transport_target = null
+	_pending_transport_resource = ""
+	_pending_transport_drop_off = null
+
+func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
+	_unregister_from_build_target()
+	_cancel_transport()
 	gather_target = target
 	carried_resource = resource_type
 	drop_off_target = drop_off
@@ -92,6 +99,7 @@ func order_drop_off(target: Node) -> void:
 	_start_move_to((target as Node2D).global_position)
 
 func order_build(target: Node) -> void:
+	_cancel_transport()
 	_unregister_from_build_target()
 	if is_instance_valid(build_target) and build_target.get("construction_complete") != null:
 		if build_target.construction_complete.is_connected(_on_construction_complete):
@@ -110,6 +118,7 @@ func order_build(target: Node) -> void:
 
 func order_move(destination: Vector2) -> void:
 	_attack_move_active = false
+	_cancel_transport()
 	_unregister_from_build_target()
 	gather_target = null
 	build_target = null
@@ -119,6 +128,7 @@ func order_move(destination: Vector2) -> void:
 	_start_move_to(destination)
 
 func order_attack(target: Node) -> void:
+	_cancel_transport()
 	_unregister_from_build_target()
 	attack_target = target
 	gather_target = null
@@ -401,20 +411,15 @@ func _handle_boarding_approach(delta: float) -> void:
 func _on_transport_garrison_changed(ship: Node, _current_size: int, _capacity: int) -> void:
 	if ship != _boarding_ship:
 		return
-	# Detect unload: we are visible again and no longer in the garrison
 	if not visible:
 		return
 	var garrison: Array = (_boarding_ship as TransportShip).get_garrison()
 	if garrison.has(self):
 		return
-	EventBus.garrison_changed.disconnect(_on_transport_garrison_changed)
 	var target: Node = _pending_transport_target
 	var res:    String = _pending_transport_resource
 	var drop:   Node = _pending_transport_drop_off
-	_boarding_ship              = null
-	_pending_transport_target   = null
-	_pending_transport_resource = ""
-	_pending_transport_drop_off = null
+	_cancel_transport()
 	if is_instance_valid(target) and not res.is_empty():
 		order_gather(target, res, drop)
 
@@ -546,6 +551,7 @@ func _play_animation(anim_name: String) -> void:
 		animated_sprite.play(anim_name)
 
 func die() -> void:
+	_cancel_transport()
 	_unregister_from_build_target()
 	current_state = UnitState.DEAD
 	_play_animation("die")
