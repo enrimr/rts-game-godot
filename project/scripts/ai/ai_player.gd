@@ -995,7 +995,7 @@ func _record_build_fail(building_id: String) -> void:
 func _build_radius_for(building_id: String, base_max: float) -> float:
 	var fails: int = _build_fail_counts.get(building_id, 0) as int
 	if fails >= BUILD_FAIL_WIDEN_THRESHOLD:
-		return base_max * (1.0 + 0.3 * float(fails - BUILD_FAIL_WIDEN_THRESHOLD + 1))
+		return base_max * (1.0 + 0.3 * float(maxi(fails - BUILD_FAIL_WIDEN_THRESHOLD + 1, 1)))
 	return base_max
 
 func _get_build_zone(building_id: String) -> Dictionary:

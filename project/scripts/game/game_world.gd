@@ -1312,7 +1312,7 @@ func _placement_overlaps(world_pos: Vector2) -> bool:
 	if _ghost_params_cached == null or _ghost_shape_cached == null:
 		return false
 	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
-	_ghost_params_cached.transform = Transform2D(0.0, world_pos)
+	_ghost_params_cached.transform = Transform2D(_ghost_rotation, world_pos)
 	var results: Array[Dictionary] = space.intersect_shape(_ghost_params_cached, 1)
 	if results.size() > 0:
 		return true
