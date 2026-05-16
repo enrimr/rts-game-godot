@@ -998,6 +998,23 @@ func _build_radius_for(building_id: String, base_max: float) -> float:
 		return base_max * (1.0 + 0.3 * float(fails - BUILD_FAIL_WIDEN_THRESHOLD + 1))
 	return base_max
 
+func _get_build_zone(building_id: String) -> Dictionary:
+	match building_id:
+		"house":
+			return {"min_r": 70.0, "max_r": 160.0, "toward_enemy": false}
+		"farm":
+			return {"min_r": 55.0, "max_r": 130.0, "toward_enemy": false}
+		"barracks", "stable", "siege_workshop":
+			return {"min_r": 150.0, "max_r": 300.0, "toward_enemy": true}
+		"blacksmith":
+			return {"min_r": 120.0, "max_r": 220.0, "toward_enemy": true}
+		"university", "temple", "market":
+			return {"min_r": 100.0, "max_r": 200.0, "toward_enemy": false}
+		"wonder":
+			return {"min_r": 80.0, "max_r": 160.0, "toward_enemy": false}
+		_:
+			return {"min_r": 80.0, "max_r": 220.0, "toward_enemy": false}
+
 func _build(building_id: String) -> void:
 	if _build_cooldowns.has(building_id):
 		return
@@ -1007,8 +1024,15 @@ func _build(building_id: String) -> void:
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
 		return
-	var max_r: float = _build_radius_for(building_id, 220.0)
-	var pos: Vector2 = _find_build_pos(town_center.global_position, 80.0, max_r)
+	var zone: Dictionary = _get_build_zone(building_id)
+	var min_r: float = zone["min_r"] as float
+	var max_r: float = _build_radius_for(building_id, zone["max_r"] as float)
+	var bias: Vector2 = Vector2.ZERO
+	if zone["toward_enemy"] as bool:
+		var etc: Node2D = _get_primary_enemy_tc()
+		if etc != null:
+			bias = town_center.global_position.direction_to(etc.global_position)
+	var pos: Vector2 = _find_build_pos(town_center.global_position, min_r, max_r, bias)
 	if pos == Vector2.INF:
 		_record_build_fail(building_id)
 		return
@@ -1055,14 +1079,22 @@ func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType)
 	# Re-assign nearby idle villagers to this drop-off
 	_redirect_villagers_to_drop_off(b, rtype)
 
-func _find_build_pos(origin: Vector2, min_r: float, max_r: float) -> Vector2:
-	for _i: int in range(40):
-		var angle: float = randf() * TAU
+# bias: unit vector that pulls candidate positions toward a direction (can be ZERO).
+# When bias is non-zero, 70 % of candidates are drawn from a ±60° cone around it.
+func _find_build_pos(origin: Vector2, min_r: float, max_r: float, bias: Vector2 = Vector2.ZERO) -> Vector2:
+	var bias_angle: float = bias.angle() if bias != Vector2.ZERO else 0.0
+	var use_bias: bool = bias != Vector2.ZERO
+	for _i: int in range(48):
+		var angle: float
+		if use_bias and randf() < 0.70:
+			angle = bias_angle + randf_range(-PI / 3.0, PI / 3.0)
+		else:
+			angle = randf() * TAU
 		var dist: float  = randf_range(min_r, max_r)
 		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * dist
 		if _build_pos_clear(pos):
 			return pos
-	# Fallback: try a wider ring before giving up
+	# Fallback: wider ring, no bias constraint
 	for _i: int in range(20):
 		var angle: float = randf() * TAU
 		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * max_r * 1.5
@@ -1073,7 +1105,7 @@ func _find_build_pos(origin: Vector2, min_r: float, max_r: float) -> Vector2:
 ## Returns true when `pos` is safe to build at: not ocean, not impassable
 ## terrain, no resource nodes within BUILDING_CLEAR px, and no existing
 ## building footprint overlapping.
-const BUILDING_CLEAR: float = 52.0
+const BUILDING_CLEAR: float = 72.0
 func _build_pos_clear(pos: Vector2) -> bool:
 	if TerrainManager.is_ocean(pos):
 		return false
