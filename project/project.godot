@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Calima Kingdoms: Flames of the Atlantic"
+config/name="Calima: Flames of the Atlantic"
 config/description="A real-time strategy game inspired by Age of Empires II."
 run/main_scene="res://scenes/game/main_menu.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
@@ -35,6 +35,7 @@ TerrainManager="*res://scripts/core/terrain_manager.gd"
 CivBonusManager="*res://scripts/core/civ_bonus_manager.gd"
 TechManager="*res://scripts/core/tech_manager.gd"
 SaveManager="*res://scripts/core/save_manager.gd"
+WeatherManager="*res://scripts/core/weather_manager.gd"
 
 [display]
 

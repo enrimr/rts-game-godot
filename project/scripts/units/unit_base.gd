@@ -216,7 +216,8 @@ func _nav_velocity() -> Vector2:
 		return Vector2.ZERO
 	var spd: float = unit_data.move_speed \
 		* CivBonusManager.get_unit_speed_multiplier(player_id, unit_data.id) \
-		* CivBonusManager.get_unit_move_speed_multiplier(player_id)
+		* CivBonusManager.get_unit_move_speed_multiplier(player_id) \
+		* WeatherManager.get_move_speed_multiplier(global_position)
 	return dir.normalized() * spd
 
 # Tracks movement over time. Returns true once per stuck period so the

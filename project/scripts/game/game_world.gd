@@ -224,6 +224,12 @@ func _ready() -> void:
 	_drag_overlay.z_index = 20
 	add_child(_drag_overlay)
 
+	var weather_overlay: Node2D = load("res://scripts/ui/weather_overlay.gd").new() as Node2D
+	weather_overlay.name = "WeatherOverlay"
+	add_child(weather_overlay)
+	WeatherManager.weather_changed.connect(_on_weather_changed)
+	WeatherManager.weather_cleared.connect(_on_weather_cleared)
+
 	EventBus.building_placed.connect(func(_b: Node, _pid: int) -> void: _request_nav_rebake())
 	EventBus.building_destroyed.connect(func(_b: Node, _pid: int) -> void: _request_nav_rebake())
 	_request_nav_rebake()
@@ -1630,6 +1636,16 @@ func _find_nearest_resource_of_type(rtype: ResourceNode.ResourceType, from: Vect
 func _on_unit_spawned(unit: Node, _player: int) -> void:
 	if unit.get_parent() != units_layer:
 		unit.reparent(units_layer)
+
+func _on_weather_changed(weather_id: String, _intensity: float) -> void:
+	var hud_mgr: Node = hud.get_node_or_null("HudManager")
+	if is_instance_valid(hud_mgr) and hud_mgr.has_method("show_weather"):
+		hud_mgr.call("show_weather", weather_id)
+
+func _on_weather_cleared() -> void:
+	var hud_mgr: Node = hud.get_node_or_null("HudManager")
+	if is_instance_valid(hud_mgr) and hud_mgr.has_method("hide_weather"):
+		hud_mgr.call("hide_weather")
 
 func _on_game_over(_winner: int) -> void:
 	AudioManager.stop_music()

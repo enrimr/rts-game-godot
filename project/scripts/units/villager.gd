@@ -223,7 +223,8 @@ func _handle_gathering(delta: float) -> void:
 	if _gather_timer >= gather_interval:
 		_gather_timer = 0.0
 		var available: float = gather_target.gather(gather_rate)
-		var rate_mult: float = CivBonusManager.get_gather_rate_multiplier(player_id, carried_resource)
+		var rate_mult: float = CivBonusManager.get_gather_rate_multiplier(player_id, carried_resource) \
+			* WeatherManager.get_gather_rate_multiplier(carried_resource, global_position)
 		carried_amount = minf(carried_amount + available * rate_mult, carry_capacity)
 
 		if not (gather_target is ResourceNode):

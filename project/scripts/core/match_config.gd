@@ -21,6 +21,10 @@ var launch_tutorial:   bool   = false
 var rival_count:    int            = 1
 var rival_civ_ids:  Array[String]  = ["castellanos"]
 
+# Weather options
+var weather_enabled:   bool = true
+var weather_frequency: int  = 1   # 0=Off, 1=Normal, 2=Frequent, 3=Extreme
+
 # Compatibility accessor — first rival's civ id
 var rival_civ_id: String:
 	get:

@@ -17,4 +17,6 @@ func _nav_velocity() -> Vector2:
 	var dir: Vector2 = next - global_position
 	if dir.length_squared() < 1.0:
 		return Vector2.ZERO
-	return dir.normalized() * unit_data.move_speed
+	var spd: float = unit_data.move_speed \
+		* WeatherManager.get_naval_speed_multiplier(dir.normalized())
+	return dir.normalized() * spd

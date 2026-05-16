@@ -226,3 +226,29 @@ func _point_in_any_land(p: Vector2) -> bool:
 		if Geometry2D.is_point_in_polygon(p, poly as PackedVector2Array):
 			return true
 	return false
+
+## Returns the approximate distance in pixels from world_pos to the nearest
+## ocean/land boundary. On non-island maps (no ocean) always returns INF.
+func distance_to_coast(world_pos: Vector2) -> float:
+	# Fast path: on non-island maps there is no coast
+	if not _is_island_map and not is_ocean(world_pos):
+		# Check whether there are any ocean zones at all
+		var has_ocean: bool = false
+		for z: Dictionary in _zones:
+			if (z["type"] as int) == TerrainType.OCEAN:
+				has_ocean = true
+				break
+		if not has_ocean:
+			return INF
+	var on_ocean: bool = is_ocean(world_pos)
+	# Search outward until we cross the land/ocean boundary
+	var step: float = 24.0
+	for ring: int in range(1, 32):
+		var r: float = step * ring
+		var checks: int = maxi(8, ring * 6)
+		for i: int in range(checks):
+			var a: float = TAU * i / float(checks)
+			var candidate: Vector2 = world_pos + Vector2(cos(a), sin(a)) * r
+			if is_ocean(candidate) != on_ocean:
+				return r
+	return INF

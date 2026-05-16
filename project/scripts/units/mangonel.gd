@@ -97,6 +97,11 @@ func _handle_attacking(delta: float) -> void:
 		_fire_at((attack_target as Node2D).global_position)
 
 func _fire_at(target_pos: Vector2) -> void:
+	# Drift impact point with wind/storm conditions
+	var dist: float = global_position.distance_to(target_pos)
+	var flight_time: float = clampf(dist / 500.0, 0.3, 0.8)
+	var drifted_target: Vector2 = target_pos + WeatherManager.get_projectile_drift() * flight_time
+
 	var dmg: float = _get_effective_attack() * CivBonusManager.get_siege_attack_bonus(player_id)
 	# Splash: hit all units and buildings in radius around impact
 	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
@@ -104,7 +109,7 @@ func _fire_at(target_pos: Vector2) -> void:
 	var circle: CircleShape2D = CircleShape2D.new()
 	circle.radius = SPLASH_RADIUS
 	query.shape = circle
-	query.transform = Transform2D(0.0, target_pos)
+	query.transform = Transform2D(0.0, drifted_target)
 	query.collision_mask = 1
 	var results: Array[Dictionary] = space.intersect_shape(query, 32)
 	for result: Dictionary in results:

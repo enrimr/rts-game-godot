@@ -224,16 +224,19 @@ func _spawn_projectile(target_pos: Vector2) -> void:
 	var dist: float = boulder.global_position.distance_to(target_pos)
 	var flight_time: float = clampf(dist / 600.0, 0.4, 0.9)
 
+	# Apply wind/storm drift to final impact position
+	var drifted_target: Vector2 = target_pos + WeatherManager.get_projectile_drift() * flight_time
+
 	# Arc: rise to peak then fall to target
-	var peak: Vector2 = (boulder.global_position + target_pos) * 0.5 + Vector2(0.0, -80.0)
+	var peak: Vector2 = (boulder.global_position + drifted_target) * 0.5 + Vector2(0.0, -80.0)
 
 	var traj: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 	traj.tween_property(boulder, "global_position", peak, flight_time * 0.5)
 	traj.set_ease(Tween.EASE_IN)
-	traj.tween_property(boulder, "global_position", target_pos, flight_time * 0.5)
+	traj.tween_property(boulder, "global_position", drifted_target, flight_time * 0.5)
 	traj.tween_callback(boulder.queue_free)
 
-	var captured_target: Vector2 = target_pos
+	var captured_target: Vector2 = drifted_target
 	var captured_self: Trebuchet = self
 	traj.tween_callback(func() -> void:
 		if is_instance_valid(captured_self):

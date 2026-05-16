@@ -139,7 +139,8 @@ func _reveal_from_units() -> void:
 			var udata: Variant = unit.get("unit_data")
 			if udata is UnitResource:
 				los = (udata as UnitResource).line_of_sight
-		_mark_circle((unit as Node2D).global_position, los * 64.0)
+		var weather_mult: float = WeatherManager.get_vision_multiplier((unit as Node2D).global_position)
+		_mark_circle((unit as Node2D).global_position, los * 64.0 * weather_mult)
 
 func _reveal_from_buildings() -> void:
 	# Buildings layer
@@ -157,13 +158,15 @@ func _reveal_from_buildings() -> void:
 			var bdata: Variant = building.get("building_data")
 			if bdata is BuildingResource:
 				los = (bdata as BuildingResource).line_of_sight
-			_mark_circle((building as Node2D).global_position, los * 64.0)
+			var bweather_mult: float = WeatherManager.get_vision_multiplier((building as Node2D).global_position)
+			_mark_circle((building as Node2D).global_position, los * 64.0 * bweather_mult)
 
 	# Town Center (drop_off_node in world root)
 	if is_instance_valid(_drop_off_node):
 		var pid: Variant = _drop_off_node.get("player_id")
 		if pid != null and (pid as int) == 0:
-			_mark_circle((_drop_off_node as Node2D).global_position, 8.0 * 64.0)
+			var tc_weather_mult: float = WeatherManager.get_vision_multiplier((_drop_off_node as Node2D).global_position)
+			_mark_circle((_drop_off_node as Node2D).global_position, 8.0 * 64.0 * tc_weather_mult)
 
 func _mark_circle(world_pos: Vector2, radius_px: float) -> void:
 	var cell: Vector2i = _world_to_cell(world_pos)
@@ -214,7 +217,8 @@ func _apply_visibility() -> void:
 				continue
 			var was_visible: bool = (unit as Node2D).visible
 			var state: int = get_cell_state((unit as Node2D).global_position)
-			var now_visible: bool = (state == STATE_VISIBLE)
+			var fog_cloaked: bool = WeatherManager.is_unit_cloaked_by_weather((unit as Node2D).global_position)
+			var now_visible: bool = (state == STATE_VISIBLE) and not fog_cloaked
 			(unit as Node2D).visible = now_visible
 			if now_visible and not was_visible:
 				EventBus.enemy_unit_spotted.emit(unit)

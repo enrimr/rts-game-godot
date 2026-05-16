@@ -2809,3 +2809,56 @@ func update_wonder_timer(seconds_left: float) -> void:
 	var mins: int = int(seconds_left) / 60
 	var secs: int = int(seconds_left) % 60
 	_wonder_label.text = _wonder_label.text.split(" — ")[0] + " — %d:%02d" % [mins, secs]
+
+# ── Weather HUD ───────────────────────────────────────────────────────────────
+
+var _weather_label: Label = null
+var _weather_tween: Tween = null
+
+const WEATHER_LABELS: Dictionary = {
+	"calima":          "☁ Calima",
+	"atlantic_storm":  "⛈ Tormenta atlántica",
+	"sea_fog":         "🌫 Niebla marina",
+	"trade_winds":     "💨 Vientos alisios",
+	"volcanic_ash":    "🌋 Ceniza volcánica",
+}
+
+const WEATHER_COLORS: Dictionary = {
+	"calima":          Color(0.85, 0.62, 0.18),
+	"atlantic_storm":  Color(0.35, 0.55, 0.80),
+	"sea_fog":         Color(0.70, 0.80, 0.88),
+	"trade_winds":     Color(0.55, 0.80, 0.95),
+	"volcanic_ash":    Color(0.55, 0.40, 0.30),
+}
+
+func show_weather(weather_id: String) -> void:
+	if not is_instance_valid(_weather_label):
+		_weather_label = Label.new()
+		_weather_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_weather_label.add_theme_font_size_override("font_size", 18)
+		_weather_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		_weather_label.offset_top = 44.0
+		_weather_label.offset_bottom = 66.0
+		_weather_label.modulate.a = 0.0
+		add_child(_weather_label)
+	var text: String = WEATHER_LABELS.get(weather_id, weather_id) as String
+	var color: Color = WEATHER_COLORS.get(weather_id, Color.WHITE) as Color
+	_weather_label.text = text
+	_weather_label.add_theme_color_override("font_color", color)
+	if is_instance_valid(_weather_tween):
+		_weather_tween.kill()
+	_weather_tween = create_tween()
+	_weather_tween.tween_property(_weather_label, "modulate:a", 1.0, 0.8)
+
+func hide_weather() -> void:
+	if not is_instance_valid(_weather_label):
+		return
+	if is_instance_valid(_weather_tween):
+		_weather_tween.kill()
+	_weather_tween = create_tween()
+	_weather_tween.tween_property(_weather_label, "modulate:a", 0.0, 1.5)
+	_weather_tween.tween_callback(func() -> void:
+		if is_instance_valid(_weather_label):
+			_weather_label.queue_free()
+			_weather_label = null
+	)
