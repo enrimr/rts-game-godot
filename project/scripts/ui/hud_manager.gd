@@ -122,6 +122,13 @@ var _research_label: Label = null
 var _pause_menu: Control = null
 var _wonder_label: Label = null
 
+const ACTION_COLS: int = 5
+const ACTION_ROWS: int = 2
+const PAGE_SIZE: int = ACTION_COLS * ACTION_ROWS  # 10
+var _action_page: int = 0
+var _page_prev_btn: Button = null
+var _page_next_btn: Button = null
+
 # --- Stats tracking ---
 var _stat_units_trained: int = 0
 var _stat_buildings_built: int = 0
@@ -353,10 +360,17 @@ func toggle_pause(is_paused: bool) -> void:
 
 func _clear_action_buttons() -> void:
 	_active_actions = []
+	_action_page = 0
 	for child: Node in _action_grid.get_children():
 		child.queue_free()
 	for child: Node in _train_queue_row.get_children():
 		child.queue_free()
+	if is_instance_valid(_page_prev_btn):
+		_page_prev_btn.queue_free()
+		_page_prev_btn = null
+	if is_instance_valid(_page_next_btn):
+		_page_next_btn.queue_free()
+		_page_next_btn = null
 	if is_instance_valid(_age_advance_bar):
 		_age_advance_bar.queue_free()
 		_age_advance_bar = null
@@ -382,8 +396,27 @@ func _key_label(keycode: int) -> String:
 func _populate_buttons(actions: Array) -> void:
 	_clear_action_buttons()
 	_active_actions = actions
-	_action_grid.columns = 4
-	for entry: Variant in actions:
+	_action_grid.columns = ACTION_COLS
+	_render_action_page()
+
+func _render_action_page() -> void:
+	for child: Node in _action_grid.get_children():
+		child.queue_free()
+	if is_instance_valid(_page_prev_btn):
+		_page_prev_btn.queue_free()
+		_page_prev_btn = null
+	if is_instance_valid(_page_next_btn):
+		_page_next_btn.queue_free()
+		_page_next_btn = null
+
+	var total: int = _active_actions.size()
+	var needs_paging: bool = total > PAGE_SIZE
+	# Reserve last 2 slots on the last row for pagination buttons when needed
+	var slots: int = PAGE_SIZE - (2 if needs_paging else 0)
+	var start: int = _action_page * slots
+	var page_actions: Array = _active_actions.slice(start, start + slots)
+
+	for entry: Variant in page_actions:
 		var data: Dictionary = entry as Dictionary
 		var btn: ActionButton = ActionButton.new()
 		btn.custom_minimum_size = Vector2(64.0, 56.0)
@@ -419,6 +452,50 @@ func _populate_buttons(actions: Array) -> void:
 			btn.tooltip_text = tr(desc)
 		btn.action_pressed.connect(_on_action_button_pressed)
 		_action_grid.add_child(btn)
+
+	if needs_paging:
+		# Pad so ◀ ▶ always land on the last two slots of the grid (positions 8 and 9)
+		var filled: int = page_actions.size()
+		var spacers_needed: int = slots - filled
+		for _i: int in range(maxi(0, spacers_needed)):
+			var spacer: Control = Control.new()
+			spacer.custom_minimum_size = Vector2(64.0, 56.0)
+			_action_grid.add_child(spacer)
+
+		var max_page: int = ceili(float(total) / float(slots)) - 1
+		_page_prev_btn = _make_page_btn("◀")
+		_page_prev_btn.disabled = _action_page <= 0
+		_page_prev_btn.pressed.connect(func() -> void:
+			_action_page = maxi(0, _action_page - 1)
+			_render_action_page()
+			_refresh_button_states())
+		_action_grid.add_child(_page_prev_btn)
+
+		_page_next_btn = _make_page_btn("▶")
+		_page_next_btn.disabled = _action_page >= max_page
+		_page_next_btn.pressed.connect(func() -> void:
+			_action_page = mini(_action_page + 1, max_page)
+			_render_action_page()
+			_refresh_button_states())
+		_action_grid.add_child(_page_next_btn)
+
+func _make_page_btn(label: String) -> Button:
+	var btn: Button = Button.new()
+	btn.text = label
+	btn.custom_minimum_size = Vector2(64.0, 56.0)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 20)
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.20, 0.20, 0.28, 0.95)
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	btn.add_theme_stylebox_override("normal", style)
+	var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
+	hover_style.bg_color = Color(0.30, 0.30, 0.40, 0.95)
+	btn.add_theme_stylebox_override("hover", hover_style)
+	return btn
 
 func _get_queue_size() -> int:
 	if not is_instance_valid(_selected_building):
