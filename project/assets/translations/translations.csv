@@ -249,11 +249,11 @@ TOOLTIP_WAR_GALLEY,Combat warship with ranged attack. Dominates coastal waters a
 TOOLTIP_UNLOAD,Unload all garrisoned units from the transport ship at the current position.,Desembarca todas las unidades de la bodega en la posición actual.
 TOOLTIP_GATE_LOCK,Lock or unlock the gate to control passage. Locked gates block all units including allies.,Bloquea o desbloquea la puerta para controlar el paso. Las puertas bloqueadas impiden el paso a todas las unidades incluidas las aliadas.
 MENU_HOW_TO_PLAY,How to Play,Cómo Jugar
-TUTORIAL_PROMPT_TITLE,New to Calima Kingdoms?,¿Nuevo en Calima Kingdoms?
+TUTORIAL_PROMPT_TITLE,New to Calima?,¿Nuevo en Calima?
 TUTORIAL_PROMPT_BODY,Would you like a quick tutorial to learn the basics before your first match?,¿Quieres un tutorial rápido para aprender lo básico antes de tu primera partida?
 TUTORIAL_PROMPT_YES,Show Tutorial,Ver Tutorial
 TUTORIAL_PROMPT_SKIP,Skip for now,Omitir por ahora
-TUTORIAL_STEP0_TITLE,Welcome to Calima Kingdoms,Bienvenido a Calima Kingdoms
+TUTORIAL_STEP0_TITLE,Welcome to Calima,Bienvenido a Calima
 TUTORIAL_STEP0_BODY,You are in command of a civilization fighting for control of the Canary Islands. This tutorial covers the basics — use Next to advance through each step. You can replay it anytime from the main menu.,Estás al mando de una civilización que lucha por el control de las Islas Canarias. Este tutorial cubre lo básico — usa Siguiente para avanzar. Puedes repetirlo cuando quieras desde el menú principal.
 TUTORIAL_STEP1_TITLE,Resources,Recursos
 TUTORIAL_STEP1_BODY,The top bar shows your 4 resources: Food (red) Wood (green) Gold (yellow) Stone (grey). Move the camera with WASD or by pushing the mouse to the screen edge to explore the map. Try it now — pan the camera to unlock this step.,La barra superior muestra tus 4 recursos: Comida (rojo) Madera (verde) Oro (amarillo) Piedra (gris). Mueve la cámara con WASD o llevando el ratón al borde de la pantalla para explorar el mapa. Inténtalo ahora — mueve la cámara para desbloquear este paso.

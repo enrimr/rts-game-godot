@@ -103,11 +103,17 @@ The HUD is a `CanvasLayer` scene at `scenes/ui/hud/hud.tscn`, instanced as a chi
 - **BottomBar** (`PanelContainer`, anchored bottom): a selection panel and a minimap panel.
   - **UnitPortraitsGrid** (`GridContainer`, 10 columns, max 40 portraits): populated dynamically by `HudManager.update_selection`. Each cell is a `UnitPortrait` instance.
   - **UnitDetailPanel**: shows the first selected unit's display name and HP bar.
-  - **ActionButtonsGrid**: `GridContainer` placeholder for future action buttons; currently empty.
+  - **ActionButtonsGrid**: `GridContainer` with `ACTION_COLS = 5` columns and `ACTION_ROWS = 2` rows (10 slots per page). When the active action list exceeds 10 entries, the last two slots on the bottom row become ◀/▶ pagination buttons. `_render_action_page()` rebuilds the grid for the current `_action_page`.
   - **MinimapPanel**: contains `MinimapPlaceholder` (`ColorRect`), a placeholder for a future minimap renderer.
 - **PauseOverlay** (`ColorRect`, full-screen, 50 % black): visible only when the game is paused.
 
 **UnitPortrait** (`class_name UnitPortrait extends PanelContainer`): built entirely in code (`_ready`). Displays a 6-character name abbreviation and a color-coded HP bar (green > 50 %, yellow > 25 %, red ≤ 25 %). Created and discarded each time the selection changes; no scene file.
+
+**Building selection behaviour**:
+
+- When a building with `state != BuildingState.COMPLETE` is selected, the HUD shows only the Destroy action button regardless of building type.
+- When construction completes, `EventBus.building_construction_complete` fires `_on_building_construction_complete`, which re-calls `_on_building_selected` on the same building if it is still selected, replacing the Destroy-only panel with the building's full action set.
+- Buildings that implement `is_respawning_hero()` (or are an instance of `TownCenterBuildable`) are treated as Town Centers: the HUD shows the Town Center action set and wires the training queue.
 
 **Player filtering**: `HudManager.local_player_id` (default `0`) gates all resource and age callbacks so that only data belonging to the local player is displayed.
 
@@ -139,6 +145,34 @@ Fishing boats can also construct a **Fish Trap** on ocean tiles. Fish Traps are 
 Map boundary walls (invisible `NavigationObstacle2D` nodes along the map edges) prevent ships from sailing outside the playable area.
 
 ## Production Buildings
+
+### TownCenterBuildable
+
+`scripts/buildings/town_center_buildable.gd` (`class_name TownCenterBuildable`) extends `BuildingBase`. Requires Castle Age (age 2). Cost: 275 Wood (defined in `resources/buildings/town_center.tres`; 2400 HP). Scene: `scenes/buildings/town_center.tscn` (80×80 collision).
+
+The building goes through the standard `BuildingBase` construction state machine while villagers build it. Once `state == COMPLETE` it activates two subsystems:
+
+**Villager training** — queue cap 5 (`MAX_QUEUE`), cost 50 food (`VILLAGER_COSTS`). Public API mirrors the Stable/Barracks pattern:
+
+| Method | Description |
+|---|---|
+| `order_train() -> bool` | Enqueues a villager; deducts food; emits `EventBus.train_queue_changed` |
+| `order_cancel_train(index: int)` | Refunds food; removes entry; emits `EventBus.train_queue_changed` |
+| `get_queue() -> Array` | Returns a duplicate of the current training queue |
+| `get_max_queue() -> int` | Returns `MAX_QUEUE` (5) |
+| `get_train_progress() -> float` | Fraction 0–1 of current training progress |
+
+**Hero respawn** — listens to `EventBus.hero_died`. If the signal fires for the same `player_id`, the TC starts a 120-second (`HERO_RESPAWN_TIME`) countdown and re-spawns the hero on expiry via `_do_respawn_hero`. The respawn logic is designed so only one TC handles a given death event (the main TC connects first in scene order).
+
+| Method | Description |
+|---|---|
+| `is_respawning_hero() -> bool` | `true` while a hero respawn countdown is active |
+| `get_hero_respawn_fraction() -> float` | Progress 0–1 of the respawn timer |
+| `get_hero_respawn_remaining() -> int` | Seconds remaining, ceiled |
+
+**Drop-off** — a `DropOffBuilding` child node named `DropOff` is included in the scene. On `_ready`, `player_id` is propagated to it via `call_deferred("_sync_drop_off_player_id")` so villagers can return resources to this TC.
+
+**HUD integration** — `HudManager._on_building_selected` detects `is_respawning_hero()` or `building is TownCenterBuildable` and renders the standard Town Center action panel (train villager, age-advance, hero-respawn bar). HUD build key: **Y** (`min_age: 2`).
 
 ### Stable
 

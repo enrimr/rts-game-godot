@@ -1,4 +1,4 @@
-# Game Design Document — Calima Kingdoms: Flames of the Atlantic
+# Game Design Document — Calima: Flames of the Atlantic
 
 ## Vision
 
@@ -50,7 +50,7 @@ The game draws from three historical and mythological layers:
 |---|---|---|
 | 0 | **Dark Age** | Town Center, Houses, basic economy |
 | 1 | **Feudal Age** | Barracks, Archery Range, Blacksmith, Stable (HeavyScout), Market |
-| 2 | **Castle Age** | Castle, University, Siege Workshop, Stable (Knight), unique units, advanced tech |
+| 2 | **Castle Age** | Castle, University, Siege Workshop, Stable (Knight), additional Town Center (buildable), unique units, advanced tech |
 | 3 | **Imperial Age** | Full tech tree, elite unique units |
 
 Advancing requires spending Food and Gold at the Town Center. Each civ may have bonuses that alter advancement cost or speed.
@@ -184,7 +184,7 @@ Players configure a skirmish before starting:
 |---|---|---|
 | M1 | Playable map with villagers gathering resources | Done |
 | M2 | Town Center, Barracks, walls, basic military | Done |
-| M3 | Full tech tree, naval gameplay, Islands map, 8 civilizations; Blacksmith / University / Temple / Market / Stable / Siege Workshop buildings; HeavyScout and Knight cavalry units; BatteringRam / Mangonel / Trebuchet siege units; 17 technologies | In progress |
+| M3 | Full tech tree, naval gameplay, Islands map, 8 civilizations; Blacksmith / University / Temple / Market / Stable / Siege Workshop / TownCenterBuildable buildings; HeavyScout and Knight cavalry units; BatteringRam / Mangonel / Trebuchet siege units; 17 technologies; HUD action grid 5×2 with pagination | In progress |
 | M4 | AI opponent with naval assault on Islands | Done |
 | M5 | All 8 civilizations with unique content and hero units | Planned |
 | M6 | Custom terrain tiles (malpaís, dune, risco, laurisilva) | Planned |

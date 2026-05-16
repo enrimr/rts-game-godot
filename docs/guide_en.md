@@ -1,4 +1,4 @@
-# Calima Kingdoms: Flames of the Atlantic — Player's Guide
+# Calima: Flames of the Atlantic — Player's Guide
 
 ---
 
@@ -8,7 +8,7 @@ The Canary Islands. Eastern Atlantic, 100 km off the coast of northwest Africa.
 
 For the native inhabitants these were simply home — volcanic mountains, laurel forests, black sand beaches and desert plains across seven islands. For the Europeans who arrived in the 15th century they were a gateway: the last stop before the open ocean, the first prize of the Age of Exploration.
 
-*Calima Kingdoms* puts you in command of one of eight civilizations fighting for control of this archipelago. The calima — the warm Saharan wind that blankets the islands in dust and silence — gives the game its name. War here is not fought on plains. It is fought on lava fields, clifftops, ocean straits, and dune crossings.
+*Calima* puts you in command of one of eight civilizations fighting for control of this archipelago. The calima — the warm Saharan wind that blankets the islands in dust and silence — gives the game its name. War here is not fought on plains. It is fought on lava fields, clifftops, ocean straits, and dune crossings.
 
 ---
 
@@ -27,7 +27,7 @@ These civilizations predate the medieval conflict. Their ruins dot the archipela
 #### Atlantes
 *"The sea is not a barrier. It is a road."*
 
-The lost civilization of myth. Greek writers — Plato, Pliny, Herodotus — placed Atlantis beyond the Pillars of Hercules, in the very ocean these islands occupy. In *Calima Kingdoms*, the Atlantes are not a legend. They are a fading empire with the most advanced seafaring knowledge in the world, and ruins everywhere.
+The lost civilization of myth. Greek writers — Plato, Pliny, Herodotus — placed Atlantis beyond the Pillars of Hercules, in the very ocean these islands occupy. In *Calima*, the Atlantes are not a legend. They are a fading empire with the most advanced seafaring knowledge in the world, and ruins everywhere.
 
 **How they play:** Atlantes control the water. They can build floating platforms on the ocean — the only civilization that can do this — turning sea tiles into buildable land. Their units cross shallow water without penalty. Their line of sight on coastal tiles is greater than any other civ.
 
@@ -233,7 +233,7 @@ The archipelago is not flat. Every tile type changes how units move and fight.
 
 ## Resources & Economy
 
-Four resources drive everything in *Calima Kingdoms*. You start with 200 Food, 75 Wood, and 50 Gold (Stone starts at 0). Normal mode uses these defaults; Abundant multiplies map deposits; Full Combat sets all four to 9999.
+Four resources drive everything in *Calima*. You start with 200 Food, 75 Wood, and 50 Gold (Stone starts at 0). Normal mode uses these defaults; Abundant multiplies map deposits; Full Combat sets all four to 9999.
 
 ### The four resources
 

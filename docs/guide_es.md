@@ -1,4 +1,4 @@
-# Calima Kingdoms: Flames of the Atlantic — Guía del Jugador
+# Calima: Flames of the Atlantic — Guía del Jugador
 
 ---
 
@@ -8,7 +8,7 @@ Las Islas Canarias. Océano Atlántico oriental, a 100 km de la costa noroeste d
 
 Para los habitantes nativos eran simplemente su hogar — montañas volcánicas, bosques de laurisilva, playas de arena negra y llanuras desérticas repartidas en siete islas. Para los europeos que llegaron en el siglo XV eran una puerta: la última escala antes del océano abierto, el primer premio de la Era de los Descubrimientos.
 
-*Calima Kingdoms* te pone al mando de una de ocho civilizaciones que luchan por el control de este archipiélago. La calima — el cálido viento sahariano que envuelve las islas en polvo y silencio — da nombre al juego. La guerra aquí no se libra en llanuras. Se libra en campos de lava, riscos, estrechos oceánicos y cruces de dunas.
+*Calima* te pone al mando de una de ocho civilizaciones que luchan por el control de este archipiélago. La calima — el cálido viento sahariano que envuelve las islas en polvo y silencio — da nombre al juego. La guerra aquí no se libra en llanuras. Se libra en campos de lava, riscos, estrechos oceánicos y cruces de dunas.
 
 ---
 
@@ -27,7 +27,7 @@ Estas civilizaciones son anteriores al conflicto medieval. Sus ruinas salpican e
 #### Atlantes
 *"El mar no es una barrera. Es un camino."*
 
-La civilización perdida del mito. Escritores griegos — Platón, Plinio, Herodoto — situaron la Atlántida más allá de las Columnas de Hércules, en el mismo océano que estas islas ocupan. En *Calima Kingdoms*, los Atlantes no son una leyenda. Son un imperio en declive con el conocimiento náutico más avanzado del mundo, y ruinas por todas partes.
+La civilización perdida del mito. Escritores griegos — Platón, Plinio, Herodoto — situaron la Atlántida más allá de las Columnas de Hércules, en el mismo océano que estas islas ocupan. En *Calima*, los Atlantes no son una leyenda. Son un imperio en declive con el conocimiento náutico más avanzado del mundo, y ruinas por todas partes.
 
 **Cómo se juega:** Los Atlantes controlan el agua. Pueden construir plataformas flotantes sobre el océano — la única civilización que puede hacerlo — convirtiendo casillas marinas en suelo edificable. Sus unidades cruzan aguas poco profundas sin penalización. Su línea de visión en casillas costeras es mayor que la de cualquier otra civilización.
 
@@ -233,7 +233,7 @@ El archipiélago no es llano. Cada tipo de casilla cambia cómo se mueven y comb
 
 ## Recursos y economía
 
-Cuatro recursos impulsan todo en *Calima Kingdoms*. Empiezas con 200 de Comida, 75 de Madera y 50 de Oro (la Piedra comienza en 0). El modo Normal usa estos valores por defecto; Abundante multiplica los depósitos del mapa; Combate Total establece los cuatro en 9999.
+Cuatro recursos impulsan todo en *Calima*. Empiezas con 200 de Comida, 75 de Madera y 50 de Oro (la Piedra comienza en 0). El modo Normal usa estos valores por defecto; Abundante multiplica los depósitos del mapa; Combate Total establece los cuatro en 9999.
 
 ### Los cuatro recursos
 

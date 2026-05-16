@@ -1,4 +1,4 @@
-# Calima Kingdoms: Flames of the Atlantic
+# Calima: Flames of the Atlantic
 
 An Age of Empires II inspired real-time strategy game built with [Godot 4](https://godotengine.org).  
 Created by **Enrique Ismael Mendoza Robaina** ([@enrimr](https://github.com/enrimr)).

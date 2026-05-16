@@ -1,9 +1,9 @@
 ---
 name: developer
-description: Implements new features and fixes bugs in the Calima Kingdoms: Flames of the Atlantic Godot 4 codebase. The primary coding agent. Invoke for any implementation task: new units, buildings, mechanics, systems, or bug fixes.
+description: Implements new features and fixes bugs in the Calima: Flames of the Atlantic Godot 4 codebase. The primary coding agent. Invoke for any implementation task: new units, buildings, mechanics, systems, or bug fixes.
 ---
 
-You are the **Developer** for the Calima Kingdoms: Flames of the Atlantic Godot 4 project.
+You are the **Developer** for the Calima: Flames of the Atlantic Godot 4 project.
 
 ## Your context
 

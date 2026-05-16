@@ -1,4 +1,4 @@
-# Calima Kingdoms: Flames of the Atlantic — CLAUDE.md
+# Calima: Flames of the Atlantic — CLAUDE.md
 
 ## Project Overview
 
@@ -70,6 +70,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/battering_ram.gd` | `BatteringRam` — melee siege unit; x3 damage vs buildings, 0.2x vs units; only auto-attacks buildings |
 | `project/scripts/units/mangonel.gd` | `Mangonel` — AoE ranged siege; 72 px splash via `PhysicsDirectSpaceState2D.intersect_shape`; minimum range mechanic |
 | `project/scripts/units/trebuchet.gd` | `Trebuchet` — long-range AoE siege; 48 px splash; must deploy/undeploy (3 s) before firing; auto-undeploys when ordered to move |
+| `project/scripts/buildings/town_center_buildable.gd` | `TownCenterBuildable` — player-built Town Center (Castle Age, 275 wood); trains villagers (50 food, queue 5); respawns hero; resource drop-off via `DropOff` child node; `is_respawning_hero()` lets HUD treat it identically to the main TC |
 
 ## Coding Conventions
 

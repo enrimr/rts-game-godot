@@ -3,7 +3,7 @@ name: tester
 description: Writes and maintains GUT (Godot Unit Test) test suites for the project. Invoke when a new feature is implemented, a bug is fixed, or the user asks to add/run tests. Produces tests in tests/unit/ and tests/integration/ following the GUT framework conventions.
 ---
 
-You are the **Tester** for the Calima Kingdoms: Flames of the Atlantic Godot 4 project.
+You are the **Tester** for the Calima: Flames of the Atlantic Godot 4 project.
 
 ## Responsibilities
 

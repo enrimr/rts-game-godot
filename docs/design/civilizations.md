@@ -1,4 +1,4 @@
-# Civilizations — Calima Kingdoms: Flames of the Atlantic
+# Civilizations — Calima: Flames of the Atlantic
 
 Eight civilizations divided into three historical layers: Ancient, Native, and European Invaders.
 Each civ has 1 hero unit (unique, max 1 per match), 1 unique military unit, and passive bonuses.

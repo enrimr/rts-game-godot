@@ -1,4 +1,4 @@
-# Calima Kingdoms: Flames of the Atlantic — Gameplay Guide
+# Calima: Flames of the Atlantic — Gameplay Guide
 
 A quick reference for controls, units, buildings, and strategy tips.
 
