@@ -441,15 +441,55 @@ func _find_nearest_drop_off() -> Node:
 			best = node
 	return best
 
+const _DROP_OFF_RESOURCE_TYPES: Dictionary = {
+	"lumber_camp":  [ResourceNode.ResourceType.WOOD],
+	"mining_camp":  [ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE],
+}
+
 func _on_construction_complete() -> void:
 	_unregister_from_build_target()
+	var just_built: Node = build_target
 	build_target = null
+
+	# If the completed building is a resource drop-off, go gather the nearest
+	# matching resource instead of looking for more construction.
+	if is_instance_valid(just_built):
+		var resource_target: Node = _find_gather_target_for_drop_off(just_built)
+		if resource_target != null:
+			var rname: String = (resource_target as ResourceNode).get_resource_name()
+			order_gather(resource_target, rname, just_built)
+			return
+
 	var next: Node = _find_nearest_construction()
 	if next != null:
 		order_build(next)
 	else:
 		current_state = UnitState.IDLE
 		_play_animation(_get_animation_name())
+
+func _find_gather_target_for_drop_off(building: Node) -> Node:
+	var bdata: Variant = building.get("building_data")
+	if bdata == null:
+		return null
+	var bid: String = (bdata as Resource).get("id") as String
+	var rtypes: Array = _DROP_OFF_RESOURCE_TYPES.get(bid, []) as Array
+	if rtypes.is_empty():
+		return null
+	var best: Node = null
+	var best_dist: float = INF
+	for rtype: Variant in rtypes:
+		var node: ResourceNode = ResourceManager.get_nearest_resource(
+			ResourceNode.RESOURCE_NAMES.get(rtype as ResourceNode.ResourceType, ""),
+			(building as Node2D).global_position,
+			600.0
+		)
+		if node == null:
+			continue
+		var d: float = (building as Node2D).global_position.distance_to(node.global_position)
+		if d < best_dist:
+			best_dist = d
+			best = node
+	return best
 
 const CONSTRUCTION_SEARCH_RANGE: float = 400.0
 
