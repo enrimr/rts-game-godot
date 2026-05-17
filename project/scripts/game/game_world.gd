@@ -404,18 +404,12 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 	if building is Wonder:
 		EventBus.wonder_destroyed.emit(owner_id)
 
-	# Player's TC destroyed → check if player has any units left
 	if building == drop_off:
-		if not _has_any_units(0):
-			# Find any surviving AI to declare as winner
-			for rival_id: int in _ai_town_centers:
-				if is_instance_valid(_ai_town_centers[rival_id]):
-					GameManager.declare_winner(rival_id)
-					return
-			GameManager.declare_winner(1)
+		# Player TC gone — run full defeat check
+		_check_player_defeat()
 		return
 
-	# Rival TC destroyed → notify that AI's TC is gone; AI handles rebuilding
+	# Rival TC destroyed → notify; AI handles rebuilding
 	var destroyed_rival: int = -1
 	for rival_id: int in _ai_town_centers:
 		if _ai_town_centers[rival_id] == building:
@@ -429,20 +423,29 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 	if _ai_town_center == building:
 		_ai_town_center = null
 
-	# The building_destroyed signal was already emitted above; the AI's _on_building_destroyed
-	# listener handles TC rebuild logic for rival_id.
-
 func _on_unit_died_check_victory(unit: Node, owner_id: int) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
-	# Only check the player (owner_id == 0) and only when TC is already gone
-	if owner_id == 0 and not is_instance_valid(drop_off):
-		if not _has_any_units(0):
-			for rival_id: int in _ai_town_centers:
-				if is_instance_valid(_ai_town_centers[rival_id]):
-					GameManager.declare_winner(rival_id)
-					return
-			GameManager.declare_winner(1)
+	if owner_id == 0:
+		_check_player_defeat()
+
+## Defeat check for the human player: loses when no units AND no buildings remain.
+func _check_player_defeat() -> void:
+	if GameManager.state != GameManager.GameState.PLAYING:
+		return
+	if _has_any_units(0) or _has_any_buildings(0):
+		return
+	# Pick the first surviving rival as winner
+	for rival_id: int in _ai_town_centers:
+		if is_instance_valid(_ai_town_centers[rival_id]):
+			GameManager.declare_winner(rival_id)
+			return
+	# Fallback: any rival that still has units or buildings
+	for rival_id: int in MatchConfig.get_rival_player_ids():
+		if _has_any_units(rival_id) or _has_any_buildings(rival_id):
+			GameManager.declare_winner(rival_id)
+			return
+	GameManager.declare_winner(1)
 
 func _on_player_eliminated(eliminated_id: int) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
