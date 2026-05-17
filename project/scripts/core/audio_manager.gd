@@ -90,6 +90,13 @@ func _build_all() -> void:
 	# Population cap
 	_register("pop_cap",        _synth_pop_cap())
 
+	# Weather ambience (looping, pool = 1)
+	_register_loop("weather_calima",  _synth_weather_calima())
+	_register_loop("weather_storm",   _synth_weather_storm())
+	_register_loop("weather_fog",     _synth_weather_fog())
+	_register_loop("weather_wind",    _synth_weather_wind())
+	_register_loop("weather_ash",     _synth_weather_ash())
+
 # ---------------------------------------------------------------------------
 # Registration helpers
 # ---------------------------------------------------------------------------
@@ -104,6 +111,49 @@ func _register(sound_id: String, stream: AudioStreamWAV, pool_size: int = POOL_S
 		pool.append(player)
 	_pools[sound_id] = pool
 	_pool_idx[sound_id] = 0
+
+func _register_loop(sound_id: String, stream: AudioStreamWAV) -> void:
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_begin = 0
+	stream.loop_end = stream.data.size() / 2  # 16-bit mono: bytes/2 = samples
+	_register(sound_id, stream, 1)
+
+# ---------------------------------------------------------------------------
+# Weather ambient API
+# ---------------------------------------------------------------------------
+
+var _weather_ambient_id: String = ""
+var _weather_fade_tween: Tween = null
+
+func play_weather_ambient(sound_id: String) -> void:
+	if _weather_ambient_id == sound_id:
+		return
+	stop_weather_ambient()
+	if not _pools.has(sound_id):
+		return
+	_weather_ambient_id = sound_id
+	var player: AudioStreamPlayer = (_pools[sound_id] as Array)[0] as AudioStreamPlayer
+	var sfx_db: float = GameSettings.volume_to_db(GameSettings.sfx_volume)
+	player.volume_db = -80.0
+	player.play()
+	if is_instance_valid(_weather_fade_tween):
+		_weather_fade_tween.kill()
+	_weather_fade_tween = create_tween()
+	_weather_fade_tween.tween_property(player, "volume_db", -14.0 + sfx_db, 4.0)
+
+func stop_weather_ambient() -> void:
+	if _weather_ambient_id.is_empty():
+		return
+	var prev_id: String = _weather_ambient_id
+	_weather_ambient_id = ""
+	if not _pools.has(prev_id):
+		return
+	var player: AudioStreamPlayer = (_pools[prev_id] as Array)[0] as AudioStreamPlayer
+	if is_instance_valid(_weather_fade_tween):
+		_weather_fade_tween.kill()
+	_weather_fade_tween = create_tween()
+	_weather_fade_tween.tween_property(player, "volume_db", -80.0, 3.0)
+	_weather_fade_tween.tween_callback(func() -> void: player.stop())
 
 # ---------------------------------------------------------------------------
 # PCM synthesis helpers
@@ -281,6 +331,95 @@ func _synth_pop_cap() -> AudioStreamWAV:
 	var a: PackedFloat32Array = _sine(400.0, 0.09, 0.35)
 	var b: PackedFloat32Array = _sine(280.0, 0.12, 0.35)
 	return _make_wav(_concat(a, b))
+
+# ---------------------------------------------------------------------------
+# Weather ambient synthesizers (looping ~4 s textures)
+# ---------------------------------------------------------------------------
+
+func _synth_weather_calima() -> AudioStreamWAV:
+	# Dry, dusty hiss: filtered white noise with slow amplitude wobble
+	var n: int = int(SAMPLE_RATE * 4.0)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	var lp: float = 0.0
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var raw: float = randf_range(-1.0, 1.0)
+		lp = lp + 0.03 * (raw - lp)   # simple one-pole low-pass (~660 Hz)
+		var wobble: float = 0.75 + 0.25 * sin(TAU * 0.18 * t)
+		buf[i] = lp * 0.50 * wobble
+	return _make_wav(buf)
+
+func _synth_weather_storm() -> AudioStreamWAV:
+	# Rain: dense high-frequency noise + low rumble + occasional thunder crack
+	var n: int = int(SAMPLE_RATE * 4.0)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	var hp: float = 0.0
+	var rumble: float = 0.0
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var raw: float = randf_range(-1.0, 1.0)
+		# High-pass for rain hiss
+		hp = 0.85 * hp + 0.85 * (raw - hp)
+		# Low-frequency rumble via sine wobble on noise
+		rumble = 0.98 * rumble + 0.02 * raw
+		var thunder_env: float = 0.0
+		# Single thunder crack at t≈1.4 s
+		var td: float = absf(t - 1.4)
+		if td < 0.18:
+			thunder_env = (1.0 - td / 0.18) * 0.5
+		buf[i] = clampf(hp * 0.45 + rumble * 0.25 + raw * thunder_env, -1.0, 1.0)
+	return _make_wav(buf)
+
+func _synth_weather_fog() -> AudioStreamWAV:
+	# Eerie coastal fog: slow low sine drone + soft filtered noise breath
+	var n: int = int(SAMPLE_RATE * 4.0)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	var lp: float = 0.0
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var drone: float = sin(TAU * 55.0 * t) * 0.18
+		var raw: float = randf_range(-1.0, 1.0)
+		lp = lp + 0.015 * (raw - lp)
+		var breath: float = 0.5 + 0.5 * sin(TAU * 0.12 * t)
+		buf[i] = clampf(drone + lp * 0.25 * breath, -1.0, 1.0)
+	return _make_wav(buf)
+
+func _synth_weather_wind() -> AudioStreamWAV:
+	# Trade winds: whooshing bandpass noise with rising/falling gusts
+	var n: int = int(SAMPLE_RATE * 4.0)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	var lp: float = 0.0
+	var hp: float = 0.0
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var raw: float = randf_range(-1.0, 1.0)
+		# Band-pass: high-pass then low-pass
+		hp = 0.92 * hp + 0.92 * (raw - hp)
+		lp = lp + 0.08 * (hp - lp)
+		# Gust envelope: two gusts in 4 s
+		var gust: float = 0.55 + 0.45 * sin(TAU * 0.40 * t + 0.5)
+		buf[i] = lp * 0.60 * gust
+	return _make_wav(buf)
+
+func _synth_weather_ash() -> AudioStreamWAV:
+	# Volcanic ash: deep subterranean rumble + fine grit hiss
+	var n: int = int(SAMPLE_RATE * 4.0)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	var lp_deep: float = 0.0
+	var lp_grit: float = 0.0
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var raw: float = randf_range(-1.0, 1.0)
+		lp_deep = lp_deep + 0.006 * (raw - lp_deep)  # very low rumble ~130 Hz
+		lp_grit = lp_grit + 0.06  * (raw - lp_grit)  # mid hiss ~1.3 kHz
+		var pulse: float = 0.65 + 0.35 * sin(TAU * 0.25 * t)
+		buf[i] = clampf(lp_deep * 0.60 * pulse + lp_grit * 0.25, -1.0, 1.0)
+	return _make_wav(buf)
 
 # ---------------------------------------------------------------------------
 # Background music

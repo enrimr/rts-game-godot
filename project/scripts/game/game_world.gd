@@ -1641,11 +1641,22 @@ func _on_weather_changed(weather_id: String, _intensity: float) -> void:
 	var hud_mgr: Node = hud.get_node_or_null("HudManager")
 	if is_instance_valid(hud_mgr) and hud_mgr.has_method("show_weather"):
 		hud_mgr.call("show_weather", weather_id)
+	const WEATHER_SOUNDS: Dictionary = {
+		"calima":         "weather_calima",
+		"atlantic_storm": "weather_storm",
+		"sea_fog":        "weather_fog",
+		"trade_winds":    "weather_wind",
+		"volcanic_ash":   "weather_ash",
+	}
+	var sound_id: String = WEATHER_SOUNDS.get(weather_id, "") as String
+	if not sound_id.is_empty():
+		AudioManager.play_weather_ambient(sound_id)
 
 func _on_weather_cleared() -> void:
 	var hud_mgr: Node = hud.get_node_or_null("HudManager")
 	if is_instance_valid(hud_mgr) and hud_mgr.has_method("hide_weather"):
 		hud_mgr.call("hide_weather")
+	AudioManager.stop_weather_ambient()
 
 func _on_game_over(_winner: int) -> void:
 	AudioManager.stop_music()
