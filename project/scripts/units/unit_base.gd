@@ -71,7 +71,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 		die()
 		return
 	if player_id == 0:
-		AudioManager.play("hit_melee", -8.0)
+		AudioManager.play_if_visible("hit_melee", global_position, -8.0)
 	if source != null and is_instance_valid(source):
 		var src_pid: Variant = source.get("player_id")
 		if src_pid != null and (src_pid as int) != player_id:

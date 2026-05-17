@@ -32,6 +32,20 @@ func play(sound_id: String, volume_db: float = 0.0) -> void:
 	player.play()
 	_pool_idx[sound_id] = (idx + 1) % pool.size()
 
+## Play a combat sound only if world_pos is currently visible to the player.
+func play_if_visible(sound_id: String, world_pos: Vector2, volume_db: float = 0.0) -> void:
+	var fog: FogOfWar = _get_fog()
+	if fog != null and fog.get_cell_state(world_pos) != FogOfWar.STATE_VISIBLE:
+		return
+	play(sound_id, volume_db)
+
+func _get_fog() -> FogOfWar:
+	var worlds: Array = get_tree().get_nodes_in_group("world")
+	if worlds.is_empty():
+		return null
+	var fog: Node = (worlds[0] as Node).get_node_or_null("FogOfWar")
+	return fog as FogOfWar
+
 func play_music() -> void:
 	if is_instance_valid(_music_player) and not _music_player.playing:
 		_music_player.play()

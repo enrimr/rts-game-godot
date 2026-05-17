@@ -203,7 +203,7 @@ func _handle_attacking(delta: float) -> void:
 		_quijote_post_attack_penalty = _quijote_attack_delay
 		if attack_target.has_method("take_damage"):
 			attack_target.take_damage(_get_effective_attack_vs(attack_target) - _get_target_armor(attack_target), self)
-			AudioManager.play("hit_melee", -4.0)
+			AudioManager.play_if_visible("hit_melee", global_position, -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
 
 # --- Ability implementations ---

@@ -124,4 +124,4 @@ func _fire_at(target_pos: Vector2) -> void:
 		if body.has_method("take_damage"):
 			body.take_damage(actual_dmg, self)
 			EventBus.unit_attacked.emit(self, body)
-	AudioManager.play("hit_ranged", -2.0)
+	AudioManager.play_if_visible("hit_ranged", global_position, -2.0)
