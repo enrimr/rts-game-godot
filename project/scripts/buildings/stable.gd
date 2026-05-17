@@ -35,14 +35,13 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if state != BuildingState.COMPLETE or _train_queue.is_empty():
 		return
-	_train_timer += delta
 	var entry: Dictionary = _train_queue[0] as Dictionary
 	var train_time: float = entry.get("train_time", 30.0) as float
+	if not PopulationManager.at_cap(player_id):
+		_train_timer += delta
 	if is_instance_valid(_train_bar):
 		_train_bar.value = (_train_timer / train_time) * 100.0
-	if _train_timer >= train_time:
-		if PopulationManager.at_cap(player_id):
-			return
+	if _train_timer >= train_time and not PopulationManager.at_cap(player_id):
 		_train_timer = 0.0
 		var scene_path: String = entry.get("scene", "") as String
 		_train_queue.pop_front()
@@ -53,8 +52,6 @@ func _process(delta: float) -> void:
 
 func order_train(unit_id: String = "heavy_scout") -> bool:
 	if _train_queue.size() >= MAX_QUEUE:
-		return false
-	if PopulationManager.at_cap(player_id):
 		return false
 	var def: Dictionary = _find_def(unit_id)
 	if def.is_empty():

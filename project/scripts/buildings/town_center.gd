@@ -108,11 +108,12 @@ func _process(delta: float) -> void:
 			_do_respawn_hero(data)
 	if _train_queue.is_empty():
 		return
-	_train_timer += delta
 	var train_time: float = VILLAGER_DATA.train_time
+	if not PopulationManager.at_cap(player_id):
+		_train_timer += delta
 	if is_instance_valid(_train_bar):
 		_train_bar.value = (_train_timer / train_time) * 100.0
-	if _train_timer >= train_time:
+	if _train_timer >= train_time and not PopulationManager.at_cap(player_id):
 		_train_timer = 0.0
 		_train_queue.pop_front()
 		if is_instance_valid(_train_bar) and _train_queue.is_empty():
@@ -122,8 +123,6 @@ func _process(delta: float) -> void:
 
 func order_train() -> bool:
 	if _train_queue.size() >= MAX_QUEUE:
-		return false
-	if PopulationManager.at_cap(player_id):
 		return false
 	if not ResourceManager.spend_resource(player_id, VILLAGER_COSTS):
 		return false
