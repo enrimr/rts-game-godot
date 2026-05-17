@@ -404,8 +404,9 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 	if building is Wonder:
 		EventBus.wonder_destroyed.emit(owner_id)
 
-	if building == drop_off:
-		# Player TC gone — run full defeat check
+	if owner_id == 0:
+		if building == drop_off:
+			drop_off = null
 		_check_player_defeat()
 		return
 
@@ -805,7 +806,7 @@ func _finish_selection(release_pos: Vector2) -> void:
 			SelectionManager.select(_selected_units)
 			return
 		# Check Town Center first
-		if _drag_start.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
+		if is_instance_valid(drop_off) and _drag_start.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
 			_selected_building = drop_off
 			EventBus.building_selected.emit(drop_off)
 			return
@@ -873,7 +874,7 @@ func _handle_right_click(world_pos: Vector2) -> void:
 			return
 
 	# 0b. Transport ship selected → right-click on land = move then unload
-	if _selected_units.size() == 1 and _selected_units[0] is TransportShip:
+	if _selected_units.size() == 1 and is_instance_valid(_selected_units[0]) and _selected_units[0] is TransportShip:
 		var ts: TransportShip = _selected_units[0] as TransportShip
 		if not ts._garrison.is_empty() and not TerrainManager.is_ocean(world_pos):
 			ts.order_move_then_unload(world_pos)
@@ -1027,7 +1028,7 @@ func _find_gate_at(world_pos: Vector2) -> Gate:
 
 func _find_drop_off_at(world_pos: Vector2) -> Node:
 	# Town Center
-	if world_pos.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
+	if is_instance_valid(drop_off) and world_pos.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
 		return drop_off
 	for building: Node in buildings_layer.get_children():
 		if not is_instance_valid(building):
@@ -1172,7 +1173,7 @@ func _find_own_damaged_building_at(world_pos: Vector2) -> Node:
 			return false
 		return true
 
-	if world_pos.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS and check.call(drop_off):
+	if is_instance_valid(drop_off) and world_pos.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS and check.call(drop_off):
 		return drop_off
 	for building: Node in buildings_layer.get_children():
 		if not is_instance_valid(building):
@@ -1610,6 +1611,9 @@ func _on_action_requested(action_id: String) -> void:
 						break
 
 func _order_gather_nearest_resource(rtype: ResourceNode.ResourceType) -> void:
+	if _selected_units.is_empty():
+		return
+	_selected_units = _selected_units.filter(func(u: Node) -> bool: return is_instance_valid(u))
 	if _selected_units.is_empty():
 		return
 	var pivot: Vector2 = (_selected_units[0] as Node2D).global_position
