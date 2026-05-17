@@ -7,6 +7,14 @@ const MAX_QUEUE: int = 5
 
 const UNIT_DEFS: Array[Dictionary] = [
 	{
+		"id": "scout",
+		"scene": "res://scenes/units/scout.tscn",
+		"data": "res://resources/units/scout_data.tres",
+		"label": "SC",
+		"color": Color(0.25, 0.65, 0.30),
+		"age": 0,
+	},
+	{
 		"id": "heavy_scout",
 		"scene": "res://scenes/units/heavy_scout.tscn",
 		"data": "res://resources/units/heavy_scout_data.tres",

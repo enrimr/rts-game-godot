@@ -58,6 +58,7 @@ const BUILD_ACTIONS: Array = [
 ]
 
 const STABLE_UNIT_DEFS: Array[Dictionary] = [
+	{"id": "scout",       "label": "ACTION_SCOUT",       "color": Color(0.25, 0.65, 0.30), "cost": {"food": 80},            "age": 0, "description": "TOOLTIP_SCOUT"},
 	{"id": "heavy_scout", "label": "ACTION_HEAVY_SCOUT", "color": Color(0.55, 0.40, 0.15), "cost": {"food": 80, "gold": 30}, "age": 1, "description": "TOOLTIP_HEAVY_SCOUT"},
 	{"id": "knight",      "label": "ACTION_KNIGHT",      "color": Color(0.25, 0.30, 0.55), "cost": {"food": 60, "gold": 75}, "age": 2, "description": "TOOLTIP_KNIGHT"},
 ]
@@ -347,6 +348,8 @@ func update_selection(units: Array) -> void:
 			_populate_transport_buttons(first as TransportShip)
 		elif first is Trebuchet:
 			_populate_trebuchet_buttons(first as Trebuchet)
+		elif first is Scout:
+			_populate_scout_buttons(first as Scout)
 		elif first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
 			_apply_tutorial_villager_gates()
@@ -1104,6 +1107,19 @@ func _populate_trebuchet_buttons(treb: Trebuchet) -> void:
 		{"id": "trebuchet_deploy", "label": deploy_label, "color": deploy_color, "cost": {}, "key": KEY_D, "raw_label": true},
 		DESTROY_ACTION,
 	]
+	_populate_buttons(actions)
+
+func _populate_scout_buttons(scout: Scout) -> void:
+	var actions: Array = [
+		{"id": "move_to",     "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
+		{"id": "attack_move", "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+		{"id": "stop",        "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
+	]
+	if scout.is_exploring():
+		actions.append({"id": "scout_explore_stop", "label": "ACTION_SCOUT_EXPLORE_STOP", "color": Color(0.65, 0.35, 0.10), "cost": {}, "key": KEY_E, "description": "TOOLTIP_SCOUT_EXPLORE_STOP"})
+	else:
+		actions.append({"id": "scout_explore", "label": "ACTION_SCOUT_EXPLORE", "color": Color(0.15, 0.55, 0.25), "cost": {}, "key": KEY_E, "description": "TOOLTIP_SCOUT_EXPLORE"})
+	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
 
 func _populate_siege_workshop_actions(workshop: SiegeWorkshop) -> void:

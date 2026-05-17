@@ -2,9 +2,15 @@ extends UnitBase
 
 class_name Scout
 
+const EXPLORE_DURATION: float = 60.0
+const EXPLORE_WAYPOINT_RADIUS: float = 400.0
+
 var attack_target: Node = null
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
+var _exploring: bool = false
+var _explore_timer: float = 0.0
+var _explore_waypoint_cooldown: float = 0.0
 
 func _ready() -> void:
 	super._ready()
@@ -13,12 +19,43 @@ func _ready() -> void:
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
 
+func start_auto_explore() -> void:
+	_exploring = true
+	_explore_timer = EXPLORE_DURATION
+	_pick_explore_waypoint()
+
+func stop_auto_explore() -> void:
+	_exploring = false
+	_explore_timer = 0.0
+
+func is_exploring() -> bool:
+	return _exploring
+
+func get_explore_fraction() -> float:
+	return clampf(_explore_timer / EXPLORE_DURATION, 0.0, 1.0)
+
 func _physics_process(delta: float) -> void:
 	match current_state:
 		UnitState.MOVING:
 			_handle_movement(delta)
 		UnitState.ATTACKING:
 			_handle_attacking(delta)
+	if _exploring:
+		_explore_timer -= delta
+		if _explore_timer <= 0.0:
+			stop_auto_explore()
+		else:
+			_explore_waypoint_cooldown -= delta
+			if _explore_waypoint_cooldown <= 0.0 or current_state == UnitState.IDLE:
+				_pick_explore_waypoint()
+
+func _pick_explore_waypoint() -> void:
+	_explore_waypoint_cooldown = randf_range(3.0, 7.0)
+	var map_min: float = 200.0
+	var map_max: float = 7480.0
+	var rx: float = randf_range(map_min, map_max)
+	var ry: float = randf_range(map_min, map_max)
+	order_move(Vector2(rx, ry))
 
 func order_move(destination: Vector2) -> void:
 	_attack_move_active = false

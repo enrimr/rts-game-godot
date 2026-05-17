@@ -1546,7 +1546,7 @@ func _on_action_requested(action_id: String) -> void:
 		"train:pikeman":
 			if is_instance_valid(_selected_building) and _selected_building is Barracks:
 				(_selected_building as Barracks).order_train("pikeman")
-		"train:heavy_scout", "train:knight":
+		"train:scout", "train:heavy_scout", "train:knight":
 			if is_instance_valid(_selected_building) and _selected_building is Stable:
 				(_selected_building as Stable).order_train(action_id.trim_prefix("train:"))
 		"train:battering_ram", "train:mangonel", "train:trebuchet":
@@ -1575,6 +1575,14 @@ func _on_action_requested(action_id: String) -> void:
 				if unit is TransportShip:
 					(unit as TransportShip).unload_all()
 					break
+		"scout_explore":
+			for unit: Node in _selected_units:
+				if unit is Scout:
+					(unit as Scout).start_auto_explore()
+		"scout_explore_stop":
+			for unit: Node in _selected_units:
+				if unit is Scout:
+					(unit as Scout).stop_auto_explore()
 		"stop":
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):
