@@ -76,6 +76,8 @@ Technologies are defined as `TechnologyResource` `.tres` files under `resources/
 
 `TechManager` (autoload) owns the research queue and applies effects when research completes. `CivBonusManager` (autoload) stores per-player multipliers derived from civilization bonuses and applied techs.
 
+When a `TechnologyResource` has non-empty `upgrade_from_unit_id` and `upgrade_to_unit_id` fields, `TechManager` treats it as a unit upgrade: on completion it immediately replaces all live units of type `upgrade_from_unit_id` with instances of `upgrade_to_unit_id` (HP scaled proportionally), and the source building switches its training queue to produce the new type going forward. Upgrade techs are researched at the same building that trains the unit (Barracks for infantry upgrades, Stable for cavalry upgrades).
+
 ## AI System
 
 `AIPlayer` runs on a 1-second tick rather than every frame. Strategy enum controls economic vs. military priorities. Difficulty scales timings and reaction windows.

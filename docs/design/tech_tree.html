@@ -503,6 +503,26 @@
     margin-top: 4px;
   }
 
+  /* ── Unit Upgrade tech cards ── */
+  .tech-card.upgrade-card {
+    border-color: rgba(200,168,75,0.5);
+  }
+
+  .tech-card.upgrade-card:hover {
+    border-color: var(--gold);
+    box-shadow: 0 0 14px rgba(200,168,75,0.4);
+  }
+
+  .upgrade-transform {
+    background: rgba(200,168,75,0.08);
+    border-left: 2px solid var(--gold-dim);
+    color: var(--gold);
+    font-size: 0.73rem;
+    margin-top: 6px;
+    padding: 3px 7px;
+    line-height: 1.4;
+  }
+
   /* ── Responsive ── */
   @media (max-width: 900px) {
     .units-columns { grid-template-columns: repeat(2, 1fr); }
@@ -553,7 +573,8 @@ const DATA = {
       "2": "monastery",
       "3": "town_center",
       "4": "market",
-      "5": "barracks"
+      "5": "barracks",
+      "6": "stable"
     }
   },
   "buildings": [
@@ -590,6 +611,16 @@ const DATA = {
       "id": "archer", "display_name": "Archer", "trained_at": "barracks",
       "age_required": 1, "cost": { "wood": 25, "gold": 45 }, "train_time": 35,
       "stats": { "hp": 30, "move_speed": 110, "los": 6, "pop_cost": 1, "attack": 5, "attack_range": 4.0, "attack_speed": 1.0, "armor_melee": 0, "armor_pierce": 0 }
+    },
+    "man_at_arms": {
+      "id": "man_at_arms", "display_name": "Man-at-Arms", "trained_at": "barracks",
+      "age_required": 1, "cost": { "food": 60, "wood": 20 }, "train_time": 21,
+      "stats": { "hp": 65, "move_speed": 100, "los": 4, "pop_cost": 1, "attack": 7, "attack_range": 1.5, "attack_speed": 1.0, "armor_melee": 1, "armor_pierce": 0 }
+    },
+    "long_swordsman": {
+      "id": "long_swordsman", "display_name": "Long Swordsman", "trained_at": "barracks",
+      "age_required": 2, "cost": { "food": 60, "wood": 20 }, "train_time": 21,
+      "stats": { "hp": 85, "move_speed": 100, "los": 4, "pop_cost": 1, "attack": 9, "attack_range": 1.5, "attack_speed": 1.0, "armor_melee": 2, "armor_pierce": 1 }
     },
     "pikeman": {
       "id": "pikeman", "display_name": "Pikeman", "trained_at": "barracks",
@@ -735,6 +766,30 @@ const DATA = {
       "id": "atonement", "display_name": "Atonement", "research_building": "monastery",
       "age_required": 3, "cost": { "food": 150, "gold": 100 }, "research_time": 55,
       "prerequisites": ["sanctity"], "effects": { "cavalry_hp": 1.20 }
+    },
+    {
+      "id": "upgrade_man_at_arms", "display_name": "Man-at-Arms", "research_building": "barracks",
+      "age_required": 1, "cost": { "food": 100, "gold": 40 }, "research_time": 45,
+      "prerequisites": [], "effects": {},
+      "upgrade_from_unit_id": "militia", "upgrade_to_unit_id": "man_at_arms"
+    },
+    {
+      "id": "upgrade_long_swordsman", "display_name": "Long Swordsman", "research_building": "barracks",
+      "age_required": 2, "cost": { "food": 200, "gold": 60 }, "research_time": 45,
+      "prerequisites": ["upgrade_man_at_arms"], "effects": {},
+      "upgrade_from_unit_id": "man_at_arms", "upgrade_to_unit_id": "long_swordsman"
+    },
+    {
+      "id": "upgrade_heavy_scout", "display_name": "Heavy Scout", "research_building": "stable",
+      "age_required": 1, "cost": { "food": 150, "gold": 75 }, "research_time": 45,
+      "prerequisites": [], "effects": {},
+      "upgrade_from_unit_id": "scout", "upgrade_to_unit_id": "heavy_scout"
+    },
+    {
+      "id": "upgrade_knight", "display_name": "Knight", "research_building": "stable",
+      "age_required": 2, "cost": { "food": 200, "gold": 100 }, "research_time": 45,
+      "prerequisites": ["upgrade_heavy_scout"], "effects": {},
+      "upgrade_from_unit_id": "heavy_scout", "upgrade_to_unit_id": "knight"
     }
   ],
   "heroes": [
@@ -1200,7 +1255,9 @@ function renderTechnologies() {
   let html = '';
 
   sections.forEach(sec => {
-    const techs = DATA.technologies.filter(t => t.research_building === sec.key);
+    const techs = DATA.technologies.filter(t =>
+      t.research_building === sec.key && !t.upgrade_from_unit_id
+    );
     if (!techs.length) return;
 
     const byAge = { 0: [], 1: [], 2: [], 3: [] };
@@ -1242,6 +1299,66 @@ function renderTechnologies() {
       <div class="tech-age-col">${headerRow}${cardsRow}</div>
     </div>`;
   });
+
+  // ── Unit Upgrades section ──
+  const upgradeSections = [
+    { key: 'barracks', label: 'Barracks' },
+    { key: 'stable',   label: 'Stable' }
+  ];
+
+  let upgradeInnerHtml = '';
+  upgradeSections.forEach(sec => {
+    const techs = DATA.technologies.filter(t =>
+      t.research_building === sec.key && t.upgrade_from_unit_id
+    );
+    if (!techs.length) return;
+
+    const byAge = { 0: [], 1: [], 2: [], 3: [] };
+    techs.forEach(t => byAge[t.age_required].push(t));
+
+    const headerRow = `<div style="grid-column:1"></div>` +
+      AGE_NAMES.map((name, i) =>
+        `<div class="tech-grid-header age-${i}">${name}</div>`
+      ).join('');
+
+    const cardsRow = `<div class="tech-building-label">${sec.label}</div>` +
+      [0, 1, 2, 3].map(age => {
+        const ageTechs = byAge[age];
+        if (!ageTechs.length) return `<div class="tech-cards-column"></div>`;
+        return `<div class="tech-cards-column">` +
+          ageTechs.map(t => {
+            const prereqHtml = t.prerequisites.length
+              ? `<div class="prereq-chips"><span style="color:var(--text-dim);font-size:0.7rem">Requires:</span>` +
+                t.prerequisites.map(pid => {
+                  const pt = techMap[pid];
+                  return `<span class="prereq-chip">${pt ? pt.display_name : pid}</span>`;
+                }).join('<span class="prereq-arrow">→</span>') +
+                `</div>`
+              : '';
+
+            const transformHtml = `<div class="upgrade-transform">▲ ${t.upgrade_from_unit_id.replace(/_/g,' ')} → ${t.upgrade_to_unit_id.replace(/_/g,' ')}</div>`;
+
+            return `<div class="card tech-card upgrade-card">
+              <div class="card-title">▲ ${t.display_name}</div>
+              ${costHtml(t.cost)}
+              <div class="tech-times">⏱ ${t.research_time} s</div>
+              ${prereqHtml}
+              ${transformHtml}
+            </div>`;
+          }).join('') +
+        `</div>`;
+      }).join('');
+
+    upgradeInnerHtml += `<div class="tech-age-col" style="margin-bottom:16px">${headerRow}${cardsRow}</div>`;
+  });
+
+  if (upgradeInnerHtml) {
+    html += `<div class="tech-section">
+      <div class="tech-section-heading">Unit Upgrades</div>
+      <p style="color:var(--text-dim);font-size:0.8rem;margin:6px 0 14px">Transforms all existing units of the source type immediately (HP scaled proportionally). The building trains the new type going forward.</p>
+      ${upgradeInnerHtml}
+    </div>`;
+  }
 
   document.getElementById('technologies').innerHTML = html;
 }

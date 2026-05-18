@@ -8,7 +8,8 @@
       "2": "monasterio",
       "3": "centro_urbano",
       "4": "mercado",
-      "5": "cuartel"
+      "5": "cuartel",
+      "6": "establo"
     }
   },
   "buildings": [
@@ -45,6 +46,16 @@
       "id": "archer", "display_name": "Arquero", "trained_at": "barracks",
       "age_required": 1, "cost": { "wood": 25, "gold": 45 }, "train_time": 35,
       "stats": { "hp": 30, "move_speed": 110, "los": 6, "pop_cost": 1, "attack": 5, "attack_range": 4.0, "attack_speed": 1.0, "armor_melee": 0, "armor_pierce": 0 }
+    },
+    "man_at_arms": {
+      "id": "man_at_arms", "display_name": "Hombre de armas", "trained_at": "barracks",
+      "age_required": 1, "cost": { "food": 60, "wood": 20 }, "train_time": 21,
+      "stats": { "hp": 65, "move_speed": 100, "los": 4, "pop_cost": 1, "attack": 7, "attack_range": 1.5, "attack_speed": 1.0, "armor_melee": 1, "armor_pierce": 0 }
+    },
+    "long_swordsman": {
+      "id": "long_swordsman", "display_name": "Espadachín largo", "trained_at": "barracks",
+      "age_required": 2, "cost": { "food": 60, "wood": 20 }, "train_time": 21,
+      "stats": { "hp": 85, "move_speed": 100, "los": 4, "pop_cost": 1, "attack": 9, "attack_range": 1.5, "attack_speed": 1.0, "armor_melee": 2, "armor_pierce": 1 }
     },
     "pikeman": {
       "id": "pikeman", "display_name": "Lancero", "trained_at": "barracks",
@@ -190,6 +201,30 @@
       "id": "atonement", "display_name": "Expiación", "research_building": "monastery",
       "age_required": 3, "cost": { "food": 150, "gold": 100 }, "research_time": 55,
       "prerequisites": ["sanctity"], "effects": { "cavalry_hp": 1.20 }
+    },
+    {
+      "id": "upgrade_man_at_arms", "display_name": "Hombre de armas", "research_building": "barracks",
+      "age_required": 1, "cost": { "food": 100, "gold": 40 }, "research_time": 45,
+      "prerequisites": [], "effects": {},
+      "upgrade_from_unit_id": "militia", "upgrade_to_unit_id": "man_at_arms"
+    },
+    {
+      "id": "upgrade_long_swordsman", "display_name": "Espadachín largo", "research_building": "barracks",
+      "age_required": 2, "cost": { "food": 200, "gold": 60 }, "research_time": 45,
+      "prerequisites": ["upgrade_man_at_arms"], "effects": {},
+      "upgrade_from_unit_id": "man_at_arms", "upgrade_to_unit_id": "long_swordsman"
+    },
+    {
+      "id": "upgrade_heavy_scout", "display_name": "Heavy Scout", "research_building": "stable",
+      "age_required": 1, "cost": { "food": 150, "gold": 75 }, "research_time": 45,
+      "prerequisites": [], "effects": {},
+      "upgrade_from_unit_id": "scout", "upgrade_to_unit_id": "heavy_scout"
+    },
+    {
+      "id": "upgrade_knight", "display_name": "Caballero", "research_building": "stable",
+      "age_required": 2, "cost": { "food": 200, "gold": 100 }, "research_time": 45,
+      "prerequisites": ["upgrade_heavy_scout"], "effects": {},
+      "upgrade_from_unit_id": "heavy_scout", "upgrade_to_unit_id": "knight"
     }
   ],
   "heroes": [

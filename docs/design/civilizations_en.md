@@ -41,7 +41,9 @@
 |---|---|---|---|---|---|---|---|---|
 | Militia | 0 | 60f + 20w | 21 s | 40 | 100 | 4 | 1.5 | 0 / 0 |
 | Archer | 1 | 25w + 45g | 35 s | 30 | 110 | 5 | 4.0 | 0 / 0 |
+| Man-at-Arms | 1 | 60f + 20w | 21 s | 65 | 100 | 7 | 1.5 | 1 / 0 |
 | Pikeman | 2 | 60f + 30g | 28 s | 65 | 90 | 7 | 1.5 | 1 / 0 |
+| Long Swordsman | 2 | 60f + 20w | 21 s | 85 | 100 | 9 | 1.5 | 2 / 1 |
 
 ### Cavalry (Stable)
 | Unit | Age | Cost | Time | HP | Speed | Attack | Range | Armour M/P | Notes |
@@ -98,6 +100,22 @@
 | Fervor | 2 | 150g | 50 s | — | Unit move speed ×1.10 |
 | Sanctity | 2 | 100f | 40 s | — | Swordsman HP ×1.15 |
 | Atonement | 3 | 150f + 100g | 55 s | Sanctity | Cavalry HP ×1.20 |
+
+### Unit Upgrades
+
+Unit upgrade technologies transform all existing units of the source type immediately (HP scaled proportionally). The building then trains the new unit type going forward. Researched at the same building that trains the unit.
+
+#### Barracks
+| Technology | Age | Cost | Time | Prerequisite | Transforms |
+|---|---|---|---|---|---|
+| Man-at-Arms | 1 | 100f + 40g | 45 s | — | Militia → Man-at-Arms |
+| Long Swordsman | 2 | 200f + 60g | 45 s | Man-at-Arms | Man-at-Arms → Long Swordsman |
+
+#### Stable
+| Technology | Age | Cost | Time | Prerequisite | Transforms |
+|---|---|---|---|---|---|
+| Heavy Scout | 1 | 150f + 75g | 45 s | — | Scout → Heavy Scout |
+| Knight | 2 | 200f + 100g | 45 s | Heavy Scout | Heavy Scout → Knight |
 
 ---
 

@@ -66,6 +66,8 @@ docs/             ← Architecture and design documentation
 | `project/scripts/buildings/stable.gd` | `Stable` — trains `HeavyScout` (Feudal) and `Knight` (Castle); queue cap 5 |
 | `project/scripts/units/heavy_scout.gd` | `HeavyScout` — Feudal Age cavalry; trained at Stable |
 | `project/scripts/units/knight.gd` | `Knight` — Castle Age heavy cavalry; trained at Stable |
+| `project/scripts/units/man_at_arms.gd` | `ManAtArms` — Feudal Age infantry upgrade of Militia; trained at Barracks |
+| `project/scripts/units/long_swordsman.gd` | `LongSwordsman` — Castle Age infantry upgrade of Man-at-Arms; trained at Barracks |
 | `project/scripts/buildings/siege_workshop.gd` | `SiegeWorkshop` — trains `BatteringRam`/`Mangonel` (Castle), `Trebuchet` (Imperial); queue cap 5 |
 | `project/scripts/units/battering_ram.gd` | `BatteringRam` — melee siege unit; x3 damage vs buildings, 0.2x vs units; only auto-attacks buildings |
 | `project/scripts/units/mangonel.gd` | `Mangonel` — AoE ranged siege; 72 px splash via `PhysicsDirectSpaceState2D.intersect_shape`; minimum range mechanic |

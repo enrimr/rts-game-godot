@@ -41,7 +41,9 @@
 |---|---|---|---|---|---|---|---|---|
 | Milicia | 0 | 60c + 20m | 21 s | 40 | 100 | 4 | 1.5 | 0 / 0 |
 | Arquero | 1 | 25m + 45o | 35 s | 30 | 110 | 5 | 4.0 | 0 / 0 |
+| Hombre de armas | 1 | 60c + 20m | 21 s | 65 | 100 | 7 | 1.5 | 1 / 0 |
 | Lancero | 2 | 60c + 30o | 28 s | 65 | 90 | 7 | 1.5 | 1 / 0 |
+| Espadachín largo | 2 | 60c + 20m | 21 s | 85 | 100 | 9 | 1.5 | 2 / 1 |
 
 ### Caballería (Establo)
 | Unidad | Edad | Coste | Tiempo | HP | Vel. | Ataque | Rango | Armadura M/P | Notas |
@@ -98,6 +100,22 @@
 | Fervor | 2 | 150o | 50 s | — | Vel. movimiento unidades ×1.10 |
 | Santidad | 2 | 100c | 40 s | — | HP espadachín ×1.15 |
 | Expiación | 3 | 150c + 100o | 55 s | Santidad | HP caballería ×1.20 |
+
+### Mejoras de unidades
+
+Las tecnologías de mejora de unidades transforman inmediatamente todas las unidades existentes del tipo de origen (HP escalado proporcionalmente). A partir de ese momento, el edificio entrena el nuevo tipo. Se investigan en el mismo edificio que entrena la unidad.
+
+#### Cuartel
+| Tecnología | Edad | Coste | Tiempo | Prerrequisito | Transforma |
+|---|---|---|---|---|---|
+| Hombre de armas | 1 | 100c + 40o | 45 s | — | Milicia → Hombre de armas |
+| Espadachín largo | 2 | 200c + 60o | 45 s | Hombre de armas | Hombre de armas → Espadachín largo |
+
+#### Establo
+| Tecnología | Edad | Coste | Tiempo | Prerrequisito | Transforma |
+|---|---|---|---|---|---|
+| Heavy Scout | 1 | 150c + 75o | 45 s | — | Scout → Heavy Scout |
+| Caballero | 2 | 200c + 100o | 45 s | Heavy Scout | Heavy Scout → Caballero |
 
 ---
 
