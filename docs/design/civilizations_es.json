@@ -1,0 +1,387 @@
+{
+  "meta": {
+    "game": "Calima: Llamas del Atlántico",
+    "edades": { "0": "Edad Oscura", "1": "Edad Feudal", "2": "Edad de Castillo", "3": "Edad Imperial" },
+    "edificio_investigacion_enum": {
+      "0": "herreria",
+      "1": "universidad",
+      "2": "monasterio",
+      "3": "centro_urbano",
+      "4": "mercado",
+      "5": "cuartel"
+    }
+  },
+  "edificios": [
+    { "id": "town_center",    "nombre": "Centro urbano",        "coste": { "madera": 275 },                                             "edad_min": 0, "hp": 2400, "tiempo_construccion": 200, "huella": [3,3] },
+    { "id": "house",          "nombre": "Casa",                  "coste": { "madera": 25 },                                              "edad_min": 0, "hp": 550,  "tiempo_construccion": 25,  "huella": [2,2], "bonus_poblacion": 5 },
+    { "id": "barracks",       "nombre": "Cuartel",               "coste": { "madera": 175 },                                             "edad_min": 0, "hp": 1200, "tiempo_construccion": 50,  "huella": [3,3] },
+    { "id": "stable",         "nombre": "Establo",               "coste": { "madera": 175 },                                             "edad_min": 0, "hp": 1100, "tiempo_construccion": 50,  "huella": [3,3] },
+    { "id": "blacksmith",     "nombre": "Herrería",              "coste": { "madera": 150 },                                             "edad_min": 1, "hp": 1000, "tiempo_construccion": 40,  "huella": [3,3] },
+    { "id": "market",         "nombre": "Mercado",               "coste": { "madera": 175 },                                             "edad_min": 1, "hp": 900,  "tiempo_construccion": 45,  "huella": [3,3] },
+    { "id": "lumber_camp",    "nombre": "Aserradero",            "coste": { "madera": 100 },                                             "edad_min": 0, "hp": 600,  "tiempo_construccion": 35,  "huella": [2,2] },
+    { "id": "mining_camp",    "nombre": "Campamento minero",     "coste": { "madera": 100 },                                             "edad_min": 0, "hp": 600,  "tiempo_construccion": 35,  "huella": [2,2] },
+    { "id": "farm",           "nombre": "Granja",                "coste": { "madera": 60 },                                              "edad_min": 0, "hp": 300,  "tiempo_construccion": 15,  "huella": [3,3] },
+    { "id": "dock",           "nombre": "Muelle",                "coste": { "madera": 150 },                                             "edad_min": 0, "hp": 1800, "tiempo_construccion": 45,  "huella": [3,2] },
+    { "id": "siege_workshop", "nombre": "Taller de asedio",      "coste": { "madera": 200 },                                             "edad_min": 2, "hp": 1200, "tiempo_construccion": 60,  "huella": [3,3] },
+    { "id": "university",     "nombre": "Universidad",           "coste": { "madera": 200 },                                             "edad_min": 2, "hp": 1100, "tiempo_construccion": 60,  "huella": [3,3] },
+    { "id": "temple",         "nombre": "Templo",                "coste": { "madera": 175 },                                             "edad_min": 2, "hp": 900,  "tiempo_construccion": 45,  "huella": [3,3] },
+    { "id": "wall_segment",   "nombre": "Segmento de muro",      "coste": { "piedra": 5 },                                               "edad_min": 0, "hp": 700,  "tiempo_construccion": 8,   "huella": [1,2] },
+    { "id": "gate",           "nombre": "Puerta",                "coste": { "madera": 30 },                                              "edad_min": 0, "hp": 500,  "tiempo_construccion": 20,  "huella": [1,2] },
+    { "id": "fish_trap",      "nombre": "Trampa de peces",       "coste": { "madera": 75 },                                              "edad_min": 0, "hp": 600,  "tiempo_construccion": 25,  "huella": [2,2] },
+    { "id": "wonder",         "nombre": "Maravilla",             "coste": { "madera": 2500, "comida": 2500, "piedra": 2500, "oro": 5000 }, "edad_min": 3, "hp": null, "tiempo_construccion": null, "huella": [4,4] }
+  ],
+  "unidades": {
+    "villager": {
+      "id": "villager", "nombre": "Aldeano", "entrena_en": "centro_urbano",
+      "edad_requerida": 0, "coste": { "comida": 50 }, "tiempo_entrenamiento": 25,
+      "estadisticas": { "hp": 25, "velocidad": 120, "vision": 4, "coste_poblacion": 1, "ataque": 3, "rango_ataque": 1.5, "vel_ataque": 1.0, "armadura_m": 0, "armadura_p": 0 }
+    },
+    "militia": {
+      "id": "militia", "nombre": "Milicia", "entrena_en": "cuartel",
+      "edad_requerida": 0, "coste": { "comida": 60, "madera": 20 }, "tiempo_entrenamiento": 21,
+      "estadisticas": { "hp": 40, "velocidad": 100, "vision": 4, "coste_poblacion": 1, "ataque": 4, "rango_ataque": 1.5, "vel_ataque": 1.0, "armadura_m": 0, "armadura_p": 0 }
+    },
+    "archer": {
+      "id": "archer", "nombre": "Arquero", "entrena_en": "cuartel",
+      "edad_requerida": 1, "coste": { "madera": 25, "oro": 45 }, "tiempo_entrenamiento": 35,
+      "estadisticas": { "hp": 30, "velocidad": 110, "vision": 6, "coste_poblacion": 1, "ataque": 5, "rango_ataque": 4.0, "vel_ataque": 1.0, "armadura_m": 0, "armadura_p": 0 }
+    },
+    "pikeman": {
+      "id": "pikeman", "nombre": "Lancero", "entrena_en": "cuartel",
+      "edad_requerida": 2, "coste": { "comida": 60, "oro": 30 }, "tiempo_entrenamiento": 28,
+      "estadisticas": { "hp": 65, "velocidad": 90, "vision": 4, "coste_poblacion": 1, "ataque": 7, "rango_ataque": 1.5, "vel_ataque": 0.8, "armadura_m": 1, "armadura_p": 0 }
+    },
+    "scout": {
+      "id": "scout", "nombre": "Scout", "entrena_en": "establo",
+      "edad_requerida": 0, "coste": { "comida": 80 }, "tiempo_entrenamiento": 30,
+      "estadisticas": { "hp": 35, "velocidad": 180, "vision": 8, "coste_poblacion": 1, "ataque": 2, "rango_ataque": 0.8, "vel_ataque": 1.0, "armadura_m": 0, "armadura_p": 0 },
+      "habilidad_especial": {
+        "id": "auto_explore", "tecla": "E",
+        "descripcion": "Explora el mapa autónomamente durante 60 segundos, eligiendo destinos aleatorios cada 3-7 s.",
+        "duracion": 60
+      }
+    },
+    "heavy_scout": {
+      "id": "heavy_scout", "nombre": "Heavy Scout", "entrena_en": "establo",
+      "edad_requerida": 1, "coste": { "comida": 80, "oro": 30 }, "tiempo_entrenamiento": 30,
+      "estadisticas": { "hp": 80, "velocidad": 130, "vision": 7, "coste_poblacion": 1, "ataque": 6, "rango_ataque": 1.5, "vel_ataque": 1.2, "armadura_m": 1, "armadura_p": 0 }
+    },
+    "knight": {
+      "id": "knight", "nombre": "Caballero", "entrena_en": "establo",
+      "edad_requerida": 2, "coste": { "comida": 60, "oro": 75 }, "tiempo_entrenamiento": 45,
+      "estadisticas": { "hp": 120, "velocidad": 115, "vision": 5, "coste_poblacion": 1, "ataque": 9, "rango_ataque": 1.5, "vel_ataque": 1.0, "armadura_m": 2, "armadura_p": 1 }
+    },
+    "battering_ram": {
+      "id": "battering_ram", "nombre": "Ariete", "entrena_en": "taller_asedio",
+      "edad_requerida": 2, "coste": { "madera": 160 }, "tiempo_entrenamiento": 60,
+      "estadisticas": { "hp": 180, "velocidad": 55, "vision": 4, "coste_poblacion": 2, "ataque": 40, "rango_ataque": 1.0, "vel_ataque": 0.4, "armadura_m": 5, "armadura_p": 5 },
+      "notas": "×3 daño vs edificios · solo ataca edificios automáticamente"
+    },
+    "mangonel": {
+      "id": "mangonel", "nombre": "Mangonela", "entrena_en": "taller_asedio",
+      "edad_requerida": 2, "coste": { "madera": 160, "oro": 135 }, "tiempo_entrenamiento": 60,
+      "estadisticas": { "hp": 90, "velocidad": 60, "vision": 8, "coste_poblacion": 2, "ataque": 35, "rango_ataque": 7.0, "vel_ataque": 0.25, "armadura_m": 0, "armadura_p": 6 },
+      "notas": "AoE splash 72 px · rango mínimo"
+    },
+    "trebuchet": {
+      "id": "trebuchet", "nombre": "Trebuchet", "entrena_en": "taller_asedio",
+      "edad_requerida": 3, "coste": { "madera": 200, "oro": 200 }, "tiempo_entrenamiento": 70,
+      "estadisticas": { "hp": 70, "velocidad": 48, "vision": 10, "coste_poblacion": 2, "ataque": 200, "rango_ataque": 12.0, "vel_ataque": 0.15, "armadura_m": 0, "armadura_p": 4 },
+      "notas": "Debe desplegarse 3 s antes de disparar · se undeploy al recibir orden de movimiento"
+    },
+    "fishing_boat": {
+      "id": "fishing_boat", "nombre": "Barca pesquera", "entrena_en": "muelle",
+      "edad_requerida": 0, "coste": { "madera": 75 }, "tiempo_entrenamiento": 25,
+      "estadisticas": { "hp": 45, "velocidad": 90, "vision": 5, "coste_poblacion": 1, "ataque": 0, "rango_ataque": 0, "vel_ataque": 0, "armadura_m": 0, "armadura_p": 2 }
+    },
+    "transport_ship": {
+      "id": "transport_ship", "nombre": "Barco transporte", "entrena_en": "muelle",
+      "edad_requerida": 1, "coste": { "madera": 125 }, "tiempo_entrenamiento": 45,
+      "estadisticas": { "hp": 150, "velocidad": 80, "vision": 5, "coste_poblacion": 1, "ataque": 0, "rango_ataque": 0, "vel_ataque": 0, "armadura_m": 0, "armadura_p": 5 }
+    },
+    "war_galley": {
+      "id": "war_galley", "nombre": "Galera de guerra", "entrena_en": "muelle",
+      "edad_requerida": 1, "coste": { "madera": 75, "oro": 35 }, "tiempo_entrenamiento": 35,
+      "estadisticas": { "hp": 120, "velocidad": 85, "vision": 7, "coste_poblacion": 1, "ataque": 6, "rango_ataque": 5.5, "vel_ataque": 0.8, "armadura_m": 0, "armadura_p": 4 }
+    }
+  },
+  "tecnologias": [
+    {
+      "id": "loom", "nombre": "Telares", "edificio_investigacion": "herreria",
+      "edad_requerida": 0, "coste": { "comida": 50 }, "tiempo_investigacion": 25,
+      "prerrequisitos": [], "efectos": { "villager_hp": 1.15 }
+    },
+    {
+      "id": "forging", "nombre": "Forja", "edificio_investigacion": "herreria",
+      "edad_requerida": 1, "coste": { "comida": 75 }, "tiempo_investigacion": 40,
+      "prerrequisitos": [], "efectos": { "unit_attack": 1.15 }
+    },
+    {
+      "id": "iron_casting", "nombre": "Fundición de hierro", "edificio_investigacion": "herreria",
+      "edad_requerida": 2, "coste": { "oro": 150 }, "tiempo_investigacion": 55,
+      "prerrequisitos": ["forging"], "efectos": { "unit_attack": 1.20 }
+    },
+    {
+      "id": "blast_furnace", "nombre": "Alto horno", "edificio_investigacion": "herreria",
+      "edad_requerida": 3, "coste": { "comida": 275, "oro": 225 }, "tiempo_investigacion": 50,
+      "prerrequisitos": [], "efectos": { "unit_attack": 1.15 }
+    },
+    {
+      "id": "scale_barding", "nombre": "Armadura de escamas", "edificio_investigacion": "herreria",
+      "edad_requerida": 1, "coste": { "comida": 100, "oro": 50 }, "tiempo_investigacion": 40,
+      "prerrequisitos": [], "efectos": { "unit_armor_melee": 1 }
+    },
+    {
+      "id": "chain_barding", "nombre": "Armadura de cadenas", "edificio_investigacion": "herreria",
+      "edad_requerida": 2, "coste": { "comida": 200, "oro": 100 }, "tiempo_investigacion": 45,
+      "prerrequisitos": ["scale_barding"], "efectos": { "unit_armor_melee": 1 }
+    },
+    {
+      "id": "plate_barding", "nombre": "Armadura de placas", "edificio_investigacion": "herreria",
+      "edad_requerida": 3, "coste": { "comida": 300, "oro": 200 }, "tiempo_investigacion": 60,
+      "prerrequisitos": ["chain_barding"], "efectos": { "unit_armor_melee": 1 }
+    },
+    {
+      "id": "padded_archer_armor", "nombre": "Protección arquero", "edificio_investigacion": "herreria",
+      "edad_requerida": 1, "coste": { "comida": 100 }, "tiempo_investigacion": 35,
+      "prerrequisitos": [], "efectos": { "archer_armor_pierce": 1 }
+    },
+    {
+      "id": "fletching", "nombre": "Flechado", "edificio_investigacion": "herreria",
+      "edad_requerida": 1, "coste": { "oro": 100 }, "tiempo_investigacion": 35,
+      "prerrequisitos": [], "efectos": { "archer_attack": 1.20 }
+    },
+    {
+      "id": "bodkin_arrow", "nombre": "Punta bodkin", "edificio_investigacion": "herreria",
+      "edad_requerida": 2, "coste": { "comida": 100, "oro": 150 }, "tiempo_investigacion": 35,
+      "prerrequisitos": ["fletching"], "efectos": { "archer_attack": 1.20, "archer_range": 1.10 }
+    },
+    {
+      "id": "shipwright", "nombre": "Astillero", "edificio_investigacion": "herreria",
+      "edad_requerida": 1, "coste": { "madera": 200, "oro": 60 }, "tiempo_investigacion": 40,
+      "prerrequisitos": [], "efectos": { "ship_hp": 1.15, "ship_cost": 0.85 }
+    },
+    {
+      "id": "ballistics", "nombre": "Balística", "edificio_investigacion": "universidad",
+      "edad_requerida": 2, "coste": { "oro": 175 }, "tiempo_investigacion": 50,
+      "prerrequisitos": ["fletching"], "efectos": { "archer_attack_speed": 1.20 }
+    },
+    {
+      "id": "chemistry", "nombre": "Química", "edificio_investigacion": "universidad",
+      "edad_requerida": 3, "coste": { "oro": 300 }, "tiempo_investigacion": 70,
+      "prerrequisitos": ["ballistics"], "efectos": { "archer_attack": 1.15 }
+    },
+    {
+      "id": "siege_engineering", "nombre": "Ingeniería de asedio", "edificio_investigacion": "universidad",
+      "edad_requerida": 2, "coste": { "oro": 200 }, "tiempo_investigacion": 60,
+      "prerrequisitos": [], "efectos": { "siege_attack_bonus": 1.20 }
+    },
+    {
+      "id": "fervor", "nombre": "Fervor", "edificio_investigacion": "monasterio",
+      "edad_requerida": 2, "coste": { "oro": 150 }, "tiempo_investigacion": 50,
+      "prerrequisitos": [], "efectos": { "unit_move_speed": 1.10 }
+    },
+    {
+      "id": "sanctity", "nombre": "Santidad", "edificio_investigacion": "monasterio",
+      "edad_requerida": 2, "coste": { "comida": 100 }, "tiempo_investigacion": 40,
+      "prerrequisitos": [], "efectos": { "swordsman_hp": 1.15 }
+    },
+    {
+      "id": "atonement", "nombre": "Expiación", "edificio_investigacion": "monasterio",
+      "edad_requerida": 3, "coste": { "comida": 150, "oro": 100 }, "tiempo_investigacion": 55,
+      "prerrequisitos": ["sanctity"], "efectos": { "cavalry_hp": 1.20 }
+    }
+  ],
+  "heroes": [
+    {
+      "id": "bencomo", "nombre": "Bencomo", "civilizacion": "guanches",
+      "estadisticas": { "hp": 180, "velocidad": 105, "ataque": 14, "rango_ataque": 1.5, "vel_ataque": 1.2, "armadura_m": 3, "armadura_p": 1 },
+      "habilidad": {
+        "id": "menceyes_charge", "recarga": 50,
+        "descripcion": "Galvaniza unidades aliadas cercanas: +30% velocidad de ataque durante 10 s."
+      }
+    },
+    {
+      "id": "doramas", "nombre": "Doramas", "civilizacion": "canarii",
+      "estadisticas": { "hp": 160, "velocidad": 115, "ataque": 12, "rango_ataque": 1.5, "vel_ataque": 1.4, "armadura_m": 2, "armadura_p": 2 },
+      "habilidad": {
+        "id": "challenge", "recarga": 45,
+        "descripcion": "Provoca a la unidad enemiga más cercana para que ataque a Doramas durante 6 s."
+      }
+    },
+    {
+      "id": "guadarfia", "nombre": "Guadarfía", "civilizacion": "mahos",
+      "estadisticas": { "hp": 140, "velocidad": 130, "ataque": 11, "rango_ataque": 1.5, "vel_ataque": 1.3, "armadura_m": 1, "armadura_p": 2 },
+      "habilidad": {
+        "id": "ambush", "recarga": 45,
+        "descripcion": "Casi invisible durante 8 s. Los enemigos no pueden atacarle automáticamente mientras está camuflado."
+      }
+    },
+    {
+      "id": "bethencourt", "nombre": "Jean de Béthencourt", "civilizacion": "francos",
+      "estadisticas": { "hp": 150, "velocidad": 110, "ataque": 11, "rango_ataque": 1.5, "vel_ataque": 1.1, "armadura_m": 3, "armadura_p": 2 },
+      "habilidad": {
+        "id": "forced_diplomacy", "recarga": 60,
+        "descripcion": "Convierte la unidad enemiga más cercana a tu bando durante 12 s."
+      }
+    },
+    {
+      "id": "drake", "nombre": "Francis Drake", "civilizacion": "britanos",
+      "estadisticas": { "hp": 145, "velocidad": 120, "ataque": 10, "rango_ataque": 3.5, "vel_ataque": 1.5, "armadura_m": 1, "armadura_p": 3 },
+      "habilidad": {
+        "id": "plunder", "recarga": 55,
+        "descripcion": "Durante 20 s genera 15 de oro por cada unidad enemiga eliminada en rango."
+      }
+    },
+    {
+      "id": "quijote", "nombre": "Don Quijote", "civilizacion": "castellanos",
+      "estadisticas": { "hp": 170, "velocidad": 125, "ataque": 16, "rango_ataque": 1.5, "vel_ataque": 0.9, "armadura_m": 4, "armadura_p": 1 },
+      "habilidad": {
+        "id": "knight_errant_charge", "recarga": 55,
+        "descripcion": "Carga en línea recta causando gran daño a todas las unidades en su camino."
+      }
+    },
+    {
+      "id": "artaxerax", "nombre": "Artaxerax", "civilizacion": "atlantes",
+      "estadisticas": { "hp": 155, "velocidad": 110, "ataque": 10, "rango_ataque": 4.0, "vel_ataque": 1.2, "armadura_m": 2, "armadura_p": 3 },
+      "habilidad": {
+        "id": "calima", "recarga": 60,
+        "descripcion": "Envuelve unidades aliadas cercanas en calima durante 12 s. Las unidades camufladas no pueden ser apuntadas por los enemigos."
+      }
+    },
+    {
+      "id": "hanno", "nombre": "Hannón el Navegante", "civilizacion": "fenicios",
+      "estadisticas": { "hp": 135, "velocidad": 105, "ataque": 8, "rango_ataque": 3.5, "vel_ataque": 1.1, "armadura_m": 1, "armadura_p": 2 },
+      "habilidad": {
+        "id": "trade_route", "recarga": 50,
+        "descripcion": "Establece una ruta comercial que genera 50 de oro a lo largo de 30 s."
+      }
+    }
+  ],
+  "civilizaciones": [
+    {
+      "id": "guanches",
+      "nombre": "Guanches",
+      "descripcion": "Maestros del terreno volcánico. Los edificios de piedra son más resistentes y los lanceros están disponibles desde el inicio.",
+      "heroe_id": "bencomo",
+      "unidades_unicas": ["menceyes_guard"],
+      "tecnologias_unicas": [],
+      "multiplicadores": {
+        "stone_building_hp": 1.20,
+        "spear_available_dark_age": 1.0
+      },
+      "unidades_no_disponibles": ["cavalry", "gunpowder"],
+      "tecnologias_no_disponibles": [],
+      "bonificadores_terreno": { "puede_atravesar_malpais": true }
+    },
+    {
+      "id": "canarii",
+      "nombre": "Canarii",
+      "descripcion": "Economía equilibrada y arqueros baratos. Los aldeanos recolectan comida más rápido.",
+      "heroe_id": "doramas",
+      "unidades_unicas": ["ravine_archer"],
+      "tecnologias_unicas": [],
+      "multiplicadores": {
+        "villager_food_gather_rate": 1.15,
+        "archer_food_cost": 0.80
+      },
+      "unidades_no_disponibles": ["heavy_cavalry"],
+      "tecnologias_no_disponibles": [],
+      "bonificadores_terreno": {}
+    },
+    {
+      "id": "mahos",
+      "nombre": "Mahos",
+      "descripcion": "Guerreros del desierto veloces. Los edificios cuestan menos madera y los scouts se mueven más rápido.",
+      "heroe_id": "guadarfia",
+      "unidades_unicas": ["sand_raider"],
+      "tecnologias_unicas": [],
+      "multiplicadores": {
+        "building_wood_cost": 0.70,
+        "scout_speed": 1.25,
+        "light_cavalry_speed": 1.25
+      },
+      "unidades_no_disponibles": ["heavy_cavalry_upgrades"],
+      "tecnologias_no_disponibles": [],
+      "bonificadores_terreno": { "puede_atravesar_dunas": true }
+    },
+    {
+      "id": "franks",
+      "nombre": "Francos",
+      "descripcion": "Nación de caballería con avance de edad rápido. Avanzar de edad cuesta menos y la caballería es más fuerte.",
+      "heroe_id": "bethencourt",
+      "unidades_unicas": ["chevalier_normand"],
+      "tecnologias_unicas": [],
+      "multiplicadores": {
+        "age_advance_cost": 0.85,
+        "cavalry_hp": 1.15,
+        "farm_build_speed": 1.20
+      },
+      "unidades_no_disponibles": ["full_archery", "late_naval"],
+      "tecnologias_no_disponibles": [],
+      "bonificadores_terreno": {}
+    },
+    {
+      "id": "britons",
+      "nombre": "Britanos",
+      "descripcion": "Piratas navales y arqueros maestros. Los arqueros ganan rango por edad y los barcos de guerra atacan más rápido.",
+      "heroe_id": "drake",
+      "unidades_unicas": ["longbowman"],
+      "tecnologias_unicas": [],
+      "multiplicadores": {
+        "archer_range_bonus_per_age": 1.0,
+        "warship_attack_speed": 1.20
+      },
+      "unidades_no_disponibles": ["heavy_cavalry_upgrades"],
+      "tecnologias_no_disponibles": [],
+      "bonificadores_terreno": {}
+    },
+    {
+      "id": "castellanos",
+      "nombre": "Castellanos",
+      "descripcion": "Potencia de late game. Cada avance de edad desbloquea una tecnología gratuita en la Herrería.",
+      "heroe_id": "quijote",
+      "unidades_unicas": ["conquistador"],
+      "tecnologias_unicas": [],
+      "multiplicadores": {
+        "swordsman_hp": 1.15,
+        "tower_range": 1.10,
+        "castle_range": 1.10
+      },
+      "unidades_no_disponibles": [],
+      "tecnologias_no_disponibles": [],
+      "bonificadores_terreno": {}
+    },
+    {
+      "id": "atlantes",
+      "nombre": "Atlantes",
+      "descripcion": "Navegantes misteriosos. Dominan las aguas costeras y pueden moverse libremente por el océano.",
+      "heroe_id": "artaxerax",
+      "unidades_unicas": ["tidecaller"],
+      "tecnologias_unicas": [],
+      "multiplicadores": {
+        "coastal_vision": 1.50,
+        "ship_attack_speed": 1.20,
+        "shallow_water_penalty": 0.0
+      },
+      "unidades_no_disponibles": ["heavy_cavalry", "siege_workshop"],
+      "tecnologias_no_disponibles": [],
+      "bonificadores_terreno": { "puede_atravesar_oceano": true }
+    },
+    {
+      "id": "fenicios",
+      "nombre": "Fenicios",
+      "descripcion": "Comerciantes ancestrales. El mercado está disponible desde el inicio y los barcos mercantes generan oro pasivo.",
+      "heroe_id": "hanno",
+      "unidades_unicas": ["trireme"],
+      "tecnologias_unicas": [],
+      "multiplicadores": {
+        "market_available_dark_age": 1.0,
+        "merchant_ship_gold_rate": 1.0
+      },
+      "unidades_no_disponibles": ["knights", "castle_infantry"],
+      "tecnologias_no_disponibles": [],
+      "bonificadores_terreno": {}
+    }
+  ]
+}
