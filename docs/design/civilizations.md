@@ -1,223 +1,221 @@
-# Civilizaciones, Unidades y Árbol de Tecnologías
+# Civilizations, Units and Technology Tree
 
-> Datos extraídos directamente de los recursos del proyecto (`resources/`).
-> Edades: **0** Dark Age · **1** Feudal · **2** Castle · **3** Imperial.
+> Data extracted directly from project resources (`resources/`).
+> Ages: **0** Dark Age · **1** Feudal Age · **2** Castle Age · **3** Imperial Age.
 
 ---
 
-## Edificios comunes
+## Common Buildings
 
-| Edificio | Coste | Edad mín. | HP | Función |
+| Building | Cost | Min Age | HP | Function |
 |---|---|---|---|---|
-| Town Center | 275 madera | 0 | 2400 | Entrena aldeanos · drop-off · reaparición héroe |
-| Casa | 25 madera | 0 | 550 | +5 cap. población |
-| Cuartel | 175 madera | 0 | 1200 | Entrena infantería |
-| Establo | 175 madera | 0 | 1100 | Entrena caballería |
-| Herrería | 150 madera | 1 | 1000 | Investiga armas y armaduras |
-| Mercado | 175 madera | 1 | 900 | Comercio de recursos |
-| Aserradero | 100 madera | 0 | 600 | Drop-off madera |
-| Campamento minero | 100 madera | 0 | 600 | Drop-off oro / piedra |
-| Granja | 60 madera | 0 | 300 | Fuente de comida continua |
-| Muelle | 150 madera | 0 | 1800 | Entrena barcos |
-| Taller de asedio | 200 madera | 2 | 1200 | Entrena asedio |
-| Universidad | 200 madera | 2 | 1100 | Tecnologías avanzadas |
-| Templo | 175 madera | 2 | 900 | Moral y curación |
-| Segmento de muro | 5 piedra | 0 | 700 | Defensa |
-| Puerta | 30 madera | 0 | 500 | Paso aliado |
-| Trampa de peces | 75 madera | 0 | 600 | Fuente pasiva de comida (océano) |
-| Maravilla | 2500m+2500c+2500p+5000o | 3 | — | Condición de victoria |
+| Town Center | 275 wood | 0 | 2400 | Trains villagers · drop-off · hero respawn |
+| House | 25 wood | 0 | 550 | +5 population cap |
+| Barracks | 175 wood | 0 | 1200 | Trains infantry |
+| Stable | 175 wood | 0 | 1100 | Trains cavalry |
+| Blacksmith | 150 wood | 1 | 1000 | Researches weapon and armour upgrades |
+| Market | 175 wood | 1 | 900 | Resource trading |
+| Lumber Camp | 100 wood | 0 | 600 | Wood drop-off |
+| Mining Camp | 100 wood | 0 | 600 | Gold / stone drop-off |
+| Farm | 60 wood | 0 | 300 | Continuous food source |
+| Dock | 150 wood | 0 | 1800 | Trains ships |
+| Siege Workshop | 200 wood | 2 | 1200 | Trains siege units |
+| University | 200 wood | 2 | 1100 | Advanced technology research |
+| Temple | 175 wood | 2 | 900 | Morale and healing research |
+| Wall Segment | 5 stone | 0 | 700 | Defensive barrier |
+| Gate | 30 wood | 0 | 500 | Allied passage |
+| Fish Trap | 75 wood | 0 | 600 | Passive food source (ocean) |
+| Wonder | 2500w+2500f+2500s+5000g | 3 | — | Victory condition |
 
 ---
 
-## Unidades comunes
+## Common Units
 
-### Aldeanos (Town Center)
-| Unidad | Coste | Tiempo | HP | Vel | Ataque | Rango |
+### Villagers (Town Center)
+| Unit | Cost | Time | HP | Speed | Attack | Range |
 |---|---|---|---|---|---|---|
-| Aldeano | 50 comida | 25 s | 25 | 120 | 3 | 1.5 |
+| Villager | 50 food | 25 s | 25 | 120 | 3 | 1.5 |
 
-### Infantería (Cuartel)
-| Unidad | Edad | Coste | Tiempo | HP | Vel | Ataque | Rango | Armadura M/P |
+### Infantry (Barracks)
+| Unit | Age | Cost | Time | HP | Speed | Attack | Range | Armour M/P |
 |---|---|---|---|---|---|---|---|---|
-| Milicia | 0 | 60c + 20m | 21 s | 40 | 100 | 4 | 1.5 | 0 / 0 |
-| Arquero | 1 | 25m + 45o | 35 s | 30 | 110 | 5 | 4.0 | 0 / 0 |
-| Lancero | 2 | 60c + 30o | 28 s | 65 | 90 | 7 | 1.5 | 1 / 0 |
+| Militia | 0 | 60f + 20w | 21 s | 40 | 100 | 4 | 1.5 | 0 / 0 |
+| Archer | 1 | 25w + 45g | 35 s | 30 | 110 | 5 | 4.0 | 0 / 0 |
+| Pikeman | 2 | 60f + 30g | 28 s | 65 | 90 | 7 | 1.5 | 1 / 0 |
 
-### Caballería (Establo)
-| Unidad | Edad | Coste | Tiempo | HP | Vel | Ataque | Rango | Armadura M/P | Notas |
+### Cavalry (Stable)
+| Unit | Age | Cost | Time | HP | Speed | Attack | Range | Armour M/P | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| Scout | 0 | 80c | 30 s | 35 | 180 | 2 | 0.8 | 0 / 0 | Habilidad: Explorar 60 s |
-| Heavy Scout | 1 | 80c + 30o | 30 s | 80 | 130 | 6 | 1.5 | 1 / 0 | |
-| Caballero | 2 | 60c + 75o | 45 s | 120 | 115 | 9 | 1.5 | 2 / 1 | |
+| Scout | 0 | 80f | 30 s | 35 | 180 | 2 | 0.8 | 0 / 0 | Explore ability (60 s) |
+| Heavy Scout | 1 | 80f + 30g | 30 s | 80 | 130 | 6 | 1.5 | 1 / 0 | |
+| Knight | 2 | 60f + 75g | 45 s | 120 | 115 | 9 | 1.5 | 2 / 1 | |
 
-> **Scout — Habilidad Explorar (tecla E):** El Scout deambula autónomamente por el mapa durante **60 segundos**, eligiendo un nuevo destino cada 3-7 s. Se puede cancelar con el mismo botón.
+> **Scout — Explore ability (key E):** The Scout autonomously roams the map for **60 seconds**, picking a new random destination every 3–7 s. Can be cancelled with the same button.
 
-### Asedio (Taller de asedio)
-| Unidad | Edad | Coste | Tiempo | HP | Vel | Ataque | Rango | Notas |
+### Siege (Siege Workshop)
+| Unit | Age | Cost | Time | HP | Speed | Attack | Range | Notes |
 |---|---|---|---|---|---|---|---|---|
-| Ariete | 2 | 160m | 60 s | 180 | 55 | 40 | 1.0 | ×3 daño edificios · pop 2 |
-| Mangonela | 2 | 160m + 135o | 60 s | 90 | 60 | 35 | 7.0 | AoE 72 px · rango mínimo · pop 2 |
-| Trebuchet | 3 | 200m + 200o | 70 s | 70 | 48 | 200 | 12.0 | Despliega 3 s · pop 2 |
+| Battering Ram | 2 | 160w | 60 s | 180 | 55 | 40 | 1.0 | ×3 damage vs buildings · pop 2 |
+| Mangonel | 2 | 160w + 135g | 60 s | 90 | 60 | 35 | 7.0 | AoE 72 px · minimum range · pop 2 |
+| Trebuchet | 3 | 200w + 200g | 70 s | 70 | 48 | 200 | 12.0 | Deploys in 3 s · auto-undeploys on move · pop 2 |
 
-### Naval (Muelle)
-| Unidad | Edad | Coste | Tiempo | HP | Vel | Ataque | Rango |
+### Naval (Dock)
+| Unit | Age | Cost | Time | HP | Speed | Attack | Range |
 |---|---|---|---|---|---|---|---|
-| Barca pesquera | 0 | 75m | 25 s | 45 | 90 | 0 | — |
-| Barco transporte | 1 | 125m | 45 s | 150 | 80 | 0 | — |
-| Galera de guerra | 1 | 75m + 35o | 35 s | 120 | 85 | 6 | 5.5 |
+| Fishing Boat | 0 | 75w | 25 s | 45 | 90 | 0 | — |
+| Transport Ship | 1 | 125w | 45 s | 150 | 80 | 0 | — |
+| War Galley | 1 | 75w + 35g | 35 s | 120 | 85 | 6 | 5.5 |
 
 ---
 
-## Árbol de tecnologías
+## Technology Tree
 
-### Herrería (Blacksmith)
-| Tecnología | Edad | Coste | Tiempo | Prerrequisito | Efecto |
+### Blacksmith
+| Technology | Age | Cost | Time | Prerequisite | Effect |
 |---|---|---|---|---|---|
-| Telares | 0 | 50c | 25 s | — | HP aldeanos ×1.15 |
-| Forja | 1 | 75c | 40 s | — | Ataque unidades ×1.15 |
-| Fundición de hierro | 2 | 150o | 55 s | Forja | Ataque unidades ×1.20 |
-| Alto horno | 3 | 275c + 225o | 50 s | — | Ataque unidades ×1.15 |
-| Armadura de escamas | 1 | 100c + 50o | 40 s | — | Armadura cuerpo a cuerpo +1 |
-| Armadura de cadenas | 2 | 200c + 100o | 45 s | Esc. escamas | Armadura cuerpo a cuerpo +1 |
-| Armadura de placas | 3 | 300c + 200o | 60 s | Esc. cadenas | Armadura cuerpo a cuerpo +1 |
-| Armadura arquero | 1 | 100c | 35 s | — | Armadura perforante arquero +1 |
-| Flechado | 1 | 100o | 35 s | — | Ataque arquero ×1.20 |
-| Punta bodkin | 2 | 100c + 150o | 35 s | Flechado | Ataque arquero ×1.20 · Rango ×1.10 |
-| Barda de escamas | 1 | 100c + 50o | 40 s | — | Armadura M unidades +1 |
-| Barda de placas | 3 | 300c + 200o | 60 s | Barda cadenas | Armadura M unidades +1 |
-| Astillero | 1 | 200m + 60o | 40 s | — | HP barcos ×1.15 · Coste -15% |
+| Loom | 0 | 50f | 25 s | — | Villager HP ×1.15 |
+| Forging | 1 | 75f | 40 s | — | Unit attack ×1.15 |
+| Iron Casting | 2 | 150g | 55 s | Forging | Unit attack ×1.20 |
+| Blast Furnace | 3 | 275f + 225g | 50 s | — | Unit attack ×1.15 |
+| Scale Barding | 1 | 100f + 50g | 40 s | — | Unit melee armour +1 |
+| Chain Barding | 2 | 200f + 100g | 45 s | Scale Barding | Unit melee armour +1 |
+| Plate Barding | 3 | 300f + 200g | 60 s | Chain Barding | Unit melee armour +1 |
+| Padded Archer Armour | 1 | 100f | 35 s | — | Archer pierce armour +1 |
+| Fletching | 1 | 100g | 35 s | — | Archer attack ×1.20 |
+| Bodkin Arrow | 2 | 100f + 150g | 35 s | Fletching | Archer attack ×1.20 · Range ×1.10 |
+| Shipwright | 1 | 200w + 60g | 40 s | — | Ship HP ×1.15 · Cost −15% |
 
-### Universidad (University)
-| Tecnología | Edad | Coste | Tiempo | Prerrequisito | Efecto |
+### University
+| Technology | Age | Cost | Time | Prerequisite | Effect |
 |---|---|---|---|---|---|
-| Balística | 2 | 175o | 50 s | Flechado | Vel. ataque arquero ×1.20 |
-| Química | 3 | 300o | 70 s | Balística | Ataque arquero ×1.15 |
-| Ingeniería de asedio | 2 | 200o | 60 s | — | Daño a edificios ×1.20 |
+| Ballistics | 2 | 175g | 50 s | Fletching | Archer attack speed ×1.20 |
+| Chemistry | 3 | 300g | 70 s | Ballistics | Archer attack ×1.15 |
+| Siege Engineering | 2 | 200g | 60 s | — | Damage vs buildings ×1.20 |
 
-### Templo (Temple / Monastery)
-| Tecnología | Edad | Coste | Tiempo | Prerrequisito | Efecto |
+### Temple (Monastery)
+| Technology | Age | Cost | Time | Prerequisite | Effect |
 |---|---|---|---|---|---|
-| Fervor | 2 | 150o | 50 s | — | Vel. movimiento unidades ×1.10 |
-| Santidad | 2 | 100c | 40 s | — | HP espadachín ×1.15 |
-| Expiación | 3 | 150c + 100o | 55 s | Santidad | HP caballería ×1.20 |
+| Fervor | 2 | 150g | 50 s | — | Unit move speed ×1.10 |
+| Sanctity | 2 | 100f | 40 s | — | Swordsman HP ×1.15 |
+| Atonement | 3 | 150f + 100g | 55 s | Sanctity | Cavalry HP ×1.20 |
 
 ---
 
-## Civilizaciones
+## Civilizations
 
 ### Guanches
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Héroe** | Bencomo |
-| **Habilidad** | *Carga de Menceyes* — Galvaniza unidades aliadas cercanas: +30% velocidad de ataque durante 10 s · Recarga 50 s |
-| **Unidad única** | Menceyes Guard |
-| **Bonificadores** | Edificios de piedra HP ×1.20 · Lanzas desde Dark Age · Atraviesan malpais |
-| **Restricciones** | Sin caballería · Sin pólvora |
+| **Hero** | Bencomo |
+| **Ability** | *Menceyes Charge* — Rallies nearby allied units, granting +30% attack speed for 10 s · Cooldown 50 s |
+| **Unique Unit** | Menceyes Guard |
+| **Bonuses** | Stone building HP ×1.20 · Spears available in Dark Age · Can traverse malpais terrain |
+| **Restrictions** | No cavalry · No gunpowder |
 
-**Estrategia:** Fortaleza defensiva con infantería resistente. Ideal para mapas con volcanes.
+**Strategy:** Defensive fortress with resilient infantry. Strong on volcanic maps.
 
 ---
 
 ### Canarii
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Héroe** | Doramas |
-| **Habilidad** | *Desafío* — Provoca a la unidad enemiga más cercana para que ataque a Doramas durante 6 s · Recarga 45 s |
-| **Unidad única** | Arquero de barranco |
-| **Bonificadores** | Aldeanos recolectan comida ×1.15 · Coste comida arqueros ×0.80 |
-| **Restricciones** | Sin caballería pesada |
+| **Hero** | Doramas |
+| **Ability** | *Challenge* — Taunts the nearest enemy unit, forcing it to attack Doramas for 6 s · Cooldown 45 s |
+| **Unique Unit** | Ravine Archer |
+| **Bonuses** | Villagers gather food ×1.15 · Archer food cost ×0.80 |
+| **Restrictions** | No heavy cavalry |
 
-**Estrategia:** Economía de comida superior + arquería barata. Ideal para rush de arqueros.
+**Strategy:** Superior food economy + cheap archers. Great for early archer rushes.
 
 ---
 
 ### Mahos
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Héroe** | Guadarfía |
-| **Habilidad** | *Emboscada* — Casi invisible durante 8 s; enemigos no pueden atacarle automáticamente · Recarga 45 s |
-| **Unidad única** | Sand Raider |
-| **Bonificadores** | Coste madera edificios ×0.70 · Scout/caballería ligera vel. ×1.25 · Atraviesan dunas |
-| **Restricciones** | Sin actualizaciones caballería pesada |
+| **Hero** | Guadarfía |
+| **Ability** | *Ambush* — Nearly invisible for 8 s; enemies cannot auto-attack Guadarfía while cloaked · Cooldown 45 s |
+| **Unique Unit** | Sand Raider |
+| **Bonuses** | Building wood cost ×0.70 · Scout / light cavalry speed ×1.25 · Can traverse dunes |
+| **Restrictions** | No heavy cavalry upgrades |
 
-**Estrategia:** Expansión rápida y barata + raids de caballería ligera. Excelente en mapas áridos.
+**Strategy:** Fast cheap expansion + light cavalry raids. Excellent on arid maps.
 
 ---
 
-### Francos
-| Campo | Valor |
+### Franks
+| Field | Value |
 |---|---|
-| **Héroe** | Jean de Béthencourt |
-| **Habilidad** | *Diplomacia Forzada* — Convierte la unidad enemiga más cercana durante 12 s · Recarga 60 s |
-| **Unidad única** | Chevalier Normand |
-| **Bonificadores** | Coste avance de edad ×0.85 · HP caballería ×1.15 · Vel. construcción granjas ×1.20 |
-| **Restricciones** | Sin arquería completa · Sin armada tardía |
+| **Hero** | Jean de Béthencourt |
+| **Ability** | *Forced Diplomacy* — Converts the nearest enemy unit for 12 s · Cooldown 60 s |
+| **Unique Unit** | Chevalier Normand |
+| **Bonuses** | Age advance cost ×0.85 · Cavalry HP ×1.15 · Farm build speed ×1.20 |
+| **Restrictions** | No full archery · No late naval |
 
-**Estrategia:** Avance rápido de edad + caballería potente. Presión constante en Castle Age.
+**Strategy:** Fast age advancement + powerful cavalry. Strong pressure in Castle Age.
 
 ---
 
-### Britanos
-| Campo | Valor |
+### Britons
+| Field | Value |
 |---|---|
-| **Héroe** | Francis Drake |
-| **Habilidad** | *Saqueo* — Genera 15 oro por unidad enemiga eliminada en rango durante 20 s · Recarga 55 s |
-| **Unidad única** | Longbowman |
-| **Bonificadores** | Rango arqueros +1 por edad avanzada · Vel. ataque barcos de guerra ×1.20 |
-| **Restricciones** | Sin actualizaciones caballería pesada |
+| **Hero** | Francis Drake |
+| **Ability** | *Plunder* — Earns 15 gold for each enemy unit killed within range for 20 s · Cooldown 55 s |
+| **Unique Unit** | Longbowman |
+| **Bonuses** | Archer range +1 per age advanced · Warship attack speed ×1.20 |
+| **Restrictions** | No heavy cavalry upgrades |
 
-**Estrategia:** Dominancia naval + arquería de largo alcance. Muy eficaz en mapas Islands.
+**Strategy:** Naval dominance + long-range archers. Very effective on Islands maps.
 
 ---
 
 ### Castellanos
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Héroe** | Don Quijote |
-| **Habilidad** | *Carga del Caballero Errante* — Carga en línea recta dañando todo lo que encuentre · Recarga 55 s |
-| **Unidad única** | Conquistador |
-| **Bonificadores** | HP espadachín ×1.15 · Rango torres/castillos ×1.10 · Tecnología gratis en Herrería por avance de edad |
-| **Restricciones** | Ninguna |
+| **Hero** | Don Quijote |
+| **Ability** | *Knight Errant Charge* — Charges forward in a straight line, dealing heavy damage to all units in the path · Cooldown 55 s |
+| **Unique Unit** | Conquistador |
+| **Bonuses** | Swordsman HP ×1.15 · Tower / castle range ×1.10 · Free Blacksmith technology per age advance |
+| **Restrictions** | None |
 
-**Estrategia:** Civilización completa sin restricciones. Fuerte en late game con tecnologías gratuitas.
+**Strategy:** Well-rounded civilisation with no restrictions. Snowballs hard in late game with free technologies.
 
 ---
 
 ### Atlantes
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Héroe** | Artaxerax |
-| **Habilidad** | *Calima* — Envuelve unidades aliadas cercanas en calima durante 12 s; los enemigos no pueden apuntarles · Recarga 60 s |
-| **Unidad única** | Tidecaller |
-| **Bonificadores** | Visión costera ×1.50 · Vel. ataque barcos ×1.20 · Sin penalización agua poco profunda · Atraviesan océano |
-| **Restricciones** | Sin caballería pesada · Sin taller de asedio |
+| **Hero** | Artaxerax |
+| **Ability** | *Calima* — Shrouds nearby allied units in a calima veil for 12 s; cloaked units cannot be targeted by enemies · Cooldown 60 s |
+| **Unique Unit** | Tidecaller |
+| **Bonuses** | Coastal vision ×1.50 · Ship attack speed ×1.20 · No shallow water penalty · Can traverse ocean |
+| **Restrictions** | No heavy cavalry · No siege workshop |
 
-**Estrategia:** Supremacía naval absoluta. Devastadores en mapas costeros e Islands.
+**Strategy:** Absolute naval supremacy. Devastating on coastal and Islands maps.
 
 ---
 
 ### Fenicios
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Héroe** | Hannón el Navegante |
-| **Habilidad** | *Ruta Comercial* — Genera 50 de oro a lo largo de 30 s · Recarga 50 s |
-| **Unidad única** | Trireme |
-| **Bonificadores** | Mercado disponible desde Dark Age · Tasa pasiva de oro en barcos mercantes |
-| **Restricciones** | Sin caballeros · Sin infantería de castillo |
+| **Hero** | Hannón el Navegante |
+| **Ability** | *Trade Route* — Generates 50 gold over 30 s · Cooldown 50 s |
+| **Unique Unit** | Trireme |
+| **Bonuses** | Market available from Dark Age · Merchant ships generate passive gold |
+| **Restrictions** | No knights · No castle infantry |
 
-**Estrategia:** Economía de oro superior desde el primer minuto. Ideal para financiar tecnologías y unidades caras.
+**Strategy:** Superior gold economy from minute one. Ideal for funding expensive technologies and units.
 
 ---
 
-## Héroes — referencia rápida
+## Heroes — Quick Reference
 
-| Héroe | Civilización | HP | Vel | Ataque | Rango | Arm M/P | Habilidad | Recarga |
+| Hero | Civilisation | HP | Speed | Attack | Range | Armour M/P | Ability | Cooldown |
 |---|---|---|---|---|---|---|---|---|
-| Bencomo | Guanches | 180 | 105 | 14 | 1.5 | 3/1 | +30% vel. ataque aliados 10 s | 50 s |
-| Doramas | Canarii | 160 | 115 | 12 | 1.5 | 2/2 | Taunt enemigo 6 s | 45 s |
-| Guadarfía | Mahos | 140 | 130 | 11 | 1.5 | 1/2 | Invisibilidad 8 s | 45 s |
-| Jean de Béthencourt | Francos | 150 | 110 | 11 | 1.5 | 3/2 | Conversión enemigo 12 s | 60 s |
-| Francis Drake | Britanos | 145 | 120 | 10 | 3.5 | 1/3 | 15 oro/kill en 20 s | 55 s |
-| Don Quijote | Castellanos | 170 | 125 | 16 | 1.5 | 4/1 | Carga en línea | 55 s |
-| Artaxerax | Atlantes | 155 | 110 | 10 | 4.0 | 2/3 | Sigilo aliados 12 s | 60 s |
-| Hannón el Navegante | Fenicios | 135 | 105 | 8 | 3.5 | 1/2 | 50 oro en 30 s | 50 s |
+| Bencomo | Guanches | 180 | 105 | 14 | 1.5 | 3/1 | +30% attack speed allies 10 s | 50 s |
+| Doramas | Canarii | 160 | 115 | 12 | 1.5 | 2/2 | Taunt enemy 6 s | 45 s |
+| Guadarfía | Mahos | 140 | 130 | 11 | 1.5 | 1/2 | Cloak 8 s | 45 s |
+| Jean de Béthencourt | Franks | 150 | 110 | 11 | 1.5 | 3/2 | Convert enemy 12 s | 60 s |
+| Francis Drake | Britons | 145 | 120 | 10 | 3.5 | 1/3 | 15 gold/kill for 20 s | 55 s |
+| Don Quijote | Castellanos | 170 | 125 | 16 | 1.5 | 4/1 | Straight-line charge | 55 s |
+| Artaxerax | Atlantes | 155 | 110 | 10 | 4.0 | 2/3 | Cloak allies 12 s | 60 s |
+| Hannón el Navegante | Fenicios | 135 | 105 | 8 | 3.5 | 1/2 | 50 gold over 30 s | 50 s |
