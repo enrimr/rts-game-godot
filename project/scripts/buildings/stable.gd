@@ -34,11 +34,18 @@ const UNIT_DEFS: Array[Dictionary] = [
 
 var _train_queue: Array[Dictionary] = []
 var _train_timer: float = 0.0
+var _unit_upgrades: Dictionary = {}  # from_unit_id -> to_unit_id
 
 @onready var _train_bar: ProgressBar = get_node_or_null("TrainingBar")
 
 func _ready() -> void:
 	super._ready()
+	EventBus.unit_upgrade_applied.connect(_on_unit_upgrade_applied)
+
+func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -> void:
+	if pid != player_id:
+		return
+	_unit_upgrades[from_id] = to_res.id
 
 func _process(delta: float) -> void:
 	if state != BuildingState.COMPLETE or _train_queue.is_empty():
@@ -127,9 +134,23 @@ func _find_def(unit_id: String) -> Dictionary:
 			return def
 	return {}
 
+func _resolve_upgraded_scene(scene_path: String) -> String:
+	# Walk the upgrade chain to find the highest-tier unit scene for this path.
+	for def: Dictionary in UNIT_DEFS:
+		if (def["scene"] as String) == scene_path:
+			var effective_id: String = def["id"] as String
+			while _unit_upgrades.has(effective_id):
+				effective_id = _unit_upgrades[effective_id] as String
+			if effective_id != (def["id"] as String):
+				for upgraded_def: Dictionary in UNIT_DEFS:
+					if (upgraded_def["id"] as String) == effective_id:
+						return upgraded_def["scene"] as String
+	return scene_path
+
 func _do_spawn(scene_path: String) -> void:
 	if scene_path.is_empty():
 		return
+	scene_path = _resolve_upgraded_scene(scene_path)
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
 		return

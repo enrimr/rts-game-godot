@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://man_at_arms_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "man_at_arms"
+display_name = "Man-at-Arms"
+description = "Upgraded infantry with improved armor and attack."
+max_health = 65.0
+move_speed = 100.0
+line_of_sight = 4.0
+population_cost = 1
+attack = 7.0
+attack_range = 1.5
+attack_speed = 1.0
+armor_melee = 1.0
+armor_pierce = 0.0
+age_required = 1
+train_time = 21.0
+cost_food = 60
+cost_wood = 20
+cost_gold = 0

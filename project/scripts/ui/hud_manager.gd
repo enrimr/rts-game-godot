@@ -160,6 +160,7 @@ func _init_rival_stats(rival_id: int) -> void:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	EventBus.resource_changed.connect(_on_resource_changed)
+	EventBus.technology_researched.connect(_on_technology_researched)
 	EventBus.unit_selected.connect(_on_unit_selected)
 	EventBus.building_selected.connect(_on_building_selected)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
@@ -448,6 +449,14 @@ func _render_action_page() -> void:
 		style.corner_radius_top_right = 4
 		style.corner_radius_bottom_left = 4
 		style.corner_radius_bottom_right = 4
+		var is_upgrade: bool = data.get("is_upgrade", false) as bool
+		btn.set_meta("is_upgrade", is_upgrade)
+		if is_upgrade:
+			style.border_color = Color(0.85, 0.72, 0.10)
+			style.border_width_left = 2
+			style.border_width_right = 2
+			style.border_width_top = 2
+			style.border_width_bottom = 2
 		btn.add_theme_stylebox_override("normal", style)
 		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
 		hover_style.bg_color = effective_color.lightened(0.25)
@@ -538,6 +547,12 @@ func _refresh_button_states() -> void:
 		style.corner_radius_top_right = 4
 		style.corner_radius_bottom_left = 4
 		style.corner_radius_bottom_right = 4
+		if btn.get_meta("is_upgrade", false) as bool:
+			style.border_color = Color(0.85, 0.72, 0.10)
+			style.border_width_left = 2
+			style.border_width_right = 2
+			style.border_width_top = 2
+			style.border_width_bottom = 2
 		btn.add_theme_stylebox_override("normal", style)
 		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
 		hover_style.bg_color = effective_color.lightened(0.25)
@@ -651,6 +666,16 @@ func _on_resource_changed(player_id: int, resource: String, amount: int) -> void
 		"gold":  _gold_display.set_amount(amount)
 		"stone": _stone_display.set_amount(amount)
 	_refresh_button_states()
+
+func _on_technology_researched(player_id: int, _tech_id: String) -> void:
+	if player_id != local_player_id:
+		return
+	if not is_instance_valid(_selected_building):
+		return
+	if _selected_building is Barracks:
+		_populate_barracks_actions(_selected_building as Barracks)
+	elif _selected_building is Stable:
+		_populate_stable_actions(_selected_building as Stable)
 
 func _on_unit_selected(units: Array) -> void:
 	if is_instance_valid(_selected_building) and _selected_building.has_method("set_selected"):
@@ -963,13 +988,15 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 		if tech.cost_food > 0: tech_costs["food"] = tech.cost_food
 		if tech.cost_wood > 0: tech_costs["wood"] = tech.cost_wood
 		if tech.cost_gold > 0: tech_costs["gold"] = tech.cost_gold
+		var is_upgrade: bool = tech.upgrade_from_unit_id != ""
 		actions.append({
 			"id": "research:%s" % tech.id,
-			"label": tech.display_name + cost_str,
-			"color": Color(0.25, 0.45, 0.55),
+			"label": ("▲ " if is_upgrade else "") + tech.display_name + cost_str,
+			"color": Color(0.45, 0.32, 0.10) if is_upgrade else Color(0.25, 0.45, 0.55),
 			"cost": tech_costs,
 			"key": 0,
 			"raw_label": true,
+			"is_upgrade": is_upgrade,
 		})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
@@ -1023,8 +1050,29 @@ func _populate_stable_actions(stable: Stable) -> void:
 			"cost": costs,
 			"key": key_map.get(uid, KEY_NONE) as Key,
 		})
+	var techs: Array[TechnologyResource] = TechManager.get_available_techs(local_player_id, TechnologyResource.ResearchBuilding.STABLE)
+	for tech: TechnologyResource in techs:
+		var cost_str: String = ""
+		if tech.cost_food > 0: cost_str += "\n%dF" % tech.cost_food
+		if tech.cost_wood > 0: cost_str += "\n%dW" % tech.cost_wood
+		if tech.cost_gold > 0: cost_str += "\n%dG" % tech.cost_gold
+		var tech_costs: Dictionary = {}
+		if tech.cost_food > 0: tech_costs["food"] = tech.cost_food
+		if tech.cost_wood > 0: tech_costs["wood"] = tech.cost_wood
+		if tech.cost_gold > 0: tech_costs["gold"] = tech.cost_gold
+		var is_upgrade: bool = tech.upgrade_from_unit_id != ""
+		actions.append({
+			"id": "research:%s" % tech.id,
+			"label": ("▲ " if is_upgrade else "") + tech.display_name + cost_str,
+			"color": Color(0.45, 0.32, 0.10) if is_upgrade else Color(0.25, 0.45, 0.55),
+			"cost": tech_costs,
+			"key": 0,
+			"raw_label": true,
+			"is_upgrade": is_upgrade,
+		})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
+	_build_research_bar(stable)
 
 func _populate_research_only_actions(building: Node, research_type: TechnologyResource.ResearchBuilding) -> void:
 	var actions: Array = []

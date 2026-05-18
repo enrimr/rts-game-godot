@@ -49,10 +49,24 @@ func _ready() -> void:
 		attack_range_area.body_entered.connect(_on_enemy_entered_range)
 	if player_id == 0:
 		EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
+	EventBus.unit_upgrade_applied.connect(_on_unit_upgrade_applied)
 	call_deferred("_add_player_color_stripe")
 
 func _add_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, 20.0, 4.0)
+
+func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -> void:
+	if pid != player_id:
+		return
+	if unit_data == null or unit_data.id != from_id:
+		return
+	var old_max: float = unit_data.max_health * CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
+	var ratio: float = clampf(health / old_max, 0.0, 1.0)
+	unit_data = to_res
+	var new_max: float = unit_data.max_health * CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
+	health = new_max * ratio
+	health_bar.max_value = new_max
+	health_bar.value = health
 
 func set_selected(value: bool) -> void:
 	is_selected = value

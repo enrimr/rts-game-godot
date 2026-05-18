@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_tech"]
+
+[resource]
+script = ExtResource("1_tech")
+id = "upgrade_man_at_arms"
+display_name = "Man-at-Arms"
+description = "Upgrades all Militia to Men-at-Arms and trains Men-at-Arms going forward."
+required_age = 1
+research_building = 5
+research_time = 45.0
+cost_food = 100
+cost_wood = 0
+cost_gold = 40
+effects = {}
+prerequisites = []
+upgrade_from_unit_id = "militia"
+upgrade_to_unit_id = "man_at_arms"

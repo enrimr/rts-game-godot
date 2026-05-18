@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calima: Flames of the Atlantic — Tech Tree Reference</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:          #1a1108;
+    --card-bg:     #2a1f0e;
+    --card-border: #3d2e18;
+    --gold:        #c8a84b;
+    --gold-dim:    #8c7232;
+    --gold-bright: #f0cc6a;
+    --text:        #d4c49a;
+    --text-dim:    #7a6a4a;
+    --age-dark:    #4a3520;
+    --age-feudal:  #4a4020;
+    --age-castle:  #3a3a50;
+    --age-imperial:#4a2020;
+    --food:        #e86c2a;
+    --wood:        #6aaa3a;
+    --gold-res:    #e8c830;
+    --stone:       #aaaaaa;
+    --shadow:      rgba(0,0,0,0.6);
+    --glow:        rgba(200,168,75,0.3);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(180deg, #0d0904 0%, #1a1108 100%);
+    border-bottom: 2px solid var(--gold-dim);
+    padding: 18px 24px 0;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px var(--shadow);
+  }
+
+  header h1 {
+    color: var(--gold);
+    font-size: 1.6rem;
+    font-variant: small-caps;
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 20px rgba(200,168,75,0.5);
+    margin-bottom: 14px;
+  }
+
+  /* ── Tab nav ── */
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  nav button {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-variant: small-caps;
+    letter-spacing: 0.08em;
+    padding: 8px 22px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  nav button:hover { color: var(--gold); }
+
+  nav button.active {
+    color: var(--gold-bright);
+    border-bottom-color: var(--gold);
+  }
+
+  /* ── Main content ── */
+  main {
+    padding: 28px 20px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Generic card ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 12px var(--glow);
+  }
+
+  .card-title {
+    color: var(--gold);
+    font-size: 0.95rem;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  /* ── Age banner ── */
+  .age-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 4px;
+    margin: 28px 0 14px;
+    padding: 8px 16px;
+    font-variant: small-caps;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    color: var(--gold-bright);
+    font-weight: 600;
+  }
+
+  .age-banner.age-0  { background: var(--age-dark);     border-left: 4px solid #8c6a40; }
+  .age-banner.age-1  { background: var(--age-feudal);   border-left: 4px solid #8c8a40; }
+  .age-banner.age-2  { background: var(--age-castle);   border-left: 4px solid #6060a0; }
+  .age-banner.age-3  { background: var(--age-imperial); border-left: 4px solid #a04040; }
+
+  /* ── Resource cost pills ── */
+  .cost {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .cost-item {
+    border-radius: 3px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 2px 7px;
+  }
+
+  .cost-food   { background: rgba(232,108,42,0.18); color: var(--food);     border: 1px solid rgba(232,108,42,0.35); }
+  .cost-wood   { background: rgba(106,170,58,0.18); color: var(--wood);     border: 1px solid rgba(106,170,58,0.35); }
+  .cost-gold   { background: rgba(232,200,48,0.18); color: var(--gold-res); border: 1px solid rgba(232,200,48,0.35); }
+  .cost-stone  { background: rgba(170,170,170,0.18);color: var(--stone);    border: 1px solid rgba(170,170,170,0.35);}
+
+  /* ── Stat row ── */
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .stat { white-space: nowrap; }
+  .stat span { color: var(--text); font-weight: 600; }
+
+  /* ── ─────────── TAB 1: Civilizations ─────────── ── */
+  .civ-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .civ-card .card-title { font-size: 1.1rem; }
+
+  .civ-desc {
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .hero-box {
+    background: rgba(200,168,75,0.06);
+    border: 1px solid rgba(200,168,75,0.2);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+  }
+
+  .hero-name {
+    color: var(--gold-bright);
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .hero-ability-label {
+    color: var(--gold-dim);
+    font-size: 0.72rem;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+  }
+
+  .hero-ability-desc {
+    color: var(--text);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    margin-top: 2px;
+  }
+
+  .hero-cooldown {
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    margin-top: 4px;
+  }
+
+  .section-label {
+    color: var(--gold-dim);
+    font-size: 0.7rem;
+    font-variant: small-caps;
+    letter-spacing: 0.08em;
+    margin: 8px 0 4px;
+    text-transform: uppercase;
+  }
+
+  .unique-units {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .unique-unit-badge {
+    background: rgba(200,168,75,0.12);
+    border: 1px solid var(--gold-dim);
+    border-radius: 20px;
+    color: var(--gold);
+    font-size: 0.75rem;
+    padding: 2px 10px;
+  }
+
+  .bonuses-list {
+    list-style: none;
+    font-size: 0.79rem;
+    line-height: 1.7;
+  }
+
+  .bonuses-list li::before {
+    content: "◆ ";
+    color: var(--gold-dim);
+    font-size: 0.6rem;
+  }
+
+  .restrictions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 4px;
+  }
+
+  .restriction-pill {
+    background: rgba(120,80,60,0.2);
+    border: 1px solid rgba(120,80,60,0.4);
+    border-radius: 20px;
+    color: var(--text-dim);
+    font-size: 0.73rem;
+    padding: 2px 9px;
+    text-decoration: line-through;
+    opacity: 0.75;
+  }
+
+  .terrain-bonuses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 0.78rem;
+  }
+
+  .terrain-tag {
+    background: rgba(40,100,80,0.2);
+    border: 1px solid rgba(40,140,100,0.3);
+    border-radius: 3px;
+    color: #6ecfa0;
+    padding: 2px 8px;
+  }
+
+  /* ── ─────────── TAB 2: Buildings ─────────── ── */
+  .buildings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .building-function {
+    background: rgba(200,168,75,0.08);
+    border-radius: 3px;
+    color: var(--gold-dim);
+    font-size: 0.7rem;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+    margin-top: 6px;
+    padding: 2px 7px;
+    display: inline-block;
+  }
+
+  .footprint-badge {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    margin-top: 6px;
+  }
+
+  /* ── ─────────── TAB 3: Units ─────────── ── */
+  .units-filter {
+    margin-bottom: 20px;
+  }
+
+  .units-filter label {
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+    margin-right: 8px;
+  }
+
+  .units-filter select {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+
+  .units-filter select:focus { outline: 1px solid var(--gold-dim); }
+
+  .units-columns {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+
+  .age-col-header {
+    padding: 10px 8px;
+    font-variant: small-caps;
+    font-size: 0.88rem;
+    letter-spacing: 0.08em;
+    color: var(--gold-bright);
+    border-bottom: 2px solid var(--card-border);
+    margin-bottom: 10px;
+  }
+
+  .age-col-header.age-0 { background: rgba(74,53,32,0.4); }
+  .age-col-header.age-1 { background: rgba(74,64,32,0.4); }
+  .age-col-header.age-2 { background: rgba(58,58,80,0.4); }
+  .age-col-header.age-3 { background: rgba(74,32,32,0.4); }
+
+  .unit-slot-empty {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    text-align: center;
+    padding: 18px 0;
+  }
+
+  .unit-card { margin-bottom: 10px; margin-right: 6px; margin-left: 2px; }
+
+  .unit-card .card-title { font-size: 0.88rem; }
+
+  .special-ability-badge {
+    background: rgba(120,60,200,0.15);
+    border: 1px solid rgba(160,80,255,0.3);
+    border-radius: 3px;
+    color: #b080ff;
+    font-size: 0.7rem;
+    margin-top: 6px;
+    padding: 3px 7px;
+    line-height: 1.4;
+  }
+
+  .unit-notes {
+    background: rgba(200,168,75,0.05);
+    border-left: 2px solid var(--gold-dim);
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    font-style: italic;
+    margin-top: 6px;
+    padding: 3px 7px;
+  }
+
+  .trained-at {
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    margin-bottom: 4px;
+    font-variant: small-caps;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── ─────────── TAB 4: Technologies ─────────── ── */
+  .tech-section { margin-bottom: 40px; }
+
+  .tech-section-heading {
+    color: var(--gold);
+    font-size: 1.1rem;
+    font-variant: small-caps;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  .tech-age-col {
+    display: grid;
+    grid-template-columns: 120px repeat(4, 1fr);
+    gap: 0;
+    margin-top: 10px;
+  }
+
+  .tech-age-label {
+    grid-column: 1;
+    display: contents;
+  }
+
+  .tech-grid-header {
+    padding: 8px;
+    font-variant: small-caps;
+    font-size: 0.8rem;
+    color: var(--gold-bright);
+    letter-spacing: 0.07em;
+    border-bottom: 2px solid var(--card-border);
+  }
+
+  .tech-grid-header.age-0 { background: rgba(74,53,32,0.4); }
+  .tech-grid-header.age-1 { background: rgba(74,64,32,0.4); }
+  .tech-grid-header.age-2 { background: rgba(58,58,80,0.4); }
+  .tech-grid-header.age-3 { background: rgba(74,32,32,0.4); }
+
+  .tech-building-label {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 10px 10px 0 0;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    font-variant: small-caps;
+    letter-spacing: 0.05em;
+    border-right: 1px solid var(--card-border);
+  }
+
+  .tech-cards-column {
+    padding: 6px 6px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tech-card { }
+
+  .tech-card .card-title { font-size: 0.85rem; }
+
+  .tech-effect {
+    background: rgba(60,100,60,0.15);
+    border-left: 2px solid rgba(80,160,80,0.4);
+    color: #8ecf8e;
+    font-size: 0.73rem;
+    margin-top: 6px;
+    padding: 3px 7px;
+    line-height: 1.4;
+  }
+
+  .prereq-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 5px;
+    align-items: center;
+  }
+
+  .prereq-arrow {
+    color: var(--text-dim);
+    font-size: 0.65rem;
+  }
+
+  .prereq-chip {
+    background: rgba(200,100,40,0.12);
+    border: 1px solid rgba(200,100,40,0.3);
+    border-radius: 12px;
+    color: #e8a040;
+    font-size: 0.68rem;
+    padding: 1px 7px;
+  }
+
+  .tech-times {
+    color: var(--text-dim);
+    font-size: 0.73rem;
+    margin-top: 4px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .units-columns { grid-template-columns: repeat(2, 1fr); }
+    .tech-age-col { grid-template-columns: 80px repeat(2, 1fr); }
+    header h1 { font-size: 1.1rem; }
+    nav button { padding: 7px 12px; font-size: 0.8rem; }
+  }
+
+  @media (max-width: 560px) {
+    .units-columns { grid-template-columns: 1fr 1fr; }
+    .civ-grid { grid-template-columns: 1fr; }
+    .buildings-grid { grid-template-columns: 1fr 1fr; }
+    .tech-age-col { grid-template-columns: 1fr; }
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 8px; background: #0d0904; }
+  ::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Calima: Flames of the Atlantic — Tech Tree</h1>
+  <nav id="tab-nav">
+    <button class="active" data-tab="civs">Civilizations</button>
+    <button data-tab="buildings">Buildings</button>
+    <button data-tab="units">Units</button>
+    <button data-tab="technologies">Technologies</button>
+  </nav>
+</header>
+
+<main>
+  <div id="civs" class="tab-panel active"></div>
+  <div id="buildings" class="tab-panel"></div>
+  <div id="units" class="tab-panel"></div>
+  <div id="technologies" class="tab-panel"></div>
+</main>
+
+<script>
+const DATA = {
+  "meta": {
+    "game": "Calima: Flames of the Atlantic",
+    "ages": { "0": "Dark Age", "1": "Feudal Age", "2": "Castle Age", "3": "Imperial Age" },
+    "research_building_enum": {
+      "0": "blacksmith",
+      "1": "university",
+      "2": "monastery",
+      "3": "town_center",
+      "4": "market",
+      "5": "barracks"
+    }
+  },
+  "buildings": [
+    { "id": "town_center",    "display_name": "Town Center",       "cost": { "wood": 275 },                                     "min_age": 0, "hp": 2400, "build_time": 200, "footprint": [3,3] },
+    { "id": "house",          "display_name": "House",              "cost": { "wood": 25 },                                      "min_age": 0, "hp": 550,  "build_time": 25,  "footprint": [2,2], "pop_bonus": 5 },
+    { "id": "barracks",       "display_name": "Barracks",           "cost": { "wood": 175 },                                     "min_age": 0, "hp": 1200, "build_time": 50,  "footprint": [3,3] },
+    { "id": "stable",         "display_name": "Stable",             "cost": { "wood": 175 },                                     "min_age": 0, "hp": 1100, "build_time": 50,  "footprint": [3,3] },
+    { "id": "blacksmith",     "display_name": "Blacksmith",         "cost": { "wood": 150 },                                     "min_age": 1, "hp": 1000, "build_time": 40,  "footprint": [3,3] },
+    { "id": "market",         "display_name": "Market",             "cost": { "wood": 175 },                                     "min_age": 1, "hp": 900,  "build_time": 45,  "footprint": [3,3] },
+    { "id": "lumber_camp",    "display_name": "Lumber Camp",        "cost": { "wood": 100 },                                     "min_age": 0, "hp": 600,  "build_time": 35,  "footprint": [2,2] },
+    { "id": "mining_camp",    "display_name": "Mining Camp",        "cost": { "wood": 100 },                                     "min_age": 0, "hp": 600,  "build_time": 35,  "footprint": [2,2] },
+    { "id": "farm",           "display_name": "Farm",               "cost": { "wood": 60 },                                      "min_age": 0, "hp": 300,  "build_time": 15,  "footprint": [3,3] },
+    { "id": "dock",           "display_name": "Dock",               "cost": { "wood": 150 },                                     "min_age": 0, "hp": 1800, "build_time": 45,  "footprint": [3,2] },
+    { "id": "siege_workshop", "display_name": "Siege Workshop",     "cost": { "wood": 200 },                                     "min_age": 2, "hp": 1200, "build_time": 60,  "footprint": [3,3] },
+    { "id": "university",     "display_name": "University",         "cost": { "wood": 200 },                                     "min_age": 2, "hp": 1100, "build_time": 60,  "footprint": [3,3] },
+    { "id": "temple",         "display_name": "Temple",             "cost": { "wood": 175 },                                     "min_age": 2, "hp": 900,  "build_time": 45,  "footprint": [3,3] },
+    { "id": "wall_segment",   "display_name": "Wall Segment",       "cost": { "stone": 5 },                                      "min_age": 0, "hp": 700,  "build_time": 8,   "footprint": [1,2] },
+    { "id": "gate",           "display_name": "Gate",               "cost": { "wood": 30 },                                      "min_age": 0, "hp": 500,  "build_time": 20,  "footprint": [1,2] },
+    { "id": "fish_trap",      "display_name": "Fish Trap",          "cost": { "wood": 75 },                                      "min_age": 0, "hp": 600,  "build_time": 25,  "footprint": [2,2] },
+    { "id": "wonder",         "display_name": "Maravilla",          "cost": { "wood": 2500, "food": 2500, "stone": 2500, "gold": 5000 }, "min_age": 3, "hp": null, "build_time": null, "footprint": [4,4] }
+  ],
+  "units": {
+    "villager": {
+      "id": "villager", "display_name": "Villager", "trained_at": "town_center",
+      "age_required": 0, "cost": { "food": 50 }, "train_time": 25,
+      "stats": { "hp": 25, "move_speed": 120, "los": 4, "pop_cost": 1, "attack": 3, "attack_range": 1.5, "attack_speed": 1.0, "armor_melee": 0, "armor_pierce": 0 }
+    },
+    "militia": {
+      "id": "militia", "display_name": "Militia", "trained_at": "barracks",
+      "age_required": 0, "cost": { "food": 60, "wood": 20 }, "train_time": 21,
+      "stats": { "hp": 40, "move_speed": 100, "los": 4, "pop_cost": 1, "attack": 4, "attack_range": 1.5, "attack_speed": 1.0, "armor_melee": 0, "armor_pierce": 0 }
+    },
+    "archer": {
+      "id": "archer", "display_name": "Archer", "trained_at": "barracks",
+      "age_required": 1, "cost": { "wood": 25, "gold": 45 }, "train_time": 35,
+      "stats": { "hp": 30, "move_speed": 110, "los": 6, "pop_cost": 1, "attack": 5, "attack_range": 4.0, "attack_speed": 1.0, "armor_melee": 0, "armor_pierce": 0 }
+    },
+    "pikeman": {
+      "id": "pikeman", "display_name": "Pikeman", "trained_at": "barracks",
+      "age_required": 2, "cost": { "food": 60, "gold": 30 }, "train_time": 28,
+      "stats": { "hp": 65, "move_speed": 90, "los": 4, "pop_cost": 1, "attack": 7, "attack_range": 1.5, "attack_speed": 0.8, "armor_melee": 1, "armor_pierce": 0 }
+    },
+    "scout": {
+      "id": "scout", "display_name": "Scout", "trained_at": "stable",
+      "age_required": 0, "cost": { "food": 80 }, "train_time": 30,
+      "stats": { "hp": 35, "move_speed": 180, "los": 8, "pop_cost": 1, "attack": 2, "attack_range": 0.8, "attack_speed": 1.0, "armor_melee": 0, "armor_pierce": 0 },
+      "special_ability": {
+        "id": "auto_explore", "key": "E",
+        "description": "Autonomously explores the map for 60 seconds, picking random destinations every 3-7 s.",
+        "duration": 60
+      }
+    },
+    "heavy_scout": {
+      "id": "heavy_scout", "display_name": "Heavy Scout", "trained_at": "stable",
+      "age_required": 1, "cost": { "food": 80, "gold": 30 }, "train_time": 30,
+      "stats": { "hp": 80, "move_speed": 130, "los": 7, "pop_cost": 1, "attack": 6, "attack_range": 1.5, "attack_speed": 1.2, "armor_melee": 1, "armor_pierce": 0 }
+    },
+    "knight": {
+      "id": "knight", "display_name": "Knight", "trained_at": "stable",
+      "age_required": 2, "cost": { "food": 60, "gold": 75 }, "train_time": 45,
+      "stats": { "hp": 120, "move_speed": 115, "los": 5, "pop_cost": 1, "attack": 9, "attack_range": 1.5, "attack_speed": 1.0, "armor_melee": 2, "armor_pierce": 1 }
+    },
+    "battering_ram": {
+      "id": "battering_ram", "display_name": "Battering Ram", "trained_at": "siege_workshop",
+      "age_required": 2, "cost": { "wood": 160 }, "train_time": 60,
+      "stats": { "hp": 180, "move_speed": 55, "los": 4, "pop_cost": 2, "attack": 40, "attack_range": 1.0, "attack_speed": 0.4, "armor_melee": 5, "armor_pierce": 5 },
+      "notes": "x3 damage vs buildings · only auto-attacks buildings"
+    },
+    "mangonel": {
+      "id": "mangonel", "display_name": "Mangonel", "trained_at": "siege_workshop",
+      "age_required": 2, "cost": { "wood": 160, "gold": 135 }, "train_time": 60,
+      "stats": { "hp": 90, "move_speed": 60, "los": 8, "pop_cost": 2, "attack": 35, "attack_range": 7.0, "attack_speed": 0.25, "armor_melee": 0, "armor_pierce": 6 },
+      "notes": "AoE splash 72 px · minimum range"
+    },
+    "trebuchet": {
+      "id": "trebuchet", "display_name": "Trebuchet", "trained_at": "siege_workshop",
+      "age_required": 3, "cost": { "wood": 200, "gold": 200 }, "train_time": 70,
+      "stats": { "hp": 70, "move_speed": 48, "los": 10, "pop_cost": 2, "attack": 200, "attack_range": 12.0, "attack_speed": 0.15, "armor_melee": 0, "armor_pierce": 4 },
+      "notes": "Must deploy for 3 s before firing · auto-undeploys on move order"
+    },
+    "fishing_boat": {
+      "id": "fishing_boat", "display_name": "Fishing Boat", "trained_at": "dock",
+      "age_required": 0, "cost": { "wood": 75 }, "train_time": 25,
+      "stats": { "hp": 45, "move_speed": 90, "los": 5, "pop_cost": 1, "attack": 0, "attack_range": 0, "attack_speed": 0, "armor_melee": 0, "armor_pierce": 2 }
+    },
+    "transport_ship": {
+      "id": "transport_ship", "display_name": "Transport Ship", "trained_at": "dock",
+      "age_required": 1, "cost": { "wood": 125 }, "train_time": 45,
+      "stats": { "hp": 150, "move_speed": 80, "los": 5, "pop_cost": 1, "attack": 0, "attack_range": 0, "attack_speed": 0, "armor_melee": 0, "armor_pierce": 5 }
+    },
+    "war_galley": {
+      "id": "war_galley", "display_name": "Galera de guerra", "trained_at": "dock",
+      "age_required": 1, "cost": { "wood": 75, "gold": 35 }, "train_time": 35,
+      "stats": { "hp": 120, "move_speed": 85, "los": 7, "pop_cost": 1, "attack": 6, "attack_range": 5.5, "attack_speed": 0.8, "armor_melee": 0, "armor_pierce": 4 }
+    }
+  },
+  "technologies": [
+    {
+      "id": "loom", "display_name": "Telares", "research_building": "blacksmith",
+      "age_required": 0, "cost": { "food": 50 }, "research_time": 25,
+      "prerequisites": [], "effects": { "villager_hp": 1.15 }
+    },
+    {
+      "id": "forging", "display_name": "Forja", "research_building": "blacksmith",
+      "age_required": 1, "cost": { "food": 75 }, "research_time": 40,
+      "prerequisites": [], "effects": { "unit_attack": 1.15 }
+    },
+    {
+      "id": "iron_casting", "display_name": "Iron Casting", "research_building": "blacksmith",
+      "age_required": 2, "cost": { "gold": 150 }, "research_time": 55,
+      "prerequisites": ["forging"], "effects": { "unit_attack": 1.20 }
+    },
+    {
+      "id": "blast_furnace", "display_name": "Alto horno", "research_building": "blacksmith",
+      "age_required": 3, "cost": { "food": 275, "gold": 225 }, "research_time": 50,
+      "prerequisites": [], "effects": { "unit_attack": 1.15 }
+    },
+    {
+      "id": "scale_barding", "display_name": "Armadura de escamas", "research_building": "blacksmith",
+      "age_required": 1, "cost": { "food": 100, "gold": 50 }, "research_time": 40,
+      "prerequisites": [], "effects": { "unit_armor_melee": 1 }
+    },
+    {
+      "id": "chain_barding", "display_name": "Armadura de cadenas", "research_building": "blacksmith",
+      "age_required": 2, "cost": { "food": 200, "gold": 100 }, "research_time": 45,
+      "prerequisites": ["scale_barding"], "effects": { "unit_armor_melee": 1 }
+    },
+    {
+      "id": "plate_barding", "display_name": "Armadura de placas", "research_building": "blacksmith",
+      "age_required": 3, "cost": { "food": 300, "gold": 200 }, "research_time": 60,
+      "prerequisites": ["chain_barding"], "effects": { "unit_armor_melee": 1 }
+    },
+    {
+      "id": "padded_archer_armor", "display_name": "Armadura arquero", "research_building": "blacksmith",
+      "age_required": 1, "cost": { "food": 100 }, "research_time": 35,
+      "prerequisites": [], "effects": { "archer_armor_pierce": 1 }
+    },
+    {
+      "id": "fletching", "display_name": "Flechado", "research_building": "blacksmith",
+      "age_required": 1, "cost": { "gold": 100 }, "research_time": 35,
+      "prerequisites": [], "effects": { "archer_attack": 1.20 }
+    },
+    {
+      "id": "bodkin_arrow", "display_name": "Punta bodkin", "research_building": "blacksmith",
+      "age_required": 2, "cost": { "food": 100, "gold": 150 }, "research_time": 35,
+      "prerequisites": ["fletching"], "effects": { "archer_attack": 1.20, "archer_range": 1.10 }
+    },
+    {
+      "id": "shipwright", "display_name": "Astillero", "research_building": "blacksmith",
+      "age_required": 1, "cost": { "wood": 200, "gold": 60 }, "research_time": 40,
+      "prerequisites": [], "effects": { "ship_hp": 1.15, "ship_cost": 0.85 }
+    },
+    {
+      "id": "ballistics", "display_name": "Ballistics", "research_building": "university",
+      "age_required": 2, "cost": { "gold": 175 }, "research_time": 50,
+      "prerequisites": ["fletching"], "effects": { "archer_attack_speed": 1.20 }
+    },
+    {
+      "id": "chemistry", "display_name": "Chemistry", "research_building": "university",
+      "age_required": 3, "cost": { "gold": 300 }, "research_time": 70,
+      "prerequisites": ["ballistics"], "effects": { "archer_attack": 1.15 }
+    },
+    {
+      "id": "siege_engineering", "display_name": "Siege Engineering", "research_building": "university",
+      "age_required": 2, "cost": { "gold": 200 }, "research_time": 60,
+      "prerequisites": [], "effects": { "siege_attack_bonus": 1.20 }
+    },
+    {
+      "id": "fervor", "display_name": "Fervor", "research_building": "monastery",
+      "age_required": 2, "cost": { "gold": 150 }, "research_time": 50,
+      "prerequisites": [], "effects": { "unit_move_speed": 1.10 }
+    },
+    {
+      "id": "sanctity", "display_name": "Santidad", "research_building": "monastery",
+      "age_required": 2, "cost": { "food": 100 }, "research_time": 40,
+      "prerequisites": [], "effects": { "swordsman_hp": 1.15 }
+    },
+    {
+      "id": "atonement", "display_name": "Atonement", "research_building": "monastery",
+      "age_required": 3, "cost": { "food": 150, "gold": 100 }, "research_time": 55,
+      "prerequisites": ["sanctity"], "effects": { "cavalry_hp": 1.20 }
+    }
+  ],
+  "heroes": [
+    {
+      "id": "bencomo", "display_name": "Bencomo", "civilization": "guanches",
+      "stats": { "hp": 180, "move_speed": 105, "attack": 14, "attack_range": 1.5, "attack_speed": 1.2, "armor_melee": 3, "armor_pierce": 1 },
+      "ability": {
+        "id": "menceyes_charge", "cooldown": 50,
+        "description": "Galvaniza unidades aliadas cercanas: +30% velocidad de ataque durante 10 s."
+      }
+    },
+    {
+      "id": "doramas", "display_name": "Doramas", "civilization": "canarii",
+      "stats": { "hp": 160, "move_speed": 115, "attack": 12, "attack_range": 1.5, "attack_speed": 1.4, "armor_melee": 2, "armor_pierce": 2 },
+      "ability": {
+        "id": "challenge", "cooldown": 45,
+        "description": "Taunts the nearest enemy unit, forcing it to attack Doramas for 6 s."
+      }
+    },
+    {
+      "id": "guadarfia", "display_name": "Guadarfía", "civilization": "mahos",
+      "stats": { "hp": 140, "move_speed": 130, "attack": 11, "attack_range": 1.5, "attack_speed": 1.3, "armor_melee": 1, "armor_pierce": 2 },
+      "ability": {
+        "id": "ambush", "cooldown": 45,
+        "description": "Nearly invisible for 8 s. Enemies cannot auto-attack Guadarfía while cloaked."
+      }
+    },
+    {
+      "id": "bethencourt", "display_name": "Jean de Béthencourt", "civilization": "franks",
+      "stats": { "hp": 150, "move_speed": 110, "attack": 11, "attack_range": 1.5, "attack_speed": 1.1, "armor_melee": 3, "armor_pierce": 2 },
+      "ability": {
+        "id": "forced_diplomacy", "cooldown": 60,
+        "description": "Converts the nearest enemy unit to your side for 12 s."
+      }
+    },
+    {
+      "id": "drake", "display_name": "Francis Drake", "civilization": "britons",
+      "stats": { "hp": 145, "move_speed": 120, "attack": 10, "attack_range": 3.5, "attack_speed": 1.5, "armor_melee": 1, "armor_pierce": 3 },
+      "ability": {
+        "id": "plunder", "cooldown": 55,
+        "description": "Durante 20 s genera 15 de oro por cada unidad enemiga eliminada en rango."
+      }
+    },
+    {
+      "id": "quijote", "display_name": "Don Quijote", "civilization": "castellanos",
+      "stats": { "hp": 170, "move_speed": 125, "attack": 16, "attack_range": 1.5, "attack_speed": 0.9, "armor_melee": 4, "armor_pierce": 1 },
+      "ability": {
+        "id": "knight_errant_charge", "cooldown": 55,
+        "description": "Charges forward in a straight line, dealing heavy damage to all units in the path."
+      }
+    },
+    {
+      "id": "artaxerax", "display_name": "Artaxerax", "civilization": "atlantes",
+      "stats": { "hp": 155, "move_speed": 110, "attack": 10, "attack_range": 4.0, "attack_speed": 1.2, "armor_melee": 2, "armor_pierce": 3 },
+      "ability": {
+        "id": "calima", "cooldown": 60,
+        "description": "Envuelve unidades aliadas cercanas en calima durante 12 s. Las unidades camufladas no pueden ser objetivo de los enemigos."
+      }
+    },
+    {
+      "id": "hanno", "display_name": "Hannón el Navegante", "civilization": "fenicios",
+      "stats": { "hp": 135, "move_speed": 105, "attack": 8, "attack_range": 3.5, "attack_speed": 1.1, "armor_melee": 1, "armor_pierce": 2 },
+      "ability": {
+        "id": "trade_route", "cooldown": 50,
+        "description": "Establece una ruta comercial que genera 50 de oro en 30 s."
+      }
+    }
+  ],
+  "civilizations": [
+    {
+      "id": "guanches",
+      "display_name": "Guanches",
+      "description": "Masters of volcanic terrain. Stone buildings are tougher and spearmen are available from the start.",
+      "hero_id": "bencomo",
+      "unique_unit_ids": ["menceyes_guard"],
+      "unique_technology_ids": [],
+      "stat_multipliers": {
+        "stone_building_hp": 1.20,
+        "spear_available_dark_age": 1.0
+      },
+      "missing_units": ["cavalry", "gunpowder"],
+      "missing_technologies": [],
+      "terrain_bonuses": { "can_traverse_malpais": true }
+    },
+    {
+      "id": "canarii",
+      "display_name": "Canarii",
+      "description": "Balanced economy and cheap archers. Villagers gather food faster and houses act as drop-off points.",
+      "hero_id": "doramas",
+      "unique_unit_ids": ["ravine_archer"],
+      "unique_technology_ids": [],
+      "stat_multipliers": {
+        "villager_food_gather_rate": 1.15,
+        "archer_food_cost": 0.80
+      },
+      "missing_units": ["heavy_cavalry"],
+      "missing_technologies": [],
+      "terrain_bonuses": {}
+    },
+    {
+      "id": "mahos",
+      "display_name": "Mahos",
+      "description": "Swift desert warriors. Buildings cost less wood and scouts move faster across arid terrain.",
+      "hero_id": "guadarfia",
+      "unique_unit_ids": ["sand_raider"],
+      "unique_technology_ids": [],
+      "stat_multipliers": {
+        "building_wood_cost": 0.70,
+        "scout_speed": 1.25,
+        "light_cavalry_speed": 1.25
+      },
+      "missing_units": ["heavy_cavalry_upgrades"],
+      "missing_technologies": [],
+      "terrain_bonuses": { "can_traverse_dune": true }
+    },
+    {
+      "id": "franks",
+      "display_name": "Francos",
+      "description": "Fast advancing cavalry nation. Age advancement costs less and cavalry is stronger from the Feudal Age.",
+      "hero_id": "bethencourt",
+      "unique_unit_ids": ["chevalier_normand"],
+      "unique_technology_ids": [],
+      "stat_multipliers": {
+        "age_advance_cost": 0.85,
+        "cavalry_hp": 1.15,
+        "farm_build_speed": 1.20
+      },
+      "missing_units": ["full_archery", "late_naval"],
+      "missing_technologies": [],
+      "terrain_bonuses": {}
+    },
+    {
+      "id": "britons",
+      "display_name": "Britanos",
+      "description": "Naval raiders and master archers. Foot archers gain range each age and warships attack faster.",
+      "hero_id": "drake",
+      "unique_unit_ids": ["longbowman"],
+      "unique_technology_ids": [],
+      "stat_multipliers": {
+        "archer_range_bonus_per_age": 1.0,
+        "warship_attack_speed": 1.20
+      },
+      "missing_units": ["heavy_cavalry_upgrades"],
+      "missing_technologies": [],
+      "terrain_bonuses": {}
+    },
+    {
+      "id": "castellanos",
+      "display_name": "Castellanos",
+      "description": "Late-game powerhouse. Each age advance unlocks a free Blacksmith technology and swordsmen are exceptionally tough.",
+      "hero_id": "quijote",
+      "unique_unit_ids": ["conquistador"],
+      "unique_technology_ids": [],
+      "stat_multipliers": {
+        "swordsman_hp": 1.15,
+        "tower_range": 1.10,
+        "castle_range": 1.10
+      },
+      "missing_units": [],
+      "missing_technologies": [],
+      "terrain_bonuses": {}
+    },
+    {
+      "id": "atlantes",
+      "display_name": "Atlantes",
+      "description": "Mysterious seafarers. Dominate coastal waters, build on ocean tiles, and move freely through shallow water.",
+      "hero_id": "artaxerax",
+      "unique_unit_ids": ["tidecaller"],
+      "unique_technology_ids": [],
+      "stat_multipliers": {
+        "coastal_vision": 1.50,
+        "ship_attack_speed": 1.20,
+        "shallow_water_penalty": 0.0
+      },
+      "missing_units": ["heavy_cavalry", "siege_workshop"],
+      "missing_technologies": [],
+      "terrain_bonuses": { "can_traverse_ocean": true }
+    },
+    {
+      "id": "fenicios",
+      "display_name": "Fenicios",
+      "description": "Ancient traders. Market available from the start, merchant ships generate passive gold, and mercenaries can be hired.",
+      "hero_id": "hanno",
+      "unique_unit_ids": ["trireme"],
+      "unique_technology_ids": [],
+      "stat_multipliers": {
+        "market_available_dark_age": 1.0,
+        "merchant_ship_gold_rate": 1.0
+      },
+      "missing_units": ["knights", "castle_infantry"],
+      "missing_technologies": [],
+      "terrain_bonuses": {}
+    }
+  ]
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const AGES = DATA.meta.ages;
+const AGE_NAMES = [AGES["0"], AGES["1"], AGES["2"], AGES["3"]];
+
+function costHtml(cost) {
+  if (!cost) return '';
+  const icons = { food: '🍖', wood: '🪵', gold: '💰', stone: '🪨' };
+  return '<div class="cost">' +
+    Object.entries(cost).map(([res, val]) =>
+      `<span class="cost-item cost-${res}">${icons[res] || ''} ${val}</span>`
+    ).join('') +
+  '</div>';
+}
+
+function statRow(stats) {
+  if (!stats) return '';
+  const parts = [];
+  if (stats.hp != null)           parts.push(`<span class="stat">❤️ <span>${stats.hp}</span></span>`);
+  if (stats.move_speed != null)   parts.push(`<span class="stat">💨 <span>${stats.move_speed}</span></span>`);
+  if (stats.attack != null)       parts.push(`<span class="stat">⚔️ <span>${stats.attack}</span></span>`);
+  if (stats.attack_range != null) parts.push(`<span class="stat">📏 <span>${stats.attack_range}</span></span>`);
+  if (stats.armor_melee != null)  parts.push(`<span class="stat">🛡️ M<span>${stats.armor_melee}</span></span>`);
+  if (stats.armor_pierce != null) parts.push(`<span class="stat">🛡️ P<span>${stats.armor_pierce}</span></span>`);
+  return `<div class="stats">${parts.join('')}</div>`;
+}
+
+function ageBannerHtml(age) {
+  return `<div class="age-banner age-${age}">${AGE_NAMES[age]}</div>`;
+}
+
+function formatMultiplier(key, val) {
+  const label = key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+
+  if (val === 1.0) {
+    return `${label}: Enabled`;
+  }
+  if (val > 1.0) {
+    const pct = Math.round((val - 1) * 100);
+    return `${label} +${pct}%`;
+  }
+  if (val === 0.0) {
+    return `${label}: Removed`;
+  }
+  // val < 1.0
+  const pct = Math.round((1 - val) * 100);
+  return `${label} −${pct}%`;
+}
+
+function formatEffects(effects) {
+  return Object.entries(effects).map(([key, val]) => {
+    const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    if (typeof val === 'number' && val > 1) {
+      return `${label} +${Math.round((val-1)*100)}%`;
+    }
+    if (typeof val === 'number' && val < 1 && val > 0) {
+      return `${label} −${Math.round((1-val)*100)}%`;
+    }
+    if (typeof val === 'number' && Number.isInteger(val) && val <= 5) {
+      return `${label} +${val}`;
+    }
+    return `${label}: ${val}`;
+  }).join(' · ');
+}
+
+// ── Tab 1: Civilizations ──────────────────────────────────────────────────────
+
+function renderCivs() {
+  const heroMap = {};
+  DATA.heroes.forEach(h => { heroMap[h.id] = h; });
+
+  const html = '<div class="civ-grid">' +
+    DATA.civilizations.map(civ => {
+      const hero = heroMap[civ.hero_id];
+
+      const heroHtml = hero ? `
+        <div class="hero-box">
+          <div class="hero-name">Hero: ${hero.display_name}</div>
+          <div class="hero-ability-label">Ability — ${hero.ability.id.replace(/_/g,' ')}</div>
+          <div class="hero-ability-desc">${hero.ability.description}</div>
+          <div class="hero-cooldown">⏱ Cooldown: ${hero.ability.cooldown} s</div>
+        </div>` : '';
+
+      const uniqueUnits = civ.unique_unit_ids.length
+        ? `<div class="section-label">Unique Units</div>
+           <div class="unique-units">${civ.unique_unit_ids.map(u =>
+             `<span class="unique-unit-badge">${u.replace(/_/g,' ')}</span>`).join('')}</div>`
+        : '';
+
+      const bonuses = Object.keys(civ.stat_multipliers).length
+        ? `<div class="section-label">Bonuses</div>
+           <ul class="bonuses-list">${Object.entries(civ.stat_multipliers).map(([k,v]) =>
+             `<li>${formatMultiplier(k,v)}</li>`).join('')}</ul>`
+        : '';
+
+      const restrictions = civ.missing_units.length
+        ? `<div class="section-label">Missing Units</div>
+           <div class="restrictions">${civ.missing_units.map(u =>
+             `<span class="restriction-pill">${u.replace(/_/g,' ')}</span>`).join('')}</div>`
+        : '';
+
+      const terrain = Object.keys(civ.terrain_bonuses).length
+        ? `<div class="section-label">Terrain</div>
+           <div class="terrain-bonuses">${Object.keys(civ.terrain_bonuses).map(k =>
+             `<span class="terrain-tag">${k.replace(/_/g,' ').replace('can traverse ','').replace('can ','')}</span>`).join('')}</div>`
+        : '';
+
+      return `<div class="card civ-card">
+        <div class="card-title">${civ.display_name}</div>
+        <div class="civ-desc">${civ.description}</div>
+        ${heroHtml}
+        ${uniqueUnits}
+        ${bonuses}
+        ${restrictions}
+        ${terrain}
+      </div>`;
+    }).join('') +
+  '</div>';
+
+  document.getElementById('civs').innerHTML = html;
+}
+
+// ── Tab 2: Buildings ──────────────────────────────────────────────────────────
+
+const BUILDING_FUNCTIONS = {
+  town_center:    'Drop-off · Trains villagers · Researches',
+  house:          'Population +5',
+  barracks:       'Trains infantry',
+  stable:         'Trains cavalry',
+  blacksmith:     'Researches combat upgrades',
+  market:         'Trade resources',
+  lumber_camp:    'Wood drop-off',
+  mining_camp:    'Gold & stone drop-off',
+  farm:           'Food source (auto-farm)',
+  dock:           'Trains ships · Fish drop-off',
+  siege_workshop: 'Trains siege weapons',
+  university:     'Advanced research',
+  temple:         'Spiritual research',
+  wall_segment:   'Fortification',
+  gate:           'Controlled passage',
+  fish_trap:      'Passive fish income',
+  wonder:         'Victory condition building'
+};
+
+function renderBuildings() {
+  const byAge = {};
+  DATA.buildings.forEach(b => {
+    const a = b.min_age;
+    if (!byAge[a]) byAge[a] = [];
+    byAge[a].push(b);
+  });
+
+  let html = '';
+  for (let age = 0; age <= 3; age++) {
+    if (!byAge[age]) continue;
+    html += ageBannerHtml(age);
+    html += '<div class="buildings-grid">';
+    byAge[age].forEach(b => {
+      const fn = BUILDING_FUNCTIONS[b.id] || '';
+      const hp = b.hp != null ? `<span class="stat">❤️ <span>${b.hp}</span></span>` : '';
+      const bt = b.build_time != null ? `<span class="stat">⏱ <span>${b.build_time} s</span></span>` : '';
+      const fp = b.footprint ? `<div class="footprint-badge">⬜ ${b.footprint[0]}×${b.footprint[1]} tiles</div>` : '';
+      const popBonus = b.pop_bonus ? `<div class="stat">👥 <span>+${b.pop_bonus} pop</span></div>` : '';
+      html += `<div class="card">
+        <div class="card-title">${b.display_name}</div>
+        ${costHtml(b.cost)}
+        <div class="stats">${hp}${bt}</div>
+        ${fp}
+        ${popBonus}
+        ${fn ? `<div class="building-function">${fn}</div>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('buildings').innerHTML = html;
+}
+
+// ── Tab 3: Units ──────────────────────────────────────────────────────────────
+
+function renderUnits(filterBuilding) {
+  const BUILDING_LABELS = {
+    all:           'All',
+    town_center:   'Town Center',
+    barracks:      'Barracks',
+    stable:        'Stable',
+    siege_workshop:'Siege Workshop',
+    dock:          'Dock'
+  };
+
+  // Filter bar
+  const filterHtml = `<div class="units-filter">
+    <label>Building:</label>
+    <select id="unit-building-filter">
+      ${Object.entries(BUILDING_LABELS).map(([val, label]) =>
+        `<option value="${val}"${val === filterBuilding ? ' selected' : ''}>${label}</option>`
+      ).join('')}
+    </select>
+  </div>`;
+
+  const units = Object.values(DATA.units).filter(u =>
+    filterBuilding === 'all' || u.trained_at === filterBuilding
+  );
+
+  // Arrange by age column
+  const cols = [[], [], [], []];
+  units.forEach(u => cols[u.age_required].push(u));
+
+  const headerRow = AGE_NAMES.map((name, i) =>
+    `<div class="age-col-header age-${i}">${name}</div>`
+  ).join('');
+
+  const maxRows = Math.max(...cols.map(c => c.length));
+  let colsHtml = cols.map((col, age) => {
+    const cards = col.map(u => {
+      const sa = u.special_ability
+        ? `<div class="special-ability-badge">⚡ [${u.special_ability.key}] ${u.special_ability.description}</div>`
+        : '';
+      const notes = u.notes
+        ? `<div class="unit-notes">${u.notes}</div>`
+        : '';
+      return `<div class="card unit-card">
+        <div class="trained-at">${u.trained_at.replace(/_/g,' ')}</div>
+        <div class="card-title">${u.display_name}</div>
+        ${costHtml(u.cost)}
+        <div class="stats">
+          <span class="stat">❤️ <span>${u.stats.hp}</span></span>
+          <span class="stat">💨 <span>${u.stats.move_speed}</span></span>
+          <span class="stat">⚔️ <span>${u.stats.attack}</span></span>
+          <span class="stat">📏 <span>${u.stats.attack_range}</span></span>
+          <span class="stat">🛡️ M<span>${u.stats.armor_melee}</span></span>
+          <span class="stat">🛡️ P<span>${u.stats.armor_pierce}</span></span>
+          <span class="stat">⏱ <span>${u.train_time} s</span></span>
+        </div>
+        ${sa}${notes}
+      </div>`;
+    }).join('');
+    return `<div>${cards}${col.length === 0 ? '<div class="unit-slot-empty">—</div>' : ''}</div>`;
+  }).join('');
+
+  const html = filterHtml +
+    `<div class="units-columns">${headerRow}${colsHtml}</div>`;
+
+  const panel = document.getElementById('units');
+  panel.innerHTML = html;
+
+  panel.querySelector('#unit-building-filter').addEventListener('change', function() {
+    renderUnits(this.value);
+  });
+}
+
+// ── Tab 4: Technologies ───────────────────────────────────────────────────────
+
+function renderTechnologies() {
+  const sections = [
+    { key: 'blacksmith', label: 'Blacksmith' },
+    { key: 'university', label: 'University' },
+    { key: 'monastery',  label: 'Temple / Monastery' }
+  ];
+
+  // Build a map for prereq display names
+  const techMap = {};
+  DATA.technologies.forEach(t => { techMap[t.id] = t; });
+
+  let html = '';
+
+  sections.forEach(sec => {
+    const techs = DATA.technologies.filter(t => t.research_building === sec.key);
+    if (!techs.length) return;
+
+    const byAge = { 0: [], 1: [], 2: [], 3: [] };
+    techs.forEach(t => byAge[t.age_required].push(t));
+
+    const headerRow = `<div style="grid-column:1"></div>` +
+      AGE_NAMES.map((name, i) =>
+        `<div class="tech-grid-header age-${i}">${name}</div>`
+      ).join('');
+
+    const cardsRow = `<div class="tech-building-label">${sec.label}</div>` +
+      [0, 1, 2, 3].map(age => {
+        const ageTechs = byAge[age];
+        if (!ageTechs.length) return `<div class="tech-cards-column"></div>`;
+        return `<div class="tech-cards-column">` +
+          ageTechs.map(t => {
+            const prereqHtml = t.prerequisites.length
+              ? `<div class="prereq-chips"><span style="color:var(--text-dim);font-size:0.7rem">Requires:</span>` +
+                t.prerequisites.map(pid => {
+                  const pt = techMap[pid];
+                  return `<span class="prereq-chip">${pt ? pt.display_name : pid}</span>`;
+                }).join('<span class="prereq-arrow">→</span>') +
+                `</div>`
+              : '';
+
+            return `<div class="card tech-card">
+              <div class="card-title">${t.display_name}</div>
+              ${costHtml(t.cost)}
+              <div class="tech-times">⏱ ${t.research_time} s</div>
+              ${prereqHtml}
+              <div class="tech-effect">${formatEffects(t.effects)}</div>
+            </div>`;
+          }).join('') +
+        `</div>`;
+      }).join('');
+
+    html += `<div class="tech-section">
+      <div class="tech-section-heading">${sec.label}</div>
+      <div class="tech-age-col">${headerRow}${cardsRow}</div>
+    </div>`;
+  });
+
+  document.getElementById('technologies').innerHTML = html;
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+
+function activateTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector(`nav button[data-tab="${id}"]`).classList.add('active');
+}
+
+document.getElementById('tab-nav').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-tab]');
+  if (btn) activateTab(btn.dataset.tab);
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+
+renderCivs();
+renderBuildings();
+renderUnits('all');
+renderTechnologies();
+</script>
+</body>
+</html>

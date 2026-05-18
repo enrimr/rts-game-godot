@@ -99,6 +99,10 @@ func _apply_tech(player_id: int, tech_id: String) -> void:
 	(_researched[player_id] as Array).append(tech_id)
 	for key: Variant in tech.effects.keys():
 		CivBonusManager.apply_tech_effect(player_id, key as String, tech.effects[key] as float)
+	if tech.upgrade_from_unit_id != "":
+		var to_res: UnitResource = load("res://resources/units/" + tech.upgrade_to_unit_id + "_data.tres") as UnitResource
+		if to_res != null:
+			EventBus.unit_upgrade_applied.emit(player_id, tech.upgrade_from_unit_id, to_res)
 
 func get_available_techs(player_id: int, research_building_type: int) -> Array[TechnologyResource]:
 	var result: Array[TechnologyResource] = []

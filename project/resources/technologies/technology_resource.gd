@@ -4,7 +4,7 @@ class_name TechnologyResource
 
 ## Defines a researchable technology and its effects.
 
-enum ResearchBuilding { BLACKSMITH, UNIVERSITY, MONASTERY, TOWN_CENTER, MARKET, BARRACKS }
+enum ResearchBuilding { BLACKSMITH, UNIVERSITY, MONASTERY, TOWN_CENTER, MARKET, BARRACKS, STABLE }
 
 @export var id: String = ""
 @export var display_name: String = ""
@@ -23,5 +23,9 @@ enum ResearchBuilding { BLACKSMITH, UNIVERSITY, MONASTERY, TOWN_CENTER, MARKET, 
 
 ## Technologies that must be researched first.
 @export var prerequisites: Array[String] = []
+
+## When non-empty, this tech upgrades all existing units of this id to upgrade_to_unit_id.
+@export var upgrade_from_unit_id: String = ""
+@export var upgrade_to_unit_id: String = ""
 
 @export var icon: Texture2D

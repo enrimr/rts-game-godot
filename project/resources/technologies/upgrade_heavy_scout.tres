@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_tech"]
+
+[resource]
+script = ExtResource("1_tech")
+id = "upgrade_heavy_scout"
+display_name = "Heavy Scout"
+description = "Upgrades all Scouts to Heavy Scouts and trains Heavy Scouts going forward."
+required_age = 1
+research_building = 6
+research_time = 45.0
+cost_food = 150
+cost_wood = 0
+cost_gold = 75
+effects = {}
+prerequisites = []
+upgrade_from_unit_id = "scout"
+upgrade_to_unit_id = "heavy_scout"
