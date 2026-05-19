@@ -2,8 +2,8 @@ extends Control
 
 class_name MinimapRenderer
 
-const WORLD_MIN: Vector2 = Vector2(-2000.0, -2000.0)
-const WORLD_SIZE: float = 4000.0
+var _world_min: Vector2 = Vector2(-1800.0, -1800.0)
+var _world_size: float = 3600.0
 
 const COLOR_BG:             Color = Color(0.08, 0.18, 0.08, 1.0)
 const COLOR_BORDER:         Color = Color(0.0,  0.0,  0.0,  1.0)
@@ -26,6 +26,9 @@ func _process(_delta: float) -> void:
 
 func _draw() -> void:
 	var ms: Vector2 = size
+	var mh: float = TerrainManager.minimap_map_half
+	_world_min = Vector2(-mh, -mh)
+	_world_size = mh * 2.0
 
 	if TerrainManager.minimap_texture != null:
 		draw_texture_rect(TerrainManager.minimap_texture, Rect2(Vector2.ZERO, ms), false)
@@ -134,10 +137,10 @@ func _move_camera_to(minimap_pos: Vector2) -> void:
 # --- Coordinate helpers ---
 
 func _to_mm(world_pos: Vector2, ms: Vector2) -> Vector2:
-	return (world_pos - WORLD_MIN) / WORLD_SIZE * ms
+	return (world_pos - _world_min) / _world_size * ms
 
 func _to_world(mm_pos: Vector2, ms: Vector2) -> Vector2:
-	return mm_pos / ms * WORLD_SIZE + WORLD_MIN
+	return mm_pos / ms * _world_size + _world_min
 
 # own units/buildings: visible in explored+visible cells; enemies: only in visible cells
 func _fog_allows_see(world_pos: Vector2, is_own: bool) -> bool:

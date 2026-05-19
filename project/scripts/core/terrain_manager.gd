@@ -46,6 +46,8 @@ var _is_island_map: bool = false
 
 # Baked terrain texture — set by MapGenerator after generation completes.
 var minimap_texture: ImageTexture = null
+# World half-size used when baking — needed by MinimapRenderer for coordinate mapping.
+var minimap_map_half: float = 1800.0
 
 func reset() -> void:
 	_zones.clear()
@@ -143,14 +145,15 @@ func nearest_passable(world_pos: Vector2, civ_id: String) -> Vector2:
 # map_half: half-size of the playable world in world units.
 # resolution: pixel dimensions of the output square texture.
 func bake_minimap_texture(map_half: float, resolution: int) -> void:
+	minimap_map_half = map_half
 	const TERRAIN_COLORS: Array[Color] = [
 		Color(0.22, 0.45, 0.18),   # GRASS
 		Color(0.14, 0.12, 0.11),   # MALPAIS
 		Color(0.78, 0.68, 0.42),   # DUNE
-		Color(0.08, 0.30, 0.12),   # LAURISILVA
-		Color(0.48, 0.44, 0.40),   # RISCO
-		Color(0.10, 0.28, 0.52),   # OCEAN
-		Color(0.30, 0.08, 0.04),   # CALDERA
+		Color(0.08, 0.28, 0.10),   # LAURISILVA
+		Color(0.35, 0.30, 0.26),   # RISCO  — dark brown/grey matching mountain base
+		Color(0.10, 0.25, 0.50),   # OCEAN
+		Color(0.28, 0.07, 0.04),   # CALDERA
 	]
 	# Flatten zones into parallel arrays — avoids per-pixel Dictionary access
 	var z_count: int = _zones.size()
