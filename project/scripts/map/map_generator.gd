@@ -1313,7 +1313,7 @@ static func create_resource_node(parent: Node2D, pos: Vector2,
 	node.global_position = pos
 
 	var jitter: float = rng.randf_range(0.85, 1.15) if rng != null else 1.0
-	var collision_r: float = _build_resource_visual(node, rtype, jitter)
+	var collision_r: float = _build_resource_visual(node, rtype, jitter, amount)
 
 	var area: Area2D = Area2D.new()
 	var shape: CollisionShape2D = CollisionShape2D.new()
@@ -1343,22 +1343,22 @@ static func create_resource_node(parent: Node2D, pos: Vector2,
 # Builds the visual Polygon2D children for a resource node.
 # Returns the effective collision radius.
 static func _build_resource_visual(node: Node2D,
-		rtype: ResourceNode.ResourceType, scale: float) -> float:
+		rtype: ResourceNode.ResourceType, scale: float, amount: float = 0.0) -> float:
 	match rtype:
 		ResourceNode.ResourceType.WOOD:
 			return _draw_tree(node, scale)
 		ResourceNode.ResourceType.GOLD:
-			return _draw_gold(node, scale)
+			return _draw_gold(node, scale, amount)
 		ResourceNode.ResourceType.STONE:
-			return _draw_stone(node, scale)
+			return _draw_stone(node, scale, amount)
 		ResourceNode.ResourceType.FOOD_BERRY:
-			return _draw_berry_bush(node, scale)
+			return _draw_berry_bush(node, scale, amount)
 		ResourceNode.ResourceType.FOOD_HUNT:
 			return _draw_deer(node, scale)
 		ResourceNode.ResourceType.FOOD_FISH:
 			return _draw_fish(node, scale)
 		ResourceNode.ResourceType.OLIVINA:
-			return _draw_olivina(node, scale)
+			return _draw_olivina(node, scale, amount)
 	return 12.0
 
 # ── Tree (wood) ──────────────────────────────────────────────────────────────
@@ -1408,52 +1408,49 @@ static func _draw_tree(node: Node2D, s: float) -> float:
 	return 13.0 * s
 
 # ── Gold rocks ───────────────────────────────────────────────────────────────
-# Lumpy rocks with gold veins running through the stone surface.
-static func _draw_gold(node: Node2D, s: float) -> float:
+static func _draw_gold(node: Node2D, s: float, amount: float = 0.0) -> float:
+	var count: int = 2 if amount <= 130.0 else 3
+	const LAYOUTS_2: Array = [[-7.0, 2.0, 1.00], [ 6.0, 0.0, 0.90]]
+	const LAYOUTS_3: Array = [[-9.0, 2.0, 1.00], [ 4.0, 0.0, 0.88], [ 0.0,-7.0, 0.75]]
+	var layout: Array = LAYOUTS_2 if count == 2 else LAYOUTS_3
+	for entry: Variant in layout:
+		var e: Array = entry as Array
+		var container: Node2D = Node2D.new()
+		container.position = Vector2((e[0] as float) * s, (e[1] as float) * s)
+		node.add_child(container)
+		_draw_single_gold_rock(container, s * (e[2] as float))
+	return (14.0 if count == 3 else 11.0) * s
+
+static func _draw_single_gold_rock(node: Node2D, s: float) -> void:
 	# Ground shadow ellipse
 	var ground: Polygon2D = Polygon2D.new()
 	ground.color = Color(0.40, 0.32, 0.08, 0.5)
 	var gpts: PackedVector2Array = PackedVector2Array()
 	for i: int in range(10):
 		var a: float = TAU * i / 10.0
-		gpts.append(Vector2(cos(a) * 12.0 * s, sin(a) * 5.0 * s))
+		gpts.append(Vector2(cos(a) * 9.0 * s, sin(a) * 4.0 * s))
 	ground.polygon = gpts
 	ground.z_index = -1
 	node.add_child(ground)
-
-	# Two overlapping rock blobs — dark earthy brown base
-	const ROCKS: Array = [
-		[-4.5, 1.0, Color(0.42, 0.35, 0.18)],
-		[ 4.0, 0.0, Color(0.38, 0.30, 0.14)],
-	]
-	for r_data: Variant in ROCKS:
-		var rd: Array = r_data as Array
-		var rx: float = (rd[0] as float) * s
-		var ry: float = (rd[1] as float) * s
-		var col: Color = rd[2] as Color
-		var rpts: PackedVector2Array = PackedVector2Array()
-		const RANGLES: Array = [0.0, 0.9, 1.8, 2.7, 3.6, 4.5, 5.4]
-		const RRADII:  Array = [9.0, 7.0, 10.0, 8.5, 6.5, 9.0, 7.5]
-		for i: int in range(7):
-			var a: float = (RANGLES[i] as float)
-			var rr: float = (RRADII[i] as float) * s
-			rpts.append(Vector2(rx + cos(a) * rr, ry + sin(a) * rr * 0.62))
-		var rock_poly: Polygon2D = Polygon2D.new()
-		rock_poly.color = col
-		rock_poly.polygon = rpts
-		node.add_child(rock_poly)
-		# Top highlight — lighter warm stone
-		var hi: Polygon2D = Polygon2D.new()
-		hi.color = Color(0.60, 0.50, 0.26, 0.55)
-		hi.polygon = PackedVector2Array([rpts[6], rpts[0], rpts[1], rpts[2]])
-		node.add_child(hi)
-
-	# Gold vein streaks across both rocks
-	const VEINS: Array = [
-		[-7.0, -3.0,  3.0, -1.5,  8.0,  0.5],
-		[ 1.0, -4.0,  7.0, -2.0,  5.0,  1.0],
-		[-2.0,  0.5,  4.0, -1.0,  2.0,  2.5],
-	]
+	# Rock blob — dark earthy brown
+	var rpts: PackedVector2Array = PackedVector2Array()
+	const RANGLES: Array = [0.0, 0.9, 1.8, 2.7, 3.6, 4.5, 5.4]
+	const RRADII:  Array = [8.0, 6.5, 9.0, 7.5, 6.0, 8.5, 7.0]
+	for i: int in range(7):
+		var a: float = (RANGLES[i] as float)
+		var rr: float = (RRADII[i] as float) * s
+		rpts.append(Vector2(cos(a) * rr, sin(a) * rr * 0.62))
+	var rock_poly: Polygon2D = Polygon2D.new()
+	rock_poly.color = Color(0.40, 0.33, 0.16)
+	rock_poly.polygon = rpts
+	node.add_child(rock_poly)
+	# Top highlight — lighter warm stone
+	var hi: Polygon2D = Polygon2D.new()
+	hi.color = Color(0.60, 0.50, 0.26, 0.55)
+	hi.polygon = PackedVector2Array([rpts[6], rpts[0], rpts[1], rpts[2]])
+	node.add_child(hi)
+	# Gold vein streaks
+	const VEINS: Array = [[-5.0,-2.5, 1.0,-1.0, 4.5, 0.5], [-1.0, 0.5, 3.5,-0.8, 2.0, 2.0]]
 	for v: Variant in VEINS:
 		var vd: Array = v as Array
 		var vein: Line2D = Line2D.new()
@@ -1464,26 +1461,48 @@ static func _draw_gold(node: Node2D, s: float) -> float:
 		vein.add_point(Vector2((vd[4] as float) * s, (vd[5] as float) * s))
 		node.add_child(vein)
 
-	return 12.0 * s
-
 # ── Olivina crystals ──────────────────────────────────────────────────────────
-# Green forsterite crystal clusters — a rare volcanic mineral deposit.
-static func _draw_olivina(node: Node2D, s: float) -> float:
-	# Ground patch
+static func _draw_olivina(node: Node2D, s: float, amount: float = 0.0) -> float:
+	var count: int
+	if amount <= 100.0:
+		count = 2
+	elif amount <= 180.0:
+		count = 3
+	else:
+		count = 4
+	# [offset_x, offset_y, half_width, height, angle, Color]
+	const CRYSTAL_2: Array = [
+		[-4.0,  0.0, 3.2, 11.0, -0.25, Color(0.35, 0.82, 0.28)],
+		[ 4.0, -1.0, 2.8, 10.0,  0.30, Color(0.28, 0.70, 0.20)],
+	]
+	const CRYSTAL_3: Array = [
+		[-5.0,  0.0, 3.5, 12.0, -0.25, Color(0.35, 0.82, 0.28)],
+		[ 1.0,  1.0, 3.0, 14.0,  0.10, Color(0.45, 0.92, 0.35)],
+		[ 5.0, -1.0, 2.5, 10.0,  0.35, Color(0.28, 0.70, 0.20)],
+	]
+	const CRYSTAL_4: Array = [
+		[-7.0,  1.0, 3.5, 13.0, -0.30, Color(0.35, 0.82, 0.28)],
+		[ 0.0,  0.0, 3.2, 15.0,  0.08, Color(0.45, 0.92, 0.35)],
+		[ 5.0, -1.0, 2.5, 10.0,  0.32, Color(0.28, 0.70, 0.20)],
+		[-2.0, -5.0, 2.2,  9.0, -0.15, Color(0.38, 0.78, 0.26)],
+	]
+	var crystals: Array
+	match count:
+		2: crystals = CRYSTAL_2
+		4: crystals = CRYSTAL_4
+		_: crystals = CRYSTAL_3
+
+	# Ground patch scales with count
 	var ground: Polygon2D = Polygon2D.new()
 	ground.color = Color(0.12, 0.38, 0.10, 0.6)
+	var gw: float = (7.0 + float(count) * 2.0) * s
 	ground.polygon = PackedVector2Array([
-		Vector2(-11.0 * s, 0.0), Vector2(11.0 * s, 0.0),
-		Vector2(8.0 * s, 4.0 * s), Vector2(-8.0 * s, 4.0 * s),
+		Vector2(-gw, 0.0), Vector2(gw, 0.0),
+		Vector2(gw * 0.72, 4.0 * s), Vector2(-gw * 0.72, 4.0 * s),
 	])
 	node.add_child(ground)
-	# Cluster of 3 crystal shards — same geometry as old gold, recolored green
-	const CRYSTALS: Array = [
-		[-5.0,  0.0,  3.5, 12.0, -0.25, Color(0.35, 0.82, 0.28)],
-		[ 1.0,  1.0,  3.0, 14.0,  0.10, Color(0.45, 0.92, 0.35)],
-		[ 5.0, -1.0,  2.5, 10.0,  0.35, Color(0.28, 0.70, 0.20)],
-	]
-	for c: Variant in CRYSTALS:
+
+	for c: Variant in crystals:
 		var ca: Array = c as Array
 		var bx: float = (ca[0] as float) * s
 		var by: float = (ca[1] as float) * s
@@ -1508,49 +1527,69 @@ static func _draw_olivina(node: Node2D, s: float) -> float:
 		shard.color = col
 		shard.polygon = pts
 		node.add_child(shard)
-		# Bright face highlight
 		var face_bright: Polygon2D = Polygon2D.new()
 		face_bright.color = Color(0.75, 1.0, 0.65, 0.50)
 		face_bright.polygon = PackedVector2Array([pts[0], pts[1], pts[2]])
 		node.add_child(face_bright)
-	return 12.0 * s
+	return (10.0 + float(count) * 2.0) * s
 
 # ── Stone rocks ──────────────────────────────────────────────────────────────
-static func _draw_stone(node: Node2D, s: float) -> float:
-	# Two overlapping irregular blobs
-	const ROCKS: Array = [
-		[-5.0, 1.0, Color(0.55, 0.53, 0.50)],
-		[ 4.0, 0.0, Color(0.48, 0.46, 0.43)],
-	]
-	for r_data: Variant in ROCKS:
-		var rd: Array = r_data as Array
-		var rx: float = (rd[0] as float) * s
-		var ry: float = (rd[1] as float) * s
-		var col: Color = rd[2] as Color
-		var pts: PackedVector2Array = PackedVector2Array()
-		# Irregular polygon with 7 vertices
-		const ANGLES: Array = [0.0, 0.9, 1.8, 2.7, 3.6, 4.5, 5.4]
-		const RADII:  Array = [9.0, 7.5, 10.0, 8.0, 6.5, 9.5, 7.0]
-		for i: int in range(7):
-			var a: float = (ANGLES[i] as float)
-			var rr: float = (RADII[i] as float) * s
-			pts.append(Vector2(rx + cos(a) * rr, ry + sin(a) * rr * 0.6))
-		var rock_poly: Polygon2D = Polygon2D.new()
-		rock_poly.color = col
-		rock_poly.polygon = pts
-		node.add_child(rock_poly)
-		# Highlight on top
-		var hi: Polygon2D = Polygon2D.new()
-		hi.color = Color(0.75, 0.73, 0.70, 0.55)
-		hi.polygon = PackedVector2Array([
-			pts[6], pts[0], pts[1], pts[2],
-		])
-		node.add_child(hi)
-	return 12.0 * s
+static func _draw_stone(node: Node2D, s: float, amount: float = 0.0) -> float:
+	var count: int = 2 if amount <= 140.0 else 3
+	const LAYOUTS_2: Array = [[-6.0, 1.0, 1.00], [ 5.0, 0.0, 0.92]]
+	const LAYOUTS_3: Array = [[-8.0, 1.0, 1.00], [ 4.0, 0.0, 0.90], [-1.0,-7.0, 0.78]]
+	var layout: Array = LAYOUTS_2 if count == 2 else LAYOUTS_3
+	for entry: Variant in layout:
+		var e: Array = entry as Array
+		var container: Node2D = Node2D.new()
+		container.position = Vector2((e[0] as float) * s, (e[1] as float) * s)
+		node.add_child(container)
+		_draw_single_stone_rock(container, s * (e[2] as float))
+	return (14.0 if count == 3 else 11.0) * s
+
+static func _draw_single_stone_rock(node: Node2D, s: float) -> void:
+	var pts: PackedVector2Array = PackedVector2Array()
+	const ANGLES: Array = [0.0, 0.9, 1.8, 2.7, 3.6, 4.5, 5.4]
+	const RADII:  Array = [9.0, 7.5, 10.0, 8.0, 6.5, 9.5, 7.0]
+	for i: int in range(7):
+		var a: float = (ANGLES[i] as float)
+		var rr: float = (RADII[i] as float) * s
+		pts.append(Vector2(cos(a) * rr, sin(a) * rr * 0.6))
+	var rock_poly: Polygon2D = Polygon2D.new()
+	rock_poly.color = Color(0.52, 0.50, 0.47)
+	rock_poly.polygon = pts
+	node.add_child(rock_poly)
+	var hi: Polygon2D = Polygon2D.new()
+	hi.color = Color(0.75, 0.73, 0.70, 0.55)
+	hi.polygon = PackedVector2Array([pts[6], pts[0], pts[1], pts[2]])
+	node.add_child(hi)
 
 # ── Berry bush (food) ────────────────────────────────────────────────────────
-static func _draw_berry_bush(node: Node2D, s: float) -> float:
-	# Green bush base — two overlapping rounded blobs
+static func _draw_berry_bush(node: Node2D, s: float, amount: float = 0.0) -> float:
+	var count: int
+	if amount <= 90.0:
+		count = 2
+	elif amount <= 130.0:
+		count = 3
+	else:
+		count = 4
+	const LAYOUTS_2: Array = [[-7.0, 0.0, 1.00], [ 6.0, 0.0, 0.88]]
+	const LAYOUTS_3: Array = [[-8.0, 0.0, 1.00], [ 4.0, 0.0, 0.88], [-1.0,-8.0, 0.80]]
+	const LAYOUTS_4: Array = [[-9.0, 0.0, 1.00], [ 5.0,-1.0, 0.88], [-2.0,-8.0, 0.82], [ 7.0,-6.0, 0.75]]
+	var layout: Array
+	match count:
+		2: layout = LAYOUTS_2
+		4: layout = LAYOUTS_4
+		_: layout = LAYOUTS_3
+	for entry: Variant in layout:
+		var e: Array = entry as Array
+		var container: Node2D = Node2D.new()
+		container.position = Vector2((e[0] as float) * s, (e[1] as float) * s)
+		node.add_child(container)
+		_draw_single_berry_bush(container, s * (e[2] as float))
+	return (12.0 + float(count) * 2.5) * s
+
+static func _draw_single_berry_bush(node: Node2D, s: float) -> void:
 	const BLOBS: Array = [
 		[-4.0, -2.0, 9.0, Color(0.15, 0.48, 0.12)],
 		[ 4.0, -1.0, 8.0, Color(0.18, 0.55, 0.15)],
@@ -1570,7 +1609,6 @@ static func _draw_berry_bush(node: Node2D, s: float) -> float:
 		blob.color = col
 		blob.polygon = pts
 		node.add_child(blob)
-	# Small red berries scattered on the bush
 	const BERRIES: Array = [
 		[-5.0, -4.0], [0.0, -9.0], [5.0, -5.0],
 		[-3.0, -1.0], [4.0, -2.0], [1.0, -6.0],
@@ -1588,7 +1626,6 @@ static func _draw_berry_bush(node: Node2D, s: float) -> float:
 		berry.color = Color(0.85, 0.15, 0.10)
 		berry.polygon = pts
 		node.add_child(berry)
-	return 10.0 * s
 
 # ── Deer (hunt food) ─────────────────────────────────────────────────────────
 static func _draw_deer(node: Node2D, s: float) -> float:
