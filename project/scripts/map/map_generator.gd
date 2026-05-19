@@ -696,9 +696,9 @@ func _spawn_player_resources(parent: Node2D, tc: Vector2,
 				200.0 * _res_mult, float(sz[2]), true)
 
 	var food_angle: float = _rng.randf_range(0.0, TAU) + angle_offset
-	_spawn_deposit(parent, tc, ResourceNode.ResourceType.FOOD_HUNT,
+	_spawn_deposit(parent, tc, ResourceNode.ResourceType.FOOD_BERRY,
 		roundi(6.0 * _res_mult), 110.0 * _res_mult, food_angle,            160.0, 280.0)
-	_spawn_deposit(parent, tc, ResourceNode.ResourceType.FOOD_HUNT,
+	_spawn_deposit(parent, tc, ResourceNode.ResourceType.FOOD_BERRY,
 		roundi(3.0 * _res_mult), 110.0 * _res_mult, food_angle + PI * 0.6, 180.0, 300.0)
 
 # Island-constrained version: resources must land within the island poly
@@ -726,7 +726,7 @@ func _spawn_player_resources_clamped(parent: Node2D, tc: Vector2,
 				180.0 * _res_mult, float(ifsz[2]), true)
 
 	var food_angle: float = _rng.randf_range(0.0, TAU) + angle_offset
-	_spawn_deposit_clamped(parent, tc, ResourceNode.ResourceType.FOOD_HUNT,
+	_spawn_deposit_clamped(parent, tc, ResourceNode.ResourceType.FOOD_BERRY,
 		roundi(6.0 * _res_mult), 100.0 * _res_mult,
 		food_angle, 120.0, max_dist, island_center, island_radius)
 
