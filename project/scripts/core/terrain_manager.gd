@@ -13,6 +13,18 @@ enum TerrainType {
 	CALDERA     = 6,   # volcanic crater — impassable, +stone for controller
 }
 
+# Canonical display colours — index matches TerrainType int.
+# MapGenerator reads these so the minimap always matches the painted terrain.
+const COLORS: Array[Color] = [
+	Color(0.22, 0.45, 0.18),   # GRASS
+	Color(0.12, 0.10, 0.09),   # MALPAIS
+	Color(0.78, 0.68, 0.42),   # DUNE
+	Color(0.08, 0.28, 0.10),   # LAURISILVA
+	Color(0.46, 0.42, 0.38),   # RISCO
+	Color(0.10, 0.25, 0.50),   # OCEAN
+	Color(0.28, 0.07, 0.04),   # CALDERA
+]
+
 # Speed multipliers for each terrain type.
 # Index = TerrainType int. Value = fraction of normal speed (1.0 = no penalty).
 const SPEED_MULT: Array[float] = [
@@ -146,15 +158,7 @@ func nearest_passable(world_pos: Vector2, civ_id: String) -> Vector2:
 # resolution: pixel dimensions of the output square texture.
 func bake_minimap_texture(map_half: float, resolution: int) -> void:
 	minimap_map_half = map_half
-	const TERRAIN_COLORS: Array[Color] = [
-		Color(0.22, 0.45, 0.18),   # GRASS
-		Color(0.14, 0.12, 0.11),   # MALPAIS
-		Color(0.78, 0.68, 0.42),   # DUNE
-		Color(0.08, 0.28, 0.10),   # LAURISILVA
-		Color(0.35, 0.30, 0.26),   # RISCO  — dark brown/grey matching mountain base
-		Color(0.10, 0.25, 0.50),   # OCEAN
-		Color(0.28, 0.07, 0.04),   # CALDERA
-	]
+	var TERRAIN_COLORS: Array[Color] = COLORS
 	# Flatten zones into parallel arrays — avoids per-pixel Dictionary access
 	var z_count: int = _zones.size()
 	var z_cx: PackedFloat32Array = PackedFloat32Array()

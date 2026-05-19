@@ -33,15 +33,8 @@ const ANIMAL_SCENE: String   = "res://scenes/units/animal.tscn"
 const SHEEP_SCENE:  String   = "res://scenes/units/sheep.tscn"
 
 # --- Terrain visual colours ---
-const TERRAIN_COLORS: Dictionary = {
-	TerrainManager.TerrainType.GRASS:      Color(0.22, 0.45, 0.18),
-	TerrainManager.TerrainType.MALPAIS:    Color(0.14, 0.12, 0.11),
-	TerrainManager.TerrainType.DUNE:       Color(0.78, 0.68, 0.42),
-	TerrainManager.TerrainType.LAURISILVA: Color(0.08, 0.30, 0.12),
-	TerrainManager.TerrainType.RISCO:      Color(0.48, 0.44, 0.40),
-	TerrainManager.TerrainType.OCEAN:      Color(0.10, 0.28, 0.52),
-	TerrainManager.TerrainType.CALDERA:    Color(0.30, 0.08, 0.04),
-}
+static func _tc(t: TerrainManager.TerrainType) -> Color:
+	return TerrainManager.COLORS[t]
 
 # Placement registry — flat arrays for fast iteration
 var _placed_pos: PackedVector2Array = PackedVector2Array()
@@ -98,7 +91,7 @@ func _run(parent: Node2D, units_layer: Node2D,
 				_register(tc, R_TC)
 				_register_unit_cluster(tc)
 			# No terrain zones — pure flat grass, just paint the base green
-			_paint_rect_bg(parent, _map_half, TERRAIN_COLORS[TerrainManager.TerrainType.GRASS])
+			_paint_rect_bg(parent, _map_half, _tc(TerrainManager.TerrainType.GRASS))
 			_spawn_animals_multi(units_layer, tc_positions)
 			for i: int in range(tc_positions.size()):
 				_spawn_player_resources(parent, tc_positions[i],
@@ -185,7 +178,7 @@ func _run_islands(parent: Node2D, units_layer: Node2D,
 		var poly: PackedVector2Array = _make_island_poly(center, island_radius)
 		_land_polys.append(poly)
 		TerrainManager.set_land_polys(_land_polys, true)
-		_paint_polygon(parent, poly, TERRAIN_COLORS[TerrainManager.TerrainType.GRASS])
+		_paint_polygon(parent, poly, _tc(TerrainManager.TerrainType.GRASS))
 		_scatter_island_terrain(center, island_radius)
 
 	_flush_terrain_zones_visual(parent)
@@ -300,7 +293,7 @@ func _paint_volcanic_coast(parent: Node2D) -> void:
 func _paint_desert_coast(parent: Node2D) -> void:
 	var h: float = _map_half
 	# Paint base as dune (paint large covering rect)
-	_paint_rect_bg(parent, h, TERRAIN_COLORS[TerrainManager.TerrainType.DUNE])
+	_paint_rect_bg(parent, h, _tc(TerrainManager.TerrainType.DUNE))
 	# Register full map as dune zone so TerrainManager knows
 	TerrainManager.add_zone(Vector2.ZERO, h * 1.5, TerrainManager.TerrainType.DUNE)
 	# Add small grass oases near TCs (registered last = highest priority)
@@ -308,7 +301,7 @@ func _paint_desert_coast(parent: Node2D) -> void:
 		var oasis: Vector2 = Vector2(side * h * 0.35, _rng.randf_range(-h * 0.2, h * 0.2))
 		TerrainManager.add_zone(oasis, h * 0.18, TerrainManager.TerrainType.GRASS)
 		_paint_circle_patch(parent, oasis, h * 0.18,
-			TERRAIN_COLORS[TerrainManager.TerrainType.GRASS])
+			_tc(TerrainManager.TerrainType.GRASS))
 	# Risco ridge on east edge
 	for _i: int in range(3):
 		var rpos: Vector2 = Vector2(_rng.randf_range(h * 0.55, h * 0.75),
@@ -336,14 +329,13 @@ func _flush_terrain_zones_visual(parent: Node2D) -> void:
 			TerrainManager.TerrainType.CALDERA:
 				_paint_caldera(parent, center, radius)
 			_:
-				_paint_circle_patch(parent, center, radius,
-					TERRAIN_COLORS.get(t, Color(0.5, 0.5, 0.5)) as Color)
+				_paint_circle_patch(parent, center, radius, _tc(t))
 
 # ── Per-terrain painters ──────────────────────────────────────────────────────
 
 func _paint_laurisilva(parent: Node2D, center: Vector2, radius: float) -> void:
 	# Base: dark green blob
-	_paint_circle_patch(parent, center, radius, Color(0.08, 0.28, 0.10))
+	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.LAURISILVA))
 	# Batch all canopies into a single Polygon2D per colour group to minimise
 	# scene-tree nodes. We use 3 colour groups; each gets one Polygon2D with
 	# all canopy outlines appended as a single closed polygon (separated by a
@@ -386,7 +378,7 @@ func _paint_laurisilva(parent: Node2D, center: Vector2, radius: float) -> void:
 		parent.add_child(canopy)
 
 func _paint_risco(parent: Node2D, center: Vector2, radius: float) -> void:
-	_paint_circle_patch(parent, center, radius, Color(0.46, 0.42, 0.38))
+	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.RISCO))
 
 	var peak_count: int = _rng.randi_range(2, 4)
 	# Back peaks render on top (higher z) so they visually sit behind front ones
@@ -445,7 +437,7 @@ func _paint_risco(parent: Node2D, center: Vector2, radius: float) -> void:
 		parent.add_child(snow)
 
 func _paint_malpais(parent: Node2D, center: Vector2, radius: float) -> void:
-	_paint_circle_patch(parent, center, radius, Color(0.12, 0.10, 0.09))
+	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.MALPAIS))
 	# Batch all fragments into a single Polygon2D
 	var all_pts: PackedVector2Array = PackedVector2Array()
 	var frag_count: int = _rng.randi_range(8, 14)
@@ -469,7 +461,7 @@ func _paint_malpais(parent: Node2D, center: Vector2, radius: float) -> void:
 		parent.add_child(frag)
 
 func _paint_caldera(parent: Node2D, center: Vector2, radius: float) -> void:
-	_paint_circle_patch(parent, center, radius, Color(0.28, 0.07, 0.04))
+	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.CALDERA))
 	_paint_circle_patch(parent, center, radius * 0.55, Color(0.06, 0.04, 0.04))
 
 	var crack_count: int = _rng.randi_range(3, 5)
@@ -1116,7 +1108,7 @@ func _spawn_resource_islets(parent: Node2D, center0: Vector2, center1: Vector2,
 		var poly: PackedVector2Array = _make_island_poly(islet_center, islet_radius)
 		_land_polys.append(poly)
 		TerrainManager.set_land_polys(_land_polys, true)
-		_paint_polygon(parent, poly, TERRAIN_COLORS[TerrainManager.TerrainType.GRASS])
+		_paint_polygon(parent, poly, _tc(TerrainManager.TerrainType.GRASS))
 
 		# Pick a random template and spawn its resources on the islet
 		var template: Array = ISLET_TEMPLATES[_rng.randi() % ISLET_TEMPLATES.size()] as Array
