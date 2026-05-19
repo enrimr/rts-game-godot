@@ -92,8 +92,9 @@ func _run(parent: Node2D, units_layer: Node2D,
 			for tc: Vector2 in tc_positions:
 				_register(tc, R_TC)
 				_register_unit_cluster(tc)
-			# No terrain zones — pure flat grass, just paint the base green
+			# No terrain zones — scatter grass variants over the flat base
 			_paint_rect_bg(parent, _map_half, _tc(TerrainManager.TerrainType.GRASS))
+			_paint_ground_scatter(parent, _map_half, TerrainManager.TerrainType.GRASS)
 			_spawn_animals_multi(units_layer, tc_positions)
 			for i: int in range(tc_positions.size()):
 				_spawn_player_resources(parent, tc_positions[i],
@@ -247,10 +248,9 @@ func _spawn_island_resources(parent: Node2D, tc: Vector2,
 
 func _paint_standard(parent: Node2D) -> void:
 	var h: float = _map_half
-	# Base grass already present on the Ground polygon in scene.
-	# Scatter: laurisilva patches, malpaís blob, dune patches, risco edge
+	_paint_rect_bg(parent, h, _tc(TerrainManager.TerrainType.GRASS))
+	_paint_ground_scatter(parent, h, TerrainManager.TerrainType.GRASS)
 	var configs: Array = [
-		# [count, radius_min, radius_max, terrain_type]
 		[3, h * 0.06, h * 0.14, TerrainManager.TerrainType.LAURISILVA],
 		[2, h * 0.08, h * 0.18, TerrainManager.TerrainType.MALPAIS],
 		[2, h * 0.07, h * 0.15, TerrainManager.TerrainType.DUNE],
@@ -267,6 +267,8 @@ func _paint_standard(parent: Node2D) -> void:
 
 func _paint_volcanic_coast(parent: Node2D) -> void:
 	var h: float = _map_half
+	_paint_rect_bg(parent, h, _tc(TerrainManager.TerrainType.GRASS))
+	_paint_ground_scatter(parent, h, TerrainManager.TerrainType.GRASS)
 	# Large central caldera + malpaís bands radiating from it
 	var caldera_pos: Vector2 = Vector2(_rng.randf_range(-h * 0.1, h * 0.1),
 		_rng.randf_range(-h * 0.1, h * 0.1))
@@ -294,8 +296,8 @@ func _paint_volcanic_coast(parent: Node2D) -> void:
 
 func _paint_desert_coast(parent: Node2D) -> void:
 	var h: float = _map_half
-	# Paint base as dune (paint large covering rect)
 	_paint_rect_bg(parent, h, _tc(TerrainManager.TerrainType.DUNE))
+	_paint_ground_scatter(parent, h, TerrainManager.TerrainType.DUNE)
 	# Register full map as dune zone so TerrainManager knows
 	TerrainManager.add_zone(Vector2.ZERO, h * 1.5, TerrainManager.TerrainType.DUNE)
 	# Add small grass oases near TCs (registered last = highest priority)
@@ -663,6 +665,26 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 		t_int = TerrainManager.TerrainType.GRASS
 	if t_int >= 0:
 		_paint_terrain_variant(parent, center, radius, t_int, variant)
+
+# Covers the whole map base with overlapping scatter patches so the flat
+# background shows terrain variants instead of a single solid colour.
+# Patches are large (15–25 % of map_half radius) and laid on a loose grid
+# with random offset so every area gets coverage.
+func _paint_ground_scatter(parent: Node2D, map_half: float,
+		terrain: TerrainManager.TerrainType) -> void:
+	var patch_r: float = map_half * 0.22
+	var step: float = map_half * 0.30
+	var x: float = -map_half
+	while x <= map_half:
+		var y: float = -map_half
+		while y <= map_half:
+			var jx: float = _rng.randf_range(-step * 0.45, step * 0.45)
+			var jy: float = _rng.randf_range(-step * 0.45, step * 0.45)
+			var center: Vector2 = Vector2(x + jx, y + jy)
+			var v: int = _rng.randi() % 3
+			_paint_terrain_variant(parent, center, patch_r, terrain, v)
+			y += step
+		x += step
 
 func _paint_terrain_variant(parent: Node2D, center: Vector2,
 		radius: float, terrain: int, variant: int) -> void:
