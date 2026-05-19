@@ -1120,7 +1120,8 @@ func _spawn_fish_multi(parent: Node2D, island_centers: Array[Vector2],
 		map_center += c
 	map_center /= float(island_centers.size())
 
-	var total: int = roundi(8.0 * _res_mult * float(island_centers.size()) * 0.75)
+	# Each node is a shoal of 5 fish — fewer nodes, higher amount each.
+	var total: int = roundi(5.0 * _res_mult * float(island_centers.size()) * 0.75)
 	var placed: int = 0
 	for _attempt: int in range(MAX_PLACE_TRIES * total * 2):
 		if placed >= total:
@@ -1135,7 +1136,7 @@ func _spawn_fish_multi(parent: Node2D, island_centers: Array[Vector2],
 			continue
 		_register(pos, R_RES_OTHER)
 		_create_resource_node(parent, pos, ResourceNode.ResourceType.FOOD_FISH,
-			200.0 * _rng.randf_range(0.8, 1.2))
+			280.0 * _rng.randf_range(0.8, 1.2))
 		placed += 1
 
 # Spawns small resource islets in the open ocean between and around the two main islands.
@@ -1583,6 +1584,24 @@ static func _draw_deer(node: Node2D, s: float) -> float:
 
 # ── Fish ─────────────────────────────────────────────────────────────────────
 static func _draw_fish(node: Node2D, s: float) -> float:
+	# School layout: [offset_x, offset_y, angle_deg, size_mult]
+	# Fish are spread in a loose shoal formation around the resource point.
+	const SCHOOL: Array = [
+		[ 0.0,   0.0,   0.0,  1.00],
+		[22.0, -14.0,  20.0,  0.80],
+		[26.0,  13.0, -14.0,  0.85],
+		[-18.0, -10.0,  8.0,  0.75],
+		[ 12.0,  22.0, -24.0, 0.72],
+	]
+	for entry: Array in SCHOOL:
+		var container: Node2D = Node2D.new()
+		container.position = Vector2((entry[0] as float) * s, (entry[1] as float) * s)
+		container.rotation = deg_to_rad(entry[2] as float)
+		node.add_child(container)
+		_draw_single_fish(container, s * (entry[3] as float))
+	return 38.0 * s
+
+static func _draw_single_fish(node: Node2D, s: float) -> void:
 	# Body
 	var body: Polygon2D = Polygon2D.new()
 	body.color = Color(0.25, 0.55, 0.75)
@@ -1622,7 +1641,6 @@ static func _draw_fish(node: Node2D, s: float) -> float:
 		Vector2(5.5 * s, -0.5 * s), Vector2(0.0, 0.5 * s),
 	])
 	node.add_child(shimmer)
-	return 10.0 * s
 
 # ── Navigation mesh carving ─────────────────────────────────────────────────
 #
