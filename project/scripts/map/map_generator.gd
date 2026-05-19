@@ -380,67 +380,92 @@ func _paint_laurisilva(parent: Node2D, center: Vector2, radius: float) -> void:
 func _paint_risco(parent: Node2D, center: Vector2, radius: float) -> void:
 	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.RISCO))
 
-	var peak_count: int = _rng.randi_range(2, 4)
-	# Back peaks render on top (higher z) so they visually sit behind front ones
-	# via painter's order within the same z band.
+	# Scattered ground pebbles across the rock zone base for texture
+	var pebble_count: int = _rng.randi_range(14, 22)
+	for _pi: int in range(pebble_count):
+		var pa: float = _rng.randf() * TAU
+		var pd: float = _rng.randf_range(0.0, radius * 0.90)
+		var ppos: Vector2 = center + Vector2(cos(pa), sin(pa)) * pd
+		var pr: float = _rng.randf_range(radius * 0.018, radius * 0.045)
+		var ppoly: Polygon2D = Polygon2D.new()
+		ppoly.color = Color(0.38, 0.35, 0.31, 0.85)
+		ppoly.z_index = -7
+		var ppts: PackedVector2Array = PackedVector2Array()
+		const PBSTEPS: int = 6
+		for psi: int in range(PBSTEPS):
+			var psa: float = TAU * psi / PBSTEPS + _rng.randf_range(-0.3, 0.3)
+			ppts.append(ppos + Vector2(cos(psa), sin(psa)) * pr * _rng.randf_range(0.6, 1.2))
+		ppoly.polygon = ppts
+		parent.add_child(ppoly)
+
+	# Peaks — more peaks, wider base to fill the zone
+	var peak_count: int = _rng.randi_range(3, 6)
 	for pi: int in range(peak_count):
-		var spread: float = _rng.randf_range(0.0, radius * 0.45)
+		# Spread peaks across most of the zone so the base is well covered
+		var spread: float = _rng.randf_range(0.0, radius * 0.60)
 		var dir_angle: float = _rng.randf() * TAU
 		var peak_center: Vector2 = center + Vector2(cos(dir_angle), sin(dir_angle)) * spread
 
-		var ph: float = _rng.randf_range(radius * 0.5, radius * 0.9)
-		var pw: float = _rng.randf_range(radius * 0.5, radius * 0.8)
+		# Wide base: pw can exceed the local spread so adjacent peaks overlap at ground level
+		var ph: float = _rng.randf_range(radius * 0.55, radius * 1.0)
+		var pw: float = _rng.randf_range(radius * 0.75, radius * 1.2)
 		var tilt: float = _rng.randf_range(-0.18, 0.18)
 
-		# Irregular peak apex — slight horizontal jitter on tip
 		var tip: Vector2 = peak_center + Vector2(tilt * pw, -ph)
-		var base_l: Vector2 = peak_center + Vector2(-pw * 0.5 + _rng.randf_range(-pw * 0.1, pw * 0.1), _rng.randf_range(-ph * 0.05, ph * 0.08))
-		var base_r: Vector2 = peak_center + Vector2( pw * 0.5 + _rng.randf_range(-pw * 0.1, pw * 0.1), _rng.randf_range(-ph * 0.05, ph * 0.08))
-		# Extra jagged vertex on each flank
-		var jag_l: Vector2 = peak_center + Vector2(-pw * 0.28 + _rng.randf_range(-pw * 0.08, pw * 0.06), -ph * _rng.randf_range(0.38, 0.55))
-		var jag_r: Vector2 = peak_center + Vector2( pw * 0.28 + _rng.randf_range(-pw * 0.06, pw * 0.08), -ph * _rng.randf_range(0.35, 0.52))
+		var base_l: Vector2 = peak_center + Vector2(-pw * 0.5 + _rng.randf_range(-pw * 0.08, pw * 0.08), _rng.randf_range(-ph * 0.05, ph * 0.10))
+		var base_r: Vector2 = peak_center + Vector2( pw * 0.5 + _rng.randf_range(-pw * 0.08, pw * 0.08), _rng.randf_range(-ph * 0.05, ph * 0.10))
+		# Extra mid-flank jagged vertices for more craggy silhouette
+		var jag_l: Vector2 = peak_center + Vector2(-pw * 0.30 + _rng.randf_range(-pw * 0.08, pw * 0.06), -ph * _rng.randf_range(0.38, 0.58))
+		var jag_r: Vector2 = peak_center + Vector2( pw * 0.30 + _rng.randf_range(-pw * 0.06, pw * 0.08), -ph * _rng.randf_range(0.35, 0.55))
+		var jag2_l: Vector2 = peak_center + Vector2(-pw * 0.42 + _rng.randf_range(-pw * 0.05, pw * 0.05), -ph * _rng.randf_range(0.15, 0.32))
+		var jag2_r: Vector2 = peak_center + Vector2( pw * 0.42 + _rng.randf_range(-pw * 0.05, pw * 0.05), -ph * _rng.randf_range(0.12, 0.30))
 
-		# Dark rock base — full mountain silhouette
+		var z_base: int = -7 if pi < peak_count / 2 else -6
+
+		# Dark rock base — full wide mountain silhouette
 		var base_poly: Polygon2D = Polygon2D.new()
-		base_poly.color = Color(0.35, 0.32, 0.28)
-		base_poly.z_index = -7 if pi < peak_count / 2 else -6
-		base_poly.polygon = PackedVector2Array([base_l, jag_l, tip, jag_r, base_r])
+		base_poly.color = Color(0.32, 0.29, 0.25)
+		base_poly.z_index = z_base
+		base_poly.polygon = PackedVector2Array([base_l, jag2_l, jag_l, tip, jag_r, jag2_r, base_r])
 		parent.add_child(base_poly)
 
-		# Mid-slope face — right half lighter
+		# Mid-slope face — right half lighter (sunlit side)
 		var face: Polygon2D = Polygon2D.new()
-		face.color = Color(0.52, 0.48, 0.44)
-		face.z_index = base_poly.z_index
+		face.color = Color(0.54, 0.50, 0.45)
+		face.z_index = z_base
 		var mid_base: Vector2 = (tip + base_r) * 0.5 + Vector2(0.0, ph * 0.08)
-		face.polygon = PackedVector2Array([tip, jag_r, base_r, mid_base])
+		face.polygon = PackedVector2Array([tip, jag_r, jag2_r, base_r, mid_base])
 		parent.add_child(face)
 
-		# Shadow side — left darker triangle
+		# Shadow side — left darker area
 		var shadow: Polygon2D = Polygon2D.new()
-		shadow.color = Color(0.22, 0.20, 0.18, 0.7)
-		shadow.z_index = base_poly.z_index
-		var mid_left: Vector2 = base_l + (tip - base_l) * 0.35
-		shadow.polygon = PackedVector2Array([base_l, jag_l, mid_left])
+		shadow.color = Color(0.18, 0.16, 0.14, 0.75)
+		shadow.z_index = z_base
+		var mid_left: Vector2 = base_l + (tip - base_l) * 0.38
+		shadow.polygon = PackedVector2Array([base_l, jag2_l, jag_l, mid_left])
 		parent.add_child(shadow)
 
-		# Snow cap — small triangle at apex
-		var snow_h: float = ph * _rng.randf_range(0.18, 0.28)
-		var snow_w: float = pw * _rng.randf_range(0.14, 0.22)
+		# Snow cap — wider irregular patch at apex
+		var snow_h: float = ph * _rng.randf_range(0.20, 0.32)
+		var snow_w: float = pw * _rng.randf_range(0.18, 0.28)
 		var snow: Polygon2D = Polygon2D.new()
-		snow.color = Color(0.88, 0.87, 0.85, 0.9)
-		snow.z_index = base_poly.z_index
+		snow.color = Color(0.90, 0.89, 0.87, 0.92)
+		snow.z_index = z_base
 		snow.polygon = PackedVector2Array([
 			tip,
+			tip + Vector2(-snow_w * 0.6, snow_h * 0.4) + Vector2(_rng.randf_range(-2.0, 2.0), 0.0),
 			tip + Vector2(-snow_w, snow_h),
 			tip + Vector2( snow_w, snow_h),
+			tip + Vector2( snow_w * 0.6, snow_h * 0.4) + Vector2(_rng.randf_range(-2.0, 2.0), 0.0),
 		])
 		parent.add_child(snow)
 
 func _paint_malpais(parent: Node2D, center: Vector2, radius: float) -> void:
 	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.MALPAIS))
-	# Batch all fragments into a single Polygon2D
+
+	# Dark lava rock fragments scattered across the zone
 	var all_pts: PackedVector2Array = PackedVector2Array()
-	var frag_count: int = _rng.randi_range(8, 14)
+	var frag_count: int = _rng.randi_range(10, 18)
 	for _i: int in range(frag_count):
 		var a: float = _rng.randf() * TAU
 		var d: float = _rng.randf_range(0.0, radius * 0.88)
@@ -455,10 +480,31 @@ func _paint_malpais(parent: Node2D, center: Vector2, radius: float) -> void:
 
 	if all_pts.size() >= 3:
 		var frag: Polygon2D = Polygon2D.new()
-		frag.color = Color(0.26, 0.23, 0.22)
+		frag.color = Color(0.24, 0.21, 0.20)
 		frag.z_index = -7
 		frag.polygon = all_pts
 		parent.add_child(frag)
+
+	# Glowing crack lines — thin orange-red veins suggesting cooling lava
+	var crack_count: int = _rng.randi_range(3, 6)
+	for _ci: int in range(crack_count):
+		var start_a: float = _rng.randf() * TAU
+		var start_d: float = _rng.randf_range(0.0, radius * 0.55)
+		var crack_start: Vector2 = center + Vector2(cos(start_a), sin(start_a)) * start_d
+		var crack_line: Line2D = Line2D.new()
+		crack_line.default_color = Color(0.72, 0.22, 0.05, 0.65)
+		crack_line.width = _rng.randf_range(1.0, 2.0)
+		crack_line.z_index = -6
+		crack_line.add_point(crack_start)
+		var seg_len: float = _rng.randf_range(radius * 0.15, radius * 0.35)
+		var dir_a: float = _rng.randf() * TAU
+		var segs: int = _rng.randi_range(3, 5)
+		var cur: Vector2 = crack_start
+		for _si: int in range(segs):
+			dir_a += _rng.randf_range(-0.6, 0.6)
+			cur += Vector2(cos(dir_a), sin(dir_a)) * (seg_len / segs)
+			crack_line.add_point(cur)
+		parent.add_child(crack_line)
 
 func _paint_caldera(parent: Node2D, center: Vector2, radius: float) -> void:
 	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.CALDERA))
@@ -602,44 +648,82 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 		fpoly.polygon = fpts
 		parent.add_child(fpoly)
 
-	# ── DUNE-specific: subtle wavy ripple lines across the zone ──────────────
+	# ── DUNE-specific: wavy ripple lines + small grain dot clusters ──────────
 	# Heuristic: sandy colour matches dune base (0.78, 0.68, 0.42)
 	if col.r > 0.70 and col.g > 0.60 and col.b < 0.55 and col.a > 0.9:
-		var ripple_count: int = _rng.randi_range(4, 6)
+		var ripple_count: int = _rng.randi_range(5, 8)
 		for ri: int in range(ripple_count):
 			var ry: float = center.y - radius * 0.8 + (radius * 1.6 / float(ripple_count)) * float(ri) \
 					+ _rng.randf_range(-radius * 0.06, radius * 0.06)
 			var line: Line2D = Line2D.new()
-			line.default_color = Color(0.70, 0.60, 0.36, 0.3)
-			line.width = _rng.randf_range(1.5, 2.5)
+			line.default_color = Color(0.68, 0.58, 0.33, 0.28)
+			line.width = _rng.randf_range(1.5, 3.0)
 			line.z_index = -7
-			var seg_count: int = _rng.randi_range(6, 8)
+			var seg_count: int = _rng.randi_range(7, 10)
 			for si: int in range(seg_count):
 				var sx: float = center.x - radius * 0.9 + (radius * 1.8 / float(seg_count - 1)) * float(si)
-				var sy: float = ry + _rng.randf_range(-4.0, 4.0)
+				var sy: float = ry + sin(float(si) * 1.4) * 3.5 + _rng.randf_range(-2.5, 2.5)
 				line.add_point(Vector2(sx, sy))
 			parent.add_child(line)
+		# Grain dots — tiny bright specks simulating sand surface texture
+		var grain_count: int = _rng.randi_range(20, 35)
+		var grain_pts: PackedVector2Array = PackedVector2Array()
+		const GRAIN_STEPS: int = 5
+		for _gri: int in range(grain_count):
+			var gra: float = _rng.randf() * TAU
+			var grd: float = _rng.randf_range(0.0, radius * 0.88)
+			var grpos: Vector2 = center + Vector2(cos(gra), sin(gra)) * grd
+			var grr: float = _rng.randf_range(radius * 0.008, radius * 0.022)
+			if grain_pts.size() > 0:
+				grain_pts.append(grain_pts[0])
+			for gsi: int in range(GRAIN_STEPS):
+				var gsa: float = TAU * gsi / GRAIN_STEPS
+				grain_pts.append(grpos + Vector2(cos(gsa), sin(gsa)) * grr)
+		if grain_pts.size() >= 3:
+			var grain_poly: Polygon2D = Polygon2D.new()
+			grain_poly.color = Color(0.88, 0.80, 0.55, 0.55)
+			grain_poly.z_index = -7
+			grain_poly.polygon = grain_pts
+			parent.add_child(grain_poly)
 
-	# ── GRASS-specific: small darker green variation blobs inside the zone ────
+	# ── GRASS-specific: variation blobs (dark patches + bright highlights) ────
 	if col.r < 0.30 and col.g > 0.38 and col.b < 0.25 and col.a > 0.9:
-		# Heuristic: matches grass base (0.22, 0.45, 0.18)
-		var blob_count: int = _rng.randi_range(5, 8)
+		var blob_count: int = _rng.randi_range(6, 10)
 		for _gi: int in range(blob_count):
 			var ga: float = _rng.randf() * TAU
-			var gd: float = _rng.randf_range(0.0, radius * 0.80)
-			var gr: float = radius * _rng.randf_range(0.08, 0.18)
+			var gd: float = _rng.randf_range(0.0, radius * 0.82)
+			var gr: float = radius * _rng.randf_range(0.07, 0.16)
 			var gpos: Vector2 = center + Vector2(cos(ga), sin(ga)) * gd
 			var gpoly: Polygon2D = Polygon2D.new()
-			gpoly.color = Color(0.18, 0.40, 0.14, 0.6)
+			# Alternate between darker clumps and lighter sun patches
+			if _rng.randi() % 3 == 0:
+				gpoly.color = Color(0.28, 0.52, 0.18, 0.45)   # lighter sun patch
+			else:
+				gpoly.color = Color(0.16, 0.36, 0.12, 0.55)   # darker clump
 			gpoly.z_index = -7
 			var gpts: PackedVector2Array = PackedVector2Array()
 			const GSTEPS: int = 10
 			for gi2: int in range(GSTEPS):
 				var gai: float = TAU * gi2 / GSTEPS
-				var gri: float = gr * _rng.randf_range(0.75, 1.20)
+				var gri: float = gr * _rng.randf_range(0.72, 1.25)
 				gpts.append(gpos + Vector2(cos(gai), sin(gai)) * gri)
 			gpoly.polygon = gpts
 			parent.add_child(gpoly)
+		# Short grass blade strokes — tiny Lines to suggest texture at close range
+		var blade_count: int = _rng.randi_range(12, 20)
+		for _bi: int in range(blade_count):
+			var ba: float = _rng.randf() * TAU
+			var bd: float = _rng.randf_range(0.0, radius * 0.75)
+			var bpos: Vector2 = center + Vector2(cos(ba), sin(ba)) * bd
+			var blade: Line2D = Line2D.new()
+			blade.default_color = Color(0.20, 0.50, 0.14, 0.35)
+			blade.width = 1.2
+			blade.z_index = -7
+			var blade_len: float = _rng.randf_range(radius * 0.025, radius * 0.055)
+			var blade_angle: float = _rng.randf_range(-PI * 0.3, PI * 0.3) - PI * 0.5
+			blade.add_point(bpos)
+			blade.add_point(bpos + Vector2(cos(blade_angle), sin(blade_angle)) * blade_len)
+			parent.add_child(blade)
 
 func _paint_rect_bg(parent: Node2D, half: float, col: Color) -> void:
 	var poly: Polygon2D = Polygon2D.new()
