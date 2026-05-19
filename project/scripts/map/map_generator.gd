@@ -1228,7 +1228,7 @@ func _spawn_deposit(parent: Node2D, center: Vector2,
 	if deposit_center == Vector2.INF or TerrainManager.is_impassable_for(deposit_center, ""):
 		return
 	_register(deposit_center, obj_r)
-	_create_resource_node(parent, deposit_center, rtype, amount * _rng.randf_range(0.85, 1.15))
+	_create_resource_node(parent, deposit_center, rtype, amount * _rng.randf_range(0.5, 1.5))
 	var placed: int = 1
 	for _i: int in range(MAX_PLACE_TRIES * count):
 		if placed >= count:
@@ -1237,7 +1237,7 @@ func _spawn_deposit(parent: Node2D, center: Vector2,
 		if pos == Vector2.INF or TerrainManager.is_impassable_for(pos, ""):
 			continue
 		_register(pos, obj_r)
-		_create_resource_node(parent, pos, rtype, amount * _rng.randf_range(0.85, 1.15))
+		_create_resource_node(parent, pos, rtype, amount * _rng.randf_range(0.5, 1.5))
 		placed += 1
 
 func _spawn_deposit_clamped(parent: Node2D, center: Vector2,
@@ -1261,7 +1261,7 @@ func _spawn_deposit_clamped(parent: Node2D, center: Vector2,
 	if deposit_center == Vector2.INF:
 		return
 	_register(deposit_center, obj_r)
-	_create_resource_node(parent, deposit_center, rtype, amount * _rng.randf_range(0.85, 1.15))
+	_create_resource_node(parent, deposit_center, rtype, amount * _rng.randf_range(0.5, 1.5))
 	var placed: int = 1
 	for _i: int in range(MAX_PLACE_TRIES * count):
 		if placed >= count:
@@ -1272,7 +1272,7 @@ func _spawn_deposit_clamped(parent: Node2D, center: Vector2,
 		if not TerrainManager._point_in_any_land(pos):
 			continue
 		_register(pos, obj_r)
-		_create_resource_node(parent, pos, rtype, amount * _rng.randf_range(0.85, 1.15))
+		_create_resource_node(parent, pos, rtype, amount * _rng.randf_range(0.5, 1.5))
 		placed += 1
 
 func _spawn_forest_zone(parent: Node2D, zone_center: Vector2,
@@ -1409,7 +1409,7 @@ static func _draw_tree(node: Node2D, s: float) -> float:
 
 # ── Gold rocks ───────────────────────────────────────────────────────────────
 static func _draw_gold(node: Node2D, s: float, amount: float = 0.0) -> float:
-	var count: int = 2 if amount <= 130.0 else 3
+	var count: int = 2 if amount <= 160.0 else 3
 	const LAYOUTS_2: Array = [[-7.0, 2.0, 1.00], [ 6.0, 0.0, 0.90]]
 	const LAYOUTS_3: Array = [[-9.0, 2.0, 1.00], [ 4.0, 0.0, 0.88], [ 0.0,-7.0, 0.75]]
 	var layout: Array = LAYOUTS_2 if count == 2 else LAYOUTS_3
@@ -1535,7 +1535,7 @@ static func _draw_olivina(node: Node2D, s: float, amount: float = 0.0) -> float:
 
 # ── Stone rocks ──────────────────────────────────────────────────────────────
 static func _draw_stone(node: Node2D, s: float, amount: float = 0.0) -> float:
-	var count: int = 2 if amount <= 140.0 else 3
+	var count: int = 2 if amount <= 180.0 else 3
 	const LAYOUTS_2: Array = [[-6.0, 1.0, 1.00], [ 5.0, 0.0, 0.92]]
 	const LAYOUTS_3: Array = [[-8.0, 1.0, 1.00], [ 4.0, 0.0, 0.90], [-1.0,-7.0, 0.78]]
 	var layout: Array = LAYOUTS_2 if count == 2 else LAYOUTS_3
@@ -1567,9 +1567,9 @@ static func _draw_single_stone_rock(node: Node2D, s: float) -> void:
 # ── Berry bush (food) ────────────────────────────────────────────────────────
 static func _draw_berry_bush(node: Node2D, s: float, amount: float = 0.0) -> float:
 	var count: int
-	if amount <= 90.0:
+	if amount <= 88.0:
 		count = 2
-	elif amount <= 130.0:
+	elif amount <= 132.0:
 		count = 3
 	else:
 		count = 4
