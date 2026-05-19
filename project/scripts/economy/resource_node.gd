@@ -2,7 +2,7 @@ extends Node2D
 
 class_name ResourceNode
 
-enum ResourceType { WOOD, GOLD, STONE, FOOD_HUNT, FOOD_FISH, FOOD_BERRY }
+enum ResourceType { WOOD, GOLD, STONE, FOOD_HUNT, FOOD_FISH, FOOD_BERRY, OLIVINA }
 
 const RESOURCE_NAMES: Dictionary = {
 	ResourceType.WOOD:       "wood",
@@ -11,6 +11,7 @@ const RESOURCE_NAMES: Dictionary = {
 	ResourceType.FOOD_HUNT:  "food",
 	ResourceType.FOOD_FISH:  "food",
 	ResourceType.FOOD_BERRY: "food",
+	ResourceType.OLIVINA:    "olivina",
 }
 
 @export var resource_type: ResourceType = ResourceType.WOOD

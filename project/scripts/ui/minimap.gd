@@ -157,5 +157,7 @@ func _resource_color(rtype: ResourceNode.ResourceType) -> Color:
 			return COLOR_RESOURCE_GOLD
 		ResourceNode.ResourceType.STONE:
 			return COLOR_RESOURCE_STONE
+		ResourceNode.ResourceType.OLIVINA:
+			return Color(0.20, 0.75, 0.25, 1.0)
 		_:
 			return COLOR_RESOURCE_WOOD

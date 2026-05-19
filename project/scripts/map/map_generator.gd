@@ -20,6 +20,7 @@ const RES_COLORS: Dictionary = {
 	ResourceNode.ResourceType.STONE:      Color(0.62, 0.60, 0.58, 1.0),
 	ResourceNode.ResourceType.FOOD_HUNT:  Color(0.65, 0.28, 0.10, 1.0),
 	ResourceNode.ResourceType.FOOD_FISH:  Color(0.18, 0.55, 0.75, 1.0),
+	ResourceNode.ResourceType.OLIVINA:    Color(0.20, 0.62, 0.22, 1.0),
 }
 const RES_LABELS: Dictionary = {
 	ResourceNode.ResourceType.WOOD:       "Wood",
@@ -27,6 +28,7 @@ const RES_LABELS: Dictionary = {
 	ResourceNode.ResourceType.STONE:      "Stone",
 	ResourceNode.ResourceType.FOOD_HUNT:  "Food",
 	ResourceNode.ResourceType.FOOD_FISH:  "Fish",
+	ResourceNode.ResourceType.OLIVINA:    "Olivina",
 }
 
 const ANIMAL_SCENE: String   = "res://scenes/units/animal.tscn"
@@ -1355,6 +1357,8 @@ static func _build_resource_visual(node: Node2D,
 			return _draw_deer(node, scale)
 		ResourceNode.ResourceType.FOOD_FISH:
 			return _draw_fish(node, scale)
+		ResourceNode.ResourceType.OLIVINA:
+			return _draw_olivina(node, scale)
 	return 12.0
 
 # ── Tree (wood) ──────────────────────────────────────────────────────────────
@@ -1403,21 +1407,81 @@ static func _draw_tree(node: Node2D, s: float) -> float:
 	node.add_child(shadow)
 	return 13.0 * s
 
-# ── Gold crystals ────────────────────────────────────────────────────────────
+# ── Gold rocks ───────────────────────────────────────────────────────────────
+# Lumpy rocks with gold veins running through the stone surface.
 static func _draw_gold(node: Node2D, s: float) -> float:
+	# Ground shadow ellipse
+	var ground: Polygon2D = Polygon2D.new()
+	ground.color = Color(0.40, 0.32, 0.08, 0.5)
+	var gpts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(10):
+		var a: float = TAU * i / 10.0
+		gpts.append(Vector2(cos(a) * 12.0 * s, sin(a) * 5.0 * s))
+	ground.polygon = gpts
+	ground.z_index = -1
+	node.add_child(ground)
+
+	# Two overlapping rock blobs — dark earthy brown base
+	const ROCKS: Array = [
+		[-4.5, 1.0, Color(0.42, 0.35, 0.18)],
+		[ 4.0, 0.0, Color(0.38, 0.30, 0.14)],
+	]
+	for r_data: Variant in ROCKS:
+		var rd: Array = r_data as Array
+		var rx: float = (rd[0] as float) * s
+		var ry: float = (rd[1] as float) * s
+		var col: Color = rd[2] as Color
+		var rpts: PackedVector2Array = PackedVector2Array()
+		const RANGLES: Array = [0.0, 0.9, 1.8, 2.7, 3.6, 4.5, 5.4]
+		const RRADII:  Array = [9.0, 7.0, 10.0, 8.5, 6.5, 9.0, 7.5]
+		for i: int in range(7):
+			var a: float = (RANGLES[i] as float)
+			var rr: float = (RRADII[i] as float) * s
+			rpts.append(Vector2(rx + cos(a) * rr, ry + sin(a) * rr * 0.62))
+		var rock_poly: Polygon2D = Polygon2D.new()
+		rock_poly.color = col
+		rock_poly.polygon = rpts
+		node.add_child(rock_poly)
+		# Top highlight — lighter warm stone
+		var hi: Polygon2D = Polygon2D.new()
+		hi.color = Color(0.60, 0.50, 0.26, 0.55)
+		hi.polygon = PackedVector2Array([rpts[6], rpts[0], rpts[1], rpts[2]])
+		node.add_child(hi)
+
+	# Gold vein streaks across both rocks
+	const VEINS: Array = [
+		[-7.0, -3.0,  3.0, -1.5,  8.0,  0.5],
+		[ 1.0, -4.0,  7.0, -2.0,  5.0,  1.0],
+		[-2.0,  0.5,  4.0, -1.0,  2.0,  2.5],
+	]
+	for v: Variant in VEINS:
+		var vd: Array = v as Array
+		var vein: Line2D = Line2D.new()
+		vein.default_color = Color(0.95, 0.80, 0.10, 0.85)
+		vein.width = 1.5 * s
+		vein.add_point(Vector2((vd[0] as float) * s, (vd[1] as float) * s))
+		vein.add_point(Vector2((vd[2] as float) * s, (vd[3] as float) * s))
+		vein.add_point(Vector2((vd[4] as float) * s, (vd[5] as float) * s))
+		node.add_child(vein)
+
+	return 12.0 * s
+
+# ── Olivina crystals ──────────────────────────────────────────────────────────
+# Green forsterite crystal clusters — a rare volcanic mineral deposit.
+static func _draw_olivina(node: Node2D, s: float) -> float:
 	# Ground patch
 	var ground: Polygon2D = Polygon2D.new()
-	ground.color = Color(0.55, 0.42, 0.10, 0.6)
+	ground.color = Color(0.12, 0.38, 0.10, 0.6)
 	ground.polygon = PackedVector2Array([
 		Vector2(-11.0 * s, 0.0), Vector2(11.0 * s, 0.0),
 		Vector2(8.0 * s, 4.0 * s), Vector2(-8.0 * s, 4.0 * s),
 	])
 	node.add_child(ground)
-	# Cluster of 3 crystal shards at different angles
+	# Cluster of 3 crystal shards — same geometry as old gold, recolored green
 	const CRYSTALS: Array = [
-		[-5.0,  0.0,  3.5, 12.0, -0.25, Color(0.95, 0.80, 0.15)],
-		[ 1.0,  1.0,  3.0, 14.0,  0.10, Color(1.00, 0.90, 0.25)],
-		[ 5.0, -1.0,  2.5, 10.0,  0.35, Color(0.88, 0.72, 0.10)],
+		[-5.0,  0.0,  3.5, 12.0, -0.25, Color(0.35, 0.82, 0.28)],
+		[ 1.0,  1.0,  3.0, 14.0,  0.10, Color(0.45, 0.92, 0.35)],
+		[ 5.0, -1.0,  2.5, 10.0,  0.35, Color(0.28, 0.70, 0.20)],
 	]
 	for c: Variant in CRYSTALS:
 		var ca: Array = c as Array
@@ -1427,7 +1491,6 @@ static func _draw_gold(node: Node2D, s: float) -> float:
 		var ht: float = (ca[3] as float) * s
 		var angle: float = ca[4] as float
 		var col: Color = ca[5] as Color
-		# Diamond / rhombus shape
 		var raw: PackedVector2Array = PackedVector2Array([
 			Vector2(0.0, -ht),
 			Vector2(hw, -ht * 0.35),
@@ -1445,12 +1508,10 @@ static func _draw_gold(node: Node2D, s: float) -> float:
 		shard.color = col
 		shard.polygon = pts
 		node.add_child(shard)
-		# Highlight line on each crystal
+		# Bright face highlight
 		var face_bright: Polygon2D = Polygon2D.new()
-		face_bright.color = Color(1.0, 1.0, 0.7, 0.5)
-		face_bright.polygon = PackedVector2Array([
-			pts[0], pts[1], pts[2],
-		])
+		face_bright.color = Color(0.75, 1.0, 0.65, 0.50)
+		face_bright.polygon = PackedVector2Array([pts[0], pts[1], pts[2]])
 		node.add_child(face_bright)
 	return 12.0 * s
 
