@@ -109,7 +109,7 @@ Run from the GUT panel inside Godot editor, or headlessly via CI.
 
 ## Sub-agents
 
-Four specialized agents live in `.claude/agents/`. Invoke them by name with `@agent-name` or via the Claude Code agent system.
+Five specialized agents live in `.claude/agents/`. Invoke them by name with `@agent-name` or via the Claude Code agent system.
 
 | Agent | File | When to invoke |
 |---|---|---|
@@ -117,6 +117,7 @@ Four specialized agents live in `.claude/agents/`. Invoke them by name with `@ag
 | `tester` | `.claude/agents/tester.md` | Writing GUT tests, expanding coverage, investigating test failures |
 | `code-reviewer` | `.claude/agents/code-reviewer.md` | Before merging a branch, after a large refactor |
 | `docs-keeper` | `.claude/agents/docs-keeper.md` | After any `.gd`/`.tscn`/`.tres` change to sync documentation |
+| `performance-checker` | `.claude/agents/performance-checker.md` | When a system touches `_process`/`_physics_process`, after adding unit-heavy features, or when performance feels off |
 
 ### Recommended workflow
 
