@@ -1059,39 +1059,13 @@ static func create_resource_node(parent: Node2D, pos: Vector2,
 	parent.add_child(node)
 	node.global_position = pos
 
-	var is_wood: bool = rtype == ResourceNode.ResourceType.WOOD
-	var w: float = (12.0 if not is_wood else 16.0)
-	var h: float = (w if not is_wood else w * 1.6)
-	if rng != null:
-		w += rng.randf_range(-2.0, 4.0)
-		h += rng.randf_range(0.0, 6.0)
-
-	var rect: ColorRect = ColorRect.new()
-	rect.color = RES_COLORS.get(rtype, Color(1, 1, 1)) as Color
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.offset_left   = -w
-	rect.offset_top    = -h
-	rect.offset_right  =  w
-	rect.offset_bottom =  w * 0.4
-	node.add_child(rect)
-
-	if not is_wood:
-		var label: Label = Label.new()
-		label.text = RES_LABELS.get(rtype, "") as String
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		label.offset_left   = -20.0
-		label.offset_top    = -h - 14.0
-		label.offset_right  =  20.0
-		label.offset_bottom = -h - 2.0
-		label.add_theme_font_size_override("font_size", 9)
-		label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-		node.add_child(label)
+	var jitter: float = rng.randf_range(0.85, 1.15) if rng != null else 1.0
+	var collision_r: float = _build_resource_visual(node, rtype, jitter)
 
 	var area: Area2D = Area2D.new()
 	var shape: CollisionShape2D = CollisionShape2D.new()
 	var circle: CircleShape2D = CircleShape2D.new()
-	circle.radius = w + 4.0
+	circle.radius = collision_r + 4.0
 	shape.shape = circle
 	area.add_child(shape)
 	node.add_child(area)
@@ -1103,15 +1077,302 @@ static func create_resource_node(parent: Node2D, pos: Vector2,
 		body.collision_mask = 0
 		var body_shape: CollisionShape2D = CollisionShape2D.new()
 		var body_circle: CircleShape2D = CircleShape2D.new()
-		body_circle.radius = maxf(w * 0.7, 8.0)
+		body_circle.radius = maxf(collision_r * 0.7, 8.0)
 		body_shape.shape = body_circle
 		body.add_child(body_shape)
 		node.add_child(body)
 
 		var obstacle: NavigationObstacle2D = NavigationObstacle2D.new()
-		obstacle.radius = w + 4.0
+		obstacle.radius = collision_r + 4.0
 		obstacle.avoidance_enabled = true
 		node.add_child(obstacle)
+
+# Builds the visual Polygon2D children for a resource node.
+# Returns the effective collision radius.
+static func _build_resource_visual(node: Node2D,
+		rtype: ResourceNode.ResourceType, scale: float) -> float:
+	match rtype:
+		ResourceNode.ResourceType.WOOD:
+			return _draw_tree(node, scale)
+		ResourceNode.ResourceType.GOLD:
+			return _draw_gold(node, scale)
+		ResourceNode.ResourceType.STONE:
+			return _draw_stone(node, scale)
+		ResourceNode.ResourceType.FOOD_BERRY:
+			return _draw_berry_bush(node, scale)
+		ResourceNode.ResourceType.FOOD_HUNT:
+			return _draw_deer(node, scale)
+		ResourceNode.ResourceType.FOOD_FISH:
+			return _draw_fish(node, scale)
+	return 12.0
+
+# ── Tree (wood) ──────────────────────────────────────────────────────────────
+static func _draw_tree(node: Node2D, s: float) -> float:
+	# Trunk
+	var trunk: Polygon2D = Polygon2D.new()
+	trunk.color = Color(0.38, 0.24, 0.12)
+	var tw: float = 3.0 * s
+	var th: float = 10.0 * s
+	trunk.polygon = PackedVector2Array([
+		Vector2(-tw, 0.0), Vector2(tw, 0.0),
+		Vector2(tw * 0.7, -th), Vector2(-tw * 0.7, -th),
+	])
+	node.add_child(trunk)
+	# Three layered canopy circles using Polygon2D octagons
+	const LAYERS: Array = [
+		[0.0,  -8.0,  13.0, Color(0.10, 0.48, 0.12)],
+		[0.0,  -16.0, 11.0, Color(0.14, 0.58, 0.16)],
+		[0.0,  -23.0,  8.0, Color(0.18, 0.65, 0.20)],
+	]
+	for layer: Variant in LAYERS:
+		var la: Array = layer as Array
+		var cx: float = (la[0] as float) * s
+		var cy: float = (la[1] as float) * s
+		var r: float  = (la[2] as float) * s
+		var col: Color = la[3] as Color
+		var pts: PackedVector2Array = PackedVector2Array()
+		for i: int in range(8):
+			var a: float = TAU * i / 8.0 - PI / 8.0
+			pts.append(Vector2(cx + cos(a) * r, cy + sin(a) * r))
+		var canopy: Polygon2D = Polygon2D.new()
+		canopy.color = col
+		canopy.polygon = pts
+		node.add_child(canopy)
+	# Shadow ellipse under the tree
+	var shadow: Polygon2D = Polygon2D.new()
+	shadow.color = Color(0.0, 0.0, 0.0, 0.18)
+	var sw: float = 11.0 * s
+	var sh: float = 4.0 * s
+	var spts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(10):
+		var a: float = TAU * i / 10.0
+		spts.append(Vector2(cos(a) * sw, sin(a) * sh))
+	shadow.polygon = spts
+	shadow.z_index = -1
+	node.add_child(shadow)
+	return 13.0 * s
+
+# ── Gold crystals ────────────────────────────────────────────────────────────
+static func _draw_gold(node: Node2D, s: float) -> float:
+	# Ground patch
+	var ground: Polygon2D = Polygon2D.new()
+	ground.color = Color(0.55, 0.42, 0.10, 0.6)
+	ground.polygon = PackedVector2Array([
+		Vector2(-11.0 * s, 0.0), Vector2(11.0 * s, 0.0),
+		Vector2(8.0 * s, 4.0 * s), Vector2(-8.0 * s, 4.0 * s),
+	])
+	node.add_child(ground)
+	# Cluster of 3 crystal shards at different angles
+	const CRYSTALS: Array = [
+		[-5.0,  0.0,  3.5, 12.0, -0.25, Color(0.95, 0.80, 0.15)],
+		[ 1.0,  1.0,  3.0, 14.0,  0.10, Color(1.00, 0.90, 0.25)],
+		[ 5.0, -1.0,  2.5, 10.0,  0.35, Color(0.88, 0.72, 0.10)],
+	]
+	for c: Variant in CRYSTALS:
+		var ca: Array = c as Array
+		var bx: float = (ca[0] as float) * s
+		var by: float = (ca[1] as float) * s
+		var hw: float = (ca[2] as float) * s
+		var ht: float = (ca[3] as float) * s
+		var angle: float = ca[4] as float
+		var col: Color = ca[5] as Color
+		# Diamond / rhombus shape
+		var raw: PackedVector2Array = PackedVector2Array([
+			Vector2(0.0, -ht),
+			Vector2(hw, -ht * 0.35),
+			Vector2(hw * 0.6, 0.0),
+			Vector2(-hw * 0.6, 0.0),
+			Vector2(-hw, -ht * 0.35),
+		])
+		var pts: PackedVector2Array = PackedVector2Array()
+		for p: Vector2 in raw:
+			pts.append(Vector2(
+				bx + p.x * cos(angle) - p.y * sin(angle),
+				by + p.x * sin(angle) + p.y * cos(angle)
+			))
+		var shard: Polygon2D = Polygon2D.new()
+		shard.color = col
+		shard.polygon = pts
+		node.add_child(shard)
+		# Highlight line on each crystal
+		var face_bright: Polygon2D = Polygon2D.new()
+		face_bright.color = Color(1.0, 1.0, 0.7, 0.5)
+		face_bright.polygon = PackedVector2Array([
+			pts[0], pts[1], pts[2],
+		])
+		node.add_child(face_bright)
+	return 12.0 * s
+
+# ── Stone rocks ──────────────────────────────────────────────────────────────
+static func _draw_stone(node: Node2D, s: float) -> float:
+	# Two overlapping irregular blobs
+	const ROCKS: Array = [
+		[-5.0, 1.0, Color(0.55, 0.53, 0.50)],
+		[ 4.0, 0.0, Color(0.48, 0.46, 0.43)],
+	]
+	for r_data: Variant in ROCKS:
+		var rd: Array = r_data as Array
+		var rx: float = (rd[0] as float) * s
+		var ry: float = (rd[1] as float) * s
+		var col: Color = rd[2] as Color
+		var pts: PackedVector2Array = PackedVector2Array()
+		# Irregular polygon with 7 vertices
+		const ANGLES: Array = [0.0, 0.9, 1.8, 2.7, 3.6, 4.5, 5.4]
+		const RADII:  Array = [9.0, 7.5, 10.0, 8.0, 6.5, 9.5, 7.0]
+		for i: int in range(7):
+			var a: float = (ANGLES[i] as float)
+			var rr: float = (RADII[i] as float) * s
+			pts.append(Vector2(rx + cos(a) * rr, ry + sin(a) * rr * 0.6))
+		var rock_poly: Polygon2D = Polygon2D.new()
+		rock_poly.color = col
+		rock_poly.polygon = pts
+		node.add_child(rock_poly)
+		# Highlight on top
+		var hi: Polygon2D = Polygon2D.new()
+		hi.color = Color(0.75, 0.73, 0.70, 0.55)
+		hi.polygon = PackedVector2Array([
+			pts[6], pts[0], pts[1], pts[2],
+		])
+		node.add_child(hi)
+	return 12.0 * s
+
+# ── Berry bush (food) ────────────────────────────────────────────────────────
+static func _draw_berry_bush(node: Node2D, s: float) -> float:
+	# Green bush base — two overlapping rounded blobs
+	const BLOBS: Array = [
+		[-4.0, -2.0, 9.0, Color(0.15, 0.48, 0.12)],
+		[ 4.0, -1.0, 8.0, Color(0.18, 0.55, 0.15)],
+		[ 0.0, -7.0, 7.0, Color(0.20, 0.52, 0.14)],
+	]
+	for bl: Variant in BLOBS:
+		var bla: Array = bl as Array
+		var bx: float = (bla[0] as float) * s
+		var by: float = (bla[1] as float) * s
+		var br: float = (bla[2] as float) * s
+		var col: Color = bla[3] as Color
+		var pts: PackedVector2Array = PackedVector2Array()
+		for i: int in range(9):
+			var a: float = TAU * i / 9.0
+			pts.append(Vector2(bx + cos(a) * br, by + sin(a) * br * 0.85))
+		var blob: Polygon2D = Polygon2D.new()
+		blob.color = col
+		blob.polygon = pts
+		node.add_child(blob)
+	# Small red berries scattered on the bush
+	const BERRIES: Array = [
+		[-5.0, -4.0], [0.0, -9.0], [5.0, -5.0],
+		[-3.0, -1.0], [4.0, -2.0], [1.0, -6.0],
+	]
+	for bpos: Variant in BERRIES:
+		var bp: Array = bpos as Array
+		var bx: float = (bp[0] as float) * s
+		var by: float = (bp[1] as float) * s
+		var br: float = 1.8 * s
+		var pts: PackedVector2Array = PackedVector2Array()
+		for i: int in range(6):
+			var a: float = TAU * i / 6.0
+			pts.append(Vector2(bx + cos(a) * br, by + sin(a) * br))
+		var berry: Polygon2D = Polygon2D.new()
+		berry.color = Color(0.85, 0.15, 0.10)
+		berry.polygon = pts
+		node.add_child(berry)
+	return 10.0 * s
+
+# ── Deer (hunt food) ─────────────────────────────────────────────────────────
+static func _draw_deer(node: Node2D, s: float) -> float:
+	# Body — oval
+	var body: Polygon2D = Polygon2D.new()
+	body.color = Color(0.65, 0.38, 0.15)
+	var pts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(12):
+		var a: float = TAU * i / 12.0
+		pts.append(Vector2(cos(a) * 9.0 * s, sin(a) * 5.5 * s - 2.0 * s))
+	body.polygon = pts
+	node.add_child(body)
+	# Head
+	var head: Polygon2D = Polygon2D.new()
+	head.color = Color(0.60, 0.34, 0.13)
+	var hpts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(8):
+		var a: float = TAU * i / 8.0
+		hpts.append(Vector2(8.0 * s + cos(a) * 4.0 * s, -4.0 * s + sin(a) * 3.0 * s))
+	head.polygon = hpts
+	node.add_child(head)
+	# Antlers — two small lines as thin polygons
+	const ANTLERS: Array = [
+		[8.0, -7.0, 10.0, -13.0],
+		[10.0, -7.0, 13.0, -13.0],
+	]
+	for ant: Variant in ANTLERS:
+		var aa: Array = ant as Array
+		var ax1: float = (aa[0] as float) * s
+		var ay1: float = (aa[1] as float) * s
+		var ax2: float = (aa[2] as float) * s
+		var ay2: float = (aa[3] as float) * s
+		var dir: Vector2 = (Vector2(ax2, ay2) - Vector2(ax1, ay1)).normalized()
+		var perp: Vector2 = Vector2(-dir.y, dir.x) * 0.8 * s
+		var antler: Polygon2D = Polygon2D.new()
+		antler.color = Color(0.35, 0.20, 0.08)
+		antler.polygon = PackedVector2Array([
+			Vector2(ax1, ay1) - perp, Vector2(ax1, ay1) + perp,
+			Vector2(ax2, ay2) + perp, Vector2(ax2, ay2) - perp,
+		])
+		node.add_child(antler)
+	# Legs — four thin rectangles
+	const LEGS: Array = [-6.0, -2.0, 2.0, 6.0]
+	for lx: Variant in LEGS:
+		var leg: Polygon2D = Polygon2D.new()
+		leg.color = Color(0.50, 0.28, 0.10)
+		var lxf: float = (lx as float) * s
+		leg.polygon = PackedVector2Array([
+			Vector2(lxf - 1.2 * s, 3.0 * s), Vector2(lxf + 1.2 * s, 3.0 * s),
+			Vector2(lxf + 1.0 * s, 9.0 * s), Vector2(lxf - 1.0 * s, 9.0 * s),
+		])
+		node.add_child(leg)
+	return 11.0 * s
+
+# ── Fish ─────────────────────────────────────────────────────────────────────
+static func _draw_fish(node: Node2D, s: float) -> float:
+	# Body
+	var body: Polygon2D = Polygon2D.new()
+	body.color = Color(0.25, 0.55, 0.75)
+	body.polygon = PackedVector2Array([
+		Vector2(-9.0 * s, 0.0),
+		Vector2(-4.0 * s, -3.5 * s),
+		Vector2(6.0 * s, -2.5 * s),
+		Vector2(9.0 * s, 0.0),
+		Vector2(6.0 * s, 2.5 * s),
+		Vector2(-4.0 * s, 3.5 * s),
+	])
+	node.add_child(body)
+	# Tail fin
+	var tail: Polygon2D = Polygon2D.new()
+	tail.color = Color(0.20, 0.45, 0.65)
+	tail.polygon = PackedVector2Array([
+		Vector2(-9.0 * s, 0.0),
+		Vector2(-14.0 * s, -4.0 * s),
+		Vector2(-12.0 * s, 0.0),
+		Vector2(-14.0 * s, 4.0 * s),
+	])
+	node.add_child(tail)
+	# Eye
+	var eye: Polygon2D = Polygon2D.new()
+	eye.color = Color(0.05, 0.05, 0.05)
+	var epts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(6):
+		var a: float = TAU * i / 6.0
+		epts.append(Vector2(6.0 * s + cos(a) * 1.5 * s, sin(a) * 1.5 * s))
+	eye.polygon = epts
+	node.add_child(eye)
+	# Shimmer stripe
+	var shimmer: Polygon2D = Polygon2D.new()
+	shimmer.color = Color(0.7, 0.9, 1.0, 0.35)
+	shimmer.polygon = PackedVector2Array([
+		Vector2(0.0, -1.5 * s), Vector2(5.0 * s, -2.0 * s),
+		Vector2(5.5 * s, -0.5 * s), Vector2(0.0, 0.5 * s),
+	])
+	node.add_child(shimmer)
+	return 10.0 * s
 
 # ── Navigation mesh carving ─────────────────────────────────────────────────
 #
