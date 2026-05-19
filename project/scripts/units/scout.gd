@@ -51,11 +51,22 @@ func _physics_process(delta: float) -> void:
 
 func _pick_explore_waypoint() -> void:
 	_explore_waypoint_cooldown = randf_range(3.0, 7.0)
-	var map_min: float = 200.0
-	var map_max: float = 7480.0
-	var rx: float = randf_range(map_min, map_max)
-	var ry: float = randf_range(map_min, map_max)
-	order_move(Vector2(rx, ry))
+	const MAP_MIN: float = 200.0
+	const MAP_MAX: float = 7480.0
+	# Try up to 12 random candidates; keep the first one that is passable for
+	# this unit's civ (avoids sending the scout into ocean, malpais, etc.).
+	for _i: int in range(12):
+		var candidate: Vector2 = Vector2(
+			randf_range(MAP_MIN, MAP_MAX),
+			randf_range(MAP_MIN, MAP_MAX)
+		)
+		if not TerrainManager.is_impassable_for(candidate, civ_id):
+			order_move(candidate)
+			return
+	# Fallback: nearest passable point from current position in a random direction.
+	var angle: float = randf_range(0.0, TAU)
+	var far: Vector2 = global_position + Vector2(cos(angle), sin(angle)) * randf_range(400.0, 1200.0)
+	order_move(TerrainManager.nearest_passable(far, civ_id))
 
 func order_move(destination: Vector2) -> void:
 	_attack_move_active = false
