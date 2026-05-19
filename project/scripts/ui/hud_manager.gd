@@ -676,6 +676,12 @@ func _on_technology_researched(player_id: int, _tech_id: String) -> void:
 		_populate_barracks_actions(_selected_building as Barracks)
 	elif _selected_building is Stable:
 		_populate_stable_actions(_selected_building as Stable)
+	elif _selected_building is Blacksmith:
+		_populate_blacksmith_actions(_selected_building as Blacksmith)
+	elif _selected_building is University:
+		_populate_research_only_actions(_selected_building, TechnologyResource.ResearchBuilding.UNIVERSITY)
+	elif _selected_building is Temple:
+		_populate_research_only_actions(_selected_building, TechnologyResource.ResearchBuilding.MONASTERY)
 
 func _on_unit_selected(units: Array) -> void:
 	if is_instance_valid(_selected_building) and _selected_building.has_method("set_selected"):
@@ -750,19 +756,16 @@ func _on_building_selected(building: Node) -> void:
 			_on_train_queue_changed(building, building.get_queue() as Array, building.get_max_queue() as int)
 	elif building is Blacksmith:
 		_populate_blacksmith_actions(building as Blacksmith)
-		_build_research_bar(building)
 	elif building is Stable:
 		_populate_stable_actions(building as Stable)
 		var st: Stable = building as Stable
 		_on_train_queue_changed(building, st.get_queue(), st.get_max_queue())
 	elif building is University:
 		_populate_research_only_actions(building, TechnologyResource.ResearchBuilding.UNIVERSITY)
-		_build_research_bar(building)
 	elif building is Market:
 		_populate_market_actions(building as Market)
 	elif building is Temple:
 		_populate_research_only_actions(building, TechnologyResource.ResearchBuilding.MONASTERY)
-		_build_research_bar(building)
 	elif building is Barracks:
 		_populate_barracks_actions(building as Barracks)
 		var br: Barracks = building as Barracks
@@ -839,15 +842,12 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 			_populate_tc_actions()
 		elif _selected_building is Blacksmith:
 			_populate_blacksmith_actions(_selected_building as Blacksmith)
-			_build_research_bar(_selected_building)
 		elif _selected_building is Stable:
 			_populate_stable_actions(_selected_building as Stable)
 		elif _selected_building is University:
 			_populate_research_only_actions(_selected_building, TechnologyResource.ResearchBuilding.UNIVERSITY)
-			_build_research_bar(_selected_building)
 		elif _selected_building is Temple:
 			_populate_research_only_actions(_selected_building, TechnologyResource.ResearchBuilding.MONASTERY)
-			_build_research_bar(_selected_building)
 		elif _selected_building is Barracks:
 			_populate_barracks_actions(_selected_building as Barracks)
 		elif _selected_building is Dock:
@@ -1027,6 +1027,7 @@ func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
 		})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
+	_build_research_bar(blacksmith)
 
 func _populate_stable_actions(stable: Stable) -> void:
 	var actions: Array = []
@@ -1099,6 +1100,7 @@ func _populate_research_only_actions(building: Node, research_type: TechnologyRe
 		})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
+	_build_research_bar(building)
 
 func _populate_market_actions(market: Market) -> void:
 	var actions: Array = [
