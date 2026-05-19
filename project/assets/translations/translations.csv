@@ -287,3 +287,9 @@ TUTORIAL_NEXT,Next →,Siguiente →
 TUTORIAL_BACK,← Back,← Atrás
 TUTORIAL_SKIP,Skip tutorial,Omitir tutorial
 TUTORIAL_DO_IT,Complete the action above to continue.,Completa la acción indicada para continuar.
+ACTION_SCOUT,Scout\n80F,Explorador\n80C
+TOOLTIP_SCOUT,Fast cavalry available from Dark Age. Has an auto-explore ability.,Caballería rápida disponible desde la Edad Oscura. Tiene una habilidad de exploración automática.
+ACTION_SCOUT_EXPLORE,Explore (E),Explorar (E)
+TOOLTIP_SCOUT_EXPLORE,The Scout roams the map autonomously for 60 seconds.,El Explorador recorre el mapa automáticamente durante 60 segundos.
+ACTION_SCOUT_EXPLORE_STOP,Stop Explore (E),Detener Exploración (E)
+TOOLTIP_SCOUT_EXPLORE_STOP,Cancel the auto-explore and return control to the player.,Cancela la exploración automática y devuelve el control al jugador.
