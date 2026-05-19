@@ -794,7 +794,7 @@ func _spawn_animals_multi(units_layer: Node2D, tc_positions: Array[Vector2]) -> 
 			var pos: Vector2 = _find_free_arc(tc, 180.0, 340.0, R_ANIMAL)
 			if pos == Vector2.INF:
 				break
-			if TerrainManager.is_ocean(pos):
+			if TerrainManager.is_impassable_for(pos, ""):
 				continue
 			_register(pos, R_ANIMAL)
 			_place_animal(sheep_scene, units_layer, pos, true)
@@ -815,7 +815,7 @@ func _spawn_animals_multi(units_layer: Node2D, tc_positions: Array[Vector2]) -> 
 				break
 		if too_close:
 			continue
-		if TerrainManager.is_ocean(pos):
+		if TerrainManager.is_impassable_for(pos, ""):
 			continue
 		if not _is_free(pos, R_ANIMAL):
 			continue
@@ -862,7 +862,7 @@ func _spawn_player_resources(parent: Node2D, tc: Vector2,
 				+ _rng.randf_range(-0.3, 0.3) + angle_offset
 		var fdist:  float = _rng.randf_range(280.0, 520.0)
 		var fcenter: Vector2 = _clamp_map(tc + Vector2(cos(fangle), sin(fangle)) * fdist)
-		if not TerrainManager.is_ocean(fcenter):
+		if not TerrainManager.is_impassable_for(fcenter, ""):
 			var pool: Array = FOREST_SIZES_SMALL if fdist < 360.0 else FOREST_SIZES_ALL
 			var sz: Array = pool[_rng.randi() % pool.size()] as Array
 			_spawn_forest_zone(parent, fcenter,
@@ -923,7 +923,7 @@ func _spawn_neutral_resources(parent: Node2D) -> void:
 	]
 	for fa: float in neutral_forest_angles:
 		var fc: Vector2 = _clamp_map(Vector2(cos(fa), sin(fa)) * _rng.randf_range(250.0, 700.0))
-		if not TerrainManager.is_ocean(fc):
+		if not TerrainManager.is_impassable_for(fc, ""):
 			var sz: Array = FOREST_SIZES[_rng.randi() % FOREST_SIZES.size()] as Array
 			_spawn_forest_zone(parent, fc,
 				roundi(_rng.randf_range(float(sz[0]), float(sz[1])) * _res_mult),
@@ -951,7 +951,7 @@ func _spawn_scattered_resources(parent: Node2D, tc_positions: Array[Vector2]) ->
 		var pos: Vector2 = Vector2(
 			_rng.randf_range(-_map_half * AREA_FRAC, _map_half * AREA_FRAC),
 			_rng.randf_range(-_map_half * AREA_FRAC, _map_half * AREA_FRAC))
-		if TerrainManager.is_ocean(pos):
+		if TerrainManager.is_impassable_for(pos, ""):
 			continue
 		var too_close: bool = false
 		for tc: Vector2 in tc_positions:
@@ -973,7 +973,7 @@ func _spawn_scattered_resources(parent: Node2D, tc_positions: Array[Vector2]) ->
 		var pos: Vector2 = Vector2(
 			_rng.randf_range(-_map_half * AREA_FRAC, _map_half * AREA_FRAC),
 			_rng.randf_range(-_map_half * AREA_FRAC, _map_half * AREA_FRAC))
-		if TerrainManager.is_ocean(pos):
+		if TerrainManager.is_impassable_for(pos, ""):
 			continue
 		var too_close: bool = false
 		for tc: Vector2 in tc_positions:
@@ -995,7 +995,7 @@ func _spawn_scattered_resources(parent: Node2D, tc_positions: Array[Vector2]) ->
 		var pos: Vector2 = Vector2(
 			_rng.randf_range(-_map_half * AREA_FRAC, _map_half * AREA_FRAC),
 			_rng.randf_range(-_map_half * AREA_FRAC, _map_half * AREA_FRAC))
-		if TerrainManager.is_ocean(pos):
+		if TerrainManager.is_impassable_for(pos, ""):
 			continue
 		var too_close: bool = false
 		for tc: Vector2 in tc_positions:
@@ -1019,7 +1019,7 @@ func _spawn_scattered_resources(parent: Node2D, tc_positions: Array[Vector2]) ->
 		var ea: float = edge_angle_base + TAU * float(ei) / 8.0 + _rng.randf_range(-0.2, 0.2)
 		var ed: float = _rng.randf_range(_map_half * EDGE_INNER, _map_half * EDGE_OUTER)
 		var ep: Vector2 = _clamp_map(Vector2(cos(ea), sin(ea)) * ed)
-		if TerrainManager.is_ocean(ep):
+		if TerrainManager.is_impassable_for(ep, ""):
 			continue
 		# Alternate: forest → gold → forest → stone → forest → gold → forest → stone
 		match ei % 4:
@@ -1146,7 +1146,7 @@ func _spawn_deposit(parent: Node2D, center: Vector2,
 		anchor_angle: float, dist_min: float, dist_max: float) -> void:
 	var obj_r: float = R_RES_WOOD if rtype == ResourceNode.ResourceType.WOOD else R_RES_OTHER
 	var deposit_center: Vector2 = _find_free_arc(center, dist_min, dist_max, obj_r, anchor_angle)
-	if deposit_center == Vector2.INF or TerrainManager.is_ocean(deposit_center):
+	if deposit_center == Vector2.INF or TerrainManager.is_impassable_for(deposit_center, ""):
 		return
 	_register(deposit_center, obj_r)
 	_create_resource_node(parent, deposit_center, rtype, amount * _rng.randf_range(0.85, 1.15))
@@ -1155,7 +1155,7 @@ func _spawn_deposit(parent: Node2D, center: Vector2,
 		if placed >= count:
 			break
 		var pos: Vector2 = _find_free_near(deposit_center, 48.0, obj_r)
-		if pos == Vector2.INF or TerrainManager.is_ocean(pos):
+		if pos == Vector2.INF or TerrainManager.is_impassable_for(pos, ""):
 			continue
 		_register(pos, obj_r)
 		_create_resource_node(parent, pos, rtype, amount * _rng.randf_range(0.85, 1.15))
@@ -1204,7 +1204,7 @@ func _spawn_forest_zone(parent: Node2D, zone_center: Vector2,
 		if count <= 0:
 			break
 		var pos: Vector2 = _find_free_near(zone_center, zone_radius, node_r)
-		if pos == Vector2.INF or TerrainManager.is_ocean(pos):
+		if pos == Vector2.INF or TerrainManager.is_impassable_for(pos, ""):
 			continue
 		_register(pos, node_r)
 		_create_resource_node(parent, pos, ResourceNode.ResourceType.WOOD,
