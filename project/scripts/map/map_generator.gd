@@ -76,10 +76,10 @@ func _run(parent: Node2D, units_layer: Node2D,
 	_rng = rng
 	_res_node_script = load("res://scripts/economy/resource_node.gd") as Script
 
-	# Terrain root sits below everything else
+	# Terrain root — plain Node2D; polygon clipping is done in _add_polygon_clipped
 	_terrain_root = Node2D.new()
 	_terrain_root.z_index = -9
-	parent.add_child(_terrain_root)
+	parent.add_child(_terrain_root as Node2D)
 
 	var player_count: int = 1 + MatchConfig.rival_count
 	var tc_positions: Array[Vector2] = []
@@ -624,18 +624,19 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 	# Main feathered-edge blob — 32 vertices with larger noise-driven jitter so
 	# zone boundaries bleed organically into adjacent terrain instead of
 	# cutting as hard circles.
-	var poly: Polygon2D = Polygon2D.new()
-	poly.color = col
-	poly.z_index = -8
 	var pts: PackedVector2Array = PackedVector2Array()
 	const STEPS: int = 32
 	for i: int in range(STEPS):
 		var a: float = TAU * i / STEPS
 		var r: float = radius * _rng.randf_range(0.72, 1.15)
-		pts.append(Vector2(cos(a), sin(a)) * r)
-	poly.polygon = pts
-	poly.position = center
-	parent.add_child(poly)
+		pts.append(center + Vector2(cos(a), sin(a)) * r)
+	var pts_clipped: PackedVector2Array = _clip_poly_to_map(pts)
+	if pts_clipped.size() >= 3:
+		var poly: Polygon2D = Polygon2D.new()
+		poly.color = col
+		poly.z_index = -8
+		poly.polygon = pts_clipped
+		parent.add_child(poly)
 
 	# Fringe blobs — small overlap patches placed around the perimeter to
 	# break the hard edge and create a natural "fraying" into adjacent terrain.
@@ -645,16 +646,19 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 		var fd: float = radius * _rng.randf_range(0.75, 1.0)
 		var fr: float = radius * _rng.randf_range(0.15, 0.30)
 		var fpos: Vector2 = center + Vector2(cos(fa), sin(fa)) * fd
-		var fpoly: Polygon2D = Polygon2D.new()
-		fpoly.color = col
-		fpoly.z_index = -8
 		var fpts: PackedVector2Array = PackedVector2Array()
 		const FSTEPS: int = 12
 		for fi2: int in range(FSTEPS):
 			var fai: float = TAU * fi2 / FSTEPS
 			var fri: float = fr * _rng.randf_range(0.70, 1.15)
 			fpts.append(fpos + Vector2(cos(fai), sin(fai)) * fri)
-		fpoly.polygon = fpts
+		var fpts_clipped: PackedVector2Array = _clip_poly_to_map(fpts)
+		if fpts_clipped.size() < 3:
+			continue
+		var fpoly: Polygon2D = Polygon2D.new()
+		fpoly.color = col
+		fpoly.z_index = -8
+		fpoly.polygon = fpts_clipped
 		parent.add_child(fpoly)
 
 	# Terrain-specific surface detail variants
@@ -674,13 +678,16 @@ func _paint_ground_scatter(parent: Node2D, map_half: float,
 		terrain: TerrainManager.TerrainType) -> void:
 	var patch_r: float = map_half * 0.22
 	var step: float = map_half * 0.30
+	# Keep centers inset by patch_r so no polygon vertex escapes the map bounds.
+	var inner: float = map_half - patch_r
 	var x: float = -map_half
 	while x <= map_half:
 		var y: float = -map_half
 		while y <= map_half:
 			var jx: float = _rng.randf_range(-step * 0.45, step * 0.45)
 			var jy: float = _rng.randf_range(-step * 0.45, step * 0.45)
-			var center: Vector2 = Vector2(x + jx, y + jy)
+			var center: Vector2 = Vector2(x + jx, y + jy).clamp(
+				Vector2(-inner, -inner), Vector2(inner, inner))
 			var v: int = _rng.randi() % 3
 			_paint_terrain_variant(parent, center, patch_r, terrain, v)
 			y += step
@@ -1201,6 +1208,20 @@ void fragment() {
 	mat.shader = shader
 	poly.material = mat
 	parent.add_child(poly)
+
+# Returns pts intersected with the map rectangle — i.e. clipped to map bounds.
+func _clip_poly_to_map(pts: PackedVector2Array) -> PackedVector2Array:
+	if pts.size() < 3:
+		return pts
+	var mh: float = _map_half
+	var map_rect: PackedVector2Array = PackedVector2Array([
+		Vector2(-mh, -mh), Vector2(mh, -mh),
+		Vector2(mh,  mh),  Vector2(-mh, mh),
+	])
+	var result: Array[PackedVector2Array] = Geometry2D.intersect_polygons(pts, map_rect)
+	if result.is_empty():
+		return PackedVector2Array()
+	return result[0]
 
 func _paint_polygon(parent: Node2D, pts: PackedVector2Array, col: Color) -> void:
 	var poly: Polygon2D = Polygon2D.new()

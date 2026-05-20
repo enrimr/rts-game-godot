@@ -132,7 +132,8 @@ func _gui_input(event: InputEvent) -> void:
 func _move_camera_to(minimap_pos: Vector2) -> void:
 	if camera_node == null:
 		return
-	camera_node.global_position = _to_world(minimap_pos, size)
+	var clamped: Vector2 = minimap_pos.clamp(Vector2.ZERO, size)
+	camera_node.global_position = _to_world(clamped, size)
 
 # --- Coordinate helpers ---
 
