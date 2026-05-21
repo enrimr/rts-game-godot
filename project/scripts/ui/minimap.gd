@@ -106,13 +106,15 @@ func _draw() -> void:
 			var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.8, 0.8, 0.8)
 			draw_circle(mp, 3.0, col)
 
-	# Camera viewport rectangle
+	# Camera viewport rectangle — clamped to minimap bounds so it never
+	# bleeds outside the widget when the camera is near a map edge.
 	if camera_node != null:
 		var vp_world: Vector2 = get_viewport().get_visible_rect().size / camera_node.zoom
 		var cam_pos: Vector2 = camera_node.global_position
-		var r_min: Vector2 = _to_mm(cam_pos - vp_world * 0.5, ms)
-		var r_max: Vector2 = _to_mm(cam_pos + vp_world * 0.5, ms)
-		draw_rect(Rect2(r_min, r_max - r_min), COLOR_CAMERA_RECT, false, 1.5)
+		var r_min: Vector2 = _to_mm(cam_pos - vp_world * 0.5, ms).clamp(Vector2.ZERO, ms)
+		var r_max: Vector2 = _to_mm(cam_pos + vp_world * 0.5, ms).clamp(Vector2.ZERO, ms)
+		if r_max.x > r_min.x and r_max.y > r_min.y:
+			draw_rect(Rect2(r_min, r_max - r_min), COLOR_CAMERA_RECT, false, 1.5)
 
 	draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
 
