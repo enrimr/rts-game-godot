@@ -645,6 +645,8 @@ func _handle_camera(delta: float) -> void:
 		if not _camera_moved_emitted:
 			_camera_moved_emitted = true
 			EventBus.camera_moved.emit()
+	var mh: float = TerrainManager.minimap_map_half
+	camera.position = camera.position.clamp(Vector2(-mh, -mh), Vector2(mh, mh))
 
 func _is_mouse_over_hud() -> bool:
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
