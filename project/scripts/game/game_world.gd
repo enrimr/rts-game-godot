@@ -82,6 +82,7 @@ var _fog: FogOfWar = null
 
 var _selected_units: Array[Node] = []
 var _selected_building: Node = null
+var _selected_node: Node = null
 var _drag_start: Vector2 = Vector2.ZERO
 var _dragging: bool = false
 var _last_click_time: float = -1.0
@@ -753,6 +754,9 @@ func _finish_selection(release_pos: Vector2) -> void:
 	if is_instance_valid(_selected_building) and _selected_building.has_method("set_selected"):
 		_selected_building.set_selected(false)
 	_selected_building = null
+	if is_instance_valid(_selected_node) and _selected_node.has_method("set_selected"):
+		_selected_node.set_selected(false)
+	_selected_node = null
 
 	if is_click:
 		# Click: select only the single nearest friendly unit within radius
@@ -825,8 +829,26 @@ func _finish_selection(release_pos: Vector2) -> void:
 				continue
 			var rn: ResourceNode = child as ResourceNode
 			if _drag_start.distance_to(rn.global_position) < UNIT_CLICK_RADIUS:
+				rn.set_selected(true)
+				_selected_node = rn
 				EventBus.resource_node_selected.emit(rn)
 				return
+		# Enemy unit / wild animal / enemy building — inspect only (no command)
+		var enemy_unit: Node = _find_enemy_unit_at(_drag_start)
+		if enemy_unit != null:
+			enemy_unit.set_selected(true)
+			_selected_node = enemy_unit
+			return
+		var wild_animal: Animal = _find_animal_at(_drag_start)
+		if wild_animal != null and (wild_animal.current_state != Animal.AnimalState.OWNED or wild_animal.player_id != 0):
+			wild_animal.set_selected(true)
+			_selected_node = wild_animal
+			return
+		var enemy_building: Node = _find_enemy_building_at(_drag_start)
+		if enemy_building != null:
+			enemy_building.set_selected(true)
+			_selected_node = enemy_building
+			return
 	else:
 		# Drag: select all friendly units and owned animals inside the rectangle
 		for unit: Node in units_layer.get_children():
@@ -1585,6 +1607,10 @@ func _on_action_requested(action_id: String) -> void:
 			for unit: Node in _selected_units:
 				if unit is Scout:
 					(unit as Scout).stop_auto_explore()
+		"show_path":
+			for unit: Node in _selected_units:
+				if is_instance_valid(unit) and unit.has_method("toggle_path_display"):
+					unit.toggle_path_display()
 		"stop":
 			for unit: Node in _selected_units:
 				if is_instance_valid(unit) and unit.has_method("order_move"):

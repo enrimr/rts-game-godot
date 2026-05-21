@@ -157,7 +157,7 @@ theme_override_constants/separation = 4
 offset_left = 8.0
 offset_top = 6.0
 offset_right = -8.0
-offset_bottom = -6.0
+offset_bottom = -18.0
 
 [node name="TopRow" type="HBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox"]
 layout_mode = 2

@@ -35,6 +35,9 @@ const GUARD_RADIUS: float = 600.0
 @onready var selection_indicator: Node2D = $SelectionIndicator
 @onready var attack_range_area: Area2D = get_node_or_null("AttackRange")
 
+var _path_line: Line2D = null
+var _path_visible: bool = false
+
 func _ready() -> void:
 	if unit_data:
 		var hp_mult: float = CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
@@ -55,6 +58,29 @@ func _ready() -> void:
 func _add_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, 20.0, 4.0)
 
+func _process(_delta: float) -> void:
+	if _path_visible and is_instance_valid(_path_line):
+		var pts: PackedVector2Array = nav_agent.get_current_navigation_path()
+		if pts.size() >= 2:
+			var local_pts: PackedVector2Array = PackedVector2Array()
+			for p: Vector2 in pts:
+				local_pts.append(p - global_position)
+			_path_line.points = local_pts
+			_path_line.visible = true
+		else:
+			_path_line.visible = false
+
+func toggle_path_display() -> void:
+	_path_visible = not _path_visible
+	if _path_visible and _path_line == null:
+		_path_line = Line2D.new()
+		_path_line.width = 2.0
+		_path_line.default_color = Color(0.3, 0.85, 1.0, 0.8)
+		_path_line.z_index = 10
+		add_child(_path_line)
+	if is_instance_valid(_path_line):
+		_path_line.visible = _path_visible
+
 func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -> void:
 	if pid != player_id:
 		return
@@ -71,6 +97,11 @@ func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -
 func set_selected(value: bool) -> void:
 	is_selected = value
 	selection_indicator.visible = value
+	if value:
+		var circle: Node = selection_indicator.get_node_or_null("SelectionCircle")
+		if circle != null:
+			var col: Color = Color(0.0, 1.0, 0.0, 0.7) if player_id == 0 else Color(1.0, 0.85, 0.0, 0.85)
+			(circle as Polygon2D).color = col
 
 func move_to(target_position: Vector2) -> void:
 	nav_agent.target_position = target_position

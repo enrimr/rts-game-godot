@@ -23,6 +23,7 @@ var _gather_timer: float = 0.0
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 var _farm_gathered: float = 0.0
+var _gather_blocked_retries: int = 0
 
 # Transport embark state — set when villager needs to cross water to reach target
 var _pending_transport_target: Node = null      # resource node to reach after crossing
@@ -34,6 +35,8 @@ const BUILD_RANGE: float = 60.0
 const DROP_OFF_RANGE: float = 72.0
 const GATHER_RANGE: float = 48.0
 const FALLBACK_RESOURCE_RANGE: float = 400.0
+const BLOCKED_RESOURCE_RANGE: float = 180.0
+const GATHER_BLOCKED_MAX: int = 3
 const REPAIR_RATE: float = 10.0  # HP per second restored when repairing
 const BOARD_APPROACH_RANGE: float = 60.0
 
@@ -86,6 +89,7 @@ func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
 		_try_board_transport(target, resource_type, drop_off)
 		return
 	_destination_state = UnitState.GATHERING
+	_gather_blocked_retries = 0
 	_start_move_to((target as Node2D).global_position)
 
 func order_drop_off(target: Node) -> void:
@@ -139,8 +143,7 @@ func order_attack(target: Node) -> void:
 # --- Internal helpers ---
 
 func _start_move_to(destination: Vector2) -> void:
-	if _move_destination == Vector2.ZERO:
-		_move_destination = destination
+	_move_destination = destination
 	nav_agent.target_position = _safe_destination(destination)
 	current_state = UnitState.MOVING
 	_play_animation(_get_animation_name())
@@ -206,6 +209,7 @@ func _handle_gathering(delta: float) -> void:
 		var fallback: Node = _find_nearest_same_resource()
 		if fallback != null:
 			gather_target = fallback
+			_gather_blocked_retries = 0
 			_destination_state = UnitState.GATHERING
 			_start_move_to((fallback as Node2D).global_position)
 		else:
@@ -215,9 +219,17 @@ func _handle_gathering(delta: float) -> void:
 
 	var dist: float = global_position.distance_to((gather_target as Node2D).global_position)
 	if dist > GATHER_RANGE:
+		_gather_blocked_retries += 1
+		if _gather_blocked_retries >= GATHER_BLOCKED_MAX:
+			_gather_blocked_retries = 0
+			var alt: Node = ResourceManager.get_nearest_resource(
+				carried_resource, global_position, BLOCKED_RESOURCE_RANGE, gather_target)
+			if alt != null:
+				gather_target = alt
 		_destination_state = UnitState.GATHERING
 		_start_move_to((gather_target as Node2D).global_position)
 		return
+	_gather_blocked_retries = 0
 
 	_gather_timer += delta
 	if _gather_timer >= gather_interval:
@@ -245,7 +257,7 @@ func _handle_gathering(delta: float) -> void:
 			else:
 				pass  # No drop-off exists — hold resources until one becomes available
 
-func _handle_returning(delta: float) -> void:
+func _handle_returning(_delta: float) -> void:
 	if not is_instance_valid(drop_off_target):
 		var fallback: Node = _find_nearest_drop_off()
 		if fallback != null:
@@ -253,29 +265,29 @@ func _handle_returning(delta: float) -> void:
 			_destination_state = UnitState.RETURNING
 			_start_move_to((fallback as Node2D).global_position)
 		else:
-			# No drop-off anywhere — stay idle retaining carried resources
 			current_state = UnitState.IDLE
 			_play_animation(_get_animation_name())
 		return
 
 	var dist: float = global_position.distance_to((drop_off_target as Node2D).global_position)
-	if dist <= DROP_OFF_RANGE:
-		ResourceManager.add_resource(player_id, carried_resource, carried_amount)
-		carried_amount = 0.0
-		_update_gather_indicator()
-		if is_instance_valid(gather_target):
-			_destination_state = UnitState.GATHERING
-			_start_move_to((gather_target as Node2D).global_position)
-		else:
-			current_state = UnitState.IDLE
-			_play_animation(_get_animation_name())
+	if dist > DROP_OFF_RANGE * 2.5:
+		var alt: Node = _find_nearest_drop_off()
+		if is_instance_valid(alt):
+			drop_off_target = alt
+		_destination_state = UnitState.RETURNING
+		_start_move_to((drop_off_target as Node2D).global_position)
 		return
 
-	if _advance_stuck(delta):
-		_jitter_repath()
-		return
-
-	nav_agent.set_velocity(_nav_velocity())
+	ResourceManager.add_resource(player_id, carried_resource, carried_amount)
+	carried_amount = 0.0
+	_update_gather_indicator()
+	if is_instance_valid(gather_target):
+		_gather_blocked_retries = 0
+		_destination_state = UnitState.GATHERING
+		_start_move_to((gather_target as Node2D).global_position)
+	else:
+		current_state = UnitState.IDLE
+		_play_animation(_get_animation_name())
 
 func _handle_building(delta: float) -> void:
 	if not is_instance_valid(build_target):

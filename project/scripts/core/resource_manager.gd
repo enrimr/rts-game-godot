@@ -22,7 +22,7 @@ func _on_node_depleted(node: ResourceNode) -> void:
 	if _resource_cache.has(key):
 		(_resource_cache[key] as Array).erase(node)
 
-func get_nearest_resource(resource_name: String, from: Vector2, max_range: float) -> ResourceNode:
+func get_nearest_resource(resource_name: String, from: Vector2, max_range: float, exclude: Node = null) -> ResourceNode:
 	var best: ResourceNode = null
 	var best_dist: float = max_range
 	var nodes: Array = _resource_cache.get(resource_name, []) as Array
@@ -32,6 +32,8 @@ func get_nearest_resource(resource_name: String, from: Vector2, max_range: float
 			stale.append(n)
 			continue
 		var node: ResourceNode = n as ResourceNode
+		if node == exclude:
+			continue
 		var d: float = from.distance_to((node as Node2D).global_position)
 		if d < best_dist:
 			best_dist = d

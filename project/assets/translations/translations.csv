@@ -35,6 +35,7 @@ ACTION_STOP,Stop,Parar
 ACTION_MOVE_TO,Move,Mover
 ACTION_ATTACK_MOVE,Attack Move,Atacar-Mover
 ACTION_DESTROY,Destroy,Destruir
+ACTION_SHOW_PATH,Show Path,Ver Ruta
 ACTION_BACK,← Back,← Volver
 ACTION_HOUSE,House\n25W,Casa\n25M
 ACTION_BARRACKS,Barracks\n175W,Cuartel\n175M
@@ -222,6 +223,7 @@ TOOLTIP_MOVE_TO,Move to a target location. [M],Mover a una posición objetivo. [
 TOOLTIP_ATTACK_MOVE,Move toward a position automatically attacking enemies in range. [A],Avanza hacia una posición atacando automáticamente a los enemigos en rango. [A]
 TOOLTIP_STOP,Cancel all orders and stand idle. [X],Cancela todas las órdenes y detén la unidad. [X]
 TOOLTIP_DESTROY,Permanently destroy the selected unit or building. Cannot be undone. [Del],Destruye permanentemente la unidad o edificio seleccionado. No se puede deshacer. [Supr]
+TOOLTIP_SHOW_PATH,Toggle display of the unit's current navigation path. [P],Mostrar u ocultar la ruta de navegación actual de la unidad. [P]
 TOOLTIP_GATHER_WOOD,Send villagers to chop wood from nearby trees. [C],Envía aldeanos a talar madera de árboles cercanos. [C]
 TOOLTIP_GATHER_GOLD,Send villagers to mine gold from deposits. [G],Envía aldeanos a extraer oro de depósitos. [G]
 TOOLTIP_GATHER_STONE,Send villagers to quarry stone. [T],Envía aldeanos a extraer piedra de canteras. [T]

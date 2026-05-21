@@ -18,6 +18,7 @@ const RESOURCE_NAMES: Dictionary = {
 @export var initial_amount: float = 100.0
 
 var remaining_amount: float = 0.0
+var _selection_ring: Node2D = null
 
 signal depleted(node: Node)
 
@@ -47,6 +48,25 @@ func get_nav_obstacle_polygon() -> PackedVector2Array:
 		global_position + Vector2( H,  H),
 		global_position + Vector2(-H,  H),
 	])
+
+func set_selected(value: bool) -> void:
+	if value:
+		if not is_instance_valid(_selection_ring):
+			_selection_ring = Node2D.new()
+			var line: Line2D = Line2D.new()
+			line.default_color = Color(1.0, 0.85, 0.2, 0.85)
+			line.width = 1.5
+			var pts: PackedVector2Array = PackedVector2Array()
+			for i: int in range(17):
+				var a: float = i * TAU / 16.0
+				pts.append(Vector2(cos(a), sin(a)) * 18.0)
+			line.points = pts
+			_selection_ring.add_child(line)
+			add_child(_selection_ring)
+		_selection_ring.visible = true
+	else:
+		if is_instance_valid(_selection_ring):
+			_selection_ring.visible = false
 
 func get_resource_name() -> String:
 	return RESOURCE_NAMES.get(resource_type, "food") as String
