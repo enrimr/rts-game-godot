@@ -37,6 +37,7 @@ const BUILDING_SCENES: Dictionary = {
 	"siege_workshop":  "res://scenes/buildings/siege_workshop.tscn",
 	"town_center":     "res://scenes/buildings/town_center.tscn",
 	"wonder":          "res://scenes/buildings/wonder.tscn",
+	"watch_tower":     "res://scenes/buildings/watch_tower.tscn",
 }
 
 const BUILDING_COSTS: Dictionary = {
@@ -54,6 +55,7 @@ const BUILDING_COSTS: Dictionary = {
 	"siege_workshop":  {"wood": 200},
 	"town_center":     {"wood": 275},
 	"wonder":          {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000},
+	"watch_tower":     {"stone": 125},
 }
 
 # Buildings that must be placed adjacent to water (at least one edge in ocean terrain).
@@ -107,6 +109,13 @@ var _ghost: Node2D = null
 var _ghost_rotation: float = 0.0
 var _ghost_shape_cached: RectangleShape2D = null
 var _ghost_params_cached: PhysicsShapeQueryParameters2D = null
+
+# Wall drag placement state
+var _wall_drag_active: bool = false
+var _wall_drag_start: Vector2 = Vector2.ZERO
+var _wall_ghosts: Array[Node2D] = []
+var _wall_cost_layer: CanvasLayer = null
+var _wall_cost_label: Label = null
 
 # Pending action waiting for a map click ("move_to" or "attack_move")
 var _pending_action: String = ""
@@ -544,12 +553,15 @@ func _process(delta: float) -> void:
 	_handle_follow()
 	if _placing_building and is_instance_valid(_ghost):
 		var mouse_pos: Vector2 = get_global_mouse_position()
+		_ghost.visible = not _wall_drag_active
 		_ghost.global_position = mouse_pos
 		_ghost.rotation = _ghost_rotation
 		var terrain_ok: bool = not TerrainManager.is_ocean(mouse_pos)
 		if _placing_id in OCEAN_BUILDINGS:
 			terrain_ok = TerrainManager.is_ocean(mouse_pos)
 		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if terrain_ok else Color(1.0, 0.2, 0.2, 0.5)
+	if _wall_drag_active:
+		_update_wall_drag_preview(get_global_mouse_position())
 	if is_instance_valid(_drag_overlay):
 		var overlay: _DragOverlay = _drag_overlay as _DragOverlay
 		overlay.active = _dragging
@@ -670,9 +682,13 @@ func _get_hud_blocking_rects() -> Array[Control]:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		var ke: InputEventKey = event as InputEventKey
-		if _placing_building and ke.pressed and not ke.echo and ke.physical_keycode == KEY_R:
-			_ghost_rotation += PI / 2.0
-			get_viewport().set_input_as_handled()
+		if _placing_building and ke.pressed and not ke.echo:
+			if ke.physical_keycode == KEY_R:
+				_ghost_rotation += PI / 2.0
+				get_viewport().set_input_as_handled()
+			elif ke.physical_keycode == KEY_ESCAPE:
+				_cancel_placement()
+				get_viewport().set_input_as_handled()
 		return
 
 	if event is InputEventMouseMotion and _panning:
@@ -708,8 +724,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 		if _placing_building:
+			var is_wall_type: bool = _placing_id == "wall_segment" or _placing_id == "gate"
 			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
-				_confirm_placement(get_global_mouse_position())
+				if is_wall_type and not _wall_drag_active:
+					_wall_drag_start = get_global_mouse_position()
+					_wall_drag_active = true
+				elif is_wall_type and _wall_drag_active:
+					_confirm_wall_drag(get_global_mouse_position())
+				else:
+					_confirm_placement(get_global_mouse_position())
 			elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
 				_cancel_placement()
 			return
@@ -1490,6 +1513,120 @@ func _cancel_placement() -> void:
 	_ghost = null
 	_ghost_shape_cached = null
 	_ghost_params_cached = null
+	_wall_drag_active = false
+	_wall_drag_start = Vector2.ZERO
+	for g: Node2D in _wall_ghosts:
+		if is_instance_valid(g):
+			g.queue_free()
+	_wall_ghosts.clear()
+	if is_instance_valid(_wall_cost_label):
+		_wall_cost_label.queue_free()
+	_wall_cost_label = null
+	if is_instance_valid(_wall_cost_layer):
+		_wall_cost_layer.queue_free()
+	_wall_cost_layer = null
+
+func _wall_segment_positions(start: Vector2, end: Vector2, step: float) -> Array[Dictionary]:
+	var delta: Vector2 = end - start
+	var dist: float = delta.length()
+	if dist < step * 0.5:
+		return []
+	var dir: Vector2 = delta.normalized()
+	var angle: float = dir.angle()
+	var count: int = maxi(1, int(dist / step))
+	var result: Array[Dictionary] = []
+	for i: int in range(count):
+		var pos: Vector2 = start + dir * (step * 0.5 + i * step)
+		pos = (pos / 40.0).round() * 40.0
+		result.append({"pos": pos, "angle": angle})
+	return result
+
+func _update_wall_drag_preview(end_pos: Vector2) -> void:
+	for g: Node2D in _wall_ghosts:
+		if is_instance_valid(g):
+			g.queue_free()
+	_wall_ghosts.clear()
+
+	var step: float = 48.0 if _placing_id == "gate" else 40.0
+	var seg_size: Vector2 = Vector2(48.0, 20.0) if _placing_id == "gate" else Vector2(24.0, 64.0)
+	var positions: Array[Dictionary] = _wall_segment_positions(_wall_drag_start, end_pos, step)
+
+	for entry: Dictionary in positions:
+		var ghost: Node2D = Node2D.new()
+		ghost.global_position = entry["pos"] as Vector2
+		ghost.rotation = entry["angle"] as float
+		var rect: ColorRect = ColorRect.new()
+		rect.size = seg_size
+		rect.position = Vector2(-seg_size.x * 0.5, -seg_size.y * 0.5)
+		rect.color = Color(0.4, 0.7, 1.0, 0.45)
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ghost.add_child(rect)
+		ghost.z_index = 5
+		buildings_layer.add_child(ghost)
+		_wall_ghosts.append(ghost)
+
+	var placing_costs: Dictionary = BUILDING_COSTS.get(_placing_id, {}) as Dictionary
+	var cost_stone: int = placing_costs.get("stone", 0) as int
+	var cost_wood: int = placing_costs.get("wood", 0) as int
+	var cost_per: int = cost_stone + cost_wood
+	var total_cost: int = positions.size() * cost_per
+
+	if not is_instance_valid(_wall_cost_layer):
+		_wall_cost_layer = CanvasLayer.new()
+		_wall_cost_layer.layer = 10
+		add_child(_wall_cost_layer)
+		_wall_cost_label = Label.new()
+		_wall_cost_label.add_theme_font_size_override("font_size", 14)
+		_wall_cost_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.6, 1.0))
+		_wall_cost_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+		_wall_cost_label.add_theme_constant_override("shadow_offset_x", 1)
+		_wall_cost_label.add_theme_constant_override("shadow_offset_y", 1)
+		_wall_cost_layer.add_child(_wall_cost_label)
+
+	var resource_key: String = "stone" if _placing_id == "wall_segment" else "wood"
+	_wall_cost_label.text = "%s: %d" % [resource_key.capitalize(), total_cost]
+	var vp_mouse: Vector2 = get_viewport().get_mouse_position()
+	_wall_cost_label.position = vp_mouse + Vector2(16.0, -24.0)
+
+func _confirm_wall_drag(end_pos: Vector2) -> void:
+	var step: float = 48.0 if _placing_id == "gate" else 40.0
+	var positions: Array[Dictionary] = _wall_segment_positions(_wall_drag_start, end_pos, step)
+	if positions.is_empty():
+		_cancel_placement()
+		return
+
+	var costs: Dictionary = BUILDING_COSTS.get(_placing_id, {})
+	var scene_path: String = BUILDING_SCENES[_placing_id]
+	var placed_count: int = 0
+
+	for entry: Dictionary in positions:
+		var seg_pos: Vector2 = entry["pos"] as Vector2
+		var seg_angle: float = entry["angle"] as float
+		if not ResourceManager.can_afford(0, costs):
+			break
+		if not ResourceManager.spend_resource(0, costs):
+			break
+		var scene: PackedScene = load(scene_path) as PackedScene
+		var building: Node2D = scene.instantiate() as Node2D
+		building.global_position = seg_pos
+		building.rotation = seg_angle
+		building.set("player_id", 0)
+		building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
+		building.set_meta("building_id", _placing_id)
+		buildings_layer.add_child(building)
+		EventBus.building_placed.emit(building, 0)
+		for unit: Node in _selected_units:
+			if is_instance_valid(unit) and unit.has_method("order_build"):
+				unit.order_build(building)
+		placed_count += 1
+
+	if placed_count > 0:
+		AudioManager.play("build_place")
+
+	var keep_id: String = _placing_id
+	_cancel_placement()
+	if Input.is_key_pressed(KEY_SHIFT):
+		_start_placement(keep_id)
 
 func _request_nav_rebake() -> void:
 	_nav_rebake_pending = true

@@ -295,3 +295,5 @@ ACTION_SCOUT_EXPLORE,Explore (E),Explorar (E)
 TOOLTIP_SCOUT_EXPLORE,The Scout roams the map autonomously for 60 seconds.,El Explorador recorre el mapa automáticamente durante 60 segundos.
 ACTION_SCOUT_EXPLORE_STOP,Stop Explore (E),Detener Exploración (E)
 TOOLTIP_SCOUT_EXPLORE_STOP,Cancel the auto-explore and return control to the player.,Cancela la exploración automática y devuelve el control al jugador.
+ACTION_WATCH_TOWER,Watch Tower\n125S,Torre Vigía\n125P
+TOOLTIP_WATCH_TOWER,Defensive tower that automatically attacks nearby enemies. Requires Feudal Age. [O],Torre defensiva que ataca automáticamente a los enemigos cercanos. Requiere Edad Feudal. [O]
