@@ -46,9 +46,11 @@ func _get_fog() -> FogOfWar:
 	var fog: Node = (worlds[0] as Node).get_node_or_null("FogOfWar")
 	return fog as FogOfWar
 
-func play_music() -> void:
-	if is_instance_valid(_music_player) and not _music_player.playing:
-		_music_player.play()
+func play_music(map_type: int = 0) -> void:
+	if is_instance_valid(_music_player):
+		_music_player.stop()
+	_music_player.stream = _build_music_for_map(map_type)
+	_music_player.play()
 	_apply_music_volume()
 
 func stop_music() -> void:
@@ -444,7 +446,15 @@ func _build_music() -> void:
 	_music_player.volume_db = -22.0
 	_music_player.bus = "Master"
 	add_child(_music_player)
-	_music_player.stream = _synth_melody_loop()
+	_music_player.stream = _build_music_for_map(0)
+
+func _build_music_for_map(map_type: int) -> AudioStreamWAV:
+	match map_type:
+		1: return _music_standard()       # Standard   — G Major, epic
+		2: return _music_volcanic()       # Volcanic   — E Phrygian, dark/tense
+		3: return _music_desert()         # Desert     — A Arabic minor, exotic
+		4: return _music_islands()        # Islands    — D Major pentatonic, bright/marine
+		_: return _music_plains()         # Plains (0) — D Dorian, calm/medieval
 
 func _sine_note(freq: float, duration: float, amp: float) -> PackedFloat32Array:
 	# ADSR-lite envelope: 10 % attack, 80 % sustain, 10 % release
@@ -471,62 +481,105 @@ func _silent(duration: float) -> PackedFloat32Array:
 	buf.fill(0.0)
 	return buf
 
-func _synth_melody_loop() -> AudioStreamWAV:
-	# D Dorian pentatonic: D3 E3 F3 A3 C4 D4 (medieval-ish, calm)
-	# Frequencies (Hz)
-	const D3: float  = 146.83
-	const E3: float  = 164.81
-	const F3: float  = 174.61
-	const A3: float  = 220.00
-	const C4: float  = 261.63
-	const D4: float  = 293.66
-	const A2: float  = 110.00
-	const D2: float  = 73.41
-
-	# Beat duration in seconds (slow, meditative)
+# Plains — D Dorian pentatonic, slow and meditative
+func _music_plains() -> AudioStreamWAV:
+	const D3: float = 146.83; const E3: float = 164.81; const F3: float = 174.61
+	const A3: float = 220.00; const C4: float = 261.63; const D4: float = 293.66
+	const A2: float = 110.00; const D2: float = 73.41
 	const B: float = 0.55
-
-	# Melody: (freq, beats)
 	var melody: Array = [
-		[D3,  1.0], [E3,  1.0], [F3,  1.0], [A3,  2.0],
-		[C4,  1.0], [A3,  1.0], [F3,  1.5], [E3,  0.5],
-		[D3,  2.0], [E3,  1.0], [A3,  1.0], [C4,  1.0],
-		[D4,  2.0], [C4,  1.0], [A3,  1.0], [F3,  1.0],
-		[E3,  1.5], [D3,  0.5], [F3,  1.0], [A3,  2.0],
-		[C4,  1.0], [D4,  1.5], [C4,  0.5], [A3,  2.0],
-		[F3,  1.0], [E3,  1.0], [D3,  4.0],
+		[D3,1.0],[E3,1.0],[F3,1.0],[A3,2.0],[C4,1.0],[A3,1.0],[F3,1.5],[E3,0.5],
+		[D3,2.0],[E3,1.0],[A3,1.0],[C4,1.0],[D4,2.0],[C4,1.0],[A3,1.0],[F3,1.0],
+		[E3,1.5],[D3,0.5],[F3,1.0],[A3,2.0],[C4,1.0],[D4,1.5],[C4,0.5],[A3,2.0],
+		[F3,1.0],[E3,1.0],[D3,4.0],
 	]
-
-	# Drone: alternates D2 and A2 every 4 beats for subtle depth
 	var drone: Array = [
-		[D2, 4.0], [A2, 4.0], [D2, 4.0], [A2, 4.0],
-		[D2, 4.0], [A2, 4.0], [D2, 8.0],
+		[D2,4.0],[A2,4.0],[D2,4.0],[A2,4.0],[D2,4.0],[A2,4.0],[D2,8.0],
 	]
+	return _build_melody_wav(melody, drone, B, 0.28, 0.12)
 
-	# Build melody buffer
+# Standard — G Major, brighter and more epic
+func _music_standard() -> AudioStreamWAV:
+	const G3: float = 196.00; const A3: float = 220.00; const B3: float = 246.94
+	const D4: float = 293.66; const E4: float = 329.63; const G4: float = 392.00
+	const G2: float = 98.00;  const D3: float = 146.83
+	const B: float = 0.48
+	var melody: Array = [
+		[G3,1.0],[A3,1.0],[B3,1.0],[D4,2.0],[E4,1.0],[D4,1.0],[B3,1.5],[A3,0.5],
+		[G3,2.0],[B3,1.0],[D4,1.0],[G4,2.0],[E4,1.0],[D4,1.0],[B3,1.0],[A3,1.0],
+		[G3,1.0],[A3,1.0],[B3,2.0],[D4,1.0],[E4,1.5],[D4,0.5],[B3,2.0],
+		[A3,1.0],[G3,1.0],[B3,1.0],[D4,4.0],
+	]
+	var drone: Array = [
+		[G2,4.0],[D3,4.0],[G2,4.0],[D3,4.0],[G2,4.0],[D3,4.0],[G2,8.0],
+	]
+	return _build_melody_wav(melody, drone, B, 0.30, 0.10)
+
+# Volcanic Coast — E Phrygian, dark and tense
+func _music_volcanic() -> AudioStreamWAV:
+	const E3: float = 164.81; const F3: float = 174.61; const G3: float = 196.00
+	const A3: float = 220.00; const B3: float = 246.94; const C4: float = 261.63
+	const E2: float = 82.41;  const B2: float = 123.47
+	const B: float = 0.62
+	var melody: Array = [
+		[E3,1.0],[F3,1.0],[G3,1.5],[F3,0.5],[E3,2.0],[A3,1.0],[G3,1.0],[F3,1.0],
+		[E3,2.0],[B3,1.0],[A3,1.0],[G3,1.0],[F3,1.5],[E3,0.5],[C4,1.0],[B3,1.0],
+		[A3,2.0],[G3,1.0],[F3,1.0],[E3,4.0],[F3,1.0],[G3,1.0],[A3,2.0],
+		[G3,1.5],[F3,0.5],[E3,4.0],
+	]
+	var drone: Array = [
+		[E2,4.0],[B2,4.0],[E2,4.0],[B2,4.0],[E2,4.0],[B2,4.0],[E2,8.0],
+	]
+	return _build_melody_wav(melody, drone, B, 0.25, 0.14)
+
+# Desert Coast — A Arabic minor (Hijaz), exotic and dry
+func _music_desert() -> AudioStreamWAV:
+	const A3: float = 220.00; const Bb3: float = 233.08; const Cs4: float = 277.18
+	const D4: float = 293.66; const E4: float = 329.63; const F4: float = 349.23
+	const A2: float = 110.00; const E3: float = 164.81
+	const B: float = 0.50
+	var melody: Array = [
+		[A3,1.0],[Bb3,0.5],[Cs4,0.5],[D4,1.5],[Cs4,0.5],[Bb3,1.0],[A3,2.0],
+		[E4,1.0],[D4,1.0],[Cs4,1.0],[Bb3,1.0],[A3,2.0],[D4,1.0],[Cs4,1.5],[Bb3,0.5],
+		[A3,1.0],[Bb3,1.0],[Cs4,1.0],[D4,2.0],[E4,1.0],[F4,1.0],[E4,1.0],[D4,1.0],
+		[Cs4,1.0],[Bb3,1.0],[A3,4.0],
+	]
+	var drone: Array = [
+		[A2,4.0],[E3,4.0],[A2,4.0],[E3,4.0],[A2,4.0],[E3,4.0],[A2,8.0],
+	]
+	return _build_melody_wav(melody, drone, B, 0.27, 0.13)
+
+# Islands — D Major pentatonic, bright and marine
+func _music_islands() -> AudioStreamWAV:
+	const D4: float = 293.66; const E4: float = 329.63; const Fs4: float = 369.99
+	const A4: float = 440.00; const B4: float = 493.88; const D5: float = 587.33
+	const D3: float = 146.83; const A3: float = 220.00
+	const B: float = 0.42
+	var melody: Array = [
+		[D4,1.0],[E4,1.0],[Fs4,1.0],[A4,2.0],[B4,1.0],[A4,1.0],[Fs4,1.5],[E4,0.5],
+		[D4,2.0],[Fs4,1.0],[A4,1.0],[D5,2.0],[B4,1.0],[A4,1.0],[Fs4,1.0],[E4,1.0],
+		[D4,1.0],[E4,1.0],[Fs4,2.0],[A4,1.0],[B4,1.5],[A4,0.5],[Fs4,2.0],
+		[E4,1.0],[D4,1.0],[Fs4,1.0],[A4,4.0],
+	]
+	var drone: Array = [
+		[D3,4.0],[A3,4.0],[D3,4.0],[A3,4.0],[D3,4.0],[A3,4.0],[D3,8.0],
+	]
+	return _build_melody_wav(melody, drone, B, 0.26, 0.11)
+
+func _build_melody_wav(melody: Array, drone: Array, beat: float, mel_amp: float, drone_amp: float) -> AudioStreamWAV:
 	var mel_buf: PackedFloat32Array = PackedFloat32Array()
+	const GAP: float = 0.04
 	for entry: Array in melody:
 		var freq: float = entry[0] as float
-		var beats: float = entry[1] as float
-		var dur: float = beats * B
-		var gap: float = 0.04
-		mel_buf = _concat(mel_buf, _sine_note(freq, maxf(dur - gap, 0.05), 0.28))
-		if gap > 0.0:
-			mel_buf = _concat(mel_buf, _silent(gap))
-
-	# Build drone buffer to match melody length
+		var dur: float = (entry[1] as float) * beat
+		mel_buf = _concat(mel_buf, _sine_note(freq, maxf(dur - GAP, 0.05), mel_amp))
+		mel_buf = _concat(mel_buf, _silent(GAP))
 	var drone_buf: PackedFloat32Array = PackedFloat32Array()
 	for entry: Array in drone:
-		var freq: float = entry[0] as float
-		var beats: float = entry[1] as float
-		drone_buf = _concat(drone_buf, _sine_note(freq, beats * B, 0.12))
-	# Pad drone to melody length if needed
+		drone_buf = _concat(drone_buf, _sine_note((entry[0] as float), (entry[1] as float) * beat, drone_amp))
 	if drone_buf.size() < mel_buf.size():
-		var pad: PackedFloat32Array = _silent(float(mel_buf.size() - drone_buf.size()) / float(SAMPLE_RATE))
-		drone_buf = _concat(drone_buf, pad)
-
+		drone_buf = _concat(drone_buf, _silent(float(mel_buf.size() - drone_buf.size()) / float(SAMPLE_RATE)))
 	var mixed: PackedFloat32Array = _mix(mel_buf, drone_buf)
-
 	var wav: AudioStreamWAV = _make_wav(mixed)
 	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	wav.loop_begin = 0

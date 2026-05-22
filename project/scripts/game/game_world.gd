@@ -239,7 +239,7 @@ func _ready() -> void:
 	for rival_id: int in MatchConfig.get_rival_player_ids():
 		player_list.append({"id": rival_id})
 	GameManager.start_game(player_list)
-	AudioManager.play_music()
+	AudioManager.play_music(MatchConfig.map_type)
 	GameManager.game_over.connect(_on_game_over)
 
 	# Restore dynamic state from save (must be after start_game so GameState is PLAYING)
