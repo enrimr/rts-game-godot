@@ -1864,6 +1864,43 @@ static func _draw_tree(node: Node2D, s: float) -> float:
 	node.add_child(shadow)
 	return 13.0 * s
 
+# ── Tree stump (shown while a villager is actively chopping) ─────────────────
+static func _draw_tree_stump(node: Node2D, s: float) -> void:
+	# Shadow ellipse — keep same footprint so it still reads as a ground object
+	var shadow: Polygon2D = Polygon2D.new()
+	shadow.color = Color(0.0, 0.0, 0.0, 0.18)
+	var sw: float = 11.0 * s
+	var sh: float = 4.0 * s
+	var spts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(10):
+		var a: float = TAU * i / 10.0
+		spts.append(Vector2(cos(a) * sw, sin(a) * sh))
+	shadow.polygon = spts
+	shadow.z_index = -1
+	node.add_child(shadow)
+	# Short wide stump
+	var stump: Polygon2D = Polygon2D.new()
+	stump.color = Color(0.38, 0.24, 0.12)
+	var sw2: float = 5.0 * s
+	var sh2: float = 4.0 * s
+	stump.polygon = PackedVector2Array([
+		Vector2(-sw2, 0.0), Vector2(sw2, 0.0),
+		Vector2(sw2 * 0.8, -sh2), Vector2(-sw2 * 0.8, -sh2),
+	])
+	node.add_child(stump)
+	# Horizontal log lying to the right, rotated slightly
+	var log: Polygon2D = Polygon2D.new()
+	log.color = Color(0.42, 0.27, 0.14)
+	var lw: float = 10.0 * s
+	var lh: float = 2.0 * s
+	log.polygon = PackedVector2Array([
+		Vector2(-lw, -lh), Vector2(lw, -lh),
+		Vector2(lw,  lh),  Vector2(-lw,  lh),
+	])
+	log.position = Vector2(12.0 * s, -2.0 * s)
+	log.rotation = deg_to_rad(15.0)
+	node.add_child(log)
+
 # ── Gold rocks ───────────────────────────────────────────────────────────────
 static func _draw_gold(node: Node2D, s: float, amount: float = 0.0) -> float:
 	var count: int = 2 if amount <= 160.0 else 3

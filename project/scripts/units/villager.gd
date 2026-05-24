@@ -77,6 +77,7 @@ func _cancel_transport() -> void:
 	_pending_transport_drop_off = null
 
 func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
+	_release_gather_target()
 	_unregister_from_build_target()
 	_cancel_transport()
 	gather_target = target
@@ -103,6 +104,7 @@ func order_drop_off(target: Node) -> void:
 	_start_move_to((target as Node2D).global_position)
 
 func order_build(target: Node) -> void:
+	_release_gather_target()
 	_cancel_transport()
 	_unregister_from_build_target()
 	if is_instance_valid(build_target) and build_target.get("construction_complete") != null:
@@ -121,6 +123,7 @@ func order_build(target: Node) -> void:
 	_start_move_to(dest)
 
 func order_move(destination: Vector2) -> void:
+	_release_gather_target()
 	_attack_move_active = false
 	_cancel_transport()
 	_unregister_from_build_target()
@@ -132,6 +135,7 @@ func order_move(destination: Vector2) -> void:
 	_start_move_to(destination)
 
 func order_attack(target: Node) -> void:
+	_release_gather_target()
 	_cancel_transport()
 	_unregister_from_build_target()
 	attack_target = target
@@ -139,6 +143,11 @@ func order_attack(target: Node) -> void:
 	build_target = null
 	_destination_state = UnitState.ATTACKING
 	_start_move_to(_nav_target_for(target))
+
+func _release_gather_target() -> void:
+	if is_instance_valid(gather_target) and gather_target is ResourceNode:
+		if (gather_target as ResourceNode).resource_type == ResourceNode.ResourceType.WOOD:
+			(gather_target as ResourceNode).set_being_gathered(false)
 
 # --- Internal helpers ---
 
@@ -185,6 +194,9 @@ func _enter_state(new_state: UnitState) -> void:
 		if bstate != null and (bstate as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 			build_target.register_builder()
 	current_state = new_state
+	if new_state == UnitState.GATHERING and gather_target is ResourceNode:
+		if (gather_target as ResourceNode).resource_type == ResourceNode.ResourceType.WOOD:
+			(gather_target as ResourceNode).set_being_gathered(true)
 	_destination_state = UnitState.IDLE
 	nav_agent.set_velocity(Vector2.ZERO)
 	_play_animation(_get_animation_name())
@@ -208,6 +220,7 @@ func _handle_gathering(delta: float) -> void:
 	if not is_instance_valid(gather_target):
 		var fallback: Node = _find_nearest_same_resource()
 		if fallback != null:
+			_release_gather_target()
 			gather_target = fallback
 			_gather_blocked_retries = 0
 			_destination_state = UnitState.GATHERING
@@ -251,6 +264,7 @@ func _handle_gathering(delta: float) -> void:
 		if gather_target is ResourceNode and carried_amount >= carry_capacity:
 			var drop_off: Node = _resolve_drop_off()
 			if is_instance_valid(drop_off):
+				_release_gather_target()
 				drop_off_target = drop_off
 				_destination_state = UnitState.RETURNING
 				_start_move_to((drop_off as Node2D).global_position)

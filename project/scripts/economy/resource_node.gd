@@ -19,6 +19,8 @@ const RESOURCE_NAMES: Dictionary = {
 
 var remaining_amount: float = 0.0
 var _selection_ring: Node2D = null
+var _being_gathered: bool = false
+var _visual_scale: float = 1.0
 
 signal depleted(node: Node)
 
@@ -70,6 +72,17 @@ func set_selected(value: bool) -> void:
 
 func get_resource_name() -> String:
 	return RESOURCE_NAMES.get(resource_type, "food") as String
+
+func set_being_gathered(value: bool) -> void:
+	if resource_type != ResourceType.WOOD:
+		return
+	if _being_gathered or not value:
+		return
+	_being_gathered = true
+	for child: Node in get_children():
+		if child is Polygon2D:
+			child.queue_free()
+	MapGenerator._draw_tree_stump(self, _visual_scale)
 
 func gather(amount: float) -> float:
 	var gathered: float = minf(amount, remaining_amount)
