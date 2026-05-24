@@ -5,6 +5,9 @@ class_name ShipBase
 ## Base class for all naval units. Water-only movement, no terrain speed penalty.
 ## Ships use civ_id = "atlantes" internally so TerrainManager considers ocean passable.
 
+func get_selection_sound() -> String:
+	return "select_naval"
+
 func _ready() -> void:
 	# Ships are always ocean-capable regardless of player civ
 	civ_id = "atlantes"

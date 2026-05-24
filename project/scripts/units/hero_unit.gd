@@ -9,6 +9,9 @@ class_name HeroUnit
 signal ability_used(hero: HeroUnit)
 signal ability_ready(hero: HeroUnit)
 
+func get_selection_sound() -> String:
+	return "select_hero"
+
 enum Ability {
 	NONE,
 	# Guanches — Bencomo

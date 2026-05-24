@@ -6,6 +6,9 @@ var attack_target: Node = null
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 
+func get_selection_sound() -> String:
+	return "select_infantry"
+
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)

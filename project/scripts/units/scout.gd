@@ -6,6 +6,9 @@ const EXPLORE_DURATION: float = 60.0
 const EXPLORE_WAYPOINT_RADIUS: float = 400.0
 
 var attack_target: Node = null
+
+func get_selection_sound() -> String:
+	return "select_cavalry"
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 var _exploring: bool = false

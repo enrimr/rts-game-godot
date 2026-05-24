@@ -39,73 +39,117 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="FoodDisplay" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+[node name="FoodDisplay" type="VBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
 layout_mode = 2
+theme_override_constants/separation = 0
 script = ExtResource("2_resdisplay")
 resource_name = "food"
 icon_text = "Food"
 unique_name_in_owner = true
 
-[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/FoodDisplay"]
+[node name="TopRow" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/FoodDisplay"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/FoodDisplay/TopRow"]
 layout_mode = 2
 text = "Food"
 theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
 
-[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/FoodDisplay"]
+[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/FoodDisplay/TopRow"]
 layout_mode = 2
 text = "0"
 theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
 
-[node name="WoodDisplay" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+[node name="GathererLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/FoodDisplay"]
 layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.85, 0.80, 0.55, 0.75)
+
+[node name="WoodDisplay" type="VBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+layout_mode = 2
+theme_override_constants/separation = 0
 script = ExtResource("2_resdisplay")
 resource_name = "wood"
 icon_text = "Wood"
 unique_name_in_owner = true
 
-[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/WoodDisplay"]
+[node name="TopRow" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/WoodDisplay"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/WoodDisplay/TopRow"]
 layout_mode = 2
 text = "Wood"
 theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
 
-[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/WoodDisplay"]
+[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/WoodDisplay/TopRow"]
 layout_mode = 2
 text = "0"
 theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
 
-[node name="GoldDisplay" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+[node name="GathererLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/WoodDisplay"]
 layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.85, 0.80, 0.55, 0.75)
+
+[node name="GoldDisplay" type="VBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+layout_mode = 2
+theme_override_constants/separation = 0
 script = ExtResource("2_resdisplay")
 resource_name = "gold"
 icon_text = "Gold"
 unique_name_in_owner = true
 
-[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/GoldDisplay"]
+[node name="TopRow" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/GoldDisplay"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/GoldDisplay/TopRow"]
 layout_mode = 2
 text = "Gold"
 theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
 
-[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/GoldDisplay"]
+[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/GoldDisplay/TopRow"]
 layout_mode = 2
 text = "0"
 theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
 
-[node name="StoneDisplay" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+[node name="GathererLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/GoldDisplay"]
 layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.85, 0.80, 0.55, 0.75)
+
+[node name="StoneDisplay" type="VBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel"]
+layout_mode = 2
+theme_override_constants/separation = 0
 script = ExtResource("2_resdisplay")
 resource_name = "stone"
 icon_text = "Stone"
 unique_name_in_owner = true
 
-[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/StoneDisplay"]
+[node name="TopRow" type="HBoxContainer" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/StoneDisplay"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="IconLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/StoneDisplay/TopRow"]
 layout_mode = 2
 text = "Stone"
 theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
 
-[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/StoneDisplay"]
+[node name="AmountLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/StoneDisplay/TopRow"]
 layout_mode = 2
 text = "0"
 theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+
+[node name="GathererLabel" type="Label" parent="HUDRoot/TopBar/TopBarLayout/ResourcePanel/StoneDisplay"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.85, 0.80, 0.55, 0.75)
 
 [node name="PopulationDisplay" type="Label" parent="HUDRoot/TopBar/TopBarLayout"]
 layout_mode = 2

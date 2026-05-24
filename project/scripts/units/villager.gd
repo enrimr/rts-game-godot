@@ -24,6 +24,7 @@ var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 var _farm_gathered: float = 0.0
 var _gather_blocked_retries: int = 0
+var _gathering_active: bool = false
 
 # Transport embark state — set when villager needs to cross water to reach target
 var _pending_transport_target: Node = null      # resource node to reach after crossing
@@ -76,7 +77,11 @@ func _cancel_transport() -> void:
 	_pending_transport_resource = ""
 	_pending_transport_drop_off = null
 
+func get_selection_sound() -> String:
+	return "select_villager"
+
 func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
+	_stop_gathering_active()
 	_release_gather_target()
 	_unregister_from_build_target()
 	_cancel_transport()
@@ -104,6 +109,7 @@ func order_drop_off(target: Node) -> void:
 	_start_move_to((target as Node2D).global_position)
 
 func order_build(target: Node) -> void:
+	_stop_gathering_active()
 	_release_gather_target()
 	_cancel_transport()
 	_unregister_from_build_target()
@@ -123,6 +129,7 @@ func order_build(target: Node) -> void:
 	_start_move_to(dest)
 
 func order_move(destination: Vector2) -> void:
+	_stop_gathering_active()
 	_release_gather_target()
 	_attack_move_active = false
 	_cancel_transport()
@@ -135,6 +142,7 @@ func order_move(destination: Vector2) -> void:
 	_start_move_to(destination)
 
 func order_attack(target: Node) -> void:
+	_stop_gathering_active()
 	_release_gather_target()
 	_cancel_transport()
 	_unregister_from_build_target()
@@ -148,6 +156,16 @@ func _release_gather_target() -> void:
 	if is_instance_valid(gather_target) and gather_target is ResourceNode:
 		if (gather_target as ResourceNode).resource_type == ResourceNode.ResourceType.WOOD:
 			(gather_target as ResourceNode).set_being_gathered(false)
+
+func _stop_gathering_active() -> void:
+	if _gathering_active:
+		_gathering_active = false
+		EventBus.gatherer_changed.emit(player_id, carried_resource, -1)
+
+func _start_gathering_active() -> void:
+	if not _gathering_active:
+		_gathering_active = true
+		EventBus.gatherer_changed.emit(player_id, carried_resource, 1)
 
 # --- Internal helpers ---
 
@@ -194,9 +212,6 @@ func _enter_state(new_state: UnitState) -> void:
 		if bstate != null and (bstate as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 			build_target.register_builder()
 	current_state = new_state
-	if new_state == UnitState.GATHERING and gather_target is ResourceNode:
-		if (gather_target as ResourceNode).resource_type == ResourceNode.ResourceType.WOOD:
-			(gather_target as ResourceNode).set_being_gathered(true)
 	_destination_state = UnitState.IDLE
 	nav_agent.set_velocity(Vector2.ZERO)
 	_play_animation(_get_animation_name())
@@ -226,6 +241,7 @@ func _handle_gathering(delta: float) -> void:
 			_destination_state = UnitState.GATHERING
 			_start_move_to((fallback as Node2D).global_position)
 		else:
+			_stop_gathering_active()
 			current_state = UnitState.IDLE
 			_play_animation(_get_animation_name())
 		return
@@ -247,6 +263,10 @@ func _handle_gathering(delta: float) -> void:
 	_gather_timer += delta
 	if _gather_timer >= gather_interval:
 		_gather_timer = 0.0
+		if gather_target is ResourceNode \
+				and (gather_target as ResourceNode).resource_type == ResourceNode.ResourceType.WOOD:
+			(gather_target as ResourceNode).set_being_gathered(true)
+		_start_gathering_active()
 		var available: float = gather_target.gather(gather_rate)
 		var rate_mult: float = CivBonusManager.get_gather_rate_multiplier(player_id, carried_resource) \
 			* WeatherManager.get_gather_rate_multiplier(carried_resource, global_position)
@@ -578,6 +598,7 @@ func _play_animation(anim_name: String) -> void:
 		animated_sprite.play(anim_name)
 
 func die() -> void:
+	_stop_gathering_active()
 	_cancel_transport()
 	_unregister_from_build_target()
 	current_state = UnitState.DEAD

@@ -3,6 +3,9 @@ extends UnitBase
 class_name Knight
 
 var attack_target: Node = null
+
+func get_selection_sound() -> String:
+	return "select_cavalry"
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 

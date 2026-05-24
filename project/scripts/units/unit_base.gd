@@ -103,6 +103,9 @@ func set_selected(value: bool) -> void:
 			var col: Color = Color(0.0, 1.0, 0.0, 0.7) if player_id == 0 else Color(1.0, 0.85, 0.0, 0.85)
 			(circle as Polygon2D).color = col
 
+func get_selection_sound() -> String:
+	return "select_generic"
+
 func move_to(target_position: Vector2) -> void:
 	nav_agent.target_position = target_position
 	current_state = UnitState.MOVING

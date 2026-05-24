@@ -3,6 +3,9 @@ extends UnitBase
 class_name Trebuchet
 
 const SPLASH_RADIUS: float = 48.0
+
+func get_selection_sound() -> String:
+	return "select_siege"
 # Trebuchet cannot fire when target is within this fraction of max range
 const MIN_RANGE_RATIO: float = 0.40
 

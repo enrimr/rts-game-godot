@@ -32,7 +32,7 @@ const VILLAGER_ACTIONS: Array = [
 	{"id": "gather_food",  "label": "ACTION_FOOD",         "color": Color(0.60, 0.20, 0.15), "cost": {}, "key": KEY_H, "description": "TOOLTIP_GATHER_FOOD"},
 	{"id": "build_menu",   "label": "ACTION_BUILD",        "color": Color(0.20, 0.30, 0.60), "cost": {}, "key": KEY_B, "description": "TOOLTIP_BUILD_MENU"},
 	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
-	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
 	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	{"id": "show_path",    "label": "ACTION_SHOW_PATH",    "color": Color(0.15, 0.45, 0.55), "cost": {}, "key": KEY_P, "description": "TOOLTIP_SHOW_PATH"},
 	DESTROY_ACTION,
@@ -42,14 +42,14 @@ const BUILD_ACTIONS: Array = [
 	{"id": "build:house",         "label": "ACTION_HOUSE",        "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H, "description": "TOOLTIP_BUILD_HOUSE",    "min_age": 0},
 	{"id": "build:barracks",      "label": "ACTION_BARRACKS",     "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B, "description": "TOOLTIP_BUILD_BARRACKS", "min_age": 0},
 	{"id": "build:blacksmith",    "label": "ACTION_BLACKSMITH",   "color": Color(0.55, 0.40, 0.20), "cost": {"wood": 150}, "key": KEY_K, "description": "TOOLTIP_BUILD_BLACKSMITH","min_age": 1},
-	{"id": "build:stable",        "label": "ACTION_STABLE",       "color": Color(0.40, 0.30, 0.15), "cost": {"wood": 175}, "key": KEY_S, "description": "TOOLTIP_BUILD_STABLE",   "min_age": 1},
+	{"id": "build:stable",        "label": "ACTION_STABLE",       "color": Color(0.40, 0.30, 0.15), "cost": {"wood": 175}, "key": KEY_J, "description": "TOOLTIP_BUILD_STABLE",   "min_age": 1},
 	{"id": "build:lumber_camp",   "label": "ACTION_LUMBER",       "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L, "description": "TOOLTIP_BUILD_LUMBER",   "min_age": 0},
 	{"id": "build:mining_camp",   "label": "ACTION_MINING",       "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N, "description": "TOOLTIP_BUILD_MINING",   "min_age": 0},
 	{"id": "build:farm",          "label": "ACTION_FARM",         "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F, "description": "TOOLTIP_BUILD_FARM",     "min_age": 0},
-	{"id": "build:wall_segment",  "label": "ACTION_WALL",         "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_W, "description": "TOOLTIP_BUILD_WALL",     "min_age": 0},
+	{"id": "build:wall_segment",  "label": "ACTION_WALL",         "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_Q, "description": "TOOLTIP_BUILD_WALL",     "min_age": 0},
 	{"id": "build:gate",          "label": "ACTION_GATE",         "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G, "description": "TOOLTIP_BUILD_GATE",       "min_age": 0},
 	{"id": "build:watch_tower",   "label": "ACTION_WATCH_TOWER",  "color": Color(0.45, 0.42, 0.38), "cost": {"stone": 125}, "key": KEY_O, "description": "TOOLTIP_WATCH_TOWER",    "min_age": 1},
-	{"id": "build:dock",          "label": "ACTION_DOCK",         "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_D, "description": "TOOLTIP_BUILD_DOCK",     "min_age": 0},
+	{"id": "build:dock",          "label": "ACTION_DOCK",         "color": Color(0.18, 0.32, 0.55), "cost": {"wood": 150}, "key": KEY_C, "description": "TOOLTIP_BUILD_DOCK",     "min_age": 0},
 	{"id": "build:market",        "label": "ACTION_MARKET",       "color": Color(0.65, 0.50, 0.10), "cost": {"wood": 175}, "key": KEY_R, "description": "TOOLTIP_BUILD_MARKET",   "min_age": 1},
 	{"id": "build:university",      "label": "ACTION_UNIVERSITY",     "color": Color(0.20, 0.30, 0.50), "cost": {"wood": 200}, "key": KEY_U, "description": "TOOLTIP_BUILD_UNIVERSITY",    "min_age": 2},
 	{"id": "build:temple",          "label": "ACTION_TEMPLE",         "color": Color(0.50, 0.30, 0.55), "cost": {"wood": 175}, "key": KEY_T, "description": "TOOLTIP_BUILD_TEMPLE",       "min_age": 2},
@@ -71,7 +71,7 @@ const TOWN_CENTER_ACTIONS: Array = [
 
 const UNIT_ACTIONS: Array = [
 	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
-	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
 	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	{"id": "show_path",    "label": "ACTION_SHOW_PATH",    "color": Color(0.15, 0.45, 0.55), "cost": {}, "key": KEY_P, "description": "TOOLTIP_SHOW_PATH"},
 	DESTROY_ACTION,
@@ -134,6 +134,9 @@ var _action_page: int = 0
 var _page_prev_btn: Button = null
 var _page_next_btn: Button = null
 
+# --- Gatherer counts ---
+var _gatherer_counts: Dictionary = {"food": 0, "wood": 0, "gold": 0, "stone": 0}
+
 # --- Stats tracking ---
 var _stat_units_trained: int = 0
 var _stat_buildings_built: int = 0
@@ -163,6 +166,7 @@ func _init_rival_stats(rival_id: int) -> void:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	EventBus.resource_changed.connect(_on_resource_changed)
+	EventBus.gatherer_changed.connect(_on_gatherer_changed)
 	EventBus.technology_researched.connect(_on_technology_researched)
 	EventBus.unit_selected.connect(_on_unit_selected)
 	EventBus.building_selected.connect(_on_building_selected)
@@ -562,6 +566,13 @@ func _refresh_button_states() -> void:
 		btn.add_theme_stylebox_override("hover", hover_style)
 
 func _on_action_button_pressed(action_id: String) -> void:
+	for child: Node in _action_grid.get_children():
+		if child is ActionButton and (child as ActionButton).action_id == action_id:
+			var cost: Dictionary = (child as ActionButton).get_meta("cost", {}) as Dictionary
+			if not cost.is_empty() and not ResourceManager.can_afford(local_player_id, cost):
+				AudioManager.play("ui_error")
+				return
+			break
 	if action_id == "build_menu":
 		AudioManager.play("ui_click")
 		_in_build_menu = true
@@ -670,6 +681,19 @@ func _on_resource_changed(player_id: int, resource: String, amount: int) -> void
 		"stone": _stone_display.set_amount(amount)
 	_refresh_button_states()
 
+func _on_gatherer_changed(player_id: int, resource: String, delta: int) -> void:
+	if player_id != local_player_id:
+		return
+	if not _gatherer_counts.has(resource):
+		return
+	_gatherer_counts[resource] = maxi(0, (_gatherer_counts[resource] as int) + delta)
+	var count: int = _gatherer_counts[resource] as int
+	match resource:
+		"food":  _food_display.set_gatherer_count(count)
+		"wood":  _wood_display.set_gatherer_count(count)
+		"gold":  _gold_display.set_gatherer_count(count)
+		"stone": _stone_display.set_gatherer_count(count)
+
 func _on_technology_researched(player_id: int, _tech_id: String) -> void:
 	if player_id != local_player_id:
 		return
@@ -695,6 +719,12 @@ func _on_unit_selected(units: Array) -> void:
 	update_selection(units)
 	if is_instance_valid(_follow_btn):
 		_follow_btn.visible = not units.is_empty()
+	if not units.is_empty():
+		var lead: Node = units[0] as Node
+		var sound: String = "select_generic"
+		if lead.has_method("get_selection_sound"):
+			sound = lead.call("get_selection_sound") as String
+		AudioManager.play(sound, -4.0)
 
 func _on_building_selected(building: Node) -> void:
 	if is_instance_valid(_selected_building) and _selected_building.has_method("set_selected"):
@@ -862,7 +892,7 @@ func _populate_hero_buttons(hero: HeroUnit) -> void:
 	_clear_action_buttons()
 	var actions: Array = [
 		{"id": "move_to",     "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
-		{"id": "attack_move", "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+		{"id": "attack_move", "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
 		{"id": "stop",        "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 		DESTROY_ACTION,
 	]
@@ -945,7 +975,7 @@ func _populate_tc_actions() -> void:
 			"label": tr("UI_ADVANCE") + " " + tr(AGE_NAME_KEYS[next_age]) + "\n" + cost_str.strip_edges(),
 			"color": advance_color,
 			"cost": costs,
-			"key": KEY_A,
+			"key": KEY_E,
 			"raw_label": true,
 			"locked": advancing or (is_tutorial and _tutorial_step < 7),
 		})
@@ -979,7 +1009,7 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 			"label": data.display_name + "\n" + cost_label,
 			"color": def["color"] as Color,
 			"cost": costs,
-			"key": (KEY_M if uid == "militia" else (KEY_A if uid == "archer" else KEY_P)),
+			"key": _barracks_key_for(uid),
 		})
 	var techs: Array[TechnologyResource] = TechManager.get_available_techs(local_player_id, TechnologyResource.ResearchBuilding.BARRACKS)
 	for tech: TechnologyResource in techs:
@@ -1004,6 +1034,19 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
 	_build_research_bar(barracks)
+
+func _barracks_key_for(uid: String) -> Key:
+	var key_map: Dictionary = {
+		"militia": KEY_M,
+		"archer": KEY_R,
+		"pikeman": KEY_P,
+		"menceyes_guard": KEY_U,
+		"ravine_archer": KEY_U,
+		"longbowman": KEY_U,
+		"conquistador": KEY_U,
+		"tidecaller": KEY_U,
+	}
+	return key_map.get(uid, KEY_NONE) as Key
 
 func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
 	var actions: Array = []
@@ -1046,7 +1089,7 @@ func _populate_stable_actions(stable: Stable) -> void:
 		if data.cost_food  > 0: costs["food"] = data.cost_food
 		if data.cost_wood  > 0: costs["wood"] = data.cost_wood
 		if data.cost_gold  > 0: costs["gold"] = data.cost_gold
-		var key_map: Dictionary = {"heavy_scout": KEY_H, "knight": KEY_K}
+		var key_map: Dictionary = {"heavy_scout": KEY_H, "knight": KEY_K, "sand_raider": KEY_U, "chevalier_normand": KEY_U}
 		actions.append({
 			"id": "train:" + uid,
 			"label": data.display_name + "\n" + cost_label,
@@ -1130,7 +1173,7 @@ func _populate_dock_actions(dock: Dock) -> void:
 		if costs.get("wood", 0) > 0: cost_parts.append("%dW" % costs["wood"])
 		if costs.get("gold", 0) > 0: cost_parts.append("%dG" % costs["gold"])
 		var cost_label: String = " ".join(PackedStringArray(cost_parts))
-		var key_map: Dictionary = {"fishing_boat": KEY_F, "transport_ship": KEY_T, "war_galley": KEY_G}
+		var key_map: Dictionary = {"fishing_boat": KEY_F, "transport_ship": KEY_T, "war_galley": KEY_G, "trireme": KEY_U}
 		actions.append({
 			"id": "train:" + uid,
 			"label": tr("ACTION_" + uid.to_upper()) + "\n" + cost_label,
@@ -1155,9 +1198,9 @@ func _populate_trebuchet_buttons(treb: Trebuchet) -> void:
 	var deploy_color: Color = Color(0.20, 0.45, 0.20) if treb.is_deployed else Color(0.45, 0.35, 0.12)
 	var actions: Array = [
 		{"id": "move_to",        "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
-		{"id": "attack_move",    "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+		{"id": "attack_move",    "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
 		{"id": "stop",           "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
-		{"id": "trebuchet_deploy", "label": deploy_label, "color": deploy_color, "cost": {}, "key": KEY_D, "raw_label": true},
+		{"id": "trebuchet_deploy", "label": deploy_label, "color": deploy_color, "cost": {}, "key": KEY_F, "raw_label": true},
 		DESTROY_ACTION,
 	]
 	_populate_buttons(actions)
@@ -1165,7 +1208,7 @@ func _populate_trebuchet_buttons(treb: Trebuchet) -> void:
 func _populate_scout_buttons(scout: Scout) -> void:
 	var actions: Array = [
 		{"id": "move_to",     "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
-		{"id": "attack_move", "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_A, "description": "TOOLTIP_ATTACK_MOVE"},
+		{"id": "attack_move", "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
 		{"id": "stop",        "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	]
 	if scout.is_exploring():

@@ -76,6 +76,16 @@ func _build_all() -> void:
 	_register("ui_select",      _synth_select())
 	_register("ui_error",       _synth_error())
 
+	# Unit selection voices
+	_register("select_generic",  _synth_sel_generic())
+	_register("select_villager", _synth_sel_villager())
+	_register("select_infantry", _synth_sel_infantry())
+	_register("select_archer",   _synth_sel_archer())
+	_register("select_cavalry",  _synth_sel_cavalry())
+	_register("select_siege",    _synth_sel_siege())
+	_register("select_naval",    _synth_sel_naval())
+	_register("select_hero",     _synth_sel_hero())
+
 	# Commands
 	_register("cmd_move",       _synth_cmd_move())
 	_register("cmd_attack",     _synth_cmd_attack())
@@ -347,6 +357,110 @@ func _synth_pop_cap() -> AudioStreamWAV:
 	var a: PackedFloat32Array = _sine(400.0, 0.09, 0.35)
 	var b: PackedFloat32Array = _sine(280.0, 0.12, 0.35)
 	return _make_wav(_concat(a, b))
+
+# ── Unit selection voices ─────────────────────────────────────────────────────
+
+func _synth_sel_generic() -> AudioStreamWAV:
+	# Neutral mid-pitch blip: two rising tones
+	var a: PackedFloat32Array = _sine(440.0, 0.06, 0.28)
+	var b: PackedFloat32Array = _sine(550.0, 0.08, 0.25)
+	return _make_wav(_concat(a, b))
+
+func _synth_sel_villager() -> AudioStreamWAV:
+	# Friendly, bright, short chirp — warm and approachable
+	var n: int = int(SAMPLE_RATE * 0.22)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var env: float = exp(-t * 12.0)
+		# Two harmonics for warmth
+		buf[i] = (sin(TAU * 520.0 * t) * 0.35 + sin(TAU * 780.0 * t) * 0.18) * env
+	return _make_wav(buf)
+
+func _synth_sel_infantry() -> AudioStreamWAV:
+	# Gruff short grunt: band-passed noise burst with low punch
+	var n: int = int(SAMPLE_RATE * 0.18)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	var lp: float = 0.0
+	var hp: float = 0.0
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var raw: float = randf_range(-1.0, 1.0)
+		lp = lp + 0.20 * (raw - lp)
+		hp = 0.70 * hp + 0.70 * (lp - hp)
+		var env: float = exp(-t * 18.0)
+		# Mix band-passed noise with a low thud tone
+		buf[i] = (hp * 0.40 + sin(TAU * 140.0 * t) * 0.30) * env
+	return _make_wav(buf)
+
+func _synth_sel_archer() -> AudioStreamWAV:
+	# Light bow-string pluck: sharp attack, fast decay, mid-high pitch
+	var n: int = int(SAMPLE_RATE * 0.20)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var env: float = exp(-t * 22.0)
+		# Fundamental + slight inharmonic partial for a pluck timbre
+		buf[i] = (sin(TAU * 680.0 * t) * 0.38 + sin(TAU * 1020.0 * t * 1.005) * 0.18) * env
+	return _make_wav(buf)
+
+func _synth_sel_cavalry() -> AudioStreamWAV:
+	# Confident, bold — rising sweep with a snort-like noise burst
+	var sweep: PackedFloat32Array = _sweep(300.0, 520.0, 0.14, 0.38)
+	var snort: PackedFloat32Array = _noise(0.08, 0.18)
+	var gap: PackedFloat32Array = PackedFloat32Array()
+	gap.resize(int(SAMPLE_RATE * 0.02))
+	gap.fill(0.0)
+	return _make_wav(_concat(_concat(sweep, gap), snort))
+
+func _synth_sel_siege() -> AudioStreamWAV:
+	# Heavy, mechanical clunk: low noise burst + iron resonance
+	var n: int = int(SAMPLE_RATE * 0.28)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	var lp: float = 0.0
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var raw: float = randf_range(-1.0, 1.0)
+		lp = lp + 0.05 * (raw - lp)
+		var env: float = exp(-t * 10.0)
+		buf[i] = (lp * 0.45 + sin(TAU * 95.0 * t) * 0.25) * env
+	return _make_wav(buf)
+
+func _synth_sel_naval() -> AudioStreamWAV:
+	# Bell-like water tone: two partials, slow decay, slight chorus
+	var n: int = int(SAMPLE_RATE * 0.32)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var env: float = exp(-t * 7.0)
+		buf[i] = (sin(TAU * 380.0 * t) * 0.35 + sin(TAU * 570.0 * t * 1.003) * 0.22) * env
+	return _make_wav(buf)
+
+func _synth_sel_hero() -> AudioStreamWAV:
+	# Celestial shimmer: high choir-like harmonics with slow attack and long tail
+	var n: int = int(SAMPLE_RATE * 0.70)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		# Soft bell-curve envelope: slow rise, long decay
+		var attack: float = 1.0 - exp(-t * 18.0)
+		var decay: float = exp(-t * 3.5)
+		var env: float = attack * decay
+		# Five harmonic partials tuned to an open fifth + octave — airy and pure
+		buf[i] = (sin(TAU * 528.0 * t) * 0.30          # fundamental
+				+ sin(TAU * 792.0 * t) * 0.20          # fifth above
+				+ sin(TAU * 1056.0 * t) * 0.15         # octave
+				+ sin(TAU * 1320.0 * t) * 0.10         # fifth + octave
+				+ sin(TAU * 1584.0 * t) * 0.06         # double octave
+				# Subtle slow vibrato on the top partial for shimmer
+				+ sin(TAU * 1058.0 * t + sin(TAU * 5.5 * t) * 0.4) * 0.08) * env
+	return _make_wav(buf)
 
 # ---------------------------------------------------------------------------
 # Weather ambient synthesizers (looping ~4 s textures)

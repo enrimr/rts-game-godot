@@ -23,12 +23,14 @@ signal population_cap_changed(player_id: int, cap: int)
 
 # Resources
 signal resource_node_selected(node: Node)
+signal gatherer_changed(player_id: int, resource: String, delta: int)
 
 # Buildings
 signal train_queue_changed(building: Node, queue: Array, max_queue: int)
 signal building_placed(building: Node, player_id: int)
 signal building_destroyed(building: Node, player_id: int)
 signal building_construction_complete(building: Node)
+signal gate_state_changed(gate: Node)
 signal building_selected(building: Node)
 signal wonder_built(player_id: int)
 signal wonder_destroyed(player_id: int)
