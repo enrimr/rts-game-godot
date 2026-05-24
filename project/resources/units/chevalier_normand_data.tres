@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://chevalier_normand_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "chevalier_normand"
+display_name = "Chevalier Normand"
+description = "Franks heavy cavalry. First attack after moving 80px deals 2.5x damage. Requires Castle Age."
+max_health = 130.0
+move_speed = 110.0
+line_of_sight = 5.0
+population_cost = 1
+attack = 10.0
+attack_range = 1.5
+attack_speed = 0.9
+armor_melee = 2.0
+armor_pierce = 1.0
+age_required = 2
+train_time = 40.0
+cost_food = 75
+cost_wood = 0
+cost_gold = 65

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://trireme_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "trireme"
+display_name = "Trireme"
+description = "Fenicios heavy warship. Deals 2x damage vs ships and pushes them back. Requires Feudal Age."
+max_health = 160.0
+move_speed = 90.0
+line_of_sight = 6.0
+population_cost = 2
+attack = 9.0
+attack_range = 3.0
+attack_speed = 0.8
+armor_melee = 2.0
+armor_pierce = 1.0
+age_required = 1
+train_time = 50.0
+cost_food = 0
+cost_wood = 100
+cost_gold = 50

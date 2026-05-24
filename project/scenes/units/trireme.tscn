@@ -1,0 +1,72 @@
+[gd_scene load_steps=5 format=3 uid="uid://unit_trireme"]
+
+[ext_resource type="Script" path="res://scripts/units/trireme.gd" id="1_trscr"]
+[ext_resource type="Resource" uid="uid://trireme_data" path="res://resources/units/trireme_data.tres" id="2_trdat"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]
+radius = 17.0
+height = 34.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 96.0
+
+[node name="Trireme" type="CharacterBody2D"]
+script = ExtResource("1_trscr")
+unit_data = ExtResource("2_trdat")
+collision_layer = 1
+collision_mask = 1
+
+[node name="Body" type="ColorRect" parent="."]
+offset_left = -17.0
+offset_top = -26.0
+offset_right = 17.0
+offset_bottom = 10.0
+color = Color(0.20, 0.30, 0.60, 1.0)
+mouse_filter = 2
+
+[node name="UnitLabel" type="Label" parent="."]
+offset_left = -17.0
+offset_top = -24.0
+offset_right = 17.0
+offset_bottom = 6.0
+text = "TR"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.80, 0.88, 1.0, 1.0)
+mouse_filter = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_1")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
+navigation_layers = 2
+path_desired_distance = 16.0
+target_desired_distance = 28.0
+avoidance_enabled = true
+avoidance_priority = 0.5
+
+[node name="SelectionIndicator" type="Node2D" parent="."]
+visible = false
+
+[node name="SelectionCircle" type="Polygon2D" parent="SelectionIndicator"]
+color = Color(0, 1, 0, 0.7)
+polygon = PackedVector2Array(16.0, 0.0, 15.39, 3.92, 13.86, 7.65, 11.31, 11.31, 7.65, 13.86, 3.92, 15.39, 0.0, 16.0, -3.92, 15.39, -7.65, 13.86, -11.31, 11.31, -13.86, 7.65, -15.39, 3.92, -16.0, 0.0, -15.39, -3.92, -13.86, -7.65, -11.31, -11.31, -7.65, -13.86, -3.92, -15.39, 0.0, -16.0, 3.92, -15.39, 7.65, -13.86, 11.31, -11.31, 13.86, -7.65, 15.39, -3.92)
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = -22.0
+offset_top = -42.0
+offset_right = 22.0
+offset_bottom = -36.0
+min_value = 0.0
+max_value = 100.0
+value = 100.0
+show_percentage = false
+mouse_filter = 2
+
+[node name="AttackRange" type="Area2D" parent="."]
+collision_mask = 1
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackRange"]
+shape = SubResource("CircleShape2D_1")

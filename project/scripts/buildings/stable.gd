@@ -30,6 +30,24 @@ const UNIT_DEFS: Array[Dictionary] = [
 		"color": Color(0.25, 0.30, 0.55),
 		"age": 2,
 	},
+	{
+		"id": "sand_raider",
+		"scene": "res://scenes/units/sand_raider.tscn",
+		"data": "res://resources/units/sand_raider_data.tres",
+		"label": "SR",
+		"color": Color(0.75, 0.55, 0.15),
+		"age": 1,
+		"civ_required": "mahos",
+	},
+	{
+		"id": "chevalier_normand",
+		"scene": "res://scenes/units/chevalier_normand.tscn",
+		"data": "res://resources/units/chevalier_normand_data.tres",
+		"label": "CN",
+		"color": Color(0.25, 0.30, 0.65),
+		"age": 2,
+		"civ_required": "franks",
+	},
 ]
 
 var _train_queue: Array[Dictionary] = []
@@ -122,10 +140,15 @@ func get_train_progress() -> float:
 
 func get_available_units() -> Array[Dictionary]:
 	var current_age: int = AgeManager.get_age(player_id)
+	var player_civ: String = MatchConfig.player_civ_id if player_id == 0 else MatchConfig.get_rival_civ_id(player_id)
 	var result: Array[Dictionary] = []
 	for def: Dictionary in UNIT_DEFS:
-		if (def["age"] as int) <= current_age:
-			result.append(def)
+		if (def["age"] as int) > current_age:
+			continue
+		var civ_req: String = def.get("civ_required", "") as String
+		if civ_req != "" and civ_req != player_civ:
+			continue
+		result.append(def)
 	return result
 
 func _find_def(unit_id: String) -> Dictionary:

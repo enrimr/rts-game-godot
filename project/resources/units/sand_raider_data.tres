@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://sand_raider_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "sand_raider"
+display_name = "Sand Raider"
+description = "Mahos fast cavalry. Retreats 90px after each attack before re-engaging. Requires Feudal Age."
+max_health = 70.0
+move_speed = 135.0
+line_of_sight = 5.0
+population_cost = 1
+attack = 8.0
+attack_range = 1.5
+attack_speed = 1.1
+armor_melee = 0.0
+armor_pierce = 0.0
+age_required = 1
+train_time = 28.0
+cost_food = 60
+cost_wood = 0
+cost_gold = 40

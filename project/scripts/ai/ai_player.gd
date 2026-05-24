@@ -132,6 +132,7 @@ func _run_tick() -> void:
 	_manage_military_buildings()
 	_manage_advanced_buildings()
 	_manage_military()
+	_manage_unique_barracks_unit()
 	_manage_age_advance()
 	if _is_naval_map():
 		_manage_naval()
@@ -142,15 +143,40 @@ func _run_tick() -> void:
 # ── TC loss / elimination ─────────────────────────────────────────────────────
 
 func _on_building_destroyed(building: Node, owner_id: int) -> void:
-	if owner_id != player_id:
+	if owner_id == player_id:
+		# React to our own TC being destroyed
+		if building == town_center or (building is TownCenterBuilding) or (building is TownCenterBuildable):
+			town_center = null
+			_tc_rebuild_pending = false
+			get_tree().create_timer(0.5).timeout.connect(_attempt_tc_rebuild)
 		return
-	# React to our own TC being destroyed (both the initial AI TC and any rebuilt one)
-	if building != town_center and not (building is TownCenterBuilding) and not (building is TownCenterBuildable):
+	# Enemy building destroyed — push nearby idle units to the next target immediately
+	_push_units_past_destroyed_building(building as Node2D)
+
+func _push_units_past_destroyed_building(destroyed: Node2D) -> void:
+	var next_target: Node = _find_nearest_enemy_building()
+	if next_target == null:
+		next_target = _find_nearest_enemy_unit()
+	if next_target == null:
 		return
-	town_center = null
-	_tc_rebuild_pending = false
-	# Give the game a tick to register the destruction, then attempt rebuild
-	get_tree().create_timer(0.5).timeout.connect(_attempt_tc_rebuild)
+	const PUSH_RADIUS: float = 300.0
+	for unit: Node in units_layer.get_children():
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != player_id:
+			continue
+		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight or unit is BatteringRam or unit is Mangonel or unit is Trebuchet or unit is MenceyesGuard or unit is RavineArcher or unit is SandRaider or unit is ChevalierNormand or unit is Longbowman or unit is Conquistador or unit is Tidecaller):
+			continue
+		if (unit as Node2D).global_position.distance_to(destroyed.global_position) > PUSH_RADIUS:
+			continue
+		var ustate: Variant = unit.get("current_state")
+		var existing_target: Variant = unit.get("attack_target")
+		var already_engaged: bool = existing_target != null and is_instance_valid(existing_target as Node) and existing_target != destroyed
+		if already_engaged:
+			continue
+		if unit.has_method("order_attack"):
+			unit.order_attack(next_target)
 
 func _attempt_tc_rebuild() -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
@@ -520,6 +546,7 @@ func _manage_stable_training() -> void:
 	if _built.get("stable", 0) as int == 0:
 		return
 	var age: int = AgeManager.get_age(player_id)
+	var ai_civ: String = MatchConfig.get_rival_civ_id(player_id)
 	for building: Node in buildings_layer.get_children():
 		if not is_instance_valid(building) or not (building is Stable):
 			continue
@@ -530,8 +557,12 @@ func _manage_stable_training() -> void:
 			continue
 		if st.get_queue().size() >= st.get_max_queue():
 			continue
-		if age >= GameManager.Age.CASTLE and ResourceManager.can_afford(player_id, {"food": 60, "gold": 75}):
+		if age >= GameManager.Age.CASTLE and ai_civ == "franks" and ResourceManager.can_afford(player_id, {"food": 75, "gold": 65}):
+			st.order_train("chevalier_normand")
+		elif age >= GameManager.Age.CASTLE and ResourceManager.can_afford(player_id, {"food": 60, "gold": 75}):
 			st.order_train("knight")
+		elif age >= GameManager.Age.FEUDAL and ai_civ == "mahos" and ResourceManager.can_afford(player_id, {"food": 60, "gold": 40}):
+			st.order_train("sand_raider")
 		elif age >= GameManager.Age.FEUDAL and ResourceManager.can_afford(player_id, {"food": 80, "gold": 30}):
 			st.order_train("heavy_scout")
 		break
@@ -615,11 +646,46 @@ func _pick_unit_to_train(desired: Dictionary) -> String:
 
 func _can_train(unit_id: String) -> bool:
 	var age: int = AgeManager.get_age(player_id)
+	var ai_civ: String = MatchConfig.get_rival_civ_id(player_id)
 	match unit_id:
-		"militia":  return true  # available from Dark Age
-		"archer":   return age >= GameManager.Age.FEUDAL
-		"pikeman":  return age >= GameManager.Age.CASTLE
+		"militia":          return true
+		"archer":           return age >= GameManager.Age.FEUDAL
+		"pikeman":          return age >= GameManager.Age.CASTLE
+		"menceyes_guard":   return age >= GameManager.Age.CASTLE and ai_civ == "guanches"
+		"ravine_archer":    return age >= GameManager.Age.CASTLE and ai_civ == "canarii"
+		"longbowman":       return age >= GameManager.Age.CASTLE and ai_civ == "britons"
+		"conquistador":     return age >= GameManager.Age.CASTLE and ai_civ == "castellanos"
+		"tidecaller":       return age >= GameManager.Age.CASTLE and ai_civ == "atlantes"
 	return false
+
+func _manage_unique_barracks_unit() -> void:
+	if _built.get("barracks", 0) as int == 0:
+		return
+	var ai_civ: String = MatchConfig.get_rival_civ_id(player_id)
+	var unique_id: String = ""
+	var unique_cost: Dictionary = {}
+	match ai_civ:
+		"guanches":    unique_id = "menceyes_guard";  unique_cost = {"food": 65, "gold": 25}
+		"canarii":     unique_id = "ravine_archer";   unique_cost = {"wood": 40, "gold": 55}
+		"britons":     unique_id = "longbowman";      unique_cost = {"wood": 30, "gold": 60}
+		"castellanos": unique_id = "conquistador";    unique_cost = {"food": 60, "gold": 60}
+		"atlantes":    unique_id = "tidecaller";      unique_cost = {"food": 50, "gold": 70}
+	if unique_id.is_empty() or not _can_train(unique_id):
+		return
+	if not ResourceManager.can_afford(player_id, unique_cost):
+		return
+	for building: Node in buildings_layer.get_children():
+		if not is_instance_valid(building) or not (building is Barracks):
+			continue
+		var br: Barracks = building as Barracks
+		if br.player_id != player_id:
+			continue
+		if br.state != BuildingBase.BuildingState.COMPLETE:
+			continue
+		if br.get_queue().size() >= br.get_max_queue():
+			continue
+		br.order_train(unique_id)
+		break
 
 # ── Age advancement ───────────────────────────────────────────────────────────
 
@@ -690,7 +756,7 @@ func _launch_attack() -> void:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight or unit is BatteringRam or unit is Mangonel or unit is Trebuchet):
+		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight or unit is BatteringRam or unit is Mangonel or unit is Trebuchet or unit is MenceyesGuard or unit is RavineArcher or unit is SandRaider or unit is ChevalierNormand or unit is Longbowman or unit is Conquistador or unit is Tidecaller):
 			continue
 		# Skip units already attacking a valid enemy target
 		var existing_target: Variant = unit.get("attack_target")
@@ -816,7 +882,7 @@ func _defend_base() -> void:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight or unit is BatteringRam or unit is Mangonel or unit is Trebuchet) and unit.has_method("order_attack"):
+		if (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight or unit is BatteringRam or unit is Mangonel or unit is Trebuchet or unit is MenceyesGuard or unit is RavineArcher or unit is SandRaider or unit is ChevalierNormand or unit is Longbowman or unit is Conquistador or unit is Tidecaller) and unit.has_method("order_attack"):
 			unit.order_attack(best_enemy)
 
 # ── Naval AI ─────────────────────────────────────────────────────────────────
@@ -850,18 +916,25 @@ func _manage_naval() -> void:
 			dk.order_train("fishing_boat")
 		return
 
-	# Feudal+: build 2 war galleys first, then 1 transport, then more galleys
+	var ai_civ: String = MatchConfig.get_rival_civ_id(player_id)
+	# Feudal+: build 2 war galleys first (or triremes for fenicios), then 1 transport, then more
 	var galley_target: int = 2 if age == GameManager.Age.FEUDAL else 3
-	if galleys < galley_target and ResourceManager.can_afford(player_id, {"wood": 75, "gold": 35}):
-		dk.order_train("war_galley")
-		return
+	if galleys < galley_target:
+		if ai_civ == "fenicios" and ResourceManager.can_afford(player_id, {"wood": 100, "gold": 50}):
+			dk.order_train("trireme")
+			return
+		if ResourceManager.can_afford(player_id, {"wood": 75, "gold": 35}):
+			dk.order_train("war_galley")
+			return
 	if transports < 1 and ResourceManager.can_afford(player_id, {"wood": 125}):
 		dk.order_train("transport_ship")
 		return
 	# Additional galleys in Castle/Imperial
-	if age >= GameManager.Age.CASTLE and galleys < 4 \
-			and ResourceManager.can_afford(player_id, {"wood": 75, "gold": 35}):
-		dk.order_train("war_galley")
+	if age >= GameManager.Age.CASTLE and galleys < 4:
+		if ai_civ == "fenicios" and ResourceManager.can_afford(player_id, {"wood": 100, "gold": 50}):
+			dk.order_train("trireme")
+		elif ResourceManager.can_afford(player_id, {"wood": 75, "gold": 35}):
+			dk.order_train("war_galley")
 
 func _manage_fishing_boats() -> void:
 	var dock: Node = _find_own_dock()
@@ -1053,7 +1126,7 @@ func _launch_naval_assault() -> void:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight or unit is BatteringRam or unit is Mangonel or unit is Trebuchet):
+		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight or unit is BatteringRam or unit is Mangonel or unit is Trebuchet or unit is MenceyesGuard or unit is RavineArcher or unit is SandRaider or unit is ChevalierNormand or unit is Longbowman or unit is Conquistador or unit is Tidecaller):
 			continue
 		if unit.get("current_state") as int == UnitBase.UnitState.IDLE:
 			ts.board(unit)
@@ -1136,7 +1209,7 @@ func _attack_with_idle_land_units() -> void:
 		var pid: Variant = unit.get("player_id")
 		if pid == null or (pid as int) != player_id:
 			continue
-		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight or unit is BatteringRam or unit is Mangonel or unit is Trebuchet):
+		if not (unit is Militia or unit is Archer or unit is Pikeman or unit is HeavyScout or unit is Knight or unit is BatteringRam or unit is Mangonel or unit is Trebuchet or unit is MenceyesGuard or unit is RavineArcher or unit is SandRaider or unit is ChevalierNormand or unit is Longbowman or unit is Conquistador or unit is Tidecaller):
 			continue
 		var ustate: Variant = unit.get("current_state")
 		if ustate == null or (ustate as int) != UnitBase.UnitState.IDLE:
@@ -1438,18 +1511,28 @@ func _count_of_type(type_name: String) -> int:
 		if pid == null or (pid as int) != player_id:
 			continue
 		match type_name:
-			"Villager":   if unit is Villager:    count += 1
-			"Militia":    if unit is Militia:     count += 1
-			"Archer":     if unit is Archer:      count += 1
-			"Pikeman":    if unit is Pikeman:     count += 1
-			"HeavyScout":   if unit is HeavyScout:   count += 1
-			"Knight":       if unit is Knight:       count += 1
-			"BatteringRam": if unit is BatteringRam: count += 1
-			"Mangonel":     if unit is Mangonel:     count += 1
-			"Trebuchet":    if unit is Trebuchet:    count += 1
+			"Villager":        if unit is Villager:        count += 1
+			"Militia":         if unit is Militia:         count += 1
+			"Archer":          if unit is Archer:          count += 1
+			"Pikeman":         if unit is Pikeman:         count += 1
+			"HeavyScout":      if unit is HeavyScout:      count += 1
+			"Knight":          if unit is Knight:          count += 1
+			"BatteringRam":    if unit is BatteringRam:    count += 1
+			"Mangonel":        if unit is Mangonel:        count += 1
+			"Trebuchet":       if unit is Trebuchet:       count += 1
+			"MenceyesGuard":   if unit is MenceyesGuard:   count += 1
+			"RavineArcher":    if unit is RavineArcher:    count += 1
+			"SandRaider":      if unit is SandRaider:      count += 1
+			"ChevalierNormand": if unit is ChevalierNormand: count += 1
+			"Longbowman":      if unit is Longbowman:      count += 1
+			"Conquistador":    if unit is Conquistador:    count += 1
+			"Tidecaller":      if unit is Tidecaller:      count += 1
 	return count
 
 func _count_military() -> int:
 	return _count_of_type("Militia") + _count_of_type("Archer") + _count_of_type("Pikeman") \
 		+ _count_of_type("HeavyScout") + _count_of_type("Knight") \
-		+ _count_of_type("BatteringRam") + _count_of_type("Mangonel") + _count_of_type("Trebuchet")
+		+ _count_of_type("BatteringRam") + _count_of_type("Mangonel") + _count_of_type("Trebuchet") \
+		+ _count_of_type("MenceyesGuard") + _count_of_type("RavineArcher") + _count_of_type("SandRaider") \
+		+ _count_of_type("ChevalierNormand") + _count_of_type("Longbowman") + _count_of_type("Conquistador") \
+		+ _count_of_type("Tidecaller")

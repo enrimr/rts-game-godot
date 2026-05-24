@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://menceyes_guard_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "menceyes_guard"
+display_name = "Menceyes Guard"
+description = "Guanches elite infantry. Rage Aura boosts nearby allies when wounded. Requires Castle Age."
+max_health = 95.0
+move_speed = 85.0
+line_of_sight = 4.0
+population_cost = 1
+attack = 9.0
+attack_range = 1.5
+attack_speed = 0.8
+armor_melee = 2.0
+armor_pierce = 1.0
+age_required = 2
+train_time = 32.0
+cost_food = 65
+cost_wood = 0
+cost_gold = 25

@@ -70,6 +70,23 @@
 
 ---
 
+## Unique Units
+
+Each civilization has one unique unit trained at their primary military building. Only available when playing that civilization.
+
+| Unit | Civilization | Trained at | Age | Cost | Time | HP | Speed | Attack | Range | Armour M/P | Pop | Special Ability |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Menceyes Guard | Guanches | Barracks | 2 | 65f + 25g | 32 s | 95 | 85 | 9 | 1.5 | 2/1 | 1 | **Rage Aura** — when HP < 50%, pulses every 2 s granting +3 attack to allied units within 80 px for 3 s |
+| Ravine Archer | Canarii | Barracks | 2 | 40w + 55g | 35 s | 45 | 105 | 7 | 5.0 | 0/1 | 1 | **Ambush Shot** — if stationary for ≥1.5 s, first shot deals ×2 damage |
+| Sand Raider | Mahos | Stable | 1 | 60f + 40g | 28 s | 70 | 135 | 8 | 1.5 | 0/0 | 1 | **Hit & Run** — after each attack retreats 90 px, then re-engages |
+| Chevalier Normand | Franks | Stable | 2 | 75f + 65g | 40 s | 130 | 110 | 10 | 1.5 | 2/1 | 1 | **Lance Charge** — first attack after moving ≥80 px deals ×2.5 damage |
+| Longbowman | Britons | Barracks | 2 | 30w + 60g | 38 s | 40 | 95 | 6 | 6.5 | 0/1 | 1 | **Armour Piercing** — +4 bonus damage vs cavalry units |
+| Conquistador | Castellanos | Barracks | 2 | 60f + 60g | 36 s | 80 | 95 | 8 | 1.2 | 1/1 | 1 | **Salvo Fire** (12 s CD) — fires 3 rapid shots (6 dmg each, ignores armour, 0.3 s apart) |
+| Tidecaller | Atlantes | Barracks | 2 | 50f + 70g | 38 s | 75 | 80 | 7 | 3.0 | 1/2 | 1 | **Tidal Pulse** — each attack deals 2 splash damage to all enemies within 65 px |
+| Trireme | Fenicios | Dock | 1 | 100w + 50g | 50 s | 160 | 90 | 9 | 3.0 | 2/1 | 2 | **Ram** — ×2 damage vs ships + pushes target 40 px away |
+
+---
+
 ## Technology Tree
 
 ### Blacksmith
@@ -126,7 +143,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 |---|---|
 | **Hero** | Bencomo |
 | **Ability** | *Menceyes Charge* — Rallies nearby allied units, granting +30% attack speed for 10 s · Cooldown 50 s |
-| **Unique Unit** | Menceyes Guard |
+| **Unique Unit** | **Menceyes Guard** — 95 HP · 65f+25g · Age 2 · *Rage Aura*: when HP<50%, pulses +3 attack to allies in 80 px every 2 s |
 | **Bonuses** | Stone building HP ×1.20 · Spears available in Dark Age · Can traverse malpais terrain |
 | **Restrictions** | No cavalry · No gunpowder |
 
@@ -139,7 +156,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 |---|---|
 | **Hero** | Doramas |
 | **Ability** | *Challenge* — Taunts the nearest enemy unit, forcing it to attack Doramas for 6 s · Cooldown 45 s |
-| **Unique Unit** | Ravine Archer |
+| **Unique Unit** | **Ravine Archer** — 45 HP · 40w+55g · Age 2 · *Ambush Shot*: stationary ≥1.5 s → ×2 first shot |
 | **Bonuses** | Villagers gather food ×1.15 · Archer food cost ×0.80 |
 | **Restrictions** | No heavy cavalry |
 
@@ -152,7 +169,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 |---|---|
 | **Hero** | Guadarfía |
 | **Ability** | *Ambush* — Nearly invisible for 8 s; enemies cannot auto-attack Guadarfía while cloaked · Cooldown 45 s |
-| **Unique Unit** | Sand Raider |
+| **Unique Unit** | **Sand Raider** — 70 HP · 60f+40g · Age 1 · *Hit & Run*: retreats 90 px after each attack then re-engages |
 | **Bonuses** | Building wood cost ×0.70 · Scout / light cavalry speed ×1.25 · Can traverse dunes |
 | **Restrictions** | No heavy cavalry upgrades |
 
@@ -165,7 +182,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 |---|---|
 | **Hero** | Jean de Béthencourt |
 | **Ability** | *Forced Diplomacy* — Converts the nearest enemy unit for 12 s · Cooldown 60 s |
-| **Unique Unit** | Chevalier Normand |
+| **Unique Unit** | **Chevalier Normand** — 130 HP · 75f+65g · Age 2 · *Lance Charge*: first attack after ≥80 px movement deals ×2.5 damage |
 | **Bonuses** | Age advance cost ×0.85 · Cavalry HP ×1.15 · Farm build speed ×1.20 |
 | **Restrictions** | No full archery · No late naval |
 
@@ -178,7 +195,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 |---|---|
 | **Hero** | Francis Drake |
 | **Ability** | *Plunder* — Earns 15 gold for each enemy unit killed within range for 20 s · Cooldown 55 s |
-| **Unique Unit** | Longbowman |
+| **Unique Unit** | **Longbowman** — 40 HP · 30w+60g · Age 2 · *Armour Piercing*: +4 bonus damage vs cavalry |
 | **Bonuses** | Archer range +1 per age advanced · Warship attack speed ×1.20 |
 | **Restrictions** | No heavy cavalry upgrades |
 
@@ -191,7 +208,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 |---|---|
 | **Hero** | Don Quijote |
 | **Ability** | *Knight Errant Charge* — Charges forward in a straight line, dealing heavy damage to all units in the path · Cooldown 55 s |
-| **Unique Unit** | Conquistador |
+| **Unique Unit** | **Conquistador** — 80 HP · 60f+60g · Age 2 · *Salvo Fire* (CD 12 s): 3 rapid shots of 6 dmg each, ignores armour |
 | **Bonuses** | Swordsman HP ×1.15 · Tower / castle range ×1.10 · Free Blacksmith technology per age advance |
 | **Restrictions** | None |
 
@@ -204,7 +221,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 |---|---|
 | **Hero** | Artaxerax |
 | **Ability** | *Calima* — Shrouds nearby allied units in a calima veil for 12 s; cloaked units cannot be targeted by enemies · Cooldown 60 s |
-| **Unique Unit** | Tidecaller |
+| **Unique Unit** | **Tidecaller** — 75 HP · 50f+70g · Age 2 · *Tidal Pulse*: each attack deals 2 AoE damage to all enemies within 65 px |
 | **Bonuses** | Coastal vision ×1.50 · Ship attack speed ×1.20 · No shallow water penalty · Can traverse ocean |
 | **Restrictions** | No heavy cavalry · No siege workshop |
 
@@ -217,7 +234,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 |---|---|
 | **Hero** | Hannón el Navegante |
 | **Ability** | *Trade Route* — Generates 50 gold over 30 s · Cooldown 50 s |
-| **Unique Unit** | Trireme |
+| **Unique Unit** | **Trireme** — 160 HP · 100w+50g · Age 1 · *Ram*: ×2 damage vs ships + pushes target 40 px away · pop 2 |
 | **Bonuses** | Market available from Dark Age · Merchant ships generate passive gold |
 | **Restrictions** | No knights · No castle infantry |
 

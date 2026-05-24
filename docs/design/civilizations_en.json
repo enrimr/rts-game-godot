@@ -114,6 +114,62 @@
       "id": "war_galley", "display_name": "Galera de guerra", "trained_at": "dock",
       "age_required": 1, "cost": { "wood": 75, "gold": 35 }, "train_time": 35,
       "stats": { "hp": 120, "move_speed": 85, "los": 7, "pop_cost": 1, "attack": 6, "attack_range": 5.5, "attack_speed": 0.8, "armor_melee": 0, "armor_pierce": 4 }
+    },
+    "menceyes_guard": {
+      "id": "menceyes_guard", "display_name": "Menceyes Guard", "trained_at": "barracks",
+      "civilization": "guanches",
+      "age_required": 2, "cost": { "food": 65, "gold": 25 }, "train_time": 32,
+      "stats": { "hp": 95, "move_speed": 85, "los": 5, "pop_cost": 1, "attack": 9, "attack_range": 1.5, "attack_speed": 0.8, "armor_melee": 2, "armor_pierce": 1 },
+      "special_ability": { "description": "Rage Aura: when HP < 50%, pulses every 2 s granting +3 attack to allied units within 80 px for 3 s." }
+    },
+    "ravine_archer": {
+      "id": "ravine_archer", "display_name": "Ravine Archer", "trained_at": "barracks",
+      "civilization": "canarii",
+      "age_required": 2, "cost": { "wood": 40, "gold": 55 }, "train_time": 35,
+      "stats": { "hp": 45, "move_speed": 105, "los": 5, "pop_cost": 1, "attack": 7, "attack_range": 5.0, "attack_speed": 1.2, "armor_melee": 0, "armor_pierce": 1 },
+      "special_ability": { "description": "Ambush Shot: if stationary for ≥1.5 s, first shot deals ×2 damage." }
+    },
+    "sand_raider": {
+      "id": "sand_raider", "display_name": "Sand Raider", "trained_at": "stable",
+      "civilization": "mahos",
+      "age_required": 1, "cost": { "food": 60, "gold": 40 }, "train_time": 28,
+      "stats": { "hp": 70, "move_speed": 135, "los": 5, "pop_cost": 1, "attack": 8, "attack_range": 1.5, "attack_speed": 1.1, "armor_melee": 0, "armor_pierce": 0 },
+      "special_ability": { "description": "Hit & Run: after each attack retreats 90 px then re-engages." }
+    },
+    "chevalier_normand": {
+      "id": "chevalier_normand", "display_name": "Chevalier Normand", "trained_at": "stable",
+      "civilization": "franks",
+      "age_required": 2, "cost": { "food": 75, "gold": 65 }, "train_time": 40,
+      "stats": { "hp": 130, "move_speed": 110, "los": 5, "pop_cost": 1, "attack": 10, "attack_range": 1.5, "attack_speed": 0.9, "armor_melee": 2, "armor_pierce": 1 },
+      "special_ability": { "description": "Lance Charge: first attack after moving ≥80 px deals ×2.5 damage." }
+    },
+    "longbowman": {
+      "id": "longbowman", "display_name": "Longbowman", "trained_at": "barracks",
+      "civilization": "britons",
+      "age_required": 2, "cost": { "wood": 30, "gold": 60 }, "train_time": 38,
+      "stats": { "hp": 40, "move_speed": 95, "los": 5, "pop_cost": 1, "attack": 6, "attack_range": 6.5, "attack_speed": 1.0, "armor_melee": 0, "armor_pierce": 1 },
+      "special_ability": { "description": "Armour Piercing: +4 bonus damage vs cavalry units." }
+    },
+    "conquistador": {
+      "id": "conquistador", "display_name": "Conquistador", "trained_at": "barracks",
+      "civilization": "castellanos",
+      "age_required": 2, "cost": { "food": 60, "gold": 60 }, "train_time": 36,
+      "stats": { "hp": 80, "move_speed": 95, "los": 5, "pop_cost": 1, "attack": 8, "attack_range": 1.2, "attack_speed": 0.9, "armor_melee": 1, "armor_pierce": 1 },
+      "special_ability": { "description": "Salvo Fire (12 s cooldown): fires 3 rapid shots (6 dmg each, ignores armour, 0.3 s apart)." }
+    },
+    "tidecaller": {
+      "id": "tidecaller", "display_name": "Tidecaller", "trained_at": "barracks",
+      "civilization": "atlantes",
+      "age_required": 2, "cost": { "food": 50, "gold": 70 }, "train_time": 38,
+      "stats": { "hp": 75, "move_speed": 80, "los": 5, "pop_cost": 1, "attack": 7, "attack_range": 3.0, "attack_speed": 0.9, "armor_melee": 1, "armor_pierce": 2 },
+      "special_ability": { "description": "Tidal Pulse: each attack deals 2 splash damage to all enemies within 65 px." }
+    },
+    "trireme": {
+      "id": "trireme", "display_name": "Trireme", "trained_at": "dock",
+      "civilization": "fenicios",
+      "age_required": 1, "cost": { "wood": 100, "gold": 50 }, "train_time": 50,
+      "stats": { "hp": 160, "move_speed": 90, "los": 5, "pop_cost": 2, "attack": 9, "attack_range": 3.0, "attack_speed": 0.8, "armor_melee": 2, "armor_pierce": 1 },
+      "special_ability": { "description": "Ram: ×2 damage vs ships + pushes target 40 px away." }
     }
   },
   "technologies": [
@@ -300,6 +356,7 @@
       "description": "Masters of volcanic terrain. Stone buildings are tougher and spearmen are available from the start.",
       "hero_id": "bencomo",
       "unique_unit_ids": ["menceyes_guard"],
+      "unique_unit": { "id": "menceyes_guard", "display_name": "Menceyes Guard", "special_ability": "Rage Aura: when HP < 50%, pulses every 2 s granting +3 attack to allied units within 80 px for 3 s." },
       "unique_technology_ids": [],
       "stat_multipliers": {
         "stone_building_hp": 1.20,
@@ -315,6 +372,7 @@
       "description": "Balanced economy and cheap archers. Villagers gather food faster and houses act as drop-off points.",
       "hero_id": "doramas",
       "unique_unit_ids": ["ravine_archer"],
+      "unique_unit": { "id": "ravine_archer", "display_name": "Ravine Archer", "special_ability": "Ambush Shot: if stationary for ≥1.5 s, first shot deals ×2 damage." },
       "unique_technology_ids": [],
       "stat_multipliers": {
         "villager_food_gather_rate": 1.15,
@@ -330,6 +388,7 @@
       "description": "Swift desert warriors. Buildings cost less wood and scouts move faster across arid terrain.",
       "hero_id": "guadarfia",
       "unique_unit_ids": ["sand_raider"],
+      "unique_unit": { "id": "sand_raider", "display_name": "Sand Raider", "special_ability": "Hit & Run: after each attack retreats 90 px then re-engages." },
       "unique_technology_ids": [],
       "stat_multipliers": {
         "building_wood_cost": 0.70,
@@ -346,6 +405,7 @@
       "description": "Fast advancing cavalry nation. Age advancement costs less and cavalry is stronger from the Feudal Age.",
       "hero_id": "bethencourt",
       "unique_unit_ids": ["chevalier_normand"],
+      "unique_unit": { "id": "chevalier_normand", "display_name": "Chevalier Normand", "special_ability": "Lance Charge: first attack after moving ≥80 px deals ×2.5 damage." },
       "unique_technology_ids": [],
       "stat_multipliers": {
         "age_advance_cost": 0.85,
@@ -362,6 +422,7 @@
       "description": "Naval raiders and master archers. Foot archers gain range each age and warships attack faster.",
       "hero_id": "drake",
       "unique_unit_ids": ["longbowman"],
+      "unique_unit": { "id": "longbowman", "display_name": "Longbowman", "special_ability": "Armour Piercing: +4 bonus damage vs cavalry units." },
       "unique_technology_ids": [],
       "stat_multipliers": {
         "archer_range_bonus_per_age": 1.0,
@@ -377,6 +438,7 @@
       "description": "Late-game powerhouse. Each age advance unlocks a free Blacksmith technology and swordsmen are exceptionally tough.",
       "hero_id": "quijote",
       "unique_unit_ids": ["conquistador"],
+      "unique_unit": { "id": "conquistador", "display_name": "Conquistador", "special_ability": "Salvo Fire (12 s cooldown): fires 3 rapid shots (6 dmg each, ignores armour, 0.3 s apart)." },
       "unique_technology_ids": [],
       "stat_multipliers": {
         "swordsman_hp": 1.15,
@@ -393,6 +455,7 @@
       "description": "Mysterious seafarers. Dominate coastal waters, build on ocean tiles, and move freely through shallow water.",
       "hero_id": "artaxerax",
       "unique_unit_ids": ["tidecaller"],
+      "unique_unit": { "id": "tidecaller", "display_name": "Tidecaller", "special_ability": "Tidal Pulse: each attack deals 2 splash damage to all enemies within 65 px." },
       "unique_technology_ids": [],
       "stat_multipliers": {
         "coastal_vision": 1.50,
@@ -409,6 +472,7 @@
       "description": "Ancient traders. Market available from the start, merchant ships generate passive gold, and mercenaries can be hired.",
       "hero_id": "hanno",
       "unique_unit_ids": ["trireme"],
+      "unique_unit": { "id": "trireme", "display_name": "Trireme", "special_ability": "Ram: ×2 damage vs ships + pushes target 40 px away." },
       "unique_technology_ids": [],
       "stat_multipliers": {
         "market_available_dark_age": 1.0,

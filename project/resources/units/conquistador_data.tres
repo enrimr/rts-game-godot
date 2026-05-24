@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://conquistador_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "conquistador"
+display_name = "Conquistador"
+description = "Castellanos gunpowder infantry. Fires 3 rapid armor-piercing shots on a 12s cooldown. Requires Castle Age."
+max_health = 80.0
+move_speed = 95.0
+line_of_sight = 5.0
+population_cost = 1
+attack = 8.0
+attack_range = 1.2
+attack_speed = 0.9
+armor_melee = 1.0
+armor_pierce = 1.0
+age_required = 2
+train_time = 36.0
+cost_food = 60
+cost_wood = 0
+cost_gold = 60

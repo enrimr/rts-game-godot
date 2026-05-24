@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3 uid="uid://ravine_archer_data"]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "ravine_archer"
+display_name = "Ravine Archer"
+description = "Canarii ambush archer. First shot after standing still deals double damage. Requires Castle Age."
+max_health = 45.0
+move_speed = 105.0
+line_of_sight = 6.0
+population_cost = 1
+attack = 7.0
+attack_range = 5.0
+attack_speed = 1.2
+armor_melee = 0.0
+armor_pierce = 1.0
+age_required = 2
+train_time = 35.0
+cost_food = 0
+cost_wood = 40
+cost_gold = 55

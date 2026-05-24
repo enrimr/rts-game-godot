@@ -77,9 +77,15 @@ func _is_allied(body: Node) -> bool:
 	var pid: Variant = body.get("player_id")
 	return pid != null and (pid as int) == player_id
 
+func get_nav_obstacle_polygon() -> PackedVector2Array:
+	if is_open:
+		return PackedVector2Array()
+	return super.get_nav_obstacle_polygon()
+
 func _set_open(value: bool) -> void:
 	is_open = value
 	_apply_state()
+	EventBus.gate_state_changed.emit(self)
 
 func _apply_state() -> void:
 	if is_instance_valid(_collision):

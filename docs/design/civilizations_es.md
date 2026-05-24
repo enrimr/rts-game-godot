@@ -70,6 +70,23 @@
 
 ---
 
+## Unidades Únicas
+
+Cada civilización dispone de una unidad exclusiva entrenada en su edificio militar principal. Solo disponible al jugar con esa civilización.
+
+| Unidad | Civilización | Edificio | Edad | Coste | Tiempo | HP | Vel. | Ataque | Rango | Arm. C/P | Pob | Habilidad especial |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Guardia Menceyes | Guanches | Cuartel | 2 | 65c + 25o | 32 s | 95 | 85 | 9 | 1,5 | 2/1 | 1 | **Aura de Furia** — PV<50%: cada 2 s otorga +3 ataque a aliados en 80 px durante 3 s |
+| Arquero de Barranco | Canarii | Cuartel | 2 | 40m + 55o | 35 s | 45 | 105 | 7 | 5,0 | 0/1 | 1 | **Disparo en Emboscada** — quieto ≥1,5 s → primer disparo hace ×2 daño |
+| Saquador de Dunas | Mahos | Establo | 1 | 60c + 40o | 28 s | 70 | 135 | 8 | 1,5 | 0/0 | 1 | **Golpe y Retirada** — tras cada ataque retrocede 90 px y vuelve a cargar |
+| Caballero Normando | Francos | Establo | 2 | 75c + 65o | 40 s | 130 | 110 | 10 | 1,5 | 2/1 | 1 | **Carga de Lanza** — primer ataque tras moverse ≥80 px hace ×2,5 daño |
+| Arquero de Longbow | Britanos | Cuartel | 2 | 30m + 60o | 38 s | 40 | 95 | 6 | 6,5 | 0/1 | 1 | **Perforación de Armadura** — +4 daño extra contra caballería |
+| Conquistador | Castellanos | Cuartel | 2 | 60c + 60o | 36 s | 80 | 95 | 8 | 1,2 | 1/1 | 1 | **Salva** (CD 12 s) — 3 disparos rápidos de 6 daño c/u, ignora armadura |
+| Invocador de Mareas | Atlantes | Cuartel | 2 | 50c + 70o | 38 s | 75 | 80 | 7 | 3,0 | 1/2 | 1 | **Pulso Mareal** — cada ataque hace 2 daño en área a todos los enemigos en 65 px |
+| Trirreme | Fenicios | Puerto | 1 | 100m + 50o | 50 s | 160 | 90 | 9 | 3,0 | 2/1 | 2 | **Espolón** — ×2 daño contra barcos + empuja al objetivo 40 px · pob 2 |
+
+---
+
 ## Árbol de tecnologías
 
 ### Herrería
@@ -126,7 +143,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 |---|---|
 | **Héroe** | Bencomo |
 | **Habilidad** | *Carga de Menceyes* — Galvaniza unidades aliadas cercanas con +30% de velocidad de ataque durante 10 s · Recarga 50 s |
-| **Unidad única** | Guardia Menceyes |
+| **Unidad única** | **Guardia Menceyes** — 95 PV · 65c+25o · Edad 2 · *Aura de Furia*: PV<50% → +3 ataque a aliados en 80 px |
 | **Bonificadores** | HP edificios de piedra ×1.20 · Lanzas disponibles desde Edad Oscura · Pueden atravesar terreno de malpais |
 | **Restricciones** | Sin caballería · Sin pólvora |
 
@@ -139,7 +156,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 |---|---|
 | **Héroe** | Doramas |
 | **Habilidad** | *Desafío* — Provoca a la unidad enemiga más cercana para que ataque a Doramas durante 6 s · Recarga 45 s |
-| **Unidad única** | Arquero de barranco |
+| **Unidad única** | **Arquero de Barranco** — 45 PV · 40m+55o · Edad 2 · *Disparo en Emboscada*: quieto ≥1,5 s → ×2 primer disparo |
 | **Bonificadores** | Aldeanos recolectan comida ×1.15 · Coste comida arqueros ×0.80 |
 | **Restricciones** | Sin caballería pesada |
 
@@ -152,7 +169,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 |---|---|
 | **Héroe** | Guadarfía |
 | **Habilidad** | *Emboscada* — Casi invisible durante 8 s; los enemigos no pueden atacarle automáticamente · Recarga 45 s |
-| **Unidad única** | Sand Raider |
+| **Unidad única** | **Saquador de Dunas** — 70 PV · 60c+40o · Edad 1 · *Golpe y Retirada*: retrocede 90 px tras cada ataque y vuelve a cargar |
 | **Bonificadores** | Coste madera edificios ×0.70 · Vel. Scout / caballería ligera ×1.25 · Pueden atravesar dunas |
 | **Restricciones** | Sin mejoras de caballería pesada |
 
@@ -165,7 +182,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 |---|---|
 | **Héroe** | Jean de Béthencourt |
 | **Habilidad** | *Diplomacia Forzada* — Convierte la unidad enemiga más cercana durante 12 s · Recarga 60 s |
-| **Unidad única** | Chevalier Normand |
+| **Unidad única** | **Caballero Normando** — 130 PV · 75c+65o · Edad 2 · *Carga de Lanza*: primer ataque tras ≥80 px hace ×2,5 daño |
 | **Bonificadores** | Coste avance de edad ×0.85 · HP caballería ×1.15 · Vel. construcción granjas ×1.20 |
 | **Restricciones** | Sin arquería completa · Sin armada tardía |
 
@@ -178,7 +195,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 |---|---|
 | **Héroe** | Francis Drake |
 | **Habilidad** | *Saqueo* — Genera 15 de oro por cada unidad enemiga eliminada en rango durante 20 s · Recarga 55 s |
-| **Unidad única** | Longbowman |
+| **Unidad única** | **Arquero de Longbow** — 40 PV · 30m+60o · Edad 2 · *Perforación de Armadura*: +4 daño extra vs caballería |
 | **Bonificadores** | Rango arqueros +1 por edad avanzada · Vel. ataque barcos de guerra ×1.20 |
 | **Restricciones** | Sin mejoras de caballería pesada |
 
@@ -191,7 +208,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 |---|---|
 | **Héroe** | Don Quijote |
 | **Habilidad** | *Carga del Caballero Errante* — Carga en línea recta causando gran daño a todo lo que encuentre · Recarga 55 s |
-| **Unidad única** | Conquistador |
+| **Unidad única** | **Conquistador** — 80 PV · 60c+60o · Edad 2 · *Salva* (CD 12 s): 3 disparos de 6 daño c/u, ignora armadura |
 | **Bonificadores** | HP espadachín ×1.15 · Rango torres/castillos ×1.10 · Tecnología gratis en Herrería por avance de edad |
 | **Restricciones** | Ninguna |
 
@@ -204,7 +221,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 |---|---|
 | **Héroe** | Artaxerax |
 | **Habilidad** | *Calima* — Envuelve unidades aliadas cercanas en una niebla de calima durante 12 s; las unidades camufladas no pueden ser apuntadas por enemigos · Recarga 60 s |
-| **Unidad única** | Tidecaller |
+| **Unidad única** | **Invocador de Mareas** — 75 PV · 50c+70o · Edad 2 · *Pulso Mareal*: cada ataque hace 2 daño en área en 65 px |
 | **Bonificadores** | Visión costera ×1.50 · Vel. ataque barcos ×1.20 · Sin penalización en aguas poco profundas · Pueden atravesar océano |
 | **Restricciones** | Sin caballería pesada · Sin taller de asedio |
 
@@ -217,7 +234,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 |---|---|
 | **Héroe** | Hannón el Navegante |
 | **Habilidad** | *Ruta Comercial* — Genera 50 de oro a lo largo de 30 s · Recarga 50 s |
-| **Unidad única** | Trireme |
+| **Unidad única** | **Trirreme** — 160 PV · 100m+50o · Edad 1 · *Espolón*: ×2 daño vs barcos + empuja 40 px · pob 2 |
 | **Bonificadores** | Mercado disponible desde Edad Oscura · Los barcos mercantes generan oro pasivo |
 | **Restricciones** | Sin caballeros · Sin infantería de castillo |
 

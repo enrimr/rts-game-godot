@@ -51,6 +51,51 @@ const UNIT_DEFS: Array[Dictionary] = [
 		"color": Color(0.50, 0.45, 0.65),
 		"age": 2,
 	},
+	{
+		"id": "menceyes_guard",
+		"scene": "res://scenes/units/menceyes_guard.tscn",
+		"data": "res://resources/units/menceyes_guard_data.tres",
+		"label": "MG",
+		"color": Color(0.55, 0.25, 0.10),
+		"age": 2,
+		"civ_required": "guanches",
+	},
+	{
+		"id": "ravine_archer",
+		"scene": "res://scenes/units/ravine_archer.tscn",
+		"data": "res://resources/units/ravine_archer_data.tres",
+		"label": "RA",
+		"color": Color(0.30, 0.55, 0.15),
+		"age": 2,
+		"civ_required": "canarii",
+	},
+	{
+		"id": "longbowman",
+		"scene": "res://scenes/units/longbowman.tscn",
+		"data": "res://resources/units/longbowman_data.tres",
+		"label": "LB",
+		"color": Color(0.25, 0.45, 0.65),
+		"age": 2,
+		"civ_required": "britons",
+	},
+	{
+		"id": "conquistador",
+		"scene": "res://scenes/units/conquistador.tscn",
+		"data": "res://resources/units/conquistador_data.tres",
+		"label": "CQ",
+		"color": Color(0.75, 0.55, 0.10),
+		"age": 2,
+		"civ_required": "castellanos",
+	},
+	{
+		"id": "tidecaller",
+		"scene": "res://scenes/units/tidecaller.tscn",
+		"data": "res://resources/units/tidecaller_data.tres",
+		"label": "TC",
+		"color": Color(0.15, 0.45, 0.70),
+		"age": 2,
+		"civ_required": "atlantes",
+	},
 ]
 
 var _train_queue: Array[Dictionary] = []
@@ -143,10 +188,17 @@ func get_train_progress() -> float:
 
 func get_available_units() -> Array[Dictionary]:
 	var current_age: int = AgeManager.get_age(player_id)
+	var player_civ: String = MatchConfig.player_civ_id if player_id == 0 else MatchConfig.get_rival_civ_id(player_id)
 	var result: Array[Dictionary] = []
 	for def: Dictionary in UNIT_DEFS:
-		if (def["age"] as int) <= current_age and not (def.get("upgrade_only", false) as bool):
-			result.append(def)
+		if (def["age"] as int) > current_age:
+			continue
+		if def.get("upgrade_only", false) as bool:
+			continue
+		var civ_req: String = def.get("civ_required", "") as String
+		if civ_req != "" and civ_req != player_civ:
+			continue
+		result.append(def)
 	return result
 
 func _find_def(unit_id: String) -> Dictionary:
