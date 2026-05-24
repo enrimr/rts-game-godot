@@ -242,6 +242,7 @@ func _ready() -> void:
 
 	EventBus.building_placed.connect(func(_b: Node, _pid: int) -> void: _request_nav_rebake())
 	EventBus.building_destroyed.connect(func(_b: Node, _pid: int) -> void: _request_nav_rebake())
+	EventBus.gate_state_changed.connect(func(_g: Node) -> void: _request_nav_rebake())
 	_request_nav_rebake()
 
 	var player_list: Array[Dictionary] = [{"id": 0}]
@@ -689,6 +690,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif ke.physical_keycode == KEY_ESCAPE:
 				_cancel_placement()
 				get_viewport().set_input_as_handled()
+			return
+		if ke.pressed and not ke.echo:
+			if ke.unicode == 43 or ke.physical_keycode == KEY_KP_ADD:
+				_zoom(CAMERA_ZOOM_STEP)
+				get_viewport().set_input_as_handled()
+				return
+			if ke.unicode == 45 or ke.physical_keycode == KEY_KP_SUBTRACT:
+				_zoom(-CAMERA_ZOOM_STEP)
+				get_viewport().set_input_as_handled()
+				return
 		return
 
 	if event is InputEventMouseMotion and _panning:
@@ -724,12 +735,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 		if _placing_building:
-			var is_wall_type: bool = _placing_id == "wall_segment" or _placing_id == "gate"
+			var is_wall_drag: bool = _placing_id == "wall_segment"
 			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
-				if is_wall_type and not _wall_drag_active:
+				if is_wall_drag and not _wall_drag_active:
 					_wall_drag_start = get_global_mouse_position()
 					_wall_drag_active = true
-				elif is_wall_type and _wall_drag_active:
+				elif is_wall_drag and _wall_drag_active:
 					_confirm_wall_drag(get_global_mouse_position())
 				else:
 					_confirm_placement(get_global_mouse_position())
@@ -759,6 +770,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _zoom(step: float) -> void:
 	camera.zoom = (camera.zoom + Vector2(step, step)).clamp(
+		Vector2(CAMERA_ZOOM_MIN, CAMERA_ZOOM_MIN),
+		Vector2(CAMERA_ZOOM_MAX, CAMERA_ZOOM_MAX))
+
+func get_zoom() -> float:
+	return camera.zoom.x
+
+func set_zoom(value: float) -> void:
+	camera.zoom = Vector2(value, value).clamp(
 		Vector2(CAMERA_ZOOM_MIN, CAMERA_ZOOM_MIN),
 		Vector2(CAMERA_ZOOM_MAX, CAMERA_ZOOM_MAX))
 
@@ -1526,19 +1545,16 @@ func _cancel_placement() -> void:
 		_wall_cost_layer.queue_free()
 	_wall_cost_layer = null
 
-func _wall_segment_positions(start: Vector2, end: Vector2, step: float) -> Array[Dictionary]:
+func _wall_segment_positions(start: Vector2, end: Vector2, step: float) -> Array[Vector2]:
 	var delta: Vector2 = end - start
 	var dist: float = delta.length()
 	if dist < step * 0.5:
 		return []
 	var dir: Vector2 = delta.normalized()
-	var angle: float = dir.angle()
 	var count: int = maxi(1, int(dist / step))
-	var result: Array[Dictionary] = []
+	var result: Array[Vector2] = []
 	for i: int in range(count):
-		var pos: Vector2 = start + dir * (step * 0.5 + i * step)
-		pos = (pos / 40.0).round() * 40.0
-		result.append({"pos": pos, "angle": angle})
+		result.append(start + dir * (step * 0.5 + i * step))
 	return result
 
 func _update_wall_drag_preview(end_pos: Vector2) -> void:
@@ -1547,17 +1563,15 @@ func _update_wall_drag_preview(end_pos: Vector2) -> void:
 			g.queue_free()
 	_wall_ghosts.clear()
 
-	var step: float = 48.0 if _placing_id == "gate" else 40.0
-	var seg_size: Vector2 = Vector2(48.0, 20.0) if _placing_id == "gate" else Vector2(24.0, 64.0)
-	var positions: Array[Dictionary] = _wall_segment_positions(_wall_drag_start, end_pos, step)
+	const WALL_STEP: float = 16.0
+	var positions: Array[Vector2] = _wall_segment_positions(_wall_drag_start, end_pos, WALL_STEP)
 
-	for entry: Dictionary in positions:
+	for pos: Vector2 in positions:
 		var ghost: Node2D = Node2D.new()
-		ghost.global_position = entry["pos"] as Vector2
-		ghost.rotation = entry["angle"] as float
+		ghost.global_position = pos
 		var rect: ColorRect = ColorRect.new()
-		rect.size = seg_size
-		rect.position = Vector2(-seg_size.x * 0.5, -seg_size.y * 0.5)
+		rect.size = Vector2(16.0, 16.0)
+		rect.position = Vector2(-8.0, -8.0)
 		rect.color = Color(0.4, 0.7, 1.0, 0.45)
 		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ghost.add_child(rect)
@@ -1565,10 +1579,7 @@ func _update_wall_drag_preview(end_pos: Vector2) -> void:
 		buildings_layer.add_child(ghost)
 		_wall_ghosts.append(ghost)
 
-	var placing_costs: Dictionary = BUILDING_COSTS.get(_placing_id, {}) as Dictionary
-	var cost_stone: int = placing_costs.get("stone", 0) as int
-	var cost_wood: int = placing_costs.get("wood", 0) as int
-	var cost_per: int = cost_stone + cost_wood
+	var cost_per: int = BUILDING_COSTS.get("wall_segment", {}).get("stone", 0) as int
 	var total_cost: int = positions.size() * cost_per
 
 	if not is_instance_valid(_wall_cost_layer):
@@ -1583,36 +1594,31 @@ func _update_wall_drag_preview(end_pos: Vector2) -> void:
 		_wall_cost_label.add_theme_constant_override("shadow_offset_y", 1)
 		_wall_cost_layer.add_child(_wall_cost_label)
 
-	var resource_key: String = "stone" if _placing_id == "wall_segment" else "wood"
-	_wall_cost_label.text = "%s: %d" % [resource_key.capitalize(), total_cost]
+	_wall_cost_label.text = "Stone: %d" % total_cost
 	var vp_mouse: Vector2 = get_viewport().get_mouse_position()
 	_wall_cost_label.position = vp_mouse + Vector2(16.0, -24.0)
 
 func _confirm_wall_drag(end_pos: Vector2) -> void:
-	var step: float = 48.0 if _placing_id == "gate" else 40.0
-	var positions: Array[Dictionary] = _wall_segment_positions(_wall_drag_start, end_pos, step)
+	const WALL_STEP: float = 16.0
+	var positions: Array[Vector2] = _wall_segment_positions(_wall_drag_start, end_pos, WALL_STEP)
 	if positions.is_empty():
 		_cancel_placement()
 		return
 
-	var costs: Dictionary = BUILDING_COSTS.get(_placing_id, {})
-	var scene_path: String = BUILDING_SCENES[_placing_id]
+	var costs: Dictionary = BUILDING_COSTS.get("wall_segment", {})
+	var scene: PackedScene = load(BUILDING_SCENES["wall_segment"]) as PackedScene
 	var placed_count: int = 0
 
-	for entry: Dictionary in positions:
-		var seg_pos: Vector2 = entry["pos"] as Vector2
-		var seg_angle: float = entry["angle"] as float
+	for seg_pos: Vector2 in positions:
 		if not ResourceManager.can_afford(0, costs):
 			break
 		if not ResourceManager.spend_resource(0, costs):
 			break
-		var scene: PackedScene = load(scene_path) as PackedScene
 		var building: Node2D = scene.instantiate() as Node2D
 		building.global_position = seg_pos
-		building.rotation = seg_angle
 		building.set("player_id", 0)
 		building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
-		building.set_meta("building_id", _placing_id)
+		building.set_meta("building_id", "wall_segment")
 		buildings_layer.add_child(building)
 		EventBus.building_placed.emit(building, 0)
 		for unit: Node in _selected_units:

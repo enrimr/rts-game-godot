@@ -197,6 +197,7 @@ func _ready() -> void:
 	_build_pause_menu_button()
 	_build_idle_villager_button()
 	_build_idle_military_button()
+
 	_build_dpad()
 
 func _process(delta: float) -> void:
@@ -2761,6 +2762,36 @@ func _open_ingame_settings() -> void:
 			GameSettings.save_settings()
 			refresh_lang.call()
 		)
+
+	vbox.add_child(HSeparator.new())
+
+	# Zoom
+	var zoom_lbl: Label = Label.new()
+	zoom_lbl.text = "Zoom"
+	zoom_lbl.add_theme_font_size_override("font_size", 19)
+	zoom_lbl.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
+	vbox.add_child(zoom_lbl)
+	var worlds: Array = get_tree().get_nodes_in_group("world")
+	var initial_zoom: float = 1.0
+	if not worlds.is_empty():
+		initial_zoom = (worlds[0] as Node).call("get_zoom") as float
+	var zoom_slider: HSlider = HSlider.new()
+	zoom_slider.min_value = 0.5
+	zoom_slider.max_value = 2.0
+	zoom_slider.step = 0.1
+	zoom_slider.value = initial_zoom
+	zoom_slider.custom_minimum_size = Vector2(0, 32)
+	vbox.add_child(zoom_slider)
+	var zoom_pct: Label = Label.new()
+	zoom_pct.text = "%d%%" % int(initial_zoom * 100.0)
+	zoom_pct.add_theme_font_size_override("font_size", 15)
+	zoom_pct.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
+	vbox.add_child(zoom_pct)
+	zoom_slider.value_changed.connect(func(v: float) -> void:
+		zoom_pct.text = "%d%%" % int(v * 100.0)
+		if not worlds.is_empty():
+			(worlds[0] as Node).call("set_zoom", v)
+	)
 
 	vbox.add_child(HSeparator.new())
 
