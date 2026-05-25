@@ -1,6 +1,6 @@
 class_name AIDebugOverlay extends CanvasLayer
 
-## Press F1 (Fn+F1 on Mac) to toggle. Shows the last 40 AI decisions for every active AIPlayer.
+## Press F2 (Fn+F2 on Mac) to toggle. Shows the last 40 AI decisions for every active AIPlayer.
 ## Attach this node to the game_world scene root (or add it from game_world._ready).
 
 var _panel: PanelContainer
@@ -30,7 +30,7 @@ func register_ai(ai: Node) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and (event as InputEventKey).pressed:
-		if (event as InputEventKey).keycode == KEY_F1:
+		if (event as InputEventKey).keycode == KEY_F2:
 			GameSettings.ai_debug = not GameSettings.ai_debug
 			_panel.visible = GameSettings.ai_debug
 
