@@ -1707,15 +1707,11 @@ func _on_action_requested(action_id: String) -> void:
 			if is_instance_valid(_selected_building) and _selected_building.has_method("order_train"):
 				if _selected_building is TownCenter or _selected_building is TownCenterBuilding:
 					_selected_building.order_train()
-		"train:militia":
+		"train:militia", "train:archer", "train:pikeman", \
+		"train:menceyes_guard", "train:ravine_archer", "train:longbowman", \
+		"train:conquistador", "train:tidecaller", "train:sand_raider":
 			if is_instance_valid(_selected_building) and _selected_building is Barracks:
-				(_selected_building as Barracks).order_train("militia")
-		"train:archer":
-			if is_instance_valid(_selected_building) and _selected_building is Barracks:
-				(_selected_building as Barracks).order_train("archer")
-		"train:pikeman":
-			if is_instance_valid(_selected_building) and _selected_building is Barracks:
-				(_selected_building as Barracks).order_train("pikeman")
+				(_selected_building as Barracks).order_train(action_id.trim_prefix("train:"))
 		"train:scout", "train:heavy_scout", "train:knight":
 			if is_instance_valid(_selected_building) and _selected_building is Stable:
 				(_selected_building as Stable).order_train(action_id.trim_prefix("train:"))
