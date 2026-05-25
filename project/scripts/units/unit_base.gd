@@ -227,7 +227,8 @@ func _get_effective_attack_vs(target: Node) -> float:
 # Effective attack reach toward a target, extended by half the target's
 # footprint so units stop and fight at the edge rather than trying to reach center.
 func _attack_reach_to(target: Node) -> float:
-	var range_mult: float = CivBonusManager.get_archer_range_multiplier(player_id) if unit_data.id == "archer" else 1.0
+	var range_mult: float = CivBonusManager.get_archer_range_multiplier(player_id) \
+		if unit_data.id in CivBonusManager._ARCHER_IDS else 1.0
 	var base: float = unit_data.attack_range * 32.0 * range_mult
 	if not is_instance_valid(target):
 		return base

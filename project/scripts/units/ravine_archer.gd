@@ -13,6 +13,9 @@ const AMBUSH_STATIONARY_THRESHOLD: float = 1.5
 const AMBUSH_DAMAGE_MULTIPLIER: float = 2.0
 const STATIONARY_VELOCITY_THRESHOLD: float = 5.0
 
+func get_selection_sound() -> String:
+	return "select_archer"
+
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
@@ -83,6 +86,15 @@ func _handle_attacking(delta: float) -> void:
 		return
 	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
 	var reach: float = _attack_reach_to(attack_target)
+	# Kiting: back away if target is too close, resetting ambush charge
+	if dist < reach * 0.4:
+		var away: Vector2 = global_position + (global_position - (attack_target as Node2D).global_position).normalized() * 80.0
+		nav_agent.target_position = _safe_destination(away)
+		nav_agent.set_velocity(_nav_velocity())
+		_stationary_timer = 0.0
+		_ambush_ready = false
+		_ambush_used = false
+		return
 	if dist > reach:
 		nav_agent.target_position = _nav_target_for(attack_target)
 		if _advance_stuck(delta):

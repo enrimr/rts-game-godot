@@ -2,6 +2,12 @@ extends Node
 
 var _multipliers: Dictionary = {}  # {player_id: Dictionary}
 
+func _ready() -> void:
+	EventBus.age_advance_complete.connect(_on_age_advance_complete)
+
+func _on_age_advance_complete(player_id: int, _new_age: int) -> void:
+	on_age_advanced(player_id)
+
 func init_player(player_id: int, civ_id: String) -> void:
 	var path: String = "res://resources/civilizations/%s.tres" % civ_id
 	var civ: CivilizationResource = load(path) as CivilizationResource
@@ -31,10 +37,12 @@ func apply_tech_effect(player_id: int, effect_key: String, value: float) -> void
 	else:
 		(_multipliers[player_id] as Dictionary)[effect_key] = current * value
 
+const _ARCHER_IDS: Array[String] = ["archer", "ravine_archer", "longbowman"]
+
 func get_unit_cost_multiplier(player_id: int, unit_id: String) -> Dictionary:
 	var result: Dictionary = {}
-	# canarii archer_food_cost applies to archers
-	if unit_id == "archer":
+	# canarii archer_food_cost applies to all archer-class units
+	if unit_id in _ARCHER_IDS:
 		var mult: float = get_multiplier(player_id, "archer_food_cost")
 		if mult != 1.0:
 			result["food"] = mult
@@ -77,7 +85,7 @@ func get_unit_speed_multiplier(player_id: int, unit_id: String) -> float:
 	return 1.0
 
 func get_unit_attack_multiplier(player_id: int, unit_id: String) -> float:
-	if unit_id == "archer":
+	if unit_id in _ARCHER_IDS:
 		var base: float = get_multiplier(player_id, "archer_attack")
 		var global_mult: float = get_multiplier(player_id, "unit_attack")
 		return base * global_mult
@@ -87,6 +95,16 @@ func get_unit_attack_multiplier(player_id: int, unit_id: String) -> float:
 
 func get_archer_range_multiplier(player_id: int) -> float:
 	return get_multiplier(player_id, "archer_range")
+
+## Call this when a player advances an age to add archer_range_bonus_per_age
+## (e.g. Britons gain +1 tile of range per age advance).
+func on_age_advanced(player_id: int) -> void:
+	var bonus: float = get_multiplier(player_id, "archer_range_bonus_per_age")
+	if bonus <= 0.0:
+		return
+	# Accumulate additively onto archer_range (starts at 1.0, each advance adds the bonus)
+	var current: float = get_multiplier(player_id, "archer_range")
+	(_multipliers[player_id] as Dictionary)["archer_range"] = current + bonus
 
 func get_siege_attack_bonus(player_id: int) -> float:
 	return get_multiplier(player_id, "siege_attack_bonus")
@@ -108,7 +126,7 @@ func get_attack_speed_multiplier(player_id: int, unit_id: String) -> float:
 		if britons_mult != 1.0:
 			return britons_mult
 		return atlantes_mult
-	if unit_id == "archer":
+	if unit_id in _ARCHER_IDS:
 		return get_multiplier(player_id, "archer_attack_speed")
 	return 1.0
 
