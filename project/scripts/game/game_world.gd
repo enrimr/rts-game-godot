@@ -485,22 +485,31 @@ func _on_player_eliminated(eliminated_id: int) -> void:
 	if not any_rival_alive:
 		GameManager.declare_winner(0)
 
-## Returns true if player_id has at least one living unit.
+## Returns true if player_id has at least one living combat-capable unit
+## (villagers count; animals/sheep do not).
 func _has_any_units(pid: int) -> bool:
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit):
+			continue
+		if unit is Animal:
 			continue
 		var p: Variant = unit.get("player_id")
 		if p != null and (p as int) == pid:
 			return true
 	return false
 
-## Returns true if player_id has at least one standing building.
+## Returns true if player_id has at least one unit-producing building
+## (TC, Barracks, Stable, SiegeWorkshop, Dock). Walls, houses, towers,
+## farms, camps, etc. do not count.
 func _has_any_buildings(pid: int) -> bool:
 	if pid == 0 and is_instance_valid(drop_off):
 		return true
 	for b: Node in buildings_layer.get_children():
 		if not is_instance_valid(b):
+			continue
+		if not (b is TownCenterBuilding or b is TownCenterBuildable
+				or b is Barracks or b is Stable
+				or b is SiegeWorkshop or b is Dock):
 			continue
 		var p: Variant = b.get("player_id")
 		if p != null and (p as int) == pid:
