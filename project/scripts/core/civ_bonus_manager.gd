@@ -67,7 +67,7 @@ func get_age_advance_cost_multiplier(player_id: int) -> float:
 func get_unit_hp_multiplier(player_id: int, unit_id: String) -> float:
 	if unit_id == "villager":
 		return get_multiplier(player_id, "villager_hp")
-	if unit_id == "scout" or unit_id == "heavy_scout" or unit_id == "knight":
+	if unit_id == "scout" or unit_id == "heavy_scout" or unit_id == "knight" or unit_id == "sand_raider":
 		return get_multiplier(player_id, "cavalry_hp")
 	if unit_id == "militia" or unit_id == "pikeman":
 		return get_multiplier(player_id, "swordsman_hp")
@@ -76,8 +76,8 @@ func get_unit_hp_multiplier(player_id: int, unit_id: String) -> float:
 	return 1.0
 
 func get_unit_speed_multiplier(player_id: int, unit_id: String) -> float:
-	# mahos scout_speed
-	if unit_id == "scout":
+	# mahos scout_speed — also applies to sand_raider (their light cavalry unique unit)
+	if unit_id == "scout" or unit_id == "sand_raider":
 		return get_multiplier(player_id, "scout_speed")
 	# mahos light_cavalry_speed (for any light cavalry unit)
 	if unit_id == "light_cavalry":

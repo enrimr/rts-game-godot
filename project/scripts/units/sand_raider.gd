@@ -10,6 +10,9 @@ var _retreat_destination: Vector2 = Vector2.ZERO
 
 const RETREAT_DISTANCE: float = 90.0
 
+func get_selection_sound() -> String:
+	return "select_cavalry"
+
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
@@ -96,7 +99,8 @@ func _handle_attacking(delta: float) -> void:
 		return
 	nav_agent.set_velocity(Vector2.ZERO)
 	_attack_timer += delta
-	if _attack_timer >= 1.0 / unit_data.attack_speed:
+	var effective_speed: float = unit_data.attack_speed * CivBonusManager.get_attack_speed_multiplier(player_id, unit_data.id)
+	if _attack_timer >= 1.0 / effective_speed:
 		_attack_timer = 0.0
 		if attack_target.has_method("take_damage"):
 			attack_target.take_damage(_get_effective_attack_vs(attack_target) - _get_target_armor(attack_target), self)
