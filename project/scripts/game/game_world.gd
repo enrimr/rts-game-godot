@@ -420,70 +420,57 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 	if owner_id == 0:
 		if building == drop_off:
 			drop_off = null
-		# Defer so queue_free() has processed before we scan for remaining buildings.
-		call_deferred("_check_player_defeat")
+		call_deferred("_check_defeat_for", 0)
 		return
 
-	# Rival TC destroyed → notify; AI handles rebuilding
-	var destroyed_rival: int = -1
+	# Keep _ai_town_centers in sync so TC-rebuild logic still works.
 	for rival_id: int in _ai_town_centers:
 		if _ai_town_centers[rival_id] == building:
-			destroyed_rival = rival_id
+			_ai_town_centers.erase(rival_id)
+			if _ai_town_center == building:
+				_ai_town_center = null
 			break
 
-	if destroyed_rival < 0:
-		return
-
-	_ai_town_centers.erase(destroyed_rival)
-	if _ai_town_center == building:
-		_ai_town_center = null
+	call_deferred("_check_defeat_for", owner_id)
 
 func _on_unit_died_check_victory(unit: Node, owner_id: int) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
-	if owner_id == 0:
-		call_deferred("_check_player_defeat")
+	call_deferred("_check_defeat_for", owner_id)
 
-## Defeat check for the human player: loses when no units AND no buildings remain.
-func _check_player_defeat() -> void:
+## Central defeat check for any player. Deferred so queue_free() has
+## processed before we scan. If the player is out, declare the other side winner.
+func _check_defeat_for(pid: int) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
-	if _has_any_units(0) or _has_any_buildings(0):
+	if _has_any_units(pid) or _has_any_buildings(pid):
 		return
-	# Pick the first surviving rival as winner
-	for rival_id: int in _ai_town_centers:
-		if is_instance_valid(_ai_town_centers[rival_id]):
-			GameManager.declare_winner(rival_id)
-			return
-	# Fallback: any rival that still has units or buildings
-	for rival_id: int in MatchConfig.get_rival_player_ids():
-		if _has_any_units(rival_id) or _has_any_buildings(rival_id):
-			GameManager.declare_winner(rival_id)
-			return
-	GameManager.declare_winner(1)
-
-func _on_player_eliminated(eliminated_id: int) -> void:
-	if GameManager.state != GameManager.GameState.PLAYING:
-		return
-	# Remove from active rivals list
-	if _ai_town_centers.has(eliminated_id):
-		_ai_town_centers.erase(eliminated_id)
-	if is_instance_valid(_ai_town_center) and _ai_town_center.get("player_id") == eliminated_id:
-		_ai_town_center = null
-	# Check if all rivals are eliminated
-	var any_rival_alive: bool = false
-	for rival_id: int in _ai_town_centers:
-		if is_instance_valid(_ai_town_centers[rival_id]):
-			any_rival_alive = true
-			break
-	if not any_rival_alive:
-		# Also check rivals with no TC but still units
+	# pid is eliminated — find a winner on the other side.
+	if pid == 0:
+		# Player lost — pick any surviving rival.
+		for rival_id: int in MatchConfig.get_rival_player_ids():
+			if _has_any_units(rival_id) or _has_any_buildings(rival_id):
+				GameManager.declare_winner(rival_id)
+				return
+		GameManager.declare_winner(1)
+	else:
+		# A rival was eliminated — check if all rivals are now gone.
+		var any_rival_alive: bool = false
 		for rival_id: int in MatchConfig.get_rival_player_ids():
 			if _has_any_units(rival_id) or _has_any_buildings(rival_id):
 				any_rival_alive = true
 				break
-	if not any_rival_alive:
-		GameManager.declare_winner(0)
+		if not any_rival_alive:
+			GameManager.declare_winner(0)
+		# Also emit player_eliminated so the AI coordinator cleans up.
+		EventBus.player_eliminated.emit(pid)
+
+func _on_player_eliminated(eliminated_id: int) -> void:
+	# Clean up AI coordinator references; victory already handled in _check_defeat_for.
+	if _ai_town_centers.has(eliminated_id):
+		_ai_town_centers.erase(eliminated_id)
+	if is_instance_valid(_ai_town_center) and _ai_town_center.get("player_id") == eliminated_id:
+		_ai_town_center = null
 
 ## Returns true if player_id has at least one living combat-capable unit
 ## (villagers count; animals/sheep do not).
