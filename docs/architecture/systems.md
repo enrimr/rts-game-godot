@@ -80,9 +80,18 @@ When a `TechnologyResource` has non-empty `upgrade_from_unit_id` and `upgrade_to
 
 ## AI System
 
-`AIPlayer` runs on a 1-second tick rather than every frame. Strategy enum controls economic vs. military priorities. Difficulty scales timings and reaction windows.
+`AIPlayer` (`scripts/ai/ai_player.gd`, `extends Node`) is the coordinator. It owns `BUILDING_SCENES` and `VILLAGER_SCENE` constants, wires `EventBus` signals, and runs on a 2-second `TICK_INTERVAL` tick (plus a 3-second `THREAT_CHECK_INTERVAL` scan). All substantive logic is delegated to four `RefCounted` modules that are instantiated in `_ready()` via `ModuleClass.new()` then `.setup(self)`. Each module holds a typed back-reference `var _ai: AIPlayer` and accesses sibling modules through `_ai._module.method()`.
 
-The AI builds lumber camps, mining camps, farms, and multiple barracks as its economy grows. On **Islands** maps the AI also builds a Dock, trains fishing boats, war galleys, and a transport ship. The naval assault sequence boards idle military units onto the transport ship and calls `order_move_then_unload` toward the enemy TC; on arrival the ship positions each unit at the nearest passable land tile without issuing a move order. Every tick on naval maps, `_attack_with_idle_land_units()` scans for idle military units that are already on the enemy island (closer to the enemy TC than to the AI's own TC) and orders them to attack the nearest enemy building. The AI attacks the nearest enemy building rather than always targeting the Town Center.
+| Module | Class | File | Responsibilities |
+|---|---|---|---|
+| `_construction` | `AIConstruction` | `scripts/ai/ai_construction.gd` | Building placement; placement-failure cooldowns (`_build_fail_counts`, `_build_cooldowns`); population-house management; loads all building costs at startup via `BuildingResource.get_cost_dict()` |
+| `_economy` | `AIEconomy` | `scripts/ai/ai_economy.gd` | Villager spawning and idle-villager assignment; per-age resource-type target fractions; age-advance trigger; `find_nearest_resource` / `find_nearest_drop_off` helpers |
+| `_military` | `AIMilitary` | `scripts/ai/ai_military.gd` | `AggressionLevel` enum (PASSIVE / ALERTED / AGGRESSIVE) with decay timer; Barracks, Stable, and SiegeWorkshop training; tech research priority queue (`_TECH_PRIORITY`); multi-target attack dispatch; control-zone threat detection and base defense |
+| `_naval` | `AINaval` | `scripts/ai/ai_naval.gd` | Naval unit training; galley patrol and HP-based retreat (`GALLEY_RETREAT_HP_RATIO = 0.30`); transport boarding and `order_move_then_unload` assault sequence; fish-trap construction; idle land-unit attack once units have crossed to the enemy island |
+
+`AIPlayer` also contains TC-loss handling: on `EventBus.building_destroyed`, if the destroyed building is the AI's Town Center, a 0.5 s deferred call to `_attempt_tc_rebuild` finds the safest villager (maximally distant from the enemy center-of-mass) and places a new TC. If the AI has no units and no buildings it emits `EventBus.player_eliminated`.
+
+On **Islands** maps (`MatchConfig.map_type == ISLANDS`) the `_run_tick` call also invokes all four naval methods; land-only maps skip the naval module entirely.
 
 ## UI / HUD System
 

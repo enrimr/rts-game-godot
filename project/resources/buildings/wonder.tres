@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BuildingResource" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://bpu66yjdkmq8c" path="res://resources/buildings/building_resource.gd" id="1_bldres"]
+
+[resource]
+script = ExtResource("1_bldres")
+id = "wonder"
+display_name = "Wonder"
+description = "A monument of civilization. Hold it long enough to win."
+max_health = 5000.0
+line_of_sight = 10.0
+garrison_capacity = 0
+cost_wood = 2500
+cost_stone = 2500
+cost_gold = 5000
+cost_food = 2500
+build_time = 600.0
+footprint = Vector2i(4, 4)

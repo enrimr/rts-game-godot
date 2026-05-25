@@ -50,6 +50,14 @@ var _ability_timer: float = 0.0
 var _trade_route_timer: Timer = null
 var _taunt_target: Node = null
 
+# Reversible state stored so _end_ability() can always clean up, whether the
+# ability expires naturally or the hero dies mid-cast.
+var _buffed_units: Array[Dictionary] = []   # MENCEYES_CHARGE: [{unit, original_speed}]
+var _fd_target: Node = null                  # FORCED_DIPLOMACY converted unit
+var _fd_original_pid: int = -1               # FORCED_DIPLOMACY original player_id
+var _calima_cloud: Node2D = null             # CALIMA cloud node in the scene
+var _cloaked_units: Array[Node] = []         # CALIMA units that were cloaked
+
 # Visual ring showing the hero is a hero (gold circle)
 var _hero_ring: Node2D = null
 
@@ -124,16 +132,16 @@ func _trigger_ability() -> void:
 	match _ability:
 		Ability.MENCEYES_CHARGE:
 			duration = 10.0
-			_buff_nearby_attack_speed(1.30, duration)
+			_buff_nearby_attack_speed(1.30)
 		Ability.CHALLENGE:
 			duration = 8.0
-			_taunt_nearest_enemy(duration)
+			_taunt_nearest_enemy()
 		Ability.AMBUSH:
 			duration = 15.0
 			modulate.a = 0.15
 		Ability.FORCED_DIPLOMACY:
 			duration = 12.0
-			_convert_nearest_native(duration)
+			_convert_nearest_native()
 		Ability.PLUNDER:
 			duration = 20.0
 			if not EventBus.unit_died.is_connected(_on_plunder_kill):
@@ -144,7 +152,7 @@ func _trigger_ability() -> void:
 			return
 		Ability.CALIMA:
 			duration = 12.0
-			_spawn_calima_cloud(duration)
+			_spawn_calima_cloud()
 		Ability.TRADE_ROUTE:
 			duration = 30.0
 			_activate_trade_route(duration)
@@ -158,6 +166,13 @@ func _trigger_ability() -> void:
 func _end_ability() -> void:
 	_ability_active = false
 	match _ability:
+		Ability.MENCEYES_CHARGE:
+			for entry: Dictionary in _buffed_units:
+				if is_instance_valid(entry.unit):
+					var d: UnitResource = (entry.unit.get("unit_data") as UnitResource).duplicate() as UnitResource
+					d.attack_speed = entry.original_speed
+					entry.unit.set("unit_data", d)
+			_buffed_units.clear()
 		Ability.AMBUSH:
 			modulate.a = 1.0
 		Ability.PLUNDER:
@@ -170,6 +185,20 @@ func _end_ability() -> void:
 				_taunt_target.set("attack_target", null)
 				_taunt_target.set("current_state", UnitBase.UnitState.IDLE)
 			_taunt_target = null
+		Ability.FORCED_DIPLOMACY:
+			if is_instance_valid(_fd_target):
+				_fd_target.set("player_id", _fd_original_pid)
+			_fd_target = null
+			_fd_original_pid = -1
+		Ability.CALIMA:
+			if is_instance_valid(_calima_cloud):
+				_calima_cloud.queue_free()
+			for unit: Node in _cloaked_units:
+				if is_instance_valid(unit):
+					unit.set("is_cloaked", false)
+					(unit as Node2D).modulate.a = 1.0
+			_cloaked_units.clear()
+			_calima_cloud = null
 		Ability.TRADE_ROUTE:
 			if is_instance_valid(_trade_route_timer):
 				_trade_route_timer.stop()
@@ -211,7 +240,9 @@ func _handle_attacking(delta: float) -> void:
 
 # --- Ability implementations ---
 
-func _buff_nearby_attack_speed(multiplier: float, duration: float) -> void:
+# Buffs nearby allied units' attack speed. State stored in _buffed_units so
+# _end_ability() can revert it whether the hero dies or the ability expires.
+func _buff_nearby_attack_speed(multiplier: float) -> void:
 	var radius: float = 180.0
 	var units: Array = get_tree().get_nodes_in_group("units")
 	for u: Node in units:
@@ -225,20 +256,13 @@ func _buff_nearby_attack_speed(multiplier: float, duration: float) -> void:
 		var udata: Variant = u.get("unit_data")
 		if udata == null:
 			continue
+		var original_speed: float = (udata as UnitResource).attack_speed
 		var data: UnitResource = (udata as UnitResource).duplicate() as UnitResource
-		var original_speed: float = data.attack_speed
 		data.attack_speed *= multiplier
 		u.set("unit_data", data)
-		# Restore after duration
-		var tw: SceneTreeTimer = get_tree().create_timer(duration)
-		tw.timeout.connect(func() -> void:
-			if is_instance_valid(u):
-				var d2: UnitResource = (u.get("unit_data") as UnitResource).duplicate() as UnitResource
-				d2.attack_speed = original_speed
-				u.set("unit_data", d2)
-		)
+		_buffed_units.append({"unit": u, "original_speed": original_speed})
 
-func _taunt_nearest_enemy(duration: float) -> void:
+func _taunt_nearest_enemy() -> void:
 	var best: Node = null
 	var best_dist: float = 300.0
 	var units: Array = get_tree().get_nodes_in_group("units")
@@ -257,19 +281,8 @@ func _taunt_nearest_enemy(duration: float) -> void:
 	best.set("taunt_source", self)
 	if best.has_method("order_attack"):
 		best.call("order_attack", self)
-	var tw: SceneTreeTimer = get_tree().create_timer(duration)
-	tw.timeout.connect(func() -> void:
-		if is_instance_valid(best):
-			best.set("is_taunted", false)
-			best.set("taunt_source", null)
-			best.set("attack_target", null)
-			best.set("current_state", UnitBase.UnitState.IDLE)
-		_taunt_target = null
-	)
 
-func _convert_nearest_native(_duration: float) -> void:
-	# Finds the nearest enemy unit and temporarily sets its player_id to ours.
-	# The unit reverts after duration via a timer.
+func _convert_nearest_native() -> void:
 	var best: Node = null
 	var best_dist: float = 200.0
 	var units: Array = get_tree().get_nodes_in_group("units")
@@ -283,13 +296,9 @@ func _convert_nearest_native(_duration: float) -> void:
 			best = u
 	if best == null:
 		return
-	var original_pid: int = best.get("player_id") as int
+	_fd_target = best
+	_fd_original_pid = best.get("player_id") as int
 	best.set("player_id", player_id)
-	var tw: SceneTreeTimer = get_tree().create_timer(_duration)
-	tw.timeout.connect(func() -> void:
-		if is_instance_valid(best):
-			best.set("player_id", original_pid)
-	)
 
 func _on_plunder_kill(unit: Node, killed_player_id: int) -> void:
 	if killed_player_id == player_id:
@@ -317,6 +326,7 @@ func _do_charge() -> void:
 	var saved_state: UnitBase.UnitState = current_state
 	current_state = UnitState.MOVING
 
+	# create_tween() binds the tween to this node; it auto-kills on queue_free().
 	var tw: Tween = create_tween()
 	tw.tween_method(func(t: float) -> void:
 		var step: float = charge_speed * (t - elapsed) * total_time
@@ -339,7 +349,9 @@ func _do_charge() -> void:
 
 const CALIMA_RADIUS: float = 180.0
 
-func _spawn_calima_cloud(duration: float) -> void:
+# Creates the visual cloud and cloaks allied units. State stored in _calima_cloud
+# and _cloaked_units so _end_ability() can clean up on hero death or expiry.
+func _spawn_calima_cloud() -> void:
 	var cloud: Node2D = Node2D.new()
 	cloud.z_index = 50
 	cloud.global_position = global_position
@@ -349,9 +361,8 @@ func _spawn_calima_cloud(duration: float) -> void:
 	)
 	get_tree().current_scene.add_child(cloud)
 	cloud.queue_redraw()
+	_calima_cloud = cloud
 
-	# Apply cloak to all allied units inside the radius
-	var cloaked_units: Array[Node] = []
 	var units_layer: Node = get_parent()
 	for unit: Node in units_layer.get_children():
 		if not is_instance_valid(unit) or not (unit is UnitBase):
@@ -365,16 +376,7 @@ func _spawn_calima_cloud(duration: float) -> void:
 		# Dim AI units so the player can barely see them; keep player units at full opacity
 		if player_id != 0:
 			(unit as Node2D).modulate.a = 0.25
-		cloaked_units.append(unit)
-
-	get_tree().create_timer(duration).timeout.connect(func() -> void:
-		if is_instance_valid(cloud):
-			cloud.queue_free()
-		for unit: Node in cloaked_units:
-			if is_instance_valid(unit):
-				unit.set("is_cloaked", false)
-				(unit as Node2D).modulate.a = 1.0
-	)
+		_cloaked_units.append(unit)
 
 func _activate_trade_route(duration: float) -> void:
 	var ticks: int = int(duration)

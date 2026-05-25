@@ -22,7 +22,7 @@ project/          ← Open this in Godot editor (contains project.godot)
     economy/      ← ResourceNode, drop-off logic
     map/          ← MapManager (tilemap, fog of war, pathfinding)
     combat/       ← Projectiles, damage calculation
-    ai/           ← AIPlayer state machine
+    ai/           ← AIPlayer coordinator + AIConstruction, AIEconomy, AIMilitary, AINaval modules
     research/     ← TechTree, ResearchQueue
     ui/           ← HUD, menus, minimap
     multiplayer/  ← Networking (future)
@@ -76,6 +76,11 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/weather_manager.gd` | `WeatherManager` autoload — procedural weather state machine (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash); provides stat-modifier query API consumed by units, buildings, fog-of-war, and projectiles |
 | `project/scripts/ui/weather_overlay.gd` | `WeatherOverlay` — screen-space `Node2D` child of GameWorld that renders rain, dust, ash, wind and fog vignette visual effects; driven by WeatherManager |
 | `project/scripts/core/match_config.gd` | `MatchConfig` — lobby settings (map size, resources, civs, weather frequency) written before loading game_world |
+| `project/scripts/ai/ai_player.gd` | `AIPlayer` — coordinator (`extends Node`); holds `BUILDING_SCENES`/`VILLAGER_SCENE` consts, EventBus wiring, TC rebuild and elimination logic; delegates all per-domain work to the four modules below |
+| `project/scripts/ai/ai_construction.gd` | `AIConstruction extends RefCounted` — building placement, placement-failure cooldowns, population-house management; loads costs via `BuildingResource.get_cost_dict()` |
+| `project/scripts/ai/ai_economy.gd` | `AIEconomy extends RefCounted` — villager spawning and assignment, resource-type target fractions per age, age-advance trigger, nearest-resource / nearest-drop-off helpers |
+| `project/scripts/ai/ai_military.gd` | `AIMilitary extends RefCounted` — `AggressionLevel` enum (PASSIVE/ALERTED/AGGRESSIVE), military training (Barracks/Stable/SiegeWorkshop), research priority queue, combat targeting, base defense |
+| `project/scripts/ai/ai_naval.gd` | `AINaval extends RefCounted` — naval unit training, galley patrol/retreat, transport boarding and `order_move_then_unload` assault, fish-trap construction, idle land-unit attack on enemy island |
 
 ## Coding Conventions
 

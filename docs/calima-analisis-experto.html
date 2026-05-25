@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calima: Flames of the Atlantic — Análisis Técnico Experto | IndieForge Magazine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset ────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Design tokens ────────────────────────────────────────────── */
+    :root {
+      /* Brand */
+      --ember:          #d4522e;
+      --ember-dark:     #a83e22;
+      --ember-glow:     rgba(212,82,46,0.12);
+      --gold:           #c8901a;
+      --gold-light:     #f5c030;
+      --gold-pale:      #fdf5dc;
+
+      /* Neutrals – light surfaces */
+      --white:          #ffffff;
+      --surface:        #faf8f5;
+      --surface-raised: #f2ede6;
+      --border:         #e4ddd4;
+      --border-strong:  #cfc6ba;
+
+      /* Neutrals – dark surfaces */
+      --dark-900:       #17140f;
+      --dark-800:       #211d17;
+      --dark-700:       #2e2820;
+      --dark-600:       #3d3428;
+
+      /* Text on light */
+      --text-primary:   #1c1814;
+      --text-secondary: #50453c;
+      --text-tertiary:  #7a6e64;
+
+      /* Text on dark */
+      --on-dark:        #f0ece5;
+      --on-dark-muted:  #c4b9ae;
+      --on-dark-label:  #f5c030;
+
+      /* Accent – ocean */
+      --ocean:          #1e5c96;
+      --ocean-bg:       #e6eff8;
+      --ocean-border:   #b6ceea;
+
+      /* Accent – code */
+      --code-bg:        #1a1d23;
+      --code-border:    #2e3440;
+      --code-text:      #d8dee9;
+
+      /* Severity */
+      --sev-high:       #c0392b;
+      --sev-high-bg:    #fdf0ee;
+      --sev-med:        #d4522e;
+      --sev-med-bg:     #fef3ee;
+      --sev-low:        #c8901a;
+      --sev-low-bg:     #fef9ec;
+
+      /* Typography */
+      --serif:   'Playfair Display', Georgia, serif;
+      --sans:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+
+      /* Layout */
+      --max-w:   860px;
+      --r:       10px;
+      --r-sm:    6px;
+    }
+
+    /* ── Base ─────────────────────────────────────────────────────── */
+    html   { scroll-behavior: smooth; font-size: 17px; }
+    body   { background: var(--dark-900); color: var(--text-primary);
+             font-family: var(--sans); line-height: 1.7; }
+
+    /* ── Progress bar ─────────────────────────────────────────────── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0; z-index: 200;
+      height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--ember), var(--gold-light));
+      transition: width 0.1s linear;
+    }
+
+    /* ── Masthead ─────────────────────────────────────────────────── */
+    .masthead {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(23,20,15,0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 0 2rem;
+      height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .masthead-logo {
+      font-family: var(--sans); font-size: 0.8rem; font-weight: 800;
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--on-dark);
+    }
+    .masthead-logo span { color: var(--ember); }
+
+    .masthead-nav { display: flex; gap: 1.75rem; list-style: none; }
+    .masthead-nav a {
+      font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--on-dark-muted);
+      text-decoration: none; transition: color 0.18s;
+    }
+    .masthead-nav a:hover { color: var(--gold-light); }
+
+    /* ── Hero ─────────────────────────────────────────────────────── */
+    .hero {
+      position: relative; min-height: 480px;
+      display: flex; align-items: flex-end; overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 30% 60%, rgba(30,92,150,0.35) 0%, transparent 58%),
+        radial-gradient(ellipse 60% 40% at 75% 30%, rgba(212,82,46,0.25) 0%, transparent 55%),
+        linear-gradient(155deg,
+          #0d0b08 0%,
+          #111520 30%,
+          #1a2035 58%,
+          #2e1a08 80%,
+          #3d2010 100%
+        );
+    }
+
+    .hero-sun {
+      position: absolute; top: 18%; right: 12%;
+      width: 140px; height: 140px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(30,92,150,0.5) 0%, rgba(212,82,46,0.3) 55%, transparent 75%);
+      filter: blur(28px); opacity: 0.55;
+    }
+
+    .hero-vignette {
+      position: absolute; inset: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(15,12,8,0.82) 0%,
+        rgba(15,12,8,0.58) 55%,
+        transparent 100%
+      );
+    }
+
+    .hero-content {
+      position: relative; z-index: 2;
+      padding: 3.5rem 3rem 3.5rem;
+      max-width: 700px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--ocean); color: #fff;
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      padding: 0.28rem 0.75rem; border-radius: 2px;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 {
+      font-family: var(--serif); font-weight: 800;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.1; color: #fff;
+      margin-bottom: 1rem;
+      text-shadow: 0 1px 24px rgba(0,0,0,0.6);
+    }
+    .hero h1 em { color: var(--gold-light); font-style: normal; }
+
+    .hero-deck {
+      font-size: 1rem; line-height: 1.6;
+      color: var(--on-dark-muted);
+      max-width: 580px; margin-bottom: 2rem;
+    }
+
+    .hero-meta { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+
+    .author-avatar {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--ocean) 0%, var(--ember) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700; color: #fff;
+    }
+
+    .author-info { font-size: 0.78rem; color: var(--on-dark-muted); }
+    .author-info strong { display: block; color: var(--on-dark); font-size: 0.82rem; font-weight: 600; }
+
+    .hero-sep { width: 1px; height: 24px; background: rgba(255,255,255,0.15); }
+
+    .hero-date { font-size: 0.75rem; color: var(--on-dark-muted); }
+
+    /* ── Article wrapper ──────────────────────────────────────────── */
+    .article-wrapper { background: var(--surface); }
+
+    .article-body {
+      max-width: var(--max-w); margin: 0 auto;
+      padding: 3rem 2rem 5rem;
+    }
+
+    /* ── TOC ──────────────────────────────────────────────────────── */
+    .toc {
+      background: var(--white); border: 1px solid var(--border);
+      border-top: 3px solid var(--ocean);
+      border-radius: 0 0 var(--r) var(--r);
+      padding: 1.5rem 1.75rem; margin-bottom: 3rem;
+    }
+    .toc-title {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 0.8rem;
+    }
+    .toc ol { padding-left: 1.1rem; }
+    .toc li { margin: 0.3rem 0; }
+    .toc a {
+      font-size: 0.85rem; font-weight: 500; color: var(--ocean);
+      text-decoration: none; transition: color 0.15s;
+    }
+    .toc a:hover { color: var(--ember); }
+
+    /* ── Intro ────────────────────────────────────────────────────── */
+    .intro { margin-bottom: 3rem; }
+
+    .dropcap::first-letter {
+      float: left; font-family: var(--serif); font-size: 4rem;
+      font-weight: 800; line-height: 0.82; color: var(--ocean);
+      margin: 0.1em 0.1em 0 0;
+    }
+
+    /* ── Sections ─────────────────────────────────────────────────── */
+    .section { margin-bottom: 3.5rem; }
+
+    .section-header {
+      display: flex; align-items: center; gap: 0.9rem;
+      margin-bottom: 1.75rem; padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-number {
+      flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--ocean) 0%, #0e3d6e 100%);
+      color: #fff; font-size: 0.72rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(30,92,150,0.4);
+    }
+
+    h2 {
+      font-family: var(--serif); font-size: 1.65rem; font-weight: 700;
+      color: var(--text-primary); line-height: 1.2;
+    }
+
+    h3 {
+      font-family: var(--serif); font-size: 1.15rem; font-weight: 700;
+      color: var(--ember-dark); margin: 2rem 0 0.75rem;
+    }
+
+    h4 {
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-tertiary); margin: 1.5rem 0 0.5rem;
+    }
+
+    p { margin-bottom: 1.15rem; color: var(--text-primary); font-size: 1rem; line-height: 1.75; }
+    strong { font-weight: 700; color: var(--text-primary); }
+    em { color: var(--text-secondary); font-style: italic; }
+
+    /* ── Pull quote ───────────────────────────────────────────────── */
+    .pullquote {
+      position: relative; padding: 1.5rem 1.75rem 1.5rem 2.5rem;
+      margin: 2.5rem 0; border-left: 4px solid var(--ember);
+      background: var(--white); border-radius: 0 var(--r) var(--r) 0;
+    }
+    .pullquote::before {
+      content: '\201C';
+      position: absolute; top: -0.15rem; left: 0.6rem;
+      font-family: var(--serif); font-size: 3.5rem; line-height: 1;
+      color: var(--ember); opacity: 0.3;
+    }
+    .pullquote p {
+      font-family: var(--serif); font-size: 1.2rem; font-weight: 700;
+      line-height: 1.45; color: var(--ember-dark); margin: 0;
+    }
+
+    /* ── Callout (dark bg) ────────────────────────────────────────── */
+    .callout {
+      background: var(--dark-700); border-radius: var(--r);
+      padding: 1.5rem 1.75rem 1.5rem 2rem;
+      margin: 2rem 0; position: relative; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .callout::before {
+      content: ''; position: absolute; top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: linear-gradient(180deg, var(--gold-light), var(--gold));
+    }
+    .callout-label {
+      font-size: 0.63rem; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--on-dark-label); margin-bottom: 0.6rem;
+    }
+    .callout p { color: var(--on-dark); font-size: 0.95rem; margin: 0; }
+    .callout p + p { margin-top: 0.65rem; }
+    .callout p strong { color: var(--on-dark); font-weight: 700; }
+    .callout p em { color: var(--on-dark-muted); font-style: italic; }
+
+    /* ── Callout ocean ────────────────────────────────────────────── */
+    .callout.ocean::before {
+      background: linear-gradient(180deg, #5ba3e8, var(--ocean));
+    }
+    .callout.ocean .callout-label { color: #5ba3e8; }
+
+    /* ── Bug box ──────────────────────────────────────────────────── */
+    .bug-box {
+      background: var(--white); border: 1px solid #e8cfc9;
+      border-radius: var(--r); margin: 1.5rem 0; overflow: hidden;
+    }
+    .bug-header {
+      display: flex; align-items: flex-start; gap: 0.9rem;
+      padding: 1rem 1.25rem 0.8rem;
+      border-bottom: 1px solid #f0e0da;
+    }
+    .bug-badge {
+      flex-shrink: 0; padding: 0.2rem 0.6rem;
+      border-radius: 3px; font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px;
+    }
+    .bug-badge.high   { background: var(--sev-high-bg); color: var(--sev-high); border: 1px solid #f5c8c2; }
+    .bug-badge.medium { background: var(--sev-med-bg);  color: var(--sev-med);  border: 1px solid #f5d8cc; }
+    .bug-badge.low    { background: var(--sev-low-bg);  color: var(--sev-low);  border: 1px solid #f0e0b4; }
+
+    .bug-title { font-weight: 700; color: var(--text-primary); font-size: 0.97rem; line-height: 1.3; }
+    .bug-file  { font-size: 0.72rem; color: var(--text-tertiary); margin-top: 0.2rem; font-family: monospace; }
+
+    .bug-body  { padding: 1rem 1.25rem; }
+    .bug-body p { font-size: 0.9rem; color: var(--text-secondary); margin: 0 0 0.7rem; line-height: 1.6; }
+    .bug-body p:last-child { margin: 0; }
+
+    /* ── Code snippet ─────────────────────────────────────────────── */
+    .code-block {
+      background: var(--code-bg); border: 1px solid var(--code-border);
+      border-radius: var(--r-sm); padding: 1rem 1.25rem; margin: 0.75rem 0;
+      overflow-x: auto;
+    }
+    .code-block pre {
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.78rem; line-height: 1.6;
+      color: var(--code-text); margin: 0; white-space: pre;
+    }
+    .code-block .c { color: #616e88; }   /* comment */
+    .code-block .k { color: #81a1c1; }   /* keyword */
+    .code-block .s { color: #a3be8c; }   /* string */
+    .code-block .n { color: #d8dee9; }   /* name */
+    .code-block .fn{ color: #88c0d0; }   /* function */
+    .code-block .num{ color: #b48ead; }  /* number */
+    .code-block .label { color: #f5c030; font-size: 0.65rem; font-weight: 700;
+                         letter-spacing: 0.1em; text-transform: uppercase;
+                         display: block; margin-bottom: 0.5rem; opacity: 0.7; }
+
+    /* ── Risk box ─────────────────────────────────────────────────── */
+    .risk-box {
+      background: var(--white); border: 1px solid #f0d8d2;
+      border-left: 4px solid var(--ember);
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      padding: 1.1rem 1.4rem; margin: 1.25rem 0;
+    }
+    .risk-box p { margin: 0; color: var(--text-secondary); font-size: 0.93rem; }
+    .risk-box p strong { color: var(--ember-dark); font-weight: 700; }
+    .risk-box p em { color: var(--text-tertiary); }
+
+    /* ── Feature box ──────────────────────────────────────────────── */
+    .feature-box {
+      background: var(--white); border: 1px solid var(--ocean-border);
+      border-left: 4px solid var(--ocean);
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      padding: 1.1rem 1.4rem; margin: 1.25rem 0;
+    }
+    .feature-box p { margin: 0; color: var(--text-secondary); font-size: 0.93rem; }
+    .feature-box p strong { color: var(--ocean); font-weight: 700; }
+    .feature-box p em { color: var(--text-tertiary); }
+
+    /* ── Tables ───────────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto; margin: 1.75rem 0;
+      border: 1px solid var(--border); border-radius: var(--r);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+
+    thead { background: var(--dark-800); }
+    thead th {
+      padding: 0.7rem 1rem; text-align: left;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--on-dark);
+    }
+
+    tbody tr { transition: background 0.12s; }
+    tbody tr:nth-child(even) { background: var(--surface-raised); }
+    tbody tr:nth-child(odd)  { background: var(--white); }
+    tbody tr:hover { background: #f5eee6; }
+
+    tbody td {
+      padding: 0.6rem 1rem; color: var(--text-primary);
+      vertical-align: top; border-bottom: 1px solid var(--border);
+      line-height: 1.5;
+    }
+    tbody td strong { color: var(--ember-dark); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Arch stats grid ──────────────────────────────────────────── */
+    .arch-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem; margin: 1.75rem 0;
+    }
+    .arch-item {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.1rem 1rem; text-align: center;
+    }
+    .arch-value {
+      font-family: var(--serif); font-size: 2.2rem; font-weight: 800;
+      line-height: 1; color: var(--ocean); margin-bottom: 0.2rem;
+    }
+    .arch-label {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    /* ── Score grid ───────────────────────────────────────────────── */
+    .score-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.85rem; margin: 2rem 0;
+    }
+
+    .score-item {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.25rem 1rem;
+      text-align: center; transition: box-shadow 0.18s;
+    }
+    .score-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+    .score-label {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 0.5rem;
+    }
+
+    .score-value {
+      font-family: var(--serif); font-size: 2.5rem; font-weight: 800;
+      line-height: 1; color: var(--ember);
+    }
+    .score-value span { font-size: 0.9rem; color: var(--text-tertiary); font-family: var(--sans); font-weight: 500; }
+
+    .score-bar {
+      margin-top: 0.6rem; height: 3px;
+      background: var(--surface-raised); border-radius: 2px; overflow: hidden;
+    }
+    .score-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--ember) 0%, var(--gold-light) 100%);
+    }
+
+    /* ── Rec list ─────────────────────────────────────────────────── */
+    .rec-list { list-style: none; margin: 1rem 0; }
+    .rec-list li {
+      display: flex; gap: 0.9rem; align-items: flex-start;
+      margin-bottom: 0.75rem; padding: 1rem 1.25rem;
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--r); font-size: 0.92rem; color: var(--text-secondary);
+      transition: box-shadow 0.18s;
+    }
+    .rec-list li:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .rec-list li strong { color: var(--text-primary); }
+    .rec-list li em { color: var(--text-tertiary); }
+
+    .rec-icon {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--ember), var(--gold));
+      color: #fff; font-size: 0.68rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px; box-shadow: 0 2px 6px rgba(212,82,46,0.3);
+    }
+
+    /* ── Roadmap timeline ─────────────────────────────────────────── */
+    .timeline { margin: 1.5rem 0; }
+    .timeline-phase {
+      border: 1px solid var(--border); border-radius: var(--r);
+      overflow: hidden; margin-bottom: 1rem;
+    }
+    .timeline-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.85rem 1.25rem;
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-badge {
+      padding: 0.2rem 0.65rem; border-radius: 3px;
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .timeline-badge.q1 { background: #dceaf7; color: #1a4a7a; }
+    .timeline-badge.q2 { background: var(--gold-pale); color: #7a4a00; }
+    .timeline-badge.q3 { background: #fce8e4; color: #9a2a1a; }
+
+    .timeline-title {
+      font-weight: 700; font-size: 0.95rem; color: var(--text-primary);
+    }
+
+    .timeline-body { padding: 1rem 1.25rem; }
+    .timeline-body ul { list-style: none; }
+    .timeline-body li {
+      display: flex; gap: 0.6rem; align-items: flex-start;
+      padding: 0.4rem 0; border-bottom: 1px solid var(--surface-raised);
+      font-size: 0.88rem; color: var(--text-secondary);
+    }
+    .timeline-body li:last-child { border-bottom: none; }
+    .timeline-body li::before {
+      content: '→'; flex-shrink: 0; color: var(--ember); font-weight: 700;
+      margin-top: 1px;
+    }
+    .timeline-body li strong { color: var(--text-primary); font-weight: 600; }
+
+    /* ── Verdict ──────────────────────────────────────────────────── */
+    .verdict {
+      background: var(--dark-800);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--r); padding: 2.5rem;
+      margin: 3rem 0 0; position: relative; overflow: hidden;
+    }
+    .verdict::after {
+      content: '✓';
+      position: absolute; bottom: -2rem; right: 1rem;
+      font-size: 12rem; font-weight: 800;
+      color: rgba(255,255,255,0.025); line-height: 1; pointer-events: none;
+    }
+
+    .verdict-label {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--on-dark-label); margin-bottom: 0.75rem;
+    }
+
+    .verdict p {
+      color: var(--on-dark-muted); font-size: 0.97rem;
+      line-height: 1.7; margin: 0 0 1rem; position: relative; z-index: 1;
+    }
+    .verdict p:last-child { margin-bottom: 0; }
+    .verdict p strong { color: var(--on-dark); font-weight: 700; }
+    .verdict-highlight {
+      color: var(--gold-light) !important; font-weight: 700 !important;
+    }
+
+    /* ── Divider ──────────────────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+    .article-footer {
+      background: var(--dark-900);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 2rem; text-align: center;
+    }
+    .article-footer p {
+      font-family: var(--sans); font-size: 0.78rem;
+      color: var(--on-dark-muted); margin: 0;
+    }
+    .article-footer p + p { margin-top: 0.4rem; opacity: 0.65; }
+    .article-footer strong { color: var(--on-dark); font-weight: 600; }
+    .article-footer a { color: var(--gold-light); text-decoration: none; }
+    .article-footer a:hover { text-decoration: underline; }
+
+    /* ── Responsive ───────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .masthead-nav  { display: none; }
+      .hero-content  { padding: 2rem 1.5rem 2.5rem; }
+      .article-body  { padding: 2rem 1.25rem 3rem; }
+      .verdict       { padding: 1.75rem; }
+      .verdict::after{ display: none; }
+      .score-grid    { grid-template-columns: repeat(2, 1fr); }
+      .arch-grid     { grid-template-columns: repeat(3, 1fr); }
+      h2             { font-size: 1.45rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Reading progress -->
+  <div id="progress-bar"></div>
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div class="masthead-logo">Indie<span>Forge</span> Magazine</div>
+    <nav>
+      <ul class="masthead-nav">
+        <li><a href="#">Análisis</a></li>
+        <li><a href="#">Arquitectura</a></li>
+        <li><a href="#">Game Design</a></li>
+        <li><a href="#">Roadmap</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-sun"></div>
+    <div class="hero-vignette"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Análisis Técnico Experto &nbsp;·&nbsp; Godot 4 RTS</div>
+      <h1><em>Calima: Flames of the Atlantic</em> — Disección técnica completa</h1>
+      <p class="hero-deck">Análisis exhaustivo desde cinco perspectivas: identidad y propuesta de valor, diferenciación de mercado, arquitectura de código (82 scripts), relación diseño-código, mejoras prioritarias y roadmap estratégico a 18 meses.</p>
+      <div class="hero-meta">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <div class="author-avatar">IF</div>
+          <div class="author-info">
+            <strong>IndieForge Técnico</strong>
+            Arquitectura · Game Design · Mercado
+          </div>
+        </div>
+        <div class="hero-sep"></div>
+        <div class="hero-date">Mayo 2026 &nbsp;·&nbsp; Lectura: 22 min</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Article -->
+  <div class="article-wrapper">
+    <article class="article-body">
+
+      <!-- TOC -->
+      <nav class="toc">
+        <div class="toc-title">Contenido del análisis</div>
+        <ol>
+          <li><a href="#identidad">Identidad y propuesta de valor</a></li>
+          <li><a href="#mercado">Diferenciación frente al mercado</a></li>
+          <li><a href="#arquitectura">Análisis de código y arquitectura</a></li>
+          <li><a href="#diseno">Relación entre diseño y código</a></li>
+          <li><a href="#mejoras">Mejoras para llevarlo al siguiente nivel</a></li>
+          <li><a href="#comercial">Potencial comercial</a></li>
+          <li><a href="#roadmap">Roadmap estratégico</a></li>
+        </ol>
+      </nav>
+
+      <!-- Intro -->
+      <div class="intro">
+        <p class="dropcap">Analizar un proyecto indie en fase de desarrollo con el rigor de un producto comercial es un ejercicio que revela tanto sus fortalezas estructurales como sus deudas técnicas. <strong>Calima: Flames of the Atlantic</strong> es un caso peculiar: un RTS con una identidad genuinamente diferenciada, una arquitectura de código sofisticada para un equipo pequeño, y un conjunto de problemas técnicos concretos que, si no se abordan pronto, pueden costar meses de trabajo más adelante.</p>
+        <p>Este documento cubre las 82 clases GDScript, las 47 escenas, los 80+ recursos de datos y el diseño sistémico del juego tal y como está implementado a mayo de 2026. No es una descripción. Es una auditoría.</p>
+      </div>
+
+      <!-- ─── SECCIÓN 1 ────────────────────────────────────────── -->
+      <section class="section" id="identidad">
+        <div class="section-header">
+          <div class="section-number">1</div>
+          <h2>Identidad y propuesta de valor</h2>
+        </div>
+
+        <h3>Un setting sin competencia directa</h3>
+
+        <p>La Conquista de las Islas Canarias (1402–1496) no aparece en ningún RTS relevante del mercado. Es un nicho histórico virgen con todos los ingredientes estructurales de un gran escenario de RTS: conflicto asimétrico genuino entre culturas con tecnología divergente, geografía extrema (volcanes, calderas, océano atlántico, dunas de lava negra), y figuras históricas con peso narrativo real.</p>
+
+        <p>Lo que distingue a Calima del clon de AoE2 promedio no es solo el setting: es que el setting <strong>está integrado en las mecánicas</strong>. La Calima es un fenómeno meteorológico real del archipiélago canario que da nombre al juego y también es un sistema de juego con efectos espaciales. El Malpais (colada de lava solidificada) es un terreno que solo los Guanches pueden atravesar. Las Dunas son el territorio nativo de los Mahos.</p>
+
+        <div class="pullquote">
+          <p>"El nombre del juego es una mecánica de juego. Eso no lo hace casi nadie y cuando funciona, es diseño sistémico puro."</p>
+        </div>
+
+        <h3>8 civilizaciones con asimetría estructural, no cosmética</h3>
+
+        <p>El modelo de civilizaciones de Calima está más cerca de StarCraft que de AoE2. La asimetría no es solo additive bonuses: hay restricciones duras que cambian completamente el árbol de decisiones. Los Guanches sin caballería en un mapa llano son un juego diferente a los Guanches con acceso al Malpais en Volcanic Coast.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Civilización</th>
+                <th>Héroe</th>
+                <th>Ventaja estructural</th>
+                <th>Restricción dura</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Guanches</strong></td>
+                <td>Bencomo</td>
+                <td>+20% HP edificios, atraviesa Malpais</td>
+                <td>Sin caballería</td>
+              </tr>
+              <tr>
+                <td><strong>Canarii</strong></td>
+                <td>Doramas</td>
+                <td>+15% velocidad unidades en Laurisilva</td>
+                <td>Sin Siege Workshop</td>
+              </tr>
+              <tr>
+                <td><strong>Mahos</strong></td>
+                <td>Guadarfía</td>
+                <td>−30% coste edificios, atraviesa Dunas sin penalización</td>
+                <td>Sin caballería pesada</td>
+              </tr>
+              <tr>
+                <td><strong>Atlantes</strong></td>
+                <td>Artaxerax</td>
+                <td>+50% visión costera, +20% vel. naval, sin penalización en aguas poco profundas</td>
+                <td>Sin Siege Workshop</td>
+              </tr>
+              <tr>
+                <td><strong>Fenicios</strong></td>
+                <td>Hannón</td>
+                <td>Market disponible desde Dark Age, gold pasivo de barcos comerciales</td>
+                <td>Sin Knights</td>
+              </tr>
+              <tr>
+                <td><strong>Francos</strong></td>
+                <td>Jean de Béthencourt</td>
+                <td>−15% coste avance de edad, caballería con rush bonus</td>
+                <td>Sin arquería de largo alcance</td>
+              </tr>
+              <tr>
+                <td><strong>Britanos</strong></td>
+                <td>Francis Drake</td>
+                <td>+25% rango arqueros, barcos corsarios convierten naves enemigas</td>
+                <td>Sin unidades de piedra</td>
+              </tr>
+              <tr>
+                <td><strong>Castellanos</strong></td>
+                <td>Don Quijote</td>
+                <td>Sin restricciones de unidades, tecnología gratuita cada avance de edad</td>
+                <td>Ninguna (civ "bola de nieve")</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>El sistema de héroes como diferenciador de género</h3>
+
+        <p>Los 8 héroes tienen habilidades activas únicas con cooldown, duración y efectos mecánicos concretos. No son unidades poderosas con stats inflados: son multiplicadores estratégicos cuya efectividad depende del timing y el posicionamiento. Esto acerca el juego a <em>Warcraft III</em> y lo aleja del modelo AoE2 puro.</p>
+
+        <div class="callout">
+          <div class="callout-label">Decisión de diseño clave</div>
+          <p>Don Quijote como héroe de los Castellanos es un personaje ficticio publicado en 1605 en una guerra del siglo XV. Esta decisión no es un error: es la declaración implícita de que el juego opera en un registro mítico-histórico donde la leyenda y la historia coexisten. <strong>Esa es la identidad narrativa más valiosa del juego y actualmente no está formalizada en ningún texto del juego.</strong></p>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 2 ────────────────────────────────────────── -->
+      <section class="section" id="mercado">
+        <div class="section-header">
+          <div class="section-number">2</div>
+          <h2>Diferenciación frente al mercado</h2>
+        </div>
+
+        <p>El RTS indie de gestión de recursos es un género pequeño con poca competencia directa de alta calidad. Los referentes más cercanos en el mercado actual son:</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dimensión</th>
+                <th>AoE2: DE</th>
+                <th>0 A.D.</th>
+                <th>Northgard</th>
+                <th><strong>Calima</strong></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Setting</strong></td>
+                <td>Medieval mundial</td>
+                <td>Antigüedad clásica</td>
+                <td>Nórdico fantástico</td>
+                <td><strong>Atlántico siglo XV (único)</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Asimetría de civs</strong></td>
+                <td>Bonuses aditivos</td>
+                <td>Moderada</td>
+                <td>Moderada</td>
+                <td><strong>Restricciones duras (StarCraft-like)</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Clima dinámico</strong></td>
+                <td>No</td>
+                <td>No</td>
+                <td>Estaciones fijas</td>
+                <td><strong>5 tipos con efectos espaciales en tiempo real</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Héroes con habilidades activas</strong></td>
+                <td>No</td>
+                <td>No</td>
+                <td>No</td>
+                <td><strong>Sí — 8 héroes, estilo Warcraft III</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Terreno con inmunidades por civ</strong></td>
+                <td>Básico</td>
+                <td>Moderado</td>
+                <td>No</td>
+                <td><strong>Sí — Malpais, Dunas, Laurisilva, Caldera</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Mapas procedurales</strong></td>
+                <td>Semiprocedural</td>
+                <td>Editor manual</td>
+                <td>Procedural</td>
+                <td><strong>5 tipos, generación poligonal simétrica</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Nicho histórico</strong></td>
+                <td>Saturado</td>
+                <td>Ocupado</td>
+                <td>Ocupado</td>
+                <td><strong>Virgen — cero competencia directa</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Precio estimado</strong></td>
+                <td>~€20</td>
+                <td>Gratis / donación</td>
+                <td>~€25</td>
+                <td>€14–18 (indie)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>La combinación de clima dinámico sistémico + asimetría de terreno por civilización + héroes con habilidades activas no existe en ningún otro RTS de gestión de recursos del mercado. Cada uno de estos tres elementos por separado sería un diferenciador. Los tres juntos son una propuesta de valor única.</p>
+
+        <div class="callout ocean">
+          <div class="callout-label">Oportunidad de posicionamiento</div>
+          <p><em>Age of Mythology: Retold</em> (2024) demostró que el género vive con fuerza. AoE2: DE tiene más de 100.000 jugadores activos diarios en Steam. <strong>Calima puede posicionarse como "el indie RTS para el jugador de AoE2 que quiere asimetría profunda y un setting que nadie ha explorado antes".</strong> Ese nicho tiene valor y está desatendido.</p>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 3 ────────────────────────────────────────── -->
+      <section class="section" id="arquitectura">
+        <div class="section-header">
+          <div class="section-number">3</div>
+          <h2>Análisis de código y arquitectura</h2>
+        </div>
+
+        <h3>Métricas generales del codebase</h3>
+
+        <div class="arch-grid">
+          <div class="arch-item">
+            <div class="arch-value">82</div>
+            <div class="arch-label">Scripts GDScript</div>
+          </div>
+          <div class="arch-item">
+            <div class="arch-value">47</div>
+            <div class="arch-label">Escenas .tscn</div>
+          </div>
+          <div class="arch-item">
+            <div class="arch-value">80+</div>
+            <div class="arch-label">Recursos .tres</div>
+          </div>
+          <div class="arch-item">
+            <div class="arch-value">62</div>
+            <div class="arch-label">Señales EventBus</div>
+          </div>
+          <div class="arch-item">
+            <div class="arch-value">10</div>
+            <div class="arch-label">Autoloads</div>
+          </div>
+          <div class="arch-item">
+            <div class="arch-value">3</div>
+            <div class="arch-label">God files (>1500 líneas)</div>
+          </div>
+        </div>
+
+        <h3>Lo que funciona bien: el núcleo arquitectónico</h3>
+
+        <p>La arquitectura de Calima tiene una columna vertebral sólida. El patrón <strong>EventBus con 62 señales tipadas</strong> organiza toda la comunicación cross-sistema sin acoplamiento directo. Los 10 autoloads están bien delimitados por responsabilidad. El sistema de recursos <code>.tres</code> para <code>UnitResource</code>, <code>BuildingResource</code>, <code>TechnologyResource</code> y <code>CivilizationResource</code> elimina stats hardcodeados del código.</p>
+
+        <div class="feature-box">
+          <p><strong>El CivBonusManager</strong> es especialmente elegante: usa un sistema multiplicativo por capas donde cada tecnología investigada acumula multiplicadores por player_id. Los ataques, velocidades y HP se calculan siempre en tiempo real desde la base del recurso, lo que hace que los upgrades mid-game sean triviales de implementar y casi imposibles de desincroniziarse.</p>
+        </div>
+
+        <h3>Los 7 problemas técnicos críticos</h3>
+
+        <p>Encontré siete problemas técnicos que van de urgentes a prioritarios. Los ordeno por impacto en estabilidad y mantenibilidad futura.</p>
+
+        <!-- Bug 1 -->
+        <div class="bug-box">
+          <div class="bug-header">
+            <span class="bug-badge high">Crítico</span>
+            <div>
+              <div class="bug-title">HeroUnit: timers de habilidades sobreviven a la muerte del héroe</div>
+              <div class="bug-file">scripts/units/hero_unit.gd · _trigger_ability()</div>
+            </div>
+          </div>
+          <div class="bug-body">
+            <p>Las habilidades de duración (MENCEYES_CHARGE, CHALLENGE, FORCED_DIPLOMACY, PLUNDER, CALIMA, TRADE_ROUTE) crean <code>SceneTreeTimer</code> con closures que referencian el héroe y los objetivos por captura. Si el héroe muere mientras la habilidad está activa, el <code>queue_free()</code> libera la instancia pero el timer sigue ejecutándose. Las closures capturan <code>self</code>, que ya es inválido.</p>
+            <p><code>_end_ability()</code> cancela correctamente TRADE_ROUTE y CHALLENGE, pero MENCEYES_CHARGE, FORCED_DIPLOMACY y CALIMA tienen timers que no se cancelan en <code>die()</code>. El resultado es uso-after-free silencioso que puede producir crashes aleatorios o efectos permanentes en unidades objetivo.</p>
+            <div class="code-block"><pre><span class="label">bug — hero_unit.gd:130-155</span><span class="c"># En _trigger_ability(), MENCEYES_CHARGE crea un SceneTreeTimer:</span>
+<span class="k">var</span> <span class="n">tw</span>: SceneTreeTimer = get_tree().create_timer(duration)
+tw.timeout.<span class="fn">connect</span>(<span class="k">func</span>() -> <span class="k">void</span>:
+    <span class="c"># Captura 'u' (unidad aliada) y 'original_speed'.</span>
+    <span class="c"># Si el héroe murió, este closure sigue ejecutándose.</span>
+    <span class="k">if</span> <span class="fn">is_instance_valid</span>(u): ...)
+
+<span class="c"># En die(), solo se llama _end_ability() que NO cancela este timer.</span></pre></div>
+            <p><strong>Fix:</strong> Mover todos los timers de habilidad a <code>Timer</code> nodes hijos del héroe. Al hacer <code>queue_free()</code>, Godot libera automáticamente todos los hijos, cancelando los timers. Alternativamente, guardar referencias a todos los SceneTreeTimers y desconectar sus señales en <code>die()</code>.</p>
+          </div>
+        </div>
+
+        <!-- Bug 2 -->
+        <div class="bug-box">
+          <div class="bug-header">
+            <span class="bug-badge high">Crítico</span>
+            <div>
+              <div class="bug-title">AIPlayer: BUILDING_COSTS desincronizado con BuildingResource</div>
+              <div class="bug-file">scripts/ai/ai_player.gd · const BUILDING_COSTS</div>
+            </div>
+          </div>
+          <div class="bug-body">
+            <p>El AI tiene un diccionario hardcodeado <code>BUILDING_COSTS</code> con los costes de construcción. Los mismos costes existen como datos en los archivos <code>.tres</code> de <code>BuildingResource</code>. Cuando un diseñador cambia el coste de un edificio en su recurso, el AI no lo sabe y sigue tomando decisiones económicas con datos obsoletos.</p>
+            <p>Esto hace que el AI sea <em>inmune a rebalanceos</em>: puede intentar construir edificios para los que no tiene suficientes recursos, o abstenerse de construir edificios que ahora son mucho más baratos tras un ajuste de balance.</p>
+            <div class="code-block"><pre><span class="label">bug — ai_player.gd</span><span class="c"># Fuente de la verdad #1 (datos):</span>
+<span class="c"># resources/buildings/barracks.tres → wood_cost: 175</span>
+
+<span class="c"># Fuente de la verdad #2 (AI) — desincronizada:</span>
+<span class="k">const</span> BUILDING_COSTS: Dictionary = {
+    <span class="s">"barracks"</span>: {<span class="s">"wood"</span>: <span class="num">175</span>, <span class="s">"stone"</span>: <span class="num">0</span>},
+    <span class="c"># Si alguien cambia barracks.tres a wood: 150, el AI no lo sabe.</span>
+}</pre></div>
+            <p><strong>Fix:</strong> El AI debe leer los costes directamente desde los recursos al inicializarse. Los recursos son autoloads o se pueden cargar con <code>load()</code>. Eliminar BUILDING_COSTS completamente y delegar al mismo sistema que usan los jugadores humanos.</p>
+          </div>
+        </div>
+
+        <!-- Bug 3 -->
+        <div class="bug-box">
+          <div class="bug-header">
+            <span class="bug-badge high">Crítico</span>
+            <div>
+              <div class="bug-title">AIPlayer: nunca investiga tecnologías</div>
+              <div class="bug-file">scripts/ai/ai_player.gd · _tick_economy() / _tick_military()</div>
+            </div>
+          </div>
+          <div class="bug-body">
+            <p>El <code>TechManager</code> tiene un sistema completo de investigación con cola por edificio, costes por recurso y efectos aplicados vía <code>CivBonusManager</code>. El jugador humano tiene acceso a todo esto. El AI nunca llama a <code>TechManager.start_research()</code>.</p>
+            <p>Esto significa que el AI juega toda la partida en Dark Age stats aunque llegue al Imperial Age. Sus unidades nunca mejoran de ataque, armadura ni velocidad. Un jugador humano en Castle Age con Blacksmith researched tiene ventajas de combate masivas sobre el AI aunque tenga menos unidades.</p>
+            <p><strong>Fix:</strong> Añadir un tick de investigación en el AI que evalúe las tecnologías disponibles (por edificio, por age, por recursos disponibles) y encole la más prioritaria. La lógica de priorización puede ser simple: primero mejoras de unidades, después mejoras económicas.</p>
+          </div>
+        </div>
+
+        <!-- Bug 4 -->
+        <div class="bug-box">
+          <div class="bug-header">
+            <span class="bug-badge medium">Prioritario</span>
+            <div>
+              <div class="bug-title">CivBonusManager: nombres de civilización hardcodeados</div>
+              <div class="bug-file">scripts/core/civ_bonus_manager.gd · get_attack_speed_multiplier()</div>
+            </div>
+          </div>
+          <div class="bug-body">
+            <p>El <code>CivBonusManager</code> tiene rutas de lógica específicas por nombre de civilización en algunas queries. Si se renombra una civ o se añade una nueva civ con una bonificación similar, hay que modificar el código fuente del manager, no solo el archivo <code>.tres</code>. Esto rompe el principio de que los datos viven en recursos.</p>
+            <p><strong>Fix:</strong> Mover todos los bonus específicos por civ a claves de diccionario en <code>CivilizationResource</code>. El manager solo debe leer datos, nunca tomar decisiones basadas en el nombre de una civ.</p>
+          </div>
+        </div>
+
+        <!-- Bug 5 -->
+        <div class="bug-box">
+          <div class="bug-header">
+            <span class="bug-badge medium">Prioritario</span>
+            <div>
+              <div class="bug-title">AIPlayer es un god file de 1539 líneas</div>
+              <div class="bug-file">scripts/ai/ai_player.gd</div>
+            </div>
+          </div>
+          <div class="bug-body">
+            <p>El fichero combina economía AI, militar AI, spawn de unidades, decisiones de construcción, detección de estado de juego, lógica de barcos y reconocimiento en una sola clase. La misma comprobación de tipo de unidad aparece al menos 4 veces en el código (cadenas <code>if unit.name == "Militia" or unit.name == "ManAtArms" or ...</code>).</p>
+            <p>A 1539 líneas, el fichero ya tiene fricción de mantenimiento seria. Añadir un nuevo tipo de unidad o una nueva estrategia AI requiere tocar múltiples lugares del mismo fichero y riesgo de regresión alto.</p>
+            <p><strong>Fix:</strong> Extraer en módulos: <code>AIEconomy</code>, <code>AIMilitary</code>, <code>AIConstruction</code>, <code>AINaval</code>. El <code>AIPlayer</code> actúa como coordinador que hace tick sobre cada módulo.</p>
+          </div>
+        </div>
+
+        <!-- Bug 6 -->
+        <div class="bug-box">
+          <div class="bug-header">
+            <span class="bug-badge medium">Prioritario</span>
+            <div>
+              <div class="bug-title">Market: tasas de cambio fijas no escalan con volumen</div>
+              <div class="bug-file">scripts/buildings/market.gd · sell_lot() / buy_lot()</div>
+            </div>
+          </div>
+          <div class="bug-body">
+            <p>Las tasas de trading del Market son fijas: 15:1 al vender, 1:20 al comprar. En AoE2, las tasas se degradan con cada transacción, creando un límite natural al abuso económico. Con tasas fijas, un jugador con acceso permanente al Market (especialmente los Fenicios, que tienen Market desde Dark Age y gold pasivo de barcos) puede explotar el sistema sin penalización progresiva.</p>
+            <p>El gold pasivo de los barcos fenicios (<code>_trade_income_timer</code> generando 5 gold/tick) acumulado con el Market disponible desde el inicio crea un loop económico que puede romper el balance en partidas largas.</p>
+            <p><strong>Fix:</strong> Implementar degradación de tasas por transacción acumulada, con recuperación lenta (como AoE2). O añadir un multiplicador de coste por transacción que sube con el volumen dentro de un mismo Age.</p>
+          </div>
+        </div>
+
+        <!-- Bug 7 -->
+        <div class="bug-box">
+          <div class="bug-header">
+            <span class="bug-badge low">Mejorable</span>
+            <div>
+              <div class="bug-title">HUDManager y MapGenerator: god files que dificultan el mantenimiento</div>
+              <div class="bug-file">scripts/ui/hud_manager.gd (3068 líneas) · scripts/map/map_generator.gd (2327 líneas)</div>
+            </div>
+          </div>
+          <div class="bug-body">
+            <p>El <code>HUDManager</code> con 3068 líneas combina la visualización de recursos, la gestión del grid de retratos de unidades, el panel de acciones con paginación, todos los paneles de edificio, la integración del tutorial, los snapshots del gráfico de partida y el pill de clima. Es imposible de mantener como clase única sin riesgo constante de regresión.</p>
+            <p>El <code>MapGenerator</code> con 2327 líneas tiene 3 variantes de pintores de terreno, la generación de islas, el shader de agua animado y la lógica de spawn de recursos en una sola clase.</p>
+            <p><strong>No es urgente</strong> (el código funciona), pero cada feature que toque la UI o la generación de mapas añadirá más entropía. En 6 meses, refactorizar costará el doble que hoy.</p>
+          </div>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 4 ────────────────────────────────────────── -->
+      <section class="section" id="diseno">
+        <div class="section-header">
+          <div class="section-number">4</div>
+          <h2>Relación entre diseño y código</h2>
+        </div>
+
+        <h3>Donde el código expresa la intención de diseño con elegancia</h3>
+
+        <p><strong>WeatherManager como API de estado ambiental.</strong> El diseño del WeatherManager es arquitectónicamente limpio. La máquina de estados (clear → ramp_in → peak → ramp_out → clear) con transiciones de 10 segundos significa que ningún sistema del juego consume el estado de clima directamente: todos llaman a la query API (<code>get_move_speed_multiplier(pos)</code>, <code>get_vision_multiplier(pos)</code>, <code>get_projectile_drift(pos)</code>). Esto es diseño sistémico correcto: el clima afecta a todos los sistemas sin que ningún sistema sepa cómo funciona el clima.</p>
+
+        <p><strong>CivBonusManager multiplicativo.</strong> El sistema de multiplicadores por capas en <code>CivBonusManager</code> es una implementación elegante de la intención de diseño "las tecnologías y los bonuses de civ se acumulan". Cada <code>apply_tech_effect</code> suma un multiplicador al bucket del player_id correspondiente. Las queries de stats siempre calculan desde la base del recurso multiplicada por todos los factores acumulados. Es correcto, extensible y sin efectos secundarios.</p>
+
+        <p><strong>TerrainManager y civilizaciones.</strong> La integración entre <code>CivilizationResource</code> (flags <code>can_traverse_malpais</code>, <code>can_traverse_dune</code>, <code>can_traverse_ocean</code>) y <code>TerrainManager.nearest_passable(position, civ_id)</code> crea la mecánica de identidad de civilización por terreno de forma limpia y data-driven.</p>
+
+        <h3>Donde diseño y código divergen</h3>
+
+        <p><strong>Héroes permanentes vs. timers que no lo son.</strong> El diseño dice que los héroes son permanentes (si mueren están fuera para siempre). El código tiene closures de habilidades que sobreviven a esa muerte permanente. Hay una contradicción entre la intención (el héroe y sus efectos desaparecen al morir) y la implementación (los efectos persisten en timers flotantes).</p>
+
+        <p><strong>El AI no usa el sistema de tecnologías.</strong> El diseño tiene un árbol tecnológico completo con prerequisitos, costes y efectos balanceados. El AI ignora completamente ese sistema. El diseño asume que las tecnologías son una capa estratégica para todos los jugadores; la implementación crea una asimetría no intencionada donde solo el jugador humano puede investigar.</p>
+
+        <p><strong>Atlantes como civ naval vs. implementación de combate naval.</strong> El diseño de los Atlantes como "dominadores del océano" está en sus bonus de civ (<code>can_traverse_ocean: true</code>, <code>ship_attack_speed: 1.20</code>, <code>coastal_vision: 1.50</code>). Pero el combate naval solo tiene 3 tipos de barco y solo importa en mapas Islands. La intención de diseño de una civ naval suprema no tiene suficiente contenido naval para expresarse.</p>
+
+        <div class="callout">
+          <div class="callout-label">Diagnóstico arquitectónico</div>
+          <p>La arquitectura del juego es más sofisticada de lo habitual en un proyecto indie de este tamaño. EventBus, recursos data-driven, CivBonusManager — estas son decisiones de ingeniería que un equipo más pequeño o menos experimentado no tomaría. <strong>Los problemas no son de arquitectura: son de partes del diseño que todavía no tienen su equivalente en código (AI tech research, combate naval) o de bugs de ciclo de vida (HeroUnit timers).</strong></p>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 5 ────────────────────────────────────────── -->
+      <section class="section" id="mejoras">
+        <div class="section-header">
+          <div class="section-number">5</div>
+          <h2>Mejoras para llevarlo al siguiente nivel</h2>
+        </div>
+
+        <p>Ordeno las 8 mejoras por impacto en jugabilidad y estabilidad, no por esfuerzo de implementación:</p>
+
+        <ul class="rec-list">
+          <li>
+            <div class="rec-icon">1</div>
+            <div>
+              <strong>Corregir los timers de HeroUnit.</strong> Es el único bug que puede causar crashes en producción. Migrar todos los <code>SceneTreeTimer</code> de habilidades a <code>Timer</code> nodes hijos del héroe. Godot los libera automáticamente al hacer <code>queue_free()</code>. Estimación: medio día de trabajo. Impacto en estabilidad: muy alto.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">2</div>
+            <div>
+              <strong>Hacer que el AI investigue tecnologías.</strong> Sin esto, el AI tiene un techo de dificultad demasiado bajo para el público RTS. Un AI en Imperial Age con stats de Dark Age es predecible en 5 partidas. La lógica puede ser simple: evaluar tecnologías disponibles por edificio, priorizar mejoras de unidades sobre económicas, encolar la más cara que el AI pueda costear. Estimación: 2-3 días. Impacto en longitud de juego: muy alto.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">3</div>
+            <div>
+              <strong>Leer BUILDING_COSTS desde los recursos del juego.</strong> Eliminar el diccionario hardcodeado del AI y delegar a los mismos <code>BuildingResource</code> que usan todos los demás sistemas. Asegura que el AI siempre tome decisiones con costes actualizados tras cualquier rebalanceo. Estimación: 1 día. Impacto en mantenibilidad: muy alto.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">4</div>
+            <div>
+              <strong>Implementar degradación de tasas en el Market.</strong> Con tasas fijas, los Fenicios con Market desde Dark Age y gold pasivo de barcos pueden desbalancear partidas largas. Una función simple de degradación (−5% por transacción, recuperación +1%/min) añade profundidad económica y evita el abuso. Estimación: 1 día. Impacto en balance: alto.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">5</div>
+            <div>
+              <strong>Expandir el combate naval (3 nuevos tipos de barco).</strong> Un juego con "Atlantic" en el título y una civ naval suprema necesita más océano. Propuesta mínima viable: Galera de Guerra (combat pesado), Cog de Transporte (más capacidad), Galera de Fuego (artillería naval). Con estos tres, los Atlantes tienen un menú de estrategia naval completo. Estimación: 1 semana por barco.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">6</div>
+            <div>
+              <strong>Campaña narrativa "La Resistencia de Bencomo" — 5 misiones.</strong> La historia real termina en derrota honrosa: victoria en Acentejo (1494), derrota y muerte en la Segunda Batalla de Acentejo (1495). Es una tragedia griega real que ningún skirmish puede generar. Una campaña con este arco emocional es el contenido de marketing más poderoso del juego y la razón por la que jugadores de una sola partida siguen jugando.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">7</div>
+            <div>
+              <strong>Extraer <code>AIPlayer</code> en módulos: Economy, Military, Construction, Naval.</strong> No es urgente pero es la mayor deuda técnica estructural. A 1539 líneas, añadir nuevas estrategias AI (diplomacia, investigación de techs, respuestas al clima) sin romper lo existente se vuelve cada vez más difícil. Refactorizar ahora cuesta menos que en 6 meses con 200 líneas más de features añadidas.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">8</div>
+            <div>
+              <strong>Formalizar el tono mítico-histórico con un "manifiesto" en el juego.</strong> Don Quijote en el siglo XV canario, Atlantes con acceso al océano, Fenicios en el Atlántico — todo esto es coherente si el juego declara explícitamente que opera en un "Atlántico mítico donde historia y leyenda se confunden." Un texto de 50 palabras en la pantalla de carga convierte la inconsistencia aparente en lore intencional.
+            </div>
+          </li>
+        </ul>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 6 ────────────────────────────────────────── -->
+      <section class="section" id="comercial">
+        <div class="section-header">
+          <div class="section-number">6</div>
+          <h2>Potencial comercial</h2>
+        </div>
+
+        <h3>Perfiles de comprador</h3>
+
+        <div class="feature-box">
+          <p><strong>Perfil 1 — Jugador de AoE2 que busca variedad (25–40 años, PC, Steam, 500+ horas).</strong> El gancho es la familiaridad mecánica con setting fresco y asimetría más pronunciada. Este es el comprador de mayor volumen: la comunidad AoE2 tiene millones de jugadores activos. <em>Hook: "El RTS que habrías diseñado si hubieras crecido en las Islas Canarias."</em></p>
+        </div>
+
+        <div class="feature-box">
+          <p><strong>Perfil 2 — Entusiasta de historia hispana (España y Latinoamérica).</strong> Bencomo es una figura cultural en Canarias comparable a Viriato en la Península. La prensa local española cubre esto casi gratis. Este perfil tiene menor conversión en compra directa pero alto impacto en visibility orgánica y prensa.</p>
+        </div>
+
+        <div class="feature-box">
+          <p><strong>Perfil 3 — Fan de indie RTS profundo (sigue Northgard, They Are Billions, Age of Wonders 4).</strong> Valora la profundidad sistémica sobre el polish visual. Es el comprador más temprano y el evangelista más efectivo en Reddit y Discord. Detectará y apreciará el WeatherManager, la asimetría de civs y el sistema de héroes desde el primer vistazo.</p>
+        </div>
+
+        <h3>Momentos virales para clips y trailers</h3>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Momento</th>
+                <th>Por qué funciona</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><strong>Llegada de la Calima</strong>: arena naranja barriendo el mapa en tiempo real, visión cayendo en 40%, música ralentizando</td>
+                <td>30 segundos que no existen en ningún otro RTS. Es el shot de apertura del trailer.</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>Don Quijote cargando en las Islas Canarias</strong>: sin contexto, con escudo de hojalata y Rocinante</td>
+                <td>Genera debate y curiosidad. Perfecto para Twitter/X: "¿Por qué está Don Quijote en un RTS histórico?" es exactamente la pregunta que quieres que hagan.</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>Artaxerax usando la habilidad Calima</strong>: cubre a todas las unidades aliadas en un velo de polvo durante 12 segundos, haciéndolas invisibles</td>
+                <td>Una habilidad de héroe que crea niebla táctica no existe en ningún RTS de gestión de recursos. Es el gancho de Twitch.</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><strong>Transport Ship descargando guanches en playa volcánica</strong></td>
+                <td>Desembarco anfibio con volcán de fondo. Es el shot de portada del juego si la dirección artística lo desarrolla bien.</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><strong>Timelapse de economía Fenicia</strong>: Market activo en Dark Age, gold acumulándose, barcos generando ingresos pasivos</td>
+                <td>Narrativa de economía como arte. Apela a jugadores de alto nivel que quieren ver cómo funciona la máquina.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Estrategia de lanzamiento</h3>
+
+        <ul class="rec-list">
+          <li>
+            <div class="rec-icon">→</div>
+            <div><strong>Canarias y España primero.</strong> La cobertura de prensa local es casi gratuita: El País Canarias, Eurogamer España, medios de tecnología canarios. "Un juego indie sobre la conquista de las Islas Canarias" es una noticia que se escribe sola. Es el mercado de menor fricción y mayor impacto emocional inicial.</div>
+          </li>
+          <li>
+            <div class="rec-icon">→</div>
+            <div><strong>Reddit r/aoe2 y r/rts.</strong> Post con: <em>"I made an RTS about the forgotten Atlantic conquest — 8 civs with hard asymmetric restrictions, procedural weather, Don Quijote as a playable hero."</em> Este post tiene potencial de 5.000+ upvotes. El nombre Don Quijote hace el trabajo de curiosidad.</div>
+          </li>
+          <li>
+            <div class="rec-icon">→</div>
+            <div><strong>Colaboración con historiadores y divulgadores.</strong> Vídeos "¿Qué tan histórico es Calima?" en YouTube generan contenido educativo orgánico. Convierte el juego en referencia cultural además de producto de entretenimiento.</div>
+          </li>
+          <li>
+            <div class="rec-icon">→</div>
+            <div><strong>Early Access con precio de entrada bajo.</strong> €12.99 EA → €17.99 v1.0. La curva de precio refleja el progreso del desarrollo y recompensa a los primeros creyentes sin alejar a compradores casuales.</div>
+          </li>
+        </ul>
+
+        <h3>Puntuación por dimensiones</h3>
+
+        <div class="score-grid">
+          <div class="score-item">
+            <div class="score-label">Originalidad setting</div>
+            <div class="score-value">9<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:90%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Profundidad sistémica</div>
+            <div class="score-value">8<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:80%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Arquitectura de código</div>
+            <div class="score-value">7<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:70%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Potencial viral</div>
+            <div class="score-value">8<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:80%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Potencial comercial</div>
+            <div class="score-value">8<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:80%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Riesgo de scope</div>
+            <div class="score-value">6<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:60%"></div></div>
+          </div>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 7 ────────────────────────────────────────── -->
+      <section class="section" id="roadmap">
+        <div class="section-header">
+          <div class="section-number">7</div>
+          <h2>Roadmap estratégico</h2>
+        </div>
+
+        <p>Un roadmap a 18 meses dividido en tres fases. La prioridad de la Fase 1 es estabilidad y credibilidad de AI. La Fase 2 es contenido narrativo y naval. La Fase 3 es multijugador y comunidad.</p>
+
+        <div class="timeline">
+
+          <div class="timeline-phase">
+            <div class="timeline-header">
+              <span class="timeline-badge q1">Fase 1 · 0–4 meses</span>
+              <span class="timeline-title">Estabilidad y AI competente</span>
+            </div>
+            <div class="timeline-body">
+              <ul>
+                <li><strong>Fix urgente:</strong> HeroUnit timers — migrar a Timer nodes hijos</li>
+                <li><strong>Fix urgente:</strong> AIPlayer lee costes desde BuildingResource</li>
+                <li><strong>AI investiga tecnologías</strong> — lógica de priorización simple</li>
+                <li><strong>Market degradación de tasas</strong> — curva anti-abuso como AoE2</li>
+                <li><strong>CivBonusManager</strong> — eliminar keys hardcodeados por nombre de civ</li>
+                <li><strong>Balance pass completo</strong> — primeras 50 partidas con todas las civs, testing de Market Fenicios</li>
+                <li><strong>Steam Next Fest demo</strong> — 2 civs (Guanches vs. Castellanos), 1 mapa, modo Conquista</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="timeline-phase">
+            <div class="timeline-header">
+              <span class="timeline-badge q2">Fase 2 · 4–10 meses</span>
+              <span class="timeline-title">Contenido narrativo y naval</span>
+            </div>
+            <div class="timeline-body">
+              <ul>
+                <li><strong>Campaña "La Resistencia de Bencomo"</strong> — 5 misiones con arco emocional completo</li>
+                <li><strong>3 nuevos tipos de barco</strong> — Galera de Guerra, Cog de Transporte, Galera de Fuego</li>
+                <li><strong>El Medidor de Calima</strong> — indicador visual dramático como feature viral</li>
+                <li><strong>Formalizar tono mítico-histórico</strong> — textos de lore en pantallas de carga</li>
+                <li><strong>Diplomacia básica</strong> — propuesta de alianza, heraldo, tregua de 3 minutos</li>
+                <li><strong>Refactor AIPlayer</strong> — módulos Economy, Military, Construction, Naval</li>
+                <li><strong>Early Access launch</strong> — €12.99, todas las civs y mapas, sin campaña completa</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="timeline-phase">
+            <div class="timeline-header">
+              <span class="timeline-badge q3">Fase 3 · 10–18 meses</span>
+              <span class="timeline-title">Multijugador y comunidad</span>
+            </div>
+            <div class="timeline-body">
+              <ul>
+                <li><strong>Multijugador LAN/online</strong> — base en Godot multiplayer con rollback (ya en arquitectura MatchConfig)</li>
+                <li><strong>Modo Historia Alterna</strong> — campaña donde los Guanches resisten definitivamente</li>
+                <li><strong>Sistema de Leyendas Atlánticas</strong> — edificios únicos Imperial Age por civ con win conditions alternativas</li>
+                <li><strong>2 civs nuevas</strong> (si Early Access lo justifica) — Portugueses, Berberes</li>
+                <li><strong>Editor de escenarios</strong> — exposición del MapGenerator a modders</li>
+                <li><strong>v1.0 launch</strong> — €17.99, campaña completa, multijugador estable</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="callout">
+          <div class="callout-label">La decisión más importante</div>
+          <p>La elección estratégica más crítica no es técnica. Es tonal: ¿es Calima un juego histórico con licencias creativas, o es un universo mítico-histórico donde el Atlántico antiguo tiene sus propias reglas?</p>
+          <p>La respuesta a esa pregunta define el trailer, el marketing, el tono de la campaña, si Don Quijote se queda o se va, y si los Atlantes son una civ "exótica" o parte central del lore. <strong>Mi recomendación: abrazar la mitología completamente.</strong> Atlantes, Fenicios, Don Quijote y Bencomo en el mismo mapa son más interesantes que un simulador histórico preciso. Y la singularidad, en el mercado indie, es el activo más escaso y más valioso.</p>
+        </div>
+
+        <!-- Veredicto final -->
+        <div class="verdict">
+          <div class="verdict-label">Evaluación técnico-comercial</div>
+          <p>Calima tiene lo más difícil: una identidad que ningún otro juego tiene. El setting virgen, el sistema de clima sistémico, la asimetría profunda de civs, los héroes con habilidades activas — todo apunta a un juego con carácter propio y difícil de copiar. La arquitectura de código es más sofisticada de lo habitual en proyectos de este tamaño: EventBus, recursos data-driven, CivBonusManager multiplicativo son decisiones de ingeniería correctas que facilitan el crecimiento futuro.</p>
+          <p>Los problemas técnicos identificados son concretos y corregibles: tres bugs de alta prioridad (timers de héroe, BUILDING_COSTS desincronizado, AI sin tecnologías) y dos god files que acumulan deuda técnica. Ninguno de ellos es un problema arquitectónico profundo — son bugs de implementación en una arquitectura sana.</p>
+          <p><span class="verdict-highlight">El riesgo real no es técnico sino de scope y polish visual.</span> Un RTS con 8 civs y assets genéricos no vende aunque el diseño sea brillante. La decisión más estratégica es no añadir más features hasta que las 8 civs existentes tengan identidad visual completa. Cuatro civs con sprites únicos valen más que ocho civs con el mismo sprite recoloreado.</p>
+        </div>
+
+      </section>
+
+    </article>
+
+    <footer class="article-footer">
+      <p>Análisis elaborado por <strong>IndieForge Magazine</strong> &nbsp;·&nbsp; Mayo 2026 &nbsp;·&nbsp; <a href="#">Política editorial</a> &nbsp;·&nbsp; <a href="#">Contacto</a></p>
+      <p>Este análisis fue generado como documento interno de auditoría técnica y diseño para el equipo de Calima: Flames of the Atlantic.</p>
+    </footer>
+  </div>
+
+  <script>
+    const bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (window.scrollY / total * 100) + '%';
+    }, { passive: true });
+  </script>
+
+</body>
+</html>

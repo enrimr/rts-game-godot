@@ -34,6 +34,11 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | Fishing Boat | `scripts/units/fishing_boat.gd` | Gathers FOOD_FISH from ocean nodes, returns to Dock |
 | Transport Ship | `scripts/units/transport_ship.gd` | Carries up to 8 military units across water; unloads them at the nearest passable shore position |
 | War Galley | `scripts/units/war_galley.gd` | Ranged naval combat unit |
+| AIPlayer | `scripts/ai/ai_player.gd` | AI coordinator; delegates to AIConstruction, AIEconomy, AIMilitary, AINaval |
+| AIConstruction | `scripts/ai/ai_construction.gd` | AI building placement and failure-cooldown tracking |
+| AIEconomy | `scripts/ai/ai_economy.gd` | AI villager management, resource assignment, age-advance |
+| AIMilitary | `scripts/ai/ai_military.gd` | AI aggression state, military training, research, combat |
+| AINaval | `scripts/ai/ai_naval.gd` | AI naval training, galley patrol, transport assault, fish traps |
 
 ## Autoloads (Singletons)
 

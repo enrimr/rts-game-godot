@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calima: Flames of the Atlantic — Análisis Profundo | IndieForge Magazine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset ────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Design tokens ────────────────────────────────────────────── */
+    :root {
+      /* Brand */
+      --ember:          #d4522e;
+      --ember-dark:     #a83e22;
+      --ember-glow:     rgba(212,82,46,0.12);
+      --gold:           #c8901a;
+      --gold-light:     #f5c030;
+      --gold-pale:      #fdf5dc;
+
+      /* Neutrals – light surfaces */
+      --white:          #ffffff;
+      --surface:        #faf8f5;
+      --surface-raised: #f2ede6;
+      --border:         #e4ddd4;
+      --border-strong:  #cfc6ba;
+
+      /* Neutrals – dark surfaces */
+      --dark-900:       #17140f;
+      --dark-800:       #211d17;
+      --dark-700:       #2e2820;
+      --dark-600:       #3d3428;
+
+      /* Text on light */
+      --text-primary:   #1c1814;
+      --text-secondary: #50453c;
+      --text-tertiary:  #7a6e64;
+
+      /* Text on dark — all pass 4.5:1 on dark-800 */
+      --on-dark:        #f0ece5;
+      --on-dark-muted:  #c4b9ae;  /* 5.8:1 on dark-800 */
+      --on-dark-label:  #f5c030;  /* gold, used for labels */
+
+      /* Accent – ocean */
+      --ocean:          #1e5c96;
+      --ocean-bg:       #e6eff8;
+      --ocean-border:   #b6ceea;
+
+      /* Typography */
+      --serif:   'Playfair Display', Georgia, serif;
+      --sans:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+
+      /* Layout */
+      --max-w:   820px;
+      --r:       10px;
+      --r-sm:    6px;
+    }
+
+    /* ── Base ─────────────────────────────────────────────────────── */
+    html   { scroll-behavior: smooth; font-size: 17px; }
+    body   { background: var(--dark-900); color: var(--text-primary);
+             font-family: var(--sans); line-height: 1.7; }
+
+    /* ── Progress bar ─────────────────────────────────────────────── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0; z-index: 200;
+      height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--ember), var(--gold-light));
+      transition: width 0.1s linear;
+    }
+
+    /* ── Masthead ─────────────────────────────────────────────────── */
+    .masthead {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(23,20,15,0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 0 2rem;
+      height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .masthead-logo {
+      font-family: var(--sans); font-size: 0.8rem; font-weight: 800;
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--on-dark);
+    }
+    .masthead-logo span { color: var(--ember); }
+
+    .masthead-nav { display: flex; gap: 1.75rem; list-style: none; }
+    .masthead-nav a {
+      font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--on-dark-muted);
+      text-decoration: none; transition: color 0.18s;
+    }
+    .masthead-nav a:hover { color: var(--gold-light); }
+
+    /* ── Hero ─────────────────────────────────────────────────────── */
+    .hero {
+      position: relative; min-height: 560px;
+      display: flex; align-items: flex-end; overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 100% 55% at 65% 35%, rgba(212,82,46,0.32) 0%, transparent 58%),
+        linear-gradient(170deg,
+          #0d0b08 0%,
+          #1a1510 20%,
+          #36280f 52%,
+          #c87820 78%,
+          #e8a030 100%
+        );
+    }
+
+    .hero-sun {
+      position: absolute; top: 12%; right: 16%;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, #ffd060 0%, #c8901a 45%, transparent 75%);
+      filter: blur(22px); opacity: 0.65;
+    }
+
+    /* Ensures text is always legible regardless of bg */
+    .hero-vignette {
+      position: absolute; inset: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(15,12,8,0.78) 0%,
+        rgba(15,12,8,0.55) 55%,
+        transparent 100%
+      );
+    }
+
+    .hero-content {
+      position: relative; z-index: 2;
+      padding: 3.5rem 3rem 3.5rem;
+      max-width: 680px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--ember); color: #fff;
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      padding: 0.28rem 0.75rem; border-radius: 2px;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 {
+      font-family: var(--serif); font-weight: 800;
+      font-size: clamp(1.9rem, 4.5vw, 3.2rem);
+      line-height: 1.1; color: #fff;
+      margin-bottom: 1rem;
+      text-shadow: 0 1px 24px rgba(0,0,0,0.6);
+    }
+    .hero h1 em { color: var(--gold-light); font-style: normal; }
+
+    .hero-deck {
+      font-size: 1rem; line-height: 1.6;
+      color: var(--on-dark-muted);
+      max-width: 560px; margin-bottom: 2rem;
+    }
+
+    .hero-meta { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+
+    .author-avatar {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--ocean) 0%, var(--ember) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700; color: #fff;
+    }
+
+    .author-info { font-size: 0.78rem; color: var(--on-dark-muted); }
+    .author-info strong { display: block; color: var(--on-dark); font-size: 0.82rem; font-weight: 600; }
+
+    .hero-sep { width: 1px; height: 24px; background: rgba(255,255,255,0.15); }
+
+    .hero-date { font-size: 0.75rem; color: var(--on-dark-muted); }
+
+    /* ── Article wrapper ──────────────────────────────────────────── */
+    .article-wrapper { background: var(--surface); }
+
+    .article-body {
+      max-width: var(--max-w); margin: 0 auto;
+      padding: 3rem 2rem 5rem;
+    }
+
+    /* ── TOC ──────────────────────────────────────────────────────── */
+    .toc {
+      background: var(--white); border: 1px solid var(--border);
+      border-top: 3px solid var(--ember);
+      border-radius: 0 0 var(--r) var(--r);
+      padding: 1.5rem 1.75rem; margin-bottom: 3rem;
+    }
+    .toc-title {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 0.8rem;
+    }
+    .toc ol { padding-left: 1.1rem; }
+    .toc li { margin: 0.3rem 0; }
+    .toc a {
+      font-size: 0.85rem; font-weight: 500; color: var(--ocean);
+      text-decoration: none; transition: color 0.15s;
+    }
+    .toc a:hover { color: var(--ember); }
+
+    /* ── Intro ────────────────────────────────────────────────────── */
+    .intro { margin-bottom: 3rem; }
+
+    .dropcap::first-letter {
+      float: left; font-family: var(--serif); font-size: 4rem;
+      font-weight: 800; line-height: 0.82; color: var(--ember);
+      margin: 0.1em 0.1em 0 0;
+    }
+
+    /* ── Sections ─────────────────────────────────────────────────── */
+    .section { margin-bottom: 3.5rem; }
+
+    .section-header {
+      display: flex; align-items: center; gap: 0.9rem;
+      margin-bottom: 1.75rem; padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-number {
+      flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--ember) 0%, var(--gold) 100%);
+      color: #fff; font-size: 0.72rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(212,82,46,0.35);
+    }
+
+    h2 {
+      font-family: var(--serif); font-size: 1.65rem; font-weight: 700;
+      color: var(--text-primary); line-height: 1.2;
+    }
+
+    h3 {
+      font-family: var(--serif); font-size: 1.15rem; font-weight: 700;
+      color: var(--ember-dark); margin: 2rem 0 0.75rem;
+    }
+
+    h4 {
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-tertiary); margin: 1.5rem 0 0.5rem;
+    }
+
+    p { margin-bottom: 1.15rem; color: var(--text-primary); font-size: 1rem; line-height: 1.75; }
+    strong { font-weight: 700; color: var(--text-primary); }
+    em { color: var(--text-secondary); font-style: italic; }
+
+    /* ── Pull quote ───────────────────────────────────────────────── */
+    .pullquote {
+      position: relative; padding: 1.5rem 1.75rem 1.5rem 2.5rem;
+      margin: 2.5rem 0; border-left: 4px solid var(--ember);
+      background: var(--white); border-radius: 0 var(--r) var(--r) 0;
+    }
+    .pullquote::before {
+      content: '\201C';
+      position: absolute; top: -0.15rem; left: 0.6rem;
+      font-family: var(--serif); font-size: 3.5rem; line-height: 1;
+      color: var(--ember); opacity: 0.3;
+    }
+    .pullquote p {
+      font-family: var(--serif); font-size: 1.2rem; font-weight: 700;
+      line-height: 1.45; color: var(--ember-dark); margin: 0;
+    }
+
+    /* ── Callout (dark bg) ────────────────────────────────────────── */
+    .callout {
+      background: var(--dark-700); border-radius: var(--r);
+      padding: 1.5rem 1.75rem 1.5rem 2rem;
+      margin: 2rem 0; position: relative; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .callout::before {
+      content: ''; position: absolute; top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: linear-gradient(180deg, var(--gold-light), var(--gold));
+    }
+    .callout-label {
+      font-size: 0.63rem; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--on-dark-label); margin-bottom: 0.6rem;
+    }
+    /* All text inside callout must be light */
+    .callout p { color: var(--on-dark); font-size: 0.95rem; margin: 0; }
+    .callout p strong { color: var(--on-dark); font-weight: 700; }
+    .callout p em { color: var(--on-dark-muted); font-style: italic; }
+
+    /* ── Risk box ─────────────────────────────────────────────────── */
+    .risk-box {
+      background: var(--white); border: 1px solid #f0d8d2;
+      border-left: 4px solid var(--ember);
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      padding: 1.1rem 1.4rem; margin: 1.25rem 0;
+    }
+    .risk-box p { margin: 0; color: var(--text-secondary); font-size: 0.93rem; }
+    .risk-box p strong { color: var(--ember-dark); font-weight: 700; }
+    .risk-box p em { color: var(--text-tertiary); }
+
+    /* ── Feature box ──────────────────────────────────────────────── */
+    .feature-box {
+      background: var(--white); border: 1px solid var(--ocean-border);
+      border-left: 4px solid var(--ocean);
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      padding: 1.1rem 1.4rem; margin: 1.25rem 0;
+    }
+    .feature-box p { margin: 0; color: var(--text-secondary); font-size: 0.93rem; }
+    .feature-box p strong { color: var(--ocean); font-weight: 700; }
+    .feature-box p em { color: var(--text-tertiary); }
+
+    /* ── Tables ───────────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto; margin: 1.75rem 0;
+      border: 1px solid var(--border); border-radius: var(--r);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+
+    thead { background: var(--dark-800); }
+    thead th {
+      padding: 0.7rem 1rem; text-align: left;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--on-dark);  /* light text on dark bg */
+    }
+
+    tbody tr { transition: background 0.12s; }
+    tbody tr:nth-child(even) { background: var(--surface-raised); }
+    tbody tr:nth-child(odd)  { background: var(--white); }
+    tbody tr:hover { background: #f5eee6; }
+
+    tbody td {
+      padding: 0.6rem 1rem; color: var(--text-primary);
+      vertical-align: top; border-bottom: 1px solid var(--border);
+      line-height: 1.5;
+    }
+    tbody td strong { color: var(--ember-dark); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Score grid ───────────────────────────────────────────────── */
+    .score-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.85rem; margin: 2rem 0;
+    }
+
+    .score-item {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.25rem 1rem;
+      text-align: center; transition: box-shadow 0.18s;
+    }
+    .score-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+    .score-label {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 0.5rem;
+    }
+
+    .score-value {
+      font-family: var(--serif); font-size: 2.5rem; font-weight: 800;
+      line-height: 1; color: var(--ember);
+    }
+    .score-value span { font-size: 0.9rem; color: var(--text-tertiary); font-family: var(--sans); font-weight: 500; }
+
+    .score-bar {
+      margin-top: 0.6rem; height: 3px;
+      background: var(--surface-raised); border-radius: 2px; overflow: hidden;
+    }
+    .score-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--ember) 0%, var(--gold-light) 100%);
+    }
+
+    /* ── Verdict (dark bg) ────────────────────────────────────────── */
+    .verdict {
+      background: var(--dark-800);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--r); padding: 2.5rem;
+      margin: 3rem 0 0; position: relative; overflow: hidden;
+    }
+    .verdict::after {
+      content: '8.5';
+      position: absolute; bottom: -1.5rem; right: -0.5rem;
+      font-family: var(--serif); font-size: 10rem; font-weight: 800;
+      color: rgba(255,255,255,0.03); line-height: 1; pointer-events: none;
+    }
+
+    .verdict-label {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--on-dark-label); margin-bottom: 0.75rem;
+    }
+
+    .verdict-score {
+      font-family: var(--serif); font-size: 4.5rem; font-weight: 800;
+      color: var(--gold-light); line-height: 1; margin-bottom: 0.2rem;
+    }
+
+    .verdict-out-of {
+      font-size: 0.82rem; font-weight: 500;
+      color: var(--on-dark-muted);  /* FIXED: was ash-light on dark */
+      margin-bottom: 1.75rem;
+    }
+
+    /* All text inside verdict must be light */
+    .verdict p {
+      color: var(--on-dark-muted); font-size: 0.97rem;
+      line-height: 1.7; margin: 0 0 1rem; position: relative; z-index: 1;
+    }
+    .verdict p:last-child { margin-bottom: 0; }
+    .verdict p strong { color: var(--on-dark); font-weight: 700; }
+    .verdict p em { color: var(--on-dark-muted); }
+
+    .verdict-highlight {
+      color: var(--gold-light) !important; font-weight: 700 !important;
+    }
+
+    /* ── Civ cards ────────────────────────────────────────────────── */
+    .civ-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.85rem; margin: 1.5rem 0;
+    }
+    .civ-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.1rem 1.25rem;
+      transition: box-shadow 0.18s, transform 0.18s;
+    }
+    .civ-card:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+      transform: translateY(-1px);
+    }
+    .civ-card-name {
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.3rem;
+    }
+    .civ-card-name.native  { color: var(--ember); }
+    .civ-card-name.invader { color: var(--ocean); }
+    .civ-card-name.ancient { color: #6b4f9a; }
+
+    .civ-card-hero {
+      font-size: 0.76rem; color: var(--text-tertiary); margin-bottom: 0.6rem;
+    }
+    .civ-card p { font-size: 0.83rem; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+
+    .tag {
+      display: inline-block; font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.18rem 0.5rem; margin: 0.5rem 0.25rem 0 0;
+      border-radius: 3px;
+    }
+    .tag-green { background: #d8f0de; color: #15672a; }
+    .tag-red   { background: #fce8e4; color: #9a2a1a; }
+    .tag-blue  { background: #dceaf7; color: #1a4a7a; }
+    .tag-gold  { background: var(--gold-pale); color: #7a4a00; }
+
+    /* ── Weather cards ────────────────────────────────────────────── */
+    .weather-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.85rem; margin: 1.5rem 0;
+    }
+    .weather-card {
+      padding: 1.25rem; border-radius: var(--r); border: 1px solid;
+      transition: box-shadow 0.18s;
+    }
+    .weather-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+
+    .weather-card.calima { background: #fef8e6; border-color: #e8c858; }
+    .weather-card.storm  { background: #eaf0f8; border-color: #7aaad0; }
+    .weather-card.fog    { background: #eff3f0; border-color: #8ab098; }
+    .weather-card.winds  { background: #eaf3fc; border-color: #7ab4d8; }
+    .weather-card.ash    { background: #f2f0ee; border-color: #a89e96; }
+
+    .weather-icon { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; }
+
+    .weather-card h4 {
+      margin: 0 0 0.4rem; font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-primary);
+    }
+    .weather-card p { font-size: 0.82rem; margin: 0; color: var(--text-secondary); line-height: 1.5; }
+
+    /* ── Rec list ─────────────────────────────────────────────────── */
+    .rec-list { list-style: none; margin: 1rem 0; }
+    .rec-list li {
+      display: flex; gap: 0.9rem; align-items: flex-start;
+      margin-bottom: 0.75rem; padding: 1rem 1.25rem;
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--r); font-size: 0.92rem; color: var(--text-secondary);
+      transition: box-shadow 0.18s;
+    }
+    .rec-list li:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .rec-list li strong { color: var(--text-primary); }
+    .rec-list li em { color: var(--text-tertiary); }
+
+    .rec-icon {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--ember), var(--gold));
+      color: #fff; font-size: 0.68rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px; box-shadow: 0 2px 6px rgba(212,82,46,0.3);
+    }
+
+    /* ── Divider ──────────────────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+    .article-footer {
+      background: var(--dark-900);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 2rem; text-align: center;
+    }
+    .article-footer p {
+      font-family: var(--sans); font-size: 0.78rem;
+      color: var(--on-dark-muted);  /* FIXED: was ash-light on dark */
+      margin: 0;
+    }
+    .article-footer p + p { margin-top: 0.4rem; opacity: 0.65; }
+    .article-footer strong { color: var(--on-dark); font-weight: 600; }
+    .article-footer a { color: var(--gold-light); text-decoration: none; }
+    .article-footer a:hover { text-decoration: underline; }
+
+    /* ── Responsive ───────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .masthead-nav        { display: none; }
+      .hero-content        { padding: 2rem 1.5rem 2.5rem; }
+      .article-body        { padding: 2rem 1.25rem 3rem; }
+      .verdict             { padding: 1.75rem; }
+      .verdict-score       { font-size: 3.5rem; }
+      .verdict::after      { display: none; }
+      .score-grid          { grid-template-columns: repeat(2, 1fr); }
+      h2                   { font-size: 1.45rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Reading progress -->
+  <div id="progress-bar"></div>
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div class="masthead-logo">Indie<span>Forge</span> Magazine</div>
+    <nav>
+      <ul class="masthead-nav">
+        <li><a href="#">Análisis</a></li>
+        <li><a href="#">Indie Dev</a></li>
+        <li><a href="#">Game Design</a></li>
+        <li><a href="#">Mercado</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-sun"></div>
+    <div class="hero-vignette"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Análisis Profundo &nbsp;·&nbsp; RTS Indie</div>
+      <h1><em>Calima: Flames of the Atlantic</em> — El RTS indie que nadie esperaba y todos necesitaban</h1>
+      <p class="hero-deck">Un RTS de gestión de recursos ambientado en la Conquista de las Islas Canarias, con 8 civilizaciones asimétricas, clima dinámico y Don Quijote en el campo de batalla. Esto no es un clon de AoE2. Es algo más extraño y más interesante que eso.</p>
+      <div class="hero-meta">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <div class="author-avatar">IF</div>
+          <div class="author-info">
+            <strong>IndieForge Análisis</strong>
+            Game Design · Mercado Indie
+          </div>
+        </div>
+        <div class="hero-sep"></div>
+        <div class="hero-date">Mayo 2026 &nbsp;·&nbsp; Lectura: 18 min</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Article -->
+  <div class="article-wrapper">
+    <article class="article-body">
+
+      <!-- TOC -->
+      <nav class="toc">
+        <div class="toc-title">Contenido del artículo</div>
+        <ol>
+          <li><a href="#identidad">Qué hace único al juego</a></li>
+          <li><a href="#valor">Valor añadido y mecánicas</a></li>
+          <li><a href="#competencia">Diferenciación respecto a la competencia</a></li>
+          <li><a href="#debilidades">Debilidades y riesgos</a></li>
+          <li><a href="#mejoras">Qué añadiría para llevarlo a otro nivel</a></li>
+          <li><a href="#comercial">Potencial comercial y marketing</a></li>
+          <li><a href="#veredicto">Veredicto final</a></li>
+        </ol>
+      </nav>
+
+      <!-- Intro -->
+      <div class="intro">
+        <p class="dropcap">Existe un territorio en el diseño de videojuegos indie que muy pocos desarrolladores se atreven a explorar: el espacio entre historia real y mitología, entre el rigor académico y la libertad creativa absoluta. <strong>Calima: Flames of the Atlantic</strong> vive en ese territorio con una convicción rara en un proyecto en desarrollo. Y lo que ha construido ahí es, francamente, más interesante de lo que parece a primera vista.</p>
+        <p>Esto es un análisis profundo del juego tal y como existe hoy: su arquitectura de diseño, sus decisiones sistémicas, sus riesgos reales y su potencial de mercado. No es una descripción. Es una disección.</p>
+      </div>
+
+      <!-- ─── SECCIÓN 1 ────────────────────────────────────────── -->
+      <section class="section" id="identidad">
+        <div class="section-header">
+          <div class="section-number">1</div>
+          <h2>Qué hace único al juego</h2>
+        </div>
+
+        <h3>El setting es oro virgen</h3>
+
+        <p>La Conquista de las Islas Canarias (1402–1496) no existe en ningún videojuego RTS relevante. Punto. Esta es una ventaja competitiva que la mayoría de devs indie no tienen porque es casi imposible de fabricar artificialmente: un nicho histórico sin competencia directa.</p>
+
+        <p>El setting reúne todo lo que hace grande a un RTS: conflicto asimétrico genuino (indígenas vs. colonizadores europeos), geografía extrema (volcanes, caldera, océano Atlántico, dunas de lava), figuras históricas apasionantes, y un fenómeno meteorológico con nombre propio que da título al juego.</p>
+
+        <div class="pullquote">
+          <p>"El juego se llama Calima y ese es además un mechanic sistémico. El nombre del juego ES una mecánica. Eso no lo hace casi nadie."</p>
+        </div>
+
+        <p>Que el juego se llame "Calima" y que ese sea también un estado de clima dinámico con efectos reales sobre visión, velocidad y economía es un acto de diseño con coherencia poética. No es marketing. Es arquitectura.</p>
+
+        <h3>Las civilizaciones tienen personalidad real, no solo stats</h3>
+
+        <p>AoE2 diseña civs sumando bonuses. Calima diseña civs <strong>restando también</strong>. Las restricciones duras crean identidades de juego imposibles de ignorar, más cercanas al diseño asimétrico de StarCraft que al estilo AoE.</p>
+
+        <div class="civ-grid">
+          <div class="civ-card">
+            <div class="civ-card-name native">Guanches</div>
+            <div class="civ-card-hero">Héroe: Bencomo</div>
+            <p>Piedra y resistencia. Sin caballería, sin pólvora. Te obliga a dominar el terreno volcánico.</p>
+            <span class="tag tag-green">+20% HP edificios</span>
+            <span class="tag tag-red">Sin caballería</span>
+          </div>
+          <div class="civ-card">
+            <div class="civ-card-name native">Mahos</div>
+            <div class="civ-card-hero">Héroe: Guadarfía</div>
+            <p>Hit & run automático. Expansión rápida y bajo coste en madera. Juegan en las dunas.</p>
+            <span class="tag tag-green">-30% coste edificios</span>
+            <span class="tag tag-red">Sin caballería pesada</span>
+          </div>
+          <div class="civ-card">
+            <div class="civ-card-name invader">Francos</div>
+            <div class="civ-card-hero">Héroe: Jean de Béthencourt</div>
+            <p>Avance de edad 15% más barato. Caballería poderosa. Presión de Castle Age.</p>
+            <span class="tag tag-blue">-15% avance de edad</span>
+            <span class="tag tag-red">Sin arquería plena</span>
+          </div>
+          <div class="civ-card">
+            <div class="civ-card-name invader">Castellanos</div>
+            <div class="civ-card-hero">Héroe: Don Quijote</div>
+            <p>Sin restricciones. Tecnología gratuita por cada avance de edad. Bola de nieve inevitable.</p>
+            <span class="tag tag-gold">Tech gratis/edad</span>
+            <span class="tag tag-green">Sin restricciones</span>
+          </div>
+          <div class="civ-card">
+            <div class="civ-card-name ancient">Atlantes</div>
+            <div class="civ-card-hero">Héroe: Artaxerax</div>
+            <p>Dominio naval absoluto. En mapas de islas, son una civ diferente a cualquier otra del juego.</p>
+            <span class="tag tag-blue">+50% visión costera</span>
+            <span class="tag tag-red">Sin siege workshop</span>
+          </div>
+          <div class="civ-card">
+            <div class="civ-card-name ancient">Fenicios</div>
+            <div class="civ-card-hero">Héroe: Hannón el Navegante</div>
+            <p>Market desde el Dark Age. Oro pasivo de barcos comerciales. La economía como arma.</p>
+            <span class="tag tag-gold">Market desde Edad 0</span>
+            <span class="tag tag-red">Sin knights</span>
+          </div>
+        </div>
+
+        <h3>El héroe de los Castellanos es Don Quijote</h3>
+
+        <p>Esto puede parecer un error de diseño. Es, en realidad, el detalle más revelador del juego. Don Quijote es un personaje ficticio publicado en 1605 puesto en una guerra del siglo XV. Su habilidad se llama "Knight Errant Charge" y hace daño AoE de caballería.</p>
+
+        <div class="callout">
+          <div class="callout-label">Lectura de diseño</div>
+          <p>Hay una decisión narrativa implícita: este juego no es historia, es <strong>mitología histórica</strong>. Guanches, Atlantes, Fenicios y Don Quijote coexisten en un mismo campo de batalla atlántico. Eso tiene potencial enorme si se abraza conscientemente.</p>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 2 ────────────────────────────────────────── -->
+      <section class="section" id="valor">
+        <div class="section-header">
+          <div class="section-number">2</div>
+          <h2>Valor añadido y mecánicas</h2>
+        </div>
+
+        <h3>El sistema de clima como diseño emergente</h3>
+
+        <p>El WeatherManager es probablemente el sistema más original del juego. Cinco estados climáticos con transiciones suaves (10 segundos de rampa) y efectos espaciales que afectan a todos los jugadores por igual. Esa igualdad es la clave: no es una ventaja para nadie, es una <em>ventana de oportunidad para el más preparado</em>.</p>
+
+        <div class="weather-grid">
+          <div class="weather-card calima">
+            <span class="weather-icon">🌫️</span>
+            <h4>Calima</h4>
+            <p>−40% visión · −20% gathering. Fuerza al jugador que exploró antes del pico.</p>
+          </div>
+          <div class="weather-card storm">
+            <span class="weather-icon">⛈️</span>
+            <h4>Tormenta Atlántica</h4>
+            <p>−50% pesca · Deriva de proyectiles. Paraliza economías navales.</p>
+          </div>
+          <div class="weather-card fog">
+            <span class="weather-icon">🌁</span>
+            <h4>Niebla del Mar</h4>
+            <p>−60% visión costera. Oculta unidades enemigas en costa. Sigilo involuntario.</p>
+          </div>
+          <div class="weather-card winds">
+            <span class="weather-icon">💨</span>
+            <h4>Vientos Alisios</h4>
+            <p>±20% velocidad naval según dirección. El posicionamiento como ventaja.</p>
+          </div>
+          <div class="weather-card ash">
+            <span class="weather-icon">🌋</span>
+            <h4>Ceniza Volcánica</h4>
+            <p>Edificios pierden 2 HP/s · −50% visión en zona central. Ataques oportunistas.</p>
+          </div>
+        </div>
+
+        <h3>Unidades con comportamientos autónomos</h3>
+
+        <p>El diseño más interesante de Calima no está en los stats. Está en los comportamientos automáticos de las unidades únicas, que crean decisiones estratégicas emergentes sin requerir micromanagement extremo:</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Unidad</th>
+                <th>Civ</th>
+                <th>Comportamiento autónomo</th>
+                <th>Implicación táctica</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Sand Raider</strong></td>
+                <td>Mahos</td>
+                <td>Se retira 90 px tras cada ataque, luego re-engaja</td>
+                <td>Kiting automático sin micro del jugador</td>
+              </tr>
+              <tr>
+                <td><strong>Menceyes Guard</strong></td>
+                <td>Guanches</td>
+                <td>Con HP &lt; 50%, pulsea +3 ataque a aliados en 80 px cada 2s</td>
+                <td>Úsalo como carnada deliberada</td>
+              </tr>
+              <tr>
+                <td><strong>Chevalier Normand</strong></td>
+                <td>Francos</td>
+                <td>Primer ataque tras ≥80 px de movimiento: ×2.5 daño</td>
+                <td>Fuerza a cargar desde lejos como una lanza real</td>
+              </tr>
+              <tr>
+                <td><strong>Trebuchet</strong></td>
+                <td>Todos</td>
+                <td>3s de despliegue; se repliega automáticamente al ordenar mover</td>
+                <td>Tensión de timing inexistente en AoE2</td>
+              </tr>
+              <tr>
+                <td><strong>Tidecaller</strong></td>
+                <td>Atlantes</td>
+                <td>Cada ataque daña 2 AoE a enemigos en 65 px</td>
+                <td>Excelente contra formaciones navales densas</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Terreno como mecánica de identidad de civilización</h3>
+
+        <p>El sistema de terreno es uno de los más sofisticados en un RTS indie. La sinergia entre civilización, terreno y mapa crea una dimensión estratégica tridimensional: los Guanches en Volcanic Coast son una civ completamente diferente a los Guanches en Islands.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Terreno</th>
+                <th>Efecto estándar</th>
+                <th>Inmune</th>
+                <th>Bonus especial</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Risco (acantilado)</strong></td>
+                <td>Inaccesible para la mayoría</td>
+                <td>—</td>
+                <td>+2 rango de ataque si estás encima</td>
+              </tr>
+              <tr>
+                <td><strong>Caldera</strong></td>
+                <td>Impasable</td>
+                <td>—</td>
+                <td>Controlar zona adyacente → +stone/min</td>
+              </tr>
+              <tr>
+                <td><strong>Malpais</strong></td>
+                <td>−50% movimiento, inedificable</td>
+                <td>Guanches</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><strong>Dunas</strong></td>
+                <td>−20% infantería pesada</td>
+                <td>Mahos</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><strong>Laurisilva</strong></td>
+                <td>−30% movimiento</td>
+                <td>—</td>
+                <td>Alta densidad de madera</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 3 ────────────────────────────────────────── -->
+      <section class="section" id="competencia">
+        <div class="section-header">
+          <div class="section-number">3</div>
+          <h2>Diferenciación respecto a la competencia</h2>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Aspecto</th>
+                <th>AoE2: DE</th>
+                <th>0 A.D.</th>
+                <th>Northgard</th>
+                <th>Calima</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Setting</strong></td>
+                <td>Medieval mundial</td>
+                <td>Antigüedad</td>
+                <td>Nórdico fantástico</td>
+                <td><strong>Atlántico siglo XV (único)</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Asimetría civs</strong></td>
+                <td>Bonuses aditivos</td>
+                <td>Moderada</td>
+                <td>Moderada</td>
+                <td><strong>Restricciones duras (StarCraft-like)</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Clima dinámico</strong></td>
+                <td>No</td>
+                <td>No</td>
+                <td>Estaciones fijas</td>
+                <td><strong>5 tipos con efectos espaciales</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Héroes con abilities</strong></td>
+                <td>No</td>
+                <td>No</td>
+                <td>No</td>
+                <td><strong>Sí, estilo Warcraft III</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Terreno con inmunidades</strong></td>
+                <td>Básico</td>
+                <td>Moderado</td>
+                <td>No</td>
+                <td><strong>Sí, por civilización</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Nicho histórico</strong></td>
+                <td>Saturado</td>
+                <td>Moderado</td>
+                <td>Moderado</td>
+                <td><strong>Virgen</strong></td>
+              </tr>
+              <tr>
+                <td><strong>Precio estimado</strong></td>
+                <td>~€20</td>
+                <td>Gratis</td>
+                <td>~€25</td>
+                <td>€14–18 (indie)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <div class="callout-label">Oportunidad de mercado</div>
+          <p>AoE2: DE tiene más de 100.000 jugadores activos diarios en Steam. Es una comunidad enorme hambrienta de "AoE-likes" con identidad propia. <em>Age of Mythology Retold</em> (2024) demostró que el género vive. <strong>Calima puede ser el indie RTS para el jugador de AoE2 que quiere algo más fresco.</strong></p>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 4 ────────────────────────────────────────── -->
+      <section class="section" id="debilidades">
+        <div class="section-header">
+          <div class="section-number">4</div>
+          <h2>Debilidades y riesgos</h2>
+        </div>
+
+        <div class="risk-box">
+          <p><strong>Riesgo 1 — Inconsistencia tonal no resuelta.</strong> El juego tiene tres capas históricas (realista, libre y mitológica) sin un marco narrativo explícito. La mezcla puede ser brillante o confusa dependiendo de si se abraza conscientemente. Necesita un manifiesto narrativo claro, aunque sea una sola frase: <em>"En el Atlántico antiguo, la historia y la leyenda se confunden."</em></p>
+        </div>
+
+        <div class="risk-box">
+          <p><strong>Riesgo 2 — La IA tiene techo bajo.</strong> El AIPlayer usa composiciones de unidades hardcodeadas por Age, ticks cada 2 segundos, y no hace micro de héroes. Para un jugador casual es suficiente. Para el público RTS habitual —que viene de AoE2— se va a sentir predecible después de 5 partidas. Sin multijugador online, la IA es la única fuente de desafío a largo plazo.</p>
+        </div>
+
+        <div class="risk-box">
+          <p><strong>Riesgo 3 — 8 civilizaciones es demasiado scope sin polish visual.</strong> Un Guanche y un Franco con el mismo sprite son el mismo juego dos veces. AoE2 tiene 45 civs pero con decenas de millones de dólares. <strong>4-5 civs con identidad visual completa vale más que 8 civs con assets genéricos.</strong></p>
+        </div>
+
+        <div class="risk-box">
+          <p><strong>Riesgo 4 — El Market puede estar roto.</strong> Las tasas de trading son fijas (15:1 vender, 1:20 comprar). En AoE2 fluctúan con el volumen. Con tasas fijas, los Fenicios (Market desde Dark Age, oro pasivo desde barcos) pueden comprar infinitamente sin penalización progresiva. Necesita testeo de balance urgente.</p>
+        </div>
+
+        <div class="risk-box">
+          <p><strong>Riesgo 5 — Naval infrautilizado para el setting.</strong> El juego se llama "Flames of the <em>Atlantic</em>". Solo hay 3 unidades navales y el combate marítimo solo importa en mapas Islands. Para un juego ambientado en un archipiélago atlántico, el océano debería ser central, no opcional.</p>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 5 ────────────────────────────────────────── -->
+      <section class="section" id="mejoras">
+        <div class="section-header">
+          <div class="section-number">5</div>
+          <h2>Qué añadiría para llevarlo a otro nivel</h2>
+        </div>
+
+        <ul class="rec-list">
+          <li>
+            <div class="rec-icon">1</div>
+            <div>
+              <strong>Campaña "La Resistencia de Bencomo" — 5 misiones.</strong> La historia real es extraordinaria: Bencomo derrotó al ejército castellano en la Batalla de Acentejo (1494), una de las mayores derrotas españolas de la era colonial. Luego murió en la segunda batalla en 1495. Empieza con victoria, termina con derrota honrosa. Es una tragedia griega real. Como el final de <em>Halo: Reach</em>, crea impacto emocional memorable que ningún skirmish puede generar.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">2</div>
+            <div>
+              <strong>El Medidor de Calima como feature viral.</strong> Un indicador visual creciente de polvo Sahariano: barra naranja/rojo, partículas en bordes de pantalla, y un <em>blackout parcial dramático de 3 segundos</em> antes de que la reducción de visión se estabilice. Ese momento es un clip en Twitch. Es la primera cosa que aparece en un trailer.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">3</div>
+            <div>
+              <strong>Diplomacia básica ligada al conflicto histórico.</strong> Sistema simple de propuesta de alianza (enviar heraldo → aceptar/rechazar → 3 minutos de no-ataque). Históricamente auténtico: algunos Menceyes guanches colaboraron con los castellanos. Además, Britons vs. Castellanos como rivales naturales (Drake vs. Imperio Español) podría activar eventos especiales de enemistad.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">4</div>
+            <div>
+              <strong>Actualizar el ciclo naval.</strong> Corrientes oceánicas como versión simplificada de los Vientos Alisios, puertos neutrales en costas que generan gold pasivo, y barcos corsarios para los Britons que conviertan embarcaciones enemigas como los monjes convierten unidades terrestres. El Atlántico merece ser protagonista.
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">5</div>
+            <div>
+              <strong>Modo "Historia Alterna".</strong> ¿Qué pasaría si los Guanches resistieran definitivamente? Una campaña donde la victoria indígena desencadena consecuencias en todo el Atlántico. Hook para prensa: <em>"El juego donde puedes cambiar la historia colonial de América."</em>
+            </div>
+          </li>
+          <li>
+            <div class="rec-icon">6</div>
+            <div>
+              <strong>Abrazar el tono mítico-histórico explícitamente.</strong> Un sistema de <em>Leyendas Atlánticas</em>: al llegar al Imperial Age, cada civ desbloquea un edificio único con nombre de su mitología (la Ciudad Sumergida de los Atlantes, el Laberinto Fenicio, el Menceyato de los Guanches). Son win conditions alternativas que refuerzan la identidad narrativa.
+            </div>
+          </li>
+        </ul>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── SECCIÓN 6 ────────────────────────────────────────── -->
+      <section class="section" id="comercial">
+        <div class="section-header">
+          <div class="section-number">6</div>
+          <h2>Potencial comercial y marketing</h2>
+        </div>
+
+        <h3>Público objetivo</h3>
+
+        <div class="feature-box">
+          <p><strong>Perfil 1 — El jugador de AoE2 que busca variedad.</strong> 25–40 años, PC, Steam, 500+ horas de AoE2. Busca mecánicas familiares con setting fresco. Hook: <em>"Si te gusta AoE2, esto es lo que habrías diseñado si hubiera nacido en Canarias."</em></p>
+        </div>
+
+        <div class="feature-box">
+          <p><strong>Perfil 2 — El entusiasta de historia hispana.</strong> Español o latinoamericano, interesado en la era de las exploraciones. Le apasiona que el "lado nativo" sea jugable y poderoso. En España esto es grande: Bencomo es una figura cultural en Canarias comparable a Viriato en la Península.</p>
+        </div>
+
+        <div class="feature-box">
+          <p><strong>Perfil 3 — El fan de indie RTS.</strong> Sigue a devs como los de <em>Northgard</em>, <em>They Are Billions</em>, <em>Age of Wonders 4</em>. Valorará la profundidad sistémica. Es el comprador más temprano y el evangelista más efectivo en redes.</p>
+        </div>
+
+        <h3>Hooks virales para trailers y clips</h3>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Momento</th>
+                <th>Por qué funciona</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><strong>La llegada de la Calima</strong>: cámara aérea, arena naranja barriendo el mapa, música ralentizando</td>
+                <td>30 segundos que no existen en ningún otro RTS</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>Don Quijote cargando en las Canarias</strong>: sin contexto, absurdo y brillante</td>
+                <td>Genera debate y curiosidad — perfecto para Twitter/X</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>Transport Ship descargando guanches en playa volcánica</strong></td>
+                <td>Desembarco anfibio con volcán de fondo. Es el shot de portada.</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><strong>Artaxerax usando Calima</strong>: cubre aliados en velo, haciéndolos intocables 12s</td>
+                <td>Mecánica que nadie espera en un RTS histórico</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><strong>Timelapse de economía Fenicia</strong>: Market activo en Dark Age, gold acumulándose</td>
+                <td>Narrativa de economía como arte. Apela a jugadores de alto nivel.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Estrategia de lanzamiento recomendada</h3>
+
+        <ul class="rec-list">
+          <li>
+            <div class="rec-icon">→</div>
+            <div><strong>Canarias y España primero.</strong> Prensa local (El País, Eurogamer España, medios canarios). La cobertura es casi gratuita por ser "el juego de las islas". Es el mercado de menor fricción y mayor impacto emocional.</div>
+          </li>
+          <li>
+            <div class="rec-icon">→</div>
+            <div><strong>Reddit r/aoe2, r/rts.</strong> Post con: <em>"I made an RTS about the forgotten Atlantic conquest — 8 civs with hard asymmetric restrictions, procedural weather, and Don Quijote as a playable hero."</em> Ese post llega a 5.000 upvotes mínimo.</div>
+          </li>
+          <li>
+            <div class="rec-icon">→</div>
+            <div><strong>Colaboración con historiadores/educadores.</strong> Vídeos "¿Qué tan histórico es Calima?" generan contenido educativo orgánico en YouTube. Convierte el juego en referencia cultural.</div>
+          </li>
+          <li>
+            <div class="rec-icon">→</div>
+            <div><strong>Early Access con precio de entrada bajo.</strong> €12.99 EA → €17.99 lanzamiento 1.0. La curva de precio refleja el progreso del juego y recompensa a los primeros creyentes.</div>
+          </li>
+        </ul>
+
+        <h3>Puntuación por dimensiones</h3>
+
+        <div class="score-grid">
+          <div class="score-item">
+            <div class="score-label">Originalidad</div>
+            <div class="score-value">9<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:90%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Profundidad sistémica</div>
+            <div class="score-value">8<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:80%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Potencial viral</div>
+            <div class="score-value">8<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:80%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Riesgo de scope</div>
+            <div class="score-value">7<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:70%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Potencial comercial</div>
+            <div class="score-value">8<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:80%"></div></div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Identidad de marca</div>
+            <div class="score-value">9<span>/10</span></div>
+            <div class="score-bar"><div class="score-fill" style="width:90%"></div></div>
+          </div>
+        </div>
+
+      </section>
+
+      <hr class="divider" />
+
+      <!-- ─── VEREDICTO ─────────────────────────────────────────── -->
+      <section class="section" id="veredicto">
+        <div class="section-header">
+          <div class="section-number">7</div>
+          <h2>Veredicto final</h2>
+        </div>
+
+        <div class="verdict">
+          <div class="verdict-label">Puntuación IndieForge</div>
+          <div class="verdict-score">8.5</div>
+          <div class="verdict-out-of">sobre 10 &nbsp;·&nbsp; Muy recomendado</div>
+          <p>Calima tiene lo más difícil: una identidad que ningún otro juego tiene. El setting, la mezcla mítico-histórica, el sistema de clima, la asimetría profunda de civs — todo apunta a un juego con carácter propio. Los riesgos son los clásicos del indie RTS: scope ambicioso, IA con techo visible, y el arte como factor decisivo. Un RTS sin visual distinctiveness no vende aunque el diseño sea brillante.</p>
+          <p>La decisión más importante que tiene que tomar el equipo ahora mismo no es de código — es tonal. ¿Es este un juego histórico serio con licencias creativas? ¿O es un juego mítico-histórico donde el Atlántico antiguo es un universo alternativo? La respuesta a esa pregunta define el trailer, el marketing, la campaña narrativa y hasta si Don Quijote se queda o se va.</p>
+          <p><span class="verdict-highlight">Mi recomendación: abrazad la mitología.</span> Atlantes, Fenicios, Don Quijote y Bencomo en el mismo mapa son más interesantes que un simulador histórico preciso. La singularidad es el activo más escaso y más valioso del mercado indie. Y Calima, si se compromete con ella, tiene una singularidad genuina y difícil de copiar.</p>
+        </div>
+
+      </section>
+
+    </article>
+
+    <footer class="article-footer">
+      <p>Análisis elaborado por <strong>IndieForge Magazine</strong> &nbsp;·&nbsp; Mayo 2026 &nbsp;·&nbsp; <a href="#">Política editorial</a> &nbsp;·&nbsp; <a href="#">Contacto</a></p>
+      <p>Este análisis fue generado como documento interno de diseño para el equipo de Calima: Flames of the Atlantic.</p>
+    </footer>
+  </div>
+
+  <script>
+    const bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (window.scrollY / total * 100) + '%';
+    }, { passive: true });
+  </script>
+
+</body>
+</html>
