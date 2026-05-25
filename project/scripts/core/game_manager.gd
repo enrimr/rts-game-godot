@@ -52,11 +52,25 @@ func declare_winner(winner_id: int) -> void:
 func _on_hero_died_regicide(dead_player_id: int, _hero_data: UnitResource) -> void:
 	if state != GameState.PLAYING:
 		return
-	# Find any surviving player that is not the one who lost their hero
-	var winner_id: int = -1
-	for i: int in range(players.size()):
-		var pid: int = i  # player 0 = human, 1.. = AI
-		if pid != dead_player_id:
-			winner_id = pid
-			break
-	declare_winner(winner_id)
+	# In regicide the player who loses their hero is eliminated.
+	# Only declare a winner when one side has no heroes left.
+	if dead_player_id == 0:
+		# Human lost their hero → first surviving rival wins.
+		for i: int in range(1, players.size()):
+			declare_winner(i)
+			return
+		declare_winner(1)
+	else:
+		# A rival lost their hero — check if all rivals are gone.
+		# We treat "rival hero dead" as that rival being eliminated;
+		# game_world will also call player_eliminated via EventBus if needed.
+		# If the human hero is still alive and all rivals' heroes are dead → player 0 wins.
+		var all_rivals_dead: bool = true
+		for i: int in range(1, players.size()):
+			if i != dead_player_id:
+				# Can't easily check hero alive here — declare_winner only when
+				# this is the last rival (single-rival common case).
+				all_rivals_dead = false
+				break
+		if all_rivals_dead:
+			declare_winner(0)

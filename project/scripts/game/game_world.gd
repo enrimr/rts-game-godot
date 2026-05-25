@@ -120,9 +120,8 @@ var _wall_cost_label: Label = null
 # Pending action waiting for a map click ("move_to" or "attack_move")
 var _pending_action: String = ""
 
-var _wonder_timer: float = 0.0
-var _wonder_owner: int = -1
-var _wonder_node: Node = null
+# Wonder mode: per-player countdown. Key = player_id, value = seconds remaining.
+var _wonder_timers: Dictionary = {}  # int -> float
 var _nav_rebake_timer: float = 0.0
 var _nav_rebake_pending: bool = false
 const NAV_REBAKE_DELAY: float = 1.0
@@ -420,8 +419,6 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 	if owner_id == 0:
 		if building == drop_off:
 			drop_off = null
-		call_deferred("_check_defeat_for", 0)
-		return
 
 	# Keep _ai_town_centers in sync so TC-rebuild logic still works.
 	for rival_id: int in _ai_town_centers:
@@ -431,21 +428,26 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 				_ai_town_center = null
 			break
 
-	call_deferred("_check_defeat_for", owner_id)
+	# Conquest only — Wonder and Regicide have their own handlers.
+	if MatchConfig.victory_mode == MatchConfig.VictoryMode.CONQUEST:
+		call_deferred("_check_defeat_for", owner_id)
 
 func _on_unit_died_check_victory(unit: Node, owner_id: int) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
-	call_deferred("_check_defeat_for", owner_id)
+	# Conquest only — Regicide is handled by GameManager._on_hero_died_regicide.
+	if MatchConfig.victory_mode == MatchConfig.VictoryMode.CONQUEST:
+		call_deferred("_check_defeat_for", owner_id)
 
-## Central defeat check for any player. Deferred so queue_free() has
+## Conquest defeat check for any player. Deferred so queue_free() has
 ## processed before we scan. If the player is out, declare the other side winner.
 func _check_defeat_for(pid: int) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 	if _has_any_units(pid) or _has_any_buildings(pid):
 		return
-	# pid is eliminated — find a winner on the other side.
+	# Notify AI coordinator so it can clean up.
+	EventBus.player_eliminated.emit(pid)
 	if pid == 0:
 		# Player lost — pick any surviving rival.
 		for rival_id: int in MatchConfig.get_rival_player_ids():
@@ -455,15 +457,10 @@ func _check_defeat_for(pid: int) -> void:
 		GameManager.declare_winner(1)
 	else:
 		# A rival was eliminated — check if all rivals are now gone.
-		var any_rival_alive: bool = false
 		for rival_id: int in MatchConfig.get_rival_player_ids():
 			if _has_any_units(rival_id) or _has_any_buildings(rival_id):
-				any_rival_alive = true
-				break
-		if not any_rival_alive:
-			GameManager.declare_winner(0)
-		# Also emit player_eliminated so the AI coordinator cleans up.
-		EventBus.player_eliminated.emit(pid)
+				return
+		GameManager.declare_winner(0)
 
 func _on_player_eliminated(eliminated_id: int) -> void:
 	# Clean up AI coordinator references; victory already handled in _check_defeat_for.
@@ -510,31 +507,20 @@ func _on_building_construction_complete(building: Node) -> void:
 func _on_wonder_built(pid: int) -> void:
 	if MatchConfig.victory_mode != MatchConfig.VictoryMode.WONDER:
 		return
-	_wonder_owner = pid
-	_wonder_timer = 240.0
-	for b: Node in buildings_layer.get_children():
-		if b is Wonder and b.get("player_id") == pid:
-			_wonder_node = b
-			break
+	_wonder_timers[pid] = 240.0
 	var hud_mgr: Node = hud.get_node_or_null("HudManager")
 	if is_instance_valid(hud_mgr) and hud_mgr.has_method("show_wonder_timer"):
-		hud_mgr.call("show_wonder_timer", _wonder_owner)
+		hud_mgr.call("show_wonder_timer", pid)
 
 func _on_wonder_destroyed(pid: int) -> void:
-	if _wonder_owner != pid:
+	if not _wonder_timers.has(pid):
 		return
-	var loser: int = pid
-	_wonder_timer = 0.0
-	_wonder_owner = -1
-	_wonder_node = null
+	# Destroying a wonder cancels that player's countdown — no immediate loss.
+	# The game continues under conquest rules (or until another wonder timer expires).
+	_wonder_timers.erase(pid)
 	var hud_mgr: Node = hud.get_node_or_null("HudManager")
 	if is_instance_valid(hud_mgr) and hud_mgr.has_method("hide_wonder_timer"):
 		hud_mgr.call("hide_wonder_timer")
-	# The player whose Wonder was destroyed loses
-	if loser == 0:
-		GameManager.declare_winner(1)
-	else:
-		GameManager.declare_winner(0)
 
 func _process(delta: float) -> void:
 	if _nav_rebake_pending:
@@ -542,13 +528,16 @@ func _process(delta: float) -> void:
 		if _nav_rebake_timer <= 0.0:
 			_nav_rebake_pending = false
 			_do_nav_rebake()
-	if _wonder_timer > 0.0:
-		_wonder_timer -= delta
+	if not _wonder_timers.is_empty():
 		var hud_mgr: Node = hud.get_node_or_null("HudManager")
-		if is_instance_valid(hud_mgr) and hud_mgr.has_method("update_wonder_timer"):
-			hud_mgr.call("update_wonder_timer", _wonder_timer)
-		if _wonder_timer <= 0.0:
-			GameManager.declare_winner(_wonder_owner)
+		for wonder_pid: int in _wonder_timers.keys():
+			_wonder_timers[wonder_pid] = (_wonder_timers[wonder_pid] as float) - delta
+			if is_instance_valid(hud_mgr) and hud_mgr.has_method("update_wonder_timer"):
+				hud_mgr.call("update_wonder_timer", _wonder_timers[wonder_pid] as float)
+			if (_wonder_timers[wonder_pid] as float) <= 0.0:
+				_wonder_timers.erase(wonder_pid)
+				GameManager.declare_winner(wonder_pid)
+				break
 	_handle_camera(delta)
 	_handle_follow()
 	if _placing_building and is_instance_valid(_ghost):
