@@ -1,8 +1,8 @@
 class_name AIEconomy extends RefCounted
 
-var _ai: AIPlayer
+var _ai: Node  # AIPlayer — untyped to avoid circular class reference
 
-func setup(ai: AIPlayer) -> void:
+func setup(ai: Node) -> void:
 	_ai = ai
 
 func manage_villagers() -> void:

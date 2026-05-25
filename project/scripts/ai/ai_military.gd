@@ -1,6 +1,6 @@
 class_name AIMilitary extends RefCounted
 
-var _ai: AIPlayer
+var _ai: Node  # AIPlayer — untyped to avoid circular class reference
 
 enum AggressionLevel { PASSIVE, ALERTED, AGGRESSIVE }
 var _aggression: AggressionLevel = AggressionLevel.PASSIVE
@@ -9,7 +9,7 @@ var _aggression_timer: float = 0.0
 const AGGRESSION_DECAY: float     = 20.0
 const CONTROL_ZONE_RADIUS: float  = 400.0
 
-func setup(ai: AIPlayer) -> void:
+func setup(ai: Node) -> void:
 	_ai = ai
 
 func update_aggression(delta: float) -> void:

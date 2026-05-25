@@ -1,6 +1,6 @@
 class_name AIConstruction extends RefCounted
 
-var _ai: AIPlayer
+var _ai: Node  # AIPlayer — untyped to avoid circular class reference
 
 var _built: Dictionary = {
 	"barracks": 0, "blacksmith": 0, "stable": 0, "house": 0,
@@ -16,7 +16,7 @@ const BUILD_FAIL_SKIP_THRESHOLD: int  = 6
 const BUILD_FAIL_COOLDOWN: float      = 30.0
 const BUILDING_CLEAR: float           = 72.0
 
-func setup(ai: AIPlayer) -> void:
+func setup(ai: Node) -> void:
 	_ai = ai
 	_load_building_costs()
 

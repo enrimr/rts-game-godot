@@ -1,6 +1,6 @@
 class_name AINaval extends RefCounted
 
-var _ai: AIPlayer
+var _ai: Node  # AIPlayer — untyped to avoid circular class reference
 
 var _naval_transport: Node = null
 var _naval_scout_target: Vector2 = Vector2.ZERO
@@ -8,7 +8,7 @@ var _naval_scout_target: Vector2 = Vector2.ZERO
 const GALLEY_RETREAT_HP_RATIO: float = 0.30
 const GALLEY_REJOIN_HP_RATIO: float  = 0.65
 
-func setup(ai: AIPlayer) -> void:
+func setup(ai: Node) -> void:
 	_ai = ai
 
 func manage_naval() -> void:
