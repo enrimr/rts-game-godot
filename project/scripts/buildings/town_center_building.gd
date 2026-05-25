@@ -9,6 +9,7 @@ const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const VILLAGER_DATA: UnitResource = preload("res://resources/units/villager_data.tres")
 const VILLAGER_COSTS: Dictionary = {"food": 50}
 const MAX_QUEUE: int = 5
+const HERO_RESPAWN_TIME: float = 120.0
 
 var player_id: int = 0
 var health: float = 2000.0
@@ -46,6 +47,9 @@ func set_selected(value: bool) -> void:
 	if is_instance_valid(_rally_marker):
 		_rally_marker.visible = value and rally_point != Vector2.ZERO
 
+var _hero_respawn_timer: float = 0.0
+var _pending_hero_data: UnitResource = null
+
 var _train_queue: Array[Dictionary] = []
 var _train_timer: float = 0.0
 
@@ -56,11 +60,50 @@ var _train_timer: float = 0.0
 func _ready() -> void:
 	add_to_group("buildings")
 	call_deferred("_add_player_color_stripe")
+	EventBus.hero_died.connect(_on_hero_died)
 
 func _add_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, 80.0, 40.0)
 
+func _on_hero_died(died_player_id: int, hero_data: UnitResource) -> void:
+	if died_player_id != player_id:
+		return
+	_pending_hero_data = hero_data
+	_hero_respawn_timer = HERO_RESPAWN_TIME
+
+func is_respawning_hero() -> bool:
+	return _pending_hero_data != null
+
+func get_hero_respawn_fraction() -> float:
+	if _pending_hero_data == null or HERO_RESPAWN_TIME <= 0.0:
+		return 0.0
+	return clampf(1.0 - _hero_respawn_timer / HERO_RESPAWN_TIME, 0.0, 1.0)
+
+func get_hero_respawn_remaining() -> int:
+	return int(ceil(_hero_respawn_timer))
+
+func _do_respawn_hero(hero_data: UnitResource) -> void:
+	var militia_scene: PackedScene = load("res://scenes/units/militia.tscn") as PackedScene
+	if militia_scene == null:
+		return
+	var hero: CharacterBody2D = militia_scene.instantiate() as CharacterBody2D
+	hero.set_script(load("res://scripts/units/hero_unit.gd"))
+	hero.set("unit_data", hero_data)
+	hero.set("player_id", player_id)
+	hero.set("civ_id", MatchConfig.get_rival_civ_id(player_id))
+	hero.global_position = global_position + Vector2(-80.0, -60.0)
+	get_parent().add_child(hero)
+	EventBus.unit_spawned.emit(hero, player_id)
+	EventBus.hero_respawned.emit(player_id)
+
 func _process(delta: float) -> void:
+	if _pending_hero_data != null:
+		_hero_respawn_timer -= delta
+		if _hero_respawn_timer <= 0.0:
+			_hero_respawn_timer = 0.0
+			var data: UnitResource = _pending_hero_data
+			_pending_hero_data = null
+			_do_respawn_hero(data)
 	if _train_queue.is_empty():
 		return
 	var train_time: float = VILLAGER_DATA.train_time
