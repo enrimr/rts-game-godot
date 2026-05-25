@@ -420,7 +420,8 @@ func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void
 	if owner_id == 0:
 		if building == drop_off:
 			drop_off = null
-		_check_player_defeat()
+		# Defer so queue_free() has processed before we scan for remaining buildings.
+		call_deferred("_check_player_defeat")
 		return
 
 	# Rival TC destroyed → notify; AI handles rebuilding
@@ -441,7 +442,7 @@ func _on_unit_died_check_victory(unit: Node, owner_id: int) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 	if owner_id == 0:
-		_check_player_defeat()
+		call_deferred("_check_player_defeat")
 
 ## Defeat check for the human player: loses when no units AND no buildings remain.
 func _check_player_defeat() -> void:
