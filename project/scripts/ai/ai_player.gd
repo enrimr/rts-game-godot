@@ -43,6 +43,21 @@ var _naval: AINaval
 var _building_costs: Dictionary:
 	get: return _construction._building_costs
 
+# ── Debug log ─────────────────────────────────────────────────────────────────
+const DEBUG_LOG_SIZE: int = 40
+var _debug_log: Array[String] = []
+
+func debug_log(msg: String) -> void:
+	if not GameSettings.ai_debug:
+		return
+	var entry: String = "[P%d] %s" % [player_id, msg]
+	_debug_log.push_back(entry)
+	if _debug_log.size() > DEBUG_LOG_SIZE:
+		_debug_log.pop_front()
+
+func get_debug_log() -> Array[String]:
+	return _debug_log
+
 func _ready() -> void:
 	_construction = AIConstruction.new()
 	_construction.setup(self)

@@ -1,10 +1,10 @@
 class_name AIEconomy extends RefCounted
 
-var _ai: Node  # AIPlayer — untyped to avoid circular class reference
+var _ai  # AIPlayer — untyped Variant so dynamic property access works at runtime
 
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 
-func setup(ai: Node) -> void:
+func setup(ai) -> void:
 	_ai = ai
 
 func manage_villagers() -> void:
@@ -64,6 +64,7 @@ func manage_age_advance() -> void:
 	var _easy_mode: bool = GameSettings.difficulty == GameSettings.Difficulty.EASY or GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL
 	var min_mil: int = 2 if _easy_mode else 3
 	if military >= min_mil and AgeManager.can_advance(_ai.player_id):
+		_ai.debug_log("AGE ADVANCE started (mil=%d)" % military)
 		AgeManager.start_advance(_ai.player_id)
 
 func find_nearest_resource(rtype: ResourceNode.ResourceType, from: Vector2) -> ResourceNode:
@@ -132,6 +133,7 @@ func spawn_villager() -> void:
 		return
 	if not ResourceManager.spend_resource(_ai.player_id, {"food": 50}):
 		return
+	_ai.debug_log("SPAWN villager")
 	var v: Node2D = VILLAGER_SCENE.instantiate() as Node2D
 	v.set("player_id", _ai.player_id)
 	v.set("civ_id", MatchConfig.get_rival_civ_id(_ai.player_id))
@@ -191,6 +193,7 @@ func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> v
 	if best_node == null:
 		return
 	var nearest_drop: Node2D = find_nearest_drop_off(best_node.resource_type)
+	_ai.debug_log("GATHER villager → %s (deficit=%.2f)" % [best_node.get_resource_name(), best_deficit])
 	v.order_gather(best_node, best_node.get_resource_name(), nearest_drop if nearest_drop != null else _ai.drop_off)
 
 func _count_of_type_villager() -> int:

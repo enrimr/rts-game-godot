@@ -14,6 +14,7 @@ var language:            String = "en"
 var tutorial_seen:       bool   = false
 var show_dpad:           bool   = false
 var edge_scroll_enabled: bool   = true
+var ai_debug:            bool   = false  # toggled with F2 in-game
 
 func _ready() -> void:
 	load_settings()

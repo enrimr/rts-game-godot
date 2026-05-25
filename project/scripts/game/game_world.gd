@@ -199,6 +199,8 @@ func _ready() -> void:
 		if _ai_town_centers.size() > 0:
 			_ai_town_center = _ai_town_centers[1]
 
+	_setup_ai_debug_overlay()
+
 	hud.action_requested.connect(_on_action_requested)
 	hud.follow_requested.connect(toggle_follow)
 	hud.pending_action_started.connect(func(id: String) -> void: _pending_action = id)
@@ -1862,3 +1864,10 @@ func _on_game_over(_winner: int) -> void:
 		drop_off.set_process(false)
 	if is_instance_valid(_ai_town_center):
 		_ai_town_center.set_process(false)
+
+func _setup_ai_debug_overlay() -> void:
+	var overlay: AIDebugOverlay = AIDebugOverlay.new()
+	add_child(overlay)
+	for child: Node in get_children():
+		if child.get_script() != null and (child.get_script() as Script).resource_path.contains("ai_player"):
+			overlay.register_ai(child)

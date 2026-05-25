@@ -1,6 +1,6 @@
 class_name AIConstruction extends RefCounted
 
-var _ai: Node  # AIPlayer — untyped to avoid circular class reference
+var _ai  # AIPlayer — untyped Variant so dynamic property access works at runtime
 
 var _built: Dictionary = {
 	"barracks": 0, "blacksmith": 0, "stable": 0, "house": 0,
@@ -33,7 +33,7 @@ const BUILD_FAIL_SKIP_THRESHOLD: int  = 6
 const BUILD_FAIL_COOLDOWN: float      = 30.0
 const BUILDING_CLEAR: float           = 72.0
 
-func setup(ai: Node) -> void:
+func setup(ai) -> void:
 	_ai = ai
 	_load_building_costs()
 
@@ -179,6 +179,7 @@ func _build(building_id: String) -> void:
 	EventBus.building_placed.emit(b, _ai.player_id)
 	ResourceManager.spend_resource(_ai.player_id, _building_costs[building_id])
 	_built[building_id] = (_built.get(building_id, 0) as int) + 1
+	_ai.debug_log("BUILD %s at (%.0f,%.0f)" % [building_id, pos.x, pos.y])
 
 func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType) -> void:
 	if _build_cooldowns.has(building_id):
@@ -209,6 +210,7 @@ func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType)
 	EventBus.building_placed.emit(b, _ai.player_id)
 	ResourceManager.spend_resource(_ai.player_id, _building_costs[building_id])
 	_built[building_id] = (_built.get(building_id, 0) as int) + 1
+	_ai.debug_log("BUILD %s near resource at (%.0f,%.0f)" % [building_id, pos.x, pos.y])
 	_ai._economy.redirect_villagers_to_drop_off(b, rtype)
 
 func _find_build_pos(origin: Vector2, min_r: float, max_r: float, bias: Vector2 = Vector2.ZERO) -> Vector2:

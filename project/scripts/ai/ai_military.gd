@@ -1,6 +1,6 @@
 class_name AIMilitary extends RefCounted
 
-var _ai: Node  # AIPlayer — untyped to avoid circular class reference
+var _ai  # AIPlayer — untyped Variant so dynamic property access works at runtime
 
 enum AggressionLevel { PASSIVE, ALERTED, AGGRESSIVE }
 var _aggression: AggressionLevel = AggressionLevel.PASSIVE
@@ -9,7 +9,7 @@ var _aggression_timer: float = 0.0
 const AGGRESSION_DECAY: float     = 20.0
 const CONTROL_ZONE_RADIUS: float  = 400.0
 
-func setup(ai: Node) -> void:
+func setup(ai) -> void:
 	_ai = ai
 
 func update_aggression(delta: float) -> void:
@@ -83,6 +83,7 @@ func launch_attack() -> void:
 				continue
 		idle_attackers.append(unit)
 
+	_ai.debug_log("ATTACK %d units → %d targets (aggr=%s)" % [idle_attackers.size(), target_count, AggressionLevel.keys()[_aggression]])
 	for i: int in range(idle_attackers.size()):
 		var target: Node = targets[i % target_count]
 		if idle_attackers[i].has_method("order_attack"):
@@ -149,6 +150,7 @@ func manage_military() -> void:
 			continue
 		if br.get_queue().size() >= br.get_max_queue():
 			continue
+		_ai.debug_log("TRAIN %s at barracks" % unit_id)
 		br.order_train(unit_id)
 		break
 
@@ -269,6 +271,7 @@ func manage_research() -> void:
 			continue
 		var chosen: TechnologyResource = _pick_research(available)
 		if chosen != null:
+			_ai.debug_log("RESEARCH %s" % chosen.id)
 			TechManager.start_research(_ai.player_id, chosen.id, building)
 
 func _research_building_type(building: Node) -> int:
@@ -382,6 +385,7 @@ func find_nearest_enemy_unit() -> Node:
 
 func _escalate_aggression(level: AggressionLevel) -> void:
 	if level > _aggression:
+		_ai.debug_log("AGGRESSION → %s" % AggressionLevel.keys()[level])
 		_aggression = level
 	_aggression_timer = 0.0
 
