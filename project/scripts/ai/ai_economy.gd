@@ -2,6 +2,8 @@ class_name AIEconomy extends RefCounted
 
 var _ai: Node  # AIPlayer — untyped to avoid circular class reference
 
+const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
+
 func setup(ai: Node) -> void:
 	_ai = ai
 
@@ -130,7 +132,7 @@ func spawn_villager() -> void:
 		return
 	if not ResourceManager.spend_resource(_ai.player_id, {"food": 50}):
 		return
-	var v: Node2D = AIPlayer.VILLAGER_SCENE.instantiate() as Node2D
+	var v: Node2D = VILLAGER_SCENE.instantiate() as Node2D
 	v.set("player_id", _ai.player_id)
 	v.set("civ_id", MatchConfig.get_rival_civ_id(_ai.player_id))
 	_ai.units_layer.add_child(v)

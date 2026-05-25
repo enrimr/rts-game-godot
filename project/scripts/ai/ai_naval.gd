@@ -5,6 +5,11 @@ var _ai: Node  # AIPlayer — untyped to avoid circular class reference
 var _naval_transport: Node = null
 var _naval_scout_target: Vector2 = Vector2.ZERO
 
+const BUILDING_SCENES: Dictionary = {
+	"dock":      "res://scenes/buildings/dock.tscn",
+	"fish_trap": "res://scenes/buildings/fish_trap.tscn",
+}
+
 const GALLEY_RETREAT_HP_RATIO: float = 0.30
 const GALLEY_REJOIN_HP_RATIO: float  = 0.65
 
@@ -279,7 +284,7 @@ func _build_dock_on_shore() -> void:
 	var pos: Vector2 = _find_shore_position()
 	if pos == Vector2.ZERO:
 		return
-	var scene_path: String = AIPlayer.BUILDING_SCENES.get("dock", "") as String
+	var scene_path: String = BUILDING_SCENES.get("dock", "") as String
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
 		return
@@ -297,7 +302,7 @@ func _build_fish_trap(boat: FishingBoat, dock: Node) -> void:
 	var pos: Vector2 = _find_ocean_build_pos((dock as Node2D).global_position, 80.0, 200.0)
 	if pos == Vector2.ZERO:
 		return
-	var scene_path: String = AIPlayer.BUILDING_SCENES.get("fish_trap", "") as String
+	var scene_path: String = BUILDING_SCENES.get("fish_trap", "") as String
 	var packed: PackedScene = load(scene_path) as PackedScene
 	if packed == null:
 		return

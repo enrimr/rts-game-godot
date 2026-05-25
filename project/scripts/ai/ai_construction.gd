@@ -11,6 +11,23 @@ var _building_costs: Dictionary = {}
 var _build_fail_counts: Dictionary = {}
 var _build_cooldowns: Dictionary = {}
 
+const BUILDING_SCENES: Dictionary = {
+	"barracks":       "res://scenes/buildings/barracks.tscn",
+	"blacksmith":     "res://scenes/buildings/blacksmith.tscn",
+	"stable":         "res://scenes/buildings/stable.tscn",
+	"house":          "res://scenes/buildings/house.tscn",
+	"lumber_camp":    "res://scenes/buildings/lumber_camp.tscn",
+	"mining_camp":    "res://scenes/buildings/mining_camp.tscn",
+	"farm":           "res://scenes/buildings/farm.tscn",
+	"dock":           "res://scenes/buildings/dock.tscn",
+	"fish_trap":      "res://scenes/buildings/fish_trap.tscn",
+	"university":     "res://scenes/buildings/university.tscn",
+	"market":         "res://scenes/buildings/market.tscn",
+	"temple":         "res://scenes/buildings/temple.tscn",
+	"siege_workshop": "res://scenes/buildings/siege_workshop.tscn",
+	"wonder":         "res://scenes/buildings/wonder.tscn",
+}
+
 const BUILD_FAIL_WIDEN_THRESHOLD: int = 3
 const BUILD_FAIL_SKIP_THRESHOLD: int  = 6
 const BUILD_FAIL_COOLDOWN: float      = 30.0
@@ -21,7 +38,7 @@ func setup(ai: Node) -> void:
 	_load_building_costs()
 
 func _load_building_costs() -> void:
-	for building_id: String in AIPlayer.BUILDING_SCENES.keys():
+	for building_id: String in BUILDING_SCENES.keys():
 		var res_path: String = "res://resources/buildings/%s.tres" % building_id
 		if not ResourceLoader.exists(res_path):
 			continue
@@ -134,7 +151,7 @@ func is_pos_clear(pos: Vector2) -> bool:
 func _build(building_id: String) -> void:
 	if _build_cooldowns.has(building_id):
 		return
-	var scene_path: String = AIPlayer.BUILDING_SCENES.get(building_id, "") as String
+	var scene_path: String = BUILDING_SCENES.get(building_id, "") as String
 	if scene_path.is_empty() or not is_instance_valid(_ai.town_center):
 		return
 	var packed: PackedScene = load(scene_path) as PackedScene
@@ -171,7 +188,7 @@ func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType)
 	if nearest == null:
 		_build(building_id)
 		return
-	var scene_path: String = AIPlayer.BUILDING_SCENES.get(building_id, "") as String
+	var scene_path: String = BUILDING_SCENES.get(building_id, "") as String
 	if scene_path.is_empty():
 		return
 	var packed: PackedScene = load(scene_path) as PackedScene
