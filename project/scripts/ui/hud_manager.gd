@@ -1523,6 +1523,17 @@ func _on_building_destroyed(building: Node, _player_id: int) -> void:
 
 func _on_unit_died(unit: Node, _player_id: int) -> void:
 	_status_unit = null
+	if unit == _hp_bar_unit or unit == _selected_unit:
+		update_selection([])
+		_selected_unit = null
+		_hp_bar_unit = null
+		return
+	for child: Node in _unit_portraits_grid.get_children():
+		if child is UnitPortrait and (child as UnitPortrait).unit_ref == unit:
+			update_selection([])
+			_selected_unit = null
+			_hp_bar_unit = null
+			return
 
 func _build_notifications() -> void:
 	var nd: NotificationDisplay = NotificationDisplay.new()
