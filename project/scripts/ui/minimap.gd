@@ -14,15 +14,56 @@ const COLOR_ANIMAL:         Color = Color(0.85, 0.65, 0.25, 1.0)
 const COLOR_CAMERA_RECT:    Color = Color(1.0,  1.0,  1.0,  0.75)
 const COLOR_GRID:           Color = Color(1.0,  1.0,  1.0,  0.06)
 
+const FLASH_DURATION:   float = 1.5
+const FLASH_RADIUS_MAX: float = 14.0
+
+# Each entry: {world_pos: Vector2, timer: float, color: Color}
+var _flashes: Array[Dictionary] = []
+
 var world_node: Node2D = null
 var camera_node: Camera2D = null
 var fog: FogOfWar = null
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
+	EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
+	EventBus.building_destroyed.connect(_on_building_destroyed)
+	EventBus.minimap_move_order.connect(_on_minimap_move_order)
+	EventBus.hero_low_hp.connect(_on_hero_low_hp)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	var i: int = _flashes.size() - 1
+	while i >= 0:
+		_flashes[i]["timer"] -= delta
+		if _flashes[i]["timer"] <= 0.0:
+			_flashes.remove_at(i)
+		i -= 1
 	queue_redraw()
+
+func add_flash(world_pos: Vector2, color: Color) -> void:
+	_flashes.append({"world_pos": world_pos, "timer": FLASH_DURATION, "color": color})
+
+func _on_player_entity_under_attack(world_pos: Vector2, _attacker: Node) -> void:
+	add_flash(world_pos, Color(1.0, 0.15, 0.15))
+
+func _on_building_destroyed(building: Node, owner_id: int) -> void:
+	if owner_id != 0:
+		return
+	add_flash((building as Node2D).global_position, Color(1.0, 0.50, 0.10))
+
+func _on_minimap_move_order(world_pos: Vector2) -> void:
+	add_flash(world_pos, Color(0.25, 1.0, 0.35))
+
+func _on_hero_low_hp(player_id: int) -> void:
+	if player_id != 0 or world_node == null:
+		return
+	var units_layer: Node = world_node.get_node_or_null("UnitsLayer")
+	if units_layer == null:
+		return
+	for unit: Node in units_layer.get_children():
+		if unit is HeroUnit and (unit as HeroUnit).player_id == 0:
+			add_flash((unit as Node2D).global_position, Color(1.0, 0.90, 0.10))
+			return
 
 func _draw() -> void:
 	var ms: Vector2 = size
@@ -115,6 +156,20 @@ func _draw() -> void:
 		var r_max: Vector2 = _to_mm(cam_pos + vp_world * 0.5, ms).clamp(Vector2.ZERO, ms)
 		if r_max.x > r_min.x and r_max.y > r_min.y:
 			draw_rect(Rect2(r_min, r_max - r_min), COLOR_CAMERA_RECT, false, 1.5)
+
+	# Attack / event flashes — expanding rings that fade out
+	for flash: Dictionary in _flashes:
+		var t: float = 1.0 - flash["timer"] / FLASH_DURATION   # 0..1 as flash ages
+		var radius: float = FLASH_RADIUS_MAX * t
+		var alpha: float = 1.0 - t
+		var col: Color = flash["color"]
+		col.a = alpha
+		var fp: Vector2 = _to_mm(flash["world_pos"], ms)
+		draw_circle(fp, radius, col)
+		# Solid dot at origin so it is visible at t=0
+		var dot_col: Color = flash["color"]
+		dot_col.a = alpha * 0.6
+		draw_circle(fp, 3.0, dot_col)
 
 	draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
 
