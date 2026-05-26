@@ -183,6 +183,7 @@ func _ready() -> void:
 	EventBus.camera_follow_cancelled.connect(func() -> void: _set_follow_active(false))
 	EventBus.hero_respawned.connect(_on_hero_respawned)
 	EventBus.garrison_changed.connect(_on_garrison_changed)
+	EventBus.market_rate_changed.connect(_on_market_rate_changed)
 	EventBus.unit_spawned.connect(_on_stat_unit_spawned)
 	EventBus.building_construction_complete.connect(_on_stat_building_complete)
 	EventBus.building_construction_complete.connect(_on_building_construction_complete)
@@ -1150,16 +1151,29 @@ func _populate_research_only_actions(building: Node, research_type: TechnologyRe
 	_build_research_bar(building)
 
 func _populate_market_actions(market: Market) -> void:
+	var sr_f: int = market.get_sell_rate(local_player_id, "food")
+	var sr_w: int = market.get_sell_rate(local_player_id, "wood")
+	var sr_s: int = market.get_sell_rate(local_player_id, "stone")
+	var br_f: int = market.get_buy_rate(local_player_id, "food")
+	var br_w: int = market.get_buy_rate(local_player_id, "wood")
+	var br_s: int = market.get_buy_rate(local_player_id, "stone")
 	var actions: Array = [
-		{"id": "market:sell:food",  "label": "Sell Food\n(%d→1G)" % Market.SELL_RATE,  "color": Color(0.60, 0.30, 0.15), "cost": {"food":  Market.SELL_RATE}, "key": KEY_NONE, "raw_label": true},
-		{"id": "market:sell:wood",  "label": "Sell Wood\n(%d→1G)" % Market.SELL_RATE,  "color": Color(0.30, 0.55, 0.20), "cost": {"wood":  Market.SELL_RATE}, "key": KEY_NONE, "raw_label": true},
-		{"id": "market:sell:stone", "label": "Sell Stone\n(%d→1G)" % Market.SELL_RATE, "color": Color(0.55, 0.55, 0.55), "cost": {"stone": Market.SELL_RATE}, "key": KEY_NONE, "raw_label": true},
-		{"id": "market:buy:food",   "label": "Buy Food\n(1G→%d)" % Market.BUY_RATE,    "color": Color(0.65, 0.20, 0.10), "cost": {"gold": 1},                  "key": KEY_NONE, "raw_label": true},
-		{"id": "market:buy:wood",   "label": "Buy Wood\n(1G→%d)" % Market.BUY_RATE,    "color": Color(0.20, 0.45, 0.15), "cost": {"gold": 1},                  "key": KEY_NONE, "raw_label": true},
-		{"id": "market:buy:stone",  "label": "Buy Stone\n(1G→%d)" % Market.BUY_RATE,   "color": Color(0.45, 0.45, 0.45), "cost": {"gold": 1},                  "key": KEY_NONE, "raw_label": true},
+		{"id": "market:sell:food",  "label": "Sell Food\n(%d→1G)" % sr_f,  "color": Color(0.60, 0.30, 0.15), "cost": {"food":  sr_f}, "key": KEY_NONE, "raw_label": true},
+		{"id": "market:sell:wood",  "label": "Sell Wood\n(%d→1G)" % sr_w,  "color": Color(0.30, 0.55, 0.20), "cost": {"wood":  sr_w}, "key": KEY_NONE, "raw_label": true},
+		{"id": "market:sell:stone", "label": "Sell Stone\n(%d→1G)" % sr_s, "color": Color(0.55, 0.55, 0.55), "cost": {"stone": sr_s}, "key": KEY_NONE, "raw_label": true},
+		{"id": "market:buy:food",   "label": "Buy Food\n(1G→%d)" % br_f,   "color": Color(0.65, 0.20, 0.10), "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
+		{"id": "market:buy:wood",   "label": "Buy Wood\n(1G→%d)" % br_w,   "color": Color(0.20, 0.45, 0.15), "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
+		{"id": "market:buy:stone",  "label": "Buy Stone\n(1G→%d)" % br_s,  "color": Color(0.45, 0.45, 0.45), "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
 		DESTROY_ACTION,
 	]
 	_populate_buttons(actions)
+
+func _on_market_rate_changed(pid: int, market: Market) -> void:
+	if pid != local_player_id:
+		return
+	if not (is_instance_valid(_selected_building) and _selected_building == market):
+		return
+	_populate_market_actions(market)
 
 func _populate_dock_actions(dock: Dock) -> void:
 	var current_age: int = AgeManager.get_age(local_player_id)

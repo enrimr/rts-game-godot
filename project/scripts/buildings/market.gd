@@ -2,21 +2,56 @@ extends BuildingBase
 
 class_name Market
 
-## Exchange rate: how many units of the sold resource per 1 gold received.
-## Selling food/wood/stone gives gold; buying gold costs food/wood/stone.
-const SELL_RATE: int = 15
-const BUY_RATE: int  = 20
+## Base exchange rates — the floor/ceiling the price recovers toward.
+const BASE_SELL_RATE: int = 15   # resources spent per 1 gold received
+const BASE_BUY_RATE:  int = 20   # resources received per 1 gold spent
+
+## Each lot traded degrades the price by this many steps.
+const DEGRADE_PER_LOT: int = 3
+
+## Maximum degradation: sell rate climbs to 30, buy rate falls to 5.
+const MAX_SELL_RATE: int = 30
+const MIN_BUY_RATE:  int = 5
+
+## Recovery: 1 step every RECOVERY_INTERVAL seconds back toward base.
+const RECOVERY_INTERVAL: float = 30.0
+
+## Per-player, per-resource price offsets (positive = degraded).
+## Key: player_id → { resource_name: int offset }
+var _sell_offsets: Dictionary = {}  # int -> { String: int }
+var _buy_offsets:  Dictionary = {}  # int -> { String: int }
+var _recovery_timers: Dictionary = {}  # int -> float
 
 func _ready() -> void:
 	super._ready()
 
+func _process(delta: float) -> void:
+	for pid: int in _recovery_timers.keys():
+		_recovery_timers[pid] = (_recovery_timers[pid] as float) + delta
+		if (_recovery_timers[pid] as float) >= RECOVERY_INTERVAL:
+			_recovery_timers[pid] = 0.0
+			_recover_rates(pid)
+
+## Current sell rate for player/resource (how much to spend per 1 gold).
+func get_sell_rate(pid: int, resource: String) -> int:
+	var off: int = ((_sell_offsets.get(pid, {}) as Dictionary).get(resource, 0) as int)
+	return mini(BASE_SELL_RATE + off, MAX_SELL_RATE)
+
+## Current buy rate for player/resource (how much resource received per 1 gold).
+func get_buy_rate(pid: int, resource: String) -> int:
+	var off: int = ((_buy_offsets.get(pid, {}) as Dictionary).get(resource, 0) as int)
+	return maxi(BASE_BUY_RATE - off, MIN_BUY_RATE)
+
+## Single-unit sell (1 gold for SELL_RATE resources), used by internal helpers.
 func sell_resource(player_id: int, resource: String) -> bool:
 	if state != BuildingState.COMPLETE:
 		return false
-	var costs: Dictionary = {resource: SELL_RATE}
+	var rate: int = get_sell_rate(player_id, resource)
+	var costs: Dictionary = {resource: rate}
 	if not ResourceManager.spend_resource(player_id, costs):
 		return false
 	ResourceManager.add_resource(player_id, "gold", 1)
+	_degrade_sell(player_id, resource)
 	return true
 
 func buy_resource(player_id: int, resource: String) -> bool:
@@ -25,20 +60,25 @@ func buy_resource(player_id: int, resource: String) -> bool:
 	var costs: Dictionary = {"gold": 1}
 	if not ResourceManager.spend_resource(player_id, costs):
 		return false
-	ResourceManager.add_resource(player_id, resource, BUY_RATE)
+	ResourceManager.add_resource(player_id, resource, get_buy_rate(player_id, resource))
+	_degrade_buy(player_id, resource)
 	return true
 
-## Bulk convenience: trade a standard lot (100 units sold → gold).
+## Bulk sell: spend 100 units of resource, receive gold at current rate.
 func sell_lot(player_id: int, resource: String) -> bool:
 	if state != BuildingState.COMPLETE:
 		return false
 	const LOT: int = 100
+	var rate: int = get_sell_rate(player_id, resource)
 	var costs: Dictionary = {resource: LOT}
 	if not ResourceManager.spend_resource(player_id, costs):
 		return false
-	ResourceManager.add_resource(player_id, "gold", int(LOT / SELL_RATE))
+	ResourceManager.add_resource(player_id, "gold", LOT / rate)
+	_degrade_sell(player_id, resource)
+	EventBus.market_rate_changed.emit(player_id, self)
 	return true
 
+## Bulk buy: spend 5 gold, receive resources at current rate.
 func buy_lot(player_id: int, resource: String) -> bool:
 	if state != BuildingState.COMPLETE:
 		return false
@@ -46,5 +86,38 @@ func buy_lot(player_id: int, resource: String) -> bool:
 	var costs: Dictionary = {"gold": LOT_GOLD}
 	if not ResourceManager.spend_resource(player_id, costs):
 		return false
-	ResourceManager.add_resource(player_id, resource, LOT_GOLD * BUY_RATE)
+	ResourceManager.add_resource(player_id, resource, LOT_GOLD * get_buy_rate(player_id, resource))
+	_degrade_buy(player_id, resource)
+	EventBus.market_rate_changed.emit(player_id, self)
 	return true
+
+func _ensure_player(pid: int) -> void:
+	if not _sell_offsets.has(pid):
+		_sell_offsets[pid] = {}
+		_buy_offsets[pid] = {}
+		_recovery_timers[pid] = 0.0
+
+func _degrade_sell(pid: int, resource: String) -> void:
+	_ensure_player(pid)
+	var off: int = ((_sell_offsets[pid] as Dictionary).get(resource, 0) as int)
+	(_sell_offsets[pid] as Dictionary)[resource] = mini(off + DEGRADE_PER_LOT, MAX_SELL_RATE - BASE_SELL_RATE)
+
+func _degrade_buy(pid: int, resource: String) -> void:
+	_ensure_player(pid)
+	var off: int = ((_buy_offsets[pid] as Dictionary).get(resource, 0) as int)
+	(_buy_offsets[pid] as Dictionary)[resource] = mini(off + DEGRADE_PER_LOT, BASE_BUY_RATE - MIN_BUY_RATE)
+
+func _recover_rates(pid: int) -> void:
+	var changed: bool = false
+	for resource: String in (_sell_offsets.get(pid, {}) as Dictionary).keys():
+		var off: int = ((_sell_offsets[pid] as Dictionary)[resource] as int)
+		if off > 0:
+			(_sell_offsets[pid] as Dictionary)[resource] = off - 1
+			changed = true
+	for resource: String in (_buy_offsets.get(pid, {}) as Dictionary).keys():
+		var off: int = ((_buy_offsets[pid] as Dictionary)[resource] as int)
+		if off > 0:
+			(_buy_offsets[pid] as Dictionary)[resource] = off - 1
+			changed = true
+	if changed:
+		EventBus.market_rate_changed.emit(pid, self)
