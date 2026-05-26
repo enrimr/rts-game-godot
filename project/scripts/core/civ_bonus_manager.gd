@@ -102,13 +102,19 @@ func get_archer_range_flat(player_id: int) -> float:
 	return get_multiplier(player_id, "archer_range_flat")
 
 ## Called on each age advance — accumulates archer_range_bonus_per_age into the
-## flat tile bucket rather than onto the × multiplier.
+## flat tile bucket rather than onto the × multiplier, and grants the oldest
+## unresearched Blacksmith tech free to Castellanos players.
 func on_age_advanced(player_id: int) -> void:
 	var bonus: float = get_multiplier(player_id, "archer_range_bonus_per_age")
-	if bonus <= 0.0:
-		return
-	var current: float = get_multiplier(player_id, "archer_range_flat")
-	(_multipliers[player_id] as Dictionary)["archer_range_flat"] = current + bonus
+	if bonus > 0.0:
+		var current: float = get_multiplier(player_id, "archer_range_flat")
+		(_multipliers[player_id] as Dictionary)["archer_range_flat"] = current + bonus
+	var free_bs: float = get_multiplier(player_id, "free_blacksmith_tech_per_age")
+	if free_bs > 0.0:
+		var new_age: int = AgeManager.get_age(player_id)
+		var tech_id: String = TechManager.get_oldest_unresearched_blacksmith_tech(player_id, new_age)
+		if not tech_id.is_empty():
+			TechManager.grant_tech(player_id, tech_id)
 
 func get_siege_attack_bonus(player_id: int) -> float:
 	return get_multiplier(player_id, "siege_attack_bonus")

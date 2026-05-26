@@ -146,3 +146,38 @@ func get_researching_tech(building: Node) -> TechnologyResource:
 	if not _all_techs.has(tech_id):
 		return null
 	return _all_techs[tech_id] as TechnologyResource
+
+## Instantly applies a technology for a player without cost or build time.
+## Used for civ bonuses like Castellanos free Blacksmith tech per age.
+func grant_tech(player_id: int, tech_id: String) -> void:
+	if not _all_techs.has(tech_id):
+		return
+	if is_researched(player_id, tech_id):
+		return
+	_apply_tech(player_id, tech_id)
+	EventBus.technology_researched.emit(player_id, tech_id)
+
+## Returns the first unresearched Blacksmith tech available at or below the
+## given age, respecting prerequisites. Returns "" if none found.
+func get_oldest_unresearched_blacksmith_tech(player_id: int, max_age: int) -> String:
+	var candidates: Array[TechnologyResource] = []
+	for tech_id: String in _all_techs.keys():
+		var tech: TechnologyResource = _all_techs[tech_id] as TechnologyResource
+		if tech.research_building != 0:  # 0 = BLACKSMITH
+			continue
+		if is_researched(player_id, tech_id):
+			continue
+		if tech.required_age > max_age:
+			continue
+		var prereqs_met: bool = true
+		for prereq: String in tech.prerequisites:
+			if not is_researched(player_id, prereq):
+				prereqs_met = false
+				break
+		if prereqs_met:
+			candidates.append(tech)
+	if candidates.is_empty():
+		return ""
+	candidates.sort_custom(func(a: TechnologyResource, b: TechnologyResource) -> bool:
+		return (a as TechnologyResource).required_age < (b as TechnologyResource).required_age)
+	return (candidates[0] as TechnologyResource).id

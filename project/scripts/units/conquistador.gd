@@ -15,6 +15,9 @@ const SALVO_SHOT_COUNT: int = 3
 const SALVO_SHOT_INTERVAL: float = 0.3
 const SALVO_SHOT_DAMAGE: float = 6.0
 
+func get_selection_sound() -> String:
+	return "select_infantry"
+
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
@@ -40,8 +43,11 @@ func _tick_salvo(delta: float) -> void:
 	if _salvo_shot_timer <= 0.0:
 		_salvo_shot_timer = SALVO_SHOT_INTERVAL
 		if attack_target.has_method("take_damage"):
-			attack_target.take_damage(SALVO_SHOT_DAMAGE, self)
+			var dmg: float = SALVO_SHOT_DAMAGE * CivBonusManager.get_unit_attack_multiplier(player_id, unit_data.id) \
+				- _get_target_armor(attack_target)
+			attack_target.take_damage(maxf(dmg, 0.0), self)
 			AudioManager.play_if_visible("hit_ranged", global_position, -4.0)
+			EventBus.unit_attacked.emit(self, attack_target)
 		_salvo_shots_remaining -= 1
 		if _salvo_shots_remaining <= 0:
 			_salvo_active = false
@@ -95,6 +101,12 @@ func _handle_attacking(delta: float) -> void:
 		return
 	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
 	var attack_reach: float = _attack_reach_to(attack_target)
+	# Back away if enemy closes past 50% of attack range
+	if dist < attack_reach * 0.5:
+		var away: Vector2 = global_position + (global_position - (attack_target as Node2D).global_position).normalized() * 64.0
+		nav_agent.target_position = _safe_destination(away)
+		nav_agent.set_velocity(_nav_velocity())
+		return
 	if dist > attack_reach:
 		nav_agent.target_position = _nav_target_for(attack_target)
 		if _advance_stuck(delta):
@@ -104,7 +116,8 @@ func _handle_attacking(delta: float) -> void:
 		return
 	nav_agent.set_velocity(Vector2.ZERO)
 	_attack_timer += delta
-	if _attack_timer >= 1.0 / unit_data.attack_speed:
+	var effective_speed: float = unit_data.attack_speed * CivBonusManager.get_attack_speed_multiplier(player_id, unit_data.id)
+	if _attack_timer >= 1.0 / effective_speed:
 		_attack_timer = 0.0
 		if _salvo_cooldown <= 0.0:
 			_salvo_active = true
