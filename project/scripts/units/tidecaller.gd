@@ -7,9 +7,16 @@ var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 
 const TIDAL_SPLASH_RADIUS: float = 65.0
-const TIDAL_SPLASH_DAMAGE: float = 2.0
+## Splash deals a fraction of the primary hit, before armor
+const TIDAL_SPLASH_FRACTION: float = 0.40
+
+func get_selection_sound() -> String:
+	return "select_naval"
 
 func _ready() -> void:
+	# Tidecaller is Atlantes' amphibious unit — treat it as ocean-capable so
+	# TerrainManager does not block movement on water tiles.
+	civ_id = "atlantes"
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
@@ -75,27 +82,42 @@ func _handle_attacking(delta: float) -> void:
 		return
 	nav_agent.set_velocity(Vector2.ZERO)
 	_attack_timer += delta
-	if _attack_timer >= 1.0 / unit_data.attack_speed:
+	var effective_speed: float = unit_data.attack_speed * CivBonusManager.get_attack_speed_multiplier(player_id, unit_data.id)
+	if _attack_timer >= 1.0 / effective_speed:
 		_attack_timer = 0.0
 		if attack_target.has_method("take_damage"):
-			attack_target.take_damage(_get_effective_attack_vs(attack_target) - _get_target_armor(attack_target), self)
+			var dmg: float = _get_effective_attack_vs(attack_target) - _get_target_armor(attack_target)
+			attack_target.take_damage(maxf(dmg, 0.0), self)
 			AudioManager.play_if_visible("hit_ranged", global_position, -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
 		_apply_tidal_pulse()
 
 func _apply_tidal_pulse() -> void:
-	for body: Node in get_tree().get_nodes_in_group("units"):
+	# Use physics query so we hit actual physics bodies rather than a group that
+	# units are never added to. Same pattern as Mangonel splash.
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	var circle: CircleShape2D = CircleShape2D.new()
+	circle.radius = TIDAL_SPLASH_RADIUS
+	query.shape = circle
+	query.transform = Transform2D(0.0, global_position)
+	query.collision_mask = 1
+	var results: Array[Dictionary] = space.intersect_shape(query, 32)
+	var splash_base: float = _get_effective_attack() * TIDAL_SPLASH_FRACTION
+	for result: Dictionary in results:
+		var body: Node = result["collider"] as Node
 		if not is_instance_valid(body):
+			continue
+		if body == attack_target:
 			continue
 		var pid: Variant = body.get("player_id")
 		if pid == null or (pid as int) == player_id:
 			continue
-		if (body as Node2D).global_position.distance_to(global_position) > TIDAL_SPLASH_RADIUS:
+		if body.get("unit_data") == null and not (body is Animal):
 			continue
-		if body == attack_target:
-			continue
+		var splash_dmg: float = maxf(splash_base - _get_target_armor(body), 0.0)
 		if body.has_method("take_damage"):
-			body.take_damage(TIDAL_SPLASH_DAMAGE, self)
+			body.take_damage(splash_dmg, self)
 
 func _scan_area_for_target() -> void:
 	if not is_instance_valid(attack_range_area):

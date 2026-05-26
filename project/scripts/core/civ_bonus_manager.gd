@@ -71,7 +71,7 @@ func get_unit_hp_multiplier(player_id: int, unit_id: String) -> float:
 		return get_multiplier(player_id, "cavalry_hp")
 	if unit_id == "militia" or unit_id == "pikeman":
 		return get_multiplier(player_id, "swordsman_hp")
-	if unit_id == "fishing_boat" or unit_id == "transport_ship" or unit_id == "war_galley":
+	if unit_id == "fishing_boat" or unit_id == "transport_ship" or unit_id == "war_galley" or unit_id == "tidecaller":
 		return get_multiplier(player_id, "ship_hp")
 	return 1.0
 
@@ -89,7 +89,7 @@ func get_unit_attack_multiplier(player_id: int, unit_id: String) -> float:
 		var base: float = get_multiplier(player_id, "archer_attack")
 		var global_mult: float = get_multiplier(player_id, "unit_attack")
 		return base * global_mult
-	if unit_id == "war_galley":
+	if unit_id == "war_galley" or unit_id == "tidecaller":
 		return get_multiplier(player_id, "ship_attack") * get_multiplier(player_id, "unit_attack")
 	return get_multiplier(player_id, "unit_attack")
 
@@ -128,8 +128,8 @@ func get_unit_armor_bonus(player_id: int) -> float:
 	return get_multiplier(player_id, "unit_armor_melee")
 
 func get_attack_speed_multiplier(player_id: int, unit_id: String) -> float:
-	# britons warship_attack_speed, atlantes ship_attack_speed
-	if unit_id == "war_galley" or unit_id == "warship":
+	# britons warship_attack_speed, atlantes ship_attack_speed (also tidecaller — naval unique unit)
+	if unit_id == "war_galley" or unit_id == "warship" or unit_id == "tidecaller":
 		var britons_mult: float = get_multiplier(player_id, "warship_attack_speed")
 		var atlantes_mult: float = get_multiplier(player_id, "ship_attack_speed")
 		# Return the one that actually has a bonus (differs from 1.0)
