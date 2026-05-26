@@ -129,6 +129,7 @@ var _research_bar: ProgressBar = null
 var _research_label: Label = null
 var _pause_menu: Control = null
 var _wonder_label: Label = null
+var _speed_buttons: Array[Button] = []
 var _hero_alert_overlay: ColorRect = null
 
 const ACTION_COLS: int = 5
@@ -205,6 +206,7 @@ func _ready() -> void:
 	_build_idle_military_button()
 
 	_build_dpad()
+	_build_speed_buttons()
 	WeatherManager.weather_changed.connect(_on_weather_changed)
 	WeatherManager.weather_cleared.connect(hide_weather)
 
@@ -672,6 +674,7 @@ func _highlight_pending_button(active_id: String) -> void:
 func _on_game_started() -> void:
 	_elapsed_seconds = 0.0
 	_clock_running = true
+	_set_game_speed(1)
 	update_age(AgeManager.get_age(local_player_id))
 	var starting: Dictionary = ResourceManager.get_resources(local_player_id)
 	update_resources(local_player_id, starting)
@@ -2343,6 +2346,65 @@ func _build_pause_menu_button() -> void:
 	btn.add_theme_stylebox_override("hover", sh)
 	btn.pressed.connect(_open_pause_menu)
 	hud_root.add_child(btn)
+
+func _build_speed_buttons() -> void:
+	var hud_root: Control = get_node_or_null("HUDRoot") as Control
+	if hud_root == null:
+		return
+	var speeds: Array = [1, 2, 4]
+	# Place to the left of the ☰ menu button (which ends at offset_right=-31)
+	# Each button 36px wide, 4px gap between them
+	var btn_w: float = 36.0
+	var gap: float = 4.0
+	var menu_left: float = -69.0  # offset_left of the menu button
+	for i: int in range(speeds.size()):
+		var speed: int = speeds[speeds.size() - 1 - i]  # right to left: 4, 2, 1
+		var btn: Button = Button.new()
+		btn.text = "x%d" % speed
+		btn.custom_minimum_size = Vector2(btn_w, 36.0)
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.add_theme_font_size_override("font_size", 14)
+		btn.anchor_left   = 1.0
+		btn.anchor_top    = 0.0
+		btn.anchor_right  = 1.0
+		btn.anchor_bottom = 0.0
+		var right_offset: float = menu_left - gap - i * (btn_w + gap)
+		btn.offset_right  = right_offset
+		btn.offset_left   = right_offset - btn_w
+		btn.offset_top    = 31.0
+		btn.offset_bottom = 67.0
+		var s: StyleBoxFlat = StyleBoxFlat.new()
+		s.bg_color = Color(0.12, 0.22, 0.12, 0.92) if speed == 1 else Color(0.12, 0.12, 0.18, 0.92)
+		s.corner_radius_top_left = 4
+		s.corner_radius_top_right = 4
+		s.corner_radius_bottom_left = 4
+		s.corner_radius_bottom_right = 4
+		btn.add_theme_stylebox_override("normal", s)
+		var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
+		sh.bg_color = Color(0.28, 0.28, 0.42, 0.97)
+		btn.add_theme_stylebox_override("hover", sh)
+		var sp: int = speed
+		btn.pressed.connect(func() -> void: _set_game_speed(sp))
+		hud_root.add_child(btn)
+		_speed_buttons.append(btn)
+	# Reverse so index 0=x1, 1=x2, 2=x4
+	_speed_buttons.reverse()
+
+func _set_game_speed(speed: int) -> void:
+	GameManager.set_game_speed(float(speed))
+	var active_bg: Color = Color(0.12, 0.42, 0.12, 0.95)
+	var inactive_bg: Color = Color(0.12, 0.12, 0.18, 0.92)
+	var speeds: Array = [1, 2, 4]
+	for i: int in range(_speed_buttons.size()):
+		if not is_instance_valid(_speed_buttons[i]):
+			continue
+		var s: StyleBoxFlat = StyleBoxFlat.new()
+		s.bg_color = active_bg if speeds[i] == speed else inactive_bg
+		s.corner_radius_top_left = 4
+		s.corner_radius_top_right = 4
+		s.corner_radius_bottom_left = 4
+		s.corner_radius_bottom_right = 4
+		_speed_buttons[i].add_theme_stylebox_override("normal", s)
 
 func _build_idle_villager_button() -> void:
 	var hud_root: Control = get_node_or_null("HUDRoot") as Control

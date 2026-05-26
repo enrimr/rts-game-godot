@@ -20,6 +20,7 @@ const RESOURCE_STARTING: Dictionary = {
 var state: GameState = GameState.MAIN_MENU
 var players: Array = []
 var current_tick: int = 0
+var game_speed: float = 1.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -31,20 +32,27 @@ func start_game(player_configs: Array) -> void:
 	if MatchConfig.victory_mode == MatchConfig.VictoryMode.REGICIDE:
 		EventBus.hero_died.connect(_on_hero_died_regicide)
 
+func set_game_speed(speed: float) -> void:
+	game_speed = speed
+	Engine.time_scale = speed
+
 func toggle_pause() -> void:
 	if state == GameState.PLAYING:
 		state = GameState.PAUSED
 		get_tree().paused = true
+		Engine.time_scale = 0.0
 		game_paused.emit(true)
 	elif state == GameState.PAUSED:
 		state = GameState.PLAYING
 		get_tree().paused = false
+		Engine.time_scale = game_speed
 		game_paused.emit(false)
 
 func declare_winner(winner_id: int) -> void:
 	if state != GameState.PLAYING:
 		return
 	state = GameState.GAME_OVER
+	Engine.time_scale = 1.0
 	if EventBus.hero_died.is_connected(_on_hero_died_regicide):
 		EventBus.hero_died.disconnect(_on_hero_died_regicide)
 	game_over.emit(winner_id)
