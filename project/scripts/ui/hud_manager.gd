@@ -106,6 +106,7 @@ const GATE_ACTIONS: Array = [
 var _elapsed_seconds: float = 0.0
 var _clock_running: bool = false
 var _idle_villager_check_timer: float = 0.0
+var _mercenary_cooldown_refresh_timer: float = 0.0
 var _in_build_menu: bool = false
 var _selected_building: Node = null
 var _selected_unit: Node = null   # tracked for transport garrison refresh
@@ -190,6 +191,7 @@ func _ready() -> void:
 	EventBus.hero_low_hp.connect(_on_hero_low_hp)
 	EventBus.garrison_changed.connect(_on_garrison_changed)
 	EventBus.market_rate_changed.connect(_on_market_rate_changed)
+	EventBus.mercenary_hired.connect(_on_mercenary_hired)
 	EventBus.unit_spawned.connect(_on_stat_unit_spawned)
 	EventBus.building_construction_complete.connect(_on_stat_building_complete)
 	EventBus.building_construction_complete.connect(_on_building_construction_complete)
@@ -220,6 +222,11 @@ func _process(delta: float) -> void:
 		_idle_villager_check_timer = 0.0
 		_update_idle_villager_button()
 		_update_idle_military_button()
+	if MatchConfig.player_civ_id == "fenicios" and is_instance_valid(_selected_building) and _selected_building is Market:
+		_mercenary_cooldown_refresh_timer += delta
+		if _mercenary_cooldown_refresh_timer >= 1.0:
+			_mercenary_cooldown_refresh_timer = 0.0
+			_populate_market_actions(_selected_building as Market)
 	if _dpad_dir != Vector2.ZERO:
 		var world: Node = get_tree().get_nodes_in_group("world").front()
 		if world != null:
@@ -1214,6 +1221,15 @@ func _populate_research_only_actions(building: Node, research_type: TechnologyRe
 	_populate_buttons(actions)
 	_build_research_bar(building)
 
+const MERCENARY_UNIT_DEFS: Array[Dictionary] = [
+	{"id": "militia",     "display": "Militia",     "age": 0},
+	{"id": "scout",       "display": "Scout",       "age": 0},
+	{"id": "archer",      "display": "Archer",      "age": 1},
+	{"id": "heavy_scout", "display": "Heavy Scout", "age": 1},
+	{"id": "knight",      "display": "Knight",      "age": 2},
+	{"id": "mangonel",    "display": "Mangonel",    "age": 2},
+]
+
 func _populate_market_actions(market: Market) -> void:
 	var sr_f: int = market.get_sell_rate(local_player_id, "food")
 	var sr_w: int = market.get_sell_rate(local_player_id, "wood")
@@ -1228,13 +1244,44 @@ func _populate_market_actions(market: Market) -> void:
 		{"id": "market:buy:food",   "label": "Buy Food\n(1G→%d)" % br_f,   "color": Color(0.65, 0.20, 0.10), "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
 		{"id": "market:buy:wood",   "label": "Buy Wood\n(1G→%d)" % br_w,   "color": Color(0.20, 0.45, 0.15), "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
 		{"id": "market:buy:stone",  "label": "Buy Stone\n(1G→%d)" % br_s,  "color": Color(0.45, 0.45, 0.45), "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
-		DESTROY_ACTION,
 	]
+	if MatchConfig.player_civ_id == "fenicios":
+		var current_age: int = AgeManager.get_age(local_player_id)
+		for def: Dictionary in MERCENARY_UNIT_DEFS:
+			if (def["age"] as int) > current_age:
+				continue
+			var uid: String = def["id"] as String
+			var scene_path: String = "res://scenes/units/%s.tscn" % uid
+			if not ResourceLoader.exists(scene_path):
+				continue
+			var gold_cost: int = market.get_mercenary_cost(uid)
+			var cooldown_remaining: float = market.get_mercenary_cooldown_fraction(uid) * market.MERCENARY_COOLDOWN
+			var on_cooldown: bool = cooldown_remaining > 0.0
+			var label: String
+			if on_cooldown:
+				label = "Hire %s\n(%ds)" % [def["display"] as String, int(ceil(cooldown_remaining))]
+			else:
+				label = "Hire %s\n(%dG)" % [def["display"] as String, gold_cost]
+			actions.append({
+				"id": "market:hire:%s" % uid,
+				"label": label,
+				"color": Color(0.55, 0.35, 0.65),
+				"cost": {"gold": gold_cost},
+				"key": KEY_NONE,
+				"raw_label": true,
+				"locked": on_cooldown,
+			})
+	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
 
 func _on_market_rate_changed(pid: int, market: Market) -> void:
 	if pid != local_player_id:
 		return
+	if not (is_instance_valid(_selected_building) and _selected_building == market):
+		return
+	_populate_market_actions(market)
+
+func _on_mercenary_hired(_pid: int, _unit_id: String, market: Market) -> void:
 	if not (is_instance_valid(_selected_building) and _selected_building == market):
 		return
 	_populate_market_actions(market)

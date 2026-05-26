@@ -1680,6 +1680,8 @@ func _on_action_requested(action_id: String) -> void:
 					(_selected_building as Market).sell_lot(0, res)
 				elif op == "buy":
 					(_selected_building as Market).buy_lot(0, res)
+				elif op == "hire":
+					_hire_mercenary_from_market(_selected_building as Market, res)
 		return
 	match action_id:
 		"gather_wood":
@@ -1777,6 +1779,25 @@ func _on_action_requested(action_id: String) -> void:
 					if unit is TransportShip:
 						(unit as TransportShip).unload_one(idx)
 						break
+
+func _hire_mercenary_from_market(market: Market, unit_id: String) -> void:
+	if not market.hire_mercenary(unit_id):
+		return
+	var scene_path: String = "res://scenes/units/%s.tscn" % unit_id
+	var packed: PackedScene = load(scene_path) as PackedScene
+	if packed == null:
+		return
+	var unit: Node2D = packed.instantiate() as Node2D
+	unit.set("player_id", 0)
+	unit.set("civ_id", "fenicios")
+	units_layer.add_child(unit)
+	var spawn_pos: Vector2 = market.rally_point if market.rally_point != Vector2.ZERO else market.global_position + Vector2(60.0, 0.0)
+	unit.global_position = spawn_pos
+	PopulationManager.add_unit(0)
+	if unit.has_method("order_move") and market.rally_point != Vector2.ZERO:
+		unit.order_move(market.rally_point)
+	AudioManager.play("unit_ready")
+	EventBus.unit_spawned.emit(unit, 0)
 
 func _order_gather_nearest_resource(rtype: ResourceNode.ResourceType) -> void:
 	if _selected_units.is_empty():

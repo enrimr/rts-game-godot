@@ -16,11 +16,16 @@ const MIN_BUY_RATE:  int = 5
 ## Recovery: 1 step every RECOVERY_INTERVAL seconds back toward base.
 const RECOVERY_INTERVAL: float = 30.0
 
+const MERCENARY_COOLDOWN: float = 30.0
+
 ## Per-player, per-resource price offsets (positive = degraded).
 ## Key: player_id → { resource_name: int offset }
 var _sell_offsets: Dictionary = {}  # int -> { String: int }
 var _buy_offsets:  Dictionary = {}  # int -> { String: int }
 var _recovery_timers: Dictionary = {}  # int -> float
+
+## unit_id -> seconds remaining on cooldown (per Market instance)
+var _mercenary_cooldowns: Dictionary = {}  # String -> float
 
 func _ready() -> void:
 	super._ready()
@@ -31,6 +36,8 @@ func _process(delta: float) -> void:
 		if (_recovery_timers[pid] as float) >= RECOVERY_INTERVAL:
 			_recovery_timers[pid] = 0.0
 			_recover_rates(pid)
+	for unit_id: String in _mercenary_cooldowns.keys():
+		_mercenary_cooldowns[unit_id] = maxf(0.0, (_mercenary_cooldowns[unit_id] as float) - delta)
 
 ## Current sell rate for player/resource (how much to spend per 1 gold).
 func get_sell_rate(pid: int, resource: String) -> int:
@@ -121,3 +128,41 @@ func _recover_rates(pid: int) -> void:
 			changed = true
 	if changed:
 		EventBus.market_rate_changed.emit(pid, self)
+
+## Returns the gold cost to hire a mercenary of unit_id.
+## Formula: (food_cost + wood_cost) * 1.5, rounded to nearest 5, minimum 20.
+func get_mercenary_cost(unit_id: String) -> int:
+	var res_path: String = "res://resources/units/%s_data.tres" % unit_id
+	var unit_res: UnitResource = load(res_path) as UnitResource
+	if unit_res == null:
+		return 0
+	var base: int = unit_res.cost_food + unit_res.cost_wood
+	var gold: int = int(round(base * 1.5 / 5.0)) * 5
+	return maxi(gold, 20)
+
+## 0.0 = no cooldown, 1.0 = just hired (full cooldown). For UI progress display.
+func get_mercenary_cooldown_fraction(unit_id: String) -> float:
+	var remaining: float = _mercenary_cooldowns.get(unit_id, 0.0) as float
+	return remaining / MERCENARY_COOLDOWN
+
+func can_hire_mercenary(unit_id: String) -> bool:
+	if state != BuildingState.COMPLETE:
+		return false
+	if PopulationManager.at_cap(player_id):
+		return false
+	if (_mercenary_cooldowns.get(unit_id, 0.0) as float) > 0.0:
+		return false
+	var gold_cost: int = get_mercenary_cost(unit_id)
+	if gold_cost <= 0:
+		return false
+	return ResourceManager.can_afford(player_id, {"gold": gold_cost})
+
+func hire_mercenary(unit_id: String) -> bool:
+	if not can_hire_mercenary(unit_id):
+		return false
+	var gold_cost: int = get_mercenary_cost(unit_id)
+	if not ResourceManager.spend_resource(player_id, {"gold": gold_cost}):
+		return false
+	_mercenary_cooldowns[unit_id] = MERCENARY_COOLDOWN
+	EventBus.mercenary_hired.emit(player_id, unit_id, self)
+	return true
