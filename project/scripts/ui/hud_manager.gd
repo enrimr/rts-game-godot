@@ -109,6 +109,8 @@ var _idle_villager_check_timer: float = 0.0
 var _in_build_menu: bool = false
 var _selected_building: Node = null
 var _selected_unit: Node = null   # tracked for transport garrison refresh
+var _hp_bar_unit: Node = null     # unit/building whose HP drives the main HP bar
+var _hp_bar_max: float = 100.0    # cached max HP for the current hp_bar_unit
 var _status_unit: Node = null
 var _active_actions: Array = []
 var _follow_btn: Button = null
@@ -232,6 +234,7 @@ func _process(delta: float) -> void:
 			_take_snapshot()
 	if is_instance_valid(_status_unit):
 		_unit_status_label.text = _get_unit_status(_status_unit)
+	_poll_hp_bars()
 	if is_instance_valid(_age_advance_bar):
 		_age_advance_bar.value = AgeManager.get_advance_progress(local_player_id) * 100.0
 	_update_train_queue_progress()
@@ -317,6 +320,7 @@ func update_selection(units: Array) -> void:
 		_unit_hp_bar.value = 0.0
 		_unit_status_label.text = ""
 		_status_unit = null
+		_hp_bar_unit = null
 		return
 
 	var capped: Array = units.slice(0, 40)
@@ -353,6 +357,8 @@ func update_selection(units: Array) -> void:
 				max_hp = mhp as float
 		if max_hp > 0.0:
 			_unit_hp_bar.value = (hp / max_hp) * 100.0
+			_hp_bar_unit = first
+			_hp_bar_max = max_hp
 
 		_status_unit = first if (first.has_method("order_gather") or first is FishingBoat) else null
 
@@ -754,6 +760,7 @@ func _on_building_selected(building: Node) -> void:
 	_in_build_menu = false
 
 	_status_unit = null
+	_hp_bar_unit = null
 	if not is_instance_valid(building):
 		_unit_name_label.text = ""
 		_unit_hp_bar.value = 0.0
@@ -781,6 +788,8 @@ func _on_building_selected(building: Node) -> void:
 			max_hp = mhp_direct as float
 	if max_hp > 0.0:
 		_unit_hp_bar.value = (hp / max_hp) * 100.0
+		_hp_bar_unit = building
+		_hp_bar_max = max_hp
 
 	var bpid: Variant = building.get("player_id")
 	if bpid != null and (bpid as int) != 0:
@@ -797,6 +806,8 @@ func _on_building_selected(building: Node) -> void:
 		var tc_max: Variant = building.get("max_health")
 		if tc_hp != null and tc_max != null and (tc_max as float) > 0.0:
 			_unit_hp_bar.value = ((tc_hp as float) / (tc_max as float)) * 100.0
+			_hp_bar_unit = building
+			_hp_bar_max = tc_max as float
 		_populate_tc_actions()
 		if building.has_method("get_queue"):
 			_on_train_queue_changed(building, building.get_queue() as Array, building.get_max_queue() as int)
@@ -1374,6 +1385,15 @@ func _build_research_bar(building: Node) -> void:
 		_research_bar.add_theme_stylebox_override("fill", fill)
 		detail_panel.add_child(_research_bar)
 
+func _poll_hp_bars() -> void:
+	if is_instance_valid(_hp_bar_unit) and _hp_bar_max > 0.0:
+		var hp_v: Variant = _hp_bar_unit.get("health")
+		if hp_v != null:
+			_unit_hp_bar.value = (hp_v as float) / _hp_bar_max * 100.0
+	for child: Node in _unit_portraits_grid.get_children():
+		if child is UnitPortrait:
+			(child as UnitPortrait).refresh()
+
 func _on_hero_low_hp(player_id: int) -> void:
 	if player_id != 0:
 		return
@@ -1446,6 +1466,7 @@ func _on_resource_node_selected(node: Node) -> void:
 	for child: Node in _unit_portraits_grid.get_children():
 		child.queue_free()
 	_clear_action_buttons()
+	_hp_bar_unit = null
 	var rn: ResourceNode = node as ResourceNode
 	var res_name: String = rn.get_resource_name().capitalize()
 	_unit_name_label.text = res_name

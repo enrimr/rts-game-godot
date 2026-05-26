@@ -70,6 +70,22 @@ func setup(unit: Node) -> void:
 	# Non-empty tooltip_text triggers _make_custom_tooltip; the string itself is unused.
 	tooltip_text = " "
 
+func refresh() -> void:
+	if not is_instance_valid(unit_ref):
+		return
+	var hp_variant: Variant = unit_ref.get("health")
+	var hp: float = hp_variant as float if hp_variant != null else 100.0
+	var max_hp: float = 100.0
+	var unit_data: Variant = unit_ref.get("unit_data")
+	if unit_data != null:
+		var max_hp_variant: Variant = (unit_data as Resource).get("max_health")
+		if max_hp_variant != null:
+			max_hp = max_hp_variant as float
+	if max_hp > 0.0:
+		var pct: float = (hp / max_hp) * 100.0
+		_hp_bar.value = pct
+		_apply_hp_color(pct)
+
 func _make_custom_tooltip(_for_text: String) -> Object:
 	if not is_instance_valid(unit_ref):
 		return null
