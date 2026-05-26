@@ -1,74 +1,36 @@
 extends BuildingBase
 
-class_name Barracks
+class_name ArcheryRange
 
 const SPAWN_OFFSET: Vector2 = Vector2(60.0, 0.0)
 const MAX_QUEUE: int = 5
 
-# All trainable units, unlocked by age_required
 const UNIT_DEFS: Array[Dictionary] = [
 	{
-		"id": "militia",
-		"scene": "res://scenes/units/militia.tscn",
-		"data": "res://resources/units/militia_data.tres",
-		"label": "M",
-		"color": Color(0.7, 0.15, 0.10),
-		"age": 0,
-	},
-	{
-		"id": "man_at_arms",
-		"scene": "res://scenes/units/man_at_arms.tscn",
-		"data": "res://resources/units/man_at_arms_data.tres",
-		"label": "MA",
-		"color": Color(0.55, 0.20, 0.12),
+		"id": "archer",
+		"scene": "res://scenes/units/archer.tscn",
+		"data": "res://resources/units/archer_data.tres",
+		"label": "A",
+		"color": Color(0.25, 0.45, 0.20),
 		"age": 1,
-		# Only reachable via the upgrade chain; not shown as a direct train button.
-		"upgrade_only": true,
 	},
 	{
-		"id": "long_swordsman",
-		"scene": "res://scenes/units/long_swordsman.tscn",
-		"data": "res://resources/units/long_swordsman_data.tres",
-		"label": "LS",
-		"color": Color(0.35, 0.25, 0.55),
+		"id": "ravine_archer",
+		"scene": "res://scenes/units/ravine_archer.tscn",
+		"data": "res://resources/units/ravine_archer_data.tres",
+		"label": "RA",
+		"color": Color(0.30, 0.55, 0.15),
 		"age": 2,
-		# Only reachable via the upgrade chain; not shown as a direct train button.
-		"upgrade_only": true,
+		"civ_required": "canarii",
 	},
 	{
-		"id": "pikeman",
-		"scene": "res://scenes/units/pikeman.tscn",
-		"data": "res://resources/units/pikeman_data.tres",
-		"label": "P",
-		"color": Color(0.50, 0.45, 0.65),
+		"id": "longbowman",
+		"scene": "res://scenes/units/longbowman.tscn",
+		"data": "res://resources/units/longbowman_data.tres",
+		"label": "LB",
+		"color": Color(0.25, 0.45, 0.65),
 		"age": 2,
-	},
-	{
-		"id": "menceyes_guard",
-		"scene": "res://scenes/units/menceyes_guard.tscn",
-		"data": "res://resources/units/menceyes_guard_data.tres",
-		"label": "MG",
-		"color": Color(0.55, 0.25, 0.10),
-		"age": 2,
-		"civ_required": "guanches",
-	},
-	{
-		"id": "conquistador",
-		"scene": "res://scenes/units/conquistador.tscn",
-		"data": "res://resources/units/conquistador_data.tres",
-		"label": "CQ",
-		"color": Color(0.75, 0.55, 0.10),
-		"age": 2,
-		"civ_required": "castellanos",
-	},
-	{
-		"id": "tidecaller",
-		"scene": "res://scenes/units/tidecaller.tscn",
-		"data": "res://resources/units/tidecaller_data.tres",
-		"label": "TC",
-		"color": Color(0.15, 0.45, 0.70),
-		"age": 2,
-		"civ_required": "atlantes",
+		"civ_required": "britons",
 	},
 ]
 
@@ -105,7 +67,7 @@ func _process(delta: float) -> void:
 		_do_spawn(scene_path)
 		EventBus.train_queue_changed.emit(self, _train_queue.duplicate(), MAX_QUEUE)
 
-func order_train(unit_id: String = "militia") -> bool:
+func order_train(unit_id: String = "archer") -> bool:
 	if _train_queue.size() >= MAX_QUEUE:
 		return false
 	var def: Dictionary = _find_def(unit_id)

@@ -140,22 +140,39 @@ func manage_military() -> void:
 	if unit_id.is_empty():
 		return
 
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building) or not (building is Barracks):
-			continue
-		var br: Barracks = building as Barracks
-		if br.player_id != _ai.player_id:
-			continue
-		if br.state != BuildingBase.BuildingState.COMPLETE:
-			continue
-		if br.get_queue().size() >= br.get_max_queue():
-			continue
-		_ai.debug_log("TRAIN %s at barracks" % unit_id)
-		br.order_train(unit_id)
-		break
+	# Archers train at ArcheryRange; infantry at Barracks.
+	if unit_id == "archer":
+		for building: Node in _ai.buildings_layer.get_children():
+			if not is_instance_valid(building) or not (building is ArcheryRange):
+				continue
+			var ar: ArcheryRange = building as ArcheryRange
+			if ar.player_id != _ai.player_id:
+				continue
+			if ar.state != BuildingBase.BuildingState.COMPLETE:
+				continue
+			if ar.get_queue().size() >= ar.get_max_queue():
+				continue
+			_ai.debug_log("TRAIN %s at archery_range" % unit_id)
+			ar.order_train(unit_id)
+			break
+	else:
+		for building: Node in _ai.buildings_layer.get_children():
+			if not is_instance_valid(building) or not (building is Barracks):
+				continue
+			var br: Barracks = building as Barracks
+			if br.player_id != _ai.player_id:
+				continue
+			if br.state != BuildingBase.BuildingState.COMPLETE:
+				continue
+			if br.get_queue().size() >= br.get_max_queue():
+				continue
+			_ai.debug_log("TRAIN %s at barracks" % unit_id)
+			br.order_train(unit_id)
+			break
 
 func manage_unique_barracks_unit() -> void:
-	if _ai._construction._built.get("barracks", 0) as int == 0:
+	if _ai._construction._built.get("barracks", 0) as int == 0 \
+			and _ai._construction._built.get("archery_range", 0) as int == 0:
 		return
 	var ai_civ: String = MatchConfig.get_rival_civ_id(_ai.player_id)
 	var unique_id: String = ""
@@ -170,18 +187,33 @@ func manage_unique_barracks_unit() -> void:
 		return
 	if not ResourceManager.can_afford(_ai.player_id, unique_cost):
 		return
+	# Archer-class unique units train at ArcheryRange; others at Barracks.
+	var use_archery_range: bool = unique_id == "ravine_archer" or unique_id == "longbowman"
 	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building) or not (building is Barracks):
-			continue
-		var br: Barracks = building as Barracks
-		if br.player_id != _ai.player_id:
-			continue
-		if br.state != BuildingBase.BuildingState.COMPLETE:
-			continue
-		if br.get_queue().size() >= br.get_max_queue():
-			continue
-		br.order_train(unique_id)
-		break
+		if use_archery_range:
+			if not is_instance_valid(building) or not (building is ArcheryRange):
+				continue
+			var ar: ArcheryRange = building as ArcheryRange
+			if ar.player_id != _ai.player_id:
+				continue
+			if ar.state != BuildingBase.BuildingState.COMPLETE:
+				continue
+			if ar.get_queue().size() >= ar.get_max_queue():
+				continue
+			ar.order_train(unique_id)
+			break
+		else:
+			if not is_instance_valid(building) or not (building is Barracks):
+				continue
+			var br: Barracks = building as Barracks
+			if br.player_id != _ai.player_id:
+				continue
+			if br.state != BuildingBase.BuildingState.COMPLETE:
+				continue
+			if br.get_queue().size() >= br.get_max_queue():
+				continue
+			br.order_train(unique_id)
+			break
 
 func manage_stable_training() -> void:
 	if _ai._construction._built.get("stable", 0) as int == 0:
@@ -275,11 +307,12 @@ func manage_research() -> void:
 			TechManager.start_research(_ai.player_id, chosen.id, building)
 
 func _research_building_type(building: Node) -> int:
-	if building is Blacksmith: return TechnologyResource.ResearchBuilding.BLACKSMITH
-	if building is University:  return TechnologyResource.ResearchBuilding.UNIVERSITY
-	if building is Temple:      return TechnologyResource.ResearchBuilding.MONASTERY
-	if building is Barracks:    return TechnologyResource.ResearchBuilding.BARRACKS
-	if building is Stable:      return TechnologyResource.ResearchBuilding.STABLE
+	if building is Blacksmith:    return TechnologyResource.ResearchBuilding.BLACKSMITH
+	if building is University:    return TechnologyResource.ResearchBuilding.UNIVERSITY
+	if building is Temple:        return TechnologyResource.ResearchBuilding.MONASTERY
+	if building is Barracks:      return TechnologyResource.ResearchBuilding.BARRACKS
+	if building is ArcheryRange:  return TechnologyResource.ResearchBuilding.BARRACKS
+	if building is Stable:        return TechnologyResource.ResearchBuilding.STABLE
 	return -1
 
 func _pick_research(available: Array[TechnologyResource]) -> TechnologyResource:

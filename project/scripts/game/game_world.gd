@@ -22,6 +22,7 @@ var _saved_tc_position: Vector2 = Vector2.ZERO
 const BUILDING_SCENES: Dictionary = {
 	"house":         "res://scenes/buildings/house.tscn",
 	"barracks":      "res://scenes/buildings/barracks.tscn",
+	"archery_range": "res://scenes/buildings/archery_range.tscn",
 	"blacksmith":    "res://scenes/buildings/blacksmith.tscn",
 	"stable":        "res://scenes/buildings/stable.tscn",
 	"lumber_camp":   "res://scenes/buildings/lumber_camp.tscn",
@@ -43,6 +44,7 @@ const BUILDING_SCENES: Dictionary = {
 const BUILDING_COSTS: Dictionary = {
 	"house":         {"wood": 25},
 	"barracks":      {"wood": 175},
+	"archery_range": {"wood": 175},
 	"blacksmith":    {"wood": 150},
 	"stable":        {"wood": 175},
 	"lumber_camp":   {"wood": 100},
@@ -492,7 +494,7 @@ func _has_any_buildings(pid: int) -> bool:
 		if not is_instance_valid(b):
 			continue
 		if not (b is TownCenterBuilding or b is TownCenterBuildable
-				or b is Barracks or b is Stable
+				or b is Barracks or b is ArcheryRange or b is Stable
 				or b is SiegeWorkshop or b is Dock):
 			continue
 		var p: Variant = b.get("player_id")
@@ -1692,11 +1694,14 @@ func _on_action_requested(action_id: String) -> void:
 			if is_instance_valid(_selected_building) and _selected_building.has_method("order_train"):
 				if _selected_building is TownCenter or _selected_building is TownCenterBuilding:
 					_selected_building.order_train()
-		"train:militia", "train:archer", "train:pikeman", \
-		"train:menceyes_guard", "train:ravine_archer", "train:longbowman", \
+		"train:militia", "train:pikeman", \
+		"train:menceyes_guard", \
 		"train:conquistador", "train:tidecaller", "train:sand_raider":
 			if is_instance_valid(_selected_building) and _selected_building is Barracks:
 				(_selected_building as Barracks).order_train(action_id.trim_prefix("train:"))
+		"train:archer", "train:ravine_archer", "train:longbowman":
+			if is_instance_valid(_selected_building) and _selected_building is ArcheryRange:
+				(_selected_building as ArcheryRange).order_train(action_id.trim_prefix("train:"))
 		"train:scout", "train:heavy_scout", "train:knight":
 			if is_instance_valid(_selected_building) and _selected_building is Stable:
 				(_selected_building as Stable).order_train(action_id.trim_prefix("train:"))

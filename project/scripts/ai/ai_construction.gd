@@ -3,7 +3,7 @@ class_name AIConstruction extends RefCounted
 var _ai  # AIPlayer — untyped Variant so dynamic property access works at runtime
 
 var _built: Dictionary = {
-	"barracks": 0, "blacksmith": 0, "stable": 0, "house": 0,
+	"barracks": 0, "archery_range": 0, "blacksmith": 0, "stable": 0, "house": 0,
 	"lumber_camp": 0, "mining_camp": 0, "farm": 0, "dock": 0,
 	"university": 0, "market": 0, "temple": 0, "siege_workshop": 0, "wonder": 0
 }
@@ -13,6 +13,7 @@ var _build_cooldowns: Dictionary = {}
 
 const BUILDING_SCENES: Dictionary = {
 	"barracks":       "res://scenes/buildings/barracks.tscn",
+	"archery_range":  "res://scenes/buildings/archery_range.tscn",
 	"blacksmith":     "res://scenes/buildings/blacksmith.tscn",
 	"stable":         "res://scenes/buildings/stable.tscn",
 	"house":          "res://scenes/buildings/house.tscn",
@@ -119,6 +120,10 @@ func manage_advanced_buildings() -> void:
 		return
 	var barracks_count: int = _built.get("barracks", 0) as int
 	if barracks_count == 0:
+		return
+	if _built.get("archery_range", 0) as int == 0 \
+			and ResourceManager.can_afford(_ai.player_id, _building_costs.get("archery_range", {"wood": 175})):
+		_build("archery_range")
 		return
 	if _built.get("blacksmith", 0) as int == 0 \
 			and ResourceManager.can_afford(_ai.player_id, _building_costs["blacksmith"]):
@@ -239,7 +244,7 @@ func _get_build_zone(building_id: String) -> Dictionary:
 			return {"min_r": 70.0, "max_r": 160.0, "toward_enemy": false}
 		"farm":
 			return {"min_r": 55.0, "max_r": 130.0, "toward_enemy": false}
-		"barracks", "stable", "siege_workshop":
+		"barracks", "archery_range", "stable", "siege_workshop":
 			return {"min_r": 150.0, "max_r": 300.0, "toward_enemy": true}
 		"blacksmith":
 			return {"min_r": 120.0, "max_r": 220.0, "toward_enemy": true}

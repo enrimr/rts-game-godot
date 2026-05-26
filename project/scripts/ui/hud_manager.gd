@@ -40,7 +40,8 @@ const VILLAGER_ACTIONS: Array = [
 
 const BUILD_ACTIONS: Array = [
 	{"id": "build:house",         "label": "ACTION_HOUSE",        "color": Color(0.50, 0.38, 0.22), "cost": {"wood": 25},  "key": KEY_H, "description": "TOOLTIP_BUILD_HOUSE",    "min_age": 0},
-	{"id": "build:barracks",      "label": "ACTION_BARRACKS",     "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B, "description": "TOOLTIP_BUILD_BARRACKS", "min_age": 0},
+	{"id": "build:barracks",       "label": "ACTION_BARRACKS",       "color": Color(0.45, 0.22, 0.18), "cost": {"wood": 175}, "key": KEY_B, "description": "TOOLTIP_BUILD_BARRACKS",       "min_age": 0},
+	{"id": "build:archery_range", "label": "ACTION_ARCHERY_RANGE",  "color": Color(0.25, 0.45, 0.20), "cost": {"wood": 175}, "key": KEY_A, "description": "TOOLTIP_BUILD_ARCHERY_RANGE", "min_age": 1},
 	{"id": "build:blacksmith",    "label": "ACTION_BLACKSMITH",   "color": Color(0.55, 0.40, 0.20), "cost": {"wood": 150}, "key": KEY_K, "description": "TOOLTIP_BUILD_BLACKSMITH","min_age": 1},
 	{"id": "build:stable",        "label": "ACTION_STABLE",       "color": Color(0.40, 0.30, 0.15), "cost": {"wood": 175}, "key": KEY_J, "description": "TOOLTIP_BUILD_STABLE",   "min_age": 1},
 	{"id": "build:lumber_camp",   "label": "ACTION_LUMBER",       "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L, "description": "TOOLTIP_BUILD_LUMBER",   "min_age": 0},
@@ -703,6 +704,8 @@ func _on_technology_researched(player_id: int, _tech_id: String) -> void:
 		return
 	if _selected_building is Barracks:
 		_populate_barracks_actions(_selected_building as Barracks)
+	elif _selected_building is ArcheryRange:
+		_populate_archery_range_actions(_selected_building as ArcheryRange)
 	elif _selected_building is Stable:
 		_populate_stable_actions(_selected_building as Stable)
 	elif _selected_building is Blacksmith:
@@ -805,6 +808,10 @@ func _on_building_selected(building: Node) -> void:
 		_populate_barracks_actions(building as Barracks)
 		var br: Barracks = building as Barracks
 		_on_train_queue_changed(building, br.get_queue(), br.get_max_queue())
+	elif building is ArcheryRange:
+		_populate_archery_range_actions(building as ArcheryRange)
+		var ar: ArcheryRange = building as ArcheryRange
+		_on_train_queue_changed(building, ar.get_queue(), ar.get_max_queue())
 	elif building is Dock:
 		_populate_dock_actions(building as Dock)
 		var dk: Dock = building as Dock
@@ -885,6 +892,8 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 			_populate_research_only_actions(_selected_building, TechnologyResource.ResearchBuilding.MONASTERY)
 		elif _selected_building is Barracks:
 			_populate_barracks_actions(_selected_building as Barracks)
+		elif _selected_building is ArcheryRange:
+			_populate_archery_range_actions(_selected_building as ArcheryRange)
 		elif _selected_building is Dock:
 			_populate_dock_actions(_selected_building as Dock)
 		elif _selected_building is SiegeWorkshop:
@@ -1036,6 +1045,39 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
 	_build_research_bar(barracks)
+
+func _populate_archery_range_actions(archery_range: ArcheryRange) -> void:
+	var actions: Array = []
+	for def: Dictionary in archery_range.get_available_units():
+		var uid: String = def["id"] as String
+		var data: UnitResource = load(def["data"] as String) as UnitResource
+		var cost_parts: Array[String] = []
+		if data.cost_food  > 0: cost_parts.append("%dF" % data.cost_food)
+		if data.cost_wood  > 0: cost_parts.append("%dW" % data.cost_wood)
+		if data.cost_gold  > 0: cost_parts.append("%dG" % data.cost_gold)
+		var cost_label: String = " ".join(PackedStringArray(cost_parts))
+		var costs: Dictionary = {}
+		if data.cost_food  > 0: costs["food"] = data.cost_food
+		if data.cost_wood  > 0: costs["wood"] = data.cost_wood
+		if data.cost_gold  > 0: costs["gold"] = data.cost_gold
+		actions.append({
+			"id": "train:" + uid,
+			"label": data.display_name + "\n" + cost_label,
+			"color": def["color"] as Color,
+			"cost": costs,
+			"key": _archery_range_key_for(uid),
+		})
+	actions.append(DESTROY_ACTION)
+	_populate_buttons(actions)
+	_build_research_bar(archery_range)
+
+func _archery_range_key_for(uid: String) -> Key:
+	var key_map: Dictionary = {
+		"archer":        KEY_R,
+		"ravine_archer": KEY_U,
+		"longbowman":    KEY_U,
+	}
+	return key_map.get(uid, KEY_NONE) as Key
 
 func _barracks_key_for(uid: String) -> Key:
 	var key_map: Dictionary = {

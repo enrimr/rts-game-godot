@@ -3,6 +3,7 @@ extends Node
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const BUILDING_SCENES: Dictionary = {
 	"barracks":       "res://scenes/buildings/barracks.tscn",
+	"archery_range":  "res://scenes/buildings/archery_range.tscn",
 	"blacksmith":     "res://scenes/buildings/blacksmith.tscn",
 	"stable":         "res://scenes/buildings/stable.tscn",
 	"house":          "res://scenes/buildings/house.tscn",
