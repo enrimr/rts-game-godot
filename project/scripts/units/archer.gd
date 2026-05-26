@@ -71,7 +71,7 @@ func _handle_attacking(delta: float) -> void:
 	# Archers keep distance — back away if target gets too close
 	if dist < reach * 0.4:
 		var away: Vector2 = global_position + (global_position - (attack_target as Node2D).global_position).normalized() * 80.0
-		nav_agent.target_position = away
+		nav_agent.target_position = _safe_destination(away)
 		nav_agent.set_velocity(_nav_velocity())
 		return
 

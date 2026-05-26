@@ -25,7 +25,7 @@ func get_multiplier(player_id: int, key: String) -> float:
 		return 0.0 if key in _ADDITIVE_KEYS else 1.0
 	return val as float
 
-const _ADDITIVE_KEYS: Array[String] = ["unit_armor_melee", "archer_armor_pierce"]
+const _ADDITIVE_KEYS: Array[String] = ["unit_armor_melee", "archer_armor_pierce", "archer_range_flat"]
 
 func apply_tech_effect(player_id: int, effect_key: String, value: float) -> void:
 	if not _multipliers.has(player_id):
@@ -96,15 +96,19 @@ func get_unit_attack_multiplier(player_id: int, unit_id: String) -> float:
 func get_archer_range_multiplier(player_id: int) -> float:
 	return get_multiplier(player_id, "archer_range")
 
-## Call this when a player advances an age to add archer_range_bonus_per_age
-## (e.g. Britons gain +1 tile of range per age advance).
+## Flat tile bonus accumulated via archer_range_bonus_per_age (e.g. Britons +1/age).
+## Stored separately from the × multiplier so the two don't interfere.
+func get_archer_range_flat(player_id: int) -> float:
+	return get_multiplier(player_id, "archer_range_flat")
+
+## Called on each age advance — accumulates archer_range_bonus_per_age into the
+## flat tile bucket rather than onto the × multiplier.
 func on_age_advanced(player_id: int) -> void:
 	var bonus: float = get_multiplier(player_id, "archer_range_bonus_per_age")
 	if bonus <= 0.0:
 		return
-	# Accumulate additively onto archer_range (starts at 1.0, each advance adds the bonus)
-	var current: float = get_multiplier(player_id, "archer_range")
-	(_multipliers[player_id] as Dictionary)["archer_range"] = current + bonus
+	var current: float = get_multiplier(player_id, "archer_range_flat")
+	(_multipliers[player_id] as Dictionary)["archer_range_flat"] = current + bonus
 
 func get_siege_attack_bonus(player_id: int) -> float:
 	return get_multiplier(player_id, "siege_attack_bonus")

@@ -9,6 +9,9 @@ var _destination_state: UnitState = UnitState.IDLE
 const CAVALRY_IDS: Array[String] = ["scout", "heavy_scout", "knight", "chevalier_normand", "sand_raider"]
 const CAVALRY_BONUS_DAMAGE: float = 4.0
 
+func get_selection_sound() -> String:
+	return "select_archer"
+
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
@@ -66,6 +69,12 @@ func _handle_attacking(delta: float) -> void:
 		return
 	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
 	var reach: float = _attack_reach_to(attack_target)
+	# Kiting: back away when enemy closes in, exploiting the Longbowman's superior range
+	if dist < reach * 0.5:
+		var away: Vector2 = global_position + (global_position - (attack_target as Node2D).global_position).normalized() * 96.0
+		nav_agent.target_position = _safe_destination(away)
+		nav_agent.set_velocity(_nav_velocity())
+		return
 	if dist > reach:
 		nav_agent.target_position = _nav_target_for(attack_target)
 		if _advance_stuck(delta):

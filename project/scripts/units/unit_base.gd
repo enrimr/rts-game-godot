@@ -229,7 +229,9 @@ func _get_effective_attack_vs(target: Node) -> float:
 func _attack_reach_to(target: Node) -> float:
 	var range_mult: float = CivBonusManager.get_archer_range_multiplier(player_id) \
 		if unit_data.id in CivBonusManager._ARCHER_IDS else 1.0
-	var base: float = unit_data.attack_range * 32.0 * range_mult
+	var flat_bonus: float = CivBonusManager.get_archer_range_flat(player_id) \
+		if unit_data.id in CivBonusManager._ARCHER_IDS else 0.0
+	var base: float = unit_data.attack_range * 32.0 * range_mult + flat_bonus * 32.0
 	if not is_instance_valid(target):
 		return base
 	# Prefer CollisionShape2D rectangle (buildings with StaticBody2D)
