@@ -40,6 +40,7 @@ func _ready() -> void:
 	EventBus.building_construction_complete.connect(_on_construction_complete)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
 	EventBus.population_changed.connect(_on_population_changed)
+	EventBus.hero_low_hp.connect(_on_hero_low_hp)
 
 func _process(delta: float) -> void:
 	if _cd_unit     > 0.0: _cd_unit     -= delta
@@ -156,6 +157,12 @@ func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 	_cd_pop = CD_POP_CAP
 	AudioManager.play("pop_cap")
 	push(tr("NOTIF_POP_CAP"), Color(1.0, 0.70, 0.25))
+
+func _on_hero_low_hp(player_id: int) -> void:
+	if player_id != 0:
+		return
+	AudioManager.play("hero_low_hp")
+	push(tr("NOTIF_HERO_LOW_HP"), Color(1.0, 0.20, 0.20), 6.0)
 
 # --- Helpers ---
 

@@ -19,6 +19,7 @@ var taunt_source: Node = null
 var _attack_move_active: bool = false
 
 var _hit_tween: Tween = null
+var _hero_low_hp_fired: bool = false   # tracks if low-HP alert has been emitted this life
 var _stuck_timer: float = 0.0
 var _stuck_retries: int = 0
 var _last_position: Vector2 = Vector2.ZERO
@@ -118,6 +119,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 	if health <= 0.0:
 		die()
 		return
+	_check_hero_low_hp()
 	if player_id == 0:
 		AudioManager.play_if_visible("hit_melee", global_position, -8.0)
 	if source != null and is_instance_valid(source):
@@ -147,6 +149,18 @@ func _flash_hit() -> void:
 	modulate = Color(1.0, 0.2, 0.2, 1.0)
 	_hit_tween = create_tween()
 	_hit_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
+
+func _check_hero_low_hp() -> void:
+	if _hero_low_hp_fired:
+		return
+	if unit_data == null or not unit_data.is_hero:
+		return
+	var max_hp: float = unit_data.max_health * CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
+	if max_hp <= 0.0:
+		return
+	if health / max_hp < 0.25:
+		_hero_low_hp_fired = true
+		EventBus.hero_low_hp.emit(player_id)
 
 ## Guard response: react when a nearby allied unit or building is attacked.
 ## Only fires for player-0 units that are IDLE and within GUARD_RADIUS of the event.

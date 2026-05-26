@@ -116,6 +116,9 @@ func _build_all() -> void:
 	# Population cap
 	_register("pop_cap",        _synth_pop_cap())
 
+	# Hero critical HP alert
+	_register("hero_low_hp",    _synth_hero_low_hp())
+
 	# Weather ambience (looping, pool = 1)
 	_register_loop("weather_calima",  _synth_weather_calima())
 	_register_loop("weather_storm",   _synth_weather_storm())
@@ -357,6 +360,14 @@ func _synth_pop_cap() -> AudioStreamWAV:
 	var a: PackedFloat32Array = _sine(400.0, 0.09, 0.35)
 	var b: PackedFloat32Array = _sine(280.0, 0.12, 0.35)
 	return _make_wav(_concat(a, b))
+
+func _synth_hero_low_hp() -> AudioStreamWAV:
+	# Urgent triple pulse: high–low–high, tight gaps, loud
+	var hi: PackedFloat32Array = _sine(880.0, 0.07, 0.55)
+	var lo: PackedFloat32Array = _sine(520.0, 0.05, 0.40)
+	var gap: PackedFloat32Array = _sine(0.0,  0.04, 0.0)
+	var seq: PackedFloat32Array = _concat(_concat(_concat(_concat(hi, gap), lo), gap), hi)
+	return _make_wav(seq)
 
 # ── Unit selection voices ─────────────────────────────────────────────────────
 

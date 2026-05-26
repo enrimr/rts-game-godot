@@ -74,6 +74,7 @@ NOTIF_AGE_COMPLETE,%s reached!,¡%s alcanzada!
 NOTIF_BUILDING_BUILT,%s built,%s construido
 NOTIF_BUILDING_DESTROYED_PLAYER,Your %s has been destroyed!,¡Tu %s ha sido destruido!
 NOTIF_BUILDING_DESTROYED_ENEMY,Enemy building destroyed,Edificio enemigo destruido
+NOTIF_HERO_LOW_HP,⚠ Your hero is critically wounded!,⚠ ¡Tu héroe está herido de gravedad!
 GAMEOVER_VICTORY,VICTORY!,¡VICTORIA!
 GAMEOVER_DEFEAT,DEFEAT,DERROTA
 GAMEOVER_SUMMARY,Match Summary,Resumen de partida

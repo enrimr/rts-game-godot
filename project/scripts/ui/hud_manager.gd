@@ -127,6 +127,7 @@ var _research_bar: ProgressBar = null
 var _research_label: Label = null
 var _pause_menu: Control = null
 var _wonder_label: Label = null
+var _hero_alert_overlay: ColorRect = null
 
 const ACTION_COLS: int = 5
 const ACTION_ROWS: int = 2
@@ -183,6 +184,7 @@ func _ready() -> void:
 	GameManager.game_over.connect(_on_game_over)
 	EventBus.camera_follow_cancelled.connect(func() -> void: _set_follow_active(false))
 	EventBus.hero_respawned.connect(_on_hero_respawned)
+	EventBus.hero_low_hp.connect(_on_hero_low_hp)
 	EventBus.garrison_changed.connect(_on_garrison_changed)
 	EventBus.market_rate_changed.connect(_on_market_rate_changed)
 	EventBus.unit_spawned.connect(_on_stat_unit_spawned)
@@ -1371,6 +1373,23 @@ func _build_research_bar(building: Node) -> void:
 		fill.bg_color = Color(0.25, 0.55, 0.75)
 		_research_bar.add_theme_stylebox_override("fill", fill)
 		detail_panel.add_child(_research_bar)
+
+func _on_hero_low_hp(player_id: int) -> void:
+	if player_id != 0:
+		return
+	_flash_hero_alert()
+
+func _flash_hero_alert() -> void:
+	if not is_instance_valid(_hero_alert_overlay):
+		_hero_alert_overlay = ColorRect.new()
+		_hero_alert_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_hero_alert_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_hero_alert_overlay.color = Color(0.85, 0.0, 0.0, 0.0)
+		_hero_alert_overlay.z_index = 100
+		get_node("HUDRoot").add_child(_hero_alert_overlay)
+	_hero_alert_overlay.color = Color(0.85, 0.0, 0.0, 0.55)
+	var tw: Tween = create_tween()
+	tw.tween_property(_hero_alert_overlay, "color:a", 0.0, 1.2)
 
 func _on_hero_respawned(_respawn_player_id: int) -> void:
 	if is_instance_valid(_hero_respawn_bar):
