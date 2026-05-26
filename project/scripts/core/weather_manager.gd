@@ -272,8 +272,8 @@ func get_building_damage_rate(world_pos: Vector2) -> float:
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-func _in_volcanic_zone(world_pos: Vector2) -> bool:
-	return world_pos.length() <= VOLCANIC_ZONE_RADIUS
+func _in_volcanic_zone(_world_pos: Vector2) -> bool:
+	return true  # Volcanic ash covers the entire map when active
 
 func _in_coastal_zone(world_pos: Vector2) -> bool:
 	return TerrainManager.distance_to_coast(world_pos) <= COASTAL_ZONE_DEPTH

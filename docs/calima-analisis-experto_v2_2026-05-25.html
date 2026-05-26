@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calima: Flames of the Atlantic — Análisis Técnico v2 | IndieForge Magazine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ember:          #d4522e;
+      --ember-dark:     #a83e22;
+      --ember-glow:     rgba(212,82,46,0.12);
+      --gold:           #c8901a;
+      --gold-light:     #f5c030;
+      --gold-pale:      #fdf5dc;
+      --white:          #ffffff;
+      --surface:        #faf8f5;
+      --surface-raised: #f2ede6;
+      --border:         #e4ddd4;
+      --border-strong:  #cfc6ba;
+      --dark-900:       #17140f;
+      --dark-800:       #211d17;
+      --dark-700:       #2e2820;
+      --dark-600:       #3d3428;
+      --text-primary:   #1c1814;
+      --text-secondary: #50453c;
+      --text-tertiary:  #7a6e64;
+      --on-dark:        #f0ece5;
+      --on-dark-muted:  #c4b9ae;
+      --on-dark-label:  #f5c030;
+      --ocean:          #1e5c96;
+      --ocean-bg:       #e6eff8;
+      --ocean-border:   #b6ceea;
+      --code-bg:        #1a1d23;
+      --code-border:    #2e3440;
+      --code-text:      #d8dee9;
+      --sev-high:       #c0392b;
+      --sev-high-bg:    #fdf0ee;
+      --sev-med:        #d4522e;
+      --sev-med-bg:     #fef3ee;
+      --sev-low:        #c8901a;
+      --sev-low-bg:     #fef9ec;
+      --serif:   'Playfair Display', Georgia, serif;
+      --sans:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+      --max-w:   860px;
+      --r:       10px;
+      --r-sm:    6px;
+    }
+
+    html   { scroll-behavior: smooth; font-size: 17px; }
+    body   { background: var(--dark-900); color: var(--text-primary); font-family: var(--sans); line-height: 1.7; }
+
+    #progress-bar {
+      position: fixed; top: 0; left: 0; z-index: 200;
+      height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--ember), var(--gold-light));
+      transition: width 0.1s linear;
+    }
+
+    .masthead {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(23,20,15,0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 0 2rem; height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .masthead-logo { font-family: var(--sans); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: var(--on-dark); }
+    .masthead-logo span { color: var(--ember); }
+    .masthead-nav { display: flex; gap: 1.75rem; list-style: none; }
+    .masthead-nav a { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--on-dark-muted); text-decoration: none; transition: color 0.18s; }
+    .masthead-nav a:hover { color: var(--gold-light); }
+
+    .hero { position: relative; min-height: 480px; display: flex; align-items: flex-end; overflow: hidden; }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 30% 60%, rgba(30,92,150,0.35) 0%, transparent 58%),
+        radial-gradient(ellipse 60% 40% at 75% 30%, rgba(212,82,46,0.25) 0%, transparent 55%),
+        linear-gradient(155deg, #0d0b08 0%, #111520 30%, #1a2035 58%, #2e1a08 80%, #3d2010 100%);
+    }
+    .hero-sun { position: absolute; top: 18%; right: 12%; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(30,92,150,0.5) 0%, rgba(212,82,46,0.3) 55%, transparent 75%); filter: blur(28px); opacity: 0.55; }
+    .hero-vignette { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,12,8,0.82) 0%, rgba(15,12,8,0.58) 55%, transparent 100%); }
+    .hero-content { position: relative; z-index: 2; padding: 3.5rem 3rem 3.5rem; max-width: 700px; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--ocean); color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.28rem 0.75rem; border-radius: 2px; margin-bottom: 1.25rem; }
+    .hero h1 { font-family: var(--serif); font-weight: 800; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.1; color: #fff; margin-bottom: 1rem; text-shadow: 0 1px 24px rgba(0,0,0,0.6); }
+    .hero h1 em { color: var(--gold-light); font-style: normal; }
+    .hero-deck { font-size: 1rem; line-height: 1.6; color: var(--on-dark-muted); max-width: 580px; margin-bottom: 2rem; }
+    .hero-meta { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+    .author-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, var(--ocean) 0%, var(--ember) 100%); display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; color: #fff; }
+    .author-info { font-size: 0.78rem; color: var(--on-dark-muted); }
+    .author-info strong { display: block; color: var(--on-dark); font-size: 0.82rem; font-weight: 600; }
+    .hero-sep { width: 1px; height: 24px; background: rgba(255,255,255,0.15); }
+    .hero-date { font-size: 0.75rem; color: var(--on-dark-muted); }
+
+    .article-wrapper { background: var(--surface); }
+    .article-body { max-width: var(--max-w); margin: 0 auto; padding: 3rem 2rem 5rem; }
+
+    .toc { background: var(--white); border: 1px solid var(--border); border-top: 3px solid var(--ocean); border-radius: 0 0 var(--r) var(--r); padding: 1.5rem 1.75rem; margin-bottom: 3rem; }
+    .toc-title { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 0.8rem; }
+    .toc ol { padding-left: 1.1rem; }
+    .toc li { margin: 0.3rem 0; }
+    .toc a { font-size: 0.85rem; font-weight: 500; color: var(--ocean); text-decoration: none; transition: color 0.15s; }
+    .toc a:hover { color: var(--ember); }
+
+    .intro { margin-bottom: 3rem; }
+    .dropcap::first-letter { float: left; font-family: var(--serif); font-size: 4rem; font-weight: 800; line-height: 0.82; color: var(--ocean); margin: 0.1em 0.1em 0 0; }
+
+    .section { margin-bottom: 3.5rem; }
+    .section-header { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+    .section-number { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--ocean) 0%, #0e3d6e 100%); color: #fff; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(30,92,150,0.4); }
+    h2 { font-family: var(--serif); font-size: 1.65rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    h3 { font-family: var(--serif); font-size: 1.15rem; font-weight: 700; color: var(--ember-dark); margin: 2rem 0 0.75rem; }
+    h4 { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); margin: 1.5rem 0 0.5rem; }
+    p { margin-bottom: 1.15rem; color: var(--text-primary); font-size: 1rem; line-height: 1.75; }
+    strong { font-weight: 700; color: var(--text-primary); }
+    em { color: var(--text-secondary); font-style: italic; }
+
+    .pullquote { position: relative; padding: 1.5rem 1.75rem 1.5rem 2.5rem; margin: 2.5rem 0; border-left: 4px solid var(--ember); background: var(--white); border-radius: 0 var(--r) var(--r) 0; }
+    .pullquote::before { content: '\201C'; position: absolute; top: -0.15rem; left: 0.6rem; font-family: var(--serif); font-size: 3.5rem; line-height: 1; color: var(--ember); opacity: 0.3; }
+    .pullquote p { font-family: var(--serif); font-size: 1.2rem; font-weight: 700; line-height: 1.45; color: var(--ember-dark); margin: 0; }
+
+    .callout { background: var(--dark-700); border-radius: var(--r); padding: 1.5rem 1.75rem 1.5rem 2rem; margin: 2rem 0; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+    .callout::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(180deg, var(--gold-light), var(--gold)); }
+    .callout-label { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--on-dark-label); margin-bottom: 0.6rem; }
+    .callout p { color: var(--on-dark); font-size: 0.95rem; margin: 0; }
+    .callout p + p { margin-top: 0.65rem; }
+    .callout p strong { color: var(--on-dark); font-weight: 700; }
+    .callout p em { color: var(--on-dark-muted); font-style: italic; }
+    .callout.ocean::before { background: linear-gradient(180deg, #5ba3e8, var(--ocean)); }
+    .callout.ocean .callout-label { color: #5ba3e8; }
+
+    .bug-box { background: var(--white); border: 1px solid #e8cfc9; border-radius: var(--r); margin: 1.5rem 0; overflow: hidden; }
+    .bug-header { display: flex; align-items: flex-start; gap: 0.9rem; padding: 1rem 1.25rem 0.8rem; border-bottom: 1px solid #f0e0da; }
+    .bug-badge { flex-shrink: 0; padding: 0.2rem 0.6rem; border-radius: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+    .bug-badge.high   { background: var(--sev-high-bg); color: var(--sev-high); border: 1px solid #f5c8c2; }
+    .bug-badge.medium { background: var(--sev-med-bg);  color: var(--sev-med);  border: 1px solid #f5d8cc; }
+    .bug-badge.low    { background: var(--sev-low-bg);  color: var(--sev-low);  border: 1px solid #f0e0b4; }
+    .bug-badge.fixed  { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    .bug-title { font-weight: 700; color: var(--text-primary); font-size: 0.97rem; line-height: 1.3; }
+    .bug-file  { font-size: 0.72rem; color: var(--text-tertiary); margin-top: 0.2rem; font-family: monospace; }
+    .bug-body  { padding: 1rem 1.25rem; }
+    .bug-body p { font-size: 0.9rem; color: var(--text-secondary); margin: 0 0 0.7rem; line-height: 1.6; }
+    .bug-body p:last-child { margin: 0; }
+
+    .code-block { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: var(--r-sm); padding: 1rem 1.25rem; margin: 0.75rem 0; overflow-x: auto; }
+    .code-block pre { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; font-size: 0.78rem; line-height: 1.6; color: var(--code-text); margin: 0; white-space: pre; }
+    .code-block .c { color: #616e88; }
+    .code-block .k { color: #81a1c1; }
+    .code-block .s { color: #a3be8c; }
+    .code-block .n { color: #d8dee9; }
+    .code-block .fn{ color: #88c0d0; }
+    .code-block .num{ color: #b48ead; }
+    .code-block .label { color: #f5c030; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 0.5rem; opacity: 0.7; }
+
+    .risk-box { background: var(--white); border: 1px solid #f0d8d2; border-left: 4px solid var(--ember); border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: 1.1rem 1.4rem; margin: 1.25rem 0; }
+    .risk-box p { margin: 0; color: var(--text-secondary); font-size: 0.93rem; }
+    .risk-box p strong { color: var(--ember-dark); font-weight: 700; }
+
+    .feature-box { background: var(--white); border: 1px solid var(--ocean-border); border-left: 4px solid var(--ocean); border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: 1.1rem 1.4rem; margin: 1.25rem 0; }
+    .feature-box p { margin: 0; color: var(--text-secondary); font-size: 0.93rem; }
+    .feature-box p strong { color: var(--ocean); font-weight: 700; }
+
+    .table-wrap { overflow-x: auto; margin: 1.75rem 0; border: 1px solid var(--border); border-radius: var(--r); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    thead { background: var(--dark-800); }
+    thead th { padding: 0.7rem 1rem; text-align: left; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--on-dark); }
+    tbody tr { transition: background 0.12s; }
+    tbody tr:nth-child(even) { background: var(--surface-raised); }
+    tbody tr:nth-child(odd)  { background: var(--white); }
+    tbody tr:hover { background: #f5eee6; }
+    tbody td { padding: 0.6rem 1rem; color: var(--text-primary); vertical-align: top; border-bottom: 1px solid var(--border); line-height: 1.5; }
+    tbody td strong { color: var(--ember-dark); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .arch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin: 1.75rem 0; }
+    .arch-item { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); padding: 1.1rem 1rem; text-align: center; }
+    .arch-value { font-family: var(--serif); font-size: 2.2rem; font-weight: 800; line-height: 1; color: var(--ocean); margin-bottom: 0.2rem; }
+    .arch-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
+
+    .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.85rem; margin: 2rem 0; }
+    .score-item { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); padding: 1.25rem 1rem; text-align: center; transition: box-shadow 0.18s; }
+    .score-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .score-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 0.5rem; }
+    .score-value { font-family: var(--serif); font-size: 2.5rem; font-weight: 800; line-height: 1; color: var(--ember); }
+    .score-value span { font-size: 0.9rem; color: var(--text-tertiary); font-family: var(--sans); font-weight: 500; }
+    .score-bar { margin-top: 0.6rem; height: 3px; background: var(--surface-raised); border-radius: 2px; overflow: hidden; }
+    .score-fill { height: 100%; background: linear-gradient(90deg, var(--ember) 0%, var(--gold-light) 100%); }
+
+    .rec-list { list-style: none; margin: 1rem 0; }
+    .rec-list li { display: flex; gap: 0.9rem; align-items: flex-start; margin-bottom: 0.75rem; padding: 1rem 1.25rem; background: var(--white); border: 1px solid var(--border); border-radius: var(--r); font-size: 0.92rem; color: var(--text-secondary); transition: box-shadow 0.18s; }
+    .rec-list li:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .rec-list li strong { color: var(--text-primary); }
+    .rec-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--ember), var(--gold)); color: #fff; font-size: 0.68rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-top: 1px; box-shadow: 0 2px 6px rgba(212,82,46,0.3); }
+
+    .timeline { margin: 1.5rem 0; }
+    .timeline-phase { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 1rem; }
+    .timeline-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1.25rem; background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+    .timeline-badge { padding: 0.2rem 0.65rem; border-radius: 3px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+    .timeline-badge.q1 { background: #dceaf7; color: #1a4a7a; }
+    .timeline-badge.q2 { background: var(--gold-pale); color: #7a4a00; }
+    .timeline-badge.q3 { background: #fce8e4; color: #9a2a1a; }
+    .timeline-title { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); }
+    .timeline-body { padding: 1rem 1.25rem; }
+    .timeline-body ul { list-style: none; }
+    .timeline-body li { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.4rem 0; border-bottom: 1px solid var(--surface-raised); font-size: 0.88rem; color: var(--text-secondary); }
+    .timeline-body li:last-child { border-bottom: none; }
+    .timeline-body li::before { content: '→'; flex-shrink: 0; color: var(--ember); font-weight: 700; margin-top: 1px; }
+    .timeline-body li strong { color: var(--text-primary); font-weight: 600; }
+
+    .verdict { background: var(--dark-800); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r); padding: 2.5rem; margin: 3rem 0 0; position: relative; overflow: hidden; }
+    .verdict::after { content: '✓'; position: absolute; bottom: -2rem; right: 1rem; font-size: 12rem; font-weight: 800; color: rgba(255,255,255,0.025); line-height: 1; pointer-events: none; }
+    .verdict-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--on-dark-label); margin-bottom: 0.75rem; }
+    .verdict p { color: var(--on-dark-muted); font-size: 0.97rem; line-height: 1.7; margin: 0 0 1rem; position: relative; z-index: 1; }
+    .verdict p:last-child { margin-bottom: 0; }
+    .verdict p strong { color: var(--on-dark); font-weight: 700; }
+    .verdict-highlight { color: var(--gold-light) !important; font-weight: 700 !important; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+    .article-footer { background: var(--dark-900); border-top: 1px solid rgba(255,255,255,0.06); padding: 2rem; text-align: center; }
+    .article-footer p { font-family: var(--sans); font-size: 0.78rem; color: var(--on-dark-muted); margin: 0; }
+    .article-footer p + p { margin-top: 0.4rem; opacity: 0.65; }
+    .article-footer strong { color: var(--on-dark); font-weight: 600; }
+    .article-footer a { color: var(--gold-light); text-decoration: none; }
+
+    @media (max-width: 640px) {
+      .masthead-nav  { display: none; }
+      .hero-content  { padding: 2rem 1.5rem 2.5rem; }
+      .article-body  { padding: 2rem 1.25rem 3rem; }
+      .verdict       { padding: 1.75rem; }
+      .verdict::after{ display: none; }
+      .score-grid    { grid-template-columns: repeat(2, 1fr); }
+      .arch-grid     { grid-template-columns: repeat(3, 1fr); }
+      h2             { font-size: 1.45rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<header class="masthead">
+  <div class="masthead-logo">Indie<span>Forge</span> Magazine</div>
+  <nav>
+    <ul class="masthead-nav">
+      <li><a href="#">Análisis</a></li>
+      <li><a href="#">Arquitectura</a></li>
+      <li><a href="#">Civilizaciones</a></li>
+      <li><a href="#">Hoja de ruta</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-sun"></div>
+  <div class="hero-vignette"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Análisis Técnico v2 · 25 mayo 2026</div>
+    <h1><em>Calima: Flames of the Atlantic</em><br>Revisión profunda del estado actual</h1>
+    <p class="hero-deck">Segundo análisis exhaustivo del proyecto RTS en Godot 4. Desde el refactor del módulo de IA hasta las condiciones de victoria por modo de juego: todo lo que ha cambiado desde la primera revisión.</p>
+    <div class="hero-meta">
+      <div class="author-avatar">IF</div>
+      <div class="author-info">
+        <strong>IndieForge Tech Desk</strong>
+        Análisis de código v2 · Godot 4 · GDScript
+      </div>
+      <div class="hero-sep"></div>
+      <div class="hero-date">25 mayo 2026 · ~5.400 palabras</div>
+    </div>
+  </div>
+</section>
+
+<div class="article-wrapper">
+<div class="article-body">
+
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="toc-title">Contenido del análisis</div>
+    <ol>
+      <li><a href="#resumen">Resumen ejecutivo</a></li>
+      <li><a href="#arquitectura">Arquitectura central</a></li>
+      <li><a href="#economia">Sistema de economía</a></li>
+      <li><a href="#unidades">Unidades y civilizaciones</a></li>
+      <li><a href="#edificios">Edificios y defensa</a></li>
+      <li><a href="#ia">Inteligencia artificial</a></li>
+      <li><a href="#victoria">Condiciones de victoria</a></li>
+      <li><a href="#clima">Sistema de clima</a></li>
+      <li><a href="#audio">Audio procedural</a></li>
+      <li><a href="#hud">UI y HUD</a></li>
+      <li><a href="#bugs">Bugs corregidos en este ciclo</a></li>
+      <li><a href="#pendiente">Deuda técnica pendiente</a></li>
+      <li><a href="#hoja-de-ruta">Hoja de ruta M4</a></li>
+      <li><a href="#veredicto">Veredicto</a></li>
+    </ol>
+  </nav>
+
+  <!-- Intro -->
+  <div class="intro">
+    <p class="dropcap">Desde el primer análisis publicado en IndieForge, <strong>Calima: Flames of the Atlantic</strong> ha recorrido un camino significativo. El hito M3 está prácticamente cerrado: 8 civilizaciones con unidades únicas, árbol tecnológico de 21 techs, gameplay naval completo en mapas de islas, y un sistema de IA refactorizado desde un fichero monolítico de 800 líneas hasta cuatro módulos especializados coordinados por un director central. Esta segunda revisión documenta el estado real del código a 25 de mayo de 2026, con énfasis en los sistemas que han recibido mayor trabajo desde la v1 y en la deuda técnica que aún espera atención.</p>
+    <p>La métrica más relevante: el proyecto ha pasado de <strong>~55% de completitud</strong> estimada en la primera revisión a <strong>~70%</strong> hoy. La diferencia se concentra en correcciones de robustez (victoria/derrota, training de unidades únicas, respawn de héroe) y en la arquitectura de IA, que era el punto más débil anterior.</p>
+  </div>
+
+  <!-- 1. Resumen ejecutivo -->
+  <div class="section" id="resumen">
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <h2>Resumen ejecutivo</h2>
+    </div>
+
+    <div class="arch-grid">
+      <div class="arch-item"><div class="arch-value">88</div><div class="arch-label">Ficheros GDScript</div></div>
+      <div class="arch-item"><div class="arch-value">23</div><div class="arch-label">Tipos de unidad</div></div>
+      <div class="arch-item"><div class="arch-value">8</div><div class="arch-label">Civilizaciones</div></div>
+      <div class="arch-item"><div class="arch-value">21</div><div class="arch-label">Edificios</div></div>
+      <div class="arch-item"><div class="arch-value">21</div><div class="arch-label">Tecnologías</div></div>
+      <div class="arch-item"><div class="arch-value">12</div><div class="arch-label">Autoloads/Singletons</div></div>
+      <div class="arch-item"><div class="arch-value">3</div><div class="arch-label">Modos de victoria</div></div>
+      <div class="arch-item"><div class="arch-value">5</div><div class="arch-label">Tipos de clima</div></div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">Estimación de completitud M3</div>
+      <p><strong>~70% completado</strong> respecto a un RTS de single-player pulido listo para distribución. Los sistemas nucleares (economía, combate, IA, victoria) están operativos y corregidos. La deuda restante se concentra en mecánicas únicas de civilizaciones incompletas, micro de IA, y sistemas de UI secundarios (minimapa, árbol tecnológico visual).</p>
+    </div>
+  </div>
+
+  <!-- 2. Arquitectura -->
+  <div class="section" id="arquitectura">
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <h2>Arquitectura central</h2>
+    </div>
+
+    <p>La base arquitectónica no ha cambiado desde v1 y sigue siendo el punto más sólido del proyecto: <strong>EventBus estricto</strong> para comunicación entre sistemas, <strong>Resources como datos</strong>, y <strong>type hints en todas las funciones</strong>. Lo que sí ha evolucionado es la aplicación de estos principios al módulo de IA.</p>
+
+    <h3>Singletons activos (12)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Singleton</th><th>Responsabilidad</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td><strong>GameManager</strong></td><td>Estado global, pausa, game-over, enum Age</td><td>Completo</td></tr>
+          <tr><td><strong>EventBus</strong></td><td>60+ señales de comunicación entre sistemas</td><td>Completo</td></tr>
+          <tr><td><strong>ResourceManager</strong></td><td>Stockpiles por jugador + caché espacial</td><td>Completo</td></tr>
+          <tr><td><strong>SelectionManager</strong></td><td>Selección de unidades, grupos de control</td><td>Completo</td></tr>
+          <tr><td><strong>CivBonusManager</strong></td><td>Multiplicadores de stat por civilización/tech</td><td>Completo</td></tr>
+          <tr><td><strong>TechManager</strong></td><td>Cola de investigación, efectos de tecnología</td><td>Completo</td></tr>
+          <tr><td><strong>WeatherManager</strong></td><td>Máquina de estados de clima procedural</td><td>Completo</td></tr>
+          <tr><td><strong>AgeManager</strong></td><td>Progresión de Edad (Oscura→Feudal→Castillo→Imperial)</td><td>Completo</td></tr>
+          <tr><td><strong>PopulationManager</strong></td><td>Capacidad y población actual por jugador</td><td>Completo</td></tr>
+          <tr><td><strong>AudioManager</strong></td><td>Síntesis PCM procedural, sin ficheros de audio</td><td>Completo</td></tr>
+          <tr><td><strong>GameSettings</strong></td><td>Dificultad, parámetros IA, volumen, ai_debug</td><td>Completo</td></tr>
+          <tr><td><strong>MatchConfig</strong></td><td>Configuración de partida: mapa, civs, modo victoria</td><td>Completo</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>La corrección de dispatch dinámico en IA</h3>
+    <p>El cambio técnico más significativo de este ciclo fue el descubrimiento y corrección de un bug silencioso en los módulos de IA. Los cuatro módulos (<code>AIEconomy</code>, <code>AIConstruction</code>, <code>AIMilitary</code>, <code>AINaval</code>) guardaban referencia al coordinador <code>AIPlayer</code> como <code>var _ai: Node</code>. En Godot 4, esta tipificación estática hace que el acceso a propiedades como <code>_ai.player_id</code> o <code>_ai.town_center</code> se resuelva en tiempo de compilación contra la clase <code>Node</code>, devolviendo <code>null</code> o <code>0</code> silenciosamente en runtime.</p>
+
+    <div class="code-block"><pre><span class="c"># Antes — dispatch estático, todo _ai.player_id devuelve 0</span>
+<span class="k">var</span> <span class="n">_ai</span>: <span class="k">Node</span>
+<span class="k">func</span> <span class="fn">setup</span>(<span class="n">ai</span>: <span class="k">Node</span>) <span class="k">-></span> <span class="k">void</span>: _ai = ai
+
+<span class="c"># Después — Variant sin tipo, dispatch dinámico completo en runtime</span>
+<span class="k">var</span> <span class="n">_ai</span>  <span class="c"># Variant</span>
+<span class="k">func</span> <span class="fn">setup</span>(<span class="n">ai</span>) <span class="k">-></span> <span class="k">void</span>: _ai = ai</pre></div>
+
+    <p>El resultado: la IA dejó de recoger recursos, subir de edad y atacar. El fix de una línea (eliminar la anotación de tipo) restauró el comportamiento completo. Es un ejemplo perfecto de cómo Godot 4's static dispatch puede introducir regresiones invisibles.</p>
+  </div>
+
+  <!-- 3. Economía -->
+  <div class="section" id="economia">
+    <div class="section-header">
+      <div class="section-number">3</div>
+      <h2>Sistema de economía</h2>
+    </div>
+
+    <p>Cuatro recursos (Comida, Madera, Oro, Piedra), recogida por aldeanos con capacidad de carga, intervalo de recolección, punto de entrega y multiplicadores de civilización y clima. El sistema funciona correctamente en todos los escenarios probados.</p>
+
+    <h3>Recursos iniciales (modo Normal)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Recurso</th><th>Cantidad inicial</th><th>Fuentes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Comida</strong></td><td>200</td><td>Caza, granjas, pesca, bayas</td></tr>
+          <tr><td><strong>Madera</strong></td><td>200</td><td>Árboles (→ tocones al talar)</td></tr>
+          <tr><td><strong>Oro</strong></td><td>100</td><td>Minas de oro</td></tr>
+          <tr><td><strong>Piedra</strong></td><td>200</td><td>Canteras</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="feature-box">
+      <p><strong>Detalle destacado:</strong> El sistema de comercio del Mercado (<code>market.gd</code>) implementa <code>sell_lot</code> / <code>buy_lot</code> con precio dinámico basado en oferta/demanda. Los Fenicios tienen la bandera <code>market_available_dark_age</code> que desbloquea el Mercado desde la Edad Oscura, aunque la generación pasiva de oro de los barcos mercantes aún no está implementada en el código de barcos.</p>
+    </div>
+
+    <h3>Progresión de edades — costes</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Edad</th><th>Coste base</th><th>Francos (×0.85)</th><th>Tiempo</th></tr></thead>
+        <tbody>
+          <tr><td>Feudal</td><td>500 Comida</td><td>425 Comida</td><td>130 s</td></tr>
+          <tr><td>Castillo</td><td>800 C + 200 O</td><td>680 C + 170 O</td><td>160 s</td></tr>
+          <tr><td>Imperial</td><td>1000 C + 800 O</td><td>850 C + 680 O</td><td>190 s</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 4. Unidades y civilizaciones -->
+  <div class="section" id="unidades">
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <h2>Unidades y civilizaciones</h2>
+    </div>
+
+    <p>El roster completo asciende a <strong>23 tipos de unidad</strong> distribuidos entre unidades universales, únicas de civilización, navales y héroes. Cada unidad extiende <code>UnitBase</code> o <code>ShipBase</code> y recibe multiplicadores de <code>CivBonusManager</code> al instanciarse.</p>
+
+    <h3>Unidades únicas por civilización</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Civilización</th><th>Unidad única</th><th>Mecánica especial</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Guanches</strong></td><td>Menceyes Guard</td><td>Aura de Ira: +3 daño aliados cercanos (80 px) cuando HP &lt; 50%. Pulsa cada 2 s.</td><td>Completo</td></tr>
+          <tr><td><strong>Canarii</strong></td><td>Ravine Archer</td><td>Hereda Archer; coste en comida −20% por bonus de civ. Sin mecánica propia.</td><td>Parcial</td></tr>
+          <tr><td><strong>Mahos</strong></td><td>Sand Raider</td><td>Unidad de incursión rápida; sinergiza con bonus de velocidad de cav. +25%.</td><td>Parcial</td></tr>
+          <tr><td><strong>Francos</strong></td><td>Chevalier Normand</td><td>Carga: 2.5× daño tras desplazarse 80 px. Se reinicia por ataque.</td><td>Completo</td></tr>
+          <tr><td><strong>Britons</strong></td><td>Longbowman</td><td>Hereda Archer; bonus de rango por edad en CivBonusManager pero Archer.gd no lo aplica.</td><td>Incompleto</td></tr>
+          <tr><td><strong>Castellanos</strong></td><td>Conquistador</td><td>Código presente; mecánica especial no visible en revisión.</td><td>Parcial</td></tr>
+          <tr><td><strong>Atlantes</strong></td><td>Tidecaller</td><td>Unidad naval/especial; sinergiza con bonuses navales Atlantes.</td><td>Parcial</td></tr>
+          <tr><td><strong>Fenicios</strong></td><td>Trireme</td><td>Extiende WarGalley; generación pasiva de oro no implementada en código de barco.</td><td>Parcial</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pullquote">
+      <p>Solo 2 de 8 unidades únicas tienen mecánicas especiales completamente implementadas. El resto tienen código de clase pero sin lógica diferenciada. Esta es la mayor brecha de contenido del proyecto.</p>
+    </div>
+
+    <h3>Civilizaciones — bonus económicos y militares</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Civ</th><th>Bonus económico clave</th><th>Bonus militar clave</th><th>Rasgos especiales</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Guanches</strong></td><td>+20% HP edificios de piedra</td><td>Lanza disponible desde Edad Oscura</td><td>can_traverse_malpais (terreno volcánico)</td></tr>
+          <tr><td><strong>Canarii</strong></td><td>+15% recolección comida</td><td>Coste archers −20% comida</td><td>Casas como punto de entrega (no implementado visualmente)</td></tr>
+          <tr><td><strong>Mahos</strong></td><td>Coste edificios madera −30%</td><td>Velocidad exploradores +25%</td><td>can_traverse_dune; economía acelerada</td></tr>
+          <tr><td><strong>Francos</strong></td><td>Coste avance de edad −15%</td><td>+15% HP caballería</td><td>Tecn. Herrería gratis por edad (no implementado)</td></tr>
+          <tr><td><strong>Britons</strong></td><td>+20% velocidad ataque buques</td><td>Rango archers +1 por edad</td><td>Sinergia naval + arqueros</td></tr>
+          <tr><td><strong>Castellanos</strong></td><td>—</td><td>+15% HP espadachines; +10% rango torres</td><td>Civilización más generalista</td></tr>
+          <tr><td><strong>Atlantes</strong></td><td>+50% visión costera</td><td>+20% velocidad ataque barcos</td><td>can_traverse_ocean; sin taller de asedio</td></tr>
+          <tr><td><strong>Fenicios</strong></td><td>Mercado desde Edad Oscura</td><td>Tasa oro barcos mercantes ×1 (sin implementar)</td><td>Economía vía comercio; sin caballería pesada</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 5. Edificios -->
+  <div class="section" id="edificios">
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <h2>Edificios y defensa</h2>
+    </div>
+
+    <p>21 tipos de edificio divididos en productores de unidades, investigación, economía y defensa. La distinción entre edificios "productores" y "de apoyo" es ahora relevante para las condiciones de victoria en modo Conquista.</p>
+
+    <h3>Edificios productores de unidades (cuentan para condición de derrota)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Edificio</th><th>Coste</th><th>Unidades producidas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Town Center</strong></td><td>275 Madera</td><td>Aldeanos, respawn héroe</td></tr>
+          <tr><td><strong>Barracks</strong></td><td>175 Madera</td><td>Milicia, M-a-A, Long Sword., Pikeman + 5 únicas de civ</td></tr>
+          <tr><td><strong>Stable</strong></td><td>175 Madera</td><td>Explorador, Heavy Scout, Knight + Sand Raider, Chevalier</td></tr>
+          <tr><td><strong>Siege Workshop</strong></td><td>200 Madera</td><td>Ariete, Mangonel, Trebuchet</td></tr>
+          <tr><td><strong>Dock</strong></td><td>150 Madera</td><td>Barca pesca, Transporte, War Galley, Trireme</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Edificios de apoyo (NO cuentan para condición de derrota)</h3>
+    <p>Casa, Muralla, Torre de Vigilancia, Puerta, Granja, Trampa de pez, Herrería, Universidad, Templo, Mercado, Aserradero, Campamento minero, Maravilla. Destruirlos no afecta a la detección de eliminación de un jugador.</p>
+
+    <div class="feature-box">
+      <p><strong>Reciente:</strong> La colocación de murallas en drag con snap a rejilla fue integrada en el hito anterior (<code>wall_segment.gd</code>). Los segmentos cuestan 5 de piedra cada uno y las puertas 30 de madera. El sistema de Gate incluye toggle de bloqueo para controlar el paso.</p>
+    </div>
+  </div>
+
+  <!-- 6. IA -->
+  <div class="section" id="ia">
+    <div class="section-header">
+      <div class="section-number">6</div>
+      <h2>Inteligencia artificial</h2>
+    </div>
+
+    <p>El cambio más estructural de este ciclo: el fichero monolítico <code>ai_player.gd</code> fue refactorizado en cinco ficheros. El coordinador delega completamente en cuatro módulos <code>RefCounted</code> especializados.</p>
+
+    <h3>Arquitectura modular post-refactor</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Módulo</th><th>Clase</th><th>Responsabilidad</th></tr></thead>
+        <tbody>
+          <tr><td><strong>AIPlayer</strong></td><td><code>extends Node</code></td><td>Coordinador: wiring EventBus, reconstrucción de TC, log de debug</td></tr>
+          <tr><td><strong>AIEconomy</strong></td><td><code>extends RefCounted</code></td><td>Spawn aldeanos, asignación recursos, avance de edad</td></tr>
+          <tr><td><strong>AIConstruction</strong></td><td><code>extends RefCounted</code></td><td>Colocación de edificios, cooldowns, gestión de población</td></tr>
+          <tr><td><strong>AIMilitary</strong></td><td><code>extends RefCounted</code></td><td>Entrenamiento unidades, investigación, combate, agresividad</td></tr>
+          <tr><td><strong>AINaval</strong></td><td><code>extends RefCounted</code></td><td>Unidades navales, patrulla, asalto con transporte</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Sistema de debug en tiempo real (F2 / Fn+F2 en Mac)</h3>
+    <p>Se añadió <code>AIDebugOverlay</code> (<code>ui/ai_debug_overlay.gd</code>), un panel superpuesto al HUD (layer 128) que muestra los últimos 14 mensajes de decisión de cada jugador IA activo, junto con sus recursos y edad actual en tiempo real. Se activa con F2 (Fn+F2 en Mac) y persiste a través de la señal <code>GameSettings.ai_debug</code>.</p>
+
+    <div class="callout ocean">
+      <div class="callout-label">Sistema de agresividad</div>
+      <p>La IA militar gestiona tres niveles de agresividad: <strong>PASSIVE</strong> (intervalo de ataque normal), <strong>ALERTED</strong> (×0.6 del intervalo, cuando detecta amenaza en 400 px del TC) y <strong>AGGRESSIVE</strong> (×0.33, cuando tiene suficientes unidades y recursos). La transición entre estados se evalúa cada 3 segundos.</p>
+    </div>
+
+    <h3>Prioridad de investigación</h3>
+    <p>La IA sigue un array <code>_TECH_PRIORITY</code> de 21 IDs ordenados por impacto ofensivo: primero upgrades de infantería y caballería, luego mejoras de ataque, luego armaduras, finalmente techs económicas y monásticas.</p>
+
+    <h3>Limitaciones conocidas</h3>
+    <ul class="rec-list">
+      <li><span class="rec-icon">!</span><div><strong>Sin formaciones ni micro de combate.</strong> Las unidades se agrupan en blob. Los arqueros no mantienen distancia de kiting. La caballería no flanquea.</div></li>
+      <li><span class="rec-icon">!</span><div><strong>Colocación de edificios por fuerza bruta.</strong> 60 ray-casts por intento. Con 3+ IAs en el mismo mapa puede generar picos de frame.</div></li>
+      <li><span class="rec-icon">!</span><div><strong>El Trebuchet no se despliega proactivamente.</strong> La IA entrena Trebuchets pero no ejecuta la secuencia deploy/undeploy de forma óptima.</div></li>
+    </ul>
+  </div>
+
+  <!-- 7. Victoria -->
+  <div class="section" id="victoria">
+    <div class="section-header">
+      <div class="section-number">7</div>
+      <h2>Condiciones de victoria</h2>
+    </div>
+
+    <p>Tres modos de victoria, cada uno con su propia lógica de detección. Tras este ciclo los tres están correctamente aislados y no se interfieren entre sí.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Modo</th><th>Condición de victoria</th><th>Condición de derrota</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Conquista</strong> (defecto)</td>
+            <td>Todos los rivales sin unidades NI edificios productores</td>
+            <td>Jugador sin unidades NI edificios productores (animales excluidos)</td>
+          </tr>
+          <tr>
+            <td><strong>Regicidio</strong></td>
+            <td>El último héroe rival cae; si queda un héroe propio vivo</td>
+            <td>El propio héroe muere (el héroe rival gana)</td>
+          </tr>
+          <tr>
+            <td><strong>Maravilla</strong></td>
+            <td>Construir Maravilla y sobrevivir 240 s de cuenta atrás</td>
+            <td>La propia cuenta atrás llega a 0 sin que se destruya la Maravilla rival</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Bugs corregidos en este ciclo</h3>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge fixed">FIXED</div>
+        <div>
+          <div class="bug-title">Pantalla de derrota no aparecía al ser eliminado</div>
+          <div class="bug-file">game_world.gd → _check_player_defeat()</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p><strong>Causa raíz:</strong> <code>queue_free()</code> en Godot es diferida al final del frame. La comprobación de derrota se ejecutaba síncronamente mientras el edificio destruido aún existía en la escena como nodo válido, haciendo que el scan devolviera "sigue habiendo edificios del jugador 0".</p>
+        <p><strong>Fix:</strong> <code>call_deferred("_check_player_defeat")</code> en ambos sitios de disparo (muerte de unidad y destrucción de edificio).</p>
+      </div>
+    </div>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge fixed">FIXED</div>
+        <div>
+          <div class="bug-title">Victoria al matar al enemigo no se detectaba si tenía murallas/casas</div>
+          <div class="bug-file">ai_player.gd → _check_elimination(), game_world.gd</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p><strong>Causa raíz:</strong> <code>_check_elimination()</code> en <code>ai_player.gd</code> contaba cualquier edificio como "jugador vivo". Murallas y casas impedían emitir <code>player_eliminated</code>. Además, la lógica de victoria estaba fragmentada entre <code>ai_player.gd</code> y <code>game_world.gd</code> sin coordinación.</p>
+        <p><strong>Fix:</strong> Toda la lógica de victoria/derrota centralizada en <code>_check_defeat_for(pid)</code> en <code>game_world.gd</code>. Solo edificios productores de unidades (TC, Barracks, Stable, SiegeWorkshop, Dock) mantienen vivo a un jugador. Animales excluidos de la cuenta de unidades.</p>
+      </div>
+    </div>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge fixed">FIXED</div>
+        <div>
+          <div class="bug-title">Regicidio declaraba ganador incorrecto con múltiples rivales</div>
+          <div class="bug-file">game_manager.gd → _on_hero_died_regicide()</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p><strong>Causa raíz:</strong> Al morir el héroe del rival 1, el código declaraba ganador al primer jugador distinto del muerto (jugador 0), aunque el rival 2 siguiera con héroe vivo.</p>
+        <p><strong>Fix:</strong> Solo se declara ganador cuando muere el último héroe rival. La comprobación verifica que no quede ningún otro rival con héroe activo.</p>
+      </div>
+    </div>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge fixed">FIXED</div>
+        <div>
+          <div class="bug-title">Modo Maravilla: destruir la maravilla rival declaraba victoria inmediata</div>
+          <div class="bug-file">game_world.gd → _on_wonder_destroyed()</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p><strong>Causa raíz:</strong> El sistema de Maravilla usaba una única variable <code>_wonder_owner</code>. Destruir la maravilla de cualquier rival declaraba al jugador 0 como ganador automáticamente, sin comprobar si había otros rivales con maravillas activas.</p>
+        <p><strong>Fix:</strong> Refactorizado a un diccionario <code>_wonder_timers: Dictionary</code> indexado por <code>player_id</code>. Destruir una maravilla cancela la cuenta atrás de ese jugador (sin derrota inmediata). El juego continúa hasta que alguien completa los 240 s o queda eliminado por conquista.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Clima -->
+  <div class="section" id="clima">
+    <div class="section-header">
+      <div class="section-number">8</div>
+      <h2>Sistema de clima</h2>
+    </div>
+
+    <p>Uno de los sistemas más originales del proyecto: cinco tipos de clima con efectos físicos reales sobre visión, velocidad, recolección, proyectiles y edificios. Completamente operativo y bien integrado en todos los sistemas que afecta.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Clima</th><th>Efecto principal</th><th>Mapas</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Calima</strong></td><td>−40% visión, −20% recolección comida/madera, −15% mov.</td><td>Todos</td></tr>
+          <tr><td><strong>Tormenta Atlántica</strong></td><td>−30% velocidad naval, −50% pesca</td><td>Todos</td></tr>
+          <tr><td><strong>Niebla Marina</strong></td><td>−60% visión costera, unidades ocultas si no exploradas</td><td>Islas/Costa</td></tr>
+          <tr><td><strong>Vientos Alisios</strong></td><td>±20% velocidad naval según dirección; deriva de proyectiles ±30–40 px</td><td>Islas/Costa</td></tr>
+          <tr><td><strong>Ceniza Volcánica</strong></td><td>Zona central: −50% visión, −30% recolección, 2 HP/s daño edificios</td><td>Todos</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>El sistema usa una máquina de estados con cuatro fases: Clear → Ramp-in (10 s) → Peak (40–160 s según tipo) → Ramp-out (10 s). La frecuencia se configura en el lobby (Off / Normal / Frecuente / Extremo).</p>
+  </div>
+
+  <!-- 9. Audio -->
+  <div class="section" id="audio">
+    <div class="section-header">
+      <div class="section-number">9</div>
+      <h2>Audio procedural</h2>
+    </div>
+
+    <p>El proyecto no contiene un solo fichero de audio. Todos los sonidos se sintetizan en PCM (<code>AudioStreamWAV</code>) al arrancar mediante <code>AudioManager</code>. La frecuencia de muestreo es 22.050 Hz con un pool de 4 reproductores por sonido en round-robin.</p>
+
+    <div class="callout">
+      <div class="callout-label">Por qué importa esto</div>
+      <p>Cero dependencias de assets de audio significa tamaño de repositorio mínimo, síntesis determinista (los sonidos suenan igual en cualquier plataforma sin conversión de formato) y modificación trivial de parámetros de sonido sin herramientas externas. Es una decisión de diseño técnico poco común que merece atención.</p>
+    </div>
+  </div>
+
+  <!-- 10. HUD -->
+  <div class="section" id="hud">
+    <div class="section-header">
+      <div class="section-number">10</div>
+      <h2>UI y HUD</h2>
+    </div>
+
+    <p>El <code>HudManager</code> es el controlador central de toda la UI en partida: gestiona 18 slots de botones de acción contextuales, el panel de recursos, la barra de edad, el reloj de partida, el grid de retratos de unidades seleccionadas y la cola de entrenamiento.</p>
+
+    <h3>Acciones contextuales</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Contexto</th><th>Acciones disponibles</th></tr></thead>
+        <tbody>
+          <tr><td>Aldeano seleccionado</td><td>Recoger madera/oro/piedra/comida, Menú construcción, Mover, Ataque-mover, Stop, Mostrar ruta</td></tr>
+          <tr><td>Town Center</td><td>Entrenar aldeano, Avanzar edad, Punto de reunión</td></tr>
+          <tr><td>Barracks</td><td>Milicia, Archer, Pikeman + únicas de civ (5 posibles) + Techs de barracks</td></tr>
+          <tr><td>Stable</td><td>Explorador, Heavy Scout, Knight + Chevalier/Sand Raider según civ</td></tr>
+          <tr><td>Siege Workshop</td><td>Ariete, Mangonel, Trebuchet</td></tr>
+          <tr><td>Dock</td><td>Barca pesca, Transporte, War Galley, Trireme (Fenicios)</td></tr>
+          <tr><td>Trebuchet</td><td>Desplegar / Replegar (toggle con indicador visual)</td></tr>
+          <tr><td>Transport Ship</td><td>Desembarcar todas las unidades</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Limitaciones actuales del HUD</h3>
+    <ul class="rec-list">
+      <li><span class="rec-icon">!</span><div><strong>Minimapa mínimo.</strong> Existe como sistema separado pero la integración con HUD es parcial. No muestra posiciones de unidades en tiempo real.</div></li>
+      <li><span class="rec-icon">!</span><div><strong>Sin visualización del árbol tecnológico.</strong> Las techs se muestran como botones en el edificio de investigación pero no hay pantalla de árbol de prerequisitos.</div></li>
+      <li><span class="rec-icon">!</span><div><strong>Sin información de contadores.</strong> El HUD no indica "los arqueros son fuertes contra caballería" ni conceptos de piedra-papel-tijeras.</div></li>
+    </ul>
+  </div>
+
+  <!-- 11. Bugs corregidos -->
+  <div class="section" id="bugs">
+    <div class="section-header">
+      <div class="section-number">11</div>
+      <h2>Bugs corregidos en este ciclo</h2>
+    </div>
+
+    <p>Además de los bugs de victoria documentados en la sección anterior, este ciclo cerró tres issues adicionales de alto impacto en jugabilidad:</p>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge fixed">FIXED</div>
+        <div>
+          <div class="bug-title">Unidades únicas de civilización en Barracks no se podían entrenar</div>
+          <div class="bug-file">game_world.gd → _on_action_requested()</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p>El switch de acciones tenía casos explícitos para <code>train:militia</code>, <code>train:archer</code> y <code>train:pikeman</code> pero ninguno para las cinco unidades únicas (<code>menceyes_guard</code>, <code>ravine_archer</code>, <code>longbowman</code>, <code>conquistador</code>, <code>tidecaller</code>). La acción se ignoraba silenciosamente. Fix: colapsados todos los casos de Barracks en un handler genérico.</p>
+      </div>
+    </div>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge fixed">FIXED</div>
+        <div>
+          <div class="bug-title">Héroe enemigo no reaparecía tras ser eliminado</div>
+          <div class="bug-file">town_center_building.gd</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p><code>TownCenterBuilding</code> (el script del TC de la IA) nunca se conectaba a <code>EventBus.hero_died</code>. Los scripts <code>TownCenter</code> y <code>TownCenterBuildable</code> del jugador sí tenían el sistema de respawn, pero el script del TC de la IA carecía de él. Fix: se añadió el sistema completo de respawn (120 s de contador, métodos <code>is_respawning_hero()</code>, <code>get_hero_respawn_fraction()</code>) al tercer TC script.</p>
+      </div>
+    </div>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge fixed">FIXED</div>
+        <div>
+          <div class="bug-title">IA completamente inoperativa tras el refactor de módulos</div>
+          <div class="bug-file">ai_economy.gd, ai_construction.gd, ai_military.gd, ai_naval.gd</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p>Los módulos declaraban <code>var _ai: Node</code>. En Godot 4, el dispatch estático sobre <code>Node</code> resuelve cualquier propiedad no definida en <code>Node</code> como <code>null</code> o <code>0</code> en runtime sin error. <code>player_id</code> siempre era 0, <code>town_center</code> siempre era <code>null</code>, <code>count_military()</code> siempre devolvía 0. Fix: cambio a <code>var _ai</code> sin tipo (Variant), forzando dispatch dinámico completo.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. Deuda técnica -->
+  <div class="section" id="pendiente">
+    <div class="section-header">
+      <div class="section-number">12</div>
+      <h2>Deuda técnica pendiente</h2>
+    </div>
+
+    <h3>Alta prioridad (afecta a jugabilidad)</h3>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge high">Alta</div>
+        <div>
+          <div class="bug-title">Bonus de rango de Longbowman (Britons) no aplicado</div>
+          <div class="bug-file">archer.gd / civ_bonus_manager.gd</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p><code>CivBonusManager</code> define <code>archer_range_bonus_per_age</code> pero <code>archer.gd</code> no lo consulta ni aplica dinámicamente al avanzar de edad. El Longbowman de los Britons debería ganar rango adicional en cada era.</p>
+      </div>
+    </div>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge high">Alta</div>
+        <div>
+          <div class="bug-title">Barcos mercantes Fenicios no generan oro pasivo</div>
+          <div class="bug-file">trireme.gd / ship_base.gd</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p>El multiplicador <code>merchant_ship_gold_rate</code> existe en <code>CivBonusManager</code> pero ningún script de barco lo consulta. La característica más distintiva de los Fenicios no funciona.</p>
+      </div>
+    </div>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge medium">Media</div>
+        <div>
+          <div class="bug-title">Traversal de terreno especial no enforced en pathfinding</div>
+          <div class="bug-file">unit_base.gd / map_manager.gd</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p>Los flags <code>can_traverse_malpais</code> (Guanches), <code>can_traverse_dune</code> (Mahos), <code>can_traverse_ocean</code> (Atlantes) están definidos en los .tres de civilización pero el pathfinding no los aplica. Las ventajas de terreno de estas civs no tienen efecto.</p>
+      </div>
+    </div>
+
+    <div class="bug-box">
+      <div class="bug-header">
+        <div class="bug-badge medium">Media</div>
+        <div>
+          <div class="bug-title">Tech gratuita por edad de Castellanos no implementada</div>
+          <div class="bug-file">tech_manager.gd</div>
+        </div>
+      </div>
+      <div class="bug-body">
+        <p>Los Castellanos deberían recibir una tecnología de Herrería gratuita al avanzar de edad. El bonus está en el diseño pero no hay lógica en <code>TechManager</code> ni en <code>AgeManager</code> que lo ejecute.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13. Hoja de ruta -->
+  <div class="section" id="hoja-de-ruta">
+    <div class="section-header">
+      <div class="section-number">13</div>
+      <h2>Hoja de ruta M4</h2>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-phase">
+        <div class="timeline-header">
+          <div class="timeline-badge q1">Sprint 1</div>
+          <div class="timeline-title">Completar mecánicas únicas de civilizaciones</div>
+        </div>
+        <div class="timeline-body">
+          <ul>
+            <li><strong>Britons:</strong> aplicar <code>archer_range_bonus_per_age</code> en Archer._ready() y en age_advance signal</li>
+            <li><strong>Fenicios:</strong> añadir tick de oro pasivo en Trireme/ship_base usando <code>merchant_ship_gold_rate</code></li>
+            <li><strong>Castellanos:</strong> hook en AgeManager para tech gratuita de Herrería al subir de edad</li>
+            <li><strong>Canarii, Mahos, Atlantes:</strong> implementar traversal de terreno especial en NavigationAgent2D</li>
+            <li>Ravine Archer, Conquistador, Tidecaller: mecánicas de combate propias</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-phase">
+        <div class="timeline-header">
+          <div class="timeline-badge q2">Sprint 2</div>
+          <div class="timeline-title">IA — formaciones, micro y balance por dificultad</div>
+        </div>
+        <div class="timeline-body">
+          <ul>
+            <li>Kiting básico para arqueros (mantener distancia mínima del objetivo)</li>
+            <li>Trebuchet: deploy automático al entrar en rango de objetivo fijo</li>
+            <li>Formación defensiva cuando la IA está ALERTED (proteger aldeanos)</li>
+            <li>Balance de parámetros por nivel de dificultad (EASY/NORMAL/HARD)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-phase">
+        <div class="timeline-header">
+          <div class="timeline-badge q3">Sprint 3</div>
+          <div class="timeline-title">UI, polish y balance de juego</div>
+        </div>
+        <div class="timeline-body">
+          <ul>
+            <li>Minimapa — integración completa con posiciones de unidades/edificios en tiempo real</li>
+            <li>Pantalla de árbol tecnológico con prerequisitos visuales</li>
+            <li>Pass de balance: costes de unidades, tiempos de investigación, bonus de civ</li>
+            <li>Sistema de guardado — integrar SaveManager con game_world.gd</li>
+            <li>Tooltip mejorado: info de contadores de unidades (piedra-papel-tijeras)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14. Veredicto -->
+  <div class="section" id="veredicto">
+    <div class="section-header">
+      <div class="section-number">14</div>
+      <h2>Puntuaciones</h2>
+    </div>
+
+    <div class="score-grid">
+      <div class="score-item">
+        <div class="score-label">Arquitectura</div>
+        <div class="score-value">9<span>/10</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:90%"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">Contenido</div>
+        <div class="score-value">7<span>/10</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:70%"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">IA</div>
+        <div class="score-value">7<span>/10</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:70%"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">Sistemas únicos</div>
+        <div class="score-value">9<span>/10</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:90%"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">Robustez</div>
+        <div class="score-value">8<span>/10</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:80%"></div></div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">UI/Polish</div>
+        <div class="score-value">6<span>/10</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:60%"></div></div>
+      </div>
+    </div>
+
+    <div class="verdict">
+      <div class="verdict-label">Veredicto IndieForge · v2 · 25 mayo 2026</div>
+      <p><strong>Calima: Flames of the Atlantic</strong> ha madurado de prototipo robusto a RTS con todas las piezas en su sitio. El ciclo entre v1 y v2 resolvió los bugs más críticos de jugabilidad: la detección de victoria/derrota ahora funciona correctamente en los tres modos, las unidades únicas de civilización son entrenables, el héroe enemigo reaparece, y la IA volvió a ser inteligente tras el regression del refactor.</p>
+      <p>La arquitectura sigue siendo el punto más fuerte: EventBus estricto, diseño orientado a datos, type hints en todo el código. Los sistemas de clima y audio procedural siguen siendo los más originales del proyecto, difíciles de encontrar en proyectos indie de esta escala.</p>
+      <p class="verdict-highlight">Completitud estimada: 70% de un RTS de single-player pulido. Con un sprint enfocado en completar las mecánicas únicas de civilización, el juego estará listo para una primera demo pública.</p>
+      <p>La deuda pendiente es manejable y está bien acotada: 4 mecánicas de civ incompletas, micro de IA limitado, UI secundaria mínima. Nada que impida una partida completa y satisfactoria de principio a fin en modo Conquista.</p>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer class="article-footer">
+  <p><strong>IndieForge Magazine</strong> · Análisis técnico de proyectos indie en desarrollo</p>
+  <p>Calima: Flames of the Atlantic · Godot 4.3+ · GDScript · Análisis v2 generado el 25 mayo 2026</p>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const el = document.getElementById('progress-bar');
+    const h = document.documentElement;
+    const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    el.style.width = pct + '%';
+  });
+</script>
+</body>
+</html>

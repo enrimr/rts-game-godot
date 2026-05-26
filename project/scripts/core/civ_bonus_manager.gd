@@ -25,7 +25,10 @@ func get_multiplier(player_id: int, key: String) -> float:
 		return 0.0 if key in _ADDITIVE_KEYS else 1.0
 	return val as float
 
-const _ADDITIVE_KEYS: Array[String] = ["unit_armor_melee", "archer_armor_pierce", "archer_range_flat"]
+const _ADDITIVE_KEYS: Array[String] = [
+	"unit_armor_melee", "archer_armor_pierce", "archer_range_flat",
+	"archer_range_bonus_per_age", "free_blacksmith_tech_per_age",
+]
 
 func apply_tech_effect(player_id: int, effect_key: String, value: float) -> void:
 	if not _multipliers.has(player_id):

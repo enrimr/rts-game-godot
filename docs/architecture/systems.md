@@ -104,6 +104,7 @@ The HUD is a `CanvasLayer` scene at `scenes/ui/hud/hud.tscn`, instanced as a chi
 | `EventBus.resource_changed` | `_on_resource_changed` | Updates the matching `ResourceDisplay` for the local player |
 | `EventBus.unit_selected` | `_on_unit_selected` | Rebuilds the unit portraits grid and detail panel |
 | `EventBus.age_advance_complete` | `_on_age_advance_complete` | Updates the age label for the local player |
+| `EventBus.market_rate_changed` | `_on_market_rate_changed` | Refreshes the Market action panel with live rates if the changed market is currently selected |
 | `GameManager.game_started` | `_on_game_started` | Starts the in-game clock |
 | `GameManager.game_paused` | `toggle_pause` | Shows/hides the full-screen pause overlay |
 
@@ -187,12 +188,14 @@ The building goes through the standard `BuildingBase` construction state machine
 
 ### Stable
 
-`scripts/buildings/stable.gd` (`class_name Stable`) extends `BuildingBase`. Trains cavalry units with a queue cap of 5 (`MAX_QUEUE`). Available units are gated by `AgeManager.get_age(player_id)`:
+`scripts/buildings/stable.gd` (`class_name Stable`) extends `BuildingBase`. Trains cavalry units with a queue cap of 5 (`MAX_QUEUE`). Available units are gated by `AgeManager.get_age(player_id)` and civ-gated via the unit's civilization field:
 
-| Unit ID | Class | Age requirement | Cost source |
-|---|---|---|---|
-| `heavy_scout` | `HeavyScout` | Feudal (1) | `resources/units/heavy_scout_data.tres` |
-| `knight` | `Knight` | Castle (2) | `resources/units/knight_data.tres` |
+| Unit ID | Class | Age requirement | Cost source | Civ restriction |
+|---|---|---|---|---|
+| `heavy_scout` | `HeavyScout` | Feudal (1) | `resources/units/heavy_scout_data.tres` | All |
+| `knight` | `Knight` | Castle (2) | `resources/units/knight_data.tres` | All |
+| `sand_raider` | `SandRaider` | Feudal (1) | `resources/units/sand_raider_data.tres` | Mahos only |
+| `chevalier_normand` | `ChevalierNormand` | Castle (2) | `resources/units/chevalier_normand_data.tres` | Franks only |
 
 Training cost is read from `UnitResource` fields (`cost_food`, `cost_wood`, `cost_gold`) and modified by `CivBonusManager.get_unit_cost_multiplier`. Resources are refunded on `order_cancel_train`. The `EventBus.train_queue_changed` signal is emitted after every queue mutation. On spawn, `PopulationManager.add_unit` is called and `EventBus.unit_spawned` is emitted.
 
@@ -204,14 +207,16 @@ Training cost is read from `UnitResource` fields (`cost_food`, `cost_wood`, `cos
 
 `scripts/buildings/market.gd` (`class_name Market`) extends `BuildingBase`.
 
-Exchange rates (all operations require `BuildingState.COMPLETE`):
+Exchange rates are **dynamic per player per resource** (all operations require `BuildingState.COMPLETE`). Base rates are `BASE_SELL_RATE = 15` (resources per 1 gold) and `BASE_BUY_RATE = 20` (resources per 1 gold spent). Each lot traded degrades the relevant rate by `DEGRADE_PER_LOT = 3` steps, bounded by `MAX_SELL_RATE = 30` and `MIN_BUY_RATE = 5`. Rates recover 1 step every `RECOVERY_INTERVAL = 30` seconds via `_process`. State is tracked in per-player, per-resource offset dictionaries (`_sell_offsets`, `_buy_offsets`, `_recovery_timers`).
 
-| Method | Direction | Rate |
+| Method | Direction | Description |
 |---|---|---|
-| `sell_resource(player_id, resource)` | resource → gold | 15 units of resource per 1 gold |
-| `buy_resource(player_id, resource)` | gold → resource | 1 gold per 20 units of resource |
-| `sell_lot(player_id, resource)` | 100 resource → gold | 100 / 15 ≈ 6 gold |
-| `buy_lot(player_id, resource)` | 5 gold → resource | 5 × 20 = 100 units |
+| `get_sell_rate(pid, resource) -> int` | query | Current sell rate (resources per 1 gold); increases with use |
+| `get_buy_rate(pid, resource) -> int` | query | Current buy rate (resources per 1 gold spent); decreases with use |
+| `sell_resource(player_id, resource)` | resource → gold | Single-unit sell at current sell rate; degrades rate |
+| `buy_resource(player_id, resource)` | gold → resource | Single-unit buy at current buy rate; degrades rate |
+| `sell_lot(player_id, resource)` | 100 resource → gold | Bulk sell: 100 / current sell rate gold received; degrades rate; emits `EventBus.market_rate_changed` |
+| `buy_lot(player_id, resource)` | 5 gold → resource | Bulk buy: 5 × current buy rate resources received; degrades rate; emits `EventBus.market_rate_changed` |
 
 ## Cavalry Units
 
@@ -261,14 +266,18 @@ Trebuchet adds a two-state deploy system on top of the base FSM:
 
 ## CivBonusManager — Extended API
 
-Two new query methods were added to `CivBonusManager`:
+Two query methods were added to `CivBonusManager`:
 
 | Method | Signature | Description |
 |---|---|---|
 | `get_archer_armor_pierce_bonus` | `(player_id: int) -> float` | Returns additive pierce-armor bonus for archers; backed by `archer_armor_pierce` key in `_ADDITIVE_KEYS` |
 | `get_unit_move_speed_multiplier` | `(player_id: int) -> float` | Returns the `unit_move_speed` multiplier applied to every unit's nav velocity |
 
-`get_attack_speed_multiplier` now also handles `unit_id == "archer"` by returning the `archer_attack_speed` multiplier.
+`get_attack_speed_multiplier` handles `unit_id == "archer"` by returning the `archer_attack_speed` multiplier. `SandRaider` calls `CivBonusManager.get_attack_speed_multiplier(player_id, unit_data.id)` to scale its attack timer.
+
+`get_unit_hp_multiplier`: `"sand_raider"` is included in the cavalry HP branch alongside `"scout"`, `"heavy_scout"`, and `"knight"`, so the `cavalry_hp` multiplier (e.g. Franks +15%) applies to Sand Raiders.
+
+`get_unit_speed_multiplier`: `"sand_raider"` is included in the `scout_speed` branch, so the Mahos `scout_speed` bonus (+25%) applies to their unique unit.
 
 `_ADDITIVE_KEYS` now includes `"archer_armor_pierce"` (alongside the existing `"unit_armor_melee"`). Additive keys accumulate flat points rather than multiplying.
 

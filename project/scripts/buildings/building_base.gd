@@ -176,8 +176,9 @@ func _flash_hit() -> void:
 	_hit_tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
 
 func _process(delta: float) -> void:
-	# Volcanic ash: slow HP drain for buildings in the affected zone
-	if state == BuildingState.COMPLETE:
+	# Volcanic ash: slow HP drain for any standing building (including pre-placed
+	# Town Centers whose state never transitions through add_construction).
+	if state != BuildingState.UNDER_CONSTRUCTION and state != BuildingState.DESTROYED:
 		var ash_dmg: float = WeatherManager.get_building_damage_rate(global_position) * delta
 		if ash_dmg > 0.0:
 			take_damage(ash_dmg)

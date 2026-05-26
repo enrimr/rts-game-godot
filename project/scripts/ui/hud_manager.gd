@@ -201,6 +201,12 @@ func _ready() -> void:
 	_build_idle_military_button()
 
 	_build_dpad()
+	WeatherManager.weather_changed.connect(_on_weather_changed)
+	WeatherManager.weather_cleared.connect(hide_weather)
+
+func _on_weather_changed(weather_id: String, _intensity: float) -> void:
+	if weather_id != "clear":
+		show_weather(weather_id)
 
 func _process(delta: float) -> void:
 	_idle_villager_check_timer += delta

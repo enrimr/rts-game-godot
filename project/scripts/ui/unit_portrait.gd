@@ -5,17 +5,25 @@ extends PanelContainer
 
 var _name_label: Label
 var _hp_bar: ProgressBar
+var _color_stripe: ColorRect
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(56.0, 56.0)
 
 	var layout: VBoxContainer = VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 2)
 	add_child(layout)
+
+	# Color block — fills most of the portrait, replaced later by unit icon
+	_color_stripe = ColorRect.new()
+	_color_stripe.custom_minimum_size = Vector2(0.0, 32.0)
+	_color_stripe.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_child(_color_stripe)
 
 	_name_label = Label.new()
 	_name_label.name = "NameLabel"
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name_label.add_theme_font_size_override("font_size", 13)
+	_name_label.add_theme_font_size_override("font_size", 11)
 	layout.add_child(_name_label)
 
 	_hp_bar = ProgressBar.new()
@@ -30,13 +38,18 @@ func setup(unit: Node) -> void:
 	unit_ref = unit
 
 	var display_name: String = "Unit"
+	var pid: int = 0
 	if is_instance_valid(unit):
+		var pid_v: Variant = unit.get("player_id")
+		if pid_v != null:
+			pid = pid_v as int
 		var unit_data: Variant = unit.get("unit_data")
 		if unit_data != null:
 			var name_val: Variant = (unit_data as Resource).get("display_name")
 			if name_val != null and not (name_val as String).is_empty():
 				display_name = name_val as String
 
+	_color_stripe.color = PlayerColors.get_color(pid).darkened(0.25)
 	_name_label.text = display_name.left(6)
 
 	var hp_percent: float = 100.0
@@ -54,6 +67,108 @@ func setup(unit: Node) -> void:
 
 	_hp_bar.value = hp_percent
 	_apply_hp_color(hp_percent)
+	# Non-empty tooltip_text triggers _make_custom_tooltip; the string itself is unused.
+	tooltip_text = " "
+
+func _make_custom_tooltip(_for_text: String) -> Object:
+	if not is_instance_valid(unit_ref):
+		return null
+	var bbcode: String = _build_tooltip(unit_ref)
+	if bbcode.is_empty():
+		return null
+
+	var panel: PanelContainer = PanelContainer.new()
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.08, 0.12, 0.96)
+	style.border_color = Color(0.30, 0.30, 0.45)
+	style.border_width_left   = 1
+	style.border_width_right  = 1
+	style.border_width_top    = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left     = 5
+	style.corner_radius_top_right    = 5
+	style.corner_radius_bottom_left  = 5
+	style.corner_radius_bottom_right = 5
+	panel.add_theme_stylebox_override("panel", style)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left",   10)
+	margin.add_theme_constant_override("margin_right",  10)
+	margin.add_theme_constant_override("margin_top",     8)
+	margin.add_theme_constant_override("margin_bottom",  8)
+	panel.add_child(margin)
+
+	var rtl: RichTextLabel = RichTextLabel.new()
+	rtl.bbcode_enabled = true
+	rtl.text = bbcode
+	rtl.fit_content = true
+	rtl.scroll_active = false
+	rtl.custom_minimum_size = Vector2(180.0, 0.0)
+	rtl.add_theme_font_size_override("normal_font_size", 14)
+	margin.add_child(rtl)
+	return panel
+
+func _build_tooltip(u: Node) -> String:
+	if not is_instance_valid(u):
+		return ""
+	var udata: Variant = u.get("unit_data")
+	if udata == null:
+		return ""
+	var d: UnitResource = udata as UnitResource
+	var pid: int = (u.get("player_id") as int) if u.get("player_id") != null else 0
+	var uid: String = d.id
+	var world_pos: Vector2 = (u as Node2D).global_position if u is Node2D else Vector2.ZERO
+
+	var hp: float = (u.get("health") as float) if u.get("health") != null else d.max_health
+	var hp_mult: float = CivBonusManager.get_unit_hp_multiplier(pid, uid)
+	var max_hp: float = d.max_health * hp_mult
+
+	var spd_civ: float = CivBonusManager.get_unit_speed_multiplier(pid, uid) \
+		* CivBonusManager.get_unit_move_speed_multiplier(pid)
+	var spd_weather: float = WeatherManager.get_move_speed_multiplier(world_pos)
+	var spd_total: float = spd_civ * spd_weather
+	var spd: float = d.move_speed * spd_total
+
+	var atk_mult: float = CivBonusManager.get_unit_attack_multiplier(pid, uid)
+	var atk: float = d.attack * atk_mult
+
+	var armor_m: float = d.armor_melee + CivBonusManager.get_unit_armor_bonus(pid)
+	var armor_p: float = d.armor_pierce + CivBonusManager.get_archer_armor_pierce_bonus(pid)
+
+	var los_mult: float = WeatherManager.get_vision_multiplier(world_pos)
+	var los: float = d.line_of_sight * los_mult
+
+	var b: String = ""
+	b += "[b]%s[/b]\n" % d.display_name
+	b += "HP: %d / %d%s\n" % [int(hp), int(max_hp), _bonus_bbcode(hp_mult, 1.0)]
+	b += "Ataque: %d%s\n" % [int(atk), _bonus_bbcode(atk_mult, 1.0)]
+	var armor_delta: float = (armor_m - d.armor_melee) + (armor_p - d.armor_pierce)
+	b += "Armadura: %d mel / %d pie%s\n" % [int(armor_m), int(armor_p), _bonus_bbcode_flat(armor_delta)]
+	b += "Velocidad: %.1f%s\n" % [spd, _bonus_bbcode(spd_total, 1.0)]
+	if d.attack_range > 1.0:
+		var rng_mult: float = CivBonusManager.get_archer_range_multiplier(pid)
+		var rng_flat: float = CivBonusManager.get_archer_range_flat(pid)
+		var rng: float = d.attack_range * rng_mult + rng_flat
+		b += "Rango: %.0f px%s\n" % [rng, _bonus_bbcode_flat(rng - d.attack_range)]
+	b += "Visión: %.0f px%s" % [los, _bonus_bbcode(los_mult, 1.0)]
+	return b
+
+func _bonus_bbcode(mult: float, baseline: float) -> String:
+	var diff: float = mult - baseline
+	if absf(diff) < 0.01:
+		return ""
+	var pct: int = int(roundf(diff * 100.0))
+	if pct > 0:
+		return "  [color=#55dd77]▲+%d%%[/color]" % pct
+	return "  [color=#ee5555]▼%d%%[/color]" % pct
+
+func _bonus_bbcode_flat(delta: float) -> String:
+	if absf(delta) < 0.5:
+		return ""
+	var n: int = int(roundf(delta))
+	if n > 0:
+		return "  [color=#55dd77]▲+%d[/color]" % n
+	return "  [color=#ee5555]▼%d[/color]" % n
 
 func set_selected_highlight(is_selected: bool) -> void:
 	if is_selected:
