@@ -488,8 +488,6 @@ func _has_any_units(pid: int) -> bool:
 ## (TC, Barracks, Stable, SiegeWorkshop, Dock). Walls, houses, towers,
 ## farms, camps, etc. do not count.
 func _has_any_buildings(pid: int) -> bool:
-	if pid == 0 and is_instance_valid(drop_off):
-		return true
 	for b: Node in buildings_layer.get_children():
 		if not is_instance_valid(b):
 			continue
