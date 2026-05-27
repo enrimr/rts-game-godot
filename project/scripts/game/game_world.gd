@@ -480,8 +480,12 @@ func _has_any_units(pid: int) -> bool:
 		if unit is Animal:
 			continue
 		var p: Variant = unit.get("player_id")
-		if p != null and (p as int) == pid:
-			return true
+		if p == null or (p as int) != pid:
+			continue
+		var st: Variant = unit.get("current_state")
+		if st != null and (st as int) == UnitBase.UnitState.DEAD:
+			continue
+		return true
 	return false
 
 ## Returns true if player_id has at least one unit-producing building
@@ -496,8 +500,12 @@ func _has_any_buildings(pid: int) -> bool:
 				or b is SiegeWorkshop or b is Dock):
 			continue
 		var p: Variant = b.get("player_id")
-		if p != null and (p as int) == pid:
-			return true
+		if p == null or (p as int) != pid:
+			continue
+		var st: Variant = b.get("state")
+		if st != null and (st as int) == BuildingBase.BuildingState.DESTROYED:
+			continue
+		return true
 	return false
 
 func _on_building_construction_complete(building: Node) -> void:
