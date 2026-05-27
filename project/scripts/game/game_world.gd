@@ -79,6 +79,8 @@ const UNIT_CLICK_RADIUS: float = 32.0
 @onready var hud: CanvasLayer = $HUD
 @onready var _nav_region: NavigationRegion2D = $NavigationRegion2D
 
+var _terrain_advantage_overlay: TerrainAdvantageOverlay = null
+
 # All AI town centers indexed by player_id
 var _ai_town_centers: Dictionary = {}   # int → Node2D
 var _ai_town_center: Node2D = null      # legacy alias for player_id 1
@@ -156,6 +158,10 @@ func _ready() -> void:
 
 	var map_data: Dictionary = MapGenerator.generate(self, units_layer, _rng)
 	var tc_positions: Array[Vector2] = map_data["tc_positions"] as Array[Vector2]
+
+	_terrain_advantage_overlay = TerrainAdvantageOverlay.new()
+	add_child(_terrain_advantage_overlay)
+	_terrain_advantage_overlay.build_from_terrain_manager(MatchConfig.player_civ_id)
 
 	# Place player TC at tc_positions[0]
 	drop_off.global_position = tc_positions[0]

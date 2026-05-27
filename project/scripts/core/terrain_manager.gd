@@ -76,6 +76,15 @@ func _get_civ(civ_id: String) -> CivilizationResource:
 	_civ_cache[civ_id] = civ
 	return civ
 
+func get_zones() -> Array[Dictionary]:
+	return _zones
+
+func get_land_polys() -> Array:
+	return _land_polys
+
+func is_island_map() -> bool:
+	return _is_island_map
+
 func add_zone(center: Vector2, radius: float, type: TerrainType) -> void:
 	_zones.append({"center": center, "radius": radius, "type": type})
 
