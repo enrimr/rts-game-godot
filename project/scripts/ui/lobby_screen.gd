@@ -192,6 +192,15 @@ func _build() -> void:
 	rivals_clip.add_child(_rivals_section)
 	_rebuild_rivals_section()
 
+	# AI difficulty
+	left.add_child(_make_label(tr("LOBBY_AI_DIFFICULTY")))
+	var diff_opts: Array[String] = [
+		tr("LOBBY_DIFFICULTY_EASY"), tr("LOBBY_DIFFICULTY_NORMAL"), tr("LOBBY_DIFFICULTY_HARD"),
+	]
+	var diff_initial: int = clampi(GameSettings.difficulty, 0, 2)
+	left.add_child(_make_option_row(diff_opts, diff_initial,
+		func(i: int) -> void: GameSettings.difficulty = i))
+
 	# ── Right column: player civ ─────────────────────────────────────────────
 	var right: VBoxContainer = VBoxContainer.new()
 	right.add_theme_constant_override("separation", 10)

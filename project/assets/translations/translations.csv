@@ -173,6 +173,10 @@ LOBBY_RES_FULL_COMBAT,Full Combat,Combate Total
 LOBBY_CIVILIZATION,Your Civilization,Tu Civilización
 LOBBY_STARTING_AGE,Starting Age,Edad de Inicio
 LOBBY_RIVAL_COUNT,Number of Rivals,Número de Rivales
+LOBBY_AI_DIFFICULTY,AI Difficulty,Dificultad de la IA
+LOBBY_DIFFICULTY_EASY,Easy,Fácil
+LOBBY_DIFFICULTY_NORMAL,Normal,Normal
+LOBBY_DIFFICULTY_HARD,Hard,Difícil
 LOBBY_RIVAL,Rival,Rival
 LOBBY_VICTORY_MODE,Victory Condition,Condición de Victoria
 LOBBY_VICTORY_CONQUEST,Conquest,Conquista
