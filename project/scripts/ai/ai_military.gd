@@ -30,7 +30,17 @@ func notify_under_attack() -> void:
 		_ai._attack_timer = get_effective_attack_interval()
 
 func check_zone_threat() -> void:
-	if not is_instance_valid(_ai.town_center):
+	var anchors: Array[Vector2] = []
+	if is_instance_valid(_ai.town_center):
+		anchors.append(_ai.town_center.global_position)
+	for b: Node in _ai.buildings_layer.get_children():
+		if not is_instance_valid(b):
+			continue
+		var bpid: Variant = b.get("player_id")
+		if bpid == null or (bpid as int) != _ai.player_id:
+			continue
+		anchors.append((b as Node2D).global_position)
+	if anchors.is_empty():
 		return
 	for unit: Node in _ai.units_layer.get_children():
 		if not is_instance_valid(unit):
@@ -40,10 +50,12 @@ func check_zone_threat() -> void:
 			continue
 		if unit.get("is_cloaked") == true:
 			continue
-		if (unit as Node2D).global_position.distance_to(_ai.town_center.global_position) <= CONTROL_ZONE_RADIUS:
-			_escalate_aggression(AggressionLevel.AGGRESSIVE)
-			_defend_base()
-			return
+		var upos: Vector2 = (unit as Node2D).global_position
+		for anchor: Vector2 in anchors:
+			if upos.distance_to(anchor) <= CONTROL_ZONE_RADIUS:
+				_escalate_aggression(AggressionLevel.AGGRESSIVE)
+				_defend_base()
+				return
 
 func launch_attack() -> void:
 	var mcount: int = count_military()
@@ -433,8 +445,7 @@ func _escalate_aggression(level: AggressionLevel) -> void:
 	_aggression_timer = 0.0
 
 func _defend_base() -> void:
-	if not is_instance_valid(_ai.town_center):
-		return
+	# Find the enemy unit closest to any AI building/TC.
 	var best_enemy: Node = null
 	var best_dist: float = CONTROL_ZONE_RADIUS
 	for unit: Node in _ai.units_layer.get_children():
@@ -445,9 +456,19 @@ func _defend_base() -> void:
 			continue
 		if unit.get("is_cloaked") == true:
 			continue
-		var d: float = (unit as Node2D).global_position.distance_to(_ai.town_center.global_position)
-		if d < best_dist:
-			best_dist = d
+		var upos: Vector2 = (unit as Node2D).global_position
+		var min_d: float = INF
+		if is_instance_valid(_ai.town_center):
+			min_d = minf(min_d, upos.distance_to(_ai.town_center.global_position))
+		for b: Node in _ai.buildings_layer.get_children():
+			if not is_instance_valid(b):
+				continue
+			var bpid: Variant = b.get("player_id")
+			if bpid == null or (bpid as int) != _ai.player_id:
+				continue
+			min_d = minf(min_d, upos.distance_to((b as Node2D).global_position))
+		if min_d < best_dist:
+			best_dist = min_d
 			best_enemy = unit
 	if best_enemy == null:
 		return
