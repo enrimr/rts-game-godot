@@ -1657,13 +1657,19 @@ func _do_nav_rebake() -> void:
 		var sv: Variant = b.get("state")
 		if sv != null and (sv as int) == BuildingBase.BuildingState.DESTROYED:
 			continue
-		source.add_obstruction_outline(b.call("get_nav_obstacle_polygon") as PackedVector2Array)
+		var bpoly: PackedVector2Array = b.call("get_nav_obstacle_polygon") as PackedVector2Array
+		if bpoly.size() >= 3:
+			source.add_obstruction_outline(bpoly)
 	if is_instance_valid(drop_off) and drop_off.has_method("get_nav_obstacle_polygon"):
-		source.add_obstruction_outline(drop_off.call("get_nav_obstacle_polygon") as PackedVector2Array)
+		var dpoly: PackedVector2Array = drop_off.call("get_nav_obstacle_polygon") as PackedVector2Array
+		if dpoly.size() >= 3:
+			source.add_obstruction_outline(dpoly)
 	for rn: Node in get_tree().get_nodes_in_group("resource_nodes"):
 		if not is_instance_valid(rn) or not rn.has_method("get_nav_obstacle_polygon"):
 			continue
-		source.add_obstruction_outline(rn.call("get_nav_obstacle_polygon") as PackedVector2Array)
+		var rpoly: PackedVector2Array = rn.call("get_nav_obstacle_polygon") as PackedVector2Array
+		if rpoly.size() >= 3:
+			source.add_obstruction_outline(rpoly)
 	NavigationServer2D.bake_from_source_geometry_data_async(
 		nav_poly, source, Callable(self, "_on_nav_bake_done"))
 

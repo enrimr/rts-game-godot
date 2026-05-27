@@ -15,7 +15,7 @@ func register_node(node: ResourceNode) -> void:
 	if not _resource_cache.has(key):
 		_resource_cache[key] = []
 	(_resource_cache[key] as Array).append(node)
-	node.depleted.connect(_on_node_depleted.bind(node))
+	node.depleted.connect(_on_node_depleted)
 
 func _on_node_depleted(node: ResourceNode) -> void:
 	var key: String = node.get_resource_name()
