@@ -2280,16 +2280,27 @@ func _add_nav_obstacles(parent: Node2D) -> void:
 			# Physical walls so ships cannot sail past the map edge
 			_add_ocean_boundary_walls(parent, half)
 
-	# Solid impassable zones → NavigationObstacle2D on the land region
-	const IMPASSABLE: Array = [
-		TerrainManager.TerrainType.MALPAIS,
-		TerrainManager.TerrainType.RISCO,
-		TerrainManager.TerrainType.CALDERA,
-	]
-	for z: Dictionary in TerrainManager._zones:
+	# Solid impassable zones → NavigationObstacle2D on the land region.
+	# Skip obstacle types that the player's civ can traverse freely.
+	var player_civ_id: String = MatchConfig.player_civ_id
+	var player_civ: CivilizationResource = load(
+		"res://resources/civilizations/%s.tres" % player_civ_id) as CivilizationResource
+	var skip_malpais: bool = player_civ != null and player_civ.can_traverse_malpais
+	var skip_caldera: bool = skip_malpais  # Guanches treat caldera like malpais
+
+	for z: Dictionary in TerrainManager.get_zones():
 		var t: TerrainManager.TerrainType = z["type"] as TerrainManager.TerrainType
-		if not (t in IMPASSABLE):
-			continue
+		match t:
+			TerrainManager.TerrainType.RISCO:
+				pass  # always an obstacle
+			TerrainManager.TerrainType.MALPAIS:
+				if skip_malpais:
+					continue
+			TerrainManager.TerrainType.CALDERA:
+				if skip_caldera:
+					continue
+			_:
+				continue
 		var center: Vector2 = z["center"] as Vector2
 		var radius: float   = z["radius"] as float
 		var obstacle: NavigationObstacle2D = NavigationObstacle2D.new()
