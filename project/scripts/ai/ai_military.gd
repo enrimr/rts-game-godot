@@ -6,7 +6,6 @@ enum AggressionLevel { PASSIVE, ALERTED, AGGRESSIVE }
 var _aggression: AggressionLevel = AggressionLevel.PASSIVE
 var _aggression_timer: float = 0.0
 
-const AGGRESSION_DECAY: float     = 20.0
 const CONTROL_ZONE_RADIUS: float  = 400.0
 
 func setup(ai) -> void:
@@ -15,7 +14,7 @@ func setup(ai) -> void:
 func update_aggression(delta: float) -> void:
 	if _aggression > AggressionLevel.PASSIVE:
 		_aggression_timer += delta
-		if _aggression_timer >= AGGRESSION_DECAY:
+		if _aggression_timer >= GameSettings.get_ai_aggression_decay():
 			_aggression = AggressionLevel.PASSIVE
 			_aggression_timer = 0.0
 
@@ -216,6 +215,8 @@ func manage_unique_barracks_unit() -> void:
 			break
 
 func manage_stable_training() -> void:
+	if GameSettings.difficulty <= GameSettings.Difficulty.EASY:
+		return
 	if _ai._construction._built.get("stable", 0) as int == 0:
 		return
 	var age: int = AgeManager.get_age(_ai.player_id)
@@ -241,6 +242,8 @@ func manage_stable_training() -> void:
 		break
 
 func manage_siege_training() -> void:
+	if GameSettings.difficulty <= GameSettings.Difficulty.EASY:
+		return
 	if _ai._construction._built.get("siege_workshop", 0) as int == 0:
 		return
 	var age: int = AgeManager.get_age(_ai.player_id)
@@ -287,6 +290,9 @@ const _TECH_PRIORITY: Array[String] = [
 ]
 
 func manage_research() -> void:
+	if GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL:
+		return
+	var research_cap: int = 2 if GameSettings.difficulty == GameSettings.Difficulty.EASY else 999
 	for building: Node in _ai.buildings_layer.get_children():
 		if not is_instance_valid(building):
 			continue
@@ -298,6 +304,10 @@ func manage_research() -> void:
 			continue
 		if TechManager.get_researching_tech(building) != null:
 			continue
+		if GameSettings.difficulty == GameSettings.Difficulty.EASY:
+			var done: int = TechManager.get_researched_count(_ai.player_id)
+			if done >= research_cap:
+				continue
 		var available: Array[TechnologyResource] = TechManager.get_available_techs(_ai.player_id, btype)
 		if available.is_empty():
 			continue

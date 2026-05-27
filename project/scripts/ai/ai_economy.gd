@@ -61,9 +61,7 @@ func manage_age_advance() -> void:
 	if AgeManager.get_age(_ai.player_id) >= GameManager.Age.IMPERIAL:
 		return
 	var military: int = _ai._military.count_military()
-	var _easy_mode: bool = GameSettings.difficulty == GameSettings.Difficulty.EASY or GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL
-	var min_mil: int = 2 if _easy_mode else 3
-	if military >= min_mil and AgeManager.can_advance(_ai.player_id):
+	if military >= GameSettings.get_ai_age_advance_min_military() and AgeManager.can_advance(_ai.player_id):
 		_ai.debug_log("AGE ADVANCE started (mil=%d)" % military)
 		AgeManager.start_advance(_ai.player_id)
 

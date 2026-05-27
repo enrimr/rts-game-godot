@@ -32,6 +32,12 @@ func is_researched(player_id: int, tech_id: String) -> bool:
 		return false
 	return (list as Array).has(tech_id)
 
+func get_researched_count(player_id: int) -> int:
+	var list: Variant = _researched.get(player_id)
+	if list == null:
+		return 0
+	return (list as Array).size()
+
 func can_research(player_id: int, tech_id: String) -> bool:
 	if is_researched(player_id, tech_id):
 		return false

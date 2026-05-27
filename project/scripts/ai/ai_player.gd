@@ -19,7 +19,6 @@ const BUILDING_SCENES: Dictionary = {
 	"wonder":         "res://scenes/buildings/wonder.tscn",
 }
 
-const TICK_INTERVAL: float         = 2.0
 const THREAT_CHECK_INTERVAL: float = 3.0
 
 @export var player_id: int = 1
@@ -92,7 +91,7 @@ func _process(delta: float) -> void:
 	_construction.update_cooldowns(delta)
 	_military.update_aggression(delta)
 
-	if _timer >= TICK_INTERVAL:
+	if _timer >= GameSettings.get_ai_tick_interval():
 		_timer = 0.0
 		_run_tick()
 

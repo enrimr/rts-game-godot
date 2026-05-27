@@ -52,6 +52,27 @@ func get_ai_min_attack_units() -> int:
 		Difficulty.HARD:     return 2
 	return 3
 
+func get_ai_tick_interval() -> float:
+	match difficulty:
+		Difficulty.TUTORIAL: return 8.0
+		Difficulty.EASY:     return 4.0
+		Difficulty.HARD:     return 1.5
+	return 2.0
+
+func get_ai_age_advance_min_military() -> int:
+	match difficulty:
+		Difficulty.TUTORIAL: return 6
+		Difficulty.EASY:     return 5
+		Difficulty.HARD:     return 2
+	return 3
+
+func get_ai_aggression_decay() -> float:
+	match difficulty:
+		Difficulty.TUTORIAL: return 8.0
+		Difficulty.EASY:     return 12.0
+		Difficulty.HARD:     return 30.0
+	return 20.0
+
 # ---------------------------------------------------------------------------
 # Volume helpers (read by AudioManager)
 # ---------------------------------------------------------------------------
