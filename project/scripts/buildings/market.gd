@@ -16,7 +16,7 @@ const MIN_BUY_RATE:  int = 5
 ## Recovery: 1 step every RECOVERY_INTERVAL seconds back toward base.
 const RECOVERY_INTERVAL: float = 30.0
 
-const MERCENARY_COOLDOWN: float = 30.0
+const MERCENARY_COOLDOWN: float = 120.0
 
 ## Per-player, per-resource price offsets (positive = degraded).
 ## Key: player_id → { resource_name: int offset }

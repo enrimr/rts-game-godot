@@ -1272,7 +1272,9 @@ func _populate_market_actions(market: Market) -> void:
 				"locked": on_cooldown,
 			})
 	actions.append(DESTROY_ACTION)
-	_populate_buttons(actions)
+	_active_actions = actions
+	_action_grid.columns = ACTION_COLS
+	_render_action_page()
 
 func _on_market_rate_changed(pid: int, market: Market) -> void:
 	if pid != local_player_id:
