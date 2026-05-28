@@ -331,16 +331,24 @@ func _count_naval(type_name: String) -> int:
 	return count
 
 func _galley_needs_retreat(wg: WarGalley) -> bool:
-	var max_hp: float = wg.get("max_health") as float
+	var udata: Variant = wg.get("unit_data")
+	if udata == null:
+		return false
+	var max_hp: float = (udata as UnitResource).max_health
 	if max_hp <= 0.0:
 		return false
-	return (wg.get("current_health") as float) / max_hp < GALLEY_RETREAT_HP_RATIO
+	var hp: float = wg.get("health") as float
+	return hp / max_hp < GALLEY_RETREAT_HP_RATIO
 
 func _galley_is_recovering(wg: WarGalley) -> bool:
-	var max_hp: float = wg.get("max_health") as float
+	var udata: Variant = wg.get("unit_data")
+	if udata == null:
+		return false
+	var max_hp: float = (udata as UnitResource).max_health
 	if max_hp <= 0.0:
 		return false
-	return (wg.get("current_health") as float) / max_hp < GALLEY_REJOIN_HP_RATIO
+	var hp: float = wg.get("health") as float
+	return hp / max_hp < GALLEY_REJOIN_HP_RATIO
 
 func _retreat_galley(wg: WarGalley) -> void:
 	var dock: Node = _find_own_dock()
