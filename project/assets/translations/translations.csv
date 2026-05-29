@@ -51,6 +51,7 @@ UI_UNLOAD,Unload,Desembarcar
 UI_GARRISON_STATUS,Garrison: %d / %d,Tripulación: %d / %d
 ACTION_FISH_TRAP,Fish Trap,Trampa de Peces
 ACTION_BLACKSMITH,Blacksmith\n150W,Herrería\n150M
+ACTION_ARCHERY_RANGE,Archery Range\n175W,Sala de Tiro\n175M
 ACTION_STABLE,Stable\n175W,Cuadra\n175M
 ACTION_UNIVERSITY,University\n200W,Universidad\n200M
 ACTION_MARKET,Market\n175W,Mercado\n175M
@@ -238,6 +239,7 @@ TOOLTIP_BUILD_MENU,Open the building menu to place structures. [B],Abre el menú
 TOOLTIP_BUILD_HOUSE,Increases population cap by 5. Build more to support a larger army.,Aumenta el límite de población en 5. Construye más para mantener un ejército mayor.
 TOOLTIP_BUILD_BARRACKS,Trains infantry units: Militia Archer and Pikeman.,Entrena unidades de infantería: Milicia Arquero y Lancero.
 TOOLTIP_BUILD_BLACKSMITH,Research attack and armor upgrades for your units.,Investiga mejoras de ataque y armadura para tus unidades.
+TOOLTIP_BUILD_ARCHERY_RANGE,Trains ranged units: Archer and Longbowman.,Entrena unidades de distancia: Arquero y Arquero de Guerra.
 TOOLTIP_BUILD_STABLE,Trains cavalry: Heavy Scout (Feudal Age) and Knight (Castle Age).,Entrena caballería: Explorador Pesado (Edad Feudal) y Caballero (Edad del Castillo).
 TOOLTIP_BUILD_LUMBER,Wood drop-off point. Villagers deposit gathered wood here.,Punto de entrega de madera. Los aldeanos depositan aquí la madera recolectada.
 TOOLTIP_BUILD_MINING,Drop-off point for gold and stone.,Punto de entrega de oro y piedra.
