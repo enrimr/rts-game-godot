@@ -15,13 +15,27 @@ collision_mask = 1
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_1")
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -36.0
-offset_top = -36.0
-offset_right = 36.0
-offset_bottom = 36.0
-color = Color(0.40, 0.30, 0.15, 1.0)
-mouse_filter = 2
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Walls" type="Polygon2D" parent="Body"]
+color = Color(0.50, 0.32, 0.14, 1.0)
+polygon = PackedVector2Array(-36, 36, 36, 36, 36, -36, -36, -36)
+
+[node name="Roof" type="Polygon2D" parent="Body"]
+color = Color(0.38, 0.22, 0.08, 1.0)
+polygon = PackedVector2Array(-36, -36, 0, -52, 36, -36)
+
+[node name="Stalls" type="Polygon2D" parent="Body"]
+color = Color(0.60, 0.42, 0.18, 1.0)
+polygon = PackedVector2Array(-28, 28, 28, 28, 28, -26, -28, -26)
+
+[node name="Divider" type="Polygon2D" parent="Body"]
+color = Color(0.38, 0.22, 0.08, 1.0)
+polygon = PackedVector2Array(-2, 28, 2, 28, 2, -26, -2, -26)
+
+[node name="Gate" type="Polygon2D" parent="Body"]
+color = Color(0.28, 0.15, 0.06, 1.0)
+polygon = PackedVector2Array(-12, 36, 12, 36, 12, 18, -12, 18)
 
 [node name="NameLabel" type="Label" parent="."]
 offset_left = -40.0

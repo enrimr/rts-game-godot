@@ -16,13 +16,27 @@ unit_data = ExtResource("2_trdat")
 collision_layer = 1
 collision_mask = 1
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -17.0
-offset_top = -26.0
-offset_right = 17.0
-offset_bottom = 10.0
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Hull" type="Polygon2D" parent="Body"]
 color = Color(0.20, 0.30, 0.60, 1.0)
-mouse_filter = 2
+polygon = PackedVector2Array(-14, 8, -17, 0, -16, -14, -10, -22, 10, -22, 16, -14, 17, 0, 14, 8)
+
+[node name="Ram" type="Polygon2D" parent="Body"]
+color = Color(0.35, 0.28, 0.42, 1.0)
+polygon = PackedVector2Array(-6, -22, 0, -32, 6, -22)
+
+[node name="LeftOars" type="Polygon2D" parent="Body"]
+color = Color(0.30, 0.40, 0.72, 1.0)
+polygon = PackedVector2Array(-20, -14, -17, -14, -17, 2, -20, 2)
+
+[node name="RightOars" type="Polygon2D" parent="Body"]
+color = Color(0.30, 0.40, 0.72, 1.0)
+polygon = PackedVector2Array(17, -14, 20, -14, 20, 2, 17, 2)
+
+[node name="Mast" type="Polygon2D" parent="Body"]
+color = Color(0.38, 0.28, 0.10, 1.0)
+polygon = PackedVector2Array(-2, -20, 2, -20, 2, -6, -2, -6)
 
 [node name="UnitLabel" type="Label" parent="."]
 offset_left = -17.0

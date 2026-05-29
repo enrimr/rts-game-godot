@@ -15,21 +15,31 @@ collision_mask = 1
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_1")
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -40.0
-offset_top = -28.0
-offset_right = 40.0
-offset_bottom = 28.0
-color = Color(0.25, 0.35, 0.55, 1.0)
-mouse_filter = 2
+[node name="Body" type="Node2D" parent="."]
 
-[node name="Pier" type="ColorRect" parent="."]
-offset_left = -10.0
-offset_top = 28.0
-offset_right = 10.0
-offset_bottom = 52.0
-color = Color(0.40, 0.28, 0.14, 1.0)
-mouse_filter = 2
+[node name="Platform" type="Polygon2D" parent="Body"]
+color = Color(0.48, 0.35, 0.14, 1.0)
+polygon = PackedVector2Array(-40, 28, 40, 28, 40, -10, 28, -28, -28, -28, -40, -10)
+
+[node name="Plank1" type="Polygon2D" parent="Body"]
+color = Color(0.55, 0.42, 0.18, 1.0)
+polygon = PackedVector2Array(-38, -8, 38, -8, 38, -4, -38, -4)
+
+[node name="Plank2" type="Polygon2D" parent="Body"]
+color = Color(0.55, 0.42, 0.18, 1.0)
+polygon = PackedVector2Array(-38, 4, 38, 4, 38, 8, -38, 8)
+
+[node name="Plank3" type="Polygon2D" parent="Body"]
+color = Color(0.55, 0.42, 0.18, 1.0)
+polygon = PackedVector2Array(-38, 14, 38, 14, 38, 18, -38, 18)
+
+[node name="Post1" type="Polygon2D" parent="Body"]
+color = Color(0.35, 0.22, 0.08, 1.0)
+polygon = PackedVector2Array(-36, 28, -32, 28, -32, 38, -36, 38)
+
+[node name="Post2" type="Polygon2D" parent="Body"]
+color = Color(0.35, 0.22, 0.08, 1.0)
+polygon = PackedVector2Array(32, 28, 36, 28, 36, 38, 32, 38)
 
 [node name="NameLabel" type="Label" parent="."]
 offset_left = -44.0

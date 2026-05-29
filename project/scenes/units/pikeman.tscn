@@ -16,13 +16,23 @@ unit_data = ExtResource("2_pikemandat")
 collision_layer = 1
 collision_mask = 1
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -11.0
-offset_top = -20.0
-offset_right = 11.0
-offset_bottom = 4.0
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Torso" type="Polygon2D" parent="Body"]
 color = Color(0.50, 0.45, 0.65, 1.0)
-mouse_filter = 2
+polygon = PackedVector2Array(-5, 3, -7, -4, -5, -11, 5, -11, 7, -4, 5, 3)
+
+[node name="Head" type="Polygon2D" parent="Body"]
+color = Color(0.60, 0.55, 0.75, 1.0)
+polygon = PackedVector2Array(-3, -11, 0, -20, 3, -11, 2, -7, -2, -7)
+
+[node name="Pike" type="Polygon2D" parent="Body"]
+color = Color(0.72, 0.72, 0.72, 1.0)
+polygon = PackedVector2Array(-4, -10, -7, -30, -5, -30, -2, -10)
+
+[node name="PikeTip" type="Polygon2D" parent="Body"]
+color = Color(0.85, 0.85, 0.88, 1.0)
+polygon = PackedVector2Array(-8, -30, -6, -36, -4, -30)
 
 [node name="UnitLabel" type="Label" parent="."]
 offset_left = -11.0

@@ -16,13 +16,23 @@ unit_data = ExtResource("2_tcdat")
 collision_layer = 1
 collision_mask = 1
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -10.0
-offset_top = -20.0
-offset_right = 10.0
-offset_bottom = 4.0
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Torso" type="Polygon2D" parent="Body"]
 color = Color(0.15, 0.45, 0.70, 1.0)
-mouse_filter = 2
+polygon = PackedVector2Array(-5, 3, -6, -4, -5, -11, 5, -11, 6, -4, 5, 3)
+
+[node name="Head" type="Polygon2D" parent="Body"]
+color = Color(0.22, 0.55, 0.82, 1.0)
+polygon = PackedVector2Array(-3, -11, 0, -20, 3, -11, 2, -7, -2, -7)
+
+[node name="Staff" type="Polygon2D" parent="Body"]
+color = Color(0.18, 0.62, 0.75, 1.0)
+polygon = PackedVector2Array(5, -8, 6, -26, 8, -26, 7, -8)
+
+[node name="Wave" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.80, 1.00, 0.85)
+polygon = PackedVector2Array(6, -26, 8, -30, 12, -28, 10, -24)
 
 [node name="UnitLabel" type="Label" parent="."]
 offset_left = -10.0

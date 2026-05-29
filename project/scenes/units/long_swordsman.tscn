@@ -16,13 +16,19 @@ unit_data = ExtResource("2_lssdat")
 collision_layer = 1
 collision_mask = 1
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -10.0
-offset_top = -20.0
-offset_right = 10.0
-offset_bottom = 4.0
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Torso" type="Polygon2D" parent="Body"]
 color = Color(0.35, 0.25, 0.55, 1.0)
-mouse_filter = 2
+polygon = PackedVector2Array(-6, 3, -8, -4, -6, -11, 6, -11, 8, -4, 6, 3)
+
+[node name="Head" type="Polygon2D" parent="Body"]
+color = Color(0.45, 0.35, 0.65, 1.0)
+polygon = PackedVector2Array(-3, -11, 0, -21, 3, -11, 2, -7, -2, -7)
+
+[node name="Sword" type="Polygon2D" parent="Body"]
+color = Color(0.85, 0.83, 0.80, 1.0)
+polygon = PackedVector2Array(6, -9, 7, -26, 9, -26, 10, -9)
 
 [node name="UnitLabel" type="Label" parent="."]
 offset_left = -10.0

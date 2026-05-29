@@ -16,13 +16,27 @@ unit_data = ExtResource("2_cndat")
 collision_layer = 1
 collision_mask = 1
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -12.0
-offset_top = -22.0
-offset_right = 12.0
-offset_bottom = 4.0
+[node name="Body" type="Node2D" parent="."]
+
+[node name="HorseBody" type="Polygon2D" parent="Body"]
 color = Color(0.25, 0.30, 0.65, 1.0)
-mouse_filter = 2
+polygon = PackedVector2Array(-12, 4, -14, 0, -12, -4, -7, -6, 0, -7, 7, -6, 12, -4, 14, 0, 12, 4, 7, 6, 0, 7, -7, 6)
+
+[node name="HorseNeck" type="Polygon2D" parent="Body"]
+color = Color(0.30, 0.36, 0.72, 1.0)
+polygon = PackedVector2Array(-3, -7, 0, -16, 3, -7)
+
+[node name="HorseHead" type="Polygon2D" parent="Body"]
+color = Color(0.25, 0.30, 0.65, 1.0)
+polygon = PackedVector2Array(-3, -16, -2, -22, 2, -22, 3, -16)
+
+[node name="RiderBody" type="Polygon2D" parent="Body"]
+color = Color(0.60, 0.65, 0.85, 1.0)
+polygon = PackedVector2Array(-5, -7, -5, -14, 5, -14, 5, -7)
+
+[node name="Shield" type="Polygon2D" parent="Body"]
+color = Color(0.82, 0.70, 0.20, 1.0)
+polygon = PackedVector2Array(-7, -14, -10, -12, -10, -7, -7, -5)
 
 [node name="UnitLabel" type="Label" parent="."]
 offset_left = -12.0

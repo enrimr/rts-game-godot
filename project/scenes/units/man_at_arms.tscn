@@ -16,13 +16,23 @@ unit_data = ExtResource("2_maadat")
 collision_layer = 1
 collision_mask = 1
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -10.0
-offset_top = -20.0
-offset_right = 10.0
-offset_bottom = 4.0
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Torso" type="Polygon2D" parent="Body"]
 color = Color(0.55, 0.20, 0.12, 1.0)
-mouse_filter = 2
+polygon = PackedVector2Array(-5, 3, -8, -4, -6, -11, 6, -11, 8, -4, 5, 3)
+
+[node name="Head" type="Polygon2D" parent="Body"]
+color = Color(0.65, 0.28, 0.18, 1.0)
+polygon = PackedVector2Array(-3, -11, 0, -20, 3, -11, 2, -7, -2, -7)
+
+[node name="Shield" type="Polygon2D" parent="Body"]
+color = Color(0.65, 0.50, 0.18, 1.0)
+polygon = PackedVector2Array(-8, -11, -13, -10, -13, -3, -8, -2)
+
+[node name="Sword" type="Polygon2D" parent="Body"]
+color = Color(0.82, 0.80, 0.75, 1.0)
+polygon = PackedVector2Array(8, -8, 13, -14, 14, -12, 9, -6)
 
 [node name="UnitLabel" type="Label" parent="."]
 offset_left = -10.0
