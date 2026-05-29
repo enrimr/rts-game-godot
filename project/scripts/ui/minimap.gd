@@ -24,6 +24,11 @@ var world_node: Node2D = null
 var camera_node: Camera2D = null
 var fog: FogOfWar = null
 
+# Resource nodes appear on the minimap only when an own unit is within this
+# fraction of its normal line-of-sight radius. Keeps partial forests hidden
+# until the unit is close enough to actually "see" the individual trees.
+const MINIMAP_RESOURCE_SIGHT_FRACTION: float = 0.30
+
 # Cached per-frame: own units with (position, sight_radius_px)
 var _own_unit_sights: Array[Dictionary] = []
 
@@ -61,7 +66,7 @@ func _cache_own_unit_sights() -> void:
 		var los_px: float = 5.0 * 64.0
 		if udata is UnitResource:
 			los_px = (udata as UnitResource).line_of_sight * 64.0
-		_own_unit_sights.append({"pos": (u as Node2D).global_position, "r": los_px})
+		_own_unit_sights.append({"pos": (u as Node2D).global_position, "r": los_px * MINIMAP_RESOURCE_SIGHT_FRACTION})
 
 func add_flash(world_pos: Vector2, color: Color) -> void:
 	_flashes.append({"world_pos": world_pos, "timer": FLASH_DURATION, "color": color})
