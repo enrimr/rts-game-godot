@@ -13,27 +13,53 @@ building_data = ExtResource("2_data")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_1")
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -16.0
-offset_top = -16.0
-offset_right = 16.0
-offset_bottom = 16.0
-color = Color(0.58, 0.56, 0.52, 1.0)
-mouse_filter = 2
+[node name="Body" type="Node2D" parent="."]
 
-[node name="Battlements" type="ColorRect" parent="."]
-offset_left = -16.0
-offset_top = -24.0
-offset_right = 16.0
-offset_bottom = -14.0
-color = Color(0.45, 0.43, 0.40, 1.0)
-mouse_filter = 2
+[node name="Base" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.40, 0.36, 1.0)
+polygon = PackedVector2Array(-16, 16, 16, 16, 16, -8, -16, -8)
+
+[node name="WallOctagon" type="Polygon2D" parent="Body"]
+color = Color(0.54, 0.52, 0.48, 1.0)
+polygon = PackedVector2Array(-16, -8, -16, -28, -10, -36, 10, -36, 16, -28, 16, -8)
+
+[node name="StoneLine1" type="Polygon2D" parent="Body"]
+color = Color(0.46, 0.44, 0.40, 1.0)
+polygon = PackedVector2Array(-16, -14, 16, -14, 16, -11, -16, -11)
+
+[node name="StoneLine2" type="Polygon2D" parent="Body"]
+color = Color(0.46, 0.44, 0.40, 1.0)
+polygon = PackedVector2Array(-16, -22, 16, -22, 16, -19, -16, -19)
+
+[node name="ArrowSlit" type="Polygon2D" parent="Body"]
+color = Color(0.18, 0.16, 0.14, 1.0)
+polygon = PackedVector2Array(-2, -28, 2, -28, 2, -16, -2, -16)
+
+[node name="Parapet" type="Polygon2D" parent="Body"]
+color = Color(0.48, 0.46, 0.42, 1.0)
+polygon = PackedVector2Array(-16, -36, 16, -36, 16, -44, -16, -44)
+
+[node name="MerlonL" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.38, 0.34, 1.0)
+polygon = PackedVector2Array(-16, -44, -10, -44, -10, -52, -16, -52)
+
+[node name="MerlonLC" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.38, 0.34, 1.0)
+polygon = PackedVector2Array(-5, -44, 1, -44, 1, -52, -5, -52)
+
+[node name="MerlonRC" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.38, 0.34, 1.0)
+polygon = PackedVector2Array(4, -44, 10, -44, 10, -52, 4, -52)
+
+[node name="MerlonR" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.38, 0.34, 1.0)
+polygon = PackedVector2Array(10, -44, 16, -44, 16, -52, 10, -52)
 
 [node name="NameLabel" type="Label" parent="."]
 offset_left = -20.0
-offset_top = -36.0
+offset_top = -64.0
 offset_right = 20.0
-offset_bottom = -26.0
+offset_bottom = -54.0
 text = "Tower"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 9
