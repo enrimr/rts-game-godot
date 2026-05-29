@@ -3226,16 +3226,18 @@ func show_weather(weather_id: String) -> void:
 	var color: Color = WEATHER_COLORS.get(weather_id, Color.WHITE) as Color
 
 	# CanvasLayer children must be positioned with absolute px coords, not anchors.
+	# Use the actual viewport width so centering works at any resolution.
+	var vp_w: float = get_viewport().get_visible_rect().size.x
 	# --- announcement banner: full-width, centred vertically at ~130 px from top ---
 	if not is_instance_valid(_weather_banner):
 		_weather_banner = Label.new()
 		_weather_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_weather_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_weather_banner.add_theme_font_size_override("font_size", 36)
-		_weather_banner.position = Vector2(0.0, 110.0)
-		_weather_banner.size = Vector2(1920.0, 60.0)
 		_weather_banner.modulate.a = 0.0
 		add_child(_weather_banner)
+	_weather_banner.position = Vector2(0.0, 110.0)
+	_weather_banner.size = Vector2(vp_w, 60.0)
 	_weather_banner.text = text
 	_weather_banner.add_theme_color_override("font_color", color)
 	if is_instance_valid(_weather_banner_tween):
@@ -3250,10 +3252,10 @@ func show_weather(weather_id: String) -> void:
 		_weather_pill = Label.new()
 		_weather_pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_weather_pill.add_theme_font_size_override("font_size", 15)
-		_weather_pill.position = Vector2(0.0, 44.0)
-		_weather_pill.size = Vector2(1920.0, 22.0)
 		_weather_pill.modulate.a = 0.0
 		add_child(_weather_pill)
+	_weather_pill.position = Vector2(0.0, 44.0)
+	_weather_pill.size = Vector2(vp_w, 22.0)
 	_weather_pill.add_theme_color_override("font_color", color)
 	var tw: Tween = create_tween()
 	tw.tween_property(_weather_pill, "modulate:a", 1.0, 0.8)
