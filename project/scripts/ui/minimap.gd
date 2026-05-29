@@ -98,15 +98,17 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
 		return
 
-	# Resources — show once area is explored (neutral, not enemy-owned)
+	# Resources — each node only appears once its own fog cell is explored.
+	# This ensures partially-seen forests show only the trees actually visited.
 	for child: Node in world_node.get_children():
-		if child is ResourceNode:
-			var rn: ResourceNode = child as ResourceNode
-			if not _fog_allows_see(rn.global_position, true):
-				continue
-			var mp: Vector2 = _to_mm(rn.global_position, ms)
-			draw_rect(Rect2(mp - Vector2(2.5, 2.5), Vector2(5.0, 5.0)),
-				_resource_color(rn.resource_type))
+		if not (child is ResourceNode):
+			continue
+		var rn: ResourceNode = child as ResourceNode
+		if fog != null and fog.get_cell_state(rn.global_position) < FogOfWar.STATE_EXPLORED:
+			continue
+		var mp: Vector2 = _to_mm(rn.global_position, ms)
+		draw_rect(Rect2(mp - Vector2(2.5, 2.5), Vector2(5.0, 5.0)),
+			_resource_color(rn.resource_type))
 
 	# Buildings layer
 	var buildings_layer: Node = world_node.get_node_or_null("BuildingsLayer")
