@@ -630,7 +630,7 @@ func _on_action_button_pressed(action_id: String) -> void:
 		_apply_tutorial_villager_gates()
 		return
 	# Actions that wait for a map click before executing
-	if action_id == "move_to" or action_id == "attack_move":
+	if action_id == "move_to" or action_id == "attack_move" or action_id == "cover_fire":
 		AudioManager.play("ui_click")
 		_set_pending_action(action_id)
 		return

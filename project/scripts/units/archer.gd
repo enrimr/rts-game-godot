@@ -7,6 +7,8 @@ const ARROW_SCENE: PackedScene = preload("res://scenes/combat/arrow.tscn")
 var attack_target: Node = null
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
+var _cover_fire_pos: Vector2 = Vector2.ZERO
+var _cover_fire_pending: bool = false
 
 func get_selection_sound() -> String:
 	return "select_archer"
@@ -26,16 +28,30 @@ func _physics_process(delta: float) -> void:
 func order_move(destination: Vector2) -> void:
 	_attack_move_active = false
 	attack_target = null
+	_cover_fire_pending = false
 	_destination_state = UnitState.IDLE
 	_navigate_to(destination)
 	current_state = UnitState.MOVING
 
 func order_attack_ground(world_pos: Vector2) -> void:
 	attack_target = null
-	_destination_state = UnitState.IDLE
-	current_state = UnitState.IDLE
-	nav_agent.set_velocity(Vector2.ZERO)
-	_launch_arrow_to(world_pos)
+	_attack_move_active = false
+	_cover_fire_pending = false
+	var reach: float = unit_data.attack_range * 32.0
+	if global_position.distance_to(world_pos) <= reach:
+		_destination_state = UnitState.IDLE
+		current_state = UnitState.IDLE
+		nav_agent.set_velocity(Vector2.ZERO)
+		_launch_arrow_to(world_pos)
+	else:
+		# Move to the edge of attack range toward the target, then fire
+		var dir: Vector2 = (world_pos - global_position).normalized()
+		var stop_pos: Vector2 = world_pos - dir * reach * 0.85
+		_cover_fire_pos = world_pos
+		_cover_fire_pending = true
+		_destination_state = UnitState.IDLE
+		_navigate_to(stop_pos)
+		current_state = UnitState.MOVING
 
 func order_attack(target: Node) -> void:
 	attack_target = target
@@ -52,11 +68,17 @@ func _handle_movement(delta: float) -> void:
 			nav_agent.set_velocity(Vector2.ZERO)
 			return
 	if nav_agent.is_navigation_finished():
+		if _cover_fire_pending:
+			_cover_fire_pending = false
+			_launch_arrow_to(_cover_fire_pos)
 		current_state = _destination_state
 		_destination_state = UnitState.IDLE
 		nav_agent.set_velocity(Vector2.ZERO)
 		return
 	if _advance_stuck(delta):
+		if _cover_fire_pending:
+			_cover_fire_pending = false
+			_launch_arrow_to(_cover_fire_pos)
 		_unstick()
 		return
 	nav_agent.set_velocity(_nav_velocity())
