@@ -2,8 +2,9 @@
 set -euo pipefail
 
 GODOT="/Applications/Godot.app/Contents/MacOS/Godot"
-PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)/project"
-BUILD_DIR="$(cd "$(dirname "$0")/.." && pwd)/builds/html"
+GAME_REPO="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT_DIR="$GAME_REPO/project"
+BUILD_DIR="$GAME_REPO/builds/html"
 RELEASE_REPO="/Users/enrique/development/projects/calima-kingdoms-web"
 
 # ── 1. Export ─────────────────────────────────────────────────────────────────
@@ -21,7 +22,7 @@ echo "==> Committing..."
 cd "$RELEASE_REPO"
 
 # Derive version tag from latest game repo commit
-GAME_HASH=$(git -C "$(dirname "$0")/.." rev-parse --short HEAD)
+GAME_HASH=$(git -C "$GAME_REPO" rev-parse --short HEAD)
 GAME_DATE=$(date +%Y-%m-%d)
 MSG="release: ${GAME_DATE} (${GAME_HASH})"
 
