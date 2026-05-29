@@ -36,6 +36,13 @@ func order_move(destination: Vector2) -> void:
 	_navigate_to(destination)
 	current_state = UnitState.MOVING
 
+func order_attack_ground(world_pos: Vector2) -> void:
+	attack_target = null
+	_destination_state = UnitState.IDLE
+	current_state = UnitState.IDLE
+	nav_agent.set_velocity(Vector2.ZERO)
+	_fire_at(world_pos)
+
 func order_attack(target: Node) -> void:
 	attack_target = target
 	_destination_state = UnitState.ATTACKING

@@ -30,6 +30,13 @@ func order_move(destination: Vector2) -> void:
 	_navigate_to(destination)
 	current_state = UnitState.MOVING
 
+func order_attack_ground(world_pos: Vector2) -> void:
+	attack_target = null
+	_destination_state = UnitState.IDLE
+	current_state = UnitState.IDLE
+	nav_agent.set_velocity(Vector2.ZERO)
+	_launch_arrow_to(world_pos)
+
 func order_attack(target: Node) -> void:
 	attack_target = target
 	_destination_state = UnitState.ATTACKING
@@ -98,6 +105,15 @@ func _launch_arrow(target: Node) -> void:
 	arrow.shooter = self
 	arrow.target_pos = (target as Node2D).global_position
 	arrow._original_target = target
+	get_parent().add_child(arrow)
+	arrow.global_position = global_position
+
+func _launch_arrow_to(world_pos: Vector2) -> void:
+	var arrow: Arrow = ARROW_SCENE.instantiate() as Arrow
+	arrow.damage = 0.0
+	arrow.shooter = self
+	arrow.target_pos = world_pos
+	arrow._original_target = null
 	get_parent().add_child(arrow)
 	arrow.global_position = global_position
 
