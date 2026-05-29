@@ -15,8 +15,6 @@ class_name Villager
 @onready var _head_poly: Node2D = $Body/Head
 @onready var _tool_poly: Node2D = $Body/Tool
 
-var _anim_time: float = 0.0
-
 var gather_target: Node = null
 var carried_resource: String = ""
 var carried_amount: float = 0.0

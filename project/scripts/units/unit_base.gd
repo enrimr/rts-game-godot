@@ -20,6 +20,7 @@ var _attack_move_active: bool = false
 
 var _hit_tween: Tween = null
 var _hero_low_hp_fired: bool = false   # tracks if low-HP alert has been emitted this life
+var _anim_time: float = 0.0
 var _stuck_timer: float = 0.0
 var _stuck_retries: int = 0
 var _last_position: Vector2 = Vector2.ZERO
@@ -59,7 +60,9 @@ func _ready() -> void:
 func _add_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, 20.0, 4.0)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_anim_time += delta
+	_animate_body(delta)
 	if _path_visible and is_instance_valid(_path_line):
 		var pts: PackedVector2Array = nav_agent.get_current_navigation_path()
 		if pts.size() >= 2:
@@ -70,6 +73,20 @@ func _process(_delta: float) -> void:
 			_path_line.visible = true
 		else:
 			_path_line.visible = false
+
+func _animate_body(_delta: float) -> void:
+	var body: Node2D = get_node_or_null("Body") as Node2D
+	if body == null:
+		return
+	var t: float = _anim_time
+	match current_state:
+		UnitState.ATTACKING:
+			var swing: float = sin(t * TAU * 3.5)
+			body.rotation = swing * 0.20
+		UnitState.MOVING:
+			body.rotation = sin(t * TAU * 2.8) * 0.08
+		_:
+			body.rotation = move_toward(body.rotation, 0.0, _delta * 4.0)
 
 func toggle_path_display() -> void:
 	_path_visible = not _path_visible
