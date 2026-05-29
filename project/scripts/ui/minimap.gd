@@ -24,6 +24,9 @@ var world_node: Node2D = null
 var camera_node: Camera2D = null
 var fog: FogOfWar = null
 
+# Cached per-frame: own units with (position, sight_radius_px)
+var _own_unit_sights: Array[Dictionary] = []
+
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
 	EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
@@ -38,7 +41,27 @@ func _process(delta: float) -> void:
 		if _flashes[i]["timer"] <= 0.0:
 			_flashes.remove_at(i)
 		i -= 1
+	_cache_own_unit_sights()
 	queue_redraw()
+
+func _cache_own_unit_sights() -> void:
+	_own_unit_sights.clear()
+	if world_node == null:
+		return
+	var ul: Node = world_node.get_node_or_null("UnitsLayer")
+	if ul == null:
+		return
+	for u: Node in ul.get_children():
+		if not is_instance_valid(u):
+			continue
+		var upid: Variant = u.get("player_id")
+		if upid == null or (upid as int) != 0:
+			continue
+		var udata: Variant = u.get("unit_data")
+		var los_px: float = 5.0 * 64.0
+		if udata is UnitResource:
+			los_px = (udata as UnitResource).line_of_sight * 64.0
+		_own_unit_sights.append({"pos": (u as Node2D).global_position, "r": los_px})
 
 func add_flash(world_pos: Vector2, color: Color) -> void:
 	_flashes.append({"world_pos": world_pos, "timer": FLASH_DURATION, "color": color})
@@ -98,17 +121,26 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
 		return
 
-	# Resources — each node only appears once its own fog cell is explored.
-	# This ensures partially-seen forests show only the trees actually visited.
-	for child: Node in world_node.get_children():
-		if not (child is ResourceNode):
+	# Resources: show when an own unit is within sight range of the node.
+	# Remembered (explored but not in sight) nodes show dimmed.
+	# Uses _own_unit_sights cached in _process to avoid per-frame iteration.
+	for rn_node: Node in get_tree().get_nodes_in_group("resource_nodes"):
+		if not is_instance_valid(rn_node) or not (rn_node is ResourceNode):
 			continue
-		var rn: ResourceNode = child as ResourceNode
-		if fog != null and fog.get_cell_state(rn.global_position) < FogOfWar.STATE_EXPLORED:
+		var rn: ResourceNode = rn_node as ResourceNode
+		if fog != null and fog.get_cell_state(rn.global_position) == FogOfWar.STATE_UNEXPLORED:
 			continue
-		var mp: Vector2 = _to_mm(rn.global_position, ms)
-		draw_rect(Rect2(mp - Vector2(2.5, 2.5), Vector2(5.0, 5.0)),
-			_resource_color(rn.resource_type))
+		var in_sight: bool = false
+		var rpos: Vector2 = rn.global_position
+		for entry: Dictionary in _own_unit_sights:
+			if (entry["pos"] as Vector2).distance_to(rpos) <= (entry["r"] as float):
+				in_sight = true
+				break
+		var col: Color = _resource_color(rn.resource_type)
+		if not in_sight:
+			col.a = 0.4
+		var mp: Vector2 = _to_mm(rpos, ms)
+		draw_rect(Rect2(mp - Vector2(2.5, 2.5), Vector2(5.0, 5.0)), col)
 
 	# Buildings layer
 	var buildings_layer: Node = world_node.get_node_or_null("BuildingsLayer")
