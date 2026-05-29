@@ -11,6 +11,11 @@ class_name Villager
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var gather_indicator: Label = $GatherIndicator
+@onready var _body_node: Node2D = $Body
+@onready var _head_poly: Node2D = $Body/Head
+@onready var _tool_poly: Node2D = $Body/Tool
+
+var _anim_time: float = 0.0
 
 var gather_target: Node = null
 var carried_resource: String = ""
@@ -44,6 +49,56 @@ const BOARD_APPROACH_RANGE: float = 60.0
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
+
+func _process(delta: float) -> void:
+	_anim_time += delta
+	_animate_body()
+
+func _animate_body() -> void:
+	if not is_instance_valid(_body_node):
+		return
+	var t: float = _anim_time
+	match current_state:
+		UnitState.GATHERING:
+			# Chop swing: body rocks forward, tool swings down then up
+			var chop: float = sin(t * TAU * 2.5)
+			_body_node.rotation = chop * 0.18
+			if is_instance_valid(_tool_poly):
+				_tool_poly.rotation = -chop * 0.55
+			if is_instance_valid(_head_poly):
+				_head_poly.rotation = chop * 0.12
+		UnitState.BUILDING:
+			# Hammer swing: faster, tool pivots more aggressively
+			var hammer: float = sin(t * TAU * 3.0)
+			_body_node.rotation = hammer * 0.14
+			if is_instance_valid(_tool_poly):
+				_tool_poly.rotation = -hammer * 0.70
+			if is_instance_valid(_head_poly):
+				_head_poly.rotation = hammer * 0.10
+		UnitState.MOVING, UnitState.RETURNING:
+			# Walk: gentle body sway + head bob
+			var walk: float = sin(t * TAU * 2.8)
+			_body_node.rotation = walk * 0.10
+			if is_instance_valid(_head_poly):
+				_head_poly.position.y = abs(walk) * -1.5
+			if is_instance_valid(_tool_poly):
+				_tool_poly.rotation = walk * 0.20
+		UnitState.ATTACKING:
+			var swing: float = sin(t * TAU * 4.0)
+			_body_node.rotation = swing * 0.20
+			if is_instance_valid(_tool_poly):
+				_tool_poly.rotation = -swing * 0.60
+			if is_instance_valid(_head_poly):
+				_head_poly.rotation = 0.0
+		_:
+			# Idle: very slow breathing sway
+			var idle: float = sin(t * TAU * 0.5)
+			_body_node.rotation = idle * 0.03
+			if is_instance_valid(_head_poly):
+				_head_poly.position.y = idle * -0.5
+				_head_poly.rotation = 0.0
+			if is_instance_valid(_tool_poly):
+				_tool_poly.rotation = 0.0
 
 func _on_enemy_entered_range(_body: Node) -> void:
 	pass  # Villagers do not proactively attack; they only retaliate via take_damage.
