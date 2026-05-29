@@ -50,9 +50,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_anim_time += delta
-	_animate_body()
+	_animate_body(delta)
 
-func _animate_body() -> void:
+func _animate_body(_delta: float) -> void:
 	if not is_instance_valid(_body_node):
 		return
 	var t: float = _anim_time
