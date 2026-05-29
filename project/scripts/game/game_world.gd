@@ -1020,30 +1020,14 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		_order_build_all(damaged_building)
 		return
 
-	# 10. Attack-ground: if ALL selected units can fire at a point, do so instead of moving
-	if _order_attack_ground_all(world_pos):
-		return
-
 	_order_move_all(world_pos)
 
-func _order_attack_ground_all(world_pos: Vector2) -> bool:
-	if _selected_units.is_empty():
-		return false
-	var any_ranged: bool = false
-	for unit: Node in _selected_units:
-		if not is_instance_valid(unit):
-			continue
-		if unit.has_method("order_attack_ground"):
-			any_ranged = true
-		else:
-			return false
-	if not any_ranged:
-		return false
+func _order_attack_ground_all(world_pos: Vector2) -> void:
 	for unit: Node in _selected_units:
 		if is_instance_valid(unit) and unit.has_method("order_attack_ground"):
 			unit.call("order_attack_ground", world_pos)
+	_flash_point(world_pos, Color(1.0, 0.6, 0.1, 1.0))
 	EventBus.minimap_move_order.emit(world_pos)
-	return true
 
 func _find_own_transport_at(world_pos: Vector2) -> TransportShip:
 	for unit: Node in units_layer.get_children():
@@ -1353,6 +1337,8 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 				# Move to position; units will auto-attack any enemy they spot en route
 				_order_attack_move_all(world_pos)
 			_flash_point(world_pos, Color(1.0, 0.35, 0.15, 1.0))
+		"cover_fire":
+			_order_attack_ground_all(world_pos)
 
 func _order_attack_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")

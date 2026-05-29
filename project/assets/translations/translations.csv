@@ -32,6 +32,7 @@ ACTION_STONE,Stone,Piedra
 ACTION_FOOD,Food,Comida
 ACTION_BUILD,Build,Construir
 ACTION_STOP,Stop,Parar
+ACTION_COVER_FIRE,Cover Fire,Fuego de Cobertura
 ACTION_MOVE_TO,Move,Mover
 ACTION_ATTACK_MOVE,Attack Move,Atacar-Mover
 ACTION_DESTROY,Destroy,Destruir
@@ -229,6 +230,7 @@ HERO_HANNO_ABILITY_DESC,Establishes a trade route generating 50 gold over 30s.,E
 TOOLTIP_MOVE_TO,Move to a target location. [M],Mover a una posición objetivo. [M]
 TOOLTIP_ATTACK_MOVE,Move toward a position automatically attacking enemies in range. [A],Avanza hacia una posición atacando automáticamente a los enemigos en rango. [A]
 TOOLTIP_STOP,Cancel all orders and stand idle. [X],Cancela todas las órdenes y detén la unidad. [X]
+TOOLTIP_COVER_FIRE,Fire at a point on the map. Right-click to aim. [C],Dispara a un punto del mapa. Clic derecho para apuntar. [C]
 TOOLTIP_DESTROY,Permanently destroy the selected unit or building. Cannot be undone. [Del],Destruye permanentemente la unidad o edificio seleccionado. No se puede deshacer. [Supr]
 TOOLTIP_SHOW_PATH,Toggle display of the unit's current navigation path. [P],Mostrar u ocultar la ruta de navegación actual de la unidad. [P]
 TOOLTIP_GATHER_WOOD,Send villagers to chop wood from nearby trees. [C],Envía aldeanos a talar madera de árboles cercanos. [C]

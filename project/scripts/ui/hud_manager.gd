@@ -78,6 +78,21 @@ const UNIT_ACTIONS: Array = [
 	DESTROY_ACTION,
 ]
 
+const RANGED_ACTIONS: Array = [
+	{"id": "cover_fire",   "label": "ACTION_COVER_FIRE",  "color": Color(0.60, 0.45, 0.10), "cost": {}, "key": KEY_C, "description": "TOOLTIP_COVER_FIRE"},
+	{"id": "move_to",      "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
+	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
+	{"id": "stop",         "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
+	DESTROY_ACTION,
+]
+
+const SIEGE_ACTIONS: Array = [
+	{"id": "cover_fire",   "label": "ACTION_COVER_FIRE",  "color": Color(0.65, 0.40, 0.08), "cost": {}, "key": KEY_C, "description": "TOOLTIP_COVER_FIRE"},
+	{"id": "move_to",      "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
+	{"id": "stop",         "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
+	DESTROY_ACTION,
+]
+
 const ANIMAL_ACTIONS: Array = [
 	{"id": "move_to", "label": "ACTION_MOVE_TO", "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
 ]
@@ -382,6 +397,10 @@ func update_selection(units: Array) -> void:
 			_populate_transport_buttons(first as TransportShip)
 		elif first is Trebuchet:
 			_populate_trebuchet_buttons(first as Trebuchet)
+		elif first is Mangonel:
+			_populate_buttons(SIEGE_ACTIONS)
+		elif first is Archer or first is Longbowman:
+			_populate_buttons(RANGED_ACTIONS)
 		elif first is Scout:
 			_populate_scout_buttons(first as Scout)
 		elif first.has_method("order_gather"):
