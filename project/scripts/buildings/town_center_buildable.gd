@@ -121,7 +121,7 @@ func _spawn_villager() -> void:
 	unit.set("player_id", player_id)
 	unit.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.get_rival_civ_id(player_id))
 	get_parent().add_child(unit)
-	unit.global_position = global_position + Vector2(90.0, 0.0)
+	unit.global_position = BuildingBase.find_spawn_pos(global_position, get_world_2d().direct_space_state)
 	PopulationManager.add_unit(player_id)
 	if rally_point != Vector2.ZERO and unit.has_method("order_move"):
 		unit.order_move(rally_point)
@@ -138,8 +138,8 @@ func _do_respawn_hero(hero_data: UnitResource) -> void:
 	hero.set("unit_data", hero_data)
 	hero.set("player_id", player_id)
 	hero.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.get_rival_civ_id(player_id))
-	hero.global_position = global_position + Vector2(-80.0, -60.0)
 	get_parent().add_child(hero)
+	hero.global_position = BuildingBase.find_spawn_pos(global_position, get_world_2d().direct_space_state)
 	if player_id == 0:
 		AudioManager.play("unit_ready")
 	EventBus.unit_spawned.emit(hero, player_id)

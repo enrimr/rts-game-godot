@@ -9,11 +9,11 @@ class_name Farm
 var _remaining: float = 0.0
 var _is_depleted: bool = false
 
-@onready var _body: ColorRect = get_node_or_null("Body")
+@onready var _body: CanvasItem = get_node_or_null("Body")
 @onready var _food_bar: ProgressBar = get_node_or_null("FoodBar")
 
-const COLOR_ACTIVE: Color = Color(0.70, 0.62, 0.22, 1.0)
-const COLOR_DEPLETED: Color = Color(0.38, 0.30, 0.18, 1.0)
+const COLOR_ACTIVE:   Color = Color(1.0, 1.0, 1.0, 1.0)
+const COLOR_DEPLETED: Color = Color(0.55, 0.45, 0.35, 1.0)
 
 func _ready() -> void:
 	super._ready()
@@ -54,7 +54,7 @@ func _deplete() -> void:
 
 func _refresh_farm_visuals() -> void:
 	if is_instance_valid(_body):
-		_body.color = COLOR_ACTIVE if not _is_depleted else COLOR_DEPLETED
+		_body.modulate = COLOR_ACTIVE if not _is_depleted else COLOR_DEPLETED
 	if is_instance_valid(_food_bar):
 		_food_bar.visible = state == BuildingState.COMPLETE
 		_food_bar.value = (_remaining / max_food) * 100.0 if max_food > 0.0 else 0.0

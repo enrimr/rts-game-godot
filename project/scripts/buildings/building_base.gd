@@ -19,7 +19,7 @@ signal construction_complete
 signal building_destroyed(building: Node)
 
 @onready var _progress_bar: ProgressBar = get_node_or_null("ConstructionBar")
-@onready var _body_rect: ColorRect   = get_node_or_null("Body")
+@onready var _body_node: CanvasItem  = get_node_or_null("Body")
 
 var _selection_line: Line2D = null
 var rally_point: Vector2 = Vector2.ZERO
@@ -39,6 +39,29 @@ func set_rally_point(world_pos: Vector2) -> void:
 func _show_rally_marker(show: bool) -> void:
 	if is_instance_valid(_rally_marker):
 		_rally_marker.visible = show and rally_point != Vector2.ZERO
+
+# Returns a free spawn position near `origin` using an outward spiral.
+# Skips positions occupied by other units/buildings (physics query).
+# `step` is the grid cell size; `max_rings` limits search depth.
+static func find_spawn_pos(origin: Vector2, space: PhysicsDirectSpaceState2D,
+		step: float = 32.0, max_rings: int = 8) -> Vector2:
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	var shape: CircleShape2D = CircleShape2D.new()
+	shape.radius = step * 0.45
+	query.shape = shape
+	query.collision_mask = 1
+	# Ring 0 = the offset just outside the building
+	for ring: int in range(1, max_rings + 1):
+		var r: float = step * float(ring)
+		var steps_in_ring: int = maxi(4, ring * 4)
+		for s: int in range(steps_in_ring):
+			var angle: float = s * TAU / float(steps_in_ring)
+			var candidate: Vector2 = origin + Vector2(cos(angle), sin(angle)) * r
+			query.transform = Transform2D(0.0, candidate)
+			if space.intersect_shape(query, 1).is_empty():
+				return candidate
+	# Fallback: just use a fixed offset
+	return origin + Vector2(step * 2.0, 0.0)
 
 static func _make_rally_marker() -> Node2D:
 	var root: Node2D = Node2D.new()
@@ -75,11 +98,6 @@ func set_selected(value: bool) -> void:
 
 func _footprint_rect() -> Rect2:
 	const PAD: float = 4.0
-	if is_instance_valid(_body_rect):
-		return Rect2(
-			_body_rect.offset_left  - PAD, _body_rect.offset_top    - PAD,
-			_body_rect.offset_right - _body_rect.offset_left + PAD * 2.0,
-			_body_rect.offset_bottom - _body_rect.offset_top + PAD * 2.0)
 	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if cs != null and cs.shape is RectangleShape2D:
 		var h: Vector2 = (cs.shape as RectangleShape2D).size * 0.5
@@ -129,8 +147,8 @@ func _complete_construction() -> void:
 	state = BuildingState.COMPLETE
 	if is_instance_valid(_progress_bar):
 		_progress_bar.visible = false
-	if is_instance_valid(_body_rect):
-		_body_rect.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	if is_instance_valid(_body_node):
+		_body_node.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	if player_id == 0:
 		AudioManager.play("build_complete")
 	construction_complete.emit()
@@ -141,16 +159,18 @@ func _refresh_visuals() -> void:
 		_progress_bar.value = construction_progress
 		_progress_bar.visible = state == BuildingState.UNDER_CONSTRUCTION or construction_progress < 100.0
 	# Blueprint/under-construction tint: semi-transparent
-	if is_instance_valid(_body_rect):
+	if is_instance_valid(_body_node):
 		var alpha: float = 0.4 + construction_progress / 100.0 * 0.6
-		_body_rect.modulate = Color(1.0, 1.0, 1.0, alpha)
+		_body_node.modulate = Color(1.0, 1.0, 1.0, alpha)
 
 func _apply_player_color_stripe() -> void:
-	if not is_instance_valid(_body_rect):
-		PlayerColors.apply_color_stripe(self, player_id, 48.0, 36.0)
-		return
-	var w: float = _body_rect.offset_right - _body_rect.offset_left
-	var b: float = _body_rect.offset_bottom
+	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
+	var w: float = 48.0
+	var b: float = 36.0
+	if cs != null and cs.shape is RectangleShape2D:
+		var h: Vector2 = (cs.shape as RectangleShape2D).size * 0.5
+		w = h.x * 2.0
+		b = h.y
 	PlayerColors.apply_color_stripe(self, player_id, w, b)
 
 func take_damage(amount: float, source: Node = null) -> void:

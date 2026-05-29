@@ -167,7 +167,7 @@ func _do_spawn(scene_path: String) -> void:
 	unit.set("player_id", player_id)
 	unit.set("civ_id", MatchConfig.player_civ_id if player_id == 0 else MatchConfig.get_rival_civ_id(player_id))
 	get_parent().add_child(unit)
-	unit.global_position = global_position + SPAWN_OFFSET
+	unit.global_position = BuildingBase.find_spawn_pos(global_position, get_world_2d().direct_space_state)
 	PopulationManager.add_unit(player_id)
 	if rally_point != Vector2.ZERO and unit.has_method("order_move"):
 		unit.order_move(rally_point)
