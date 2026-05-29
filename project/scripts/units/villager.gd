@@ -58,44 +58,55 @@ func _animate_body(_delta: float) -> void:
 	var t: float = _anim_time
 	match current_state:
 		UnitState.GATHERING:
-			# Chop swing: body rocks forward, tool swings down then up
+			# Chop: body leans forward/back (rotation), tool swings down, no position drift
 			var chop: float = sin(t * TAU * 2.5)
+			_body_node.position.x = 0.0
 			_body_node.rotation = chop * 0.18
 			if is_instance_valid(_tool_poly):
+				_tool_poly.position.x = 0.0
 				_tool_poly.rotation = -chop * 0.55
 			if is_instance_valid(_head_poly):
 				_head_poly.rotation = chop * 0.12
 		UnitState.BUILDING:
-			# Hammer swing: faster, tool pivots more aggressively
+			# Hammer: faster forward lean, tool pivots hard, no position drift
 			var hammer: float = sin(t * TAU * 3.0)
+			_body_node.position.x = 0.0
 			_body_node.rotation = hammer * 0.14
 			if is_instance_valid(_tool_poly):
+				_tool_poly.position.x = 0.0
 				_tool_poly.rotation = -hammer * 0.70
 			if is_instance_valid(_head_poly):
 				_head_poly.rotation = hammer * 0.10
 		UnitState.MOVING, UnitState.RETURNING:
-			# Walk: gentle body sway + head bob
+			# Walk: side-to-side shuffle (position.x) + head bob, no rotation
 			var walk: float = sin(t * TAU * 2.8)
-			_body_node.rotation = walk * 0.10
+			_body_node.rotation = 0.0
+			_body_node.position.x = walk * 2.5
 			if is_instance_valid(_head_poly):
 				_head_poly.position.y = abs(walk) * -1.5
+				_head_poly.rotation = 0.0
 			if is_instance_valid(_tool_poly):
-				_tool_poly.rotation = walk * 0.20
+				_tool_poly.position.x = -walk * 1.5
+				_tool_poly.rotation = 0.0
 		UnitState.ATTACKING:
 			var swing: float = sin(t * TAU * 4.0)
+			_body_node.position.x = 0.0
 			_body_node.rotation = swing * 0.20
 			if is_instance_valid(_tool_poly):
+				_tool_poly.position.x = 0.0
 				_tool_poly.rotation = -swing * 0.60
 			if is_instance_valid(_head_poly):
 				_head_poly.rotation = 0.0
 		_:
 			# Idle: very slow breathing sway
 			var idle: float = sin(t * TAU * 0.5)
+			_body_node.position.x = 0.0
 			_body_node.rotation = idle * 0.03
 			if is_instance_valid(_head_poly):
 				_head_poly.position.y = idle * -0.5
 				_head_poly.rotation = 0.0
 			if is_instance_valid(_tool_poly):
+				_tool_poly.position.x = 0.0
 				_tool_poly.rotation = 0.0
 
 func _on_enemy_entered_range(_body: Node) -> void:
