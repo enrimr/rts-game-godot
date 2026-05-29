@@ -47,13 +47,35 @@ player_id = 0
 script = ExtResource("4_dropoff")
 player_id = 0
 
-[node name="DropOffVisual" type="ColorRect" parent="DropOffNode"]
-offset_left = -40.0
-offset_top = -40.0
-offset_right = 40.0
-offset_bottom = 40.0
-color = Color(0.55, 0.35, 0.1, 1.0)
-mouse_filter = 2
+[node name="Body" type="Node2D" parent="DropOffNode"]
+
+[node name="MainWalls" type="Polygon2D" parent="DropOffNode/Body"]
+color = Color(0.55, 0.18, 0.12, 1.0)
+polygon = PackedVector2Array(-40, 40, 40, 40, 40, -32, 32, -40, -32, -40, -40, -32)
+
+[node name="Keep" type="Polygon2D" parent="DropOffNode/Body"]
+color = Color(0.62, 0.22, 0.15, 1.0)
+polygon = PackedVector2Array(-18, 18, 18, 18, 18, -18, -18, -18)
+
+[node name="TowerNW" type="Polygon2D" parent="DropOffNode/Body"]
+color = Color(0.45, 0.14, 0.10, 1.0)
+polygon = PackedVector2Array(-40, -18, -26, -18, -26, -40, -40, -40)
+
+[node name="TowerNE" type="Polygon2D" parent="DropOffNode/Body"]
+color = Color(0.45, 0.14, 0.10, 1.0)
+polygon = PackedVector2Array(26, -18, 40, -18, 40, -40, 26, -40)
+
+[node name="TowerSW" type="Polygon2D" parent="DropOffNode/Body"]
+color = Color(0.45, 0.14, 0.10, 1.0)
+polygon = PackedVector2Array(-40, 18, -26, 18, -26, 40, -40, 40)
+
+[node name="TowerSE" type="Polygon2D" parent="DropOffNode/Body"]
+color = Color(0.45, 0.14, 0.10, 1.0)
+polygon = PackedVector2Array(26, 18, 40, 18, 40, 40, 26, 40)
+
+[node name="Gate" type="Polygon2D" parent="DropOffNode/Body"]
+color = Color(0.20, 0.08, 0.06, 1.0)
+polygon = PackedVector2Array(-12, 40, 12, 40, 12, 22, -12, 22)
 
 [node name="DropOffLabel" type="Label" parent="DropOffNode"]
 offset_left = -48.0

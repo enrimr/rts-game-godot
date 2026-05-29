@@ -2,6 +2,8 @@ extends UnitBase
 
 class_name Longbowman
 
+const ARROW_SCENE: PackedScene = preload("res://scenes/combat/arrow.tscn")
+
 var attack_target: Node = null
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
@@ -87,12 +89,18 @@ func _handle_attacking(delta: float) -> void:
 	var effective_speed: float = unit_data.attack_speed * CivBonusManager.get_attack_speed_multiplier(player_id, unit_data.id)
 	if _attack_timer >= 1.0 / effective_speed:
 		_attack_timer = 0.0
-		if attack_target.has_method("take_damage"):
-			var dmg: float = _get_effective_attack_vs(attack_target) - _get_target_armor(attack_target)
-			dmg += _get_cavalry_bonus(attack_target)
-			attack_target.take_damage(dmg, self)
-			AudioManager.play_if_visible("hit_ranged", global_position, -4.0)
-			EventBus.unit_attacked.emit(self, attack_target)
+		_launch_arrow(attack_target)
+
+func _launch_arrow(target: Node) -> void:
+	var arrow: Arrow = ARROW_SCENE.instantiate() as Arrow
+	var dmg: float = _get_effective_attack_vs(target) - _get_target_armor(target)
+	dmg += _get_cavalry_bonus(target)
+	arrow.damage = dmg
+	arrow.shooter = self
+	arrow.target_pos = (target as Node2D).global_position
+	arrow._original_target = target
+	get_parent().add_child(arrow)
+	arrow.global_position = global_position
 
 func _get_cavalry_bonus(target: Node) -> float:
 	var udata: Variant = target.get("unit_data")
