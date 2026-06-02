@@ -1056,11 +1056,15 @@ func _order_board(unit: Node, transport: TransportShip) -> void:
 			unit.call("order_move", (transport as Node2D).global_position)
 		_start_board_poll(unit, transport)
 
-func _start_board_poll(unit: Node, transport: TransportShip) -> void:
+func _start_board_poll(unit: Node, transport: TransportShip, attempts: int = 0) -> void:
+	const MAX_BOARD_ATTEMPTS: int = 100  # 10 seconds (100 * 0.1s)
 	var gw: Node = self
 	var timer: SceneTreeTimer = get_tree().create_timer(0.1)
 	timer.timeout.connect(func() -> void:
 		if not is_instance_valid(unit) or not is_instance_valid(transport):
+			return
+		# Transport destroyed/moved/full - abort boarding
+		if transport.is_full():
 			return
 		var d: float = (unit as Node2D).global_position.distance_to(
 			(transport as Node2D).global_position)
@@ -1068,8 +1072,9 @@ func _start_board_poll(unit: Node, transport: TransportShip) -> void:
 			transport.board(unit)
 			gw._selected_units.erase(unit)
 			SelectionManager.select(gw._selected_units)
-		else:
-			gw._start_board_poll(unit, transport)
+		elif attempts < MAX_BOARD_ATTEMPTS:
+			gw._start_board_poll(unit, transport, attempts + 1)
+		# else: timeout - unit couldn't reach transport, silently abort
 	)
 
 func _find_animal_at(world_pos: Vector2) -> Animal:
