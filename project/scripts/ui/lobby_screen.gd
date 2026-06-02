@@ -18,14 +18,14 @@ const CIVS: Array[Dictionary] = [
 
 # Hero name, ability name key, ability description, unique unit display name
 const CIV_DETAILS: Dictionary = {
-	"guanches":    {"hero": "Bencomo",               "ability": "HERO_BENCOMO_ABILITY",     "ability_desc": "HERO_BENCOMO_ABILITY_DESC",     "unique_unit": "CIV_GUANCHES_UNIQUE_UNIT"},
-	"canarii":     {"hero": "Doramas",               "ability": "HERO_DORAMAS_ABILITY",     "ability_desc": "HERO_DORAMAS_ABILITY_DESC",     "unique_unit": "CIV_CANARII_UNIQUE_UNIT"},
-	"mahos":       {"hero": "Guadarfía",             "ability": "HERO_GUADARFIA_ABILITY",   "ability_desc": "HERO_GUADARFIA_ABILITY_DESC",   "unique_unit": "CIV_MAHOS_UNIQUE_UNIT"},
-	"franks":      {"hero": "Jean de Béthencourt",   "ability": "HERO_BETHENCOURT_ABILITY", "ability_desc": "HERO_BETHENCOURT_ABILITY_DESC", "unique_unit": "CIV_FRANKS_UNIQUE_UNIT"},
-	"britons":     {"hero": "Francis Drake",         "ability": "HERO_DRAKE_ABILITY",       "ability_desc": "HERO_DRAKE_ABILITY_DESC",       "unique_unit": "CIV_BRITONS_UNIQUE_UNIT"},
-	"castellanos": {"hero": "Don Quijote",           "ability": "HERO_QUIJOTE_ABILITY",     "ability_desc": "HERO_QUIJOTE_ABILITY_DESC",     "unique_unit": "CIV_CASTELLANOS_UNIQUE_UNIT"},
-	"atlantes":    {"hero": "Artaxerax",             "ability": "HERO_ARTAXERAX_ABILITY",   "ability_desc": "HERO_ARTAXERAX_ABILITY_DESC",   "unique_unit": "CIV_ATLANTES_UNIQUE_UNIT"},
-	"fenicios":    {"hero": "Hannón el Navegante",   "ability": "HERO_HANNO_ABILITY",       "ability_desc": "HERO_HANNO_ABILITY_DESC",       "unique_unit": "CIV_FENICIOS_UNIQUE_UNIT"},
+	"guanches":    {"hero_m": "Bencomo",               "hero_f": "Dácil",                 "ability_m": "HERO_BENCOMO_ABILITY",     "ability_f": "HERO_DACIL_ABILITY",      "ability_desc_m": "HERO_BENCOMO_ABILITY_DESC",     "ability_desc_f": "HERO_DACIL_ABILITY_DESC",      "unique_unit": "CIV_GUANCHES_UNIQUE_UNIT"},
+	"canarii":     {"hero_m": "Doramas",               "hero_f": "Guayarmina",            "ability_m": "HERO_DORAMAS_ABILITY",     "ability_f": "HERO_GUAYARMINA_ABILITY", "ability_desc_m": "HERO_DORAMAS_ABILITY_DESC",     "ability_desc_f": "HERO_GUAYARMINA_ABILITY_DESC", "unique_unit": "CIV_CANARII_UNIQUE_UNIT"},
+	"mahos":       {"hero_m": "Guadarfía",             "hero_f": "Tibiabin",              "ability_m": "HERO_GUADARFIA_ABILITY",   "ability_f": "HERO_TIBIABIN_ABILITY",   "ability_desc_m": "HERO_GUADARFIA_ABILITY_DESC",   "ability_desc_f": "HERO_TIBIABIN_ABILITY_DESC",   "unique_unit": "CIV_MAHOS_UNIQUE_UNIT"},
+	"franks":      {"hero_m": "Jean de Béthencourt",   "hero_f": "Catalina",              "ability_m": "HERO_BETHENCOURT_ABILITY", "ability_f": "HERO_CATALINA_ABILITY",   "ability_desc_m": "HERO_BETHENCOURT_ABILITY_DESC", "ability_desc_f": "HERO_CATALINA_ABILITY_DESC",   "unique_unit": "CIV_FRANKS_UNIQUE_UNIT"},
+	"britons":     {"hero_m": "Francis Drake",         "hero_f": "Grace O'Malley",        "ability_m": "HERO_DRAKE_ABILITY",       "ability_f": "HERO_GRACE_ABILITY",      "ability_desc_m": "HERO_DRAKE_ABILITY_DESC",       "ability_desc_f": "HERO_GRACE_ABILITY_DESC",      "unique_unit": "CIV_BRITONS_UNIQUE_UNIT"},
+	"castellanos": {"hero_m": "Don Quijote",           "hero_f": "Dulcinea",              "ability_m": "HERO_QUIJOTE_ABILITY",     "ability_f": "HERO_DULCINEA_ABILITY",   "ability_desc_m": "HERO_QUIJOTE_ABILITY_DESC",     "ability_desc_f": "HERO_DULCINEA_ABILITY_DESC",   "unique_unit": "CIV_CASTELLANOS_UNIQUE_UNIT"},
+	"atlantes":    {"hero_m": "Artaxerax",             "hero_f": "Cleito",                "ability_m": "HERO_ARTAXERAX_ABILITY",   "ability_f": "HERO_CLEITO_ABILITY",     "ability_desc_m": "HERO_ARTAXERAX_ABILITY_DESC",   "ability_desc_f": "HERO_CLEITO_ABILITY_DESC",     "unique_unit": "CIV_ATLANTES_UNIQUE_UNIT"},
+	"fenicios":    {"hero_m": "Hannón el Navegante",   "hero_f": "Elissa",                "ability_m": "HERO_HANNO_ABILITY",       "ability_f": "HERO_ELISSA_ABILITY",     "ability_desc_m": "HERO_HANNO_ABILITY_DESC",       "ability_desc_f": "HERO_ELISSA_ABILITY_DESC",     "unique_unit": "CIV_FENICIOS_UNIQUE_UNIT"},
 }
 
 const AGE_KEYS: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
@@ -155,6 +155,12 @@ func _build() -> void:
 	var victory_opts: Array[String] = [tr("LOBBY_VICTORY_CONQUEST"), tr("LOBBY_VICTORY_REGICIDE"), tr("LOBBY_VICTORY_WONDER")]
 	left.add_child(_make_option_row(victory_opts, MatchConfig.victory_mode,
 		func(i: int) -> void: MatchConfig.victory_mode = i))
+
+	# Hero gender selection
+	left.add_child(_make_label(tr("LOBBY_HERO_GENDER")))
+	var hero_gender_opts: Array[String] = [tr("LOBBY_HERO_RANDOM"), tr("LOBBY_HERO_MALE"), tr("LOBBY_HERO_FEMALE")]
+	left.add_child(_make_option_row(hero_gender_opts, MatchConfig.hero_gender,
+		func(i: int) -> void: MatchConfig.hero_gender = i))
 
 	# Weather
 	left.add_child(_make_label(tr("LOBBY_WEATHER_FREQUENCY")))
@@ -318,10 +324,23 @@ func _rebuild_civ_detail(vbox: VBoxContainer, civ_idx: int) -> void:
 
 	vbox.add_child(HSeparator.new())
 
-	# Hero
-	if details.has("hero"):
-		_add_detail_row(vbox, tr("LOBBY_CIV_HERO"), details["hero"] as String, Color(1.0, 0.85, 0.40))
-		_add_detail_text(vbox, tr(details["ability_desc"] as String), Color(0.68, 0.80, 0.95))
+	# Hero (show based on gender selection)
+	var hero_name: String = ""
+	var hero_ability_desc: String = ""
+	match MatchConfig.hero_gender:
+		MatchConfig.HeroGender.RANDOM:
+			hero_name = details.get("hero_m", "") as String + " / " + details.get("hero_f", "") as String
+			hero_ability_desc = tr("LOBBY_HERO_RANDOM_DESC")
+		MatchConfig.HeroGender.MALE:
+			hero_name = details.get("hero_m", "") as String
+			hero_ability_desc = tr(details.get("ability_desc_m", "") as String)
+		MatchConfig.HeroGender.FEMALE:
+			hero_name = details.get("hero_f", "") as String
+			hero_ability_desc = tr(details.get("ability_desc_f", "") as String)
+
+	if not hero_name.is_empty():
+		_add_detail_row(vbox, tr("LOBBY_CIV_HERO"), hero_name, Color(1.0, 0.85, 0.40))
+		_add_detail_text(vbox, hero_ability_desc, Color(0.68, 0.80, 0.95))
 
 	vbox.add_child(HSeparator.new())
 

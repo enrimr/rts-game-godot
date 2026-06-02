@@ -297,8 +297,16 @@ func _get_civ_id_for_player(player_id: int) -> String:
 
 func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	var civ_id: String = _get_civ_id_for_player(player_id)
-	# Randomly select male or female hero (50/50)
-	var use_female: bool = _rng.randi() % 2 == 0
+	# Select hero gender based on MatchConfig setting
+	var use_female: bool = false
+	match MatchConfig.hero_gender:
+		MatchConfig.HeroGender.RANDOM:
+			use_female = _rng.randi() % 2 == 0
+		MatchConfig.HeroGender.MALE:
+			use_female = false
+		MatchConfig.HeroGender.FEMALE:
+			use_female = true
+
 	var hero_map: Dictionary = HERO_FEMALE_DATA if use_female else HERO_MALE_DATA
 	var data_path: String = hero_map.get(civ_id, "") as String
 	if data_path.is_empty():

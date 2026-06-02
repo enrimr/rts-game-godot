@@ -7,6 +7,7 @@ enum MapSize      { SMALL = 0, MEDIUM = 1, LARGE = 2 }
 enum Resources    { SCARCE = 0, NORMAL = 1, ABUNDANT = 2, FULL_COMBAT = 3, TUTORIAL = 4 }
 enum MapType      { PLAINS = 0, STANDARD = 1, VOLCANIC_COAST = 2, DESERT_COAST = 3, ISLANDS = 4 }
 enum VictoryMode  { CONQUEST = 0, REGICIDE = 1, WONDER = 2 }
+enum HeroGender   { RANDOM = 0, MALE = 1, FEMALE = 2 }
 
 # Chosen by the player in the lobby
 var map_size:          int    = MapSize.MEDIUM
@@ -24,6 +25,9 @@ var rival_civ_ids:  Array[String]  = ["castellanos"]
 # Weather options
 var weather_enabled:   bool = true
 var weather_frequency: int  = 1   # 0=Off, 1=Normal, 2=Frequent, 3=Extreme
+
+# Hero gender selection
+var hero_gender: int = HeroGender.RANDOM
 
 # Compatibility accessor — first rival's civ id
 var rival_civ_id: String:
