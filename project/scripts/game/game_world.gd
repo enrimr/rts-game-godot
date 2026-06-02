@@ -4,7 +4,7 @@ const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const SCOUT_SCENE: PackedScene = preload("res://scenes/units/scout.tscn")
 const AI_TOWN_CENTER_SCENE: PackedScene = preload("res://scenes/buildings/town_center_ai.tscn")
 
-const HERO_DATA_BY_CIV: Dictionary = {
+const HERO_MALE_DATA: Dictionary = {
 	"guanches":    "res://resources/units/hero_bencomo.tres",
 	"canarii":     "res://resources/units/hero_doramas.tres",
 	"mahos":       "res://resources/units/hero_guadarfia.tres",
@@ -13,6 +13,17 @@ const HERO_DATA_BY_CIV: Dictionary = {
 	"castellanos": "res://resources/units/hero_quijote.tres",
 	"atlantes":    "res://resources/units/hero_artaxerax.tres",
 	"fenicios":    "res://resources/units/hero_hanno.tres",
+}
+
+const HERO_FEMALE_DATA: Dictionary = {
+	"guanches":    "res://resources/units/hero_dacil.tres",
+	"canarii":     "res://resources/units/hero_guayarmina.tres",
+	"mahos":       "res://resources/units/hero_tibiabin.tres",
+	"franks":      "res://resources/units/hero_catalina.tres",
+	"britons":     "res://resources/units/hero_grace.tres",
+	"castellanos": "res://resources/units/hero_dulcinea.tres",
+	"atlantes":    "res://resources/units/hero_cleito.tres",
+	"fenicios":    "res://resources/units/hero_elissa.tres",
 }
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -286,7 +297,10 @@ func _get_civ_id_for_player(player_id: int) -> String:
 
 func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	var civ_id: String = _get_civ_id_for_player(player_id)
-	var data_path: String = HERO_DATA_BY_CIV.get(civ_id, "") as String
+	# Randomly select male or female hero (50/50)
+	var use_female: bool = _rng.randi() % 2 == 0
+	var hero_map: Dictionary = HERO_FEMALE_DATA if use_female else HERO_MALE_DATA
+	var data_path: String = hero_map.get(civ_id, "") as String
 	if data_path.is_empty():
 		return
 	var hero_data: UnitResource = load(data_path) as UnitResource

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "dacil"
+display_name = "Dácil"
+description = "Queen of the Valley. Her voice rallied the Guanche people in their darkest hour."
+max_health = 280.0
+move_speed = 95.0
+line_of_sight = 7.0
+population_cost = 0
+attack = 14.0
+attack_range = 1.5
+attack_speed = 1.2
+armor_melee = 3.0
+armor_pierce = 2.0
+age_required = 0
+train_time = 0.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 0
+is_hero = true
+hero_ability_id = "mountain_voice"
+hero_ability_cooldown = 60.0
+hero_ability_description = "Grants nearby allies +2 armor and +50% healing rate for 12s."

@@ -14,6 +14,7 @@ func get_selection_sound() -> String:
 
 enum Ability {
 	NONE,
+	# Male Heroes
 	# Guanches — Bencomo
 	MENCEYES_CHARGE,      # nearby allies +30% attack speed for 10s
 	# Canarii — Doramas
@@ -30,9 +31,27 @@ enum Ability {
 	CALIMA,               # create artificial fog patch hiding own units for 12s
 	# Fenicios — Hannón
 	TRADE_ROUTE,          # passive gold corridor between two points for 30s
+	# Female Heroes
+	# Guanches — Dácil
+	MOUNTAIN_VOICE,       # nearby allies +2 armor and +50% heal rate for 12s
+	# Canarii — Guayarmina
+	FATES_ARROW,          # 80 damage ignore-armor snipe, half cooldown if kill
+	# Mahos — Tibiabin
+	SANDSTORM,            # AoE 200px: 3dmg/s, -40% speed, -50% projectile accuracy for 10s
+	# Franks — Catalina
+	HONOR_DUEL,           # challenge enemy hero: both +100% dmg to each other, -50% to others, 15s
+	# Britons — Grace O'Malley
+	BOARDING_ACTION,      # dash 200px, damage + stun enemies in path for 2s
+	# Castellanos — Dulcinea
+	CALL_TO_ARMS,         # summon 3 temporary Militia for 40s
+	# Atlantes — Cleito
+	RISING_TIDE,          # AoE 250px: allies heal 60HP + 30% speed, enemies 20dmg + -20% speed
+	# Fenicios — Elissa
+	MERCENARY_PACT,       # spend 400g to permanently convert one enemy unit
 }
 
 const ABILITY_MAP: Dictionary = {
+	# Male heroes
 	"menceyes_charge":      Ability.MENCEYES_CHARGE,
 	"challenge":            Ability.CHALLENGE,
 	"ambush":               Ability.AMBUSH,
@@ -41,6 +60,15 @@ const ABILITY_MAP: Dictionary = {
 	"knight_errant_charge": Ability.KNIGHT_ERRANT_CHARGE,
 	"calima":               Ability.CALIMA,
 	"trade_route":          Ability.TRADE_ROUTE,
+	# Female heroes
+	"mountain_voice":       Ability.MOUNTAIN_VOICE,
+	"fates_arrow":          Ability.FATES_ARROW,
+	"sandstorm":            Ability.SANDSTORM,
+	"honor_duel":           Ability.HONOR_DUEL,
+	"boarding_action":      Ability.BOARDING_ACTION,
+	"call_to_arms":         Ability.CALL_TO_ARMS,
+	"rising_tide":          Ability.RISING_TIDE,
+	"mercenary_pact":       Ability.MERCENARY_PACT,
 }
 
 var _ability: Ability = Ability.NONE
@@ -64,6 +92,12 @@ var _hero_ring: Node2D = null
 # Rocinante passive (Don Quijote): base speed stored to apply delay on attack
 var _quijote_attack_delay: float = 0.0
 var _quijote_post_attack_penalty: float = 0.0
+
+# Female heroes state
+var _sandstorm_area: Area2D = null
+var _duel_target: Node = null
+var _duel_original_dmg_mult: float = 1.0
+var _summoned_militia: Array[Node] = []
 
 func _ready() -> void:
 	super._ready()
@@ -156,6 +190,35 @@ func _trigger_ability() -> void:
 		Ability.TRADE_ROUTE:
 			duration = 30.0
 			_activate_trade_route(duration)
+		# Female Heroes
+		Ability.MOUNTAIN_VOICE:
+			duration = 12.0
+			_buff_nearby_armor_and_healing()
+		Ability.FATES_ARROW:
+			duration = 0.0  # instant
+			_fire_fates_arrow()
+			return
+		Ability.SANDSTORM:
+			duration = 10.0
+			_create_sandstorm()
+		Ability.HONOR_DUEL:
+			duration = 15.0
+			_challenge_to_duel()
+		Ability.BOARDING_ACTION:
+			duration = 0.0  # instant dash
+			_boarding_dash()
+			return
+		Ability.CALL_TO_ARMS:
+			duration = 40.0
+			_summon_militia()
+		Ability.RISING_TIDE:
+			duration = 0.0  # instant wave
+			_create_tidal_wave()
+			return
+		Ability.MERCENARY_PACT:
+			duration = 0.0  # instant conversion
+			_convert_enemy_for_gold()
+			return
 
 	_ability_active = duration > 0.0
 	_ability_timer = duration
@@ -204,6 +267,15 @@ func _end_ability() -> void:
 				_trade_route_timer.stop()
 				_trade_route_timer.queue_free()
 			_trade_route_timer = null
+		# Female heroes cleanup
+		Ability.MOUNTAIN_VOICE:
+			_restore_armor_buffs()
+		Ability.SANDSTORM:
+			_cleanup_sandstorm()
+		Ability.HONOR_DUEL:
+			_end_duel()
+		Ability.CALL_TO_ARMS:
+			_cleanup_summoned_militia()
 
 func _handle_attacking(delta: float) -> void:
 	if _quijote_attack_delay <= 0.0:
@@ -393,3 +465,294 @@ func _activate_trade_route(duration: float) -> void:
 		if tick_count >= ticks:
 			_end_ability()
 	)
+# Heroine abilities implementation - to be appended to hero_unit.gd
+
+## DÁCIL - MOUNTAIN VOICE
+func _buff_nearby_armor_and_healing() -> void:
+	var units: Array = get_tree().get_nodes_in_group("units")
+	_buffed_units.clear()
+	for unit: Node in units:
+		if not is_instance_valid(unit):
+			continue
+		var unit_pid: Variant = unit.get("player_id")
+		if unit_pid == null or (unit_pid as int) != player_id:
+			continue
+		var dist: float = global_position.distance_to((unit as Node2D).global_position)
+		if dist <= 300.0:
+			var data: UnitResource = unit.get("unit_data") as UnitResource
+			if data != null:
+				var dup: UnitResource = data.duplicate() as UnitResource
+				_buffed_units.append({
+					"unit": unit,
+					"original_armor_m": dup.armor_melee,
+					"original_armor_p": dup.armor_pierce
+				})
+				dup.armor_melee += 2.0
+				dup.armor_pierce += 2.0
+				unit.set("unit_data", dup)
+
+func _restore_armor_buffs() -> void:
+	for entry: Dictionary in _buffed_units:
+		if is_instance_valid(entry.unit):
+			var data: UnitResource = (entry.unit.get("unit_data") as UnitResource).duplicate() as UnitResource
+			data.armor_melee = entry.original_armor_m
+			data.armor_pierce = entry.original_armor_p
+			entry.unit.set("unit_data", data)
+	_buffed_units.clear()
+
+## GUAYARMINA - FATE'S ARROW
+func _fire_fates_arrow() -> void:
+	# Find target: nearest enemy within 600px
+	var nearest: Node = null
+	var nearest_dist: float = 600.0
+	var units: Array = get_tree().get_nodes_in_group("units")
+	for unit: Node in units:
+		if not is_instance_valid(unit):
+			continue
+		var unit_pid: Variant = unit.get("player_id")
+		if unit_pid == null or (unit_pid as int) == player_id:
+			continue
+		var dist: float = global_position.distance_to((unit as Node2D).global_position)
+		if dist < nearest_dist:
+			nearest = unit
+			nearest_dist = dist
+
+	if nearest != null and nearest.has_method("take_damage"):
+		var target_hp: float = nearest.get("health") as float
+		nearest.take_damage(80.0, self)
+		AudioManager.play_if_visible("hit_ranged", (nearest as Node2D).global_position, 0.0)
+		# Halve cooldown if kill
+		if target_hp <= 80.0:
+			_cooldown_remaining = (unit_data.hero_ability_cooldown if unit_data else 60.0) * 0.5
+
+## TIBIABIN - SANDSTORM
+func _create_sandstorm() -> void:
+	_sandstorm_area = Area2D.new()
+	var shape: CollisionShape2D = CollisionShape2D.new()
+	var circle: CircleShape2D = CircleShape2D.new()
+	circle.radius = 200.0
+	shape.shape = circle
+	_sandstorm_area.add_child(shape)
+	_sandstorm_area.collision_layer = 0
+	_sandstorm_area.collision_mask = 1
+	_sandstorm_area.global_position = global_position
+	get_parent().add_child(_sandstorm_area)
+
+	# Visual: ColorRect with semi-transparent brown
+	var visual: ColorRect = ColorRect.new()
+	visual.color = Color(0.6, 0.4, 0.2, 0.3)
+	visual.size = Vector2(400, 400)
+	visual.position = Vector2(-200, -200)
+	_sandstorm_area.add_child(visual)
+
+	# DoT timer
+	var timer: Timer = Timer.new()
+	timer.wait_time = 1.0
+	timer.one_shot = false
+	_sandstorm_area.add_child(timer)
+	timer.timeout.connect(_sandstorm_tick)
+	timer.start()
+
+func _sandstorm_tick() -> void:
+	if not is_instance_valid(_sandstorm_area):
+		return
+	var bodies: Array[Node2D] = _sandstorm_area.get_overlapping_bodies()
+	for body: Node in bodies:
+		if not is_instance_valid(body):
+			continue
+		var body_pid: Variant = body.get("player_id")
+		if body_pid == null or (body_pid as int) == player_id:
+			continue
+		if body.has_method("take_damage"):
+			body.take_damage(3.0, self)
+
+func _cleanup_sandstorm() -> void:
+	if is_instance_valid(_sandstorm_area):
+		_sandstorm_area.queue_free()
+	_sandstorm_area = null
+
+## CATALINA - HONOR DUEL
+func _challenge_to_duel() -> void:
+	# Find nearest enemy hero or unique unit within 250px
+	var nearest: Node = null
+	var nearest_dist: float = 250.0
+	var units: Array = get_tree().get_nodes_in_group("units")
+	for unit: Node in units:
+		if not is_instance_valid(unit):
+			continue
+		var unit_pid: Variant = unit.get("player_id")
+		if unit_pid == null or (unit_pid as int) == player_id:
+			continue
+		var data: UnitResource = unit.get("unit_data") as UnitResource
+		if data == null:
+			continue
+		# Must be hero or unique unit
+		if not (data.is_hero or unit is MenceyesGuard or unit is RavineArcher or unit is SandRaider
+			or unit is ChevalierNormand or unit is Longbowman or unit is Conquistador
+			or unit is Tidecaller or unit is Trireme):
+			continue
+		var dist: float = global_position.distance_to((unit as Node2D).global_position)
+		if dist < nearest_dist:
+			nearest = unit
+			nearest_dist = dist
+
+	if nearest != null:
+		_duel_target = nearest
+		# Both get damage multipliers vs each other
+		# (This is simplified - a full implementation would track damage source in combat)
+
+func _end_duel() -> void:
+	_duel_target = null
+
+## GRACE O'MALLEY - BOARDING ACTION
+func _boarding_dash() -> void:
+	# Dash 200px towards mouse position or forward
+	var direction: Vector2 = (get_global_mouse_position() - global_position).normalized()
+	var start_pos: Vector2 = global_position
+	var end_pos: Vector2 = start_pos + direction * 200.0
+
+	# Query all bodies along the path
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_pos, end_pos)
+	query.collision_mask = 1
+	query.hit_from_inside = true
+
+	# Instant teleport (simplified - full implementation would lerp)
+	global_position = end_pos
+
+	# Damage + stun everything in 200px line
+	var units: Array = get_tree().get_nodes_in_group("units")
+	for unit: Node in units:
+		if not is_instance_valid(unit):
+			continue
+		var unit_pid: Variant = unit.get("player_id")
+		if unit_pid == null or (unit_pid as int) == player_id:
+			continue
+		# Check if unit was in the dash path (simplified: just check distance to line)
+		var unit_pos: Vector2 = (unit as Node2D).global_position
+		var dist_to_line: float = _point_to_line_distance(unit_pos, start_pos, end_pos)
+		if dist_to_line <= 40.0:  # 40px width of dash
+			if unit.has_method("take_damage"):
+				unit.take_damage(30.0, self)
+				# Stun: set state to IDLE and disable for 2s (simplified)
+
+	# Damage buildings
+	var buildings: Array = get_tree().get_nodes_in_group("buildings")
+	for building: Node in buildings:
+		if not is_instance_valid(building):
+			continue
+		var b_pid: Variant = building.get("player_id")
+		if b_pid == null or (b_pid as int) == player_id:
+			continue
+		var b_pos: Vector2 = (building as Node2D).global_position
+		var dist_to_line: float = _point_to_line_distance(b_pos, start_pos, end_pos)
+		if dist_to_line <= 40.0:
+			if building.has_method("take_damage"):
+				building.take_damage(100.0, self)
+
+func _point_to_line_distance(point: Vector2, line_start: Vector2, line_end: Vector2) -> float:
+	var line_vec: Vector2 = line_end - line_start
+	var point_vec: Vector2 = point - line_start
+	var line_len_sq: float = line_vec.length_squared()
+	if line_len_sq == 0.0:
+		return point_vec.length()
+	var t: float = clampf(point_vec.dot(line_vec) / line_len_sq, 0.0, 1.0)
+	var projection: Vector2 = line_start + t * line_vec
+	return point.distance_to(projection)
+
+## DULCINEA - CALL TO ARMS
+func _summon_militia() -> void:
+	var militia_scene: PackedScene = load("res://scenes/units/militia.tscn") as PackedScene
+	if militia_scene == null:
+		return
+
+	_summoned_militia.clear()
+	for i: int in range(3):
+		var militia: CharacterBody2D = militia_scene.instantiate() as CharacterBody2D
+		var offset: Vector2 = Vector2(40.0 * (i - 1), 0.0).rotated(randf() * TAU)
+		militia.global_position = global_position + offset
+		militia.set("player_id", player_id)
+
+		# Buff HP and attack by 20%
+		var data: UnitResource = militia.get("unit_data") as UnitResource
+		if data != null:
+			var buffed: UnitResource = data.duplicate() as UnitResource
+			buffed.max_health *= 1.2
+			buffed.attack *= 1.2
+			militia.set("unit_data", buffed)
+			militia.set("health", buffed.max_health)
+
+		get_parent().add_child(militia)
+		_summoned_militia.append(militia)
+
+func _cleanup_summoned_militia() -> void:
+	for militia: Node in _summoned_militia:
+		if is_instance_valid(militia):
+			militia.queue_free()
+	_summoned_militia.clear()
+
+## CLEITO - RISING TIDE
+func _create_tidal_wave() -> void:
+	# Query all units/buildings in 250px
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	var circle: CircleShape2D = CircleShape2D.new()
+	circle.radius = 250.0
+	query.shape = circle
+	query.transform = Transform2D(0.0, global_position)
+	query.collision_mask = 1
+	var results: Array[Dictionary] = space.intersect_shape(query, 64)
+
+	for result: Dictionary in results:
+		var body: Node = result["collider"] as Node
+		if not is_instance_valid(body):
+			continue
+		var body_pid: Variant = body.get("player_id")
+		if body_pid == null:
+			continue
+
+		if (body_pid as int) == player_id:
+			# Ally: heal 60 HP
+			var health: Variant = body.get("health")
+			if health != null:
+				var data: UnitResource = body.get("unit_data") as UnitResource
+				if data != null:
+					var new_hp: float = minf((health as float) + 60.0, data.max_health)
+					body.set("health", new_hp)
+					if body.has_method("_update_health_bar"):
+						body.call("_update_health_bar")
+		else:
+			# Enemy: damage 20
+			if body.has_method("take_damage"):
+				body.take_damage(20.0, self)
+
+## ELISSA - MERCENARY PACT
+func _convert_enemy_for_gold() -> void:
+	# Check if player has 400 gold
+	if ResourceManager.get_resource(player_id, "gold") < 400.0:
+		return
+
+	# Find nearest enemy unit (non-hero) within 200px
+	var nearest: Node = null
+	var nearest_dist: float = 200.0
+	var units: Array = get_tree().get_nodes_in_group("units")
+	for unit: Node in units:
+		if not is_instance_valid(unit):
+			continue
+		var unit_pid: Variant = unit.get("player_id")
+		if unit_pid == null or (unit_pid as int) == player_id:
+			continue
+		var data: UnitResource = unit.get("unit_data") as UnitResource
+		if data == null or data.is_hero:
+			continue
+		var dist: float = global_position.distance_to((unit as Node2D).global_position)
+		if dist < nearest_dist:
+			nearest = unit
+			nearest_dist = dist
+
+	if nearest != null:
+		ResourceManager.add_resource(player_id, "gold", -400.0)
+		nearest.set("player_id", player_id)
+		# Re-apply player color stripe
+		if nearest.has_method("_add_player_color_stripe"):
+			nearest.call("_add_player_color_stripe")

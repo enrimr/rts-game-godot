@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="UnitResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "elissa"
+display_name = "Elissa"
+description = "Founder of Carthage. Princess Dido, renowned for diplomatic cunning and mercantile genius."
+max_health = 220.0
+move_speed = 85.0
+line_of_sight = 7.0
+population_cost = 0
+attack = 10.0
+attack_range = 1.5
+attack_speed = 1.2
+armor_melee = 2.0
+armor_pierce = 2.0
+age_required = 0
+train_time = 0.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 0
+is_hero = true
+hero_ability_id = "mercenary_pact"
+hero_ability_cooldown = 120.0
+hero_ability_description = "Spends 400 gold to permanently convert one enemy unit (non-hero, non-building) within 200px."

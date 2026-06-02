@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="UnitResource" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "dulcinea"
+display_name = "Dulcinea del Toboso"
+description = "Lady of Strategy. The idealized inspiration made real as a battlefield commander."
+max_health = 300.0
+move_speed = 90.0
+line_of_sight = 7.0
+population_cost = 0
+attack = 12.0
+attack_range = 1.5
+attack_speed = 1.2
+armor_melee = 3.0
+armor_pierce = 3.0
+age_required = 0
+train_time = 0.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 0
+is_hero = true
+hero_ability_id = "call_to_arms"
+hero_ability_cooldown = 90.0
+hero_ability_description = "Summons 3 temporary Militia (+20% HP/attack) for 40s. They don't count as casualties when lost."

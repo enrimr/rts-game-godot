@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "grace"
+display_name = "Grace O'Malley"
+description = "Pirate Queen. Irish privateer who matched Drake's naval prowess and exceeded his courage."
+max_health = 260.0
+move_speed = 105.0
+line_of_sight = 7.0
+population_cost = 0
+attack = 18.0
+attack_range = 1.5
+attack_speed = 1.2
+armor_melee = 2.0
+armor_pierce = 2.0
+age_required = 0
+train_time = 0.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 0
+is_hero = true
+hero_ability_id = "boarding_action"
+hero_ability_cooldown = 50.0
+hero_ability_description = "Dashes 200px in a line, dealing 30 damage and stunning enemies for 2s. Deals 100 damage to buildings."

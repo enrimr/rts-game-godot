@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "catalina"
+display_name = "Catalina de Béthencourt"
+description = "Countess Conqueror. Upheld the Norman code of honor through single combat."
+max_health = 320.0
+move_speed = 95.0
+line_of_sight = 7.0
+population_cost = 0
+attack = 22.0
+attack_range = 1.5
+attack_speed = 1.2
+armor_melee = 4.0
+armor_pierce = 2.0
+age_required = 0
+train_time = 0.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 0
+is_hero = true
+hero_ability_id = "honor_duel"
+hero_ability_cooldown = 80.0
+hero_ability_description = "Challenges an enemy hero or unique unit: both deal +100% damage to each other, -50% to others for 15s. Heals 50% HP if Catalina wins."

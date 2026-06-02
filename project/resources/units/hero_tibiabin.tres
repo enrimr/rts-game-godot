@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="UnitResource" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://cf7opcqowyqyr" path="res://resources/units/unit_resource.gd" id="1_unitres"]
+
+[resource]
+script = ExtResource("1_unitres")
+id = "tibiabin"
+display_name = "Tibiabin"
+description = "Rider of the Dunes. Queen of Fuerteventura who commanded the desert winds."
+max_health = 240.0
+move_speed = 120.0
+line_of_sight = 7.0
+population_cost = 0
+attack = 16.0
+attack_range = 1.5
+attack_speed = 1.2
+armor_melee = 2.0
+armor_pierce = 1.0
+age_required = 0
+train_time = 0.0
+cost_food = 0
+cost_wood = 0
+cost_gold = 0
+is_hero = true
+hero_ability_id = "sandstorm"
+hero_ability_cooldown = 70.0
+hero_ability_description = "Creates a 200px sandstorm for 10s: 3dmg/s, -40% speed, -50% projectile accuracy to enemies."
