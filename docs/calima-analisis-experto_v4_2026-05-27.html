@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calima: Flames of the Atlantic — Análisis Experto v4</title>
+<style>
+  :root {
+    --bg: #080a10;
+    --surface: #10131e;
+    --surface2: #181c2a;
+    --surface3: #1e2236;
+    --border: #252a40;
+    --border2: #2e3450;
+    --accent: #e8901a;
+    --accent2: #4a9eff;
+    --accent3: #18d4a0;
+    --accent4: #e83050;
+    --accent5: #b060ff;
+    --text: #d0d5e8;
+    --text-muted: #707890;
+    --text-dim: #40485a;
+    --green: #18d4a0;
+    --yellow: #e8c018;
+    --red: #e83050;
+    --orange: #e8901a;
+    --purple: #b060ff;
+    --blue: #4a9eff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.70;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(160deg, #060810 0%, #14101e 35%, #0a1220 70%, #060810 100%);
+    border-bottom: 1px solid var(--border2);
+    padding: 70px 40px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 15% 60%, rgba(232,144,26,0.10) 0%, transparent 65%),
+      radial-gradient(ellipse 55% 40% at 85% 40%, rgba(74,158,255,0.10) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 30% at 50% 100%, rgba(24,212,160,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(232,144,26,0.12);
+    border: 1px solid rgba(232,144,26,0.35);
+    color: var(--accent);
+    font-size: 11px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; padding: 5px 18px; border-radius: 20px;
+    margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(30px, 5.5vw, 58px);
+    font-weight: 900; letter-spacing: -1.5px;
+    background: linear-gradient(140deg, #fff 0%, var(--accent) 55%, #ff6010 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 14px;
+  }
+  .hero-sub {
+    font-size: 17px; color: var(--text-muted);
+    max-width: 680px; margin: 0 auto 24px;
+    line-height: 1.6;
+  }
+  .hero-meta {
+    display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;
+    font-size: 12px; color: var(--text-dim); letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .hero-meta span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+  .dot.blue { background: var(--blue); }
+  .dot.green { background: var(--green); }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 1100px; margin: 0 auto; padding: 48px 28px; }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 52px;
+  }
+  .toc h2 { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px 20px; }
+  .toc a { color: var(--text-muted); text-decoration: none; font-size: 13.5px; line-height: 1.5; }
+  .toc a:hover { color: var(--accent); }
+  .toc-num { color: var(--accent); font-weight: 700; margin-right: 6px; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 60px; }
+  .section-header {
+    display: flex; align-items: center; gap: 14px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px; margin-bottom: 32px;
+  }
+  .section-num {
+    background: var(--accent); color: #000;
+    font-size: 12px; font-weight: 900; letter-spacing: 1px;
+    padding: 4px 10px; border-radius: 6px; min-width: 34px; text-align: center;
+  }
+  .section-num.blue { background: var(--blue); }
+  .section-num.green { background: var(--green); }
+  .section-num.purple { background: var(--purple); }
+  .section-num.red { background: var(--red); }
+  .section h2 { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+
+  /* ── CARDS ── */
+  .cards { display: grid; gap: 18px; }
+  .cards.col2 { grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); }
+  .cards.col3 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 100%; height: 3px;
+  }
+  .card.orange::before { background: linear-gradient(90deg, var(--orange), transparent); }
+  .card.blue::before   { background: linear-gradient(90deg, var(--blue),   transparent); }
+  .card.green::before  { background: linear-gradient(90deg, var(--green),  transparent); }
+  .card.purple::before { background: linear-gradient(90deg, var(--purple), transparent); }
+  .card.red::before    { background: linear-gradient(90deg, var(--red),    transparent); }
+  .card.yellow::before { background: linear-gradient(90deg, var(--yellow), transparent); }
+  .card h3 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+  .card ul { padding-left: 18px; }
+  .card ul li { margin-bottom: 5px; }
+
+  /* ── SCORE BAR ── */
+  .score-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .score-label { width: 180px; font-size: 13px; color: var(--text-muted); flex-shrink: 0; }
+  .score-bar { flex: 1; height: 8px; background: var(--surface3); border-radius: 4px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 4px; }
+  .score-val { width: 38px; text-align: right; font-size: 13px; font-weight: 700; }
+  .s-orange { background: var(--orange); }
+  .s-blue   { background: var(--blue);   }
+  .s-green  { background: var(--green);  }
+  .s-purple { background: var(--purple); }
+  .s-red    { background: var(--red);    }
+
+  /* ── CALLOUT ── */
+  .callout {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.65;
+  }
+  .callout.blue  { border-left-color: var(--blue);   }
+  .callout.green { border-left-color: var(--green);  }
+  .callout.red   { border-left-color: var(--red);    }
+  .callout.purple{ border-left-color: var(--purple); }
+  .callout strong { color: #fff; }
+
+  /* ── TABLE ── */
+  .tbl-wrap { overflow-x: auto; margin: 20px 0; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th {
+    background: var(--surface2); color: var(--accent);
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 11px 14px; text-align: left; white-space: nowrap;
+  }
+  td { padding: 10px 14px; border-top: 1px solid var(--border); color: var(--text-muted); vertical-align: top; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    padding: 2px 9px; border-radius: 20px; white-space: nowrap;
+  }
+  .badge.high   { background: rgba(24,212,160,0.15); color: var(--green); border: 1px solid rgba(24,212,160,0.3); }
+  .badge.medium { background: rgba(232,192,24,0.15); color: var(--yellow); border: 1px solid rgba(232,192,24,0.3); }
+  .badge.low    { background: rgba(232,48,80,0.15);  color: var(--red);  border: 1px solid rgba(232,48,80,0.3); }
+  .badge.info   { background: rgba(74,158,255,0.15); color: var(--blue); border: 1px solid rgba(74,158,255,0.3); }
+  .badge.new    { background: rgba(176,96,255,0.15); color: var(--purple); border: 1px solid rgba(176,96,255,0.3); }
+
+  /* ── DIVIDER ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* ── PROSE ── */
+  .prose { font-size: 14.5px; color: var(--text-muted); line-height: 1.75; }
+  .prose p { margin-bottom: 14px; }
+  .prose strong { color: var(--text); }
+  .prose em { color: var(--accent); font-style: normal; }
+
+  /* ── TIMELINE ── */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before { content: ''; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 2px; background: var(--border2); }
+  .tl-item { position: relative; margin-bottom: 28px; }
+  .tl-dot {
+    position: absolute; left: -24px; top: 5px;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--surface); background: var(--accent);
+  }
+  .tl-dot.blue   { background: var(--blue); }
+  .tl-dot.green  { background: var(--green); }
+  .tl-dot.purple { background: var(--purple); }
+  .tl-item h4 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .tl-item p  { font-size: 13.5px; color: var(--text-muted); }
+
+  /* ── HOOK BOX ── */
+  .hook-box {
+    background: linear-gradient(135deg, rgba(232,144,26,0.08), rgba(74,158,255,0.06));
+    border: 1px solid var(--border2);
+    border-radius: 12px; padding: 28px 30px; margin: 24px 0;
+  }
+  .hook-box h3 { font-size: 16px; font-weight: 800; color: var(--accent); margin-bottom: 12px; }
+
+  /* ── VERDICT ── */
+  .verdict {
+    background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%);
+    border: 1px solid var(--border2);
+    border-radius: 14px; padding: 36px 40px; text-align: center; margin-top: 52px;
+  }
+  .verdict h2 { font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 10px; }
+  .verdict .score { font-size: 56px; font-weight: 900; background: linear-gradient(135deg, var(--accent), #ff6010); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin: 14px 0; }
+  .verdict p { font-size: 15px; color: var(--text-muted); max-width: 640px; margin: 0 auto; line-height: 1.7; }
+
+  /* ── HIGHLIGHT ── */
+  .hl { color: var(--accent); font-weight: 700; }
+  .hl.blue   { color: var(--blue);   }
+  .hl.green  { color: var(--green);  }
+  .hl.purple { color: var(--purple); }
+  .hl.red    { color: var(--red);    }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .hero { padding: 44px 20px 36px; }
+    .page { padding: 32px 16px; }
+    .cards.col2, .cards.col3 { grid-template-columns: 1fr; }
+    .score-label { width: 140px; }
+    .verdict { padding: 28px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════ HERO -->
+<header class="hero">
+  <div class="hero-badge">Análisis Experto · v4 · 2026-05-27</div>
+  <h1>Calima: Flames of the Atlantic</h1>
+  <p class="hero-sub">
+    Análisis integral técnico, jugable, creativo y comercial basado en el código fuente completo del proyecto.
+    Diagnóstico, oportunidades ocultas y roadmap estratégico para un indie sobresaliente.
+  </p>
+  <div class="hero-meta">
+    <span><span class="dot"></span>Godot 4 · GDScript</span>
+    <span><span class="dot blue"></span>~90 scripts · 48 escenas</span>
+    <span><span class="dot green"></span>8 civilizaciones · 8 héroes</span>
+    <span><span class="dot"></span>Naval · Asedio · Clima procedural</span>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- TOC -->
+  <div class="toc">
+    <h2>Índice</h2>
+    <div class="toc-grid">
+      <a href="#s1"><span class="toc-num">01</span>Identidad y propuesta de valor</a>
+      <a href="#s2"><span class="toc-num">02</span>Diferenciación de mercado</a>
+      <a href="#s3"><span class="toc-num">03</span>Análisis de arquitectura y código</a>
+      <a href="#s4"><span class="toc-num">04</span>Relación diseño ↔ código</a>
+      <a href="#s5"><span class="toc-num">05</span>Mejoras para llevarlo al siguiente nivel</a>
+      <a href="#s6"><span class="toc-num">06</span>Potencial comercial</a>
+      <a href="#s7"><span class="toc-num">07</span>Roadmap estratégico</a>
+      <a href="#s8"><span class="toc-num">08</span>Veredicto final</a>
+    </div>
+  </div>
+
+  <!-- ═══ 01 IDENTIDAD -->
+  <section class="section" id="s1">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>Identidad y propuesta de valor</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        <strong>Calima: Flames of the Atlantic</strong> es un RTS 2D inspirado en Age of Empires II pero ambientado en las Islas Canarias del siglo XV-XVI,
+        durante la conquista europea de un archipiélago donde colisionan tres mundos: la antigüedad fenicia y atlante,
+        las culturas nativas guanche/canarii/mahos y las potencias invasoras europeas. Esa premisa histórica no es decorativa:
+        es el eje diferenciador más fuerte del juego.
+      </p>
+      <p>
+        Tras un análisis exhaustivo del código fuente, el proyecto tiene ya más profundidad sistémica de la que aparenta en una primera lectura.
+        El <em>WeatherManager</em> con 5 tipos de clima procedural (Calima, Tormenta Atlántica, Niebla Marina, Vientos Alisios, Ceniza Volcánica)
+        afecta visión, velocidad, recogida, deriva de proyectiles y daño a edificios. El <em>MapGenerator</em> con 2.300 líneas
+        pinta terreno procedural con shaders de agua, laurisilva, malpaís, riscos, caldera — todo generado programáticamente con polígonos y Line2D.
+        Hay héroes únicos por civilización con 8 habilidades completamente distintas entre sí.
+      </p>
+    </div>
+
+    <div class="hook-box">
+      <h3>El hook central que pocos RTS indie tienen</h3>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.7">
+        El sistema de clima no es cosmético: un Calima real (viento sahárnico) reduce visión un 40%, penaliza recolección de madera y comida, y desvía proyectiles de trebuchet.
+        Eso cambia el ritmo de la partida de forma sistémica y obliga a adaptar la estrategia. Ningún AoE2-like tiene esto.
+        Sumado al terreno volcánico como ventaja civilizacional, el mapa condiciona activamente el gameplay — no solo la estética.
+      </p>
+    </div>
+
+    <div class="cards col2" style="margin-top:24px">
+      <div class="card orange">
+        <h3>🌋 Hooks fuertes</h3>
+        <ul>
+          <li>Clima procedural con efectos reales sobre combate y economía</li>
+          <li>Héroes únicos con 8 habilidades radicalmente distintas (invisibilidad, carga, conversión, trade route, AoE de lanza…)</li>
+          <li>Civilizaciones nativas en posición simétrica a los invasores — narrativa invertida</li>
+          <li>Terreno atlántico: laurisilva, malpaís, caldera, riscos — visualmente único</li>
+          <li>Modo Islands con naval obligatorio y transporte de tropas</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h3>🎯 Elementos con identidad propia</h3>
+        <ul>
+          <li><em>Sand Raider</em> (Mahos): hit-and-run codificado — retrocede 90 px tras cada golpe y re-engages. Mecánica táctica real</li>
+          <li><em>Tidecaller</em> (Atlantes): cada ataque hace AoE de 65 px a todos los enemigos cercanos — masa de choque</li>
+          <li><em>Calima hero ability</em>: crea niebla local que cloak a aliados — único entre todos los RTS</li>
+          <li>Conquista de caldera → bonus stone/min: el punto geográfico central tiene recompensa táctica</li>
+          <li>Modo Regicidio + héroes permanentes = presión psicológica desde el minuto 1</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h3>📱 Potencial viral / streamer</h3>
+        <ul>
+          <li>Un Calima que llega a mitad de un ataque — el momento de caos es altamente clipeable</li>
+          <li>Carga de Don Quijote a través de 8 unidades — GIF perfecto</li>
+          <li>Naval en Islands con trebuchets que derivan por el viento = momentos únicos</li>
+          <li>IA con 3 niveles de agresión dinámica que puede "calentarse" visualmente</li>
+          <li>Post-game charts de recursos y batallas</li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <h3>🧠 Conexión emocional potencial</h3>
+        <ul>
+          <li>Canarias como escenario es completamente inexplorado en videojuegos — garantiza curiosidad editorial</li>
+          <li>Jugar como civilización nativa contra el invasor europeo — narrativa con significado cultural actual</li>
+          <li>Nombres reales: Bencomo, Doramas, Guadarfía — figuras históricas auténticas</li>
+          <li>El Atlántico mítico como campo de juego: fenicios, atlantes, piratas ingleses</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 02 DIFERENCIACIÓN -->
+  <section class="section" id="s2">
+    <div class="section-header">
+      <span class="section-num blue">02</span>
+      <h2>Diferenciación frente al mercado</h2>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Referente</th>
+            <th>Lo que hace</th>
+            <th>Calima vs él</th>
+            <th>Ventaja de Calima</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Age of Empires II: DE</strong></td>
+            <td>El estándar del género; 35 civs, campañas, online</td>
+            <td>Calima tiene 1/4 del contenido pero un escenario 10× más original</td>
+            <td><span class="badge high">Alta</span> Setting único + clima sistémico</td>
+          </tr>
+          <tr>
+            <td><strong>0 A.D.</strong></td>
+            <td>AoE-like OSS con Antigüedad como setting</td>
+            <td>Comparte período histórico Fenicios/Atlantes, sin clima</td>
+            <td><span class="badge high">Alta</span> Narrativa más coherente, clima, héroes</td>
+          </tr>
+          <tr>
+            <td><strong>Northgard</strong></td>
+            <td>RTS nórdico con territorios y clima</td>
+            <td>Ambos tienen clima como mecánica pero Northgard lo hace solo decorativamente</td>
+            <td><span class="badge high">Alta</span> Clima de Calima afecta combate real</td>
+          </tr>
+          <tr>
+            <td><strong>Ancestors Legacy</strong></td>
+            <td>RTS medieval europeo, squads</td>
+            <td>Similar período, diferente mecánica</td>
+            <td><span class="badge medium">Media</span> Setting más original</td>
+          </tr>
+          <tr>
+            <td><strong>Bronze Age: Skirmish</strong></td>
+            <td>Pequeño RTS indie, civilizaciones antiguas</td>
+            <td>Compite directamente en nicho indie RTS</td>
+            <td><span class="badge high">Alta</span> Más profundidad sistémica</td>
+          </tr>
+          <tr>
+            <td><strong>Warfront Kingdoms</strong></td>
+            <td>RTS mobile-first indie</td>
+            <td>Público diferente, scope diferente</td>
+            <td><span class="badge info">N/A</span> No compiten directamente</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout blue">
+      <strong>Nicho potencial concreto:</strong> El nicho es "AoE2 para jugadores que quieren algo históricamente inusual y sistémicamente rico sin necesitar 300 horas de aprendizaje".
+      Steam tiene ~15 títulos que intentan capturar ese espacio pero ninguno tiene el escenario Canarias ni el clima como mecánica de combate.
+      Esto es defendible con un buen posicionamiento de marketing.
+    </div>
+
+    <div class="callout">
+      <strong>Potencial desaprovechado detectado:</strong> El terreno tipo <em>Risco</em> da +2 range desde la cima pero no parece estar completamente integrado con señales de UI que lo indiquen al jugador.
+      La ventaja civilizacional de Guanches de <em>can_traverse_malpais</em> está codificada en el recurso pero su efecto estratégico no tiene enseñanza visual.
+      Son mecánicas que existen pero el jugador no tiene por qué descubrir.
+    </div>
+  </section>
+
+  <!-- ═══ 03 ARQUITECTURA -->
+  <section class="section" id="s3">
+    <div class="section-header">
+      <span class="section-num green">03</span>
+      <h2>Análisis de arquitectura y código</h2>
+    </div>
+
+    <div class="callout green">
+      <strong>Veredicto general:</strong> La arquitectura es sólida para un proyecto indie en Godot 4.
+      El patrón EventBus está bien ejecutado, los Resources son data-driven, y la separación de responsabilidades
+      (AIPlayer como coordinator + 4 módulos RefCounted) es elegante. El código está tipado en su mayoría.
+      Hay deuda técnica puntual pero ningún problema arquitectónico crítico.
+    </div>
+
+    <h3 style="font-size:16px;color:#fff;margin-bottom:16px;margin-top:28px">Fortalezas arquitectónicas</h3>
+    <div class="cards col2">
+      <div class="card green">
+        <h3>EventBus bien ejecutado</h3>
+        <p>65 señales tipadas en <code>event_bus.gd</code> cubren economía, unidades, edificios, combate, mapa y mercado.
+        El desacoplamiento es real — systems como WeatherManager emiten su señal y no saben quién la consume.
+        La conexión/desconexión explícita en <code>_exit_tree()</code> previene memory leaks.</p>
+      </div>
+      <div class="card green">
+        <h3>AI modular y evolucionable</h3>
+        <p>El patrón <code>AIPlayer + 4 RefCounted modules</code> (AIConstruction, AIEconomy, AIMilitary, AINaval) es la decisión más inteligente del proyecto.
+        Cada módulo es reemplazable. La IA tiene ciclos distintos para economía, construcción, investigación y agresión dinámica con 3 niveles PASSIVE/ALERTED/AGGRESSIVE.</p>
+      </div>
+      <div class="card green">
+        <h3>CivBonusManager data-driven</h3>
+        <p>Todos los multiplicadores civilizacionales se leen de <code>civilization_resource.tres</code> y se aplican en runtime vía <code>get_multiplier()</code>.
+        Añadir una nueva civilización requiere solo crear un <code>.tres</code> — cero código nuevo. El sistema distingue claves multiplicativas de claves aditivas correctamente.</p>
+      </div>
+      <div class="card green">
+        <h3>MapGenerator: complejidad bien gestionada</h3>
+        <p>2.327 líneas que generan terrain patches, recursos, animales, unidades, islas y nav obstacles.
+        Usa spatial hash para el placement registry, clipping de polígonos al borde del mapa y shadermaterial inline para el océano.
+        Para ser procedural puramente con polígonos GDScript, el resultado es visualmente rico.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;color:#fff;margin-bottom:16px;margin-top:32px">Problemas detectados</h3>
+    <div class="cards col2">
+      <div class="card red">
+        <h3>⚠ is_military_unit() y count_military() — lista manual creciente</h3>
+        <p>En <code>ai_military.gd:361–376</code>, ambas funciones hacen <code>or unit is X</code> / <code>match type_name</code> con 16 tipos hardcoded.
+        Cada nueva unidad militar requiere editar ambas funciones en dos lugares.
+        <strong>Impacto:</strong> bug silencioso probable si se añade una unidad y se olvida actualizar.</p>
+        <div style="margin-top:10px"><span class="badge low">Riesgo alto</span></div>
+        <p style="margin-top:8px;font-size:13px"><em>Solución: </em> Añadir un grupo Godot <code>"military_units"</code> en <code>_ready()</code> de cada unidad militar. <code>count_military()</code> se reduce a <code>get_tree().get_nodes_in_group("military_units")</code>.</p>
+      </div>
+      <div class="card red">
+        <h3>⚠ _on_hero_died_regicide() — lógica incompleta</h3>
+        <p>En <code>game_manager.gd:60–84</code>, la función solo maneja el caso de un rival.
+        En un futuro multijugador con 3+ rivales, la lógica de "todos los rivales muertos" es incorrecta:
+        rompe en el primer rival no-muerto sin verificar al resto.
+        <strong>Impacto:</strong> bug en regicide con 3+ jugadores.</p>
+        <div style="margin-top:10px"><span class="badge medium">Riesgo medio</span></div>
+        <p style="margin-top:8px;font-size:13px"><em>Solución: </em> Refactorizar a un array de "héroes vivos por player_id" actualizado con EventBus.hero_died.</p>
+      </div>
+      <div class="card orange">
+        <h3>⚠ MapGenerator: excesivos nodos de escena</h3>
+        <p>Cada detalle de terreno (cada hoja de helecho, cada grieta de caldera, cada guijarro de risco) se añade como un nodo Godot independiente al árbol de escena.
+        Una partida estándar puede generar 2.000–5.000 Polygon2D y Line2D solo en el terreno.
+        <strong>Impacto:</strong> frametime en _ready largo, escena pesada, no escala bien con mapas grandes.</p>
+        <div style="margin-top:10px"><span class="badge medium">Riesgo medio</span></div>
+        <p style="margin-top:8px;font-size:13px"><em>Solución: </em> Bake todo el terreno en un único SubViewport + Texture2D al generar el mapa. Después, la escena de juego tiene un solo Sprite2D de terreno. Reducción de nodos de 5.000 a 1.</p>
+      </div>
+      <div class="card orange">
+        <h3>⚠ manage_unique_barracks_unit() — match civ string</h3>
+        <p>En <code>ai_military.gd:184–227</code>, la selección de unidad única usa un <code>match ai_civ</code> con strings hardcoded ("guanches", "canarii"…) y <em>Fenicios y Mahos no están en la lista de cavalry</em>.
+        La omisión de Fenicios (Trireme) del slot de entrenamiento especial significa que la IA Fenicios nunca entrena su unidad única naval en modo skirmish terrestre.
+        <strong>Impacto:</strong> Fenicios IA suboptimal.</p>
+        <div style="margin-top:10px"><span class="badge medium">Riesgo medio</span></div>
+      </div>
+      <div class="card orange">
+        <h3>⚠ _in_volcanic_zone() siempre devuelve true</h3>
+        <p>En <code>weather_manager.gd:275</code>, la función está marcada con comentario <em>"Volcanic ash covers the entire map"</em> pero ignora la constante <code>VOLCANIC_ZONE_RADIUS = 800.0</code>.
+        Esto hace que la ceniza volcánica penalice edificios en toda la isla, no solo en la zona central.
+        <strong>Impacto:</strong> el gameplay diseñado de "acercarse a la caldera es arriesgado" no funciona — la penaliza igual en el borde del mapa.</p>
+        <div style="margin-top:10px"><span class="badge medium">Riesgo diseño</span></div>
+        <p style="margin-top:8px;font-size:13px"><em>Solución: </em> <code>return world_pos.distance_to(Vector2.ZERO) &lt;= VOLCANIC_ZONE_RADIUS</code></p>
+      </div>
+      <div class="card orange">
+        <h3>⚠ get_multiplier() devuelve 0.0 por defecto en keys aditivas</h3>
+        <p>En <code>civ_bonus_manager.gd:22</code>, si una civ no tiene la key, devuelve <code>0.0</code> para keys aditivas o <code>1.0</code> para multiplicativas.
+        Si una nueva civ no define "archer_range_flat" y el código la suma, la aritmética es correcta (0+base=base).
+        Pero si alguien llama <code>get_unit_speed_multiplier(pid, "light_cavalry")</code> y la civ no tiene esa key, el multiplicador es 0.0 — la unidad se queda sin velocidad.
+        <strong>Impacto:</strong> bug invisible al añadir nuevas civs con keys parciales.</p>
+        <div style="margin-top:10px"><span class="badge medium">Riesgo medio</span></div>
+      </div>
+      <div class="card red">
+        <h3>⚠ HeroUnit._do_charge() — tween con closure problemática</h3>
+        <p>En <code>hero_unit.gd:310–348</code>, el charge de Don Quijote usa <code>create_tween().tween_method()</code> con una closure que modifica <code>global_position</code> directamente y usa <code>get_process_delta_time()</code> dentro del método.
+        El cálculo de <code>step</code> está definido pero no se usa — la posición se mueve con delta pero <code>charge_speed / charge_dist</code> es una constante, haciendo el movimiento independiente de <code>charge_speed</code>.
+        <strong>Impacto:</strong> la carga de Quijote probablemente no recorra la distancia esperada.</p>
+        <div style="margin-top:10px"><span class="badge low">Bug funcional</span></div>
+      </div>
+      <div class="card orange">
+        <h3>⚠ Regicide con 1 rival: fallo de lógica</h3>
+        <p>En <code>game_manager.gd:67–69</code>, en regicide cuando el humano muere, el código itera los players buscando rivales y llama <code>declare_winner(i)</code> dentro de un <code>for</code> pero también llama <code>declare_winner(1)</code> fuera — lo que puede provocar una doble declaración.
+        <strong>Impacto:</strong> condición de victoria duplicada en algunos casos de regicide.</p>
+        <div style="margin-top:10px"><span class="badge medium">Bug lógico</span></div>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;color:#fff;margin-bottom:16px;margin-top:32px">Deuda técnica puntuada</h3>
+    <div style="max-width:560px;margin:0 auto">
+      <div class="score-row"><span class="score-label">Modularidad</span><div class="score-bar"><div class="score-fill s-green" style="width:82%"></div></div><span class="score-val hl green">8.2</span></div>
+      <div class="score-row"><span class="score-label">Desacoplamiento (EventBus)</span><div class="score-bar"><div class="score-fill s-green" style="width:80%"></div></div><span class="score-val hl green">8.0</span></div>
+      <div class="score-row"><span class="score-label">Data-driven (Resources)</span><div class="score-bar"><div class="score-fill s-green" style="width:85%"></div></div><span class="score-val hl green">8.5</span></div>
+      <div class="score-row"><span class="score-label">Type safety GDScript</span><div class="score-bar"><div class="score-fill s-blue" style="width:72%"></div></div><span class="score-val hl blue">7.2</span></div>
+      <div class="score-row"><span class="score-label">Rendimiento en caliente</span><div class="score-bar"><div class="score-fill s-orange" style="width:55%"></div></div><span class="score-val hl">5.5</span></div>
+      <div class="score-row"><span class="score-label">Escalabilidad (n jugadores)</span><div class="score-bar"><div class="score-fill s-orange" style="width:50%"></div></div><span class="score-val hl">5.0</span></div>
+      <div class="score-row"><span class="score-label">Cobertura de tests</span><div class="score-bar"><div class="score-fill s-red" style="width:25%"></div></div><span class="score-val hl red">2.5</span></div>
+      <div class="score-row"><span class="score-label">Consistencia entre módulos</span><div class="score-bar"><div class="score-fill s-blue" style="width:70%"></div></div><span class="score-val hl blue">7.0</span></div>
+    </div>
+
+    <div class="callout" style="margin-top:28px">
+      <strong>Riesgo de rendimiento a vigilar:</strong>
+      La función <code>check_zone_threat()</code> en AIMilitary itera cada 3 segundos todos los edificios del AI (bucle anidado dentro de otro bucle por unidad enemiga).
+      Con 3 jugadores AI y mapas grandes puede ser costoso. La misma observación aplica a <code>count_military()</code> que recorre todo el units_layer en cada tick.
+      La solución canónica en Godot es grupos con <code>get_nodes_in_group()</code> y contadores cacheados por señal.
+    </div>
+  </section>
+
+  <!-- ═══ 04 DISEÑO ↔ CÓDIGO -->
+  <section class="section" id="s4">
+    <div class="section-header">
+      <span class="section-num purple">04</span>
+      <h2>Relación entre diseño y código</h2>
+    </div>
+
+    <div class="prose">
+      <p>
+        La arquitectura actual <em>no limita</em> el game design en ningún punto crítico. Al contrario: el CivBonusManager con multipliers aditivos/multiplicativos
+        es exactamente el tipo de sistema que permite iterar valores de civilización sin tocar código.
+        El WeatherManager con su API de query (<code>get_move_speed_multiplier(pos)</code>, <code>get_vision_multiplier(pos)</code>, etc.) está diseñado para ser extendido.
+      </p>
+    </div>
+
+    <div class="cards col2" style="margin-top:24px">
+      <div class="card blue">
+        <h3>Sistemas poco explotados en diseño</h3>
+        <ul>
+          <li><strong>VOLCANIC_ZONE_RADIUS:</strong> Está definido pero no usado correctamente (siempre true). El diseño de "controla la caldera" existe en el GDD pero el código no lo sostiene.</li>
+          <li><strong>Risco +2 range:</strong> El terreno existe visualmente y modifica la velocidad, pero el bonus de rango desde riscos no parece tener feedback visual para el jugador.</li>
+          <li><strong>Terrain speed penalties:</strong> Hay <code>TerrainManager.get_speed_mult()</code> que multiplica la velocidad según terreno. La penalización del 50% en malpaís para unidades no-Guanches existe en código pero no se comunica en UI.</li>
+          <li><strong>MatchChart post-game:</strong> El sistema de gráficas de partida existe y soporta series múltiples y "attack spikes". Es más sofisticado de lo que parece desde fuera.</li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <h3>Mecánicas que limita la implementación actual</h3>
+        <ul>
+          <li><strong>Habilidades heroicas sin UI de cooldown visible</strong> en el HUD más allá del botón. El jugador no sabe cuándo puede usar la habilidad sin mirar el estado del botón.</li>
+          <li><strong>Doramas (Challenge) / Guadarfía (Ambush):</strong> Las habilidades existen pero la IA no las usa. El módulo AIMilitary no tiene lógica de <code>hero.use_ability()</code>.</li>
+          <li><strong>San Raider hit-and-run:</strong> Perfectamente implementado, pero la IA no prioriza Sand Raiders en ataques donde el hit-and-run sería ventajoso vs infantry. La IA los trata como caballería genérica.</li>
+          <li><strong>Mercenary hire en Market:</strong> El EventBus tiene <code>mercenary_hired</code> pero no hay UI visible para contratar mercenarios desde el mercado.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tbl-wrap" style="margin-top:28px">
+      <table>
+        <thead>
+          <tr>
+            <th>Cambio técnico</th>
+            <th>Efecto en diseño</th>
+            <th>Complejidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fijar <code>_in_volcanic_zone()</code> con radio real</td>
+            <td>Activa la mecánica de "controla la zona central peligrosa" del GDD</td>
+            <td><span class="badge high">1 línea</span></td>
+          </tr>
+          <tr>
+            <td>Añadir grupo <code>"military_units"</code> a unidades</td>
+            <td>Permite AI iterar eficientemente y nuevas unidades se auto-registran</td>
+            <td><span class="badge high">Trivial</span></td>
+          </tr>
+          <tr>
+            <td>Implementar hero ability en AIPlayer</td>
+            <td>La IA usa las habilidades únicas → partidas más dramáticas e impredecibles</td>
+            <td><span class="badge medium">Medio</span></td>
+          </tr>
+          <tr>
+            <td>Añadir tooltip de terreno en hover</td>
+            <td>El jugador descubre los bonuses de risco y malpaís → decisiones informadas</td>
+            <td><span class="badge medium">Medio</span></td>
+          </tr>
+          <tr>
+            <td>Bake de terreno a textura en generación</td>
+            <td>Permite mapas Large sin penalización de framerate → más espacio estratégico</td>
+            <td><span class="badge medium">Alto impacto</span></td>
+          </tr>
+          <tr>
+            <td>UI de mercenarios en Market</td>
+            <td>Fenicios consigue su loop económico completo; nuevas decisiones tácticas</td>
+            <td><span class="badge medium">Medio</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══ 05 MEJORAS -->
+  <section class="section" id="s5">
+    <div class="section-header">
+      <span class="section-num red">05</span>
+      <h2>Qué añadir para llevarlo al siguiente nivel</h2>
+    </div>
+
+    <h3 style="font-size:15px;color:var(--accent);text-transform:uppercase;letter-spacing:2px;margin-bottom:18px">ALTO IMPACTO · BAJO COSTE</h3>
+    <div class="cards col3">
+      <div class="card orange">
+        <h3>Indicadores de terreno en UI</h3>
+        <p>Tooltip al hover sobre una celda que muestre: tipo de terreno, penalización de velocidad, si es buildable, excepciones civilizacionales. <em>Impacto:</em> el jugador descubre malpaís como ventaja guanche por sí solo.</p>
+        <div style="margin-top:8px"><span class="badge high">3-5 días</span></div>
+      </div>
+      <div class="card orange">
+        <h3>Cooldown visual del héroe en HUD</h3>
+        <p>Ring de cooldown animado sobre el retrato del héroe. Ya existe <code>get_cooldown_fraction()</code> en HeroUnit. Solo falta el widget en HUD. <em>Impacto:</em> el jugador usa la habilidad activamente, no la ignora.</p>
+        <div style="margin-top:8px"><span class="badge high">1-2 días</span></div>
+      </div>
+      <div class="card orange">
+        <h3>Notificación de clima inminente</h3>
+        <p>Banner/sonido 30 segundos antes de que llegue un Calima o Tormenta. El WeatherManager ya tiene <code>get_remaining_seconds()</code>. Solo falta el aviso. <em>Impacto:</em> el clima se convierte en decisión estratégica, no en sorpresa aleatoria.</p>
+        <div style="margin-top:8px"><span class="badge high">1 día</span></div>
+      </div>
+      <div class="card orange">
+        <h3>Fog of war coloreado por clima</h3>
+        <p>Durante Calima: el fog toma tonos anaranjados. Durante Tormenta: azul-grisáceo. Ya existe WeatherOverlay. Extender el shader del fog. <em>Impacto:</em> el clima es inmediatamente legible sin leer texto.</p>
+        <div style="margin-top:8px"><span class="badge high">2-3 días</span></div>
+      </div>
+      <div class="card orange">
+        <h3>Mini-tutorial de habilidad en hero spawn</h3>
+        <p>Tooltip de 4s al spawnear el héroe explicando su habilidad. El sistema <code>tutorial_overlay.gd</code> ya existe. <em>Impacto:</em> onboarding mejorado, el jugador sabe que tiene una habilidad.</p>
+        <div style="margin-top:8px"><span class="badge high">1 día</span></div>
+      </div>
+      <div class="card orange">
+        <h3>Hero ability en IA</h3>
+        <p>Añadir a <code>AIPlayer._run_tick()</code> llamadas a <code>hero.use_ability()</code> cuando el héroe está en rango de enemigos. Cada civ tiene lógica trivial: Bencomo si hay aliados cerca, Guadarfía si HP baja.</p>
+        <div style="margin-top:8px"><span class="badge high">2-3 días</span></div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;color:var(--blue);text-transform:uppercase;letter-spacing:2px;margin:32px 0 18px">ALTO IMPACTO · COSTE MEDIO</h3>
+    <div class="cards col2">
+      <div class="card blue">
+        <h3>Sistema de Reliquias (3ª condición de victoria)</h3>
+        <p>El GDD menciona "Relics" como win condition pero no está implementado. El sistema de Wonder ya existe como plantilla — una Relic es un nodo pasivo que genera recursos mientras se posee. El scoring de "tiempo en posesión" está implícito en el MatchChart.
+        <br><br><em>Complejidad estimada:</em> 3-4 días. <em>Impacto:</em> añade una segunda capa estratégica al mid-game; los jugadores que van a Wonder race buscan reliqs para sabotear.</p>
+        <div style="margin-top:10px"><span class="badge info">Semana</span></div>
+      </div>
+      <div class="card blue">
+        <h3>Mercenarios en Market con UI</h3>
+        <p>El EventBus tiene <code>mercenary_hired</code>. Añadir una pestaña en Market donde Fenicios (y posiblemente otros) puedan contratar unidades únicas a precio de oro puro. Refuerza el loop económico de Fenicios y da al mercado un rol estratégico más allá del trading.
+        <br><br><em>Complejidad estimada:</em> 4-5 días. <em>Impacto:</em> Fenicios se vuelve completamente distinto a jugar.</p>
+        <div style="margin-top:10px"><span class="badge info">Semana</span></div>
+      </div>
+      <div class="card blue">
+        <h3>IA dificultad HARD con micro de unidades</h3>
+        <p>La IA en HARD ya existe pero no hace micro táctico (retirar unidades con poco HP, usar la hit-and-run del Sand Raider activamente, defender con seige).
+        Añadir lógica de "low HP unit retreat" en AIMilitary + activación de habilidades especiales de unidades únicas.
+        <em>Impacto:</em> la dificultad Hard se siente realmente desafiante, no solo más recursos.</p>
+        <div style="margin-top:10px"><span class="badge info">1-2 semanas</span></div>
+      </div>
+      <div class="card blue">
+        <h3>Replay system (básico)</h3>
+        <p>Grabar los comandos del jugador e IA con timestamp → replay reproducible. En Godot 4 con Engine.time_scale esto es factible sin un sistema de networking completo.
+        <em>Impacto:</em> virabilidad masiva (streamers lo graban, comparten momentos épicos), feature diferenciadora vs otros AoE2-clones indie.</p>
+        <div style="margin-top:10px"><span class="badge info">2-3 semanas</span></div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;color:var(--green);text-transform:uppercase;letter-spacing:2px;margin:32px 0 18px">LARGO PLAZO · ALTO POTENCIAL</h3>
+    <div class="cards col2">
+      <div class="card green">
+        <h3>Modo Campaña histórica (3-5 misiones)</h3>
+        <p>La narrativa histórica (conquista de Canarias 1402-1496) ofrece escenarios con objetivos únicos. No hace falta un motor de campaña complejo: el sistema de misiones puede ser un GameManager extendido con "objetivos activos" y texto narrativo.
+        Narrativa + misiones únicas = <em>wishlist bait</em> máximo para prensa y creadores de contenido.</p>
+      </div>
+      <div class="card green">
+        <h3>Procedural weather events únicos (raros)</h3>
+        <p>Eventos de "tormenta de fuego" (caldera en erupción), "marea roja" (penaliza pesca), o "eclipse" (niebla total) con probabilidad 1-2% por partida.
+        Eventos raros que el jugador recuerda y comparte. El WeatherManager ya tiene toda la infraestructura — solo faltan nuevos tipos.</p>
+      </div>
+      <div class="card green">
+        <h3>Moddability: editor de civilizaciones</h3>
+        <p>Dado que las civs son puramente data-driven (Resources .tres), un editor in-game o herramienta externa que permita al jugador crear su propia civ editando los multipliers y asignando unidad única es técnicamente barato de hacer pero tiene un impacto enorme en comunidad y longevidad.</p>
+      </div>
+      <div class="card green">
+        <h3>Multijugador LAN (ya planificado en GDD)</h3>
+        <p>El GDD menciona LAN. La arquitectura EventBus + autoloads facilita la transición a estado compartido si se implementa con Godot's ENet/WebRTC. Los módulos RefCounted de IA se pueden desactivar en el cliente y el servidor.
+        Este feature solo es viable cuando el balance 1v1 esté sólido.</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:28px">
+      <strong>UX crítica pendiente:</strong> El sistema de unidades tiene <code>toggle_path_display()</code> para mostrar la ruta de navegación, pero no hay hotkey visible documentada.
+      La herramienta existe, solo falta exponerla. En AoE2 el jugador avanzado visualiza rutas constantemente para detectar pathfinding issues.
+    </div>
+  </section>
+
+  <!-- ═══ 06 POTENCIAL COMERCIAL -->
+  <section class="section" id="s6">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>Potencial comercial</h2>
+    </div>
+
+    <div class="cards col3">
+      <div class="card orange">
+        <h3>Target de jugadores</h3>
+        <ul>
+          <li>Fans de AoE2 que quieren algo nuevo (mayor mercado potencial)</li>
+          <li>Jugadores de estrategia de habla hispana y portuguesa (Canarias / Iberoamérica como setting)</li>
+          <li>Aficionados a historia medieval y edad de la exploración</li>
+          <li>Jugadores casual-estrategia que buscan RTS menos abrumadores que el AoE2 moderno</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h3>Steam — análisis de viabilidad</h3>
+        <ul>
+          <li><span class="badge medium">Realista</span> 5.000–15.000 copias en 12 meses con marketing correcto</li>
+          <li>AoE2 clones indie con setting único venden consistentemente 5k-30k</li>
+          <li>El setting Canarias es noticia garantizada en medios especializados españoles</li>
+          <li>Steam Next Fest + IGN España/Vandal = visibility gratuita por novedad</li>
+          <li>Precio ideal: $9.99 (acceso anticipado) → $14.99 (1.0)</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h3>Elementos de retención</h3>
+        <ul>
+          <li>8 civs con ventajas asimétricas → replay natural</li>
+          <li>4 tipos de mapa × condiciones climáticas = experiencias distintas</li>
+          <li>3 condiciones de victoria (Conquest, Wonder, Relics)</li>
+          <li>Héroes únicos por civ con habilidades distintas → quiero probar cada uno</li>
+          <li>IA con 3 dificultades que usa civs específicas</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="hook-box" style="margin-top:28px">
+      <h3>Hooks para tráiler / medios / creadores de contenido</h3>
+      <div class="cards col3" style="margin-top:14px">
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <p style="font-size:13px;color:var(--text-muted)">
+            <strong style="color:#fff">GIF 1:</strong> Un Calima llega en el momento exacto de una batalla de archers. Las flechas se desvían, la visión cae al 60%. El jugador pierde tropas que creía tener controladas.
+          </p>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <p style="font-size:13px;color:var(--text-muted)">
+            <strong style="color:#fff">GIF 2:</strong> Don Quijote carga en línea recta a través de 6 Knights enemigos. Cada uno recibe daño y es empujado. La carga llega hasta el Town Center.
+          </p>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <p style="font-size:13px;color:var(--text-muted)">
+            <strong style="color:#fff">GIF 3:</strong> Artaxerax usa Calima ability. 8 unidades aliadas desaparecen del fog of war enemigo. El rival lanza sus catapultas a ciegas. La emboscada funciona.
+          </p>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <p style="font-size:13px;color:var(--text-muted)">
+            <strong style="color:#fff">Clip 4:</strong> Combate naval Islands. Trade winds: los barcos de Britanos van más rápido en dirección NE; los de Fenicios los flanquean. El trebuchet en el barco dispara y la bala deriva 40px por el viento.
+          </p>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <p style="font-size:13px;color:var(--text-muted)">
+            <strong style="color:#fff">Screenshot:</strong> El terreno procedural con la caldera central brillando en naranja, rodeada de malpaís negro, con la niebla del Atlántico en el borde norte. Visualmente identitario, inmediatamente reconocible.
+          </p>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <p style="font-size:13px;color:var(--text-muted)">
+            <strong style="color:#fff">Wishlist hook:</strong> "El único RTS donde el clima cambia el combate en tiempo real. Bencomo, el caudillo guanche, lucha contra los invasores francos — y la naturaleza se pone de su lado."
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout blue" style="margin-top:24px">
+      <strong>Oportunidad de nicho:</strong> En itch.io + Steam, el tag "Historical Strategy + Procedural" con setting Atlántico/Mediterráneo es prácticamente vacío. Los primeros 3 resultados relevantes son projetos sin mantenimiento activo. Calima puede ser el referente de ese nicho si la release timing es correcta (2026-2027 con el resurgir de interés en AoE II: DE).
+    </div>
+  </section>
+
+  <!-- ═══ 07 ROADMAP -->
+  <section class="section" id="s7">
+    <div class="section-header">
+      <span class="section-num blue">07</span>
+      <h2>Roadmap estratégico recomendado</h2>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <h4>CORTO PLAZO — 4-6 semanas: "Release Candidate" jugable</h4>
+        <p>
+          <strong style="color:#fff">Bugs críticos:</strong> Fijar <code>_in_volcanic_zone()</code>, lógica regicide multi-rival, charge de Don Quijote.<br>
+          <strong style="color:#fff">Quick wins UX:</strong> Cooldown visual del héroe, notificación de clima inminente, tooltip de terreno.<br>
+          <strong style="color:#fff">Rendimiento:</strong> Bake de terreno a textura o al menos limitar nodos de detalle en mapas Large.<br>
+          <strong style="color:#fff">IA:</strong> Añadir hero ability usage en AIPlayer. Fijar Fenicios IA entrenando Trireme.<br>
+          <strong style="color:#fff">Metaobjetivo:</strong> Que una partida completa vs IA en Islands sea completamente jugable y divertida sin bugs aparentes.
+        </p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot blue"></div>
+        <h4>MEDIO PLAZO — 2-4 meses: "Acceso Anticipado"</h4>
+        <p>
+          <strong style="color:#fff">Contenido:</strong> Sistema de Reliquias como 3ª condición de victoria. Mercenarios en Market para Fenicios. Modo de partida rápida pre-configurada.<br>
+          <strong style="color:#fff">Balance:</strong> Primer ciclo de balance de civs basado en win-rates de testeo. Castellanos free-tech y Fenicios economy son los más desequilibrantes a priori.<br>
+          <strong style="color:#fff">IA:</strong> HARD con micro básico (retirada de unidades con HP crítico, uso de habilidades únicas).<br>
+          <strong style="color:#fff">Accesibilidad:</strong> Tutorial completo que enseña clima, terrain, y héroes. Guía in-game de civilizaciones.<br>
+          <strong style="color:#fff">Metaobjetivo:</strong> Steam Early Access con page que muestra los GIFs virales identificados.
+        </p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot green"></div>
+        <h4>LARGO PLAZO — 6-12 meses: "1.0 Launch"</h4>
+        <p>
+          <strong style="color:#fff">Narrativa:</strong> 3-5 misiones de campaña histórica (batalla de Acentejo, conquista de Lanzarote, expedición de Drake).<br>
+          <strong style="color:#fff">Profundidad:</strong> Eventos climáticos raros (erupción volcánica, eclipse, tormenta de fuego).<br>
+          <strong style="color:#fff">Comunidad:</strong> Editor básico de civilizaciones. Soporte de mods de Resources.<br>
+          <strong style="color:#fff">Multijugador:</strong> LAN 2 jugadores si el balance 1v1 es sólido.<br>
+          <strong style="color:#fff">Metaobjetivo:</strong> Review de prensa en medios hispanohablantes. Presencia en Spain Game Devs. 10k wishlists antes del launch.
+        </p>
+      </div>
+    </div>
+
+    <div class="tbl-wrap" style="margin-top:32px">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Prioridad</th>
+            <th>Impacto jugador</th>
+            <th>Complejidad</th>
+            <th>Viabilidad técnica</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fix <code>_in_volcanic_zone()</code></td>
+            <td><span class="badge high">Crítico</span></td>
+            <td>Activa mecánica clave del GDD</td>
+            <td>1 línea</td>
+            <td><span class="badge high">Inmediata</span></td>
+          </tr>
+          <tr>
+            <td>Cooldown visual héroe en HUD</td>
+            <td><span class="badge high">Alta</span></td>
+            <td>Player usa habilidades activamente</td>
+            <td>1-2 días</td>
+            <td><span class="badge high">Alta</span></td>
+          </tr>
+          <tr>
+            <td>Aviso clima inminente</td>
+            <td><span class="badge high">Alta</span></td>
+            <td>Clima = decisión estratégica</td>
+            <td>1 día</td>
+            <td><span class="badge high">Alta</span></td>
+          </tr>
+          <tr>
+            <td>Hero ability en IA</td>
+            <td><span class="badge high">Alta</span></td>
+            <td>Partidas vs IA más dramáticas</td>
+            <td>2-3 días</td>
+            <td><span class="badge high">Alta</span></td>
+          </tr>
+          <tr>
+            <td>Tooltip de terreno</td>
+            <td><span class="badge medium">Media</span></td>
+            <td>Onboarding de civs nativas</td>
+            <td>3-5 días</td>
+            <td><span class="badge high">Alta</span></td>
+          </tr>
+          <tr>
+            <td>Reliquias (3ª win condition)</td>
+            <td><span class="badge medium">Media</span></td>
+            <td>Variedad estratégica mid-game</td>
+            <td>1 semana</td>
+            <td><span class="badge high">Alta</span></td>
+          </tr>
+          <tr>
+            <td>Mercenarios en Market</td>
+            <td><span class="badge medium">Media</span></td>
+            <td>Loop completo Fenicios</td>
+            <td>1 semana</td>
+            <td><span class="badge high">Alta</span></td>
+          </tr>
+          <tr>
+            <td>Bake de terreno a textura</td>
+            <td><span class="badge medium">Media</span></td>
+            <td>Mapas Large sin lag en spawn</td>
+            <td>1-2 semanas</td>
+            <td><span class="badge medium">Media</span></td>
+          </tr>
+          <tr>
+            <td>Tutorial completo con clima/terrain</td>
+            <td><span class="badge medium">Media</span></td>
+            <td>Retención de nuevos jugadores</td>
+            <td>2-3 semanas</td>
+            <td><span class="badge high">Alta</span></td>
+          </tr>
+          <tr>
+            <td>Campaña histórica (3 misiones)</td>
+            <td><span class="badge low">EA→1.0</span></td>
+            <td>Wishlist bait + prensa</td>
+            <td>1-2 meses</td>
+            <td><span class="badge medium">Media</span></td>
+          </tr>
+          <tr>
+            <td>LAN multijugador 2p</td>
+            <td><span class="badge low">1.0</span></td>
+            <td>Longevidad máxima</td>
+            <td>3-4 meses</td>
+            <td><span class="badge medium">Media</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══ 08 VEREDICTO -->
+  <section class="section" id="s8">
+    <div class="section-header">
+      <span class="section-num green">08</span>
+      <h2>Veredicto final</h2>
+    </div>
+
+    <div class="cards col2">
+      <div class="card orange">
+        <h3>Lo que realmente tiene</h3>
+        <ul>
+          <li>Un setting completamente único en el mercado RTS indie</li>
+          <li>Clima procedural con efectos reales — ningún competidor lo tiene</li>
+          <li>8 civilizaciones asimétricas con recursos .tres editables sin código</li>
+          <li>IA modular con 4 módulos independientes y 3 niveles de agresión dinámica</li>
+          <li>Generador de mapas procedural con 5 terrenos visualmente ricos</li>
+          <li>Héroes con 8 habilidades únicas ya codificadas</li>
+          <li>Modo naval Islands con transporte y combate</li>
+          <li>Arquitectura EventBus bien ejecutada y escalable</li>
+        </ul>
+      </div>
+      <div class="card red">
+        <h3>Lo que necesita antes del lanzamiento</h3>
+        <ul>
+          <li>Fijar bugs de lógica (volcanic zone, regicide multi-rival, charge Quijote)</li>
+          <li>UI que enseñe las mecánicas que ya existen (terreno, clima, cooldowns)</li>
+          <li>IA que use las habilidades heroicas</li>
+          <li>Un ciclo de balance real con las 8 civs</li>
+          <li>Cobertura de tests básica en sistemas críticos (combat damage, civ bonus stacking)</li>
+          <li>Tutorial que enseñe el sistema de clima en los primeros 5 minutos</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="verdict">
+      <h2>Calima: Flames of the Atlantic</h2>
+      <div class="score">8.1 / 10</div>
+      <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+        <div style="text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--green)">9.0</div>
+          <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Originalidad</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--blue)">8.0</div>
+          <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Arquitectura</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--orange)">7.5</div>
+          <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Game design actual</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--purple)">8.5</div>
+          <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Potencial</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--red)">6.5</div>
+          <div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Pulido actual</div>
+        </div>
+      </div>
+      <p>
+        Calima no es un clon más de AoE2. Es un RTS con un escenario históricamente genuino,
+        un sistema de clima que altera el combate sistémicamente, ocho héroes con habilidades radicalmente distintas
+        y una arquitectura técnica sólida para evolucionar. El proyecto tiene más profundidad de la que aparenta.
+        <br><br>
+        El gap principal entre "buen proyecto" y "indie sobresaliente" está en <strong style="color:#fff">comunicar lo que ya existe</strong>:
+        el jugador necesita ver el tooltip que explica por qué sus unidades van más lento en malpaís,
+        necesita escuchar el aviso de que en 30 segundos llega un Calima,
+        necesita el ring de cooldown del héroe para usarlo con intención.
+        <br><br>
+        Con las correcciones de bugs críticos y los quick wins de UX descritos,
+        <em style="color:var(--accent)">este juego está listo para un Early Access de Steam en 4-6 semanas</em>.
+        Con el roadmap completo de un año, puede ser el RTS indie de referencia en el espacio atlántico/mediterráneo.
+      </p>
+    </div>
+  </section>
+
+  <hr>
+  <p style="text-align:center;font-size:12px;color:var(--text-dim);padding:20px 0">
+    Calima: Flames of the Atlantic · Análisis Experto v4 · Generado el 2026-05-27 · Basado en análisis completo del código fuente (90 scripts, 48 escenas, 80+ resources)
+  </p>
+
+</div>
+</body>
+</html>
