@@ -36,52 +36,95 @@ docs/             ← Architecture and design documentation
 
 1. **EventBus pattern** — cross-system communication happens exclusively through signals on `EventBus` (autoload). Never call methods across system boundaries directly.
 2. **Data-driven resources** — all tuneable values live in `Resource` subclasses under `resources/`. Scripts read from resources; they do not hardcode stats.
-3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager`, `WeatherManager` — access these by name anywhere.
+3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager`, `WeatherManager`, `AgeManager`, `AudioManager`, `TerrainManager`, `PopulationManager`, `SaveManager`, `GameSettings` — access these by name anywhere.
 4. **Type hints everywhere** — every GDScript function must declare parameter types and return type.
+5. **Area2D for range detection** — attack ranges use Area2D nodes that monitor for enemies entering/leaving range, avoiding per-frame physics queries.
+6. **Outward spiral spawn positioning** — units spawn at free positions found via outward spiral physics query, preventing overlap.
 
 ## Key Files
 
 | File | Purpose |
 |---|---|
-| `project/scripts/core/game_manager.gd` | Global game state, pause, game-over |
+| **Core Systems** ||
+| `project/scripts/core/game_manager.gd` | Global game state, pause, game-over, victory conditions (Conquest/Regicide/Wonder) |
 | `project/scripts/core/event_bus.gd` | All cross-system signals |
-| `project/scripts/core/resource_manager.gd` | Per-player food/wood/gold/stone stockpiles |
+| `project/scripts/core/resource_manager.gd` | Per-player food/wood/gold/stone stockpiles, spatial resource cache |
 | `project/scripts/core/selection_manager.gd` | Unit selection, control groups |
-| `project/scripts/units/unit_base.gd` | Base class for all units |
-| `project/scripts/units/villager.gd` | Gathering and building logic |
-| `project/scripts/buildings/building_base.gd` | Base class for all buildings |
+| `project/scripts/core/age_manager.gd` | Per-player Age tracking, age advance timer, cost multipliers |
+| `project/scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, age-up costs, move speed, attack speed; archer range bonuses per age |
+| `project/scripts/core/tech_manager.gd` | Research queue, applies technology effects, 21 technologies total |
+| `project/scripts/core/weather_manager.gd` | Procedural weather state machine (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash); stat-modifier query API |
+| `project/scripts/core/population_manager.gd` | Per-player population current/cap tracking |
+| `project/scripts/core/save_manager.gd` | Complete game save/load system, JSON-based, 99 save slots |
+| `project/scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
+| `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries |
+| `project/scripts/core/audio_manager.gd` | Spatial audio playback, distance attenuation |
+| `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
+| **Unit Classes** ||
+| `project/scripts/units/unit_base.gd` | Base class for all units; Area2D range detection, attack-move, stuck detection, body animation |
+| `project/scripts/units/villager.gd` | Gathering and building logic, work/walk animation differentiation |
+| `project/scripts/units/hero_unit.gd` | Hero units with 8 unique abilities (extends Militia) |
+| `project/scripts/units/militia.gd` | Dark Age infantry |
+| `project/scripts/units/man_at_arms.gd` | Feudal Age infantry upgrade |
+| `project/scripts/units/long_swordsman.gd` | Castle Age infantry upgrade |
+| `project/scripts/units/pikeman.gd` | Castle Age anti-cavalry spearman |
+| `project/scripts/units/archer.gd` | Feudal Age ranged infantry, attack-ground, cover fire |
+| `project/scripts/units/scout.gd` | Dark Age exploration cavalry, auto-explore ability |
+| `project/scripts/units/heavy_scout.gd` | Feudal Age cavalry upgrade |
+| `project/scripts/units/knight.gd` | Castle Age heavy cavalry |
+| `project/scripts/units/battering_ram.gd` | Castle Age melee siege; ×3 vs buildings, 0.2× vs units |
+| `project/scripts/units/mangonel.gd` | Castle Age AoE siege; 72 px splash, minimum range |
+| `project/scripts/units/trebuchet.gd` | Imperial Age long-range siege; 48 px splash, deploy/undeploy mechanic |
+| `project/scripts/units/fishing_boat.gd` | Naval food gatherer |
+| `project/scripts/units/transport_ship.gd` | Naval troop transport, garrison 10 units |
+| `project/scripts/units/war_galley.gd` | Feudal Age combat ship |
+| **Unique Units (8 civs)** ||
+| `project/scripts/units/menceyes_guard.gd` | Guanches infantry: Rage Aura at HP < 50% |
+| `project/scripts/units/ravine_archer.gd` | Canarii archer: Ambush Shot (×2 first shot when stationary) |
+| `project/scripts/units/sand_raider.gd` | Mahos cavalry: Hit & Run (retreat after attack) |
+| `project/scripts/units/chevalier_normand.gd` | Franks cavalry: Lance Charge (×2.5 after 80 px movement) |
+| `project/scripts/units/longbowman.gd` | Britons archer: Armour Piercing (+4 vs cavalry) |
+| `project/scripts/units/conquistador.gd` | Castellanos infantry: Salvo Fire (3 rapid shots, 12 s CD) |
+| `project/scripts/units/tidecaller.gd` | Atlantes amphibious: Tidal Pulse (2 splash damage) |
+| `project/scripts/units/trireme.gd` | Fenicios ship: Ram (×2 vs ships, 40 px knockback) |
+| **Building Classes** ||
+| `project/scripts/buildings/building_base.gd` | Base class for all buildings; outward spiral spawn positioning, rally points |
+| `project/scripts/buildings/town_center.gd` | Main TC: trains villagers, hero respawn, drop-off |
+| `project/scripts/buildings/town_center_buildable.gd` | Castle Age player-built TC (275 wood) |
+| `project/scripts/buildings/barracks.gd` | Trains infantry (Militia/Archer/Man-at-Arms/Pikeman/Long Swordsman/unique units) |
+| `project/scripts/buildings/archery_range.gd` | Feudal Age: trains Archer |
+| `project/scripts/buildings/stable.gd` | Trains cavalry (Scout/Heavy Scout/Knight/unique cavalry) |
+| `project/scripts/buildings/siege_workshop.gd` | Castle Age: trains siege (BatteringRam/Mangonel/Trebuchet) |
+| `project/scripts/buildings/dock.gd` | Naval: trains ships (FishingBoat/TransportShip/WarGalley/Trireme) |
+| `project/scripts/buildings/blacksmith.gd` | Research weapon/armour upgrades (9 techs) |
+| `project/scripts/buildings/university.gd` | Castle Age: research advanced techs (Ballistics/Chemistry/Siege Engineering) |
+| `project/scripts/buildings/temple.gd` | Castle Age: research morale/HP buffs (Fervor/Sanctity/Atonement) |
+| `project/scripts/buildings/market.gd` | Resource trading with dynamic rates, mercenary hiring |
+| `project/scripts/buildings/wonder.gd` | Imperial Age: Wonder victory condition |
+| `project/scripts/buildings/watch_tower.gd` | Defensive tower with auto-attack |
+| `project/scripts/buildings/wall_segment.gd` | Defensive wall |
+| `project/scripts/buildings/gate.gd` | Wall gate (opens for allies) |
+| `project/scripts/buildings/house.gd` | +5 population cap |
+| `project/scripts/buildings/farm.gd` | Renewable food source |
+| `project/scripts/buildings/fish_trap.gd` | Naval renewable food source |
+| `project/scripts/buildings/lumber_camp.gd` | Wood drop-off |
+| `project/scripts/buildings/mining_camp.gd` | Gold/stone drop-off |
+| **AI Systems** ||
+| `project/scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic |
+| `project/scripts/ai/ai_economy.gd` | Villager spawning/assignment, resource targets per age, age-advance trigger |
+| `project/scripts/ai/ai_construction.gd` | Building placement, placement-failure cooldowns, population-house management |
+| `project/scripts/ai/ai_military.gd` | Military training, research priority, combat targeting, base defense, aggression escalation |
+| `project/scripts/ai/ai_naval.gd` | Naval training, galley patrol/retreat, transport assault, fish-trap construction |
+| **UI Systems** ||
+| `project/scripts/ui/hud_manager.gd` | CanvasLayer controller: drives all HUD child nodes |
+| `project/scripts/ui/resource_display.gd` | HBoxContainer showing one resource icon + amount |
+| `project/scripts/ui/unit_portrait.gd` | PanelContainer showing unit name + HP bar in selection grid |
+| `project/scripts/ui/weather_overlay.gd` | Screen-space visual effects (rain, dust, ash, fog) driven by WeatherManager |
+| **Resources** ||
 | `project/resources/units/unit_resource.gd` | Unit stat definition (Resource) |
 | `project/resources/buildings/building_resource.gd` | Building stat definition |
 | `project/resources/technologies/technology_resource.gd` | Tech effects |
 | `project/resources/civilizations/civilization_resource.gd` | Civ bonuses |
-| `project/scripts/ui/hud_manager.gd` | CanvasLayer controller: wires EventBus/GameManager signals, drives all HUD child nodes |
-| `project/scripts/ui/resource_display.gd` | `ResourceDisplay` — HBoxContainer showing one resource icon + amount |
-| `project/scripts/ui/unit_portrait.gd` | `UnitPortrait` — PanelContainer showing unit name abbreviation and HP bar in selection grid |
-| `project/scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, age-up costs, move speed, and attack speed; `sand_raider` included in cavalry HP and scout speed branches |
-| `project/scripts/core/tech_manager.gd` | Research queue, applies technology effects to units |
-| `project/scripts/buildings/blacksmith.gd` | `Blacksmith` — research-only building; hosts BLACKSMITH techs |
-| `project/scripts/buildings/university.gd` | `University` — research-only building; hosts UNIVERSITY techs |
-| `project/scripts/buildings/temple.gd` | `Temple` — research-only building; hosts MONASTERY techs |
-| `project/scripts/buildings/market.gd` | `Market` — resource trading: `sell_lot` / `buy_lot` (bulk) and `sell_resource` / `buy_resource` (single-unit); dynamic per-player per-resource rates that degrade on each trade and recover over time; `get_sell_rate` / `get_buy_rate` query API; emits `EventBus.market_rate_changed` |
-| `project/scripts/buildings/stable.gd` | `Stable` — trains `HeavyScout` (Feudal) and `Knight` (Castle); queue cap 5; also trains civ-gated unique cavalry (e.g. `SandRaider`) |
-| `project/scripts/units/sand_raider.gd` | `SandRaider` — Mahos unique cavalry (Feudal Age); hit-and-run mechanic: retreats 90 px after each attack then re-engages; attack speed scaled by `CivBonusManager.get_attack_speed_multiplier`; `get_selection_sound` returns `"select_cavalry"` |
-| `project/scripts/units/heavy_scout.gd` | `HeavyScout` — Feudal Age cavalry; trained at Stable |
-| `project/scripts/units/knight.gd` | `Knight` — Castle Age heavy cavalry; trained at Stable |
-| `project/scripts/units/man_at_arms.gd` | `ManAtArms` — Feudal Age infantry upgrade of Militia; trained at Barracks |
-| `project/scripts/units/long_swordsman.gd` | `LongSwordsman` — Castle Age infantry upgrade of Man-at-Arms; trained at Barracks |
-| `project/scripts/buildings/siege_workshop.gd` | `SiegeWorkshop` — trains `BatteringRam`/`Mangonel` (Castle), `Trebuchet` (Imperial); queue cap 5 |
-| `project/scripts/units/battering_ram.gd` | `BatteringRam` — melee siege unit; x3 damage vs buildings, 0.2x vs units; only auto-attacks buildings |
-| `project/scripts/units/mangonel.gd` | `Mangonel` — AoE ranged siege; 72 px splash via `PhysicsDirectSpaceState2D.intersect_shape`; minimum range mechanic |
-| `project/scripts/units/trebuchet.gd` | `Trebuchet` — long-range AoE siege; 48 px splash; must deploy/undeploy (3 s) before firing; auto-undeploys when ordered to move |
-| `project/scripts/buildings/town_center_buildable.gd` | `TownCenterBuildable` — player-built Town Center (Castle Age, 275 wood); trains villagers (50 food, queue 5); respawns hero; resource drop-off via `DropOff` child node; `is_respawning_hero()` lets HUD treat it identically to the main TC |
-| `project/scripts/core/weather_manager.gd` | `WeatherManager` autoload — procedural weather state machine (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash); provides stat-modifier query API consumed by units, buildings, fog-of-war, and projectiles |
-| `project/scripts/ui/weather_overlay.gd` | `WeatherOverlay` — screen-space `Node2D` child of GameWorld that renders rain, dust, ash, wind and fog vignette visual effects; driven by WeatherManager |
-| `project/scripts/core/match_config.gd` | `MatchConfig` — lobby settings (map size, resources, civs, weather frequency) written before loading game_world |
-| `project/scripts/ai/ai_player.gd` | `AIPlayer` — coordinator (`extends Node`); holds `BUILDING_SCENES`/`VILLAGER_SCENE` consts, EventBus wiring, TC rebuild and elimination logic; delegates all per-domain work to the four modules below |
-| `project/scripts/ai/ai_construction.gd` | `AIConstruction extends RefCounted` — building placement, placement-failure cooldowns, population-house management; loads costs via `BuildingResource.get_cost_dict()` |
-| `project/scripts/ai/ai_economy.gd` | `AIEconomy extends RefCounted` — villager spawning and assignment, resource-type target fractions per age, age-advance trigger, nearest-resource / nearest-drop-off helpers |
-| `project/scripts/ai/ai_military.gd` | `AIMilitary extends RefCounted` — `AggressionLevel` enum (PASSIVE/ALERTED/AGGRESSIVE), military training (Barracks/Stable/SiegeWorkshop), research priority queue, combat targeting, base defense |
-| `project/scripts/ai/ai_naval.gd` | `AINaval extends RefCounted` — naval unit training, galley patrol/retreat, transport boarding and `order_move_then_unload` assault, fish-trap construction, idle land-unit attack on enemy island |
 
 ## Coding Conventions
 
@@ -109,9 +152,126 @@ docs/             ← Architecture and design documentation
 Uses [GUT](https://github.com/bitwes/Gut) addon. Tests live in `tests/unit/` and `tests/integration/`.
 Run from the GUT panel inside Godot editor, or headlessly via CI.
 
-## Current Milestone
+## Current Status
 
-**M3** — Full tech tree, 8 civilizations with unique content, naval gameplay on Islands maps.
+**Production-ready** — All core features implemented. Recent work focused on polish and bug fixes.
+
+### Implemented Features
+
+**Core Gameplay:**
+- 4 Ages (Dark → Feudal → Castle → Imperial) with age-advance costs and timers
+- 4 resources (Food, Wood, Gold, Stone) with villager gathering, drop-off buildings, and farms
+- Population cap system (5 per House, starts at 15)
+- 3 victory conditions: Conquest (eliminate all enemies), Regicide (kill enemy hero), Wonder (build + hold for timer)
+- Fog of War with 3 states: unexplored / explored / visible
+- Save/Load system (99 JSON slots with metadata UI)
+- Procedural map generation with 5 map types (Plains, Standard, Volcanic Coast, Desert Coast, Islands)
+- 4 resource modes (Scarce, Normal, Abundant, Full Combat)
+
+**Units (28 total):**
+- Villagers (gather, build, repair)
+- Infantry: Militia → Man-at-Arms → Long Swordsman, Pikeman, Archer
+- Cavalry: Scout → Heavy Scout → Knight
+- Siege: Battering Ram, Mangonel, Trebuchet (deploy mechanic)
+- Naval: Fishing Boat, Transport Ship (garrison 10), War Galley
+- Animals: Sheep (convertible), generic Animal
+- 8 Hero units (one per civ) with unique abilities
+- 8 Unique units (one per civ) with special mechanics
+
+**Buildings (22 total):**
+- Economy: Town Center, House, Lumber Camp, Mining Camp, Farm, Fish Trap
+- Military: Barracks, Archery Range, Stable, Siege Workshop, Dock
+- Research: Blacksmith, University, Temple, Market
+- Defense: Wall Segment, Gate, Watch Tower
+- Special: Wonder (victory condition)
+
+**Technologies (21 total):**
+- Blacksmith (9): Loom, Forging, Iron Casting, Blast Furnace, Scale/Chain/Plate Barding, Padded Archer Armour, Fletching, Bodkin Arrow, Shipwright
+- University (3): Ballistics, Chemistry, Siege Engineering
+- Temple (3): Fervor, Sanctity, Atonement
+- Unit Upgrades (4): Man-at-Arms, Long Swordsman, Heavy Scout, Knight
+- Instant civ bonus: Castellanos free Blacksmith tech per age
+
+**Civilizations (8 total):**
+- Guanches: Stone building HP bonus, infantry-focused, malpaís traversal
+- Canarii: Food gather bonus, cheap archers, no heavy cavalry
+- Mahos: Cheap buildings, fast cavalry, dune traversal
+- Franks: Cheaper age advance, cavalry HP bonus, fast farms
+- Britons: Archer range +1/age, warship attack speed bonus
+- Castellanos: Free Blacksmith tech/age, balanced roster
+- Atlantes: Ship attack speed bonus, amphibious unique unit
+- Fenicios: Ship cost reduction, ramming naval unique unit
+
+**Weather System:**
+- 5 procedural weather types (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash)
+- Stat modifiers: vision, movement speed, gather rate, projectile drift, building damage
+- Weather-based cloaking (Sea Fog coastal stealth)
+- Visual effects overlay (rain, dust, ash, fog vignette)
+- Lobby-configurable frequency (Off/Normal/Frequent/Extreme)
+
+**Combat:**
+- Melee and ranged damage calculation with armour types (melee/pierce)
+- Projectile system with flight time and drift (weather-affected)
+- Area-of-effect splash damage (Mangonel 72 px, Trebuchet 48 px)
+- Attack-ground command for ranged/siege units
+- Cover Fire button (move into range then attack)
+- Minimum range mechanic (siege)
+- Auto-attack range detection via Area2D nodes (no per-frame queries)
+
+**AI:**
+- Economic AI: villager spawning/assignment, resource balancing, age advancement
+- Construction AI: building placement with cooldowns, population management
+- Military AI: training queues, research priorities, aggression escalation
+- Naval AI: ship training, galley patrols, transport assaults, fish-trap construction
+- Defensive AI: base defense, TC rebuild, idle unit redeployment
+
+**UI/UX:**
+- HUD: resource display, population counter, age indicator, unit selection grid (40 max)
+- Minimap with right-click move orders, resource/unit/building icons
+- Weather banner and countdown pill
+- In-game pause menu (Resume, Settings, Surrender, Exit)
+- Game-over screen with victory/defeat message
+- Match lobby with civ selection, map type, resource mode, victory mode, weather settings
+- Tooltips for all buttons (buildings, units, technologies)
+- Camera follow selected units
+- Control groups (Ctrl+1..9)
+
+**Polish:**
+- Procedural body animation for all units (walk, attack, work)
+- Flying arrow projectiles (visual only)
+- Polygon2D silhouettes for all units/buildings (replaces ColorRect placeholders)
+- Tall stone tower visual for Watch Tower
+- Player color stripes on all units/buildings
+- Selection indicators (green circle for player, yellow for allies)
+- Hero ring (gold circle) visual
+- Rally point markers for production buildings
+- Health bars for units/buildings (hidden when full HP)
+- Sound effects: select, attack, build, gather, hit (with spatial attenuation)
+
+### Recent Bug Fixes (Production-Ready Milestone)
+
+1. Cover Fire: register as pending action, move into range before firing
+2. Spawn positioning: outward spiral physics query prevents unit overlap
+3. Minimap: fixed revealing entire resource clusters at once
+4. Weather HUD: fixed banner/pill centering at non-1920 resolutions
+5. Villager: fixed `_animate_body` signature mismatch
+6. Town Center: fixed initial graphic, arrow projectile rendering
+7. WarGalley: fixed HP check using wrong property names
+8. Conquest victory: fixed missing DEAD/DESTROYED node checks
+9. Conquest defeat: fixed never triggering for human player
+10. Regicide: fixed per-mode victory condition logic
+11. Market: fixed page reset on cooldown refresh
+12. Volcanic Ash: fixed building damage application
+13. Nav mesh: skip obstacles for terrain player civ can traverse
+14. Release script: resolve game repo path correctly
+
+### Known Limitations (Planned for Future Milestones)
+
+- No multiplayer (LAN planned for M7)
+- Custom terrain tiles in progress (malpaís, dune, risco, laurisilva)
+- Tutorial mode exists but incomplete
+- Some unique unit abilities partially implemented
+- Mercenary system exists but UI incomplete
 
 ## Sub-agents
 

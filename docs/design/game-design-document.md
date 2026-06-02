@@ -156,11 +156,112 @@ Produced at the **Siege Workshop** (Castle Age, 200 Wood).
 
 ---
 
-## Win Conditions
+## Technology Tree
 
-- **Conquest**: destroy all enemy Town Centers and military production buildings
-- **Wonder**: build a Wonder and defend it for 200 in-game years
-- **Relics**: collect all map relics and hold them for 200 in-game years
+21 technologies across 4 research buildings. Technologies provide permanent stat bonuses to units/buildings.
+
+### Blacksmith (9 technologies)
+
+| Tech | Age | Cost | Time | Effect |
+|---|---|---|---|---|
+| **Loom** | Dark | 50f | 25s | Villager HP ×1.15 |
+| **Forging** | Feudal | 75f | 40s | Unit attack ×1.15 |
+| **Scale Barding** | Feudal | 100f+50g | 40s | Unit melee armour +1 |
+| **Padded Archer Armour** | Feudal | 100f | 35s | Archer pierce armour +1 |
+| **Fletching** | Feudal | 100g | 35s | Archer attack ×1.20 |
+| **Shipwright** | Feudal | 200w+60g | 40s | Ship HP ×1.15, cost −15% |
+| **Iron Casting** | Castle | 150g | 55s | Unit attack ×1.20 (requires Forging) |
+| **Chain Barding** | Castle | 200f+100g | 45s | Unit melee armour +1 (requires Scale Barding) |
+| **Bodkin Arrow** | Castle | 100f+150g | 35s | Archer attack ×1.20, range ×1.10 (requires Fletching) |
+| **Blast Furnace** | Imperial | 275f+225g | 50s | Unit attack ×1.15 |
+| **Plate Barding** | Imperial | 300f+200g | 60s | Unit melee armour +1 (requires Chain Barding) |
+
+### University (3 technologies)
+
+Castle Age building (200 wood). Researches advanced military upgrades.
+
+| Tech | Age | Cost | Time | Effect |
+|---|---|---|---|---|
+| **Siege Engineering** | Castle | 200g | 60s | Damage vs buildings ×1.20 |
+| **Ballistics** | Castle | 175g | 50s | Archer attack speed ×1.20 (requires Fletching) |
+| **Chemistry** | Imperial | 300g | 70s | Archer attack ×1.15 (requires Ballistics) |
+
+### Temple (3 technologies)
+
+Castle Age building (175 wood). Researches morale and HP buffs.
+
+| Tech | Age | Cost | Time | Effect |
+|---|---|---|---|---|
+| **Fervor** | Castle | 150g | 50s | Unit move speed ×1.10 |
+| **Sanctity** | Castle | 100f | 40s | Swordsman HP ×1.15 |
+| **Atonement** | Imperial | 150f+100g | 55s | Cavalry HP ×1.20 (requires Sanctity) |
+
+### Unit Upgrade Technologies (4)
+
+Researched at the building that trains the unit. Transforms all existing units of that type immediately (HP scaled proportionally), and the building trains the new unit going forward.
+
+| Tech | Building | Age | Cost | Time | Transforms |
+|---|---|---|---|---|---|
+| **Man-at-Arms** | Barracks | Feudal | 100f+40g | 45s | Militia → Man-at-Arms |
+| **Long Swordsman** | Barracks | Castle | 200f+60g | 45s | Man-at-Arms → Long Swordsman |
+| **Heavy Scout** | Stable | Feudal | 150f+75g | 45s | Scout → Heavy Scout |
+| **Knight** | Stable | Castle | 200f+100g | 45s | Heavy Scout → Knight |
+
+### Civilization Instant Tech Grants
+
+**Castellanos**: Receive one free Blacksmith technology each time they advance an Age. The game automatically grants the oldest unresearched Blacksmith tech available at the new Age (respecting prerequisites). Example: advancing to Feudal grants Loom or Forging for free.
+
+---
+
+## Weather System
+
+Procedural weather events affect gameplay with stat modifiers and visual effects. Enabled/disabled and frequency configurable in lobby.
+
+### Weather Types
+
+| Weather | Map Restriction | Duration (peak) | Effects |
+|---|---|---|---|
+| **Calima** (Saharan dust) | All maps | 70-130s | Vision −40%, gather −20% (wood/food), move speed −15% |
+| **Atlantic Storm** | All maps | 40-90s | Naval speed −30%, fishing −50%, projectile drift (30 px cross-wind) |
+| **Sea Fog** | Coastal maps only | 60-120s | Coastal vision −60%, unit cloaking when in coastal zone (intensity ≥0.5) |
+| **Trade Winds** | All maps | 100-160s | Naval speed ±20% (alignment with wind), projectile drift (40 px with wind) |
+| **Volcanic Ash** | All maps | 40-80s | Vision −50%, gather −30%, building HP drain (2/s), covers entire map |
+
+### Weather Phases
+
+Each weather event has 3 phases:
+1. **Ramp-in** (10 s): intensity 0.0 → 1.0
+2. **Peak** (duration above): intensity = 1.0
+3. **Ramp-out** (10 s): intensity 1.0 → 0.0
+4. **Clear** (60-120 s): no weather, intensity = 0.0
+
+### Weather Frequency Settings
+
+- **Off**: No weather events
+- **Normal**: Clear duration 60-120 s (baseline)
+- **Frequent**: Clear duration ×0.6 (36-72 s)
+- **Extreme**: Clear duration ×0.3 (18-36 s)
+
+### Visual Effects
+
+`WeatherOverlay` renders screen-space effects:
+- **Rain** (Atlantic Storm): falling particles
+- **Dust** (Calima): horizontal particles
+- **Ash** (Volcanic Ash): falling grey particles
+- **Wind** (Trade Winds): horizontal particles
+- **Fog vignette** (Sea Fog): screen-edge darkening
+
+---
+
+## Victory Conditions
+
+Three victory modes are implemented, selectable in the lobby:
+
+- **Conquest**: Destroy all enemy Town Centers and military production buildings. Last player standing wins.
+- **Regicide**: Each player starts with a Hero unit. Kill the enemy Hero to eliminate that player. Heroes cannot be retrained if lost.
+- **Wonder**: Build a Wonder (Imperial Age, costs 2500 wood + 2500 food + 2500 stone + 5000 gold) and defend it for 200 in-game years. First player to hold a Wonder for the full duration wins.
+
+**Elimination logic**: A player is eliminated when they have no Town Center and no remaining resources to rebuild one. On elimination, all their units/buildings are destroyed.
 
 ---
 
@@ -171,10 +272,15 @@ Players configure a skirmish before starting:
 | Option | Values |
 |---|---|
 | Map Size | Small / Medium / Large |
-| Map Type | Standard / Volcanic Coast / Desert Coast / Islands |
-| Starting Resources | Scarce / Normal / Abundant / Full Combat (all resources 9999) |
-| Civilization | Choose from 8 civs |
+| Map Type | Plains / Standard / Volcanic Coast / Desert Coast / Islands |
+| Starting Resources | Scarce / Normal / Abundant / Full Combat (all 9999) / Tutorial (320 wood only) |
+| Player Civilization | Choose from 8 civs (Guanches, Canarii, Mahos, Franks, Britons, Castellanos, Atlantes, Fenicios) |
+| Rival Count | 1-3 AI opponents |
+| Rival Civilizations | Choose civ for each AI |
 | Starting Age | Dark / Feudal / Castle / Imperial |
+| Victory Condition | Conquest / Regicide / Wonder |
+| Weather Enabled | On / Off |
+| Weather Frequency | Off / Normal / Frequent / Extreme |
 
 ---
 
@@ -182,11 +288,43 @@ Players configure a skirmish before starting:
 
 | Milestone | Description | Status |
 |---|---|---|
-| M1 | Playable map with villagers gathering resources | Done |
-| M2 | Town Center, Barracks, walls, basic military | Done |
-| M3 | Full tech tree, naval gameplay, Islands map, 8 civilizations; Blacksmith / University / Temple / Market / Stable / Siege Workshop / TownCenterBuildable buildings; HeavyScout and Knight cavalry units; BatteringRam / Mangonel / Trebuchet siege units; 17 technologies; HUD action grid 5×2 with pagination | In progress |
-| M4 | AI opponent with naval assault on Islands | Done |
-| M5 | All 8 civilizations with unique content and hero units | Planned |
-| M6 | Custom terrain tiles (malpaís, dune, risco, laurisilva) | Planned |
-| M7 | All map types with generators | Planned |
-| M8 | Multiplayer (LAN) | Planned |
+| M1 | Playable map with villagers gathering resources | ✅ Done |
+| M2 | Town Center, Barracks, walls, basic military, fog of war | ✅ Done |
+| M3 | Age progression (4 ages), tech tree (8 techs), new units (Archer, Pikeman) | ✅ Done |
+| M4 | Naval gameplay (Dock, ships, Islands map, AI naval assault) | ✅ Done |
+| M5 | **Production-ready**: 8 civs with unique units/heroes, 21 technologies, weather system, save/load, 3 victory conditions, polish & bug fixes | ✅ Done |
+| M6 | Custom terrain tiles (malpaís, dune, risco, laurisilva) with civ traversal bonuses | 🚧 In progress |
+| M7 | Multiplayer (LAN) | 📋 Planned |
+| M8 | Campaign mode with story missions | 📋 Planned |
+
+### M5 Feature Breakdown (Production-Ready)
+
+**Core Systems:**
+- 8 civilizations (Guanches, Canarii, Mahos, Franks, Britons, Castellanos, Atlantes, Fenicios)
+- 8 hero units with unique abilities
+- 8 unique units with special mechanics
+- 28 total unit types
+- 22 building types
+- 21 technologies (Blacksmith 9, University 3, Temple 3, Unit Upgrades 4, Civ instant grants 2)
+- 3 victory conditions (Conquest, Regicide, Wonder)
+- Dynamic weather system (5 types: Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash)
+- Save/Load system (99 JSON slots)
+- Population cap system (5 per House)
+
+**Polish:**
+- Procedural body animation for all units
+- Flying arrow projectiles
+- Polygon2D silhouettes (replaced ColorRect placeholders)
+- Tall stone tower visual for Watch Tower
+- Spatial audio with distance attenuation
+- Weather visual effects overlay
+- Area2D range detection (performance optimization)
+- Outward spiral spawn positioning (no unit overlap)
+
+**Bug Fixes:**
+- 14 critical fixes (see CHANGELOG.md for details)
+- Conquest/Regicide victory logic
+- Minimap resource reveal
+- Weather HUD centering
+- Cover Fire action registration
+- Nav mesh obstacles per civ
