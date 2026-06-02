@@ -3,10 +3,10 @@ extends UnitBase
 class_name Mangonel
 
 const SPLASH_RADIUS: float = 72.0
+const MIN_RANGE_RATIO: float = 0.35
 
 func get_selection_sound() -> String:
 	return "select_siege"
-const MIN_RANGE_RATIO: float = 0.35
 
 var attack_target: Node = null
 var _attack_timer: float = 0.0

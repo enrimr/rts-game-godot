@@ -69,6 +69,8 @@ func reset() -> void:
 	minimap_texture = null
 
 func _get_civ(civ_id: String) -> CivilizationResource:
+	if civ_id.is_empty():
+		return null
 	if _civ_cache.has(civ_id):
 		return _civ_cache[civ_id] as CivilizationResource
 	var path: String = "res://resources/civilizations/%s.tres" % civ_id
