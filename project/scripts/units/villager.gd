@@ -56,6 +56,10 @@ func _animate_body(_delta: float) -> void:
 	if not is_instance_valid(_body_node):
 		return
 	var t: float = _anim_time
+
+	# Update body orientation based on target direction
+	_update_villager_orientation(_body_node)
+
 	match current_state:
 		UnitState.GATHERING:
 			# Chop: body leans forward/back (rotation), tool swings down, no position drift
@@ -652,6 +656,47 @@ func _get_animation_name() -> String:
 		UnitState.DEAD:
 			return "die"
 	return "idle"
+
+func _update_villager_orientation(body: Node) -> void:
+	var target_pos: Vector2 = Vector2.ZERO
+	var has_target: bool = false
+
+	# Check for gather target
+	if is_instance_valid(gather_target):
+		target_pos = (gather_target as Node2D).global_position
+		has_target = true
+
+	# Check for build target
+	if not has_target and is_instance_valid(build_target):
+		target_pos = (build_target as Node2D).global_position
+		has_target = true
+
+	# Check for attack target
+	if not has_target and is_instance_valid(attack_target):
+		target_pos = (attack_target as Node2D).global_position
+		has_target = true
+
+	# Check for drop-off target when returning
+	if not has_target and current_state == UnitState.RETURNING and is_instance_valid(drop_off_target):
+		target_pos = (drop_off_target as Node2D).global_position
+		has_target = true
+
+	# If moving, face movement direction
+	if not has_target and (current_state == UnitState.MOVING or current_state == UnitState.RETURNING):
+		if velocity.length_squared() > 1.0:
+			target_pos = global_position + velocity.normalized() * 10.0
+			has_target = true
+
+	# Flip body horizontally based on target direction
+	if has_target:
+		var direction: float = target_pos.x - global_position.x
+		if abs(direction) > 5.0:  # Dead zone to prevent flickering
+			var new_scale_x: float = -1.0 if direction < 0.0 else 1.0
+			# Handle both Node2D and Control types
+			if body is Node2D:
+				(body as Node2D).scale.x = new_scale_x
+			elif body is Control:
+				(body as Control).scale.x = new_scale_x
 
 func _play_animation(anim_name: String) -> void:
 	if not is_instance_valid(animated_sprite):

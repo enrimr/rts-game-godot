@@ -75,18 +75,65 @@ func _process(delta: float) -> void:
 			_path_line.visible = false
 
 func _animate_body(_delta: float) -> void:
-	var body: Node2D = get_node_or_null("Body") as Node2D
+	var body: Node = get_node_or_null("Body")
 	if body == null:
 		return
 	var t: float = _anim_time
-	match current_state:
-		UnitState.ATTACKING:
-			var swing: float = sin(t * TAU * 3.5)
-			body.rotation = swing * 0.20
-		UnitState.MOVING:
-			body.rotation = sin(t * TAU * 2.8) * 0.08
-		_:
-			body.rotation = move_toward(body.rotation, 0.0, _delta * 4.0)
+
+	# Determine facing direction based on state and target
+	_update_body_orientation(body)
+
+	# Apply rotation animation if the body supports it (Node2D)
+	if body is Node2D:
+		match current_state:
+			UnitState.ATTACKING:
+				var swing: float = sin(t * TAU * 3.5)
+				(body as Node2D).rotation = swing * 0.20
+			UnitState.MOVING:
+				(body as Node2D).rotation = sin(t * TAU * 2.8) * 0.08
+			_:
+				(body as Node2D).rotation = move_toward((body as Node2D).rotation, 0.0, _delta * 4.0)
+
+func _update_body_orientation(body: Node) -> void:
+	var target_pos: Vector2 = Vector2.ZERO
+	var has_target: bool = false
+
+	# Check for attack target (most units)
+	var attack_tgt: Variant = get("attack_target")
+	if attack_tgt != null and is_instance_valid(attack_tgt as Node):
+		target_pos = (attack_tgt as Node2D).global_position
+		has_target = true
+
+	# Check for gather target (villagers)
+	if not has_target:
+		var gather_tgt: Variant = get("gather_target")
+		if gather_tgt != null and is_instance_valid(gather_tgt as Node):
+			target_pos = (gather_tgt as Node2D).global_position
+			has_target = true
+
+	# Check for build target (villagers)
+	if not has_target:
+		var build_tgt: Variant = get("build_target")
+		if build_tgt != null and is_instance_valid(build_tgt as Node):
+			target_pos = (build_tgt as Node2D).global_position
+			has_target = true
+
+	# If moving, face movement direction
+	if not has_target and current_state == UnitState.MOVING:
+		if velocity.length_squared() > 1.0:
+			target_pos = global_position + velocity.normalized() * 10.0
+			has_target = true
+
+	# Flip body horizontally based on target direction
+	if has_target:
+		var direction: float = target_pos.x - global_position.x
+		if abs(direction) > 5.0:  # Dead zone to prevent flickering
+			var new_scale_x: float = -1.0 if direction < 0.0 else 1.0
+			# Handle both Node2D (uses scale) and Control (uses size/scale differently)
+			if body is Node2D:
+				(body as Node2D).scale.x = new_scale_x
+			elif body is Control:
+				(body as Control).scale.x = new_scale_x
 
 func toggle_path_display() -> void:
 	_path_visible = not _path_visible
