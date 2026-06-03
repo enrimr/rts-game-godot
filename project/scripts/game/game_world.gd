@@ -167,6 +167,8 @@ func _ready() -> void:
 		_rng.randomize()
 		_saved_rng_seed = _rng.seed
 
+	_setup_ambient_lighting()
+
 	var map_data: Dictionary = MapGenerator.generate(self, units_layer, _rng)
 	var tc_positions: Array[Vector2] = map_data["tc_positions"] as Array[Vector2]
 
@@ -276,6 +278,41 @@ func _ready() -> void:
 	if SaveManager.pending_load:
 		SaveManager.restore_world(self)
 		camera.position = drop_off.global_position
+
+## Adds a per-map-type ambient colour wash (CanvasModulate) and a full-screen
+## vignette. Both are subtle — they tint and frame the scene without obscuring it.
+func _setup_ambient_lighting() -> void:
+	var ambient: Color = Color(1.0, 1.0, 1.0, 1.0)
+	match MatchConfig.map_type:
+		MatchConfig.MapType.DESERT_COAST:
+			ambient = Color(1.06, 1.00, 0.88, 1.0)   # warm sun
+		MatchConfig.MapType.VOLCANIC_COAST:
+			ambient = Color(1.04, 0.94, 0.86, 1.0)   # dusky ember
+		MatchConfig.MapType.ISLANDS:
+			ambient = Color(0.96, 0.99, 1.04, 1.0)   # cool sea light
+		_:
+			ambient = Color(0.99, 1.00, 0.97, 1.0)   # neutral daylight
+	var modulate_node: CanvasModulate = CanvasModulate.new()
+	modulate_node.name = "AmbientModulate"
+	modulate_node.color = ambient
+	add_child(modulate_node)
+
+	# HUD defaults to layer 0; lift it above the vignette so edge-darkening
+	# never bleeds over the resource/command bars.
+	hud.layer = 5
+
+	var vignette_layer: CanvasLayer = CanvasLayer.new()
+	vignette_layer.name = "VignetteLayer"
+	vignette_layer.layer = 1   # above world (layer 0), below HUD (layer 5)
+	var rect: ColorRect = ColorRect.new()
+	rect.name = "Vignette"
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat: ShaderMaterial = ShaderMaterial.new()
+	mat.shader = load("res://assets/shaders/vignette.gdshader") as Shader
+	rect.material = mat
+	vignette_layer.add_child(rect)
+	add_child(vignette_layer)
 
 func _apply_civilization() -> void:
 	var civ_path: String = "res://resources/civilizations/%s.tres" % MatchConfig.player_civ_id

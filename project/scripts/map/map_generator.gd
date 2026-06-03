@@ -59,6 +59,25 @@ var _land_polys: Array = []
 # Cached resource node script — loaded once per generation
 var _res_node_script: Script = null
 
+# Shared shader materials — one instance reused across all base terrain / ocean
+# polygons so we never allocate hundreds of ShaderMaterials.
+const WATER_SHADER: Shader = preload("res://assets/shaders/water.gdshader")
+const TERRAIN_SHADER: Shader = preload("res://assets/shaders/terrain.gdshader")
+var _terrain_material: ShaderMaterial = null
+var _water_material: ShaderMaterial = null
+
+func _get_terrain_material() -> ShaderMaterial:
+	if _terrain_material == null:
+		_terrain_material = ShaderMaterial.new()
+		_terrain_material.shader = TERRAIN_SHADER
+	return _terrain_material
+
+func _get_water_material() -> ShaderMaterial:
+	if _water_material == null:
+		_water_material = ShaderMaterial.new()
+		_water_material.shader = WATER_SHADER
+	return _water_material
+
 # ── Public entry point ──────────────────────────────────────────────────────
 
 static func generate(parent: Node2D, units_layer: Node2D,
@@ -1174,6 +1193,7 @@ func _paint_rect_bg(parent: Node2D, half: float, col: Color) -> void:
 	var poly: Polygon2D = Polygon2D.new()
 	poly.color = col
 	poly.z_index = -9
+	poly.material = _get_terrain_material()
 	poly.polygon = PackedVector2Array([
 		Vector2(-half, -half), Vector2(half, -half),
 		Vector2(half, half),   Vector2(-half, half),
@@ -1184,29 +1204,11 @@ func _paint_ocean_bg(parent: Node2D, half: float) -> void:
 	var poly: Polygon2D = Polygon2D.new()
 	poly.color = Color(1, 1, 1, 1)   # tinted by shader
 	poly.z_index = -9
+	poly.material = _get_water_material()
 	poly.polygon = PackedVector2Array([
 		Vector2(-half, -half), Vector2(half, -half),
 		Vector2(half, half),   Vector2(-half, half),
 	])
-	var shader: Shader = Shader.new()
-	shader.code = """
-shader_type canvas_item;
-uniform vec4 water_deep : source_color = vec4(0.07, 0.22, 0.48, 1.0);
-uniform vec4 water_shallow : source_color = vec4(0.18, 0.44, 0.70, 1.0);
-uniform float wave_speed : hint_range(0.1, 4.0) = 1.2;
-void fragment() {
-	vec2 uv = UV;
-	float t = TIME * wave_speed;
-	float wave = sin((uv.x + uv.y) * 18.0 + t) * 0.5
-			   + sin((uv.x - uv.y) * 12.0 + t * 1.3) * 0.3
-			   + sin(uv.x * 25.0 + t * 0.7) * 0.2;
-	float blend = wave * 0.5 + 0.5;
-	COLOR = mix(water_deep, water_shallow, clamp(blend, 0.0, 1.0));
-}
-"""
-	var mat: ShaderMaterial = ShaderMaterial.new()
-	mat.shader = shader
-	poly.material = mat
 	parent.add_child(poly)
 
 # Returns pts intersected with the map rectangle — i.e. clipped to map bounds.
@@ -1227,6 +1229,7 @@ func _paint_polygon(parent: Node2D, pts: PackedVector2Array, col: Color) -> void
 	var poly: Polygon2D = Polygon2D.new()
 	poly.color = col
 	poly.z_index = -8
+	poly.material = _get_terrain_material()
 	poly.polygon = pts
 	parent.add_child(poly)
 

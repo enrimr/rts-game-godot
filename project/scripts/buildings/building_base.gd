@@ -126,7 +126,18 @@ func _ready() -> void:
 		health = max_health
 	_refresh_visuals()
 	call_deferred("_apply_player_color_stripe")
+	call_deferred("_add_ground_shadow")
 	_setup_nav_obstacle()
+
+func _add_ground_shadow() -> void:
+	var rx: float = 30.0
+	var ry: float = 14.0
+	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if cs != null and cs.shape is RectangleShape2D:
+		var h: Vector2 = (cs.shape as RectangleShape2D).size * 0.5
+		rx = h.x * 1.05
+		ry = h.y * 0.55
+	VisualFx.add_ground_shadow(self, rx, ry, ry * 0.7)
 
 func register_builder() -> void:
 	_active_builders += 1

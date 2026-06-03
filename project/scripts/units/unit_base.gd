@@ -56,9 +56,13 @@ func _ready() -> void:
 		EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
 	EventBus.unit_upgrade_applied.connect(_on_unit_upgrade_applied)
 	call_deferred("_add_player_color_stripe")
+	call_deferred("_add_ground_shadow")
 
 func _add_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, 20.0, 4.0)
+
+func _add_ground_shadow() -> void:
+	VisualFx.add_ground_shadow(self, 11.0, 4.5, 9.0)
 
 func _process(delta: float) -> void:
 	_anim_time += delta
