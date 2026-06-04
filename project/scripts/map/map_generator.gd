@@ -274,15 +274,34 @@ func _run_islands(parent: Node2D, units_layer: Node2D,
 
 	return tc_positions
 
+# Builds a soft, rounded blob outline. Instead of jittering each vertex's radius
+# independently (which makes sharp spikes when neighbours land far apart), the
+# radius is modulated by a sum of low-frequency sine harmonics with random
+# phases. Neighbouring vertices stay close, so the outline undulates in smooth
+# lobes. `roughness` scales how much the radius deviates from a perfect circle;
+# `steps` controls vertex density (more = rounder).
+func _smooth_blob(center: Vector2, radius: float, steps: int = 40,
+		roughness: float = 0.16) -> PackedVector2Array:
+	# Three harmonics: a few big lobes + gentle medium + faint fine detail.
+	var freq_a: int = _rng.randi_range(2, 3)
+	var freq_b: int = _rng.randi_range(4, 5)
+	var freq_c: int = _rng.randi_range(6, 8)
+	var phase_a: float = _rng.randf() * TAU
+	var phase_b: float = _rng.randf() * TAU
+	var phase_c: float = _rng.randf() * TAU
+	var pts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(steps):
+		var a: float = TAU * float(i) / float(steps)
+		var wave: float = sin(a * float(freq_a) + phase_a) * 0.60 \
+				+ sin(a * float(freq_b) + phase_b) * 0.28 \
+				+ sin(a * float(freq_c) + phase_c) * 0.12
+		var r: float = radius * (1.0 + wave * roughness)
+		pts.append(center + Vector2(cos(a), sin(a)) * r)
+	return pts
+
 # Build a bumpy circle polygon for an island
 func _make_island_poly(center: Vector2, radius: float) -> PackedVector2Array:
-	var pts: PackedVector2Array = PackedVector2Array()
-	var steps: int = 24
-	for i: int in range(steps):
-		var angle: float = TAU * i / steps
-		var r: float = radius * _rng.randf_range(0.72, 1.10)
-		pts.append(center + Vector2(cos(angle), sin(angle)) * r)
-	return pts
+	return _smooth_blob(center, radius, 44, 0.18)
 
 func _scatter_island_terrain(center: Vector2, island_radius: float) -> void:
 	var inner: float = island_radius * 0.70
@@ -721,12 +740,9 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 	if terrain in _GRADIENT_TERRAINS:
 		_paint_edge_gradient(parent, center, radius, col)
 
-	var pts: PackedVector2Array = PackedVector2Array()
-	const STEPS: int = 32
-	for i: int in range(STEPS):
-		var a: float = TAU * i / STEPS
-		var r: float = radius * _rng.randf_range(0.72, 1.15)
-		pts.append(center + Vector2(cos(a), sin(a)) * r)
+	# Smooth, rounded base outline (low-frequency harmonics instead of per-vertex
+	# jitter so the edge undulates in soft lobes rather than spikes).
+	var pts: PackedVector2Array = _smooth_blob(center, radius, 40, 0.15)
 	var pts_clipped: PackedVector2Array = _clip_poly_to_map(pts)
 	if pts_clipped.size() >= 3:
 		var poly: Polygon2D = Polygon2D.new()
@@ -736,20 +752,15 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 		poly.polygon = pts_clipped
 		parent.add_child(poly)
 
-	# Fringe blobs — small overlap patches placed around the perimeter to
-	# break the hard edge and create a natural "fraying" into adjacent terrain.
+	# Fringe blobs — small rounded overlap patches around the perimeter that
+	# break the edge and fray softly into adjacent terrain.
 	var fringe_count: int = _rng.randi_range(8, 12)
 	for _fi: int in range(fringe_count):
 		var fa: float = _rng.randf() * TAU
 		var fd: float = radius * _rng.randf_range(0.75, 1.0)
 		var fr: float = radius * _rng.randf_range(0.15, 0.30)
 		var fpos: Vector2 = center + Vector2(cos(fa), sin(fa)) * fd
-		var fpts: PackedVector2Array = PackedVector2Array()
-		const FSTEPS: int = 12
-		for fi2: int in range(FSTEPS):
-			var fai: float = TAU * fi2 / FSTEPS
-			var fri: float = fr * _rng.randf_range(0.70, 1.15)
-			fpts.append(fpos + Vector2(cos(fai), sin(fai)) * fri)
+		var fpts: PackedVector2Array = _smooth_blob(fpos, fr, 16, 0.18)
 		var fpts_clipped: PackedVector2Array = _clip_poly_to_map(fpts)
 		if fpts_clipped.size() < 3:
 			continue
@@ -781,7 +792,13 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 # the halo reaches.
 func _paint_edge_gradient(parent: Node2D, center: Vector2, radius: float,
 		col: Color, rings: int = 5, spread: float = 0.38, z: int = -8) -> void:
-	const STEPS: int = 28
+	# Shared low-frequency shape so all rings undulate together as smooth lobes
+	# (concentric and rounded) instead of each ring spiking independently.
+	const STEPS: int = 40
+	var freq_a: int = _rng.randi_range(2, 3)
+	var freq_b: int = _rng.randi_range(4, 5)
+	var phase_a: float = _rng.randf() * TAU
+	var phase_b: float = _rng.randf() * TAU
 	for ri: int in range(rings):
 		var frac: float = float(ri + 1) / float(rings)
 		var ring_r: float = radius * (1.0 + spread * frac)
@@ -794,7 +811,9 @@ func _paint_edge_gradient(parent: Node2D, center: Vector2, radius: float,
 		var pts: PackedVector2Array = PackedVector2Array()
 		for i: int in range(STEPS):
 			var a: float = TAU * float(i) / float(STEPS)
-			var r: float = ring_r * _rng.randf_range(0.86, 1.14)
+			var wave: float = sin(a * float(freq_a) + phase_a) * 0.7 \
+					+ sin(a * float(freq_b) + phase_b) * 0.3
+			var r: float = ring_r * (1.0 + wave * 0.10)
 			pts.append(center + Vector2(cos(a), sin(a)) * r)
 		var pts_clipped: PackedVector2Array = _clip_poly_to_map(pts)
 		if pts_clipped.size() < 3:
@@ -1368,10 +1387,7 @@ func _paint_coastal_ocean(parent: Node2D, half: float) -> void:
 			var inward: Vector2 = base.normalized() * -1.0 * _rng.randf_range(0.0, half * 0.04)
 			var blob_pos: Vector2 = base + inward
 			var br: float = _rng.randf_range(half * 0.04, half * 0.085)
-			var bpts: PackedVector2Array = PackedVector2Array()
-			for bi: int in range(9):
-				var ba: float = TAU * float(bi) / 9.0
-				bpts.append(blob_pos + Vector2(cos(ba), sin(ba)) * br * _rng.randf_range(0.6, 1.25))
+			var bpts: PackedVector2Array = _smooth_blob(blob_pos, br, 14, 0.20)
 			var bpoly: Polygon2D = Polygon2D.new()
 			bpoly.color = fringe_col
 			bpoly.z_index = -9
@@ -1417,13 +1433,14 @@ func _paint_shore(parent: Node2D, land_pts: PackedVector2Array, center: Vector2)
 	# Sand beach: narrower, opaque, just outside the land edge (z -9).
 	_paint_shore_ring(parent, land_pts, center, 1.07, SHORE_SAND, -9)
 
-# Draws one ring by scaling the land outline outward from `center` by `scale`,
-# jittered for an organic edge.
+# Draws one ring by scaling the land outline outward from `center` by `scale`.
+# Follows the (already smooth) land outline exactly so the beach hugs the coast
+# without re-introducing per-vertex spikes.
 func _paint_shore_ring(parent: Node2D, land_pts: PackedVector2Array,
 		center: Vector2, scale: float, col: Color, z: int) -> void:
 	var pts: PackedVector2Array = PackedVector2Array()
 	for p: Vector2 in land_pts:
-		var out: Vector2 = (p - center) * (scale * _rng.randf_range(0.98, 1.04))
+		var out: Vector2 = (p - center) * scale
 		pts.append(center + out)
 	var clipped: PackedVector2Array = _clip_poly_to_map(pts)
 	if clipped.size() < 3:
@@ -1436,27 +1453,35 @@ func _paint_shore_ring(parent: Node2D, land_pts: PackedVector2Array,
 	poly.polygon = clipped
 	parent.add_child(poly)
 
-# Filled square of half-extent `half` with a wavy (jittered) outline, used for
+# Filled square of half-extent `half` with a gently undulating outline, used for
 # the coastal beach/foam frames. Drawn under the land rect so only its margin
-# beyond the land shows.
+# beyond the land shows. The outward bulge follows a smooth sine along each edge
+# (rather than per-point jitter) so the shoreline rolls instead of spiking.
 func _paint_rect_outline_fill(parent: Node2D, half: float, col: Color, z: int) -> void:
 	var pts: PackedVector2Array = PackedVector2Array()
-	const PER_SIDE: int = 10
+	const PER_SIDE: int = 18
 	var corners: Array = [
 		[Vector2(-half, -half), Vector2( half, -half)],
 		[Vector2( half, -half), Vector2( half,  half)],
 		[Vector2( half,  half), Vector2(-half,  half)],
 		[Vector2(-half,  half), Vector2(-half, -half)],
 	]
+	# Random phase/frequency per call so foam and sand frames aren't identical.
+	var freq: float = float(_rng.randi_range(3, 5))
+	var phase: float = _rng.randf() * TAU
+	var amp: float = half * 0.035
+	var idx: float = 0.0
 	for edge: Array in corners:
 		var a: Vector2 = edge[0]
 		var b: Vector2 = edge[1]
 		for s: int in range(PER_SIDE):
 			var f: float = float(s) / float(PER_SIDE)
 			var p: Vector2 = a.lerp(b, f)
-			# Jitter outward (away from origin) for an organic shoreline.
+			# Smooth outward bulge (always >= 0 so the edge never dents inward).
+			var bulge: float = (sin(idx / float(PER_SIDE) * TAU * freq / 4.0 + phase) * 0.5 + 0.5) * amp
 			var n: Vector2 = p.normalized()
-			pts.append(p + n * _rng.randf_range(0.0, half * 0.03))
+			pts.append(p + n * bulge)
+			idx += 1.0
 	var poly: Polygon2D = Polygon2D.new()
 	poly.color = col
 	poly.z_index = z
