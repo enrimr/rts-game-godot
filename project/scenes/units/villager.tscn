@@ -51,29 +51,49 @@ collision_mask = 1
 
 [node name="Body" type="Node2D" parent="."]
 
+[node name="LegLeft" type="Polygon2D" parent="Body"]
+color = Color(0.32, 0.24, 0.16, 1.0)
+polygon = PackedVector2Array(-4, 3, -1, 3, -1, 9, -4, 9)
+
+[node name="LegRight" type="Polygon2D" parent="Body"]
+color = Color(0.32, 0.24, 0.16, 1.0)
+polygon = PackedVector2Array(1, 3, 4, 3, 4, 9, 1, 9)
+
 [node name="Torso" type="Polygon2D" parent="Body"]
-color = Color(0.60, 0.45, 0.20, 1.0)
-polygon = PackedVector2Array(-5, 3, -7, -4, -5, -11, 5, -11, 7, -4, 5, 3)
+color = Color(0.62, 0.46, 0.24, 1.0)
+polygon = PackedVector2Array(-5, 4, -4, -5, -3, -8, 3, -8, 4, -5, 5, 4)
+
+[node name="Belt" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.28, 0.14, 1.0)
+polygon = PackedVector2Array(-5, 2, 5, 2, 5, 4, -5, 4)
+
+[node name="ArmLeft" type="Polygon2D" parent="Body"]
+color = Color(0.56, 0.41, 0.20, 1.0)
+polygon = PackedVector2Array(-6, -6, -4, -6, -3, 0, -5, 1)
+
+[node name="ArmRight" type="Polygon2D" parent="Body"]
+color = Color(0.56, 0.41, 0.20, 1.0)
+polygon = PackedVector2Array(4, -6, 6, -6, 6, 0, 4, 0)
 
 [node name="Head" type="Polygon2D" parent="Body"]
-color = Color(0.72, 0.57, 0.30, 1.0)
-polygon = PackedVector2Array(-3, -11, 0, -20, 3, -11, 2, -7, -2, -7)
+color = Color(0.80, 0.62, 0.44, 1.0)
+polygon = PackedVector2Array(-3, -8, -3, -13, -2, -15, 2, -15, 3, -13, 3, -8)
 
-[node name="Tool" type="Polygon2D" parent="Body"]
-color = Color(0.80, 0.65, 0.18, 1.0)
-polygon = PackedVector2Array(5, -8, 11, -6, 10, -4, 4, -6)
+[node name="Hat" type="Polygon2D" parent="Body"]
+color = Color(0.78, 0.66, 0.34, 1.0)
+polygon = PackedVector2Array(-6, -13, -2, -17, 2, -17, 6, -13, 3, -14, -3, -14)
 
-[node name="UnitLabel" type="Label" parent="."]
-offset_left = -10.0
-offset_top = -18.0
-offset_right = 10.0
-offset_bottom = 2.0
-text = "V"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.15, 0.08, 0.0, 1.0)
-mouse_filter = 2
+[node name="Tool" type="Node2D" parent="Body"]
+position = Vector2(4, -2)
+
+[node name="ToolHandle" type="Polygon2D" parent="Body/Tool"]
+color = Color(0.46, 0.30, 0.14, 1.0)
+polygon = PackedVector2Array(0, 4, 1, 4, 7, -11, 6, -11)
+
+[node name="ToolHead" type="Polygon2D" parent="Body/Tool"]
+color = Color(0.72, 0.72, 0.78, 1.0)
+polygon = PackedVector2Array(2, -11, 10, -13, 10, -11, 7, -10)
+
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")

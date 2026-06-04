@@ -28,6 +28,9 @@ var _destination_state: UnitState = UnitState.IDLE
 var _farm_gathered: float = 0.0
 var _gather_blocked_retries: int = 0
 var _gathering_active: bool = false
+# Tool pivots from its base position (the hand), not the body centre, so the
+# pick/hoe swings naturally. Animation offsets are applied on top of this.
+var _tool_base_pos: Vector2 = Vector2.ZERO
 
 # Transport embark state — set when villager needs to cross water to reach target
 var _pending_transport_target: Node = null      # resource node to reach after crossing
@@ -47,6 +50,13 @@ const BOARD_APPROACH_RANGE: float = 60.0
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
+	if is_instance_valid(_tool_poly):
+		_tool_base_pos = _tool_poly.position
+
+# Narrower player-colour stripe placed at the villager's feet so it doesn't
+# cover the redesigned body (the base 20 px stripe sat across the waist).
+func _add_player_color_stripe() -> void:
+	PlayerColors.apply_color_stripe(self, player_id, 12.0, 11.0)
 
 func _process(delta: float) -> void:
 	_anim_time += delta
@@ -67,7 +77,7 @@ func _animate_body(_delta: float) -> void:
 			_body_node.position.x = 0.0
 			_body_node.rotation = chop * 0.18
 			if is_instance_valid(_tool_poly):
-				_tool_poly.position.x = 0.0
+				_tool_poly.position = _tool_base_pos
 				_tool_poly.rotation = -chop * 0.55
 			if is_instance_valid(_head_poly):
 				_head_poly.rotation = chop * 0.12
@@ -77,7 +87,7 @@ func _animate_body(_delta: float) -> void:
 			_body_node.position.x = 0.0
 			_body_node.rotation = hammer * 0.14
 			if is_instance_valid(_tool_poly):
-				_tool_poly.position.x = 0.0
+				_tool_poly.position = _tool_base_pos
 				_tool_poly.rotation = -hammer * 0.70
 			if is_instance_valid(_head_poly):
 				_head_poly.rotation = hammer * 0.10
@@ -90,14 +100,14 @@ func _animate_body(_delta: float) -> void:
 				_head_poly.position.y = abs(walk) * -1.5
 				_head_poly.rotation = 0.0
 			if is_instance_valid(_tool_poly):
-				_tool_poly.position.x = -walk * 1.5
+				_tool_poly.position.x = _tool_base_pos.x - walk * 1.5
 				_tool_poly.rotation = 0.0
 		UnitState.ATTACKING:
 			var swing: float = sin(t * TAU * 4.0)
 			_body_node.position.x = 0.0
 			_body_node.rotation = swing * 0.20
 			if is_instance_valid(_tool_poly):
-				_tool_poly.position.x = 0.0
+				_tool_poly.position = _tool_base_pos
 				_tool_poly.rotation = -swing * 0.60
 			if is_instance_valid(_head_poly):
 				_head_poly.rotation = 0.0
@@ -110,7 +120,7 @@ func _animate_body(_delta: float) -> void:
 				_head_poly.position.y = idle * -0.5
 				_head_poly.rotation = 0.0
 			if is_instance_valid(_tool_poly):
-				_tool_poly.position.x = 0.0
+				_tool_poly.position = _tool_base_pos
 				_tool_poly.rotation = 0.0
 
 func _on_enemy_entered_range(_body: Node) -> void:
