@@ -300,7 +300,7 @@ func _smooth_blob(center: Vector2, radius: float, steps: int = 40,
 
 # Build a bumpy circle polygon for an island
 func _make_island_poly(center: Vector2, radius: float) -> PackedVector2Array:
-	return _smooth_blob(center, radius, 44, 0.18, 0.07)
+	return _smooth_blob(center, radius, 52, 0.17, 0.045)
 
 func _scatter_island_terrain(center: Vector2, island_radius: float) -> void:
 	var inner: float = island_radius * 0.70
@@ -1428,18 +1428,31 @@ func _paint_shore(parent: Node2D, land_pts: PackedVector2Array, center: Vector2)
 	if land_pts.size() < 3:
 		return
 	# Foam band: widest, faint, sits just in the water (z -9, above the ocean).
-	_paint_shore_ring(parent, land_pts, center, 1.14, SHORE_FOAM, -9)
 	# Sand beach: narrower, opaque, just outside the land edge (z -9).
-	_paint_shore_ring(parent, land_pts, center, 1.07, SHORE_SAND, -9)
+	# Both widths breathe around the coastline (variation arg) so the beach is
+	# broad in places and thin in others, like a real shore. The foam always
+	# extends past the sand because its base scale is larger.
+	_paint_shore_ring(parent, land_pts, center, 1.13, 0.05, SHORE_FOAM, -9)
+	_paint_shore_ring(parent, land_pts, center, 1.06, 0.035, SHORE_SAND, -9)
 
-# Draws one ring by scaling the land outline outward from `center` by `scale`.
-# Follows the (already smooth) land outline exactly so the beach hugs the coast
-# without re-introducing per-vertex spikes.
+# Draws one ring by scaling the land outline outward from `center`. The scale
+# isn't constant: it wanders by `variation` via low-frequency harmonics around
+# the perimeter, so the band's width varies along the coast instead of being a
+# uniform offset. Follows the (already smooth) land outline so no new spikes.
 func _paint_shore_ring(parent: Node2D, land_pts: PackedVector2Array,
-		center: Vector2, scale: float, col: Color, z: int) -> void:
+		center: Vector2, base_scale: float, variation: float, col: Color, z: int) -> void:
+	var n: int = land_pts.size()
+	var freq_a: int = _rng.randi_range(2, 3)
+	var freq_b: int = _rng.randi_range(4, 6)
+	var phase_a: float = _rng.randf() * TAU
+	var phase_b: float = _rng.randf() * TAU
 	var pts: PackedVector2Array = PackedVector2Array()
-	for p: Vector2 in land_pts:
-		var out: Vector2 = (p - center) * scale
+	for i: int in range(n):
+		var a: float = TAU * float(i) / float(n)
+		var w: float = sin(a * float(freq_a) + phase_a) * 0.65 \
+				+ sin(a * float(freq_b) + phase_b) * 0.35
+		var scale: float = base_scale + w * variation
+		var out: Vector2 = (land_pts[i] - center) * scale
 		pts.append(center + out)
 	var clipped: PackedVector2Array = _clip_poly_to_map(pts)
 	if clipped.size() < 3:
@@ -1468,7 +1481,12 @@ func _paint_rect_outline_fill(parent: Node2D, half: float, col: Color, z: int) -
 	# Random phase/frequency per call so foam and sand frames aren't identical.
 	var freq: float = float(_rng.randi_range(3, 5))
 	var phase: float = _rng.randf() * TAU
+	# A second, slower wave modulates the bulge amplitude so the band's width
+	# varies along the coast (broad here, thin there) rather than a uniform roll.
+	var amp_freq: float = float(_rng.randi_range(1, 2))
+	var amp_phase: float = _rng.randf() * TAU
 	var amp: float = half * 0.035
+	var total: int = PER_SIDE * corners.size()
 	var idx: float = 0.0
 	for edge: Array in corners:
 		var a: Vector2 = edge[0]
@@ -1476,8 +1494,11 @@ func _paint_rect_outline_fill(parent: Node2D, half: float, col: Color, z: int) -
 		for s: int in range(PER_SIDE):
 			var f: float = float(s) / float(PER_SIDE)
 			var p: Vector2 = a.lerp(b, f)
+			var perim: float = idx / float(total)   # 0..1 around the whole frame
+			# Width envelope wanders between ~40% and 100% of amp.
+			var env: float = 0.40 + (sin(perim * TAU * amp_freq + amp_phase) * 0.5 + 0.5) * 0.60
 			# Smooth outward bulge (always >= 0 so the edge never dents inward).
-			var bulge: float = (sin(idx / float(PER_SIDE) * TAU * freq / 4.0 + phase) * 0.5 + 0.5) * amp
+			var bulge: float = (sin(perim * TAU * freq + phase) * 0.5 + 0.5) * amp * env
 			var n: Vector2 = p.normalized()
 			pts.append(p + n * bulge)
 			idx += 1.0
