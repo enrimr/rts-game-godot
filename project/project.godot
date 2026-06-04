@@ -85,6 +85,10 @@ locale/translations=PackedStringArray("res://assets/translations/translations.en
 locale/locale_filter_mode=1
 locale/locale_filter=PackedStringArray("en", "es")
 
+[physics]
+
+common/physics_interpolation=true
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
