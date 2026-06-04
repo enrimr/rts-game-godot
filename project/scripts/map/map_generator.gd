@@ -70,6 +70,15 @@ var _lava_material: ShaderMaterial = null
 # Per-terrain-type base material (grain/variation tuned to the surface).
 var _terrain_materials_by_type: Dictionary = {}
 
+# Terrain types whose edges get a soft fade-out halo into neighbouring ground.
+# Contrasting, impassable special zones — grass/dune backgrounds are excluded.
+const _GRADIENT_TERRAINS: Array = [
+	TerrainManager.TerrainType.MALPAIS,
+	TerrainManager.TerrainType.CALDERA,
+	TerrainManager.TerrainType.RISCO,
+	TerrainManager.TerrainType.LAURISILVA,
+]
+
 # Grain/variation tuning per terrain type: rougher surfaces get more grain.
 const _TERRAIN_SHADER_PARAMS: Dictionary = {
 	TerrainManager.TerrainType.GRASS:      {"variation": 0.16, "grain": 0.06, "detail_scale": 0.022},
@@ -235,6 +244,7 @@ func _run_islands(parent: Node2D, units_layer: Node2D,
 		var poly: PackedVector2Array = _make_island_poly(center, island_radius)
 		_land_polys.append(poly)
 		TerrainManager.set_land_polys(_land_polys, true)
+		_paint_shore(parent, poly, center)
 		_paint_polygon(parent, poly, _tc(TerrainManager.TerrainType.GRASS))
 		_scatter_island_terrain(center, island_radius)
 
@@ -703,6 +713,14 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 	# A terrain-tuned grain/variation shader runs on the base blobs so the zone
 	# floor isn't a flat colour beneath its detail decals.
 	var base_mat: ShaderMaterial = _get_terrain_material_for(terrain) if terrain >= 0 else null
+
+	# Soft edge: fade the zone colour outward into the surrounding terrain so the
+	# boundary isn't a hard cut. Drawn first (below the opaque base blob) so only
+	# the outer fade shows over the neighbouring ground. Only contrasting special
+	# zones get this — grass/dune background patches don't need it.
+	if terrain in _GRADIENT_TERRAINS:
+		_paint_edge_gradient(parent, center, radius, col)
+
 	var pts: PackedVector2Array = PackedVector2Array()
 	const STEPS: int = 32
 	for i: int in range(STEPS):
@@ -754,6 +772,38 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 		t_int = TerrainManager.TerrainType.GRASS
 	if t_int >= 0:
 		_paint_terrain_variant(parent, center, radius, t_int, variant)
+
+# Paints a soft transition halo around a zone so its edge fades into the
+# surrounding terrain instead of cutting hard. Draws a few concentric irregular
+# rings just outside `radius`, each the zone colour with decreasing alpha, so
+# the underlying terrain shows through progressively — an optical gradient.
+# `rings` controls smoothness; `spread` is how far out (as a fraction of radius)
+# the halo reaches.
+func _paint_edge_gradient(parent: Node2D, center: Vector2, radius: float,
+		col: Color, rings: int = 5, spread: float = 0.38, z: int = -8) -> void:
+	const STEPS: int = 28
+	for ri: int in range(rings):
+		var frac: float = float(ri + 1) / float(rings)
+		var ring_r: float = radius * (1.0 + spread * frac)
+		# Alpha fades out toward the edge. sqrt curve keeps inner rings strong so
+		# the halo reads clearly, then tapers to nothing at the outer edge.
+		var alpha: float = col.a * (1.0 - sqrt(frac)) * 0.85
+		if alpha <= 0.02:
+			continue
+		var ring_col: Color = Color(col.r, col.g, col.b, alpha)
+		var pts: PackedVector2Array = PackedVector2Array()
+		for i: int in range(STEPS):
+			var a: float = TAU * float(i) / float(STEPS)
+			var r: float = ring_r * _rng.randf_range(0.86, 1.14)
+			pts.append(center + Vector2(cos(a), sin(a)) * r)
+		var pts_clipped: PackedVector2Array = _clip_poly_to_map(pts)
+		if pts_clipped.size() < 3:
+			continue
+		var poly: Polygon2D = Polygon2D.new()
+		poly.color = ring_col
+		poly.z_index = z
+		poly.polygon = pts_clipped
+		parent.add_child(poly)
 
 # Covers the whole map base with overlapping scatter patches so the flat
 # background shows terrain variants instead of a single solid colour.
@@ -1295,6 +1345,13 @@ func _paint_coastal_ocean(parent: Node2D, half: float) -> void:
 	])
 	parent.add_child(water)
 
+	# Beach + foam frame around the land perimeter. These rects are larger than
+	# the playable land (±half); the opaque land background painted afterwards
+	# (z -9) covers their centres, leaving only the outer sand/foam rings showing
+	# over the water — a soft shore instead of a hard green/blue edge.
+	_paint_rect_outline_fill(parent, half * 1.085, SHORE_FOAM, -9)
+	_paint_rect_outline_fill(parent, half * 1.040, SHORE_SAND, -9)
+
 	# Irregular shoreline fringe: a band of land-coloured blobs hugging the inner
 	# edge of the border so the coast bleeds organically into the sea.
 	var fringe_col: Color = _tc(TerrainManager.TerrainType.GRASS)
@@ -1342,6 +1399,69 @@ func _paint_polygon(parent: Node2D, pts: PackedVector2Array, col: Color) -> void
 	poly.color = col
 	poly.z_index = -8
 	poly.material = _get_terrain_material()
+	poly.polygon = pts
+	parent.add_child(poly)
+
+# Paints a beach + foam ring around a land outline so land meets water through a
+# soft sand band instead of a hard green/blue cut. The land polygon is drawn on
+# top afterwards (z -8), covering the inner part of these rings; only the outer
+# sand and foam show beyond the shoreline.
+const SHORE_SAND: Color = Color(0.80, 0.72, 0.48, 1.0)
+const SHORE_FOAM: Color = Color(0.82, 0.90, 0.94, 0.45)
+
+func _paint_shore(parent: Node2D, land_pts: PackedVector2Array, center: Vector2) -> void:
+	if land_pts.size() < 3:
+		return
+	# Foam band: widest, faint, sits just in the water (z -9, above the ocean).
+	_paint_shore_ring(parent, land_pts, center, 1.14, SHORE_FOAM, -9)
+	# Sand beach: narrower, opaque, just outside the land edge (z -9).
+	_paint_shore_ring(parent, land_pts, center, 1.07, SHORE_SAND, -9)
+
+# Draws one ring by scaling the land outline outward from `center` by `scale`,
+# jittered for an organic edge.
+func _paint_shore_ring(parent: Node2D, land_pts: PackedVector2Array,
+		center: Vector2, scale: float, col: Color, z: int) -> void:
+	var pts: PackedVector2Array = PackedVector2Array()
+	for p: Vector2 in land_pts:
+		var out: Vector2 = (p - center) * (scale * _rng.randf_range(0.98, 1.04))
+		pts.append(center + out)
+	var clipped: PackedVector2Array = _clip_poly_to_map(pts)
+	if clipped.size() < 3:
+		return
+	var poly: Polygon2D = Polygon2D.new()
+	poly.color = col
+	poly.z_index = z
+	if col.a >= 0.99:
+		poly.material = _get_terrain_material()
+	poly.polygon = clipped
+	parent.add_child(poly)
+
+# Filled square of half-extent `half` with a wavy (jittered) outline, used for
+# the coastal beach/foam frames. Drawn under the land rect so only its margin
+# beyond the land shows.
+func _paint_rect_outline_fill(parent: Node2D, half: float, col: Color, z: int) -> void:
+	var pts: PackedVector2Array = PackedVector2Array()
+	const PER_SIDE: int = 10
+	var corners: Array = [
+		[Vector2(-half, -half), Vector2( half, -half)],
+		[Vector2( half, -half), Vector2( half,  half)],
+		[Vector2( half,  half), Vector2(-half,  half)],
+		[Vector2(-half,  half), Vector2(-half, -half)],
+	]
+	for edge: Array in corners:
+		var a: Vector2 = edge[0]
+		var b: Vector2 = edge[1]
+		for s: int in range(PER_SIDE):
+			var f: float = float(s) / float(PER_SIDE)
+			var p: Vector2 = a.lerp(b, f)
+			# Jitter outward (away from origin) for an organic shoreline.
+			var n: Vector2 = p.normalized()
+			pts.append(p + n * _rng.randf_range(0.0, half * 0.03))
+	var poly: Polygon2D = Polygon2D.new()
+	poly.color = col
+	poly.z_index = z
+	if col.a >= 0.99:
+		poly.material = _get_terrain_material()
 	poly.polygon = pts
 	parent.add_child(poly)
 
