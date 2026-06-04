@@ -19,6 +19,15 @@ func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
+# Wider stripe under the horse's hooves so it reads as a mounted unit's banner
+# without covering the horse/rider.
+func _add_player_color_stripe() -> void:
+	PlayerColors.apply_color_stripe(self, player_id, 18.0, 13.0)
+
+# Wider, lower shadow to match the horse's longer footprint.
+func _add_ground_shadow() -> void:
+	VisualFx.add_ground_shadow(self, 15.0, 4.5, 11.0)
+
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
 

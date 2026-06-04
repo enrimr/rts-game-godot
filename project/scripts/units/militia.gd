@@ -13,6 +13,10 @@ func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
+# Narrower stripe at the feet so the team colour doesn't cover the soldier body.
+func _add_player_color_stripe() -> void:
+	PlayerColors.apply_color_stripe(self, player_id, 12.0, 11.0)
+
 func _on_auto_attack_target(target: Node) -> void:
 	if is_taunted and is_instance_valid(taunt_source):
 		return
