@@ -732,16 +732,18 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 	# floor isn't a flat colour beneath its detail decals.
 	var base_mat: ShaderMaterial = _get_terrain_material_for(terrain) if terrain >= 0 else null
 
-	# Soft edge: fade the zone colour outward into the surrounding terrain so the
-	# boundary isn't a hard cut. Drawn first (below the opaque base blob) so only
-	# the outer fade shows over the neighbouring ground. Only contrasting special
-	# zones get this — grass/dune background patches don't need it.
-	if terrain in _GRADIENT_TERRAINS:
-		_paint_edge_gradient(parent, center, radius, col)
-
 	# Smooth, rounded base outline (low-frequency harmonics instead of per-vertex
 	# jitter so the edge undulates in soft lobes rather than spikes).
 	var pts: PackedVector2Array = _smooth_blob(center, radius, 40, 0.15)
+
+	# Soft edge: blend the zone colour into the surrounding terrain so the
+	# boundary isn't a hard cut. Follows the base outline exactly (scaled bands)
+	# so the blend hugs the real silhouette instead of a circle. Drawn first
+	# (below the opaque base blob) so only the outer fringe shows. Only
+	# contrasting special zones get this — grass/dune patches don't need it.
+	if terrain in _GRADIENT_TERRAINS:
+		_paint_edge_gradient(parent, pts, center, col)
+
 	var pts_clipped: PackedVector2Array = _clip_poly_to_map(pts)
 	if pts_clipped.size() >= 3:
 		var poly: Polygon2D = Polygon2D.new()
@@ -783,37 +785,28 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 	if t_int >= 0:
 		_paint_terrain_variant(parent, center, radius, t_int, variant)
 
-# Paints a soft transition halo around a zone so its edge fades into the
-# surrounding terrain instead of cutting hard. Draws a few concentric irregular
-# rings just outside `radius`, each the zone colour with decreasing alpha, so
-# the underlying terrain shows through progressively — an optical gradient.
-# `rings` controls smoothness; `spread` is how far out (as a fraction of radius)
-# the halo reaches.
-func _paint_edge_gradient(parent: Node2D, center: Vector2, radius: float,
-		col: Color, rings: int = 5, spread: float = 0.38, z: int = -8) -> void:
-	# Shared low-frequency shape so all rings undulate together as smooth lobes
-	# (concentric and rounded) instead of each ring spiking independently.
-	const STEPS: int = 40
-	var freq_a: int = _rng.randi_range(2, 3)
-	var freq_b: int = _rng.randi_range(4, 5)
-	var phase_a: float = _rng.randf() * TAU
-	var phase_b: float = _rng.randf() * TAU
+# Blends a zone's edge into the surrounding terrain by stacking a few thin bands
+# that follow the zone's actual outline (scaled outward from its centre), each
+# the zone colour with decreasing alpha. Because the bands are the base polygon
+# scaled — not a fresh circle — the blend hugs the real silhouette. Kept tight
+# (`spread` small, few `rings`) so it reads as a soft fusion at the border rather
+# than a wide halo.
+func _paint_edge_gradient(parent: Node2D, outline: PackedVector2Array,
+		center: Vector2, col: Color, rings: int = 4, spread: float = 0.14, z: int = -8) -> void:
+	if outline.size() < 3:
+		return
 	for ri: int in range(rings):
 		var frac: float = float(ri + 1) / float(rings)
-		var ring_r: float = radius * (1.0 + spread * frac)
-		# Alpha fades out toward the edge. sqrt curve keeps inner rings strong so
-		# the halo reads clearly, then tapers to nothing at the outer edge.
-		var alpha: float = col.a * (1.0 - sqrt(frac)) * 0.85
+		var scale: float = 1.0 + spread * frac
+		# Alpha fades out toward the edge; sqrt keeps inner bands strong then
+		# tapers to almost nothing at the outermost band.
+		var alpha: float = col.a * (1.0 - sqrt(frac)) * 0.9
 		if alpha <= 0.02:
 			continue
 		var ring_col: Color = Color(col.r, col.g, col.b, alpha)
 		var pts: PackedVector2Array = PackedVector2Array()
-		for i: int in range(STEPS):
-			var a: float = TAU * float(i) / float(STEPS)
-			var wave: float = sin(a * float(freq_a) + phase_a) * 0.7 \
-					+ sin(a * float(freq_b) + phase_b) * 0.3
-			var r: float = ring_r * (1.0 + wave * 0.10)
-			pts.append(center + Vector2(cos(a), sin(a)) * r)
+		for p: Vector2 in outline:
+			pts.append(center + (p - center) * scale)
 		var pts_clipped: PackedVector2Array = _clip_poly_to_map(pts)
 		if pts_clipped.size() < 3:
 			continue
