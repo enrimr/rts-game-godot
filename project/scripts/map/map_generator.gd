@@ -274,14 +274,13 @@ func _run_islands(parent: Node2D, units_layer: Node2D,
 
 	return tc_positions
 
-# Builds a soft, rounded blob outline. Instead of jittering each vertex's radius
-# independently (which makes sharp spikes when neighbours land far apart), the
-# radius is modulated by a sum of low-frequency sine harmonics with random
-# phases. Neighbouring vertices stay close, so the outline undulates in smooth
-# lobes. `roughness` scales how much the radius deviates from a perfect circle;
-# `steps` controls vertex density (more = rounder).
+# Builds a blob outline. A smooth low-frequency base (sum of sine harmonics with
+# random phases) gives soft lobes, and a small per-vertex `jitter` adds irregular
+# bite on top — a middle ground between a perfectly round blob and the old spiky
+# per-vertex random radius. `roughness` scales the smooth lobe depth; `jitter`
+# scales the fine random wobble; `steps` controls vertex density.
 func _smooth_blob(center: Vector2, radius: float, steps: int = 40,
-		roughness: float = 0.16) -> PackedVector2Array:
+		roughness: float = 0.16, jitter: float = 0.06) -> PackedVector2Array:
 	# Three harmonics: a few big lobes + gentle medium + faint fine detail.
 	var freq_a: int = _rng.randi_range(2, 3)
 	var freq_b: int = _rng.randi_range(4, 5)
@@ -295,13 +294,13 @@ func _smooth_blob(center: Vector2, radius: float, steps: int = 40,
 		var wave: float = sin(a * float(freq_a) + phase_a) * 0.60 \
 				+ sin(a * float(freq_b) + phase_b) * 0.28 \
 				+ sin(a * float(freq_c) + phase_c) * 0.12
-		var r: float = radius * (1.0 + wave * roughness)
+		var r: float = radius * (1.0 + wave * roughness + _rng.randf_range(-jitter, jitter))
 		pts.append(center + Vector2(cos(a), sin(a)) * r)
 	return pts
 
 # Build a bumpy circle polygon for an island
 func _make_island_poly(center: Vector2, radius: float) -> PackedVector2Array:
-	return _smooth_blob(center, radius, 44, 0.18)
+	return _smooth_blob(center, radius, 44, 0.18, 0.07)
 
 func _scatter_island_terrain(center: Vector2, island_radius: float) -> void:
 	var inner: float = island_radius * 0.70
