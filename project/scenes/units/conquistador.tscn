@@ -18,37 +18,65 @@ collision_mask = 1
 
 [node name="Body" type="Node2D" parent="."]
 
+[node name="LegFrontFar" type="Polygon2D" parent="Body"]
+color = Color(0.50, 0.36, 0.10, 1.0)
+polygon = PackedVector2Array(8, 2, 10, 2, 10, 11, 8, 11)
+
+[node name="LegBackFar" type="Polygon2D" parent="Body"]
+color = Color(0.50, 0.36, 0.10, 1.0)
+polygon = PackedVector2Array(-10, 2, -8, 2, -8, 11, -10, 11)
+
+[node name="Tail" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.30, 0.08, 1.0)
+polygon = PackedVector2Array(-12, -3, -16, -3, -15, 5, -12, 1)
+
 [node name="HorseBody" type="Polygon2D" parent="Body"]
-color = Color(0.65, 0.48, 0.12, 1.0)
-polygon = PackedVector2Array(-10, 4, -12, 0, -10, -4, -6, -6, 0, -7, 6, -6, 10, -4, 12, 0, 10, 4, 6, 6, 0, 7, -6, 6)
+color = Color(0.66, 0.49, 0.13, 1.0)
+polygon = PackedVector2Array(-13, -3, -9, -6, 9, -6, 12, -3, 12, 2, 9, 3, -11, 3, -13, 0)
 
 [node name="HorseNeck" type="Polygon2D" parent="Body"]
-color = Color(0.72, 0.55, 0.18, 1.0)
-polygon = PackedVector2Array(-3, -7, 0, -15, 3, -7)
+color = Color(0.70, 0.53, 0.16, 1.0)
+polygon = PackedVector2Array(8, -5, 11, -6, 16, -14, 12, -14)
 
 [node name="HorseHead" type="Polygon2D" parent="Body"]
-color = Color(0.65, 0.48, 0.12, 1.0)
-polygon = PackedVector2Array(-3, -15, -2, -21, 2, -21, 3, -15)
+color = Color(0.70, 0.53, 0.16, 1.0)
+polygon = PackedVector2Array(13, -13, 15, -15, 20, -13, 20, -9, 14, -9)
+
+[node name="Mane" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.30, 0.08, 1.0)
+polygon = PackedVector2Array(8, -5, 10, -5, 14, -14, 12, -14)
+
+[node name="LegFrontNear" type="Polygon2D" parent="Body"]
+color = Color(0.64, 0.47, 0.14, 1.0)
+polygon = PackedVector2Array(7, 2, 9, 2, 9, 12, 7, 12)
+
+[node name="LegBackNear" type="Polygon2D" parent="Body"]
+color = Color(0.64, 0.47, 0.14, 1.0)
+polygon = PackedVector2Array(-9, 2, -7, 2, -7, 12, -9, 12)
 
 [node name="RiderBody" type="Polygon2D" parent="Body"]
-color = Color(0.80, 0.70, 0.30, 1.0)
-polygon = PackedVector2Array(-4, -7, -4, -13, 4, -13, 4, -7)
+color = Color(0.74, 0.62, 0.26, 1.0)
+polygon = PackedVector2Array(-4, -6, -3, -15, 3, -15, 4, -6)
 
-[node name="Lance" type="Polygon2D" parent="Body"]
-color = Color(0.72, 0.65, 0.50, 1.0)
-polygon = PackedVector2Array(3, -13, 4, -30, 6, -30, 5, -13)
+[node name="Breastplate" type="Polygon2D" parent="Body"]
+color = Color(0.62, 0.62, 0.68, 1.0)
+polygon = PackedVector2Array(-3, -13, 3, -13, 3, -8, 0, -6, -3, -8)
 
-[node name="UnitLabel" type="Label" parent="."]
-offset_left = -10.0
-offset_top = -18.0
-offset_right = 10.0
-offset_bottom = 2.0
-text = "CQ"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(1.0, 0.95, 0.70, 1.0)
-mouse_filter = 2
+[node name="Arquebus" type="Polygon2D" parent="Body"]
+color = Color(0.34, 0.24, 0.12, 1.0)
+polygon = PackedVector2Array(2, -12, 16, -13, 16, -11, 2, -10)
+
+[node name="ArquebusBarrel" type="Polygon2D" parent="Body"]
+color = Color(0.50, 0.50, 0.55, 1.0)
+polygon = PackedVector2Array(14, -13, 18, -12.5, 18, -11.5, 14, -11)
+
+[node name="RiderHead" type="Polygon2D" parent="Body"]
+color = Color(0.80, 0.62, 0.44, 1.0)
+polygon = PackedVector2Array(-2, -15, -2, -19, 2, -19, 2, -15)
+
+[node name="Morrion" type="Polygon2D" parent="Body"]
+color = Color(0.56, 0.56, 0.62, 1.0)
+polygon = PackedVector2Array(-4, -18, 0, -23, 4, -18, 2, -19, -2, -19)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")

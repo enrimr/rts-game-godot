@@ -18,37 +18,81 @@ collision_mask = 1
 
 [node name="Body" type="Node2D" parent="."]
 
+[node name="LegFrontFar" type="Polygon2D" parent="Body"]
+color = Color(0.18, 0.22, 0.48, 1.0)
+polygon = PackedVector2Array(8, 2, 10, 2, 10, 11, 8, 11)
+
+[node name="LegBackFar" type="Polygon2D" parent="Body"]
+color = Color(0.18, 0.22, 0.48, 1.0)
+polygon = PackedVector2Array(-10, 2, -8, 2, -8, 11, -10, 11)
+
+[node name="Tail" type="Polygon2D" parent="Body"]
+color = Color(0.12, 0.14, 0.34, 1.0)
+polygon = PackedVector2Array(-12, -3, -17, -3, -16, 5, -12, 1)
+
 [node name="HorseBody" type="Polygon2D" parent="Body"]
 color = Color(0.25, 0.30, 0.65, 1.0)
-polygon = PackedVector2Array(-12, 4, -14, 0, -12, -4, -7, -6, 0, -7, 7, -6, 12, -4, 14, 0, 12, 4, 7, 6, 0, 7, -7, 6)
+polygon = PackedVector2Array(-13, -3, -9, -6, 9, -6, 12, -3, 12, 2, 9, 3, -11, 3, -13, 0)
+
+[node name="Caparison" type="Polygon2D" parent="Body"]
+color = Color(0.70, 0.16, 0.20, 1.0)
+polygon = PackedVector2Array(-11, 2, 9, 2, 8, 6, -10, 6)
 
 [node name="HorseNeck" type="Polygon2D" parent="Body"]
-color = Color(0.30, 0.36, 0.72, 1.0)
-polygon = PackedVector2Array(-3, -7, 0, -16, 3, -7)
+color = Color(0.28, 0.33, 0.68, 1.0)
+polygon = PackedVector2Array(8, -5, 11, -6, 16, -14, 12, -14)
 
 [node name="HorseHead" type="Polygon2D" parent="Body"]
-color = Color(0.25, 0.30, 0.65, 1.0)
-polygon = PackedVector2Array(-3, -16, -2, -22, 2, -22, 3, -16)
+color = Color(0.28, 0.33, 0.68, 1.0)
+polygon = PackedVector2Array(13, -13, 15, -15, 20, -13, 20, -9, 14, -9)
 
-[node name="RiderBody" type="Polygon2D" parent="Body"]
-color = Color(0.60, 0.65, 0.85, 1.0)
-polygon = PackedVector2Array(-5, -7, -5, -14, 5, -14, 5, -7)
+[node name="Mane" type="Polygon2D" parent="Body"]
+color = Color(0.12, 0.14, 0.34, 1.0)
+polygon = PackedVector2Array(8, -5, 10, -5, 14, -14, 12, -14)
+
+[node name="LegFrontNear" type="Polygon2D" parent="Body"]
+color = Color(0.22, 0.27, 0.58, 1.0)
+polygon = PackedVector2Array(7, 2, 9, 2, 9, 12, 7, 12)
+
+[node name="LegBackNear" type="Polygon2D" parent="Body"]
+color = Color(0.22, 0.27, 0.58, 1.0)
+polygon = PackedVector2Array(-9, 2, -7, 2, -7, 12, -9, 12)
 
 [node name="Shield" type="Polygon2D" parent="Body"]
 color = Color(0.82, 0.70, 0.20, 1.0)
-polygon = PackedVector2Array(-7, -14, -10, -12, -10, -7, -7, -5)
+polygon = PackedVector2Array(-7, -13, -3, -14, -2, -8, -3, -3, -7, -4)
 
-[node name="UnitLabel" type="Label" parent="."]
-offset_left = -12.0
-offset_top = -20.0
-offset_right = 12.0
-offset_bottom = 2.0
-text = "CN"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.85, 0.90, 1.0, 1.0)
-mouse_filter = 2
+[node name="ShieldCross" type="Polygon2D" parent="Body"]
+color = Color(0.55, 0.14, 0.16, 1.0)
+polygon = PackedVector2Array(-5, -13, -4, -13, -4, -4, -5, -4)
+
+[node name="RiderBody" type="Polygon2D" parent="Body"]
+color = Color(0.62, 0.66, 0.86, 1.0)
+polygon = PackedVector2Array(-4, -6, -3, -15, 3, -15, 4, -6)
+
+[node name="LanceArm" type="Polygon2D" parent="Body"]
+color = Color(0.54, 0.58, 0.78, 1.0)
+polygon = PackedVector2Array(2, -12, 7, -10, 7, -8, 2, -10)
+
+[node name="Lance" type="Polygon2D" parent="Body"]
+color = Color(0.52, 0.36, 0.18, 1.0)
+polygon = PackedVector2Array(4, -10, 23, -12, 23, -10.5, 4, -8.5)
+
+[node name="LanceTip" type="Polygon2D" parent="Body"]
+color = Color(0.82, 0.82, 0.86, 1.0)
+polygon = PackedVector2Array(23, -13, 27, -11, 23, -9)
+
+[node name="Pennant" type="Polygon2D" parent="Body"]
+color = Color(0.82, 0.70, 0.20, 1.0)
+polygon = PackedVector2Array(18, -12, 18, -16, 23, -14, 21, -12)
+
+[node name="RiderHead" type="Polygon2D" parent="Body"]
+color = Color(0.80, 0.62, 0.44, 1.0)
+polygon = PackedVector2Array(-2, -15, -2, -19, 2, -19, 2, -15)
+
+[node name="Helmet" type="Polygon2D" parent="Body"]
+color = Color(0.58, 0.60, 0.70, 1.0)
+polygon = PackedVector2Array(-3, -18, -2, -22, 2, -22, 3, -18, 2, -20, -2, -20)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")

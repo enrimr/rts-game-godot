@@ -26,7 +26,7 @@ var _hit_tween: Tween = null
 
 @onready var _health_bar: ProgressBar = $HealthBar
 @onready var _selection_indicator: Node2D = $SelectionIndicator
-@onready var _body_rect: ColorRect = $Body
+@onready var _body_torso: Polygon2D = $Body/Torso
 @onready var _nav: NavigationAgent2D = $NavigationAgent2D
 @onready var _convert_area: Area2D = $ConvertArea
 
@@ -138,7 +138,7 @@ func _convert_to(owner_id: int) -> void:
 	velocity = Vector2.ZERO
 
 func _on_converted() -> void:
-	_body_rect.color = Color(0.78, 0.55, 0.18, 1.0)
+	_body_torso.color = Color(0.78, 0.55, 0.18, 1.0)
 
 func _start_flee(from_source: Node) -> void:
 	current_state = AnimalState.FLEEING

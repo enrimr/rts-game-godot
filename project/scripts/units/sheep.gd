@@ -43,4 +43,4 @@ func _check_nearest_owner() -> void:
 
 func _on_converted() -> void:
 	# Tint by team color
-	_body_rect.color = PlayerColors.get_color(player_id)
+	_body_torso.color = PlayerColors.get_color(player_id)

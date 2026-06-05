@@ -18,33 +18,53 @@ collision_mask = 1
 
 [node name="Body" type="Node2D" parent="."]
 
-[node name="Torso" type="Polygon2D" parent="Body"]
-color = Color(0.55, 0.25, 0.10, 1.0)
-polygon = PackedVector2Array(-5, 3, -7, -4, -5, -11, 5, -11, 7, -4, 5, 3)
+[node name="Spear" type="Polygon2D" parent="Body"]
+color = Color(0.46, 0.32, 0.16, 1.0)
+polygon = PackedVector2Array(5, 4, 6.5, 4, 4, -30, 2.5, -30)
 
-[node name="Head" type="Polygon2D" parent="Body"]
-color = Color(0.68, 0.35, 0.18, 1.0)
-polygon = PackedVector2Array(-3, -11, 0, -20, 3, -11, 2, -7, -2, -7)
+[node name="SpearTip" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.40, 0.44, 1.0)
+polygon = PackedVector2Array(1.5, -29, 5, -29, 4.5, -37, 3, -37)
+
+[node name="LegLeft" type="Polygon2D" parent="Body"]
+color = Color(0.34, 0.20, 0.12, 1.0)
+polygon = PackedVector2Array(-4, 3, -1, 3, -1, 9, -4, 9)
+
+[node name="LegRight" type="Polygon2D" parent="Body"]
+color = Color(0.34, 0.20, 0.12, 1.0)
+polygon = PackedVector2Array(1, 3, 4, 3, 4, 9, 1, 9)
 
 [node name="Shield" type="Polygon2D" parent="Body"]
-color = Color(0.72, 0.50, 0.20, 1.0)
-polygon = PackedVector2Array(-11, -11, -13, -8, -14, -4, -13, 0, -11, 3, -8, 4, -5, 3, -4, -1, -5, -5, -7, -9)
+color = Color(0.70, 0.48, 0.20, 1.0)
+polygon = PackedVector2Array(-11, -7, -9, -11, -6, -12, -6, 0, -9, 0, -11, -3)
 
-[node name="Spear" type="Polygon2D" parent="Body"]
-color = Color(0.72, 0.72, 0.72, 1.0)
-polygon = PackedVector2Array(5, -10, 6, -28, 8, -28, 7, -10)
+[node name="ShieldPattern" type="Polygon2D" parent="Body"]
+color = Color(0.45, 0.28, 0.12, 1.0)
+polygon = PackedVector2Array(-9, -8, -7, -8, -7, -2, -9, -2)
 
-[node name="UnitLabel" type="Label" parent="."]
-offset_left = -10.0
-offset_top = -18.0
-offset_right = 10.0
-offset_bottom = 2.0
-text = "MG"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(1.0, 0.85, 0.70, 1.0)
-mouse_filter = 2
+[node name="Torso" type="Polygon2D" parent="Body"]
+color = Color(0.58, 0.27, 0.12, 1.0)
+polygon = PackedVector2Array(-5, 4, -4, -7, -2, -9, 3, -9, 4, -7, 5, 4)
+
+[node name="TunicTrim" type="Polygon2D" parent="Body"]
+color = Color(0.78, 0.62, 0.30, 1.0)
+polygon = PackedVector2Array(-4, 0, 4, 0, 4, 1, -4, 1)
+
+[node name="ArmSpear" type="Polygon2D" parent="Body"]
+color = Color(0.62, 0.30, 0.14, 1.0)
+polygon = PackedVector2Array(3, -7, 6, -7, 6, -3, 3, -3)
+
+[node name="Head" type="Polygon2D" parent="Body"]
+color = Color(0.78, 0.56, 0.36, 1.0)
+polygon = PackedVector2Array(-3, -9, -3, -14, 3, -14, 3, -9)
+
+[node name="Headband" type="Polygon2D" parent="Body"]
+color = Color(0.82, 0.66, 0.34, 1.0)
+polygon = PackedVector2Array(-3, -13, 3, -13, 3, -11, -3, -11)
+
+[node name="Hair" type="Polygon2D" parent="Body"]
+color = Color(0.30, 0.18, 0.08, 1.0)
+polygon = PackedVector2Array(-3, -13, -3, -16, 3, -16, 3, -13, 2, -14, -2, -14)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")

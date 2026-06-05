@@ -18,33 +18,65 @@ collision_mask = 1
 
 [node name="Body" type="Node2D" parent="."]
 
+[node name="LegFrontFar" type="Polygon2D" parent="Body"]
+color = Color(0.60, 0.44, 0.12, 1.0)
+polygon = PackedVector2Array(7, 1, 9, 1, 9, 10, 7, 10)
+
+[node name="LegBackFar" type="Polygon2D" parent="Body"]
+color = Color(0.60, 0.44, 0.12, 1.0)
+polygon = PackedVector2Array(-9, 1, -7, 1, -7, 10, -9, 10)
+
+[node name="Tail" type="Polygon2D" parent="Body"]
+color = Color(0.52, 0.38, 0.10, 1.0)
+polygon = PackedVector2Array(-11, -4, -15, -4, -14, 4, -11, 1)
+
 [node name="HorseBody" type="Polygon2D" parent="Body"]
-color = Color(0.75, 0.55, 0.15, 1.0)
-polygon = PackedVector2Array(-11, 4, -13, 0, -11, -4, -6, -6, 0, -7, 6, -6, 11, -4, 13, 0, 11, 4, 6, 6, 0, 7, -6, 6)
+color = Color(0.76, 0.56, 0.16, 1.0)
+polygon = PackedVector2Array(-12, -3, -8, -6, 8, -6, 11, -3, 11, 2, 9, 3, -10, 3, -12, 0)
 
 [node name="HorseNeck" type="Polygon2D" parent="Body"]
-color = Color(0.82, 0.62, 0.20, 1.0)
-polygon = PackedVector2Array(-3, -7, 0, -15, 3, -7)
+color = Color(0.80, 0.60, 0.18, 1.0)
+polygon = PackedVector2Array(7, -5, 10, -6, 15, -13, 11, -13)
 
 [node name="HorseHead" type="Polygon2D" parent="Body"]
-color = Color(0.75, 0.55, 0.15, 1.0)
-polygon = PackedVector2Array(-3, -15, -2, -21, 2, -21, 3, -15)
+color = Color(0.80, 0.60, 0.18, 1.0)
+polygon = PackedVector2Array(12, -12, 14, -14, 19, -12, 19, -8, 13, -8)
+
+[node name="Mane" type="Polygon2D" parent="Body"]
+color = Color(0.52, 0.38, 0.10, 1.0)
+polygon = PackedVector2Array(7, -5, 9, -5, 13, -13, 11, -13)
+
+[node name="LegFrontNear" type="Polygon2D" parent="Body"]
+color = Color(0.74, 0.54, 0.16, 1.0)
+polygon = PackedVector2Array(6, 1, 8, 1, 8, 11, 6, 11)
+
+[node name="LegBackNear" type="Polygon2D" parent="Body"]
+color = Color(0.74, 0.54, 0.16, 1.0)
+polygon = PackedVector2Array(-8, 1, -6, 1, -6, 11, -8, 11)
+
+[node name="RiderLeg" type="Polygon2D" parent="Body"]
+color = Color(0.74, 0.60, 0.24, 1.0)
+polygon = PackedVector2Array(-3, -6, 0, -6, 1, -1, -2, -1)
 
 [node name="RiderBody" type="Polygon2D" parent="Body"]
-color = Color(0.88, 0.72, 0.28, 1.0)
-polygon = PackedVector2Array(-4, -7, -4, -13, 4, -13, 4, -7)
+color = Color(0.90, 0.74, 0.30, 1.0)
+polygon = PackedVector2Array(-4, -6, -3, -14, 2, -14, 3, -6)
 
-[node name="UnitLabel" type="Label" parent="."]
-offset_left = -11.0
-offset_top = -18.0
-offset_right = 11.0
-offset_bottom = 2.0
-text = "SR"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(1.0, 0.95, 0.70, 1.0)
-mouse_filter = 2
+[node name="RiderArm" type="Polygon2D" parent="Body"]
+color = Color(0.80, 0.64, 0.26, 1.0)
+polygon = PackedVector2Array(2, -12, 6, -8, 5, -6, 1, -9)
+
+[node name="Scimitar" type="Polygon2D" parent="Body"]
+color = Color(0.86, 0.85, 0.80, 1.0)
+polygon = PackedVector2Array(5, -8, 12, -16, 14, -15, 9, -7, 6, -6)
+
+[node name="RiderHead" type="Polygon2D" parent="Body"]
+color = Color(0.80, 0.62, 0.44, 1.0)
+polygon = PackedVector2Array(-2, -14, -2, -18, 2, -18, 2, -14)
+
+[node name="Turban" type="Polygon2D" parent="Body"]
+color = Color(0.92, 0.82, 0.50, 1.0)
+polygon = PackedVector2Array(-3, -17, -3, -20, 3, -21, 3, -17, 1, -18, -1, -18)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")

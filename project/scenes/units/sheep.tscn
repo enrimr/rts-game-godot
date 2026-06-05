@@ -21,25 +21,35 @@ line_of_sight = 2.0
 collision_layer = 1
 collision_mask = 1
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -9.0
-offset_top = -12.0
-offset_right = 9.0
-offset_bottom = 4.0
-color = Color(0.92, 0.92, 0.88, 1.0)
-mouse_filter = 2
+[node name="Body" type="Node2D" parent="."]
 
-[node name="AnimalLabel" type="Label" parent="."]
-offset_left = -10.0
-offset_top = -11.0
-offset_right = 10.0
-offset_bottom = 3.0
-text = "O"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 11
-theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1.0)
-mouse_filter = 2
+[node name="LegFront" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.36, 0.32, 1.0)
+polygon = PackedVector2Array(5, 1, 7, 1, 7, 6, 5, 6)
+
+[node name="LegBack" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.36, 0.32, 1.0)
+polygon = PackedVector2Array(-7, 1, -5, 1, -5, 6, -7, 6)
+
+[node name="Torso" type="Polygon2D" parent="Body"]
+color = Color(0.92, 0.92, 0.88, 1.0)
+polygon = PackedVector2Array(-8, -2, -6, -6, 4, -7, 7, -5, 8, -1, 7, 2, -7, 2)
+
+[node name="WoolBump1" type="Polygon2D" parent="Body"]
+color = Color(0.84, 0.84, 0.80, 1.0)
+polygon = PackedVector2Array(-7, -5, -4, -7, -2, -5, -5, -4)
+
+[node name="WoolBump2" type="Polygon2D" parent="Body"]
+color = Color(0.84, 0.84, 0.80, 1.0)
+polygon = PackedVector2Array(0, -6, 3, -8, 5, -6, 2, -5)
+
+[node name="Head" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.38, 0.34, 1.0)
+polygon = PackedVector2Array(7, -5, 11, -6, 12, -3, 8, -2)
+
+[node name="Ear" type="Polygon2D" parent="Body"]
+color = Color(0.34, 0.30, 0.27, 1.0)
+polygon = PackedVector2Array(8, -6, 9, -8, 10, -6)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")
