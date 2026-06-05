@@ -13,8 +13,12 @@ func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
+# Stripe under the warhorse's hooves; wider/lower shadow to match its footprint.
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 28.0, 8.0)
+	PlayerColors.apply_color_stripe(self, player_id, 20.0, 14.0)
+
+func _add_ground_shadow() -> void:
+	VisualFx.add_ground_shadow(self, 16.0, 5.0, 12.0)
 
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
