@@ -122,16 +122,23 @@ func _update_body_orientation(body: Node) -> void:
 			target_pos = (build_tgt as Node2D).global_position
 			has_target = true
 
-	# If moving, face movement direction
+	# If moving, face the navigation destination rather than the instantaneous
+	# velocity. The destination is stable, so a unit travelling on a diagonal or
+	# near-vertical path still faces the side it's heading to, and the facing
+	# doesn't flicker when the path serpentines (velocity.x noise).
 	if not has_target and current_state == UnitState.MOVING:
-		if velocity.length_squared() > 1.0:
+		if is_instance_valid(nav_agent) and not nav_agent.is_navigation_finished():
+			target_pos = nav_agent.target_position
+			has_target = true
+		elif velocity.length_squared() > 1.0:
 			target_pos = global_position + velocity.normalized() * 10.0
 			has_target = true
 
-	# Flip body horizontally based on target direction
+	# Flip body horizontally based on target direction. Small dead zone prevents
+	# flicker when the target is nearly straight above/below.
 	if has_target:
 		var direction: float = target_pos.x - global_position.x
-		if abs(direction) > 5.0:  # Dead zone to prevent flickering
+		if abs(direction) > 2.0:
 			var new_scale_x: float = -1.0 if direction < 0.0 else 1.0
 			# Handle both Node2D (uses scale) and Control (uses size/scale differently)
 			if body is Node2D:
