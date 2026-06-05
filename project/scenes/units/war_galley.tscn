@@ -18,37 +18,53 @@ collision_mask = 1
 
 [node name="Body" type="Node2D" parent="."]
 
+[node name="OarBladeL1" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.30, 0.14, 1.0)
+polygon = PackedVector2Array(-19, -10, -14, -8, -14, -6, -19, -8)
+
+[node name="OarBladeL2" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.30, 0.14, 1.0)
+polygon = PackedVector2Array(-19, 0, -14, 2, -14, 4, -19, 2)
+
+[node name="OarBladeR1" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.30, 0.14, 1.0)
+polygon = PackedVector2Array(19, -10, 14, -8, 14, -6, 19, -8)
+
+[node name="OarBladeR2" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.30, 0.14, 1.0)
+polygon = PackedVector2Array(19, 0, 14, 2, 14, 4, 19, 2)
+
+[node name="HullShadow" type="Polygon2D" parent="Body"]
+color = Color(0.36, 0.10, 0.10, 1.0)
+polygon = PackedVector2Array(-12, 9, -14, 0, -13, -12, -6, -19, 8, -19, 14, -12, 15, 0, 13, 9)
+
 [node name="Hull" type="Polygon2D" parent="Body"]
-color = Color(0.55, 0.15, 0.15, 1.0)
-polygon = PackedVector2Array(-13, 8, -15, 0, -14, -12, -7, -20, 7, -20, 14, -12, 15, 0, 13, 8)
+color = Color(0.56, 0.16, 0.15, 1.0)
+polygon = PackedVector2Array(-12, 8, -14, 0, -13, -12, -6, -20, 6, -20, 13, -12, 14, 0, 12, 8)
+
+[node name="Deck" type="Polygon2D" parent="Body"]
+color = Color(0.66, 0.22, 0.20, 1.0)
+polygon = PackedVector2Array(-9, 5, -10, 0, -9, -11, -4, -16, 4, -16, 9, -11, 10, 0, 9, 5)
+
+[node name="RowBench1" type="Polygon2D" parent="Body"]
+color = Color(0.44, 0.14, 0.13, 1.0)
+polygon = PackedVector2Array(-9, -2, 9, -2, 9, -1, -9, -1)
+
+[node name="RowBench2" type="Polygon2D" parent="Body"]
+color = Color(0.44, 0.14, 0.13, 1.0)
+polygon = PackedVector2Array(-8, -9, 8, -9, 8, -8, -8, -8)
 
 [node name="Ram" type="Polygon2D" parent="Body"]
-color = Color(0.35, 0.28, 0.12, 1.0)
-polygon = PackedVector2Array(-5, -20, 0, -28, 5, -20)
-
-[node name="LeftOars" type="Polygon2D" parent="Body"]
-color = Color(0.68, 0.22, 0.22, 1.0)
-polygon = PackedVector2Array(-18, -12, -15, -12, -15, 4, -18, 4)
-
-[node name="RightOars" type="Polygon2D" parent="Body"]
-color = Color(0.68, 0.22, 0.22, 1.0)
-polygon = PackedVector2Array(15, -12, 18, -12, 18, 4, 15, 4)
+color = Color(0.40, 0.40, 0.46, 1.0)
+polygon = PackedVector2Array(-4, -19, 0, -28, 4, -19)
 
 [node name="Mast" type="Polygon2D" parent="Body"]
-color = Color(0.40, 0.28, 0.10, 1.0)
-polygon = PackedVector2Array(-2, -18, 2, -18, 2, -4, -2, -4)
+color = Color(0.36, 0.24, 0.10, 1.0)
+polygon = PackedVector2Array(-1.5, 2, 1.5, 2, 1.5, -14, -1.5, -14)
 
-[node name="UnitLabel" type="Label" parent="."]
-offset_left = -15.0
-offset_top = -20.0
-offset_right = 15.0
-offset_bottom = 4.0
-text = "G"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(1.0, 0.85, 0.85, 1.0)
-mouse_filter = 2
+[node name="Sail" type="Polygon2D" parent="Body"]
+color = Color(0.84, 0.80, 0.70, 1.0)
+polygon = PackedVector2Array(-6, -3, 6, -3, 5, -13, -5, -13)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")
