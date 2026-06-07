@@ -24,6 +24,13 @@ var _flee_timer: float = 0.0
 var _origin: Vector2 = Vector2.ZERO
 var _hit_tween: Tween = null
 
+# Leg walk animation: each entry is {node, base, phase}. Legs swing back/forth
+# in counter-phase while the animal moves, easing back to rest when it stops.
+var _legs: Array[Dictionary] = []
+var _walk_time: float = 0.0
+const _LEG_SWING: float = 2.2   # px of fore/aft swing
+const _LEG_FREQ: float = 3.2    # stride cycles per second
+
 @onready var _health_bar: ProgressBar = $HealthBar
 @onready var _selection_indicator: Node2D = $SelectionIndicator
 @onready var _body: Node2D = $Body
@@ -38,6 +45,38 @@ func _ready() -> void:
 	add_to_group("animals")
 	_nav.velocity_computed.connect(_on_velocity_computed)
 	_convert_area.body_entered.connect(_on_body_entered_range)
+	_collect_legs()
+
+# Gathers the leg polygons (deer has 4, sheep has 2) with their rest position and
+# a stride phase so diagonal legs swing together (a natural trot/walk).
+func _collect_legs() -> void:
+	var phases: Dictionary = {
+		"LegFrontFar": 0.0, "LegBackNear": 0.0,   # diagonal pair A
+		"LegBackFar": PI,   "LegFrontNear": PI,    # diagonal pair B
+		"LegFront": 0.0,    "LegBack": PI,          # sheep's two legs
+	}
+	for leg_name: String in phases:
+		var leg: Polygon2D = _body.get_node_or_null(leg_name) as Polygon2D
+		if leg != null:
+			_legs.append({"node": leg, "base": leg.position, "phase": phases[leg_name]})
+
+func _process(delta: float) -> void:
+	if _legs.is_empty():
+		return
+	var moving: bool = current_state != AnimalState.DEAD and velocity.length_squared() > 4.0
+	if moving:
+		_walk_time += delta
+	var amount: float = _LEG_SWING if moving else 0.0
+	for entry: Dictionary in _legs:
+		var leg: Polygon2D = entry["node"] as Polygon2D
+		if not is_instance_valid(leg):
+			continue
+		var base: Vector2 = entry["base"] as Vector2
+		var target_x: float = base.x
+		if moving:
+			target_x += sin(_walk_time * TAU * _LEG_FREQ + (entry["phase"] as float)) * amount
+		# Ease toward the target so stopping settles smoothly.
+		leg.position.x = lerpf(leg.position.x, target_x, clampf(delta * 12.0, 0.0, 1.0))
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	if current_state == AnimalState.DEAD:
