@@ -17,29 +17,61 @@ shape = SubResource("RectangleShape2D_1")
 
 [node name="Body" type="Node2D" parent="."]
 
+[node name="Water" type="Polygon2D" parent="Body"]
+color = Color(0.18, 0.40, 0.55, 1.0)
+polygon = PackedVector2Array(-40, 28, 40, 28, 40, 18, -40, 18)
+
+[node name="WaterRipple" type="Polygon2D" parent="Body"]
+color = Color(0.30, 0.52, 0.66, 1.0)
+polygon = PackedVector2Array(-32, 24, -18, 24, -18, 22, -32, 22)
+
 [node name="Platform" type="Polygon2D" parent="Body"]
-color = Color(0.48, 0.35, 0.14, 1.0)
-polygon = PackedVector2Array(-40, 28, 40, 28, 40, -10, 28, -28, -28, -28, -40, -10)
+color = Color(0.54, 0.40, 0.16, 1.0)
+polygon = PackedVector2Array(-40, 18, 40, 18, 40, -10, 28, -28, -28, -28, -40, -10)
+
+[node name="PlatformShade" type="Polygon2D" parent="Body"]
+color = Color(0.44, 0.32, 0.13, 1.0)
+polygon = PackedVector2Array(-40, 18, 40, 18, 40, 12, -40, 12)
 
 [node name="Plank1" type="Polygon2D" parent="Body"]
-color = Color(0.55, 0.42, 0.18, 1.0)
-polygon = PackedVector2Array(-38, -8, 38, -8, 38, -4, -38, -4)
+color = Color(0.60, 0.46, 0.20, 1.0)
+polygon = PackedVector2Array(-38, -16, 38, -16, 38, -12, -38, -12)
 
 [node name="Plank2" type="Polygon2D" parent="Body"]
-color = Color(0.55, 0.42, 0.18, 1.0)
-polygon = PackedVector2Array(-38, 4, 38, 4, 38, 8, -38, 8)
+color = Color(0.60, 0.46, 0.20, 1.0)
+polygon = PackedVector2Array(-38, -4, 38, -4, 38, 0, -38, 0)
 
 [node name="Plank3" type="Polygon2D" parent="Body"]
-color = Color(0.55, 0.42, 0.18, 1.0)
-polygon = PackedVector2Array(-38, 14, 38, 14, 38, 18, -38, 18)
+color = Color(0.60, 0.46, 0.20, 1.0)
+polygon = PackedVector2Array(-38, 8, 38, 8, 38, 12, -38, 12)
+
+[node name="Hull" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.28, 0.14, 1.0)
+polygon = PackedVector2Array(-34, 16, -10, 16, -14, 26, -30, 26)
+
+[node name="Mast" type="Polygon2D" parent="Body"]
+color = Color(0.30, 0.22, 0.10, 1.0)
+polygon = PackedVector2Array(-23, 16, -21, 16, -21, -34, -23, -34)
+
+[node name="TeamSail" type="Polygon2D" parent="Body"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(-21, -32, -6, -28, -21, -8)
 
 [node name="Post1" type="Polygon2D" parent="Body"]
-color = Color(0.35, 0.22, 0.08, 1.0)
-polygon = PackedVector2Array(-36, 28, -32, 28, -32, 38, -36, 38)
+color = Color(0.32, 0.20, 0.08, 1.0)
+polygon = PackedVector2Array(-36, 18, -32, 18, -32, 28, -36, 28)
 
 [node name="Post2" type="Polygon2D" parent="Body"]
-color = Color(0.35, 0.22, 0.08, 1.0)
-polygon = PackedVector2Array(32, 28, 36, 28, 36, 38, 32, 38)
+color = Color(0.32, 0.20, 0.08, 1.0)
+polygon = PackedVector2Array(32, 18, 36, 18, 36, 28, 32, 28)
+
+[node name="TeamFlagPole" type="Polygon2D" parent="Body"]
+color = Color(0.3, 0.22, 0.12, 1.0)
+polygon = PackedVector2Array(28, -28, 30, -28, 30, -44, 28, -44)
+
+[node name="TeamFlag" type="Polygon2D" parent="Body"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(30, -44, 40, -41, 30, -37)
 
 [node name="NameLabel" type="Label" parent="."]
 offset_left = -44.0

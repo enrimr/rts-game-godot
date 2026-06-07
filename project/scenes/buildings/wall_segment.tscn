@@ -13,21 +13,27 @@ building_data = ExtResource("2_data")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_1")
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -8.0
-offset_top = -8.0
-offset_right = 8.0
-offset_bottom = 8.0
-color = Color(0.55, 0.53, 0.50, 1.0)
-mouse_filter = 2
+[node name="Body" type="Node2D" parent="."]
 
-[node name="Top" type="ColorRect" parent="."]
-offset_left = -8.0
-offset_top = -8.0
-offset_right = 8.0
-offset_bottom = -4.0
-color = Color(0.42, 0.40, 0.38, 1.0)
-mouse_filter = 2
+[node name="Stone" type="Polygon2D" parent="Body"]
+color = Color(0.58, 0.56, 0.52, 1.0)
+polygon = PackedVector2Array(-8, 8, 8, 8, 8, -4, -8, -4)
+
+[node name="WallShade" type="Polygon2D" parent="Body"]
+color = Color(0.48, 0.46, 0.43, 1.0)
+polygon = PackedVector2Array(-8, 8, 8, 8, 8, 4, -8, 4)
+
+[node name="AshlarLine" type="Polygon2D" parent="Body"]
+color = Color(0.50, 0.48, 0.45, 1.0)
+polygon = PackedVector2Array(-8, 1, 8, 1, 8, 2, -8, 2)
+
+[node name="TeamMerlonL" type="Polygon2D" parent="Body"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(-8, -4, -3, -4, -3, -8, -8, -8)
+
+[node name="TeamMerlonR" type="Polygon2D" parent="Body"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(3, -4, 8, -4, 8, -8, 3, -8)
 
 [node name="NameLabel" type="Label" parent="."]
 offset_left = -20.0

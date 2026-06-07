@@ -18,28 +18,64 @@ shape = SubResource("RectangleShape2D_1")
 [node name="Body" type="Node2D" parent="."]
 
 [node name="Base" type="Polygon2D" parent="Body"]
-color = Color(0.60, 0.45, 0.18, 1.0)
-polygon = PackedVector2Array(-36, 36, 36, 36, 36, -36, -36, -36)
+color = Color(0.66, 0.50, 0.22, 1.0)
+polygon = PackedVector2Array(-36, 36, 36, 36, 36, -8, -36, -8)
 
-[node name="Awning" type="Polygon2D" parent="Body"]
-color = Color(0.80, 0.25, 0.12, 1.0)
-polygon = PackedVector2Array(-32, -10, 32, -10, 36, -20, -36, -20)
+[node name="WallShade" type="Polygon2D" parent="Body"]
+color = Color(0.56, 0.42, 0.18, 1.0)
+polygon = PackedVector2Array(-36, 36, 36, 36, 36, 26, -36, 26)
 
 [node name="Stall" type="Polygon2D" parent="Body"]
-color = Color(0.72, 0.55, 0.25, 1.0)
-polygon = PackedVector2Array(-26, 28, 26, 28, 26, -8, -26, -8)
+color = Color(0.74, 0.58, 0.28, 1.0)
+polygon = PackedVector2Array(-28, 28, 28, 28, 28, -6, -28, -6)
+
+[node name="StallCounter" type="Polygon2D" parent="Body"]
+color = Color(0.50, 0.36, 0.16, 1.0)
+polygon = PackedVector2Array(-28, 6, 28, 6, 28, 0, -28, 0)
+
+[node name="Crate" type="Polygon2D" parent="Body"]
+color = Color(0.58, 0.42, 0.20, 1.0)
+polygon = PackedVector2Array(14, 26, 26, 26, 26, 14, 14, 14)
 
 [node name="GoldPile" type="Polygon2D" parent="Body"]
 color = Color(0.95, 0.80, 0.10, 1.0)
-polygon = PackedVector2Array(-10, 24, 0, 14, 10, 24)
+polygon = PackedVector2Array(-22, 26, -16, 14, -10, 26)
+
+[node name="GoldGlint" type="Polygon2D" parent="Body"]
+color = Color(1.0, 0.92, 0.45, 1.0)
+polygon = PackedVector2Array(-18, 20, -14, 18, -15, 24)
 
 [node name="Post1" type="Polygon2D" parent="Body"]
 color = Color(0.40, 0.28, 0.10, 1.0)
-polygon = PackedVector2Array(-34, -20, -30, -20, -30, 30, -34, 30)
+polygon = PackedVector2Array(-34, -16, -30, -16, -30, 30, -34, 30)
 
 [node name="Post2" type="Polygon2D" parent="Body"]
 color = Color(0.40, 0.28, 0.10, 1.0)
-polygon = PackedVector2Array(30, -20, 34, -20, 34, 30, 30, 30)
+polygon = PackedVector2Array(30, -16, 34, -16, 34, 30, 30, 30)
+
+[node name="AwningShade" type="Polygon2D" parent="Body"]
+color = Color(0.32, 0.24, 0.10, 1.0)
+polygon = PackedVector2Array(-36, -6, 36, -6, 36, -10, -36, -10)
+
+[node name="TeamAwning" type="Polygon2D" parent="Body"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(-36, -10, 36, -10, 40, -24, -40, -24)
+
+[node name="AwningStripe1" type="Polygon2D" parent="Body"]
+color = Color(0.92, 0.90, 0.84, 0.85)
+polygon = PackedVector2Array(-22, -10, -10, -10, -8, -24, -24, -24)
+
+[node name="AwningStripe2" type="Polygon2D" parent="Body"]
+color = Color(0.92, 0.90, 0.84, 0.85)
+polygon = PackedVector2Array(10, -10, 22, -10, 24, -24, 8, -24)
+
+[node name="TeamFlagPole" type="Polygon2D" parent="Body"]
+color = Color(0.3, 0.22, 0.12, 1.0)
+polygon = PackedVector2Array(0, -24, 2, -24, 2, -40, 0, -40)
+
+[node name="TeamFlag" type="Polygon2D" parent="Body"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(2, -40, 12, -37, 2, -33)
 
 [node name="NameLabel" type="Label" parent="."]
 offset_left = -40.0
