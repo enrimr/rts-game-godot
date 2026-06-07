@@ -343,6 +343,7 @@ func _collect_unit(unit: Node) -> Dictionary:
 		"player_id": unit.get("player_id") as int,
 		"civ_id":    str(unit.get("civ_id")),
 		"health":    unit.get("health") as float,
+		"is_female": unit.get("is_female") as bool,
 	}
 	if unit is HeroUnit:
 		var ud: Variant = unit.get("unit_data")
@@ -478,6 +479,8 @@ func _restore_units(world: Node, data: Dictionary) -> void:
 		var pid: int = u.get("player_id", 0) as int
 		unit.set("player_id", pid)
 		unit.set("civ_id", str(u.get("civ_id", "")))
+		# Set before add_child so _ready (which runs on enter) doesn't re-roll it.
+		unit.set("is_female", u.get("is_female", false) as bool)
 		var pos: Array = u.get("position", [0.0, 0.0]) as Array
 		unit.global_position = Vector2(pos[0] as float, pos[1] as float)
 		units_layer.add_child(unit)

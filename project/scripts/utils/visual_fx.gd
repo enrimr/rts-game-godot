@@ -29,3 +29,77 @@ static func _ellipse_points(rx: float, ry: float, steps: int) -> PackedVector2Ar
 		var a: float = TAU * float(i) / float(steps)
 		pts.append(Vector2(cos(a) * rx, sin(a) * ry))
 	return pts
+
+# Names a human unit's head polygon goes by across the unit scenes. The first
+# one found marks the unit as "human" (ships/siege/animals have none).
+const _HEAD_NODES: Array = ["Head", "RiderHead"]
+# Headgear that should stay ON when adding hair (hats/helmets a woman can wear);
+# only loose hair-replacing pieces are nudged. We keep all headgear and just add
+# hair behind it, which reads fine at this scale.
+
+## Returns the unit's head Polygon2D (searching the Body subtree), or null if the
+## unit has no head — i.e. it isn't a human figure. Used both to decide whether a
+## unit can be gendered and to anchor the hair.
+static func find_head(unit: Node) -> Polygon2D:
+	var body: Node = unit.get_node_or_null("Body")
+	if body == null:
+		return null
+	for n: String in _HEAD_NODES:
+		var h: Polygon2D = body.get_node_or_null(n) as Polygon2D
+		if h != null:
+			return h
+	return null
+
+## Adds long hair framing the head so the unit reads as female. Idempotent.
+## `unit` must have a Body with a head polygon (check with find_head first).
+static func add_female_hair(unit: Node2D) -> void:
+	var head: Polygon2D = find_head(unit)
+	if head == null:
+		return
+	var body: Node2D = unit.get_node_or_null("Body") as Node2D
+	if body == null or body.get_node_or_null("FemaleHair") != null:
+		return
+
+	# Derive head bounds from its polygon so hair fits any unit's proportions.
+	var min_x: float = INF
+	var max_x: float = -INF
+	var top_y: float = INF
+	var bot_y: float = -INF
+	for p: Vector2 in head.polygon:
+		min_x = minf(min_x, p.x)
+		max_x = maxf(max_x, p.x)
+		top_y = minf(top_y, p.y)
+		bot_y = maxf(bot_y, p.y)
+	var hair_col: Color = Color(0.34, 0.20, 0.09, 1.0)
+
+	# Back hair: a curtain behind the head falling just below the chin, framing
+	# both sides. Drawn behind the head (added first, moved to front of list).
+	var back: Polygon2D = Polygon2D.new()
+	back.name = "FemaleHair"
+	back.color = hair_col
+	var fall: float = bot_y + 4.0   # how far the hair falls past the head
+	back.polygon = PackedVector2Array([
+		Vector2(min_x - 1.0, top_y - 1.0),
+		Vector2(min_x - 1.5, fall),
+		Vector2(min_x + 1.0, fall),
+		Vector2(min_x + 1.0, top_y + 1.0),
+		Vector2(max_x - 1.0, top_y + 1.0),
+		Vector2(max_x - 1.0, fall),
+		Vector2(max_x + 1.5, fall),
+		Vector2(max_x + 1.0, top_y - 1.0),
+	])
+	body.add_child(back)
+	body.move_child(back, 0)
+
+	# A small fringe across the top of the forehead, drawn above the head.
+	var fringe: Polygon2D = Polygon2D.new()
+	fringe.name = "FemaleFringe"
+	fringe.color = hair_col
+	fringe.polygon = PackedVector2Array([
+		Vector2(min_x - 1.0, top_y - 1.0),
+		Vector2(max_x + 1.0, top_y - 1.0),
+		Vector2(max_x + 1.0, top_y + 1.5),
+		Vector2(0.0, top_y + 0.5),
+		Vector2(min_x - 1.0, top_y + 1.5),
+	])
+	body.add_child(fringe)

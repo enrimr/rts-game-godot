@@ -9,9 +9,8 @@ class_name HeroUnit
 signal ability_used(hero: HeroUnit)
 signal ability_ready(hero: HeroUnit)
 
-## Set by the spawner before _ready(). When true the inherited militia body is
-## restyled with feminine features (long hair, gown) so heroines read as female.
-var is_female: bool = false
+## is_female is inherited from UnitBase. The spawner sets it before _ready() to
+## pick the lobby-chosen gender; _apply_female_appearance gives the queen look.
 
 func get_selection_sound() -> String:
 	return "select_hero"
@@ -125,6 +124,11 @@ func _ready() -> void:
 				if not p.is_empty():
 					initials += p[0]
 			label_node.set("text", initials.left(2))
+
+# Heroes style their own gender (the queen look in _apply_female_appearance), so
+# opt out of the generic hair the base class would otherwise add.
+func _apply_gender_appearance() -> void:
+	pass
 
 func die() -> void:
 	_end_ability()

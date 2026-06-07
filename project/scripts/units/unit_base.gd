@@ -14,6 +14,15 @@ var civ_id: String = ""   # set at spawn time from MatchConfig for player units
 var is_cloaked: bool = false
 var is_taunted: bool = false
 var taunt_source: Node = null
+# Visual gender. Human units roll this 50/50 at _ready unless a spawner/save set
+# it first. Setting the property (e.g. unit.set("is_female", true) before the
+# unit enters the tree, or a save restore) marks it as decided so _ready won't
+# re-roll. Non-human units (ships, siege, animals) ignore it.
+var _gender_assigned: bool = false
+var is_female: bool = false:
+	set(value):
+		is_female = value
+		_gender_assigned = true
 # True while unit is executing an attack-move order: auto-attacks enemies spotted
 # during movement rather than ignoring them.
 var _attack_move_active: bool = false
@@ -55,11 +64,22 @@ func _ready() -> void:
 	if player_id == 0:
 		EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
 	EventBus.unit_upgrade_applied.connect(_on_unit_upgrade_applied)
+	# Decide visual gender (50/50) unless a spawner or save already set it.
+	if not _gender_assigned:
+		is_female = randf() < 0.5
 	call_deferred("_add_player_color_stripe")
 	call_deferred("_add_ground_shadow")
+	call_deferred("_apply_gender_appearance")
 
 func _add_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, 20.0, 4.0)
+
+# Applies the female look to human units. Non-human units (no head polygon) and
+# male units are left as-is. Subclasses that style gender themselves (HeroUnit)
+# override this to opt out.
+func _apply_gender_appearance() -> void:
+	if is_female:
+		VisualFx.add_female_hair(self)
 
 func _add_ground_shadow() -> void:
 	VisualFx.add_ground_shadow(self, 11.0, 4.5, 9.0)
