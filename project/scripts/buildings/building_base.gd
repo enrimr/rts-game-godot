@@ -126,8 +126,28 @@ func _ready() -> void:
 		health = max_health
 	_refresh_visuals()
 	call_deferred("_apply_player_color_stripe")
+	call_deferred("_apply_team_accents")
 	call_deferred("_add_ground_shadow")
 	_setup_nav_obstacle()
+
+# Recolours team-accent polygons (flags, roofs, banners) to the owner's colour so
+# buildings are identifiable at a glance. Any Polygon2D/Line2D under Body whose
+# name starts with "Team" is tinted; a name containing "Dark" gets a shaded
+# variant (e.g. roof underside) so accents keep some depth.
+func _apply_team_accents() -> void:
+	var body: Node = get_node_or_null("Body")
+	if body == null:
+		return
+	var col: Color = PlayerColors.get_color(player_id)
+	var dark: Color = Color(col.r * 0.7, col.g * 0.7, col.b * 0.7, 1.0)
+	for node: Node in body.get_children():
+		if not node.name.begins_with("Team"):
+			continue
+		var tint: Color = dark if node.name.contains("Dark") else col
+		if node is Polygon2D:
+			(node as Polygon2D).color = tint
+		elif node is Line2D:
+			(node as Line2D).default_color = tint
 
 func _add_ground_shadow() -> void:
 	var rx: float = 30.0
