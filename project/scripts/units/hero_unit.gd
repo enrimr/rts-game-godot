@@ -9,6 +9,10 @@ class_name HeroUnit
 signal ability_used(hero: HeroUnit)
 signal ability_ready(hero: HeroUnit)
 
+## Set by the spawner before _ready(). When true the inherited militia body is
+## restyled with feminine features (long hair, gown) so heroines read as female.
+var is_female: bool = false
+
 func get_selection_sound() -> String:
 	return "select_hero"
 
@@ -109,6 +113,8 @@ func _ready() -> void:
 		unit_data.move_speed *= 1.15
 		_quijote_attack_delay = 1.2
 	_build_hero_ring()
+	if is_female:
+		_apply_female_appearance()
 	# Update portrait label to hero initials instead of the militia default "M"
 	if unit_data:
 		var label_node: Node = get_node_or_null("UnitLabel")
@@ -125,6 +131,61 @@ func die() -> void:
 	if unit_data:
 		EventBus.hero_died.emit(player_id, unit_data)
 	super.die()
+
+# Restyles the inherited militia body so a heroine reads as female: swaps the
+# helmet for long hair + a circlet, slims the torso into a flared gown, and
+# softens the limb colours. Keeps the weapon/shield — she's still a warrior.
+func _apply_female_appearance() -> void:
+	var body: Node2D = get_node_or_null("Body") as Node2D
+	if body == null:
+		return
+
+	# Gown: narrow shoulders flaring out to a wide skirt hem at the feet.
+	var gown_col: Color = Color(0.60, 0.16, 0.30, 1.0)
+	var torso: Polygon2D = body.get_node_or_null("Torso") as Polygon2D
+	if torso != null:
+		torso.color = gown_col
+		torso.polygon = PackedVector2Array([
+			Vector2(-6, 9), Vector2(-3, -6), Vector2(-2, -8),
+			Vector2(2, -8), Vector2(3, -6), Vector2(6, 9)])
+	# Hide the legs under the skirt.
+	for leg_name: String in ["LegLeft", "LegRight"]:
+		var leg: Polygon2D = body.get_node_or_null(leg_name) as Polygon2D
+		if leg != null:
+			leg.visible = false
+	# Skirt hem trim.
+	var hem: Polygon2D = Polygon2D.new()
+	hem.name = "GownHem"
+	hem.color = Color(0.78, 0.62, 0.32, 1.0)
+	hem.polygon = PackedVector2Array([Vector2(-6, 9), Vector2(6, 9), Vector2(6, 7), Vector2(-6, 7)])
+	body.add_child(hem)
+	# Waist sash over the belt.
+	var belt: Polygon2D = body.get_node_or_null("Belt") as Polygon2D
+	if belt != null:
+		belt.color = Color(0.82, 0.66, 0.34, 1.0)
+
+	# Replace the helmet with long hair framing the face and falling to the back.
+	var helmet: Polygon2D = body.get_node_or_null("Helmet") as Polygon2D
+	if helmet != null:
+		helmet.queue_free()
+	var hair_back: Polygon2D = Polygon2D.new()
+	hair_back.name = "HairBack"
+	hair_back.color = Color(0.30, 0.18, 0.08, 1.0)
+	hair_back.polygon = PackedVector2Array([
+		Vector2(-4, -12), Vector2(-4, -2), Vector2(-2, -2),
+		Vector2(-2, -11), Vector2(2, -11), Vector2(2, -2),
+		Vector2(4, -2), Vector2(4, -12), Vector2(2, -15),
+		Vector2(-2, -15)])
+	body.add_child(hair_back)
+	body.move_child(hair_back, 0)   # behind head/torso
+	# Crown/circlet marking her as a leader.
+	var circlet: Polygon2D = Polygon2D.new()
+	circlet.name = "Circlet"
+	circlet.color = Color(0.90, 0.78, 0.30, 1.0)
+	circlet.polygon = PackedVector2Array([
+		Vector2(-3, -13), Vector2(-3, -15), Vector2(0, -17),
+		Vector2(3, -15), Vector2(3, -13)])
+	body.add_child(circlet)
 
 func _build_hero_ring() -> void:
 	_hero_ring = Node2D.new()

@@ -359,6 +359,7 @@ func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	hero.set("unit_data", hero_data)
 	hero.set("player_id", player_id)
 	hero.set("civ_id", civ_id)
+	hero.set("is_female", use_female)
 	hero.global_position = tc_pos + Vector2(-80.0, -60.0)
 	units_layer.add_child(hero)
 	EventBus.unit_spawned.emit(hero, player_id)
