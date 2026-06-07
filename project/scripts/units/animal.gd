@@ -26,6 +26,7 @@ var _hit_tween: Tween = null
 
 @onready var _health_bar: ProgressBar = $HealthBar
 @onready var _selection_indicator: Node2D = $SelectionIndicator
+@onready var _body: Node2D = $Body
 @onready var _body_torso: Polygon2D = $Body/Torso
 @onready var _nav: NavigationAgent2D = $NavigationAgent2D
 @onready var _convert_area: Area2D = $ConvertArea
@@ -43,6 +44,16 @@ func _on_velocity_computed(safe_velocity: Vector2) -> void:
 		return
 	velocity = safe_velocity
 	move_and_slide()
+	_face_movement(safe_velocity)
+
+# Flips the body to face the travel direction. The sprite is drawn facing right
+# (head at +x), so scale.x = 1 faces right, -1 faces left. A small horizontal
+# dead zone avoids flicker when moving almost straight up or down.
+func _face_movement(vel: Vector2) -> void:
+	if not is_instance_valid(_body):
+		return
+	if absf(vel.x) > 2.0:
+		_body.scale.x = -1.0 if vel.x < 0.0 else 1.0
 
 func set_selected(value: bool) -> void:
 	_selection_indicator.visible = value
