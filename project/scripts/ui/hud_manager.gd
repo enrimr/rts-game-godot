@@ -140,6 +140,7 @@ var _wonder_label: Label = null
 var _hero_alert_overlay: ColorRect = null
 var _weather: HudWeather = null
 var _match_stats: HudMatchStats = null
+var _resource_bar: HudResourceBar = null
 
 const ACTION_COLS: int = 5
 const ACTION_ROWS: int = 2
@@ -148,13 +149,9 @@ var _action_page: int = 0
 var _page_prev_btn: Button = null
 var _page_next_btn: Button = null
 
-# --- Gatherer counts ---
-var _gatherer_counts: Dictionary = {"food": 0, "wood": 0, "gold": 0, "stone": 0}
-
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	EventBus.resource_changed.connect(_on_resource_changed)
-	EventBus.gatherer_changed.connect(_on_gatherer_changed)
 	EventBus.technology_researched.connect(_on_technology_researched)
 	EventBus.unit_selected.connect(_on_unit_selected)
 	EventBus.building_selected.connect(_on_building_selected)
@@ -178,6 +175,10 @@ func _ready() -> void:
 	_clock_label.text = "00:00"
 	_unit_name_label.text = ""
 	_unit_hp_bar.value = 0.0
+	_resource_bar = HudResourceBar.new()
+	_resource_bar.init(local_player_id, _food_display, _wood_display, _gold_display,
+		_stone_display, _population_label, _age_label)
+	add_child(_resource_bar)
 	_controls = HudControls.new()
 	_controls.init(local_player_id, get_node("HUDRoot"))
 	add_child(_controls)
@@ -270,12 +271,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 func update_resources(player_id: int, resources: Dictionary) -> void:
-	if player_id != local_player_id:
-		return
-	_food_display.set_amount(int(resources.get("food", 0)))
-	_wood_display.set_amount(int(resources.get("wood", 0)))
-	_gold_display.set_amount(int(resources.get("gold", 0)))
-	_stone_display.set_amount(int(resources.get("stone", 0)))
+	_resource_bar.update_resources(player_id, resources)
 
 func update_selection(units: Array) -> void:
 	cancel_pending()
@@ -355,7 +351,7 @@ func update_selection(units: Array) -> void:
 			_populate_buttons(UNIT_ACTIONS)
 
 func update_age(age: int) -> void:
-	_age_label.text = tr(["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"][clampi(age, 0, 3)])
+	_resource_bar.update_age(age)
 
 func toggle_pause(is_paused: bool) -> void:
 	_pause_overlay.visible = is_paused
@@ -651,28 +647,12 @@ func _on_game_started() -> void:
 		MatchConfig.launch_tutorial = false
 		call_deferred("_start_tutorial")
 
-func _on_resource_changed(player_id: int, resource: String, amount: int) -> void:
+func _on_resource_changed(player_id: int, _resource: String, _amount: int) -> void:
+	# HudResourceBar updates the counters; the action menu only needs an
+	# affordability refresh when the local player's stockpile changes.
 	if player_id != local_player_id:
 		return
-	match resource:
-		"food":  _food_display.set_amount(amount)
-		"wood":  _wood_display.set_amount(amount)
-		"gold":  _gold_display.set_amount(amount)
-		"stone": _stone_display.set_amount(amount)
 	_refresh_button_states()
-
-func _on_gatherer_changed(player_id: int, resource: String, delta: int) -> void:
-	if player_id != local_player_id:
-		return
-	if not _gatherer_counts.has(resource):
-		return
-	_gatherer_counts[resource] = maxi(0, (_gatherer_counts[resource] as int) + delta)
-	var count: int = _gatherer_counts[resource] as int
-	match resource:
-		"food":  _food_display.set_gatherer_count(count)
-		"wood":  _wood_display.set_gatherer_count(count)
-		"gold":  _gold_display.set_gatherer_count(count)
-		"stone": _stone_display.set_gatherer_count(count)
 
 func _on_technology_researched(player_id: int, _tech_id: String) -> void:
 	if player_id != local_player_id:
@@ -827,20 +807,11 @@ func _refresh_gate_toggle_label(gate: Gate) -> void:
 			continue
 		btn.text = "[O] " + (tr("UI_GATE_UNLOCK") if gate.locked else tr("UI_GATE_LOCK"))
 
-func _on_population_changed(player_id: int, current: int, cap: int) -> void:
+func _on_population_changed(player_id: int, _current: int, _cap: int) -> void:
+	# HudResourceBar updates the population label; the action menu refreshes the
+	# train queue so the pop-blocked indicator updates when population frees up.
 	if player_id != local_player_id:
 		return
-	_population_label.text = tr("UI_POP") % [current, cap]
-	if current >= cap:
-		_population_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25))
-		var tw: Tween = create_tween()
-		tw.tween_property(_population_label, "modulate:a", 0.3, 0.25)
-		tw.tween_property(_population_label, "modulate:a", 1.0, 0.25)
-		tw.tween_property(_population_label, "modulate:a", 0.3, 0.25)
-		tw.tween_property(_population_label, "modulate:a", 1.0, 0.25)
-	else:
-		_population_label.remove_theme_color_override("font_color")
-	# Refresh queue display so the blocked indicator updates when pop frees up
 	if is_instance_valid(_selected_building) and _selected_building.has_method("get_queue"):
 		_on_train_queue_changed(_selected_building,
 			_selected_building.get_queue() as Array,
@@ -853,10 +824,11 @@ func _on_age_advance_started(player_id: int, _target_age: int) -> void:
 	if is_instance_valid(_selected_building) and _selected_building.has_method("is_respawning_hero"):
 		_populate_tc_actions()
 
-func _on_age_advance_complete(player_id: int, new_age: int) -> void:
+func _on_age_advance_complete(player_id: int, _new_age: int) -> void:
+	# HudResourceBar updates the age label; the action menu replaces the
+	# advance progress bar and refreshes newly unlocked build/train options.
 	if player_id != local_player_id:
 		return
-	update_age(new_age)
 	if is_instance_valid(_age_advance_bar):
 		_age_advance_bar.queue_free()
 		_age_advance_bar = null
