@@ -95,9 +95,19 @@ On **Islands** maps (`MatchConfig.map_type == ISLANDS`) the `_run_tick` call als
 
 ## UI / HUD System
 
-The HUD is a `CanvasLayer` scene at `scenes/ui/hud/hud.tscn`, instanced as a child of `GameWorld` in `scenes/game/game_world.tscn`. The root node carries `hud_manager.gd`, which owns all display logic.
+The HUD is a `CanvasLayer` scene at `scenes/ui/hud/hud.tscn`, instanced as a child of `GameWorld` in `scenes/game/game_world.tscn`. The root node carries `hud_manager.gd`, which retains the core in-game UI (action menu, selection panel, timer bars, tutorial) and **composes** a set of focused child components, each a plain `Node` added in `_ready`:
 
-**EventBus wiring** (`_ready` connects):
+| Component (`class_name`) | File | Responsibility |
+|---|---|---|
+| `HudWeather` | `scripts/ui/hud/hud_weather.gd` | Weather announcement banner + countdown pill; self-wires to `WeatherManager` |
+| `HudMatchStats` | `scripts/ui/hud/hud_match_stats.gd` | Match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays |
+| `HudMenus` | `scripts/ui/hud/hud_menus.gd` | Pause menu, settings, save-slot picker, surrender (tutorial/dpad hooks injected as callables) |
+| `HudControls` | `scripts/ui/hud/hud_controls.gd` | Game-speed buttons, camera dpad + panning, idle-villager/idle-military cycle buttons |
+| `HudStyle` | `scripts/ui/hud/hud_style.gd` | Shared `StyleBoxFlat` panel/button factory |
+
+The components self-wire to their own signals; `hud_manager` does not relay events to them. The split was incremental and behaviour-preserving — `hud_manager.gd` went from ~3300 to ~1900 lines. A headless load harness lives at `project/tools/check_hud.gd` (`godot --headless -s tools/check_hud.gd`).
+
+**EventBus wiring** (`hud_manager._ready` connects the core panels; components connect their own):
 
 | Signal | Handler | Effect |
 |---|---|---|
@@ -105,8 +115,9 @@ The HUD is a `CanvasLayer` scene at `scenes/ui/hud/hud.tscn`, instanced as a chi
 | `EventBus.unit_selected` | `_on_unit_selected` | Rebuilds the unit portraits grid and detail panel |
 | `EventBus.age_advance_complete` | `_on_age_advance_complete` | Updates the age label for the local player |
 | `EventBus.market_rate_changed` | `_on_market_rate_changed` | Refreshes the Market action panel with live rates if the changed market is currently selected |
-| `GameManager.game_started` | `_on_game_started` | Starts the in-game clock |
+| `GameManager.game_started` | `_on_game_started` | Resets game speed and refreshes age/resources (the clock is started by `HudMatchStats`) |
 | `GameManager.game_paused` | `toggle_pause` | Shows/hides the full-screen pause overlay |
+| `GameManager.game_over` | `HudMatchStats._on_game_over` | Stops the clock and builds the end-of-match summary + charts |
 
 **Component breakdown**:
 
