@@ -45,8 +45,14 @@ Each civilization includes:
 - **Ranged Combat**: Attack-ground, cover fire, minimum range mechanics
 - **Siege Warfare**: Deploy/undeploy trebuchets, AoE splash damage
 - **Naval Gameplay**: Fishing boats, war galleys, troop transports, amphibious assaults
-- **Hero Abilities**: 8 unique hero powers (charge, taunt, cloak, convert, etc.)
+- **Hero Abilities**: 16 legendary heroes (one male + one female per civilization), each with a unique power; gender selectable in the lobby
 - **Unit Special Abilities**: Hit-and-run cavalry, ambush shots, lance charges, salvo fire
+
+### Visual Presentation
+- **Readable procedural art**: Hand-built vector figures for every unit, building and animal (no external textures)
+- **Random unit gender**: Every human unit is randomly male or female (cosmetic); distinct heroine sprites
+- **Team-colour identification**: Buildings carry their owner's colour on roofs, flags, banners and sails
+- **Living world**: Animated water with coastal foam, pulsing caldera lava, walking animals, ground shadows, ambient lighting
 
 ### Technical Highlights
 - **Procedural Map Generation**: Random terrain, resources, starting positions

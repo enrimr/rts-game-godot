@@ -436,6 +436,7 @@ Antes de iniciar una escaramuza eliges:
 - **Edad de inicio** — Oscura, Feudal, Castillo o Imperial
 - **Número de rivales** — 1 a 3 oponentes controlados por la IA
 - **Condición de victoria** — Conquista / Regicidio / Maravilla
+- **Género del héroe** — Aleatorio / Masculino / Femenino. Cada civilización tiene dos héroes legendarios (uno de cada género) con habilidades distintas; esta opción decide cuál lidera tus fuerzas.
 
 ---
 
@@ -448,3 +449,16 @@ Antes de iniciar una escaramuza eliges:
 - **Investiga en cuanto avances de edad** — no dejes la Herrería vacía. La Forja en Edad Feudal da a todas las unidades +15% de ataque por solo 75 de Comida. El Flechado por 100 de Oro duplica el valor de tus arqueros. Las pequeñas inversiones se multiplican rápidamente.
 - **La caldera genera piedra** — si hay una caldera volcánica en el mapa, el equipo que controla la zona a su alrededor obtiene piedra gratis. No la ignores.
 - **El modo Maravilla es una carrera** — si vas ganando, avanza a la Edad Imperial y constrúyela antes de que tu rival pueda hacerlo. Si tu oponente la construye primero, tienes exactamente 4 minutos para destruirla. Deja todo y ataca de inmediato.
+
+---
+
+## Presentación visual
+
+Todo el arte del juego es vectorial y procedural (sin texturas externas), pero diseñado para que cada elemento sea reconocible de un vistazo:
+
+- **Unidades legibles** — cada unidad es una figura clara según su rol: el aldeano lleva sombrero de paja y un pico, los espadachines casco y escudo, los arqueros tensan un arco, la caballería va a caballo, y cada unidad única de civilización tiene rasgos propios.
+- **Género visual aleatorio** — al crearse, cada unidad humana es hombre o mujer al azar (50%). Las mujeres se distinguen por una melena larga. Es solo estético: no afecta a las estadísticas ni a la jugabilidad.
+- **Heroínas distintivas** — si tu héroe es femenino, se reconoce por su melena, una corona dorada y un vestido, conservando su arma. Elige el género del héroe en el lobby (Aleatorio / Masculino / Femenino).
+- **Color de equipo en los edificios** — cada edificio luce detalles en el color de su dueño (tejados, banderas, estandartes, toldos, velas, cúpulas), además de la franja de color en la base, para identificar de quién es a distancia.
+- **Animación y orientación** — las unidades y los animales miran hacia donde se mueven; los ciervos y ovejas trotan al desplazarse.
+- **Terreno con vida** — el agua tiene oleaje y espuma costera, la lava de las calderas late, las costas tienen playas de arena y las zonas de terreno se funden suavemente con sus vecinas.

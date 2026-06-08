@@ -239,9 +239,16 @@ Run from the GUT panel inside Godot editor, or headlessly via CI.
 **Polish:**
 - Procedural body animation for all units (walk, attack, work)
 - Flying arrow projectiles (visual only)
-- Polygon2D silhouettes for all units/buildings (replaces ColorRect placeholders)
+- Readable Polygon2D figures for all units/buildings/animals (redesigned from placeholder silhouettes — villagers, soldiers, riders, archers, ships, siege, civ-unique units, deer/sheep)
+- Random visual gender for all human units (50/50, long hair for female); persisted across save/load; cosmetic only
+- Distinct heroine sprites (long hair, golden circlet, gown); hero gender selectable in the lobby (Random/Male/Female)
+- Team-colour building accents (roofs, flags, banners, awnings, domes, sails) via the `Team*`-node accent system in `building_base.gd`, plus player colour stripes
+- Ground shadows under units and buildings
+- Animated water shader (swell + coastal foam), terrain detail shader, animated caldera lava, ambient lighting + vignette
+- Smooth terrain-zone blending and rounded sandy coastlines
+- Animal walking gait (deer/sheep legs trot); unit & animal orientation follows travel direction
+- 2D physics interpolation enabled (smooth movement at high render framerates)
 - Tall stone tower visual for Watch Tower
-- Player color stripes on all units/buildings
 - Selection indicators (green circle for player, yellow for allies)
 - Hero ring (gold circle) visual
 - Rally point markers for production buildings

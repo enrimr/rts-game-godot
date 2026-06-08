@@ -436,6 +436,7 @@ Before starting a skirmish you choose:
 - **Starting Age** — Dark, Feudal, Castle, or Imperial
 - **Number of Rivals** — 1 to 3 AI opponents
 - **Victory Condition** — Conquest / Regicide / Wonder
+- **Hero Gender** — Random / Male / Female. Each civilization has two legendary heroes (one of each gender) with different abilities; this option decides which one leads your forces.
 
 ---
 
@@ -448,3 +449,16 @@ Before starting a skirmish you choose:
 - **Research as you advance** — do not sit on an empty Blacksmith. Forging in Feudal Age gives every unit +15% attack for 75 Food. Fletching for 100 Gold doubles the value of your archers. Small investments compound fast.
 - **The caldera generates stone** — if there is a volcanic caldera on the map, the team that controls the zone around it gets free stone. Do not ignore it.
 - **Wonder mode is a race** — if you are winning, rush to Imperial Age and build it before your opponent can. If your opponent builds it first, you have exactly 4 minutes to destroy it. Drop everything and attack immediately.
+
+---
+
+## Visual Presentation
+
+All of the game's art is vector and procedural (no external textures), but designed so every element is recognisable at a glance:
+
+- **Readable units** — each unit is a clear figure for its role: the villager wears a straw hat and carries a pick, swordsmen have helmets and shields, archers draw a bow, cavalry ride horses, and each civ-unique unit has its own distinguishing features.
+- **Random visual gender** — when created, each human unit is randomly male or female (50%). Women are shown with long hair. This is cosmetic only: it does not affect stats or gameplay.
+- **Distinct heroines** — if your hero is female she's recognisable by long hair, a golden circlet and a gown, while keeping her weapon. Choose the hero's gender in the lobby (Random / Male / Female).
+- **Team colour on buildings** — every building shows detail in its owner's colour (roofs, flags, banners, awnings, sails, domes) on top of the colour stripe at its base, so you can tell whose it is from afar.
+- **Animation and orientation** — units and animals face the direction they move; deer and sheep trot as they travel.
+- **Living terrain** — water has swell and coastal foam, caldera lava pulses, coasts have sandy beaches, and terrain zones blend smoothly into their neighbours.

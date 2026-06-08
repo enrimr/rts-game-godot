@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0] - 2026-06-08 - Visual Overhaul
+
+### Summary
+A full art pass: every unit, building, animal and the terrain were redesigned from cryptic colored polygons into clearly readable figures, and all human units now have a random visual gender. No gameplay rules changed — this release is purely visual quality, identification and polish.
+
+### Added
+- **Random visual gender for all human units** — every human unit (villager, infantry, cavalry, archers, unique units) is randomly male or female (50/50) when created, shown via long hair framing the head. Persisted across save/load. Ships, siege engines and animals are unaffected.
+- **Distinct heroine sprites** — female heroes now read as women: long hair, a golden circlet (they are queens/leaders) and a flared gown, while keeping their weapon and shield.
+- **Team-colour building accents** — buildings carry team-coloured detail (roofs, flags, banners, awnings, domes, sails) so each building's owner is identifiable at a glance.
+- **Ground shadows** under every unit and building, seating them on the terrain.
+- **Animated water shader** (layered swell, ripples, foam) for oceans and coasts.
+- **Terrain detail shader** (grain + tonal variation) so terrain isn't flat colour.
+- **Animated lava** (pulsing ember glow) on malpaís veins and caldera cracks/pools.
+- **Coastal oceans** with sandy, variable-width beaches and foam on Volcanic Coast and Desert Coast maps.
+- **Ambient lighting + vignette** per map type for atmosphere.
+- **Walking gait for animals** — deer and sheep legs swing in a trot while moving.
+
+### Changed
+- **All unit sprites redesigned** into recognisable figures: villager (straw-hat peasant with a pick), militia/man-at-arms/long swordsman (helmeted swordsmen with shields), pikeman (pike), scout/heavy scout/knight and unique cavalry (riders on horseback), archers (drawing a bow), the 8 civ-unique units, and the siege engines and ships (with hull detail, oars, sails).
+- **All building sprites upgraded** with stonework shading, ashlar lines, crenellations and thematic detail (forge glow, market stalls, temple/university domes, etc.).
+- **Animal sprites redesigned** — deer (with antlers) and sheep (woolly), converted from flat rectangles to figures.
+- **Unit & animal orientation** now follows the navigation destination, so units and animals face the way they travel (including on diagonal and near-vertical paths).
+- **Terrain boundaries softened** — zone edges fade into neighbours following the zone's real outline, and coastlines are rounded with naturally varying beach/foam width.
+
+### Fixed
+- **Jerky unit movement** — enabled 2D physics interpolation (render ran faster than the 60 Hz physics step with interpolation off, so sprites snapped between ticks). Movement is now smooth.
+
+---
+
 ## [0.5.0] - 2026-06-01 - Production-Ready Milestone
 
 ### Summary

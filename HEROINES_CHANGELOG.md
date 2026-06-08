@@ -202,7 +202,7 @@ func _convert_enemy_for_gold() -> void:
 
 ## Future Work (Out of Scope)
 
-- [ ] Visual differentiation (heroines use same sprites as heroes currently)
+- [x] Visual differentiation — heroines now have a distinct sprite (long hair, golden circlet, gown) so they read as female; male/female hero is also selectable in the lobby
 - [ ] Voice lines for heroines
 - [ ] Unique particle effects per ability
 - [ ] Balance tuning based on playtesting
