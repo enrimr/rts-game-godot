@@ -117,6 +117,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/ai/ai_naval.gd` | Naval training, galley patrol/retreat, transport assault, fish-trap construction |
 | **UI Systems** ||
 | `project/scripts/ui/hud_manager.gd` | CanvasLayer controller: action menu, selection panel, timer bars, tutorial; composes the HUD child components below |
+| `project/scripts/ui/hud/hud_resource_bar.gd` | `HudResourceBar` — top-bar resource counters + gatherer counts, population label, age label (self-wires to EventBus) |
 | `project/scripts/ui/hud/hud_weather.gd` | `HudWeather` — weather announcement banner + countdown pill (self-wires to WeatherManager) |
 | `project/scripts/ui/hud/hud_match_stats.gd` | `HudMatchStats` — match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays |
 | `project/scripts/ui/hud/hud_menus.gd` | `HudMenus` — in-game pause menu, settings panel, save-slot picker, surrender flow |

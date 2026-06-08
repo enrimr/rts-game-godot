@@ -99,6 +99,7 @@ The HUD is a `CanvasLayer` scene at `scenes/ui/hud/hud.tscn`, instanced as a chi
 
 | Component (`class_name`) | File | Responsibility |
 |---|---|---|
+| `HudResourceBar` | `scripts/ui/hud/hud_resource_bar.gd` | Top-bar resource counters + gatherer counts, population label (at-cap flash), age label; self-wires to EventBus |
 | `HudWeather` | `scripts/ui/hud/hud_weather.gd` | Weather announcement banner + countdown pill; self-wires to `WeatherManager` |
 | `HudMatchStats` | `scripts/ui/hud/hud_match_stats.gd` | Match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays |
 | `HudMenus` | `scripts/ui/hud/hud_menus.gd` | Pause menu, settings, save-slot picker, surrender (tutorial/dpad hooks injected as callables) |
