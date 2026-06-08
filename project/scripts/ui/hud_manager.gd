@@ -147,6 +147,7 @@ var _pause_menu: Control = null
 var _wonder_label: Label = null
 var _speed_buttons: Array[Button] = []
 var _hero_alert_overlay: ColorRect = null
+var _weather: HudWeather = null
 
 const ACTION_COLS: int = 5
 const ACTION_ROWS: int = 2
@@ -224,12 +225,8 @@ func _ready() -> void:
 
 	_build_dpad()
 	_build_speed_buttons()
-	WeatherManager.weather_changed.connect(_on_weather_changed)
-	WeatherManager.weather_cleared.connect(hide_weather)
-
-func _on_weather_changed(weather_id: String, _intensity: float) -> void:
-	if weather_id != "clear":
-		show_weather(weather_id)
+	_weather = HudWeather.new()
+	add_child(_weather)
 
 func _process(delta: float) -> void:
 	_idle_villager_check_timer += delta
@@ -299,7 +296,6 @@ func _process(delta: float) -> void:
 					var cd_secs: int = int(udata.hero_ability_cooldown * cd_frac)
 					btn.text = key_hint + ability_name + "\n" + tr("HERO_ABILITY_COOLDOWN") % cd_secs
 					btn.modulate = Color(0.65, 0.65, 0.65)
-	_update_weather_pill()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
@@ -3216,97 +3212,13 @@ func update_wonder_timer(seconds_left: float) -> void:
 	_wonder_label.text = _wonder_label.text.split(" — ")[0] + " — %d:%02d" % [mins, secs]
 
 # ── Weather HUD ───────────────────────────────────────────────────────────────
-
-# Banner: big centered announcement that fades out after a few seconds
-var _weather_banner: Label = null
-var _weather_banner_tween: Tween = null
-
-# Persistent pill: small label under the top bar showing name + countdown
-var _weather_pill: Label = null
-
-const WEATHER_LABELS: Dictionary = {
-	"calima":          "☁ Calima",
-	"atlantic_storm":  "⛈ Tormenta atlántica",
-	"sea_fog":         "🌫 Niebla marina",
-	"trade_winds":     "💨 Vientos alisios",
-	"volcanic_ash":    "🌋 Ceniza volcánica",
-}
-
-const WEATHER_COLORS: Dictionary = {
-	"calima":          Color(0.85, 0.62, 0.18),
-	"atlantic_storm":  Color(0.35, 0.55, 0.80),
-	"sea_fog":         Color(0.70, 0.80, 0.88),
-	"trade_winds":     Color(0.55, 0.80, 0.95),
-	"volcanic_ash":    Color(0.55, 0.40, 0.30),
-}
+# Delegated to HudWeather (scripts/ui/hud/hud_weather.gd). Kept as thin
+# forwarders for any external caller (game_world.gd) that still references them.
 
 func show_weather(weather_id: String) -> void:
-	var text: String = WEATHER_LABELS.get(weather_id, weather_id) as String
-	var color: Color = WEATHER_COLORS.get(weather_id, Color.WHITE) as Color
-
-	# CanvasLayer children must be positioned with absolute px coords, not anchors.
-	# Use the actual viewport width so centering works at any resolution.
-	var vp_w: float = get_viewport().get_visible_rect().size.x
-	# --- announcement banner: full-width, centred vertically at ~130 px from top ---
-	if not is_instance_valid(_weather_banner):
-		_weather_banner = Label.new()
-		_weather_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_weather_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		_weather_banner.add_theme_font_size_override("font_size", 36)
-		_weather_banner.modulate.a = 0.0
-		add_child(_weather_banner)
-	_weather_banner.position = Vector2(0.0, 110.0)
-	_weather_banner.size = Vector2(vp_w, 60.0)
-	_weather_banner.text = text
-	_weather_banner.add_theme_color_override("font_color", color)
-	if is_instance_valid(_weather_banner_tween):
-		_weather_banner_tween.kill()
-	_weather_banner_tween = create_tween()
-	_weather_banner_tween.tween_property(_weather_banner, "modulate:a", 1.0, 0.5)
-	_weather_banner_tween.tween_interval(3.0)
-	_weather_banner_tween.tween_property(_weather_banner, "modulate:a", 0.0, 1.2)
-
-	# --- persistent pill: just below the top bar (~44 px) ---
-	if not is_instance_valid(_weather_pill):
-		_weather_pill = Label.new()
-		_weather_pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_weather_pill.add_theme_font_size_override("font_size", 15)
-		_weather_pill.modulate.a = 0.0
-		add_child(_weather_pill)
-	_weather_pill.position = Vector2(0.0, 44.0)
-	_weather_pill.size = Vector2(vp_w, 22.0)
-	_weather_pill.add_theme_color_override("font_color", color)
-	var tw: Tween = create_tween()
-	tw.tween_property(_weather_pill, "modulate:a", 1.0, 0.8)
+	if is_instance_valid(_weather):
+		_weather.show_weather(weather_id)
 
 func hide_weather() -> void:
-	# Banner: kill any pending tween and hide immediately (it may already be fading)
-	if is_instance_valid(_weather_banner):
-		if is_instance_valid(_weather_banner_tween):
-			_weather_banner_tween.kill()
-		var tw_b: Tween = create_tween()
-		tw_b.tween_property(_weather_banner, "modulate:a", 0.0, 0.6)
-		tw_b.tween_callback(func() -> void:
-			if is_instance_valid(_weather_banner):
-				_weather_banner.queue_free()
-				_weather_banner = null)
-
-	# Pill: fade out then free
-	if is_instance_valid(_weather_pill):
-		var tw_p: Tween = create_tween()
-		tw_p.tween_property(_weather_pill, "modulate:a", 0.0, 1.5)
-		tw_p.tween_callback(func() -> void:
-			if is_instance_valid(_weather_pill):
-				_weather_pill.queue_free()
-				_weather_pill = null)
-
-func _update_weather_pill() -> void:
-	if not is_instance_valid(_weather_pill):
-		return
-	var secs: float = WeatherManager.get_remaining_seconds()
-	if secs <= 0.0:
-		return
-	var mins: int = int(secs) / 60
-	var s: int = int(secs) % 60
-	var name_text: String = WEATHER_LABELS.get(WeatherManager.get_weather_id(), "") as String
-	_weather_pill.text = "%s  %d:%02d" % [name_text, mins, s]
+	if is_instance_valid(_weather):
+		_weather.hide_weather()

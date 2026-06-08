@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calima: Flames of the Atlantic — Análisis Integral · 2026-06-08 10:16</title>
+<style>
+  :root{
+    --ink:#13202b; --paper:#f4efe6; --card:#fffdf8; --line:#d9cfbd;
+    --sea:#0d5c75; --sea2:#11829e; --sun:#e8a23d; --lava:#c0392b;
+    --grass:#3f8a52; --muted:#6a7480; --shadow:rgba(19,32,43,.12);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Helvetica,Arial,sans-serif;background:var(--paper);color:var(--ink);line-height:1.6}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px 80px}
+
+  /* ---- Cover ---- */
+  .cover{position:relative;overflow:hidden;color:#fff;
+    background:linear-gradient(135deg,#072c3a 0%,var(--sea) 45%,var(--sea2) 100%);
+    padding:54px 20px 60px;text-align:center;border-bottom:6px solid var(--sun)}
+  .cover::after{content:"";position:absolute;inset:0;opacity:.10;
+    background:radial-gradient(circle at 20% 30%,#fff 0 2px,transparent 2px),
+               radial-gradient(circle at 70% 60%,#fff 0 2px,transparent 2px),
+               radial-gradient(circle at 45% 80%,#fff 0 1px,transparent 1px);
+    background-size:120px 120px,90px 90px,60px 60px}
+  .kicker{position:relative;letter-spacing:.32em;font-size:12px;text-transform:uppercase;color:var(--sun);font-weight:700}
+  .cover h1{position:relative;margin:.25em 0 .1em;font-size:clamp(30px,6vw,54px);line-height:1.05;text-shadow:0 2px 10px rgba(0,0,0,.35)}
+  .cover .sub{position:relative;font-style:italic;font-size:18px;opacity:.92}
+  .stamp{position:relative;display:inline-block;margin-top:18px;padding:7px 16px;border:1px solid rgba(255,255,255,.45);
+    border-radius:30px;font-size:13px;letter-spacing:.04em;background:rgba(0,0,0,.18)}
+  .score-badge{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    width:130px;height:130px;margin:26px auto 0;border-radius:50%;
+    background:var(--sun);color:#3a2406;box-shadow:0 8px 24px rgba(0,0,0,.35);border:4px solid #fff}
+  .score-badge b{font-size:46px;line-height:1}
+  .score-badge span{font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+
+  /* ---- Pull quote ---- */
+  .pull{background:var(--ink);color:#f4efe6;font-style:italic;font-size:20px;text-align:center;
+    padding:30px 26px;margin:0;border-bottom:3px solid var(--sun)}
+  .pull b{color:var(--sun);font-style:normal}
+
+  /* ---- Nav ---- */
+  nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);
+    display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;box-shadow:0 2px 8px var(--shadow)}
+  nav a{font-size:12.5px;text-decoration:none;color:var(--sea);padding:5px 10px;border-radius:6px;font-weight:600}
+  nav a:hover{background:#e9f1f3}
+
+  /* ---- Sections ---- */
+  section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px 30px;margin-top:26px;box-shadow:0 4px 14px var(--shadow)}
+  .sec-num{display:inline-block;background:var(--sea);color:#fff;width:30px;height:30px;border-radius:8px;text-align:center;line-height:30px;font-weight:700;margin-right:10px}
+  h2{font-size:25px;margin:.1em 0 .5em;display:flex;align-items:center}
+  h3{font-size:17px;margin:1.4em 0 .3em;color:var(--sea)}
+  p{margin:.6em 0}
+  ul{margin:.5em 0;padding-left:22px}
+  li{margin:.3em 0}
+  code{background:#eee6d6;padding:1px 6px;border-radius:4px;font-family:"SFMono-Regular",Consolas,monospace;font-size:13px;color:#7a4b12}
+
+  /* ---- Score bars ---- */
+  .bars{display:grid;gap:12px;margin:8px 0}
+  .bar-row{display:grid;grid-template-columns:160px 1fr 48px;align-items:center;gap:12px}
+  .bar-row .lbl{font-weight:600;font-size:14px}
+  .track{height:14px;background:#e7ddcb;border-radius:8px;overflow:hidden}
+  .fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--sea2),var(--grass))}
+  .fill.warn{background:linear-gradient(90deg,var(--sun),var(--lava))}
+  .bar-row .val{font-weight:700;text-align:right}
+
+  /* ---- Callouts ---- */
+  .box{border-radius:10px;padding:14px 18px;margin:14px 0;border-left:5px solid}
+  .problem{background:#fcecec;border-color:var(--lava)}
+  .improve{background:#eaf6ee;border-color:var(--grass)}
+  .box .tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:inline-block;margin-bottom:4px}
+  .problem .tag{color:var(--lava)}
+  .improve .tag{color:var(--grass)}
+  .box h4{margin:.1em 0 .4em;font-size:15px}
+
+  /* ---- Tables ---- */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef3f4;color:var(--sea);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tr:hover td{background:#faf6ee}
+  .sev{font-weight:700;padding:2px 8px;border-radius:5px;font-size:11px;color:#fff;white-space:nowrap}
+  .hi{background:var(--lava)} .md{background:var(--sun);color:#3a2406} .lo{background:#7f8c8d} .ok{background:var(--grass)}
+  .stars{color:var(--sun);letter-spacing:1px}
+
+  /* ---- Stat strip ---- */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;margin:6px 0 4px}
+  .stat{background:#eef3f4;border-radius:10px;padding:14px;text-align:center}
+  .stat b{display:block;font-size:26px;color:var(--sea)}
+  .stat span{font-size:12px;color:var(--muted)}
+
+  /* ---- Roadmap timeline ---- */
+  .road{display:grid;gap:14px}
+  .lane{border-radius:10px;padding:16px 18px;border:1px solid var(--line)}
+  .lane.short{background:#eaf6ee} .lane.mid{background:#fdf6e6} .lane.long{background:#fcecec}
+  .lane h4{margin:0 0 .4em;display:flex;align-items:center;gap:8px}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .dot.short{background:var(--grass)} .dot.mid{background:var(--sun)} .dot.long{background:var(--lava)}
+
+  footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:40px}
+  @media print{nav{display:none}body{background:#fff}section{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="kicker">Análisis de Videojuego · Edición Especial</div>
+  <h1>Calima: Flames of the Atlantic</h1>
+  <div class="sub">RTS atlántico · Godot 4 · ~23.000 líneas de GDScript bajo el microscopio</div>
+  <div class="stamp">📅 Análisis realizado el <strong>2026-06-08 a las 10:16</strong></div>
+  <div class="score-badge"><b>78</b><span>/ 100</span></div>
+</header>
+
+<p class="pull">"Un RTS atlántico con identidad propia enterrada bajo tres <b>god objects</b>. El clima y los héroes son oro puro; la arquitectura es la deuda que decide si este juego escala o se ahoga."</p>
+
+<nav>
+  <a href="#s1">1 · Identidad</a>
+  <a href="#s2">2 · Mercado</a>
+  <a href="#s3">3 · Arquitectura</a>
+  <a href="#s4">4 · Diseño↔Código</a>
+  <a href="#s5">5 · Mejoras</a>
+  <a href="#s6">6 · Comercial</a>
+  <a href="#s7">7 · Roadmap</a>
+  <a href="#verdict">★ Veredicto</a>
+</nav>
+
+<div class="wrap">
+
+  <div class="stats">
+    <div class="stat"><b>92</b><span>scripts .gd</span></div>
+    <div class="stat"><b>23k</b><span>líneas GDScript</span></div>
+    <div class="stat"><b>49</b><span>escenas .tscn</span></div>
+    <div class="stat"><b>87</b><span>resources .tres</span></div>
+    <div class="stat"><b>8</b><span>civilizaciones</span></div>
+    <div class="stat"><b>16</b><span>héroes</span></div>
+  </div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="sec-num">1</span> Identidad y propuesta de valor</h2>
+    <p><strong>El gancho existe y es real.</strong> Calima no es "otro clon de AoE2". Su ADN vive en dos sistemas que ningún indie del género combina.</p>
+
+    <h3>🌪️ El clima como mecánica jugable, no decorativa</h3>
+    <p><code>weather_manager.gd</code> implementa cinco fenómenos canarios con modificadores <em>medibles</em>:</p>
+    <table>
+      <tr><th>Clima</th><th>Efecto jugable</th></tr>
+      <tr><td><b>Calima</b></td><td>−40% visión, −15% velocidad, −20% recolección (el más frecuente)</td></tr>
+      <tr><td><b>Tormenta Atlántica</b></td><td>−50% pesca (¡puede matar de hambre a una civ naval!), deriva de proyectiles ±30px</td></tr>
+      <tr><td><b>Niebla Marina</b></td><td>Cloaking costero real si intensidad ≥0.5 → <b>stealth dinámico gratuito</b></td></tr>
+      <tr><td><b>Vientos Alisios</b></td><td>Bono/penalización <b>direccional</b> naval (−20% a +20%) → micro naval emergente</td></tr>
+      <tr><td><b>Ceniza Volcánica</b></td><td>2 HP/s de daño a <b>todos</b> los edificios → obliga a reubicar la base</td></tr>
+    </table>
+    <p>El <em>ramping</em> de 10s de entrada/salida crea <b>ventanas de timing</b> para jugadas. Esto es diseño sistémico de verdad, no un filtro de pantalla.</p>
+
+    <h3>⚔️ 16 héroes con variante de género — todos implementados</h3>
+    <p><code>hero_unit.gd</code> (823 líneas): Bencomo, Dácil, Doramas, Drake, Don Quijote, Cleito, Artaxerax… auras, conversión de enemigos a mitad de partida, dash de 400px, sniping, oleadas de marea curativas. Verificado: <b>no son stubs</b>, incluyen gestión de cooldown y limpieza de buffs al morir. La elección de género <b>cambia la habilidad</b>.</p>
+
+    <h3>Sensación que transmite</h3>
+    <p>Un RTS reactivo e impredecible anclado en un imaginario fresquísimo: <b>Canarias prehispánica + Atlántida + conquista castellana</b>. Guanches que cruzan el malpaís volcánico, Atlantes anfibios que cruzan el océano, Fenicios con Mercado desde la Edad Oscura. <b>El tema está tejido en la mecánica, no pegado encima</b> — lo más difícil de lograr, y aquí está conseguido.</p>
+
+    <div class="box improve">
+      <span class="tag">Hooks virales / streamer-friendly</span>
+      <ul style="margin-bottom:0">
+        <li>Niebla marina = emboscada invisible costera → clip viral inmediato.</li>
+        <li>Vientos alisios volteando una batalla naval → momento comentable.</li>
+        <li>Don Quijote cargando 400px a través de un ejército → GIF de tráiler.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="sec-num">2</span> Diferenciación frente al mercado</h2>
+    <table>
+      <tr><th>Referente</th><th>Qué hace Calima distinto</th></tr>
+      <tr><td><b>AoE2 / AoE4</b></td><td>Clima con stats reales + traversal de terreno asimétrico por civ + héroes con habilidad activa</td></tr>
+      <tr><td><b>Northgard / They Are Billions</b></td><td>Northgard tiene estaciones; Calima añade clima <b>direccional</b> y <b>localizado</b> (ceniza central, niebla costera)</td></tr>
+      <tr><td><b>0 A.D.</b> (el indie más cercano)</td><td>0 A.D. es histórico-genérico; Calima apuesta por un <b>setting de nicho con gancho cultural</b> (mitología guanche/atlante)</td></tr>
+    </table>
+    <p><strong>Nicho que puede poseer:</strong> <em>"RTS atlántico de nicho cultural con clima sistémico"</em>. No existe un AoE ambientado en Canarias y la Atlántida. Es <b>wishlist-bait</b> para el público hispano y para el subgénero "RTS histórico alternativo".</p>
+    <div class="box problem">
+      <span class="tag">Potencial desaprovechado</span>
+      <p style="margin:0">El clima no tiene <b>bonus asimétricos por civilización</b> (un "Atlantes ignora la tormenta" sería un combo civ×clima brutal y prácticamente gratis). El setting vive solo en los nombres: <b>no hay campaña ni lore in-game</b> que lo explote.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="sec-num">3</span> Código fuente y arquitectura</h2>
+    <p><strong>Veredicto técnico:</strong> base <b>disciplinada y data-driven</b>, pero con <b>tres god objects</b> que son el mayor riesgo de evolución.</p>
+
+    <div class="box problem">
+      <span class="tag">Problema · Alta</span>
+      <h4><code>hud_manager.gd</code> — 3.312 líneas, 128 funciones, 12 arrays de acciones hardcodeados</h4>
+      <p><b>Por qué importa:</b> mezcla rendering, estado modal, colocación de edificios, timers, atajos y navegación DPad. <b>Impacto:</b> cada nueva unidad/edificio toca este archivo — cuello de botella de desarrollo. <b>Solución:</b> dividir en <code>ActionMenuManager</code>, <code>ResourceDisplayPanel</code>, <code>TrainQueueUI</code>, <code>BuildingPlacementOverlay</code>, <code>TimerDisplayManager</code>; mover las arrays (<code>hud_manager.gd:28-120</code>) a <code>.tres</code>/JSON → habilita modding.</p>
+    </div>
+
+    <div class="box problem">
+      <span class="tag">Problema · Alta</span>
+      <h4>IA acoplada al árbol de escena</h4>
+      <p><code>ai_player.gd:26-29</code> referencia directa a <code>units_layer</code>/<code>buildings_layer</code>; 18+ <code>get_children()</code> directos en <code>ai_military.gd</code>, <code>ai_construction.gd</code>, <code>ai_naval.gd</code>. <b>Impacto:</b> reestructurar capas rompe toda la IA; cero abstracción. <b>Solución:</b> servicio <code>WorldQuery</code> inyectado (<code>get_own_units()</code>, <code>get_enemy_buildings()</code>, <code>find_nearest_of_type()</code>).</p>
+    </div>
+
+    <div class="box problem">
+      <span class="tag">Problema · Media-Alta</span>
+      <h4><code>map_generator.gd</code> (2.610 l) y <code>game_world.gd</code> (1.973 l)</h4>
+      <p>Terreno + shaders + spatial hash + spawn mezclados; selección + colocación + cámara + victoria mezclados. <b>Solución:</b> extraer <code>TerrainPainter</code>, <code>EntityPlacer</code>, <code>MaterialManager</code>, <code>CameraController</code>, <code>UnitSelectionManager</code>.</p>
+    </div>
+
+    <h3>Tabla resumen de hallazgos</h3>
+    <table>
+      <tr><th>Hallazgo</th><th>Severidad</th><th>Ubicación</th></tr>
+      <tr><td>God object HUD (rendering + estado + timers)</td><td><span class="sev hi">ALTA</span></td><td>hud_manager.gd:1-3312</td></tr>
+      <tr><td>IA acoplada a capas de escena</td><td><span class="sev hi">ALTA</span></td><td>ai_military.gd:36-531</td></tr>
+      <tr><td>MapGenerator multi-responsabilidad</td><td><span class="sev md">MEDIA-ALTA</span></td><td>map_generator.gd:1-2610</td></tr>
+      <tr><td>Minimap itera todas las unidades cada frame</td><td><span class="sev md">MEDIA</span></td><td>minimap.gd:42-69</td></tr>
+      <tr><td>~80 líneas duplicadas de combate (Militia/Pikeman)</td><td><span class="sev md">MEDIA</span></td><td>militia.gd vs pikeman.gd</td></tr>
+      <tr><td>UI→World vía <code>get_nodes_in_group</code></td><td><span class="sev md">MEDIA</span></td><td>hud_manager.gd:246,2032…</td></tr>
+      <tr><td>Cobertura de tests ~9% (sin combate/recolección)</td><td><span class="sev md">MEDIA</span></td><td>tests/unit/ (8 archivos)</td></tr>
+      <tr><td>EventBus consistente (59 señales, 226 refs)</td><td><span class="sev ok">BIEN</span></td><td>event_bus.gd</td></tr>
+      <tr><td>Stats data-driven (unidades/edificios)</td><td><span class="sev ok">BIEN</span></td><td>unit_resource.gd</td></tr>
+      <tr><td>Deuda mínima (0 TODO/FIXME/HACK)</td><td><span class="sev ok">BIEN</span></td><td>codebase</td></tr>
+    </table>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="sec-num">4</span> Relación diseño ↔ código</h2>
+    <p>Sí, la arquitectura limita el diseño <em>hoy</em>:</p>
+    <ul>
+      <li><b>El HUD hardcodeado frena el contenido.</b> Añadir una unidad obliga a editar arrays dentro de 3.312 líneas. Un sistema data-driven de acciones desbloquearía prototipado rápido de unidades y modding.</li>
+      <li><b>La IA acoplada bloquea la iteración táctica.</b> Probar nuevos comportamientos significa pelearse con <code>get_children()</code>. Un <code>WorldQuery</code> + comportamiento data-driven permitiría tunear la IA sin tocar el motor.</li>
+      <li><b>El clima está infrautilizado por falta de hooks de civ.</b> La API de modificadores ya existe; falta un punto de enganche en <code>civ_bonus_manager.gd</code> para "esta civ ignora/aprovecha X clima". Bajo coste, alto impacto.</li>
+      <li><b>Sin command pattern</b> → no hay base para replays, undo ni multijugador determinista. Es la deuda que decide el techo del proyecto.</li>
+    </ul>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="sec-num">5</span> Qué añadiría para llevarlo a otro nivel</h2>
+    <table>
+      <tr><th>Propuesta</th><th>Beneficio</th><th>Compl.</th><th>Impacto</th><th>Viab.</th></tr>
+      <tr><td><b>Combos Civ × Clima</b> (Atlantes inmune a tormenta, Guanches +recolección en calima)</td><td>Combina los dos sistemas estrella → identidad única</td><td>Baja</td><td class="stars">★★★★</td><td>Alta</td></tr>
+      <tr><td><b>Arreglar bonus dunas Mahos</b> (hoy cosmético: dunas ya son 0.8)</td><td>Justicia de diseño, civ deja de ser trampa</td><td>Trivial</td><td class="stars">★★★</td><td>Alta</td></tr>
+      <tr><td><b>Implementar/retirar Wonder Victory</b> (etiquetada, sin code path)</td><td>Elimina feature muerta del lobby</td><td>Media</td><td class="stars">★★</td><td>Alta</td></tr>
+      <tr><td><b>Acciones data-driven (JSON/.tres)</b></td><td>Desbloquea modding + prototipado</td><td>Media</td><td class="stars">★★★★</td><td>Media</td></tr>
+      <tr><td><b>Riscos = bono de rango / Caldera = stone</b> (comentado, no implementado)</td><td>Terreno se vuelve decisión táctica</td><td>Media</td><td class="stars">★★★</td><td>Alta</td></tr>
+      <tr><td><b>Mini-campaña narrativa</b> (conquista de Canarias)</td><td>Contexto al setting, retención, material de prensa</td><td>Alta</td><td class="stars">★★★★★</td><td>Media</td></tr>
+      <tr><td><b>Accesibilidad</b> (daltonismo en team colors, escalado UI, remapeo)</td><td>Amplía público, requisito Steam moderno</td><td>Media</td><td class="stars">★★★</td><td>Alta</td></tr>
+      <tr><td><b>Replay system</b> (sobre command pattern)</td><td>Streamer-friendly, esports-lite, debugging</td><td>Alta</td><td class="stars">★★★★</td><td>Media</td></tr>
+    </table>
+    <div class="box improve">
+      <span class="tag">Sistema emergente a un paso</span>
+      <p style="margin:0">Clima direccional + traversal anfibio Atlante + niebla costera = <b>metajuego de control de mapa por clima</b>. Súbelo con un clima <em>parcialmente predecible</em> (parte meteorológico en el minimapa) para que sea estrategia y no lotería.</p>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="sec-num">6</span> Potencial comercial</h2>
+    <ul>
+      <li><b>Target:</b> fans de AoE2/0 A.D. + público hispano atraído por el setting canario/atlante + nicho "RTS histórico alternativo".</li>
+      <li><b>Steam:</b> muy viable como indie de nicho con gancho cultural; el setting es el diferenciador de la página de tienda.</li>
+      <li><b>Capacidad viral:</b> alta en clips (niebla-emboscada, vientos que voltean batallas, carga de Don Quijote).</li>
+      <li><b>Retención:</b> hoy limitada — solo skirmish vs IA. Campaña + multijugador (M7) son las palancas reales.</li>
+    </ul>
+    <div class="box improve">
+      <span class="tag">Hooks de tráiler</span>
+      <ol style="margin:0">
+        <li>Tormenta atlántica hundiendo una economía pesquera.</li>
+        <li>Ejército Atlante emergiendo del océano.</li>
+        <li>Cleito lanzando la oleada de marea curativa.</li>
+        <li>Niebla marina y una emboscada invisible.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="sec-num">7</span> Roadmap estratégico</h2>
+    <div class="road">
+      <div class="lane short">
+        <h4><span class="dot short"></span> Corto plazo — Quick wins (alto ROI)</h4>
+        <ul style="margin-bottom:0">
+          <li>Arreglar bonus dunas Mahos + implementar/retirar Wonder Victory.</li>
+          <li><b>Combos Civ × Clima</b> — el combo identitario más barato del proyecto.</li>
+          <li>Minimap event-driven (fix de rendimiento real).</li>
+          <li>Tests de combate y recolección (el agujero más peligroso).</li>
+        </ul>
+      </div>
+      <div class="lane mid">
+        <h4><span class="dot mid"></span> Medio plazo</h4>
+        <ul style="margin-bottom:0">
+          <li>Dividir <code>hud_manager.gd</code> en 5 managers + acciones data-driven.</li>
+          <li>Servicio <code>WorldQuery</code> para desacoplar la IA.</li>
+          <li>Extraer <code>MeleeCombatUnit</code>; terreno táctico (riscos/caldera).</li>
+          <li>Mini-campaña narrativa + accesibilidad.</li>
+        </ul>
+      </div>
+      <div class="lane long">
+        <h4><span class="dot long"></span> Largo plazo</h4>
+        <ul style="margin-bottom:0">
+          <li>Command pattern → replays + base para multijugador determinista (M7).</li>
+          <li>Refactor de <code>map_generator</code>/<code>game_world</code>; soporte de modding.</li>
+          <li>ECS-lite si se superan ~500 unidades simultáneas.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Verdict -->
+  <section id="verdict">
+    <h2><span class="sec-num">★</span> Veredicto del Game Reviewer</h2>
+    <div class="bars">
+      <div class="bar-row"><span class="lbl">Originalidad / Identidad</span><div class="track"><div class="fill" style="width:88%"></div></div><span class="val">88</span></div>
+      <div class="bar-row"><span class="lbl">Diseño jugable</span><div class="track"><div class="fill" style="width:78%"></div></div><span class="val">78</span></div>
+      <div class="bar-row"><span class="lbl">Técnica / Arquitectura</span><div class="track"><div class="fill warn" style="width:68%"></div></div><span class="val">68</span></div>
+      <div class="bar-row"><span class="lbl">Potencial comercial</span><div class="track"><div class="fill" style="width:80%"></div></div><span class="val">80</span></div>
+      <div class="bar-row"><span class="lbl"><b>GLOBAL</b></span><div class="track"><div class="fill" style="width:78%;background:linear-gradient(90deg,var(--sea),var(--sun))"></div></div><span class="val">78</span></div>
+    </div>
+    <p class="pull" style="border-radius:10px;margin-top:18px;font-size:18px">"Calima tiene el alma de un indie sobresaliente: clima sistémico, héroes legendarios y un setting que nadie más ha tocado. Lo que lo separa del notable alto es <b>fontanería</b> — tres god objects y una IA pegada al árbol de escena. Arregla la arquitectura y enchufa el clima a las civilizaciones, y tienes un RTS de nicho con techo de culto."</p>
+  </section>
+
+  <footer>
+    Análisis integral generado por el agente <b>game-reviewer</b> · Calima: Flames of the Atlantic · 2026-06-08 10:16<br>
+    Auditoría sobre 92 scripts / ~23.000 líneas GDScript · Godot 4 · evidencia verificada contra el código fuente.
+  </footer>
+
+</div>
+</body>
+</html>
