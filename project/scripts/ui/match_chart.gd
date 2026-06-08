@@ -85,11 +85,26 @@ func _max_value() -> float:
 	return mv
 
 func _draw_band(idx: int, n: int, pw: float, ph: float, col: Color) -> void:
-	if n < 2 or idx < 0 or idx >= n:
+	if n < 1 or idx < 0 or idx >= n:
 		return
-	var slot: float = pw / maxf(n - 1, 1)
-	var cx: float = _PL + idx * slot
-	draw_rect(Rect2(cx - slot * 0.5, _PT, slot, ph), col)
+	# Match the band to the same x grid as the data it highlights, then clamp to
+	# the plot area so the first/last band never spills past the time axis.
+	var x0: float
+	var x1: float
+	if mode == Mode.BARS:
+		var slot: float = pw / n
+		x0 = _PL + idx * slot
+		x1 = x0 + slot
+	else:
+		var slot: float = pw / maxf(n - 1, 1)
+		var cx: float = _PL + idx * slot
+		x0 = cx - slot * 0.5
+		x1 = cx + slot * 0.5
+	x0 = maxf(x0, _PL)
+	x1 = minf(x1, _PL + pw)
+	if x1 <= x0:
+		return
+	draw_rect(Rect2(x0, _PT, x1 - x0, ph), col)
 
 func _draw_polyline(series: Array, col: Color, pw: float, ph: float, max_v: float, steps: bool) -> void:
 	var sn: int = series.size()
