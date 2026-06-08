@@ -116,7 +116,12 @@ docs/             ← Architecture and design documentation
 | `project/scripts/ai/ai_military.gd` | Military training, research priority, combat targeting, base defense, aggression escalation |
 | `project/scripts/ai/ai_naval.gd` | Naval training, galley patrol/retreat, transport assault, fish-trap construction |
 | **UI Systems** ||
-| `project/scripts/ui/hud_manager.gd` | CanvasLayer controller: drives all HUD child nodes |
+| `project/scripts/ui/hud_manager.gd` | CanvasLayer controller: action menu, selection panel, timer bars, tutorial; composes the HUD child components below |
+| `project/scripts/ui/hud/hud_weather.gd` | `HudWeather` — weather announcement banner + countdown pill (self-wires to WeatherManager) |
+| `project/scripts/ui/hud/hud_match_stats.gd` | `HudMatchStats` — match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays |
+| `project/scripts/ui/hud/hud_menus.gd` | `HudMenus` — in-game pause menu, settings panel, save-slot picker, surrender flow |
+| `project/scripts/ui/hud/hud_controls.gd` | `HudControls` — game-speed buttons, camera dpad (with panning), idle-villager/idle-military cycle buttons |
+| `project/scripts/ui/hud/hud_style.gd` | `HudStyle` — shared StyleBoxFlat panel/button factory used by HUD components |
 | `project/scripts/ui/resource_display.gd` | HBoxContainer showing one resource icon + amount |
 | `project/scripts/ui/unit_portrait.gd` | PanelContainer showing unit name + HP bar in selection grid |
 | `project/scripts/ui/weather_overlay.gd` | Screen-space visual effects (rain, dust, ash, fog) driven by WeatherManager |
