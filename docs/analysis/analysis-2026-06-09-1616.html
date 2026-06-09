@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calima: Flames of the Atlantic — Análisis · 2026-06-09 16:16</title>
+<style>
+  /* ── Theming: claro por defecto, oscuro con [data-theme="dark"] ───────── */
+  :root{
+    --bg:#f7f5f0; --surface:#ffffff; --surface-2:#f1ede3; --tech-surface:#eef1f3;
+    --ink:#20242a; --ink-soft:#4c535c; --muted:#838b95; --line:#e4ded2; --rule:#d3cab6;
+    --accent:#0f7e99;        /* azul mar - acento principal / parte tecnica */
+    --accent-warm:#c9762a;   /* sol - acento editorial / parte gamer */
+    --good:#3c8350; --bad:#c0392b; --warn:#c9762a; --info:#0f7e99;
+    --code-bg:#f0ede5; --code-ink:#9a5b1e;
+    --shadow:rgba(20,24,30,.08); --shadow-2:rgba(20,24,30,.14);
+    --hero-1:#0a3a4a; --hero-2:#0f7e99; --hero-ink:#ffffff;
+  }
+  [data-theme="dark"]{
+    --bg:#11151a; --surface:#1a2027; --surface-2:#222a33; --tech-surface:#161d24;
+    --ink:#e7ecf1; --ink-soft:#b6bfc9; --muted:#7e8a96; --line:#2a333d; --rule:#33404c;
+    --accent:#3bb6d6; --accent-warm:#e6a24d;
+    --good:#5cb377; --bad:#e0685a; --warn:#e6a24d; --info:#3bb6d6;
+    --code-bg:#0c1217; --code-ink:#e6b873;
+    --shadow:rgba(0,0,0,.32); --shadow-2:rgba(0,0,0,.45);
+    --hero-1:#06222c; --hero-2:#0c4a5c; --hero-ink:#eaf6fa;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:Georgia,"Iowan Old Style","Times New Roman",serif;line-height:1.62;
+    transition:background .25s,color .25s}
+  .sheet{max-width:1060px;margin:0 auto;background:var(--surface);
+    box-shadow:0 0 0 1px var(--line),0 20px 60px var(--shadow)}
+  .pad{padding:0 clamp(20px,5vw,68px)}
+  a{color:var(--accent)}
+
+  /* ── Reading progress bar ─────────────────────────────────────────────── */
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:50;
+    background:linear-gradient(90deg,var(--accent),var(--accent-warm));transition:width .1s}
+
+  /* ── Theme toggle ─────────────────────────────────────────────────────── */
+  #theme-toggle{position:fixed;top:14px;right:16px;z-index:60;width:42px;height:42px;
+    border-radius:50%;border:1px solid var(--rule);background:var(--surface);color:var(--ink);
+    cursor:pointer;font-size:18px;line-height:1;box-shadow:0 4px 14px var(--shadow-2);
+    display:flex;align-items:center;justify-content:center;transition:background .2s,transform .15s}
+  #theme-toggle:hover{transform:scale(1.08)}
+
+  /* ── Masthead ─────────────────────────────────────────────────────────── */
+  .masthead{display:flex;justify-content:space-between;align-items:baseline;
+    padding:14px clamp(20px,5vw,68px);border-bottom:2px solid var(--ink);
+    font-family:"Helvetica Neue",Arial,sans-serif}
+  .mag-name{font-weight:800;font-size:19px;text-transform:uppercase;letter-spacing:.18em}
+  .mag-name span{color:var(--accent-warm)}
+  .mag-meta{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.16em}
+
+  /* ── Cover ────────────────────────────────────────────────────────────── */
+  .cover{position:relative;color:var(--hero-ink);overflow:hidden;
+    background:linear-gradient(145deg,var(--hero-1),var(--hero-2));
+    padding:48px clamp(20px,5vw,68px) 54px}
+  .cover .rubric{font-family:"Helvetica Neue",Arial,sans-serif;text-transform:uppercase;
+    letter-spacing:.32em;font-size:12px;font-weight:700;color:var(--accent-warm)}
+  [data-theme="dark"] .cover .rubric{color:var(--sunlight,#e6a24d)}
+  .cover h1{margin:.16em 0 .14em;font-size:clamp(34px,6.4vw,60px);line-height:1.03;
+    font-weight:800;letter-spacing:-.015em}
+  .cover .tagline{font-style:italic;font-size:clamp(16px,2.3vw,20px);opacity:.93;max-width:60ch}
+  .cover-badge{position:absolute;top:44px;right:clamp(20px,5vw,68px);
+    width:120px;height:120px;border-radius:50%;border:4px solid #fff;
+    background:radial-gradient(circle at 35% 30%,#f3c873,var(--accent-warm));
+    color:#3a2406;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    box-shadow:0 10px 28px rgba(0,0,0,.35);font-family:"Helvetica Neue",Arial,sans-serif}
+  .cover-badge b{font-size:44px;line-height:.9;font-weight:800}
+  .cover-badge small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
+  .cover-badge em{font-size:11px;font-style:normal;margin-top:3px;background:rgba(0,0,0,.2);
+    color:#fff;padding:1px 8px;border-radius:10px}
+  @media(max-width:600px){.cover-badge{position:static;margin:20px auto 0}}
+
+  /* ── Nav ──────────────────────────────────────────────────────────────── */
+  nav{position:sticky;top:0;z-index:40;background:var(--surface);border-bottom:1px solid var(--rule);
+    display:flex;flex-wrap:wrap;gap:3px;padding:9px clamp(14px,4vw,44px);
+    font-family:"Helvetica Neue",Arial,sans-serif}
+  nav a{font-size:12px;text-decoration:none;color:var(--ink-soft);padding:5px 11px;
+    border-radius:6px;font-weight:600;transition:background .15s}
+  nav a:hover{background:var(--surface-2)}
+  nav a.key{color:var(--accent-warm)}
+
+  /* ── Part banners ─────────────────────────────────────────────────────── */
+  .part{display:flex;align-items:center;gap:16px;
+    padding:34px clamp(20px,5vw,68px) 4px;font-family:"Helvetica Neue",Arial,sans-serif}
+  .part .num{font-size:50px;font-weight:800;color:var(--line);line-height:.8}
+  .part .kick{font-size:11px;letter-spacing:.28em;text-transform:uppercase;font-weight:700}
+  .part.gamer .kick{color:var(--accent-warm)}
+  .part.tech  .kick{color:var(--accent)}
+  .part h2{margin:.04em 0 0;font-size:clamp(26px,4vw,38px);font-weight:800;
+    color:var(--ink);font-family:Georgia,serif;letter-spacing:-.01em}
+
+  /* ── Editorial body ───────────────────────────────────────────────────── */
+  .lede{font-family:"Helvetica Neue",Arial,sans-serif;font-size:clamp(17px,2.2vw,20px);
+    line-height:1.5;color:var(--ink-soft);font-weight:500;border-left:4px solid var(--accent-warm);
+    padding-left:18px;margin:18px 0 26px}
+  .cols{column-count:2;column-gap:36px;column-rule:1px solid var(--line);
+    margin:0 0 8px;font-size:16.5px;text-align:justify;hyphens:auto}
+  @media(max-width:700px){.cols{column-count:1}}
+  .cols p{margin:0 0 1em}
+  .dropcap::first-letter{float:left;font-size:3.3em;line-height:.74;font-weight:800;
+    padding:6px 9px 0 0;color:var(--accent-warm);font-family:Georgia,serif}
+  h3.head{font-family:"Helvetica Neue",Arial,sans-serif;font-size:13px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--accent);margin:30px 0 8px;padding-bottom:5px;
+    border-bottom:1px solid var(--rule)}
+  .pull{font-family:Georgia,serif;font-style:italic;font-size:clamp(20px,2.9vw,26px);
+    line-height:1.34;color:var(--accent-warm);text-align:center;margin:28px auto;max-width:25ch;
+    padding:16px 0;border-top:2px solid var(--rule);border-bottom:2px solid var(--rule)}
+
+  /* ── Spec sidebar ─────────────────────────────────────────────────────── */
+  .spec{float:right;width:250px;margin:6px 0 18px 28px;background:var(--surface-2);
+    border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:4px;
+    font-family:"Helvetica Neue",Arial,sans-serif;font-size:13px}
+  .spec h4{margin:0;padding:11px 15px;background:var(--accent);color:#fff;font-size:12px;
+    letter-spacing:.14em;text-transform:uppercase}
+  .spec dl{margin:0;padding:8px 15px 13px}
+  .spec dt{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-top:9px}
+  .spec dd{margin:1px 0 0;font-weight:600;color:var(--ink)}
+  @media(max-width:600px){.spec{float:none;width:auto;margin:0 0 18px}}
+
+  /* ── Generic cards / grids ────────────────────────────────────────────── */
+  .grid{display:grid;gap:14px;margin:18px 0}
+  .grid.two{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .grid.three{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .card{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--accent);
+    border-radius:5px;padding:14px 16px;box-shadow:0 2px 8px var(--shadow);
+    font-family:"Helvetica Neue",Arial,sans-serif}
+  .card h4{margin:0 0 6px;font-size:15px;color:var(--ink)}
+  .card p{margin:.2em 0;font-size:14px;color:var(--ink-soft);line-height:1.5}
+  .card.warm{border-top-color:var(--accent-warm)}
+
+  /* "Para quien es" personas */
+  .persona{border-top-color:var(--accent-warm)}
+  .persona .who{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent-warm);font-weight:700}
+
+  /* Viral / streamer hooks */
+  .hook{border-top-color:var(--good)}
+  .hook .tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.1em;
+    text-transform:uppercase;color:#fff;background:var(--good);padding:2px 8px;border-radius:4px;margin-bottom:6px}
+
+  /* ── Comparison table ─────────────────────────────────────────────────── */
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;
+    font-family:"Helvetica Neue",Arial,sans-serif}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--surface-2);color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  tbody tr:hover td{background:var(--surface-2)}
+  .yes{color:var(--good);font-weight:700} .no{color:var(--bad);font-weight:700} .partial{color:var(--warn);font-weight:700}
+
+  /* ── Lo mejor / lo peor ───────────────────────────────────────────────── */
+  .verdictbox{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:24px 0 6px;
+    border:1px solid var(--rule);border-radius:5px;overflow:hidden;
+    font-family:"Helvetica Neue",Arial,sans-serif}
+  @media(max-width:600px){.verdictbox{grid-template-columns:1fr}}
+  .vb-pros{padding:16px 20px;background:var(--surface);border-right:1px solid var(--rule)}
+  .vb-cons{padding:16px 20px;background:var(--surface-2)}
+  .vb-pros h4,.vb-cons h4{margin:0 0 9px;font-size:12px;letter-spacing:.13em;text-transform:uppercase}
+  .vb-pros h4{color:var(--good)} .vb-cons h4{color:var(--bad)}
+  .vb-pros ul,.vb-cons ul{margin:0;padding-left:18px;font-size:14px;color:var(--ink-soft)}
+  .vb-pros li,.vb-cons li{margin:.32em 0}
+
+  /* ── Scorecard ────────────────────────────────────────────────────────── */
+  .scorecard{margin:24px 0;border:1px solid var(--rule);border-radius:5px;background:var(--surface-2);padding:18px 22px}
+  .scorecard h4{font-family:"Helvetica Neue",Arial,sans-serif;margin:0 0 13px;font-size:13px;
+    letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+  .bars{display:grid;gap:10px;font-family:"Helvetica Neue",Arial,sans-serif}
+  .bar{display:grid;grid-template-columns:180px 1fr 70px;align-items:center;gap:12px}
+  @media(max-width:560px){.bar{grid-template-columns:120px 1fr 56px}}
+  .bar .lbl{font-size:13px;font-weight:600;color:var(--ink)}
+  .track{height:12px;background:var(--line);border-radius:6px;overflow:hidden}
+  .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--good))}
+  .fill.warn{background:linear-gradient(90deg,var(--warn),var(--bad))}
+  .bar .val{font-size:14px;font-weight:700;text-align:right;color:var(--ink)}
+  .bar .val .delta{color:var(--good);font-size:11px;font-weight:600}
+  .bar.total .lbl{font-size:15px;font-weight:800}
+  .bar.total .fill{background:linear-gradient(90deg,var(--accent),var(--accent-warm))}
+
+  /* ── Metrics strip ────────────────────────────────────────────────────── */
+  .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden;
+    margin:20px 0;font-family:"Helvetica Neue",Arial,sans-serif}
+  .strip .s{background:var(--surface);padding:14px;text-align:center}
+  .strip .s b{display:block;font-size:24px;color:var(--accent);font-weight:800}
+  .strip .s span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+
+  /* ── Technical part wrapper (accent, not forced-dark) ─────────────────── */
+  .tech-body{background:var(--tech-surface);padding:22px clamp(20px,5vw,68px) 40px;
+    font-family:"Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.6;color:var(--ink)}
+  .tech-body h3{font-size:13px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+    margin:28px 0 10px;border-bottom:1px solid var(--rule);padding-bottom:5px}
+  .tech-body p{color:var(--ink-soft)}
+  code{background:var(--code-bg);color:var(--code-ink);padding:1px 6px;border-radius:4px;
+    font-family:"SFMono-Regular",Consolas,monospace;font-size:13px}
+
+  /* Issue cards (severity) */
+  .issue{border-radius:6px;padding:13px 16px;margin:12px 0;border-left:5px solid;
+    background:var(--surface);box-shadow:0 1px 6px var(--shadow)}
+  .issue.hi{border-color:var(--bad)} .issue.md{border-color:var(--warn)}
+  .issue.lo{border-color:var(--muted)} .issue.done{border-color:var(--good)}
+  .issue .sev{font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+    display:inline-block;padding:2px 8px;border-radius:4px;color:#fff}
+  .issue.hi .sev{background:var(--bad)} .issue.md .sev{background:var(--warn)}
+  .issue.lo .sev{background:var(--muted)} .issue.done .sev{background:var(--good)}
+  .issue h4{margin:6px 0 5px;font-size:15.5px;color:var(--ink)}
+  .issue p{margin:.3em 0;color:var(--ink-soft);font-size:14px}
+
+  /* Effort/impact badges (quick wins) */
+  .pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:2px 8px;border-radius:10px;margin-left:6px}
+  .pill.easy{background:var(--good);color:#fff} .pill.mid{background:var(--warn);color:#fff}
+  .pill.hard{background:var(--bad);color:#fff} .pill.impact{background:var(--accent);color:#fff}
+
+  /* Roadmap lanes */
+  .road{display:grid;gap:12px;margin:14px 0}
+  .lane{border-radius:6px;padding:14px 18px;border:1px solid var(--line);background:var(--surface)}
+  .lane h4{margin:0 0 .4em;display:flex;align-items:center;gap:9px;color:var(--ink);font-size:15px}
+  .lane.short{border-left:5px solid var(--good)} .lane.mid{border-left:5px solid var(--warn)} .lane.long{border-left:5px solid var(--bad)}
+  .lane ul{margin:0;padding-left:20px;color:var(--ink-soft);font-size:14px}
+
+  footer{background:var(--ink);color:var(--bg);text-align:center;font-size:12px;
+    font-family:"Helvetica Neue",Arial,sans-serif;padding:22px;letter-spacing:.03em;line-height:1.7}
+  footer b{color:var(--accent-warm)}
+  @media print{#theme-toggle,#progress,nav{display:none}.sheet{box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<button id="theme-toggle" aria-label="Cambiar tema" title="Claro / oscuro">☾</button>
+
+<div class="sheet">
+
+  <div class="masthead">
+    <div class="mag-name">PÍXEL&nbsp;<span>&amp;</span>&nbsp;CÓDIGO</div>
+    <div class="mag-meta">Nº 5 · Análisis · 2026-06-09</div>
+  </div>
+
+  <header class="cover">
+    <div class="rubric">Estrategia en tiempo real · Indie</div>
+    <h1>Calima: Flames of the Atlantic</h1>
+    <div class="cover-badge"><b>81</b><small>/ 100</small><em>= +0</em></div>
+    <p class="tagline">El RTS donde la calima ciega a tu ejército y los Atlantes emergen del océano. Esta vez no buscamos novedad: abrimos el capó y comprobamos si lo que dice la ficha técnica es verdad.</p>
+  </header>
+
+  <nav>
+    <a href="#analisis" class="key">EL ANÁLISIS</a>
+    <a href="#comparativa">Comparativa</a>
+    <a href="#paraquien">¿Para quién?</a>
+    <a href="#veredicto">Veredicto</a>
+    <a href="#capo" class="key">BAJO EL CAPÓ</a>
+    <a href="#arquitectura">Arquitectura</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+
+  <!-- ════ PARTE 1 · EL ANÁLISIS (GAMER) ════ -->
+  <div class="part gamer">
+    <div class="num">01</div>
+    <div><div class="kick">Segunda vuelta · revisión a fondo</div><h2 id="analisis">El Análisis</h2></div>
+  </div>
+
+  <div class="pad">
+    <aside class="spec">
+      <h4>Ficha</h4>
+      <dl>
+        <dt>Género</dt><dd>RTS 2D estilo AoE2</dd>
+        <dt>Motor</dt><dd>Godot 4 · GDScript</dd>
+        <dt>Ambientación</dt><dd>Islas Canarias + Atlántida</dd>
+        <dt>Modos</dt><dd>Skirmish 1 jugador vs IA (LAN planeado)</dd>
+        <dt>Civilizaciones</dt><dd>8</dd>
+        <dt>Estado</dt><dd>Production-ready / en pulido</dd>
+      </dl>
+    </aside>
+
+    <p class="lede">Desde la última visita no se ha tocado una sola línea de jugabilidad —solo plantilla, docs y un arreglo de gráfica—, así que la nota se queda clavada en 81/100. Pero esta vuelta no va de novedades: va de honestidad. Hemos abierto sistemas que las reseñas anteriores miraron de reojo —combate, recolección, guardado, árbol tecnológico, navegación— y los hemos cronometrado de verdad. La buena noticia: la mayoría aguanta. La incómoda: el combate vende una profundidad que su código no entrega.</p>
+
+    <div class="cols">
+      <p class="dropcap">Hay un momento, jugando a Calima, en el que entiendes de qué va esto. Tienes a tus arqueros cubriendo una loma, el enemigo avanza, y de pronto el cielo se vuelve ocre: llega la calima. La visión de tus tropas cae, se mueven más lento y, sobre todo, tus flechas empiezan a desviarse con el viento. La batalla que tenías controlada se convierte en una apuesta. Eso no es un filtro de pantalla: son cinco sistemas climáticos con modificadores medibles —la tormenta atlántica hunde tu pesca y castiga lo naval, la niebla marina te regala cloaking costero, los alisios empujan los proyectiles según la dirección y la ceniza volcánica corroe edificios— y siguen siendo el alma del juego.</p>
+      <p>Lo que esta segunda vuelta confirma es que el setting no es decorado: el guardado restaura una partida entera —semilla del mapa, recursos, edades, tecnologías, colas de entrenamiento, oro que carga cada aldeano, progreso de construcción de cada edificio y hasta la niebla de guerra— y el árbol tecnológico respeta edades, prerrequisitos y coste como un AoE de verdad. Son las fontanerías invisibles que separan un prototipo de un juego que respeta tu tiempo. Aquí están, y funcionan.</p>
+      <p>Pero hay una grieta que duele precisamente porque el resto está tan cuidado. El combate promete "armaduras de tipo melé y perforante", el clásico baile de tijera de AoE2 donde el arquero pincha al piquero pero rebota contra el caballero. Jugando con la cabeza fría, ese baile no existe: el arquero hace exactamente el mismo daño contra una unidad blindada que contra una de tela. La pieza más identitaria del subgénero está pintada en la interfaz pero desconectada de la batalla. Y la calima, su joya, sigue afectando a todos por igual: ser Guanche o Atlante no cambia nada cuando el cielo se vuelve ocre.</p>
+    </div>
+
+    <p class="pull">La calima desvía tus flechas y los Atlantes salen del mar. Lo que aún no desvía es el equilibrio: el arquero pincha igual a todo el mundo.</p>
+
+    <h3 class="head" id="comparativa">Frente a la competencia</h3>
+    <table>
+      <thead><tr><th>Referente</th><th>Clima sistémico</th><th>Combate tijera (melé/perf.)</th><th>Qué aporta Calima</th></tr></thead>
+      <tbody>
+        <tr><td>Age of Empires II / IV</td><td><span class="no">✗</span> Sin clima con stats</td><td><span class="yes">✓</span> Tijera profunda y equilibrada</td><td>Aporta clima medible y traversal por civ, pero su tijera de armaduras está sin conectar.</td></tr>
+        <tr><td>Northgard</td><td><span class="partial">~</span> Estaciones, no direccional</td><td><span class="partial">~</span> Combate simple por clan</td><td>Aporta dirección del viento y consecuencia económica real del clima.</td></tr>
+        <tr><td>0 A.D.</td><td><span class="no">✗</span> Histórico genérico</td><td><span class="yes">✓</span> Tipos de daño implementados</td><td>Aporta un setting de nicho cultural (canario/atlante) con gancho propio.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="head" id="paraquien">¿Para quién es?</h3>
+    <div class="grid three">
+      <div class="card persona"><div class="who">El veterano</div><h4>Estratega de AoE2 / 0 A.D.</h4><p>25-40 años, quiere profundidad clásica con un giro fresco. El clima le da la variable nueva, pero notará enseguida que el combate aún no "muerde" como el de la saga madre.</p></div>
+      <div class="card persona"><div class="who">El cultural</div><h4>Público hispano</h4><p>Atraído por el imaginario canario y atlante, casi inexplorado en videojuego. Compra por el setting antes que por el género.</p></div>
+      <div class="card persona"><div class="who">El curioso</div><h4>Nicho histórico-alternativo · creadores</h4><p>Fans del "RTS histórico alternativo" y streamers que buscan algo distinto que enseñar. Calima les da clips que no se parecen a nada.</p></div>
+    </div>
+
+    <h3 class="head">Lo que pediríamos para la próxima actualización</h3>
+    <div class="cols">
+      <p>Esta vez la lista de deseos tiene una prioridad cero clarísima: que el combate cumpla lo que promete. Conectar la armadura perforante para que arqueros y asedio se comporten distinto frente a infantería pesada no es contenido nuevo, es honrar una promesa ya escrita en la ficha. Después, lo de siempre: combos Civ×Clima, para que ser Guanche signifique algo bajo la calima y los Atlantes saquen ventaja de la tormenta. Una mini-campaña que dé voz al lore guanche-atlante que hoy solo vive en la mecánica. Y accesibilidad básica de RTS moderno: daltonismo, escalado de UI y remapeo de teclas. Un sistema de replays multiplicaría la vida útil y la viralidad de los clips.</p>
+    </div>
+
+    <div class="verdictbox">
+      <div class="vb-pros"><h4>✦ Lo mejor</h4><ul><li>Clima sistémico real con modificadores medibles que cambian partidas.</li><li>Guardado/carga completísimo: restaura partida entera, no un esqueleto.</li><li>Árbol tecnológico data-driven serio (edades, prerrequisitos, coste).</li><li>Setting atlántico-canario único, tejido en la mecánica.</li></ul></div>
+      <div class="vb-cons"><h4>✕ Lo peor</h4><ul><li>La armadura perforante existe en datos pero no en la batalla: combate "plano".</li><li>El clima sigue desconectado de las civilizaciones.</li><li>Sin campaña ni lore in-game que cuente el mundo.</li><li>La IA pegada al árbol de escena frena la iteración táctica.</li></ul></div>
+    </div>
+
+    <h3 class="head">Momentos de tráiler · gancho para creadores</h3>
+    <div class="grid three">
+      <div class="card hook"><span class="tag">Clip 1</span><p>La calima irrumpe a mitad de batalla y las flechas se desvían con el viento: el control se vuelve apuesta en directo.</p></div>
+      <div class="card hook"><span class="tag">Clip 2</span><p>Un ejército Atlante emerge del océano para un asalto anfibio sobre una base desprevenida.</p></div>
+      <div class="card hook"><span class="tag">Clip 3</span><p>Cleito lanza la oleada de marea y cura a todos los aliados del radio justo antes de la carga decisiva.</p></div>
+      <div class="card hook"><span class="tag">Clip 4</span><p>Niebla marina sobre la costa: una emboscada invisible aparece de la nada sobre el flanco enemigo.</p></div>
+    </div>
+    <div class="cols"><p>Comercialmente, Calima es viable en Steam por su setting diferencial y tiene alta capacidad viral gracias a sus clips —pocos RTS regalan momentos tan autocontados—. El talón de Aquiles es doble: la retención (hoy solo skirmish contra la IA) y un combate que, al carecer del baile de armaduras, ofrece menos techo de habilidad del que un veterano espera. Las palancas claras son arreglar el combate primero, y luego campaña y multijugador (M7) para convertir el "wishlist" en horas jugadas.</p></div>
+
+    <div class="scorecard" id="veredicto">
+      <h4>Veredicto · puntuación por apartados</h4>
+      <div class="bars">
+        <div class="bar"><span class="lbl">Originalidad / Identidad</span><div class="track"><div class="fill" style="width:88%"></div></div><span class="val">88 <span class="delta">=0</span></span></div>
+        <div class="bar"><span class="lbl">Diseño jugable</span><div class="track"><div class="fill" style="width:80%"></div></div><span class="val">80 <span class="delta">=0</span></span></div>
+        <div class="bar"><span class="lbl">Técnica / Arquitectura</span><div class="track"><div class="fill warn" style="width:74%"></div></div><span class="val">74 <span class="delta">=0</span></span></div>
+        <div class="bar"><span class="lbl">Potencial comercial</span><div class="track"><div class="fill" style="width:81%"></div></div><span class="val">81 <span class="delta">=0</span></span></div>
+        <div class="bar total"><span class="lbl">GLOBAL</span><div class="track"><div class="fill" style="width:81%"></div></div><span class="val">81 <span class="delta">=0</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ PARTE 2 · BAJO EL CAPÓ (TÉCNICO) ════ -->
+  <div class="part tech">
+    <div class="num">02</div>
+    <div><div class="kick">El motor por dentro · para developers</div><h2 id="capo">Bajo el Capó</h2></div>
+  </div>
+
+  <div class="tech-body">
+    <!-- Resumen ejecutivo: métricas de un vistazo -->
+    <div class="strip">
+      <div class="s"><b>103</b><span>scripts .gd</span></div>
+      <div class="s"><b>23,4K</b><span>líneas GDScript</span></div>
+      <div class="s"><b>49</b><span>escenas</span></div>
+      <div class="s"><b>87</b><span>resources</span></div>
+      <div class="s"><b>8</b><span>tests</span></div>
+    </div>
+
+    <p>Nota metodológica: este es un re-análisis de <b>verificación</b>. Confirmamos primero el estado tras el último ciclo (sin cambios de jugabilidad: solo plantilla, docs y un arreglo de gráfica), y luego fuimos más profundo en sistemas que las reseñas previas trataron por encima. El conteo de scripts sube de 98 a <b>103</b> y las líneas de 23,2K a 23,4K: crecimiento marginal coherente con "sin cambios de gameplay". La nota técnica se mantiene en 74 porque no hubo regresión ni progreso estructural; lo que aporta esta vuelta es un hallazgo nuevo de profundidad en combate.</p>
+
+    <h3 id="progreso">▲ Verificado desde el análisis anterior</h3>
+    <div class="issue done"><span class="sev">Confirmado</span>
+      <h4>El refactor del HUD sigue desmontado (1879 líneas)</h4>
+      <p><b>Evidencia:</b> <code>ui/hud_manager.gd</code> = 1879 líneas · <code>ui/hud/</code> = 6 componentes (1578 líneas)</p>
+      <p>Reconfirmado: <code>hud_manager.gd</code> mantiene las 1879 líneas y los seis componentes (<code>hud_match_stats.gd</code> 606, <code>hud_menus.gd</code> 478, <code>hud_controls.gd</code> 284, <code>hud_weather.gd</code> 109, <code>hud_resource_bar.gd</code> 87, <code>hud_style.gd</code> 14) viven en <code>ui/hud/</code>. El god object del HUD ya no existe.</p>
+    </div>
+    <div class="issue done"><span class="sev">Confirmado</span>
+      <h4>El clamp de la banda ofensiva de la gráfica SÍ está</h4>
+      <p><b>Evidencia:</b> <code>ui/match_chart.gd:103-104</code></p>
+      <p>El arreglo está presente: <code>_draw_band()</code> calcula <code>x0/x1</code> según el grid de datos y luego aplica <code>x0 = maxf(x0, _PL)</code> y <code>x1 = minf(x1, _PL + pw)</code>, con un <code>if x1 &lt;= x0: return</code> de guarda. La banda de la primera/última muestra ya no se desborda del eje temporal.</p>
+    </div>
+    <div class="issue done"><span class="sev">Verificado · fortaleza</span>
+      <h4>Guardado/carga: es completo de verdad, no un stub</h4>
+      <p><b>Evidencia:</b> <code>core/save_manager.gd:215-313</code> (<code>_collect</code>), <code>:336-394</code> (unidades/edificios), <code>:165-639</code> (restore)</p>
+      <p>Verificado leyendo el serializador: persiste <code>rng_seed</code>, <code>match_config</code>, recursos/edades/pop-cap/tecnologías por jugador, unidades (posición, HP, civ, género, oro cargado del aldeano, cooldown de héroe), estado del TC con colas, edificios con <code>construction_progress</code> y colas de entrenamiento con costes, nodos de recurso con su <code>remaining</code>, y la niebla en base64. Es uno de los sistemas más sólidos del proyecto.</p>
+    </div>
+    <div class="issue done"><span class="sev">Verificado · fortaleza</span>
+      <h4>Árbol tecnológico y navegación dual: sanos</h4>
+      <p><b>Evidencia:</b> <code>core/tech_manager.gd:41-111</code> · <code>map/map_generator.gd:2512-2552</code> · <code>game/game_world.gd:1720-1747</code></p>
+      <p><code>tech_manager.gd</code> escanea <code>.tres</code>, valida edad+prerrequisitos+coste (<code>can_research</code>), aplica efectos vía CivBonusManager y emite por EventBus: data-driven y desacoplado. La navegación usa dos <code>NavigationRegion2D</code> (tierra/océano) horneadas async desde geometría: robusta, no improvisada.</p>
+    </div>
+
+    <h3 id="arquitectura">Arquitectura, deuda y rendimiento</h3>
+    <p>La salud estructural es la misma que en el último corte: un god object del HUD ya desmontado, cero marcadores <code>TODO/FIXME/HACK</code> en todo el árbol, y tres frentes de deuda que siguen abiertos. La novedad de esta vuelta es un <b>bug de diseño-en-código de severidad alta</b> en el cálculo de daño que ningún análisis anterior había detectado, porque nadie había leído el camino de combate de punta a punta.</p>
+
+    <div class="issue hi"><span class="sev">Alta · NUEVO</span>
+      <h4>La armadura perforante existe en datos pero nunca se aplica</h4>
+      <p><b>Evidencia:</b> <code>resources/units/unit_resource.gd:21-22</code> (define <code>armor_melee</code> y <code>armor_pierce</code>) · <code>units/unit_base.gd:304-324</code> (<code>_get_target_armor</code> solo lee <code>armor_melee</code>) · <code>units/archer.gd:130</code>, <code>longbowman.gd:127</code>, <code>ravine_archer.gd:114</code>, <code>trireme.gd:87</code>, <code>mangonel.gd:132</code>, <code>trebuchet.gd:186</code></p>
+      <p><b>Por qué importa:</b> <code>_get_target_armor()</code> es la <b>única</b> función de armadura del juego y siempre devuelve <code>armor_melee</code>. Todos los atacantes —incluidos arqueros, asedio y barcos que en AoE2 hacen daño perforante— restan armadura de <i>melé</i>. Resultado: <code>armor_pierce</code> es dato muerto (solo se muestra en <code>ui/unit_portrait.gd:152</code>), y la "tijera" melé/perforante que define al subgénero no existe en combate. La afirmación de CLAUDE.md "damage calculation with armour types (melee/pierce)" es <b>falsa/obsoleta</b>. <b>Solución:</b> añadir un campo <code>damage_type</code> (melee/pierce) en <code>UnitResource</code> y en los proyectiles, y que <code>_get_target_armor(target, damage_type)</code> seleccione <code>armor_pierce</code> cuando el ataque sea perforante. Es el arreglo de mayor impacto/coste del proyecto.</p>
+    </div>
+    <div class="issue hi"><span class="sev">Alta</span>
+      <h4>IA acoplada al árbol de escena (sin cambios)</h4>
+      <p><b>Evidencia:</b> 51 accesos a <code>units_layer/buildings_layer</code> y 43 <code>get_children()</code> en <code>scripts/ai/</code> (<code>ai_military.gd</code> 18, <code>ai_naval.gd</code> 10, <code>ai_economy.gd</code> 7, <code>ai_player.gd</code> 6, <code>ai_construction.gd</code> 2)</p>
+      <p><b>Por qué importa:</b> la IA recorre la jerarquía de nodos directamente; cualquier reestructura de escena la rompe y no se puede testear ni iterar la táctica aislada. <b>Solución:</b> inyectar un servicio <code>WorldQuery</code> (unidades/edificios por jugador, por área) que la IA consuma por interfaz en lugar de <code>get_children()</code>.</p>
+    </div>
+    <div class="issue md"><span class="sev">Media-Alta</span>
+      <h4>Dos god objects restantes: map_generator y game_world</h4>
+      <p><b>Evidencia:</b> <code>map/map_generator.gd</code> = 2610 líneas · <code>game/game_world.gd</code> = 1973 líneas</p>
+      <p><b>Por qué importa:</b> concentran demasiadas responsabilidades, dificultando lectura, prueba y cambio. <b>Solución:</b> de <code>map_generator.gd</code> extraer <code>TerrainPainter</code>/<code>EntityPlacer</code>/<code>MaterialManager</code>; de <code>game_world.gd</code> extraer <code>VictoryController</code>/<code>SelectionController</code>/<code>CameraController</code>.</p>
+    </div>
+    <div class="issue md"><span class="sev">Media</span>
+      <h4>El minimapa itera unidades cada frame</h4>
+      <p><b>Evidencia:</b> <code>ui/minimap.gd:42-69</code> (<code>_process</code> → <code>_cache_own_unit_sights</code> recorre <code>UnitsLayer.get_children()</code>) y <code>:153,175</code> (<code>_draw</code> vuelve a iterar <code>buildings_layer</code>/<code>units_layer</code>)</p>
+      <p><b>Por qué importa:</b> recorrer todas las unidades por frame —y de nuevo en <code>_draw</code>— escala mal cuando crece el conteo. Matiz justo: ya cachea la línea de visión en <code>_process</code> para no re-iterar en el redibujado de recursos (<code>:131</code>), así que está a medio optimizar. <b>Solución:</b> actualizar por eventos (alta/baja/movimiento vía EventBus) o con un tick desacoplado a menor frecuencia.</p>
+    </div>
+    <div class="issue md"><span class="sev">Media</span>
+      <h4>Cobertura de tests baja y mal repartida</h4>
+      <p><b>Evidencia:</b> <code>tests/unit/</code> = 8 archivos, 0 integración. Cubren: costes IA, investigación IA, niebla de guerra, limpieza de habilidades de héroe, regicidio, save manager, unidades únicas, transporte de aldeano.</p>
+      <p><b>Por qué importa:</b> los sistemas más críticos —fórmula de daño, recolección/drop-off, modificadores de clima, recuperación de atascos— no tienen ni un test. Justo el combate, donde acabamos de encontrar el bug de la armadura, está a ciegas: un test de "arquero vs unidad blindada" lo habría cazado. <b>Solución:</b> priorizar tests de combate (tipos de daño) y recolección; añadir integración aprovechando el patrón headless ya existente.</p>
+    </div>
+
+    <h3>Relación diseño ↔ código</h3>
+    <p>El patrón "la civ cambia una regla" ya está demostrado de punta a punta en el traversal de terreno (<code>core/terrain_manager.gd</code> → <code>units/unit_base.gd:404</code>, donde <code>get_speed_mult</code> entra en la velocidad de navegación). Eso prueba que la arquitectura <i>permite</i> asimetría por civilización. El problema es que el clima no la usa: <code>weather_manager.gd:189-266</code> expone <code>get_move_speed_multiplier</code>, <code>get_gather_rate_multiplier</code>, <code>get_vision_multiplier</code>, etc., todos parametrizados por <code>world_pos</code> pero <b>nunca por <code>civ_id</code>/<code>player_id</code></b>: imposible que una civ reaccione distinto al cielo ocre sin tocar la firma. Y el combate tiene el problema inverso: el dato existe (<code>armor_pierce</code>) pero el código lo ignora. Son dos caras de la misma lección —diseño y código que no se hablan—. Por último, sin un command pattern no hay base para replays, undo ni multijugador determinista: esa decisión condiciona toda la rama social.</p>
+
+    <h3>Resumen de hallazgos</h3>
+    <table>
+      <thead><tr><th>Hallazgo</th><th>Severidad</th><th>Ubicación</th></tr></thead>
+      <tbody>
+        <tr><td>Armadura perforante nunca aplicada (combate plano)</td><td><span class="no">Alta · NUEVO</span></td><td><code>unit_base.gd:304-324</code></td></tr>
+        <tr><td>IA acoplada al árbol de escena (51 accesos / 43 get_children)</td><td><span class="no">Alta</span></td><td><code>ai_*.gd</code></td></tr>
+        <tr><td>God objects restantes (2610 / 1973 líneas)</td><td><span class="partial">Media-Alta</span></td><td><code>map_generator.gd</code> / <code>game_world.gd</code></td></tr>
+        <tr><td>Minimapa itera por frame (a medio optimizar)</td><td><span class="partial">Media</span></td><td><code>minimap.gd:42-69</code></td></tr>
+        <tr><td>Cobertura de tests baja, sin combate ni recolección</td><td><span class="partial">Media</span></td><td><code>tests/unit/</code></td></tr>
+        <tr><td>Clima sin parámetro de civilización</td><td><span class="partial">Media</span></td><td><code>weather_manager.gd:189-266</code></td></tr>
+        <tr><td>HUD desmontado · match_chart clamp · save/load · tech tree</td><td><span class="yes">OK</span></td><td><code>hud/*.gd</code> · <code>save_manager.gd</code> · <code>tech_manager.gd</code></td></tr>
+        <tr><td>Marcadores de deuda (TODO/FIXME/HACK)</td><td><span class="yes">OK</span></td><td>cero en el árbol</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="roadmap">Roadmap · esfuerzo vs impacto</h3>
+    <div class="road">
+      <div class="lane short"><h4>● Quick wins · corto plazo</h4>
+        <ul>
+          <li>Conectar la armadura perforante: <code>damage_type</code> en proyectiles/unidades y selección en <code>_get_target_armor</code>. <span class="pill easy">Bajo coste</span><span class="pill impact">Alto impacto</span></li>
+          <li>Test de combate "arquero vs unidad blindada" que habría cazado el bug. <span class="pill easy">Bajo coste</span></li>
+          <li>Combos Civ×Clima: añadir <code>civ_id</code> a la API de <code>weather_manager</code>. <span class="pill easy">Bajo coste</span><span class="pill impact">Alto impacto</span></li>
+          <li>Corregir en CLAUDE.md la afirmación obsoleta sobre tipos de daño. <span class="pill easy">Bajo coste</span></li>
+        </ul></div>
+      <div class="lane mid"><h4>● Medio plazo</h4>
+        <ul>
+          <li>Servicio <code>WorldQuery</code> inyectado para desacoplar la IA. <span class="pill mid">Medio</span><span class="pill impact">Alto impacto</span></li>
+          <li>Minimapa por eventos / tick desacoplado. <span class="pill mid">Medio</span></li>
+          <li>Dividir <code>game_world.gd</code> en controllers. <span class="pill mid">Medio</span></li>
+          <li>Tests de recolección y de modificadores de clima. <span class="pill mid">Medio</span></li>
+        </ul></div>
+      <div class="lane long"><h4>● Largo plazo</h4>
+        <ul>
+          <li>Refactor de <code>map_generator.gd</code> (TerrainPainter/EntityPlacer/MaterialManager). <span class="pill hard">Alto coste</span></li>
+          <li>Command pattern: base para replays y multijugador determinista. <span class="pill hard">Alto coste</span><span class="pill impact">Alto impacto</span></li>
+          <li>Persistir <code>_active_research</code> y orden en curso de unidades en el save. <span class="pill hard">Alto coste</span></li>
+        </ul></div>
+    </div>
+  </div>
+
+  <footer>
+    Análisis generado por el agente <b>game-reviewer</b> · Calima: Flames of the Atlantic · 2026-06-09 16:16<br>
+    103 scripts / 23,4K líneas GDScript · evidencia verificada contra el código fuente.
+  </footer>
+
+</div>
+
+<script>
+  // Theme toggle (claro por defecto; respeta preferencia previa y del sistema)
+  (function(){
+    var root = document.documentElement, btn = document.getElementById('theme-toggle');
+    var saved = null;
+    try { saved = localStorage.getItem('pc-theme'); } catch(e){}
+    if (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) saved = 'dark';
+    if (saved) root.setAttribute('data-theme', saved);
+    function sync(){ btn.textContent = root.getAttribute('data-theme') === 'dark' ? '☀' : '☾'; }
+    sync();
+    btn.addEventListener('click', function(){
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('pc-theme', next); } catch(e){}
+      sync();
+    });
+    // Reading progress
+    var bar = document.getElementById('progress');
+    function upd(){
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+    }
+    window.addEventListener('scroll', upd, {passive:true});
+    window.addEventListener('resize', upd); upd();
+  })();
+</script>
+</body>
+</html>

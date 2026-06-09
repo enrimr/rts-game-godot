@@ -14,6 +14,7 @@ population_cost = 1
 attack = 6.0
 attack_range = 5.5
 attack_speed = 0.8
+damage_type = 1
 armor_melee = 0.0
 armor_pierce = 4.0
 age_required = 1

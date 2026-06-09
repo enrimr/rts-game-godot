@@ -299,28 +299,33 @@ func order_attack_move(destination: Vector2) -> void:
 func _on_auto_attack_target(_target: Node) -> void:
 	_attack_move_active = false
 
-# Reads armor_melee from a target node, handling both unit (via unit_data) and
-# building (via building_data or direct property) targets.
+# Armour the target reduces from THIS unit's attack. The attacker's
+# unit_data.damage_type selects which armour value applies: PIERCE attacks
+# (archers, gunpowder, ships, siege artillery) are reduced by armor_pierce,
+# everything else by armor_melee. Buildings only define armor_melee, so they
+# use it against both damage types.
 func _get_target_armor(target: Node) -> float:
 	if not is_instance_valid(target):
 		return 0.0
+	var pierce: bool = unit_data != null and unit_data.damage_type == UnitResource.DamageType.PIERCE
 	var base_armor: float = 0.0
 	var udata: Variant = target.get("unit_data")
 	if udata is UnitResource:
-		base_armor = (udata as UnitResource).armor_melee
-		# Archers gain additional pierce armor from padded_archer_armor tech
-		if (udata as UnitResource).id == "archer":
-			var target_pid: Variant = target.get("player_id")
-			if target_pid != null:
-				base_armor += CivBonusManager.get_archer_armor_pierce_bonus(target_pid as int)
+		base_armor = (udata as UnitResource).armor_pierce if pierce else (udata as UnitResource).armor_melee
+		# Archer-type targets gain extra pierce armour from the padded_archer_armor tech
+		if pierce and (udata as UnitResource).id == "archer":
+			var atid: Variant = target.get("player_id")
+			if atid != null:
+				base_armor += CivBonusManager.get_archer_armor_pierce_bonus(atid as int)
 	else:
 		var bdata: Variant = target.get("building_data")
 		if bdata is BuildingResource:
 			base_armor = (bdata as BuildingResource).get("armor_melee") if (bdata as BuildingResource).get("armor_melee") != null else 0.0
-	var target_pid: Variant = target.get("player_id")
-	if target_pid != null:
-		var armor_bonus: float = CivBonusManager.get_unit_armor_bonus(target_pid as int)
-		base_armor += armor_bonus
+	# The generic per-civ armour bonus is melee armour; it does not shield against pierce.
+	if not pierce:
+		var target_pid: Variant = target.get("player_id")
+		if target_pid != null:
+			base_armor += CivBonusManager.get_unit_armor_bonus(target_pid as int)
 	return base_armor
 
 func _get_effective_attack() -> float:
