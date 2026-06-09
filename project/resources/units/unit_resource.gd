@@ -4,6 +4,10 @@ class_name UnitResource
 
 ## Static data for a unit type — loaded once, shared across instances.
 
+## Which armour type this unit's attacks are reduced by on the target.
+## Ranged/projectile units (archers, gunpowder, ships, trebuchet) deal PIERCE.
+enum DamageType { MELEE, PIERCE }
+
 @export var id: String = ""
 @export var display_name: String = ""
 @export var description: String = ""
@@ -18,6 +22,7 @@ class_name UnitResource
 @export var attack: float = 3.0
 @export var attack_range: float = 0.5
 @export var attack_speed: float = 1.5  # attacks per second
+@export var damage_type: DamageType = DamageType.MELEE
 @export var armor_melee: float = 0.0
 @export var armor_pierce: float = 0.0
 
