@@ -37,11 +37,30 @@ Produce an **integral analysis** of the game from four angles simultaneously: **
 Always do BOTH:
 
 1. **Expose the analysis in the chat** as well-structured Markdown.
-2. **Generate an HTML report** in `docs/analysis/`. The filename MUST embed the analysis date and time, e.g. `analysis-YYYY-MM-DD-HHMM.html`. Get the real timestamp by running `date "+%Y-%m-%d-%H%M"` (and a human-readable form with `date "+%Y-%m-%d %H:%M"`) — never invent it. The HTML must:
-   - Be a single self-contained file (inline CSS, no external dependencies).
-   - Show the analysis date and time prominently in the header.
-   - Use a magazine layout: cover header with title + verdict score, section navigation, score bars, callout boxes for problems (red) and improvements (green), and a roadmap timeline.
-   - Render readably both on screen and when printed.
+2. **Generate an HTML report** in `docs/analysis/`, built **as a real magazine article in two distinct feature sections.**
+
+### The magazine template (use it — do not hand-roll CSS)
+
+A reusable template lives at **`docs/analysis/_template.html`**. Your workflow for the HTML:
+
+1. Get the real timestamp: run `date "+%Y-%m-%d-%H%M"` (filename) and `date "+%Y-%m-%d %H:%M"` (human form). Never invent it.
+2. **Read `docs/analysis/_template.html`**, copy it to `docs/analysis/analysis-YYYY-MM-DD-HHMM.html`, and fill in every `{{PLACEHOLDER}}` and each `<!-- AGENT: ... -->` block with the real content. Keep the structure, classes and CSS intact — only replace the placeholders and add/remove repeated rows (`.issue`, `.bar`, table rows, `.lane` items) as the content requires.
+3. The template is already a single self-contained file (inline CSS, no external dependencies, prints cleanly). Do not add `<link>`, Google Fonts or CDNs.
+
+The template encodes the required shape; respect it:
+
+- **Cover** — fictional magazine masthead (keep "PÍXEL & CÓDIGO"), rubric, title, tagline, and a round verdict badge with the /100 score (and a ▲/▼ delta on re-analyses).
+- **Part 1 · "El Análisis" (the GAMER feature)** — warm, editorial prose as if written by a journalist who *played* the game. Two-column body with a drop-cap, pull-quote, the "Identidad/valor", "Diferenciación" and "qué añadirías (jugable)" material, a "Lo mejor / Lo peor" box, and the per-dimension scorecard. **No file:line references here** — this section is about how the game *feels*.
+- **Part 2 · "Bajo el Capó" (the TECHNICAL feature)** — dark-themed engineering report. Metrics strip, severity-tagged `.issue` cards (`hi`/`md`/`lo`, `done` for resolved items on re-analyses), the design↔code section, a findings table, and the short/medium/long roadmap timeline. **file:line evidence is mandatory here.**
+- **Footer** — agent name + game + the real date and time.
+
+If `_template.html` is missing, fall back to building the same two-part magazine layout inline, but prefer the template.
+
+### Mapping the 7 sections onto the two parts
+
+The seven mandatory analysis sections split across the two features: §1 Identity, §2 Differentiation, §5 What you'd add (the gameplay half) and the verdict live in **Part 1 (El Análisis)**; §3 Source/architecture, §4 Design↔code, §5 (the technical/tooling half) and §7 Roadmap live in **Part 2 (Bajo el Capó)**. §6 Commercial potential can go at the end of Part 1 or as its own short block — your call, keep it readable.
+
+When the run is a **re-analysis**, Part 2 must open with the "▲ Progreso desde el análisis anterior" block using `done` issue cards, and the scorecard bars must show the per-dimension delta.
 
 ## Workflow
 
