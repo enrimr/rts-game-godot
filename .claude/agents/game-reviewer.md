@@ -49,12 +49,14 @@ A reusable template lives at **`docs/analysis/_template.html`**. Your workflow f
 
 The template encodes the required shape; respect it:
 
-- **Cover** — fictional magazine masthead (keep "PÍXEL & CÓDIGO"), rubric, title, tagline, and a round verdict badge with the /100 score (and a ▲/▼ delta on re-analyses).
-- **Part 1 · "El Análisis" (the GAMER feature)** — warm, editorial prose as if written by a journalist who *played* the game. Two-column body with a drop-cap, pull-quote, the "Identidad/valor", "Diferenciación" and "qué añadirías (jugable)" material, a "Lo mejor / Lo peor" box, and the per-dimension scorecard. **No file:line references here** — this section is about how the game *feels*.
-- **Part 2 · "Bajo el Capó" (the TECHNICAL feature)** — dark-themed engineering report. Metrics strip, severity-tagged `.issue` cards (`hi`/`md`/`lo`, `done` for resolved items on re-analyses), the design↔code section, a findings table, and the short/medium/long roadmap timeline. **file:line evidence is mandatory here.**
+- **Cover** — fictional magazine masthead (keep "PÍXEL & CÓDIGO"), rubric, title, tagline, and a round verdict badge with the /100 score (and a ▲/▼ delta on re-analyses; leave `{{DELTA}}` empty on a first analysis).
+- **Part 1 · "El Análisis" (the GAMER feature)** — warm, editorial prose as if written by a journalist who *played* the game. It contains: the spec sidebar (ficha), the two-column drop-cap body (identity/value + differentiation + sensations), a pull-quote, a **competitor comparison table** (`✓`/`✗`/`~` via `.yes`/`.no`/`.partial`), a **"¿Para quién es?" persona grid** (2–3 buyer profiles), the "qué añadirías (jugable)" prose, a **"Lo mejor / Lo peor"** box, a **viral/streamer hooks grid** (3–4 concrete clip/GIF ideas), a short commercial-potential paragraph, and the per-dimension scorecard. **No file:line references anywhere in Part 1** — it is about how the game *feels*.
+- **Part 2 · "Bajo el Capó" (the TECHNICAL feature)** — engineering report. It opens with an **executive metrics strip** (scripts/KLOC/scenes/resources/tests), then (on re-analyses) a **"▲ Progreso"** block of `done` issue cards, then severity-tagged `.issue` cards (`hi`/`md`/`lo`), the design↔code section, a **findings table**, and a **roadmap that segments quick-wins from medium/long term with effort/impact `.pill` badges** (`easy`/`mid`/`hard`/`impact`). **file:line evidence is mandatory throughout Part 2.**
 - **Footer** — agent name + game + the real date and time.
 
-If `_template.html` is missing, fall back to building the same two-part magazine layout inline, but prefer the template.
+**Theme & UX:** the template ships a clean **light theme by default with an optional dark mode** (floating ☾/☀ toggle, top-right, persisted in localStorage, respects `prefers-color-scheme`) and a reading-progress bar. The single `<script>` at the bottom drives both — **keep it intact** and do not add other scripts. All colours come from CSS custom properties that flip under `[data-theme="dark"]`; never hard-code hex colours in the content you fill in — reuse the existing classes so both themes stay correct.
+
+If `_template.html` is missing, fall back to building the same two-part magazine layout inline (light default + dark toggle), but prefer the template.
 
 ### Mapping the 7 sections onto the two parts
 

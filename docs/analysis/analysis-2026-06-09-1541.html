@@ -1,38 +1,9 @@
 <!DOCTYPE html>
-<!--
-  ============================================================================
-  PLANTILLA DE REVISTA - game-reviewer
-  ----------------------------------------------------------------------------
-  Clona este archivo a  docs/analysis/analysis-YYYY-MM-DD-HHMM.html  y rellena
-  cada {{PLACEHOLDER}} y cada bloque  <!-- AGENT: ... -->  con contenido real.
-
-  REGLAS:
-   - Archivo unico autocontenido. SIN dependencias externas (sin Google Fonts,
-     sin CDNs, sin <link>). El unico <script> es el toggle de tema de abajo:
-     dejalo tal cual.
-   - Diseno limpio, FONDO CLARO por defecto, con MODO OSCURO opcional via el
-     boton flotante (recuerda la eleccion en localStorage; respeta
-     prefers-color-scheme la primera vez).
-   - Manten estructura, clases y CSS intactos: solo sustituye placeholders y
-     anade/quita filas repetidas (.issue, .bar, filas de tabla, .lane, .persona,
-     .hook, .compare).
-
-  DOS REPORTAJES EN UNA REVISTA:
-   PARTE 1 - "El Analisis"  (GAMER): prosa editorial, como un redactor que jugo.
-     -> Identidad/valor, Diferenciacion (+tabla comparativa), Para-quien-es
-        (personas), mejoras jugables, Lo mejor/Lo peor, hooks virales, veredicto.
-     -> SIN referencias file:line aqui.
-   PARTE 2 - "Bajo el Capo" (TECNICO): ingenieria. file:line OBLIGATORIO.
-     -> Resumen ejecutivo (metricas), Progreso (solo re-analisis), problemas por
-        severidad, diseno<->codigo, tabla de hallazgos, quick-wins + roadmap.
-  ============================================================================
--->
 <html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- AGENT: titulo del juego + fecha-hora reales -->
-<title>{{GAME}} — Análisis · {{FECHA_HORA}}</title>
+<title>Calima: Flames of the Atlantic — Análisis · 2026-06-09 15:41</title>
 <style>
   /* ── Theming: claro por defecto, oscuro con [data-theme="dark"] ───────── */
   :root{
@@ -261,17 +232,16 @@
 
 <div class="sheet">
 
-  <!-- AGENT: nombre de revista fijo "PÍXEL & CÓDIGO"; nº/seccion/fecha reales -->
   <div class="masthead">
     <div class="mag-name">PÍXEL&nbsp;<span>&amp;</span>&nbsp;CÓDIGO</div>
-    <div class="mag-meta">Nº {{NUM}} · Análisis · {{FECHA}}</div>
+    <div class="mag-meta">Nº 4 · Análisis · 2026-06-09</div>
   </div>
 
   <header class="cover">
-    <div class="rubric">{{RUBRICA}}</div>
-    <h1>{{GAME}}</h1>
-    <div class="cover-badge"><b>{{NOTA}}</b><small>/ 100</small><em>{{DELTA}}</em></div>
-    <p class="tagline">{{TAGLINE}}</p>
+    <div class="rubric">Estrategia en tiempo real · Indie</div>
+    <h1>Calima: Flames of the Atlantic</h1>
+    <div class="cover-badge"><b>81</b><small>/ 100</small><em>▲ +3</em></div>
+    <p class="tagline">El RTS donde la calima ciega tu ejército, los héroes atlánticos curan en oleadas y una civilización entera puede emerger del océano para asaltarte.</p>
   </header>
 
   <nav>
@@ -294,74 +264,72 @@
     <aside class="spec">
       <h4>Ficha</h4>
       <dl>
-        <dt>Género</dt><dd>{{GENERO}}</dd>
-        <dt>Motor</dt><dd>{{MOTOR}}</dd>
-        <dt>Ambientación</dt><dd>{{AMBIENTACION}}</dd>
-        <dt>Modos</dt><dd>{{MODOS}}</dd>
-        <dt>Civilizaciones</dt><dd>{{N_CIVS}}</dd>
-        <dt>Estado</dt><dd>{{ESTADO}}</dd>
+        <dt>Género</dt><dd>RTS 2D estilo AoE2</dd>
+        <dt>Motor</dt><dd>Godot 4 · GDScript</dd>
+        <dt>Ambientación</dt><dd>Islas Canarias + Atlántida</dd>
+        <dt>Modos</dt><dd>Skirmish 1 jugador vs IA (LAN planeado)</dd>
+        <dt>Civilizaciones</dt><dd>8</dd>
+        <dt>Estado</dt><dd>Production-ready / en pulido</dd>
       </dl>
     </aside>
 
-    <p class="lede">{{ENTRADILLA}}</p>
+    <p class="lede">Calima coge la fórmula sagrada de Age of Empires II y le mete dentro algo que la saga madre nunca se atrevió a tocar: el clima como mecánica con números, no como decorado. Tras la última iteración el juego sube a 81/100 (▲+3): el peor problema de código está desmontado y el diseño respira mejor. Pero el motor de identidad sigue a medio gas.</p>
 
     <div class="cols">
-      <p class="dropcap">{{PARRAFO_1 — identidad y propuesta de valor, abre con capitular}}</p>
-      <p>{{PARRAFO_2 — mecánicas diferenciales / el hook desde la silla del jugador}}</p>
-      <p>{{PARRAFO_3 — sensaciones, momentos memorables, potencial viral}}</p>
+      <p class="dropcap">Hay un momento, jugando a Calima, en el que entiendes de qué va esto. Tienes a tus arqueros cubriendo una loma, el enemigo avanza, y de pronto el cielo se vuelve ocre: llega la calima. La visión de tus tropas cae un 40%, se mueven un 15% más lentas y, sobre todo, tus flechas empiezan a desviarse con el viento. La batalla que tenías controlada se convierte en una apuesta. Eso no es un filtro de pantalla: son cinco sistemas climáticos con modificadores medibles —la tormenta atlántica hunde tu pesca un 50% y castiga lo naval un 30%, la niebla marina te regala cloaking costero, los vientos alisios empujan los proyectiles ±20% según dirección y la ceniza volcánica corroe edificios a 2 HP/s— y son el alma del juego.</p>
+      <p>Encima del clima, Calima apila dos capas más de personalidad. La primera son sus 16 héroes con habilidades reales: auras de furia, conversión de unidades, dashes de carga y oleadas curativas que sanan a los aliados en un radio. La segunda, y la más infravalorada, es cómo el setting guanche-atlante está tejido en la regla, no pegado encima: los Guanches cruzan el malpaís que frena a todos los demás, y los Atlantes son anfibios de verdad. La ambientación canaria, un imaginario que casi nadie ha tocado en videojuego, deja de ser piel y se vuelve mecánica.</p>
+      <p>¿Cómo se siente? Se siente fresco dentro de un género que vive de la nostalgia. El problema es que ese gran motor climático aún no conversa con las civilizaciones: la calima afecta a todos por igual. Cuando una tormenta cambia el rumbo de una partida, es memorable; cuando lo hace sin que tu elección de civilización importe, sabes que falta el último clic. Calima ya demostró —con el traversal por terreno— que sabe hacer que "la civ cambia una regla". Solo le falta aplicar esa misma lección a su joya climática.</p>
     </div>
 
-    <p class="pull">{{CITA_DESTACADA}}</p>
+    <p class="pull">La calima desvía tus flechas y los Atlantes salen del mar: pocas cosas en un RTS se cuentan solas tan bien como esto.</p>
 
     <!-- NUEVO · tabla comparativa vs competidores -->
     <h3 class="head" id="comparativa">Frente a la competencia</h3>
     <table>
-      <thead><tr><th>Referente</th><th>{{EJE_1}}</th><th>{{EJE_2}}</th><th>Qué aporta {{GAME_CORTO}}</th></tr></thead>
+      <thead><tr><th>Referente</th><th>Clima sistémico</th><th>Traversal asimétrico por civ</th><th>Qué aporta Calima</th></tr></thead>
       <tbody>
-        <!-- AGENT: una fila por referente (AoE2, 0 A.D., Northgard…). Usa <span class="yes">✓</span> / <span class="no">✗</span> / <span class="partial">~</span> -->
-        <tr><td>{{REF_1}}</td><td>{{C11}}</td><td>{{C12}}</td><td>{{C13}}</td></tr>
-        <tr><td>{{REF_2}}</td><td>{{C21}}</td><td>{{C22}}</td><td>{{C23}}</td></tr>
+        <tr><td>Age of Empires II / IV</td><td><span class="no">✗</span> Sin clima con stats</td><td><span class="no">✗</span> Sin traversal por civ</td><td>Aporta ambos: clima medible + reglas de terreno propias por civilización.</td></tr>
+        <tr><td>Northgard</td><td><span class="partial">~</span> Estaciones, pero no direccional ni localizado</td><td><span class="partial">~</span> Clanes con rasgos, no movilidad por terreno</td><td>Aporta dirección del viento y consecuencia económica real del clima.</td></tr>
+        <tr><td>0 A.D.</td><td><span class="no">✗</span> Histórico genérico</td><td><span class="no">✗</span> Sin traversal asimétrico</td><td>Aporta un setting de nicho cultural (canario/atlante) con gancho propio, frente a un FOSS histórico-genérico.</td></tr>
       </tbody>
     </table>
 
     <!-- NUEVO · ¿Para quién es? personas -->
     <h3 class="head" id="paraquien">¿Para quién es?</h3>
     <div class="grid three">
-      <!-- AGENT: 2-3 perfiles de comprador -->
-      <div class="card persona"><div class="who">{{PERSONA_1_ETIQUETA}}</div><h4>{{PERSONA_1_TITULO}}</h4><p>{{PERSONA_1_DESC}}</p></div>
-      <div class="card persona"><div class="who">{{PERSONA_2_ETIQUETA}}</div><h4>{{PERSONA_2_TITULO}}</h4><p>{{PERSONA_2_DESC}}</p></div>
-      <div class="card persona"><div class="who">{{PERSONA_3_ETIQUETA}}</div><h4>{{PERSONA_3_TITULO}}</h4><p>{{PERSONA_3_DESC}}</p></div>
+      <div class="card persona"><div class="who">El veterano</div><h4>Estratega de AoE2 / 0 A.D.</h4><p>25-40 años, quiere profundidad estratégica clásica pero un giro fresco. El clima sistémico le da exactamente la variable nueva que la saga madre nunca le dio.</p></div>
+      <div class="card persona"><div class="who">El cultural</div><h4>Público hispano</h4><p>Atraído por el imaginario canario y atlante, un universo casi inexplorado en videojuego. Compra por el setting antes que por el género.</p></div>
+      <div class="card persona"><div class="who">El curioso</div><h4>Nicho histórico-alternativo · creadores</h4><p>Fans del "RTS histórico alternativo" y streamers que buscan algo distinto que enseñar. Calima les da clips que no se parecen a nada en su rotación.</p></div>
     </div>
 
     <h3 class="head">Lo que pediríamos para la próxima actualización</h3>
     <div class="cols">
-      <p>{{MEJORAS_JUGABLES — prosa: campaña, progresión, accesibilidad, rejugabilidad…}}</p>
+      <p>Lo primero, y lo más barato: combos Civ×Clima. Que ser Guanche signifique algo bajo la calima, que los Atlantes saquen ventaja de la tormenta. Es el matrimonio natural de sus dos mejores sistemas. Después, una mini-campaña narrativa que dé voz al lore guanche-atlante que hoy solo vive en la mecánica, no en pantalla. En accesibilidad falta lo básico de un RTS moderno: modos para daltonismo, escalado de UI y remapeo de teclas. Un sistema de replays multiplicaría la vida útil y la viralidad de los clips. Y, ya que el motor lo permite, recuperar la ceniza volcánica localizada para que el mapa cuente su propia historia de peligro zonal.</p>
     </div>
 
     <div class="verdictbox">
-      <div class="vb-pros"><h4>✦ Lo mejor</h4><ul><li>{{PRO_1}}</li><li>{{PRO_2}}</li><li>{{PRO_3}}</li></ul></div>
-      <div class="vb-cons"><h4>✕ Lo peor</h4><ul><li>{{CON_1}}</li><li>{{CON_2}}</li><li>{{CON_3}}</li></ul></div>
+      <div class="vb-pros"><h4>✦ Lo mejor</h4><ul><li>Clima sistémico real, con modificadores medibles que cambian partidas.</li><li>16 héroes con identidad propia y habilidades de verdad.</li><li>Setting atlántico-canario único, tejido en la mecánica.</li><li>HUD ya saneado (refactor −43%) y arnés de pruebas headless.</li></ul></div>
+      <div class="vb-cons"><h4>✕ Lo peor</h4><ul><li>El clima sigue desconectado de las civilizaciones.</li><li>Sin campaña ni lore in-game que cuente el mundo.</li><li>La IA está pegada al árbol de escena, frena la iteración.</li><li>Cobertura de tests baja: sin combate ni recolección cubiertos.</li></ul></div>
     </div>
 
     <!-- NUEVO · hooks virales / streamer + potencial comercial breve -->
     <h3 class="head">Momentos de tráiler · gancho para creadores</h3>
     <div class="grid three">
-      <!-- AGENT: 3-4 ideas concretas de clip/GIF -->
-      <div class="card hook"><span class="tag">Clip 1</span><p>{{HOOK_1}}</p></div>
-      <div class="card hook"><span class="tag">Clip 2</span><p>{{HOOK_2}}</p></div>
-      <div class="card hook"><span class="tag">Clip 3</span><p>{{HOOK_3}}</p></div>
+      <div class="card hook"><span class="tag">Clip 1</span><p>La calima irrumpe a mitad de batalla y las flechas se desvían con el viento: el control se vuelve apuesta en directo.</p></div>
+      <div class="card hook"><span class="tag">Clip 2</span><p>Un ejército Atlante emerge del océano para un asalto anfibio sobre una base desprevenida.</p></div>
+      <div class="card hook"><span class="tag">Clip 3</span><p>Cleito lanza la oleada de marea y cura a todos los aliados del radio justo antes de la carga decisiva.</p></div>
+      <div class="card hook"><span class="tag">Clip 4</span><p>Niebla marina sobre la costa: una emboscada invisible aparece de la nada sobre el flanco enemigo.</p></div>
     </div>
-    <div class="cols"><p>{{POTENCIAL_COMERCIAL — Steam, viralidad, retención, palancas de mercado}}</p></div>
+    <div class="cols"><p>Comercialmente, Calima es viable en Steam por su setting diferencial y tiene una capacidad viral alta gracias a sus clips —pocos RTS regalan momentos tan autocontados. El talón de Aquiles es la retención: hoy solo hay skirmish contra la IA. Las palancas claras son la campaña y el multijugador (M7); ese es el camino para convertir el "wishlist" en horas jugadas. El público objetivo combina al hispanohablante atraído por el imaginario y al nicho del RTS histórico-alternativo.</p></div>
 
     <div class="scorecard" id="veredicto">
       <h4>Veredicto · puntuación por apartados</h4>
       <div class="bars">
-        <!-- AGENT: una .bar por dimensión; añade <span class="delta"> en re-análisis; usa .warn si la nota es baja -->
-        <div class="bar"><span class="lbl">{{DIM_1}}</span><div class="track"><div class="fill" style="width:{{P1}}%"></div></div><span class="val">{{N1}}</span></div>
-        <div class="bar"><span class="lbl">{{DIM_2}}</span><div class="track"><div class="fill" style="width:{{P2}}%"></div></div><span class="val">{{N2}}</span></div>
-        <div class="bar"><span class="lbl">{{DIM_3}}</span><div class="track"><div class="fill warn" style="width:{{P3}}%"></div></div><span class="val">{{N3}}</span></div>
-        <div class="bar"><span class="lbl">{{DIM_4}}</span><div class="track"><div class="fill" style="width:{{P4}}%"></div></div><span class="val">{{N4}}</span></div>
-        <div class="bar total"><span class="lbl">GLOBAL</span><div class="track"><div class="fill" style="width:{{PG}}%"></div></div><span class="val">{{NOTA}}</span></div>
+        <div class="bar"><span class="lbl">Originalidad / Identidad</span><div class="track"><div class="fill" style="width:88%"></div></div><span class="val">88</span></div>
+        <div class="bar"><span class="lbl">Diseño jugable</span><div class="track"><div class="fill" style="width:80%"></div></div><span class="val">80 <span class="delta">▲2</span></span></div>
+        <div class="bar"><span class="lbl">Técnica / Arquitectura</span><div class="track"><div class="fill warn" style="width:74%"></div></div><span class="val">74 <span class="delta">▲6</span></span></div>
+        <div class="bar"><span class="lbl">Potencial comercial</span><div class="track"><div class="fill" style="width:81%"></div></div><span class="val">81 <span class="delta">▲1</span></span></div>
+        <div class="bar total"><span class="lbl">GLOBAL</span><div class="track"><div class="fill" style="width:81%"></div></div><span class="val">81 <span class="delta">▲3</span></span></div>
       </div>
     </div>
   </div>
@@ -375,43 +343,67 @@
   <div class="tech-body">
     <!-- Resumen ejecutivo: métricas de un vistazo -->
     <div class="strip">
-      <div class="s"><b>{{N_SCRIPTS}}</b><span>scripts .gd</span></div>
-      <div class="s"><b>{{KLOC}}</b><span>líneas GDScript</span></div>
-      <div class="s"><b>{{N_ESCENAS}}</b><span>escenas</span></div>
-      <div class="s"><b>{{N_RES}}</b><span>resources</span></div>
-      <div class="s"><b>{{N_TESTS}}</b><span>tests</span></div>
+      <div class="s"><b>98</b><span>scripts .gd</span></div>
+      <div class="s"><b>23,2K</b><span>líneas GDScript</span></div>
+      <div class="s"><b>49</b><span>escenas</span></div>
+      <div class="s"><b>87</b><span>resources</span></div>
+      <div class="s"><b>8</b><span>tests</span></div>
     </div>
 
-    <!-- AGENT (solo re-análisis): progreso con issues .done; si no, borra este bloque -->
     <h3 id="progreso">▲ Progreso desde el análisis anterior</h3>
     <div class="issue done"><span class="sev">Resuelto</span>
-      <h4>{{TITULO_RESUELTO}}</h4>
-      <p>{{DETALLE con file:line}}</p>
+      <h4>El HUD god object, desmontado (−43%)</h4>
+      <p><b>Evidencia:</b> <code>hud_manager.gd:137-196</code> · <code>project/tools/check_hud.gd</code></p>
+      <p>El antiguo HUD de 3313 líneas baja a 1879 (−43%), descompuesto en <code>HudResourceBar</code>, <code>HudMatchStats</code>, <code>HudMenus</code>, <code>HudControls</code>, <code>HudWeather</code> y <code>HudStyle</code>, instanciados desde <code>hud_manager.gd:137-196</code>. Se añade además un arnés de pruebas headless en <code>project/tools/check_hud.gd</code>. Esto sube Técnica de 68 a 74.</p>
+    </div>
+    <div class="issue done"><span class="sev">Resuelto</span>
+      <h4>Victoria por Maravilla: confirmada funcional</h4>
+      <p><b>Evidencia:</b> <code>game_world.gd:581-610</code></p>
+      <p>La condición de victoria por Wonder SÍ opera: temporizador de 240s con <code>_wonder_timers</code>. Deja de ser una duda de diseño.</p>
+    </div>
+    <div class="issue done"><span class="sev">Resuelto</span>
+      <h4>Bono de dunas Mahos: no es cosmético</h4>
+      <p><b>Evidencia:</b> <code>terrain_manager.gd:110-128</code> · <code>unit_base.gd:404</code></p>
+      <p>El traversal de dunas Mahos aplica 1.0 frente a 0.80 de penalización, consumido en <code>unit_base.gd:404</code>. La asimetría por civ es real. Junto al Wonder, esto sube Diseño de 78 a 80.</p>
     </div>
 
     <h3 id="arquitectura">Arquitectura, deuda y rendimiento</h3>
-    <p>{{RESUMEN_TECNICO}}</p>
-    <!-- AGENT: una .issue por hallazgo; clase hi/md/lo; severidad Alta/Media/Baja -->
+    <p>La salud del proyecto mejora: cae el peor god object y aparece tooling headless. Pero quedan tres frentes de deuda estructural y una IA acoplada que bloquea iteración táctica. Nota positiva: cero marcadores <code>TODO/FIXME/HACK</code> en todo el árbol.</p>
+
     <div class="issue hi"><span class="sev">Alta</span>
-      <h4>{{PROBLEMA_1}}</h4>
-      <p><b>Evidencia:</b> <code>{{archivo.gd:linea}}</code></p>
-      <p><b>Por qué importa:</b> {{...}} <b>Solución:</b> {{...}}</p>
+      <h4>IA acoplada al árbol de escena</h4>
+      <p><b>Evidencia:</b> <code>ai_player.gd:27-262</code> · <code>ai_military.gd</code> / <code>ai_construction.gd</code> / <code>ai_naval.gd</code></p>
+      <p><b>Por qué importa:</b> 51 accesos directos a <code>units_layer/buildings_layer.get_children()</code> atan la IA a la jerarquía de nodos: cualquier reestructura de escena la rompe, y no se puede testear ni iterar la táctica de forma aislada. <b>Solución:</b> inyectar un servicio <code>WorldQuery</code> que abstraiga las consultas de mundo (unidades/edificios por jugador, por área) y que la IA consuma por interfaz, no por <code>get_children()</code>.</p>
+    </div>
+    <div class="issue md"><span class="sev">Media-Alta</span>
+      <h4>Dos god objects restantes: map_generator y game_world</h4>
+      <p><b>Evidencia:</b> <code>map_generator.gd</code> (~2610 líneas) · <code>game_world.gd</code> (~1973 líneas)</p>
+      <p><b>Por qué importa:</b> concentran demasiadas responsabilidades, dificultando lectura, prueba y cambio. <b>Solución:</b> de <code>map_generator.gd</code> extraer <code>TerrainPainter</code>, <code>EntityPlacer</code> y <code>MaterialManager</code>; de <code>game_world.gd</code> extraer <code>VictoryController</code>, <code>SelectionController</code> y <code>CameraController</code>.</p>
     </div>
     <div class="issue md"><span class="sev">Media</span>
-      <h4>{{PROBLEMA_2}}</h4>
-      <p><b>Evidencia:</b> <code>{{archivo.gd:linea}}</code></p>
-      <p><b>Por qué importa:</b> {{...}} <b>Solución:</b> {{...}}</p>
+      <h4>El minimapa itera unidades cada frame</h4>
+      <p><b>Evidencia:</b> <code>minimap.gd:42,59,91,175</code></p>
+      <p><b>Por qué importa:</b> recorrer todas las unidades por frame escala mal cuando crece el conteo y compite con el resto del render. <b>Solución:</b> actualizar por eventos (alta/baja/movimiento significativo vía EventBus) o con un tick desacoplado a menor frecuencia y cache espacial.</p>
+    </div>
+    <div class="issue md"><span class="sev">Media</span>
+      <h4>Cobertura de tests baja</h4>
+      <p><b>Evidencia:</b> <code>tests/</code> (8 unit, 0 integración)</p>
+      <p><b>Por qué importa:</b> los sistemas críticos —combate y recolección— no tienen red de seguridad; cada refactor es a ciegas. <b>Solución:</b> priorizar tests de combate y recolección, y añadir integración aprovechando el patrón headless de <code>check_hud.gd</code>.</p>
     </div>
 
     <h3>Relación diseño ↔ código</h3>
-    <p>{{¿La arquitectura limita el diseño? ¿Qué desbloquearía qué? Data-driven, pipelines, prototipado.}}</p>
+    <p>El HUD ya frena menos al contenido; el siguiente paso natural es hacer las acciones data-driven (vía <code>.tres</code>/JSON) para iterar sin tocar código. La IA acoplada es hoy el principal freno a la iteración táctica: mientras dependa del árbol de escena, probar nuevas tácticas es caro. La buena noticia es que el traversal-por-civ ya demuestra que el patrón "la civ cambia una regla" funciona end-to-end (<code>terrain_manager.gd:110-128</code> → <code>unit_base.gd:404</code>): replicarlo en el clima es el combo de identidad más barato y potente disponible. Por último, sin un command pattern no hay base para replays, undo ni un multijugador determinista, así que esa decisión condiciona toda la rama social del juego.</p>
 
     <h3>Resumen de hallazgos</h3>
     <table>
       <thead><tr><th>Hallazgo</th><th>Severidad</th><th>Ubicación</th></tr></thead>
       <tbody>
-        <!-- AGENT: una fila por hallazgo -->
-        <tr><td>{{...}}</td><td>{{Alta/Media/Baja/OK}}</td><td><code>{{archivo:linea}}</code></td></tr>
+        <tr><td>HUD god object descompuesto</td><td><span class="yes">OK</span></td><td><code>hud/*.gd</code></td></tr>
+        <tr><td>IA acoplada al árbol de escena</td><td><span class="no">Alta</span></td><td><code>ai_*.gd</code></td></tr>
+        <tr><td>God objects restantes (map/world)</td><td><span class="partial">Media-Alta</span></td><td><code>map_generator.gd</code> / <code>game_world.gd</code></td></tr>
+        <tr><td>Minimapa itera por frame</td><td><span class="partial">Media</span></td><td><code>minimap.gd</code></td></tr>
+        <tr><td>Cobertura de tests baja</td><td><span class="partial">Media</span></td><td><code>tests/</code></td></tr>
+        <tr><td>Marcadores de deuda (TODO/FIXME/HACK)</td><td><span class="yes">OK</span></td><td>cero en el árbol</td></tr>
       </tbody>
     </table>
 
@@ -420,20 +412,30 @@
     <div class="road">
       <div class="lane short"><h4>● Quick wins · corto plazo</h4>
         <ul>
-          <!-- AGENT: cada item con badges, p.ej.: <span class="pill easy">Bajo coste</span><span class="pill impact">Alto impacto</span> -->
-          <li>{{QW_1}} <span class="pill easy">Bajo coste</span><span class="pill impact">Alto impacto</span></li>
-          <li>{{QW_2}} <span class="pill easy">Bajo coste</span></li>
+          <li>Combos Civ×Clima: enchufar la calima/tormenta a las civilizaciones. <span class="pill easy">Bajo coste</span><span class="pill impact">Alto impacto</span></li>
+          <li>Decidir y recuperar la ceniza volcánica localizada. <span class="pill easy">Bajo coste</span></li>
+          <li>Tests de combate y recolección. <span class="pill easy">Bajo coste</span></li>
+          <li>Replicar el arnés <code>check_hud.gd</code> a otras escenas. <span class="pill easy">Bajo coste</span></li>
         </ul></div>
       <div class="lane mid"><h4>● Medio plazo</h4>
-        <ul><li>{{MED_1}} <span class="pill mid">Medio</span></li><li>{{MED_2}}</li></ul></div>
+        <ul>
+          <li>Servicio <code>WorldQuery</code> inyectado para desacoplar la IA. <span class="pill mid">Medio</span><span class="pill impact">Alto impacto</span></li>
+          <li>Acciones data-driven (.tres/JSON). <span class="pill mid">Medio</span></li>
+          <li>Dividir <code>game_world.gd</code> en controllers. <span class="pill mid">Medio</span></li>
+          <li>Mini-campaña narrativa + accesibilidad (daltonismo/UI/remapeo). <span class="pill mid">Medio</span></li>
+        </ul></div>
       <div class="lane long"><h4>● Largo plazo</h4>
-        <ul><li>{{LRG_1}} <span class="pill hard">Alto coste</span></li><li>{{LRG_2}}</li></ul></div>
+        <ul>
+          <li>Refactor de <code>map_generator.gd</code> (TerrainPainter/EntityPlacer/MaterialManager). <span class="pill hard">Alto coste</span></li>
+          <li>Command pattern: base para replays y multijugador determinista. <span class="pill hard">Alto coste</span><span class="pill impact">Alto impacto</span></li>
+          <li>ECS-lite si se superan las 500 unidades en pantalla. <span class="pill hard">Alto coste</span></li>
+        </ul></div>
     </div>
   </div>
 
   <footer>
-    Análisis generado por el agente <b>game-reviewer</b> · {{GAME}} · {{FECHA_HORA}}<br>
-    {{N_SCRIPTS}} scripts / {{KLOC}} líneas GDScript · evidencia verificada contra el código fuente.
+    Análisis generado por el agente <b>game-reviewer</b> · Calima: Flames of the Atlantic · 2026-06-09 15:41<br>
+    98 scripts / 23,2K líneas GDScript · evidencia verificada contra el código fuente.
   </footer>
 
 </div>
