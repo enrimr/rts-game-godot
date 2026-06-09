@@ -141,7 +141,7 @@ func _build_tooltip(u: Node) -> String:
 
 	var spd_civ: float = CivBonusManager.get_unit_speed_multiplier(pid, uid) \
 		* CivBonusManager.get_unit_move_speed_multiplier(pid)
-	var spd_weather: float = WeatherManager.get_move_speed_multiplier(world_pos)
+	var spd_weather: float = WeatherManager.get_move_speed_multiplier(world_pos, pid)
 	var spd_total: float = spd_civ * spd_weather
 	var spd: float = d.move_speed * spd_total
 
@@ -151,7 +151,7 @@ func _build_tooltip(u: Node) -> String:
 	var armor_m: float = d.armor_melee + CivBonusManager.get_unit_armor_bonus(pid)
 	var armor_p: float = d.armor_pierce + CivBonusManager.get_archer_armor_pierce_bonus(pid)
 
-	var los_mult: float = WeatherManager.get_vision_multiplier(world_pos)
+	var los_mult: float = WeatherManager.get_vision_multiplier(world_pos, pid)
 	var los: float = d.line_of_sight * los_mult
 
 	var b: String = ""

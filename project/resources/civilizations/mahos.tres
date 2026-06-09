@@ -11,6 +11,7 @@ unique_unit_ids = ["sand_raider"]
 unique_technology_ids = []
 starting_bonuses = {}
 stat_multipliers = {"building_wood_cost": 0.70, "scout_speed": 1.25, "light_cavalry_speed": 1.25}
+weather_affinity = {"calima": 0.5}
 missing_units = ["heavy_cavalry_upgrades"]
 missing_technologies = []
 can_traverse_dune = true

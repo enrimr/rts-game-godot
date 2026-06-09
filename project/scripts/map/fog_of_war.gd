@@ -139,7 +139,7 @@ func _reveal_from_units() -> void:
 			var udata: Variant = unit.get("unit_data")
 			if udata is UnitResource:
 				los = (udata as UnitResource).line_of_sight
-		var weather_mult: float = WeatherManager.get_vision_multiplier((unit as Node2D).global_position)
+		var weather_mult: float = WeatherManager.get_vision_multiplier((unit as Node2D).global_position, 0)
 		_mark_circle((unit as Node2D).global_position, los * 64.0 * weather_mult)
 
 func _reveal_from_buildings() -> void:
@@ -158,14 +158,14 @@ func _reveal_from_buildings() -> void:
 			var bdata: Variant = building.get("building_data")
 			if bdata is BuildingResource:
 				los = (bdata as BuildingResource).line_of_sight
-			var bweather_mult: float = WeatherManager.get_vision_multiplier((building as Node2D).global_position)
+			var bweather_mult: float = WeatherManager.get_vision_multiplier((building as Node2D).global_position, 0)
 			_mark_circle((building as Node2D).global_position, los * 64.0 * bweather_mult)
 
 	# Town Center (drop_off_node in world root)
 	if is_instance_valid(_drop_off_node):
 		var pid: Variant = _drop_off_node.get("player_id")
 		if pid != null and (pid as int) == 0:
-			var tc_weather_mult: float = WeatherManager.get_vision_multiplier((_drop_off_node as Node2D).global_position)
+			var tc_weather_mult: float = WeatherManager.get_vision_multiplier((_drop_off_node as Node2D).global_position, 0)
 			_mark_circle((_drop_off_node as Node2D).global_position, 8.0 * 64.0 * tc_weather_mult)
 
 func _mark_circle(world_pos: Vector2, radius_px: float) -> void:

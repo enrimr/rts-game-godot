@@ -11,5 +11,6 @@ unique_unit_ids = ["trireme"]
 unique_technology_ids = []
 starting_bonuses = {}
 stat_multipliers = {"market_available_dark_age": 1.0, "merchant_ship_gold_rate": 1.0}
+weather_affinity = {"atlantic_storm": 0.5}
 missing_units = ["knights", "castle_infantry"]
 missing_technologies = []
