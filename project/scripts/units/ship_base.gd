@@ -21,5 +21,5 @@ func _nav_velocity() -> Vector2:
 	if dir.length_squared() < 1.0:
 		return Vector2.ZERO
 	var spd: float = unit_data.move_speed \
-		* WeatherManager.get_naval_speed_multiplier(dir.normalized())
+		* WeatherManager.get_naval_speed_multiplier(dir.normalized(), player_id)
 	return dir.normalized() * spd

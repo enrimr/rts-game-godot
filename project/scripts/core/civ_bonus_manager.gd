@@ -1,6 +1,7 @@
 extends Node
 
-var _multipliers: Dictionary = {}  # {player_id: Dictionary}
+var _multipliers: Dictionary = {}        # {player_id: Dictionary}
+var _weather_affinity: Dictionary = {}   # {player_id: {weather_id: resistance}}
 
 func _ready() -> void:
 	EventBus.age_advance_complete.connect(_on_age_advance_complete)
@@ -13,8 +14,18 @@ func init_player(player_id: int, civ_id: String) -> void:
 	var civ: CivilizationResource = load(path) as CivilizationResource
 	if civ == null:
 		_multipliers[player_id] = {}
+		_weather_affinity[player_id] = {}
 		return
 	_multipliers[player_id] = (civ.stat_multipliers as Dictionary).duplicate()
+	_weather_affinity[player_id] = (civ.weather_affinity as Dictionary).duplicate()
+
+## Penalty-scaling factor in [0.0, 1.0] for a player's civ against a weather id.
+## 1.0 = full penalty (default, also for unknown players like -1); 0.0 = immune.
+func get_weather_resistance(player_id: int, weather_id: String) -> float:
+	var aff: Variant = _weather_affinity.get(player_id)
+	if aff == null:
+		return 1.0
+	return (aff as Dictionary).get(weather_id, 1.0) as float
 
 func get_multiplier(player_id: int, key: String) -> float:
 	var player_mults: Variant = _multipliers.get(player_id)

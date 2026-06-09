@@ -51,7 +51,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/resource_manager.gd` | Per-player food/wood/gold/stone stockpiles, spatial resource cache |
 | `project/scripts/core/selection_manager.gd` | Unit selection, control groups |
 | `project/scripts/core/age_manager.gd` | Per-player Age tracking, age advance timer, cost multipliers |
-| `project/scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, age-up costs, move speed, attack speed; archer range bonuses per age |
+| `project/scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, age-up costs, move speed, attack speed; archer range bonuses per age; per-civ weather resistance |
 | `project/scripts/core/tech_manager.gd` | Research queue, applies technology effects, 21 technologies total |
 | `project/scripts/core/weather_manager.gd` | Procedural weather state machine (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash); stat-modifier query API |
 | `project/scripts/core/population_manager.gd` | Per-player population current/cap tracking |
@@ -211,6 +211,7 @@ Run from the GUT panel inside Godot editor, or headlessly via CI.
 **Weather System:**
 - 5 procedural weather types (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash)
 - Stat modifiers: vision, movement speed, gather rate, projectile drift, building damage
+- Per-civ weather affinity: `CivilizationResource.weather_affinity` ({weather_id: resistance 0..1}) scales penalties per civilization (e.g. Guanches immune to Calima, Atlantes ignore the Atlantic Storm naval penalty); weather query methods take an optional `player_id`
 - Weather-based cloaking (Sea Fog coastal stealth)
 - Visual effects overlay (rain, dust, ash, fog vignette)
 - Lobby-configurable frequency (Off/Normal/Frequent/Extreme)

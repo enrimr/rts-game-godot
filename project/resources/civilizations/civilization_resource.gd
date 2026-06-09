@@ -16,6 +16,12 @@ class_name CivilizationResource
 ## Multipliers applied to stats (e.g. {"villager_carry_capacity": 1.15}).
 @export var stat_multipliers: Dictionary = {}
 
+## Weather affinity: weather_id -> resistance factor in [0.0, 1.0] applied to that
+## weather's penalties. 1.0 (or absent) = affected like everyone else; 0.5 = half
+## the penalty; 0.0 = immune. Keys match WeatherManager weather ids, e.g.
+## {"calima": 0.0, "volcanic_ash": 0.5}.
+@export var weather_affinity: Dictionary = {}
+
 ## Which unit lines are unavailable for this civilization.
 @export var missing_units: Array[String] = []
 @export var missing_technologies: Array[String] = []

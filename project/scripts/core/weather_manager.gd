@@ -185,13 +185,20 @@ func get_weather_id() -> String:
 
 # ── Stat query API ────────────────────────────────────────────────────────────
 
-## Land movement speed multiplier for a unit at world_pos.
-func get_move_speed_multiplier(world_pos: Vector2) -> float:
+## Per-civ penalty scaling for the CURRENT weather. 1.0 = full penalty (also for
+## player_id == -1 / unknown), 0.0 = immune. Multiply any penalty fraction by this.
+func _resistance(player_id: int) -> float:
+	if player_id < 0:
+		return 1.0
+	return CivBonusManager.get_weather_resistance(player_id, get_weather_id())
+
+## Land movement speed multiplier for a unit at world_pos owned by player_id.
+func get_move_speed_multiplier(world_pos: Vector2, player_id: int = -1) -> float:
 	if intensity <= 0.0:
 		return 1.0
 	match current_weather:
 		WeatherType.CALIMA:
-			return 1.0 - 0.15 * intensity
+			return 1.0 - 0.15 * intensity * _resistance(player_id)
 		WeatherType.ATLANTIC_STORM:
 			return 1.0   # only affects naval in gather/attack; land units unaffected
 		WeatherType.TRADE_WINDS:
@@ -200,43 +207,48 @@ func get_move_speed_multiplier(world_pos: Vector2) -> float:
 
 ## Naval (ship) movement speed multiplier for a ship moving in direction move_dir.
 ## Trade winds give a bonus when sailing with the wind, penalty against it.
-func get_naval_speed_multiplier(move_dir: Vector2) -> float:
+func get_naval_speed_multiplier(move_dir: Vector2, player_id: int = -1) -> float:
 	if intensity <= 0.0 or current_weather != WeatherType.TRADE_WINDS:
 		if current_weather == WeatherType.ATLANTIC_STORM:
-			return 1.0 - 0.30 * intensity
+			return 1.0 - 0.30 * intensity * _resistance(player_id)
 		return 1.0
 	var alignment: float = move_dir.normalized().dot(_wind_dir)  # -1..1
-	return 1.0 + alignment * 0.20 * intensity
+	# A favourable wind is a bonus (never scaled down); only the headwind penalty
+	# is softened by affinity.
+	var effect: float = alignment * 0.20 * intensity
+	if effect < 0.0:
+		effect *= _resistance(player_id)
+	return 1.0 + effect
 
-## Gather rate multiplier for resource type at world_pos.
-func get_gather_rate_multiplier(resource: String, world_pos: Vector2) -> float:
+## Gather rate multiplier for resource type at world_pos owned by player_id.
+func get_gather_rate_multiplier(resource: String, world_pos: Vector2, player_id: int = -1) -> float:
 	if intensity <= 0.0:
 		return 1.0
 	match current_weather:
 		WeatherType.CALIMA:
 			if resource == "wood" or resource == "food":
-				return 1.0 - 0.20 * intensity
+				return 1.0 - 0.20 * intensity * _resistance(player_id)
 		WeatherType.ATLANTIC_STORM:
 			if resource == "food":   # fishing affected
-				return 1.0 - 0.50 * intensity
+				return 1.0 - 0.50 * intensity * _resistance(player_id)
 		WeatherType.VOLCANIC_ASH:
 			if _in_volcanic_zone(world_pos):
-				return 1.0 - 0.30 * intensity
+				return 1.0 - 0.30 * intensity * _resistance(player_id)
 	return 1.0
 
-## Vision radius multiplier for a unit at world_pos.
-func get_vision_multiplier(world_pos: Vector2) -> float:
+## Vision radius multiplier for a unit at world_pos owned by player_id.
+func get_vision_multiplier(world_pos: Vector2, player_id: int = -1) -> float:
 	if intensity <= 0.0:
 		return 1.0
 	match current_weather:
 		WeatherType.CALIMA:
-			return 1.0 - 0.40 * intensity
+			return 1.0 - 0.40 * intensity * _resistance(player_id)
 		WeatherType.SEA_FOG:
 			if _in_coastal_zone(world_pos):
-				return 1.0 - 0.60 * intensity
+				return 1.0 - 0.60 * intensity * _resistance(player_id)
 		WeatherType.VOLCANIC_ASH:
 			if _in_volcanic_zone(world_pos):
-				return 1.0 - 0.50 * intensity
+				return 1.0 - 0.50 * intensity * _resistance(player_id)
 	return 1.0
 
 ## World-space drift applied to projectile final position (trebuchet, mangonel).
@@ -263,12 +275,12 @@ func is_unit_cloaked_by_weather(world_pos: Vector2) -> bool:
 	return _in_coastal_zone(world_pos)
 
 ## HP drain per second for a building at world_pos from volcanic ash.
-func get_building_damage_rate(world_pos: Vector2) -> float:
+func get_building_damage_rate(world_pos: Vector2, player_id: int = -1) -> float:
 	if intensity <= 0.0 or current_weather != WeatherType.VOLCANIC_ASH:
 		return 0.0
 	if not _in_volcanic_zone(world_pos):
 		return 0.0
-	return 2.0 * intensity
+	return 2.0 * intensity * _resistance(player_id)
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 

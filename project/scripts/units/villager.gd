@@ -347,7 +347,7 @@ func _handle_gathering(delta: float) -> void:
 		_start_gathering_active()
 		var available: float = gather_target.gather(gather_rate)
 		var rate_mult: float = CivBonusManager.get_gather_rate_multiplier(player_id, carried_resource) \
-			* WeatherManager.get_gather_rate_multiplier(carried_resource, global_position)
+			* WeatherManager.get_gather_rate_multiplier(carried_resource, global_position, player_id)
 		carried_amount = minf(carried_amount + available * rate_mult, carry_capacity)
 
 		if not (gather_target is ResourceNode):

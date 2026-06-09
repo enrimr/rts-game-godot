@@ -11,6 +11,7 @@ unique_unit_ids = ["tidecaller"]
 unique_technology_ids = []
 starting_bonuses = {}
 stat_multipliers = {"coastal_vision": 1.50, "ship_attack_speed": 1.20, "shallow_water_penalty": 0.0}
+weather_affinity = {"atlantic_storm": 0.0, "sea_fog": 0.5}
 missing_units = ["heavy_cavalry", "siege_workshop"]
 missing_technologies = []
 can_traverse_ocean = true

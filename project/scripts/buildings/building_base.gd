@@ -230,7 +230,7 @@ func _process(delta: float) -> void:
 	# Volcanic ash: slow HP drain for any standing building (including pre-placed
 	# Town Centers whose state never transitions through add_construction).
 	if state != BuildingState.UNDER_CONSTRUCTION and state != BuildingState.DESTROYED:
-		var ash_dmg: float = WeatherManager.get_building_damage_rate(global_position) * delta
+		var ash_dmg: float = WeatherManager.get_building_damage_rate(global_position, player_id) * delta
 		if ash_dmg > 0.0:
 			take_damage(ash_dmg)
 	if _under_attack_timer <= 0.0:
