@@ -78,12 +78,7 @@ func update_cooldowns(delta: float) -> void:
 func sync_built_counts() -> void:
 	for key: String in _built.keys():
 		_built[key] = 0
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building):
-			continue
-		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for building: Node in _ai.world.own_buildings(_ai.player_id):
 		var bdata: Variant = building.get("building_data")
 		if bdata == null:
 			continue
@@ -183,9 +178,7 @@ func _build_pos_clear_footprint(pos: Vector2, footprint: float) -> bool:
 			continue
 		if pos.distance_to((node as Node2D).global_position) < footprint + 32.0:
 			return false
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building):
-			continue
+	for building: Node in _ai.world.all_buildings():
 		var other_id: String = ""
 		var bdata: Variant = building.get("building_data")
 		if bdata != null:
