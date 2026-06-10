@@ -7,24 +7,23 @@ const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 func setup(ai) -> void:
 	_ai = ai
 
+## Own villagers (typed), via WorldQuery — replaces the repeated
+## "for child / is Villager / player_id == mine" scans in this module.
+func _own_villagers() -> Array:
+	return WorldQuery.of_type(_ai.world.own_units(_ai.player_id), Villager)
+
 func manage_villagers() -> void:
 	if not is_instance_valid(_ai.town_center):
 		var counts: Dictionary = {}
 		var assigned_total: int = 0
-		for unit: Node in _ai.units_layer.get_children():
-			if not is_instance_valid(unit) or not (unit is Villager):
-				continue
-			var vil: Villager = unit as Villager
-			if vil.player_id != _ai.player_id or not is_instance_valid(vil.gather_target) or not (vil.gather_target is ResourceNode):
+		for vil: Villager in _own_villagers():
+			if not is_instance_valid(vil.gather_target) or not (vil.gather_target is ResourceNode):
 				continue
 			var rt: ResourceNode.ResourceType = (vil.gather_target as ResourceNode).resource_type
 			counts[rt] = (counts.get(rt, 0) as int) + 1
 			assigned_total += 1
-		for unit: Node in _ai.units_layer.get_children():
-			if not is_instance_valid(unit) or not (unit is Villager):
-				continue
-			var v: Villager = unit as Villager
-			if v.player_id != _ai.player_id or v.current_state != UnitBase.UnitState.IDLE:
+		for v: Villager in _own_villagers():
+			if v.current_state != UnitBase.UnitState.IDLE:
 				continue
 			_assign_villager(v, counts, assigned_total)
 		return
@@ -34,24 +33,14 @@ func manage_villagers() -> void:
 		spawn_villager()
 	var counts: Dictionary = {}
 	var assigned_total: int = 0
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit) or not (unit is Villager):
-			continue
-		var vil: Villager = unit as Villager
-		if vil.player_id != _ai.player_id:
-			continue
+	for vil: Villager in _own_villagers():
 		if not is_instance_valid(vil.gather_target) or not (vil.gather_target is ResourceNode):
 			continue
 		var rt: ResourceNode.ResourceType = (vil.gather_target as ResourceNode).resource_type
 		var n: int = counts.get(rt, 0) as int
 		counts[rt] = n + 1
 		assigned_total += 1
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit) or not (unit is Villager):
-			continue
-		var v: Villager = unit as Villager
-		if v.player_id != _ai.player_id:
-			continue
+	for v: Villager in _own_villagers():
 		if v.current_state == UnitBase.UnitState.IDLE:
 			_assign_villager(v, counts, assigned_total)
 
@@ -91,12 +80,7 @@ func find_nearest_drop_off(rtype: ResourceNode.ResourceType) -> Node2D:
 			return _ai.drop_off
 	var best: Node2D = null
 	var best_dist: float = INF
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building):
-			continue
-		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for building: Node in _ai.world.own_buildings(_ai.player_id):
 		var bdata: Variant = building.get("building_data")
 		if bdata == null:
 			continue
@@ -113,14 +97,9 @@ func find_nearest_drop_off(rtype: ResourceNode.ResourceType) -> Node2D:
 
 func redirect_villagers_to_drop_off(new_drop: Node2D, rtype: ResourceNode.ResourceType) -> void:
 	var reassigned: int = 0
-	for unit: Node in _ai.units_layer.get_children():
+	for v: Villager in _own_villagers():
 		if reassigned >= 2:
 			break
-		if not is_instance_valid(unit) or not (unit is Villager):
-			continue
-		var v: Villager = unit as Villager
-		if v.player_id != _ai.player_id:
-			continue
 		var carried: Variant = v.get("carried_resource")
 		if carried != null and (carried as String) != "" and v.gather_target != null:
 			v.drop_off_target = new_drop
@@ -195,13 +174,4 @@ func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> v
 	v.order_gather(best_node, best_node.get_resource_name(), nearest_drop if nearest_drop != null else _ai.drop_off)
 
 func _count_of_type_villager() -> int:
-	var count: int = 0
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
-		if unit is Villager:
-			count += 1
-	return count
+	return _own_villagers().size()
