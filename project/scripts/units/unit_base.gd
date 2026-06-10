@@ -39,7 +39,7 @@ var _move_destination: Vector2 = Vector2.ZERO
 const STUCK_TIMEOUT: float = 1.2
 const STUCK_THRESHOLD: float = 6.0
 const MAX_STUCK_RETRIES: int = 6
-const GUARD_RADIUS: float = 600.0
+const GUARD_RADIUS: float = 250.0
 
 @onready var nav_agent: NavigationAgent2D = $NavigationAgent2D
 @onready var health_bar: ProgressBar = $HealthBar
@@ -262,6 +262,8 @@ func _check_hero_low_hp() -> void:
 func _on_player_entity_under_attack(world_pos: Vector2, attacker: Node) -> void:
 	if current_state != UnitState.IDLE:
 		return
+	if not _responds_to_guard():
+		return
 	if not is_instance_valid(attacker):
 		return
 	if global_position.distance_to(world_pos) > GUARD_RADIUS:
@@ -272,6 +274,16 @@ func _on_player_entity_under_attack(world_pos: Vector2, attacker: Node) -> void:
 	if attacker.get("is_cloaked") == true:
 		return
 	_on_auto_attack_target(attacker)
+
+## Whether this unit reacts to the "ally under attack" guard signal. Only
+## military land units do; villagers, ships and animals stay put so the player's
+## economy doesn't run off to defend on its own.
+func _responds_to_guard() -> bool:
+	if has_method("order_gather"):   # villagers
+		return false
+	if has_method("get_garrison") or has_method("order_fish"):  # transport / fishing ships
+		return false
+	return true
 
 ## Called when any body enters the attack-range Area2D.
 ## Triggers auto-attack only from IDLE, or from MOVING when attack-move is active.
@@ -427,31 +439,32 @@ func _advance_stuck(delta: float) -> bool:
 	return false
 
 # Escalating unstick strategy called every time _advance_stuck fires.
-# Retries 1-2: small target jitter.
-# Retries 3-4: large jitter + re-path to passable position near destination.
-# Retries 5+:  physically push the unit sideways out of the obstacle.
+# Retries 1-4: re-path with growing jitter toward a passable point near the
+#              destination (path-only; never teleports the unit).
+# After MAX_STUCK_RETRIES: give up and return to idle, so an unreachable
+# target (e.g. an enemy on another island chased via guard/auto-scan) can no
+# longer make the unit twitch in place. Earlier versions pushed global_position
+# directly here, which is what produced the "units move on their own" jitter.
 func _unstick() -> void:
+	if _stuck_retries > MAX_STUCK_RETRIES:
+		_stuck_retries = 0
+		_abandon_movement()
+		return
 	var dest: Vector2 = _move_destination if _move_destination != Vector2.ZERO \
 		else nav_agent.target_position
-	match _stuck_retries:
-		1, 2:
-			var jitter: float = 28.0 * float(_stuck_retries)
-			nav_agent.target_position = _safe_destination(
-				dest + Vector2(randf_range(-jitter, jitter), randf_range(-jitter, jitter)))
-		3, 4:
-			var jitter: float = 56.0
-			var new_dest: Vector2 = _safe_destination(
-				dest + Vector2(randf_range(-jitter, jitter), randf_range(-jitter, jitter)))
-			nav_agent.target_position = new_dest
-			# Also nudge the unit itself slightly away from where it's stuck
-			var push: Vector2 = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized() * 20.0
-			global_position += push
-		_:
-			# Push unit toward destination, stepping around the blocker
-			var to_dest: Vector2 = (dest - global_position).normalized()
-			var perp: Vector2 = Vector2(-to_dest.y, to_dest.x)
-			var side: float = 1.0 if (_stuck_retries % 2 == 0) else -1.0
-			global_position += perp * side * 32.0 + to_dest * 16.0
-			nav_agent.target_position = _safe_destination(dest)
-			if _stuck_retries > MAX_STUCK_RETRIES:
-				_stuck_retries = 0
+	var jitter: float = 28.0 * float(mini(_stuck_retries, 2))
+	nav_agent.target_position = _safe_destination(
+		dest + Vector2(randf_range(-jitter, jitter), randf_range(-jitter, jitter)))
+
+# Give up the current move/chase and return to idle. Clears the various targets
+# generically (set() no-ops on subclasses that lack a given property) so an
+# abandoned unit is not immediately re-engaged by _handle_attacking next frame.
+func _abandon_movement() -> void:
+	if is_instance_valid(nav_agent):
+		nav_agent.set_velocity(Vector2.ZERO)
+	_attack_move_active = false
+	if "attack_target" in self:
+		set("attack_target", null)
+	if "_destination_state" in self:
+		set("_destination_state", UnitState.IDLE)
+	current_state = UnitState.IDLE
