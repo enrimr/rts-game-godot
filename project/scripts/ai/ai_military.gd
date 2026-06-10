@@ -33,23 +33,11 @@ func check_zone_threat() -> void:
 	var anchors: Array[Vector2] = []
 	if is_instance_valid(_ai.town_center):
 		anchors.append(_ai.town_center.global_position)
-	for b: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(b):
-			continue
-		var bpid: Variant = b.get("player_id")
-		if bpid == null or (bpid as int) != _ai.player_id:
-			continue
+	for b: Node in _ai.world.own_buildings(_ai.player_id):
 		anchors.append((b as Node2D).global_position)
 	if anchors.is_empty():
 		return
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) == _ai.player_id:
-			continue
-		if unit.get("is_cloaked") == true:
-			continue
+	for unit: Node in _ai.world.enemy_units_visible(_ai.player_id):
 		var upos: Vector2 = (unit as Node2D).global_position
 		for anchor: Vector2 in anchors:
 			if upos.distance_to(anchor) <= CONTROL_ZONE_RADIUS:
@@ -79,12 +67,7 @@ func launch_attack() -> void:
 	var target_count: int = targets.size()
 
 	var idle_attackers: Array[Node] = []
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for unit: Node in _ai.world.own_units(_ai.player_id):
 		if not is_military_unit(unit):
 			continue
 		var existing_target: Variant = unit.get("attack_target")
@@ -107,12 +90,7 @@ func push_units_past_destroyed_building(destroyed: Node2D) -> void:
 	if next_target == null:
 		return
 	const PUSH_RADIUS: float = 300.0
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for unit: Node in _ai.world.own_units(_ai.player_id):
 		if not is_military_unit(unit):
 			continue
 		if (unit as Node2D).global_position.distance_to(destroyed.global_position) > PUSH_RADIUS:
@@ -153,12 +131,7 @@ func manage_military() -> void:
 
 	# Archers train at ArcheryRange; infantry at Barracks.
 	if unit_id == "archer":
-		for building: Node in _ai.buildings_layer.get_children():
-			if not is_instance_valid(building) or not (building is ArcheryRange):
-				continue
-			var ar: ArcheryRange = building as ArcheryRange
-			if ar.player_id != _ai.player_id:
-				continue
+		for ar: ArcheryRange in WorldQuery.of_type(_ai.world.own_buildings(_ai.player_id), ArcheryRange):
 			if ar.state != BuildingBase.BuildingState.COMPLETE:
 				continue
 			if ar.get_queue().size() >= ar.get_max_queue():
@@ -167,12 +140,7 @@ func manage_military() -> void:
 			ar.order_train(unit_id)
 			break
 	else:
-		for building: Node in _ai.buildings_layer.get_children():
-			if not is_instance_valid(building) or not (building is Barracks):
-				continue
-			var br: Barracks = building as Barracks
-			if br.player_id != _ai.player_id:
-				continue
+		for br: Barracks in WorldQuery.of_type(_ai.world.own_buildings(_ai.player_id), Barracks):
 			if br.state != BuildingBase.BuildingState.COMPLETE:
 				continue
 			if br.get_queue().size() >= br.get_max_queue():
@@ -200,31 +168,14 @@ func manage_unique_barracks_unit() -> void:
 		return
 	# Archer-class unique units train at ArcheryRange; others at Barracks.
 	var use_archery_range: bool = unique_id == "ravine_archer" or unique_id == "longbowman"
-	for building: Node in _ai.buildings_layer.get_children():
-		if use_archery_range:
-			if not is_instance_valid(building) or not (building is ArcheryRange):
-				continue
-			var ar: ArcheryRange = building as ArcheryRange
-			if ar.player_id != _ai.player_id:
-				continue
-			if ar.state != BuildingBase.BuildingState.COMPLETE:
-				continue
-			if ar.get_queue().size() >= ar.get_max_queue():
-				continue
-			ar.order_train(unique_id)
-			break
-		else:
-			if not is_instance_valid(building) or not (building is Barracks):
-				continue
-			var br: Barracks = building as Barracks
-			if br.player_id != _ai.player_id:
-				continue
-			if br.state != BuildingBase.BuildingState.COMPLETE:
-				continue
-			if br.get_queue().size() >= br.get_max_queue():
-				continue
-			br.order_train(unique_id)
-			break
+	var prod_type: Variant = ArcheryRange if use_archery_range else Barracks
+	for building: Node in WorldQuery.of_type(_ai.world.own_buildings(_ai.player_id), prod_type):
+		if building.get("state") as int != BuildingBase.BuildingState.COMPLETE:
+			continue
+		if (building.get_queue() as Array).size() >= building.get_max_queue() as int:
+			continue
+		building.order_train(unique_id)
+		break
 
 func manage_stable_training() -> void:
 	if GameSettings.difficulty <= GameSettings.Difficulty.EASY:
@@ -233,12 +184,7 @@ func manage_stable_training() -> void:
 		return
 	var age: int = AgeManager.get_age(_ai.player_id)
 	var ai_civ: String = MatchConfig.get_rival_civ_id(_ai.player_id)
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building) or not (building is Stable):
-			continue
-		var st: Stable = building as Stable
-		if st.player_id != _ai.player_id:
-			continue
+	for st: Stable in WorldQuery.of_type(_ai.world.own_buildings(_ai.player_id), Stable):
 		if st.state != BuildingBase.BuildingState.COMPLETE:
 			continue
 		if st.get_queue().size() >= st.get_max_queue():
@@ -259,12 +205,7 @@ func manage_siege_training() -> void:
 	if _ai._construction._built.get("siege_workshop", 0) as int == 0:
 		return
 	var age: int = AgeManager.get_age(_ai.player_id)
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building) or not (building is SiegeWorkshop):
-			continue
-		var sw: SiegeWorkshop = building as SiegeWorkshop
-		if sw.player_id != _ai.player_id:
-			continue
+	for sw: SiegeWorkshop in WorldQuery.of_type(_ai.world.own_buildings(_ai.player_id), SiegeWorkshop):
 		if sw.state != BuildingBase.BuildingState.COMPLETE:
 			continue
 		if sw.get_queue().size() >= sw.get_max_queue():
@@ -305,12 +246,7 @@ func manage_research() -> void:
 	if GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL:
 		return
 	var research_cap: int = 2 if GameSettings.difficulty == GameSettings.Difficulty.EASY else 999
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building):
-			continue
-		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for building: Node in _ai.world.own_buildings(_ai.player_id):
 		var btype: int = _research_building_type(building)
 		if btype < 0:
 			continue
@@ -347,12 +283,7 @@ func _pick_research(available: Array[TechnologyResource]) -> TechnologyResource:
 func get_primary_enemy_tc() -> Node2D:
 	if is_instance_valid(_ai.enemy_town_center):
 		return _ai.enemy_town_center
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building):
-			continue
-		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) == _ai.player_id:
-			continue
+	for building: Node in _ai.world.enemy_buildings(_ai.player_id):
 		if building.get("is_town_center") == true or \
 				building.get_script() != null and (building.get_script() as Script).resource_path.contains("town_center"):
 			return building as Node2D
@@ -380,12 +311,7 @@ func _find_enemy_building_targets(max_count: int) -> Array[Node]:
 	var etc: Node2D = get_primary_enemy_tc()
 	if etc != null:
 		candidates.append(etc)
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building):
-			continue
-		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) == _ai.player_id:
-			continue
+	for building: Node in _ai.world.enemy_buildings(_ai.player_id):
 		var sv: Variant = building.get("state")
 		if sv != null and (sv as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 			continue
@@ -405,12 +331,7 @@ func find_nearest_enemy_building() -> Node:
 	if etc != null:
 		best = etc
 		best_dist = origin.distance_to(etc.global_position)
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building):
-			continue
-		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) == _ai.player_id:
-			continue
+	for building: Node in _ai.world.enemy_buildings(_ai.player_id):
 		var sv: Variant = building.get("state")
 		if sv != null and (sv as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 			continue
@@ -424,14 +345,7 @@ func find_nearest_enemy_unit() -> Node:
 	var origin: Vector2 = _ai.town_center.global_position if is_instance_valid(_ai.town_center) else Vector2.ZERO
 	var best: Node = null
 	var best_dist: float = INF
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) == _ai.player_id:
-			continue
-		if unit.get("is_cloaked") == true:
-			continue
+	for unit: Node in _ai.world.enemy_units_visible(_ai.player_id):
 		var d: float = origin.distance_to((unit as Node2D).global_position)
 		if d < best_dist:
 			best_dist = d
@@ -448,36 +362,19 @@ func _defend_base() -> void:
 	# Find the enemy unit closest to any AI building/TC.
 	var best_enemy: Node = null
 	var best_dist: float = CONTROL_ZONE_RADIUS
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) == _ai.player_id:
-			continue
-		if unit.get("is_cloaked") == true:
-			continue
+	for unit: Node in _ai.world.enemy_units_visible(_ai.player_id):
 		var upos: Vector2 = (unit as Node2D).global_position
 		var min_d: float = INF
 		if is_instance_valid(_ai.town_center):
 			min_d = minf(min_d, upos.distance_to(_ai.town_center.global_position))
-		for b: Node in _ai.buildings_layer.get_children():
-			if not is_instance_valid(b):
-				continue
-			var bpid: Variant = b.get("player_id")
-			if bpid == null or (bpid as int) != _ai.player_id:
-				continue
+		for b: Node in _ai.world.own_buildings(_ai.player_id):
 			min_d = minf(min_d, upos.distance_to((b as Node2D).global_position))
 		if min_d < best_dist:
 			best_dist = min_d
 			best_enemy = unit
 	if best_enemy == null:
 		return
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for unit: Node in _ai.world.own_units(_ai.player_id):
 		if is_military_unit(unit) and unit.has_method("order_attack"):
 			unit.order_attack(best_enemy)
 
@@ -528,12 +425,7 @@ func _can_train(unit_id: String) -> bool:
 
 func _count_of_type(type_name: String) -> int:
 	var count: int = 0
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for unit: Node in _ai.world.own_units(_ai.player_id):
 		match type_name:
 			"Villager":         if unit is Villager:         count += 1
 			"Militia":          if unit is Militia:          count += 1
