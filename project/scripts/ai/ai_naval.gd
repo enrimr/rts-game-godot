@@ -62,13 +62,7 @@ func manage_naval_patrol() -> void:
 	var etc: Node2D = _ai._military.get_primary_enemy_tc()
 	if etc == null:
 		return
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit) or not (unit is WarGalley):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
-		var wg: WarGalley = unit as WarGalley
+	for wg: WarGalley in WorldQuery.of_type(_ai.world.own_units(_ai.player_id), WarGalley):
 		if _galley_needs_retreat(wg):
 			if wg.current_state != UnitBase.UnitState.MOVING:
 				_retreat_galley(wg)
@@ -91,13 +85,7 @@ func manage_fishing_boats() -> void:
 
 	var fish_node: Node = _find_nearest_fish_node(dk_pos)
 
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit) or not (unit is FishingBoat):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
-		var fb: FishingBoat = unit as FishingBoat
+	for fb: FishingBoat in WorldQuery.of_type(_ai.world.own_units(_ai.player_id), FishingBoat):
 		if fb.current_state != UnitBase.UnitState.IDLE:
 			continue
 
@@ -116,13 +104,7 @@ func launch_naval_assault() -> void:
 	if etc == null:
 		return
 
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit) or not (unit is WarGalley):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
-		var wg: WarGalley = unit as WarGalley
+	for wg: WarGalley in WorldQuery.of_type(_ai.world.own_units(_ai.player_id), WarGalley):
 		if _galley_needs_retreat(wg):
 			if wg.current_state != UnitBase.UnitState.MOVING:
 				_retreat_galley(wg)
@@ -157,14 +139,9 @@ func launch_naval_assault() -> void:
 		return
 
 	var boarded: int = 0
-	for unit: Node in _ai.units_layer.get_children():
+	for unit: Node in _ai.world.own_units(_ai.player_id):
 		if ts.is_full() or boarded >= 4:
 			break
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
 		if not _ai._military.is_military_unit(unit):
 			continue
 		if unit.get("current_state") as int == UnitBase.UnitState.IDLE:
@@ -187,12 +164,7 @@ func attack_with_idle_land_units() -> void:
 	if target == null:
 		return
 	var enemy_origin: Vector2 = (target as Node2D).global_position
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for unit: Node in _ai.world.own_units(_ai.player_id):
 		if not _ai._military.is_military_unit(unit):
 			continue
 		var ustate: Variant = unit.get("current_state")
@@ -205,35 +177,19 @@ func attack_with_idle_land_units() -> void:
 				unit.order_attack(target)
 
 func _find_own_dock() -> Node:
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building):
-			continue
-		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for building: Node in _ai.world.own_buildings(_ai.player_id):
 		if building is Dock:
 			return building
 	return null
 
 func _find_own_transport() -> Node:
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for unit: Node in _ai.world.own_units(_ai.player_id):
 		if unit is TransportShip:
 			return unit
 	return null
 
 func _find_own_fish_trap() -> FishTrap:
-	for building: Node in _ai.buildings_layer.get_children():
-		if not is_instance_valid(building) or not (building is FishTrap):
-			continue
-		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
-		var ft: FishTrap = building as FishTrap
+	for ft: FishTrap in WorldQuery.of_type(_ai.world.own_buildings(_ai.player_id), FishTrap):
 		if ft.state == BuildingBase.BuildingState.COMPLETE and not ft.is_depleted():
 			return ft
 	return null
@@ -318,12 +274,7 @@ func _build_fish_trap(boat: FishingBoat, dock: Node) -> void:
 
 func _count_naval(type_name: String) -> int:
 	var count: int = 0
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != _ai.player_id:
-			continue
+	for unit: Node in _ai.world.own_units(_ai.player_id):
 		match type_name:
 			"WarGalley":     if unit is WarGalley:     count += 1
 			"TransportShip": if unit is TransportShip: count += 1
@@ -363,12 +314,7 @@ func _retreat_galley(wg: WarGalley) -> void:
 func _find_nearest_enemy_ship(from: Vector2) -> Node:
 	var best: Node = null
 	var best_dist: float = 800.0
-	for unit: Node in _ai.units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) == _ai.player_id:
-			continue
+	for unit: Node in _ai.world.enemy_units(_ai.player_id):
 		if not (unit is WarGalley or unit is FishingBoat or unit is TransportShip):
 			continue
 		var d: float = from.distance_to((unit as Node2D).global_position)
