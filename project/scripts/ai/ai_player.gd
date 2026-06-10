@@ -168,31 +168,16 @@ func _find_safest_villager() -> Villager:
 	var best_score: float = -INF
 	var enemy_origin: Vector2 = Vector2.ZERO
 	var enemy_count: int = 0
-	for unit: Node in units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) == player_id:
-			continue
+	for unit: Node in world.enemy_units(player_id):
 		enemy_origin += (unit as Node2D).global_position
 		enemy_count += 1
-	for b: Node in buildings_layer.get_children():
-		if not is_instance_valid(b):
-			continue
-		var pid: Variant = b.get("player_id")
-		if pid == null or (pid as int) == player_id:
-			continue
+	for b: Node in world.enemy_buildings(player_id):
 		enemy_origin += (b as Node2D).global_position
 		enemy_count += 1
 	if enemy_count > 0:
 		enemy_origin /= float(enemy_count)
 
-	for unit: Node in units_layer.get_children():
-		if not is_instance_valid(unit) or not (unit is Villager):
-			continue
-		var v: Villager = unit as Villager
-		if v.player_id != player_id:
-			continue
+	for v: Villager in WorldQuery.of_type(world.own_units(player_id), Villager):
 		var score: float = 0.0
 		if enemy_count > 0:
 			score = v.global_position.distance_to(enemy_origin)
@@ -229,12 +214,7 @@ func _build_new_tc(builder: Villager) -> void:
 func _find_safe_tc_position(origin: Vector2) -> Vector2:
 	var enemy_center: Vector2 = Vector2.ZERO
 	var enemy_count: int = 0
-	for b: Node in buildings_layer.get_children():
-		if not is_instance_valid(b):
-			continue
-		var pid: Variant = b.get("player_id")
-		if pid == null or (pid as int) == player_id:
-			continue
+	for b: Node in world.enemy_buildings(player_id):
 		enemy_center += (b as Node2D).global_position
 		enemy_count += 1
 	var bias: Vector2 = Vector2.ZERO
@@ -258,26 +238,9 @@ func _check_elimination() -> void:
 		return
 	if is_instance_valid(town_center):
 		return
-	var has_any: bool = false
-	for unit: Node in units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != player_id:
-			continue
-		has_any = true
-		break
-	if has_any:
+	if not world.own_units(player_id).is_empty():
 		return
-	for b: Node in buildings_layer.get_children():
-		if not is_instance_valid(b):
-			continue
-		var pid: Variant = b.get("player_id")
-		if pid == null or (pid as int) != player_id:
-			continue
-		has_any = true
-		break
-	if not has_any:
+	if world.own_buildings(player_id).is_empty():
 		EventBus.player_eliminated.emit(player_id)
 
 func _is_naval_map() -> bool:
