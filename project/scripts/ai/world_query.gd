@@ -23,6 +23,25 @@ func _init(units_layer: Node, buildings_layer: Node) -> void:
 	_units_layer = units_layer
 	_buildings_layer = buildings_layer
 
+# ── All entities (no player filter) ───────────────────────────────────────────
+
+## Every valid building, regardless of owner (e.g. footprint/placement checks).
+func all_buildings() -> Array:
+	return _all(_buildings_layer)
+
+## Every valid unit, regardless of owner.
+func all_units() -> Array:
+	return _all(_units_layer)
+
+func _all(layer: Node) -> Array:
+	var result: Array = []
+	if not is_instance_valid(layer):
+		return result
+	for node: Node in layer.get_children():
+		if is_instance_valid(node):
+			result.append(node)
+	return result
+
 # ── Internal core ─────────────────────────────────────────────────────────────
 
 # own == true  -> keep player_id == owner_id

@@ -29,6 +29,16 @@ var buildings_layer: Node2D = null
 var drop_off: Node2D        = null
 var enemy_town_center: Node2D = null
 
+# Read-only query service over the layers. Lazily built because game_world
+# assigns units_layer/buildings_layer after add_child() (post-_ready); rebuilt
+# if the layer references ever change.
+var _world: WorldQuery = null
+var world: WorldQuery:
+	get:
+		if _world == null or _world._units_layer != units_layer or _world._buildings_layer != buildings_layer:
+			_world = WorldQuery.new(units_layer, buildings_layer)
+		return _world
+
 var _timer: float        = 0.0
 var _attack_timer: float = 0.0
 var _threat_timer: float = 0.0

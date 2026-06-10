@@ -115,8 +115,17 @@ func test_nearest_to() -> void:
 	assert_eq(WorldQuery.nearest_to(q.enemy_units(1), Vector2.ZERO), near, "picks the closest enemy")
 	assert_null(WorldQuery.nearest_to([], Vector2.ZERO), "empty -> null")
 
-# 7 — null layer is safe
+# 7 — all_* ignore ownership, keep every valid node (incl. no-pid)
+func test_all_entities_ignore_owner() -> void:
+	_unit(1); _unit(2); _units.add_child(Node2D.new())  # no-pid still counts as a node
+	_building(1); _building(2)
+	var q: WorldQuery = WQ.new(_units, _buildings)
+	assert_eq(q.all_units().size(), 3, "all_units keeps every valid node regardless of pid")
+	assert_eq(q.all_buildings().size(), 2)
+
+# 8 — null layer is safe
 func test_null_layer_safe() -> void:
 	var q: WorldQuery = WQ.new(null, null)
 	assert_eq(q.own_units(1).size(), 0)
 	assert_eq(q.enemy_buildings(1).size(), 0)
+	assert_eq(q.all_units().size(), 0)

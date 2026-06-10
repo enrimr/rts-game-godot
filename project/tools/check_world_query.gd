@@ -65,9 +65,14 @@ func _initialize() -> void:
 	_check("nearest_to closest", WorldQuery.nearest_to(q.enemy_units(1), Vector2.ZERO) != null, true)
 	_check("nearest empty -> null", WorldQuery.nearest_to([], Vector2.ZERO), null)
 
+	# all_units keeps every VALID node regardless of player_id (incl. the two bare
+	# Node2D padding nodes with no pid): 10 UnitDouble + 2 Node2D = 12.
+	_check("all_units counts every valid node", q.all_units().size(), 12)
+
 	# null layer safe
 	var q2: WorldQuery = WQ.new(null, null)
 	_check("null layer own_units", q2.own_units(1).size(), 0)
+	_check("null layer all_buildings", q2.all_buildings().size(), 0)
 
 	print("CHECK_WORLD_QUERY: %d failure(s)" % _fails)
 	quit(1 if _fails > 0 else 0)
