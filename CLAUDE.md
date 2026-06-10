@@ -110,7 +110,8 @@ docs/             ← Architecture and design documentation
 | `project/scripts/buildings/lumber_camp.gd` | Wood drop-off |
 | `project/scripts/buildings/mining_camp.gd` | Gold/stone drop-off |
 | **AI Systems** ||
-| `project/scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic |
+| `project/scripts/ai/world_query.gd` | `WorldQuery` — read-only query service over the unit/building layers (own/enemy/all, of_type/in_state/nearest_to); the AI queries it instead of walking the scene tree. Exposed lazily as `AIPlayer.world` |
+| `project/scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic; owns the `world: WorldQuery` getter |
 | `project/scripts/ai/ai_economy.gd` | Villager spawning/assignment, resource targets per age, age-advance trigger |
 | `project/scripts/ai/ai_construction.gd` | Building placement, placement-failure cooldowns, population-house management |
 | `project/scripts/ai/ai_military.gd` | Military training, research priority, combat targeting, base defense, aggression escalation |
