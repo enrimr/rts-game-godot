@@ -157,8 +157,15 @@ docs/             ← Architecture and design documentation
 
 ## Testing
 
-Uses [GUT](https://github.com/bitwes/Gut) addon. Tests live in `tests/unit/` and `tests/integration/`.
-Run from the GUT panel inside Godot editor, or headlessly via CI.
+Uses the [GUT](https://github.com/bitwes/Gut) addon (vendored at
+`project/addons/gut`). Tests live in `project/tests/unit/` and
+`project/tests/integration/` (inside the Godot project so they resolve via
+`res://`). Run them headlessly with `./run_tests.sh` (all tests) or
+`./run_tests.sh res://tests/unit/test_world_query.gd` (one script); set the
+`GODOT` env var to the engine binary. Also runnable from the GUT panel in the
+editor. There are also standalone headless harnesses under `project/tools/`
+(`check_*.gd`) for things GUT can't easily reach (HUD scene load, WorldQuery,
+PlacementGrid).
 
 ## Current Status
 

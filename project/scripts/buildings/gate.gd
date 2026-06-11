@@ -88,10 +88,13 @@ func _set_open(value: bool) -> void:
 	EventBus.gate_state_changed.emit(self)
 
 func _apply_state() -> void:
+	# Toggled from Area2D body_entered/exited callbacks, which run while the
+	# physics server is flushing queries — mutating a collision shape's disabled
+	# state then is illegal, so defer it.
 	if is_instance_valid(_collision):
-		_collision.disabled = is_open
+		_collision.set_deferred("disabled", is_open)
 	if is_instance_valid(_obstacle):
-		_obstacle.avoidance_enabled = not is_open
+		_obstacle.set_deferred("avoidance_enabled", not is_open)
 	if is_instance_valid(_body):
 		if locked:
 			_body.color = COLOR_LOCKED

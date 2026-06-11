@@ -274,12 +274,12 @@ func _nav_half_extents() -> Vector2:
 func _nav_bake_half_extents() -> Vector2:
 	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if cs != null and cs.shape is RectangleShape2D:
-		# 12 px (= unit radius). Grid placement keeps buildings aligned, so this
-		# wider carve no longer leaves sub-cell slivers: a gap between two
-		# buildings is either ≥1 empty cell (passable) or none. With the old 4 px
-		# margin, free placement produced ~few-px navmesh corridors a 24 px-wide
-		# unit could not traverse.
-		return (cs.shape as RectangleShape2D).size * 0.5 + Vector2(12.0, 12.0)
+		# 6 px carve. Combined with the nav agent_radius (10 px) the effective
+		# dead-zone is ~16 px = one grid cell, so a 1-cell gap stays passable
+		# while a 0-cell gap is closed. A larger margin (e.g. 12 px) made many
+		# obstruction outlines overlap heavily and could make Godot's convex
+		# partition fail, leaving an EMPTY navmesh (units frozen).
+		return (cs.shape as RectangleShape2D).size * 0.5 + Vector2(6.0, 6.0)
 	return Vector2(34.0, 34.0)
 
 # Returns the world-space obstacle polygon (4 corners) used by the nav bake.

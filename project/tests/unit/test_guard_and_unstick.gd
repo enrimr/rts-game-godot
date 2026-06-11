@@ -40,12 +40,15 @@ func test_guard_radius_tightened() -> void:
 	assert_lt(UnitBase.GUARD_RADIUS, 600.0, "GUARD_RADIUS must be tighter than the old 600 px")
 	assert_almost_eq(UnitBase.GUARD_RADIUS, 250.0, 0.01, "GUARD_RADIUS is 250 px")
 
-# 2 — only military responds to the guard signal
+# 2 — only military responds to the guard signal.
+# _responds_to_guard() is pure duck-typing (has_method + self), so we don't add
+# the units to the tree — that avoids each subclass's _ready needing its full
+# scene rig (ships in particular).
 func test_military_responds_economy_does_not() -> void:
-	var militia: Militia = _make(Militia, "militia") as Militia
-	var villager: Villager = _make(Villager, "villager") as Villager
-	var fisher: FishingBoat = _make(FishingBoat, "fishing_boat") as FishingBoat
-	var transport: TransportShip = _make(TransportShip, "transport_ship") as TransportShip
+	var militia: Militia = autofree(Militia.new())
+	var villager: Villager = autofree(Villager.new())
+	var fisher: FishingBoat = autofree(FishingBoat.new())
+	var transport: TransportShip = autofree(TransportShip.new())
 	assert_true(militia._responds_to_guard(),  "Militia should defend")
 	assert_false(villager._responds_to_guard(), "Villager should NOT run off to defend")
 	assert_false(fisher._responds_to_guard(),   "FishingBoat should NOT defend")

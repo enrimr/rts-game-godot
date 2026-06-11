@@ -139,6 +139,7 @@ var _pending_action: String = ""
 var _wonder_timers: Dictionary = {}  # int -> float
 var _nav_rebake_timer: float = 0.0
 var _nav_rebake_pending: bool = false
+var _nav_bake_target: NavigationPolygon = null   # temp poly being baked async
 const NAV_REBAKE_DELAY: float = 1.0
 
 # Drag-select rectangle overlay
@@ -1724,9 +1725,16 @@ func _request_nav_rebake() -> void:
 func _do_nav_rebake() -> void:
 	if not is_instance_valid(_nav_region):
 		return
-	var nav_poly: NavigationPolygon = _nav_region.navigation_polygon
-	if nav_poly == null:
+	var current: NavigationPolygon = _nav_region.navigation_polygon
+	if current == null:
 		return
+	# Bake into a FRESH polygon (copying agent settings) rather than the live one.
+	# If the convex partition fails the result is empty; _on_nav_bake_done then
+	# keeps the previous mesh instead of leaving units with no walkable navmesh.
+	var nav_poly: NavigationPolygon = NavigationPolygon.new()
+	nav_poly.agent_radius = current.agent_radius
+	nav_poly.cell_size = current.cell_size
+	_nav_bake_target = nav_poly
 	var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
 	source.add_traversable_outline(PackedVector2Array([
 		Vector2(-3000.0, -3000.0), Vector2(3000.0, -3000.0),
@@ -1755,8 +1763,16 @@ func _do_nav_rebake() -> void:
 		nav_poly, source, Callable(self, "_on_nav_bake_done"))
 
 func _on_nav_bake_done() -> void:
-	if is_instance_valid(_nav_region):
-		_nav_region.navigation_polygon = _nav_region.navigation_polygon
+	if not is_instance_valid(_nav_region) or _nav_bake_target == null:
+		return
+	# Only swap in the freshly baked mesh if the partition succeeded (non-empty).
+	# An empty result means the bake failed (convex partition error); keep the
+	# existing navmesh so units never lose their walkable surface.
+	if _nav_bake_target.get_polygon_count() > 0:
+		_nav_region.navigation_polygon = _nav_bake_target
+	else:
+		push_warning("Nav rebake produced an empty mesh; keeping the previous navigation polygon.")
+	_nav_bake_target = null
 
 # --- HUD action buttons ---
 
