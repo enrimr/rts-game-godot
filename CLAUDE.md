@@ -40,6 +40,7 @@ docs/             ← Architecture and design documentation
 4. **Type hints everywhere** — every GDScript function must declare parameter types and return type.
 5. **Area2D for range detection** — attack ranges use Area2D nodes that monitor for enemies entering/leaving range, avoiding per-frame physics queries.
 6. **Outward spiral spawn positioning** — units spawn at free positions found via outward spiral physics query, preventing overlap.
+7. **Grid-snap placement** — the player's building/wall placement snaps to a 16 px grid via `PlacementGrid` (`scripts/map/placement_grid.gd`, pure/testable); units still move continuously. Hold **Alt** for free placement. AI placement is unchanged.
 
 ## Key Files
 
