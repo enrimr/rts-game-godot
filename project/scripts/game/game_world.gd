@@ -140,6 +140,7 @@ var _wonder_timers: Dictionary = {}  # int -> float
 var _nav_rebake_timer: float = 0.0
 var _nav_rebake_pending: bool = false
 var _nav_bake_target: NavigationPolygon = null   # temp poly being baked async
+var _nav_bake_failed: bool = false               # last bake produced an empty mesh
 const NAV_REBAKE_DELAY: float = 1.0
 
 # Drag-select rectangle overlay
@@ -1766,12 +1767,18 @@ func _on_nav_bake_done() -> void:
 	if not is_instance_valid(_nav_region) or _nav_bake_target == null:
 		return
 	# Only swap in the freshly baked mesh if the partition succeeded (non-empty).
-	# An empty result means the bake failed (convex partition error); keep the
-	# existing navmesh so units never lose their walkable surface.
+	# An empty result means the bake failed (Godot's convex partition can choke
+	# on certain overlapping obstruction layouts) — keep the existing navmesh so
+	# units never lose their walkable surface, and schedule a retry so the mesh
+	# catches up once the transient geometry settles (warn only once).
 	if _nav_bake_target.get_polygon_count() > 0:
 		_nav_region.navigation_polygon = _nav_bake_target
+		_nav_bake_failed = false
 	else:
-		push_warning("Nav rebake produced an empty mesh; keeping the previous navigation polygon.")
+		if not _nav_bake_failed:
+			push_warning("Nav rebake produced an empty mesh; keeping the previous polygon and retrying.")
+			_nav_bake_failed = true
+		_request_nav_rebake()   # retry after the standard debounce delay
 	_nav_bake_target = null
 
 # --- HUD action buttons ---
