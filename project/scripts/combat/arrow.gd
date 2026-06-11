@@ -43,8 +43,12 @@ func _on_impact() -> void:
 	if is_instance_valid(_original_target):
 		var target_dist: float = global_position.distance_to((_original_target as Node2D).global_position)
 		if target_dist <= _hit_radius and _original_target.has_method("take_damage"):
-			_original_target.take_damage(damage, shooter)
+			# The shooter may have died while the arrow was in flight; pass a live
+			# reference or null (take_damage handles null) — never a freed Object,
+			# which fails take_damage's typed `source` argument.
+			var live_shooter: Node = shooter if is_instance_valid(shooter) else null
+			_original_target.take_damage(damage, live_shooter)
 			AudioManager.play_if_visible("hit_ranged", global_position, -4.0)
-			if is_instance_valid(shooter):
-				EventBus.unit_attacked.emit(shooter, _original_target)
+			if live_shooter != null:
+				EventBus.unit_attacked.emit(live_shooter, _original_target)
 	queue_free()
