@@ -63,3 +63,24 @@ func test_abandon_movement_returns_to_idle() -> void:
 	assert_eq(m.current_state, UnitBase.UnitState.IDLE, "abandon returns the unit to IDLE")
 	assert_null(m.attack_target, "abandon clears the attack target")
 	assert_eq(m.global_position, pos_before, "abandon must NOT teleport the unit")
+
+# 4 — _edge_distance_to measures to the footprint edge, so build reach scales
+#     with building size (regression: villagers couldn't reach large buildings).
+func test_edge_distance_to_footprint() -> void:
+	var m: Militia = _make(Militia, "militia") as Militia
+	# A 72x72 building (Barracks/Stable/Archery Range) centred at (200,0).
+	var b: StaticBody2D = StaticBody2D.new()
+	var cs: CollisionShape2D = CollisionShape2D.new()
+	var rect: RectangleShape2D = RectangleShape2D.new()
+	rect.size = Vector2(72, 72)
+	cs.shape = rect
+	cs.name = "CollisionShape2D"
+	b.add_child(cs)
+	b.global_position = Vector2(200, 0)
+	add_child_autofree(b)
+	# Unit at x=240: 40 px from centre, but only 40-36 = 4 px from the edge.
+	m.global_position = Vector2(240, 0)
+	assert_almost_eq(m._edge_distance_to(b), 4.0, 0.5, "edge distance ignores the 36 px half-extent")
+	# That 4 px is within BUILD_RANGE (24) even though 40 px to centre would
+	# have failed an old centre-distance check tuned for small buildings.
+	assert_lt(m._edge_distance_to(b), Villager.BUILD_RANGE, "builder is within reach at the edge")

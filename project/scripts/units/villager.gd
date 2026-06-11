@@ -38,7 +38,10 @@ var _pending_transport_resource: String = ""    # resource type for the pending 
 var _pending_transport_drop_off: Node = null    # drop-off for the pending gather
 var _boarding_ship: Node = null                 # ship we're walking toward to board
 
-const BUILD_RANGE: float = 60.0
+# Reach measured from the building's footprint EDGE (see _edge_distance_to),
+# so it works for any building size — a centre-distance threshold could never
+# be met on a large building like a Barracks/Stable/Archery Range.
+const BUILD_RANGE: float = 24.0
 const DROP_OFF_RANGE: float = 72.0
 const GATHER_RANGE: float = 48.0
 const FALLBACK_RESOURCE_RANGE: float = 400.0
@@ -202,9 +205,10 @@ func order_build(target: Node) -> void:
 	var is_under_construction: bool = bstate != null and (bstate as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION
 	if is_under_construction:
 		build_target.construction_complete.connect(_on_construction_complete, CONNECT_ONE_SHOT)
-	# For complete buildings (repair) approach the edge, not the center
-	var dest: Vector2 = _nav_target_for(target) if not is_under_construction else (target as Node2D).global_position
-	_start_move_to(dest)
+	# Always approach the footprint EDGE, never the centre: the centre sits
+	# inside the building's collider and is unreachable, which left builders
+	# stuck just outside large buildings (Barracks/Stable/Archery Range).
+	_start_move_to(_nav_target_for(target))
 
 func order_move(destination: Vector2) -> void:
 	_stop_gathering_active()
@@ -261,7 +265,7 @@ func _handle_movement(delta: float) -> void:
 			_enter_state(UnitState.ATTACKING)
 			return
 	elif _destination_state == UnitState.BUILDING and is_instance_valid(build_target):
-		if global_position.distance_to((build_target as Node2D).global_position) <= BUILD_RANGE:
+		if _edge_distance_to(build_target) <= BUILD_RANGE:
 			_enter_state(UnitState.BUILDING)
 			return
 	elif _destination_state == UnitState.GATHERING and is_instance_valid(gather_target):
