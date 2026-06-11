@@ -69,6 +69,12 @@ func find_nearest_resource(rtype: ResourceNode.ResourceType, from: Vector2) -> R
 			best = rn
 	return best
 
+# A valid drop-off node, or null. _ai.drop_off can point at a freed Town Center
+# after the TC is destroyed (it is only reassigned on rebuild), so never hand it
+# back without an is_instance_valid check.
+func _base_drop_off() -> Node2D:
+	return _ai.drop_off if is_instance_valid(_ai.drop_off) else null
+
 func find_nearest_drop_off(rtype: ResourceNode.ResourceType) -> Node2D:
 	var preferred_id: String
 	match rtype:
@@ -77,7 +83,7 @@ func find_nearest_drop_off(rtype: ResourceNode.ResourceType) -> Node2D:
 		ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE:
 			preferred_id = "mining_camp"
 		_:
-			return _ai.drop_off
+			return _base_drop_off()
 	var best: Node2D = null
 	var best_dist: float = INF
 	for building: Node in _ai.world.own_buildings(_ai.player_id):
@@ -93,7 +99,7 @@ func find_nearest_drop_off(rtype: ResourceNode.ResourceType) -> Node2D:
 		if d < best_dist:
 			best_dist = d
 			best = building as Node2D
-	return best if best != null else _ai.drop_off
+	return best if best != null else _base_drop_off()
 
 func redirect_villagers_to_drop_off(new_drop: Node2D, rtype: ResourceNode.ResourceType) -> void:
 	var reassigned: int = 0
@@ -169,9 +175,11 @@ func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> v
 
 	if best_node == null:
 		return
+	# find_nearest_drop_off already returns null when there is no valid drop-off
+	# (e.g. the Town Center was destroyed); order_gather tolerates a null target.
 	var nearest_drop: Node2D = find_nearest_drop_off(best_node.resource_type)
 	_ai.debug_log("GATHER villager → %s (deficit=%.2f)" % [best_node.get_resource_name(), best_deficit])
-	v.order_gather(best_node, best_node.get_resource_name(), nearest_drop if nearest_drop != null else _ai.drop_off)
+	v.order_gather(best_node, best_node.get_resource_name(), nearest_drop)
 
 func _count_of_type_villager() -> int:
 	return _own_villagers().size()
