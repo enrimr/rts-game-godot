@@ -395,6 +395,19 @@ func _nav_target_for(target: Node) -> Vector2:
 		return target_pos + clamped + to_self.normalized() * 8.0
 	return target_pos
 
+# Distance from this unit to the nearest point on a target's footprint (its
+# CollisionShape2D bounding box), rather than to its centre. Range checks for
+# large buildings must use this so the reach doesn't depend on footprint size —
+# a fixed centre-distance threshold can never be met on a big building's corner.
+func _edge_distance_to(target: Node) -> float:
+	var target_pos: Vector2 = (target as Node2D).global_position
+	var cs: CollisionShape2D = target.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if cs != null and cs.shape is RectangleShape2D:
+		var half: Vector2 = (cs.shape as RectangleShape2D).size * 0.5
+		var d: Vector2 = (global_position - target_pos).abs() - half
+		return Vector2(maxf(d.x, 0.0), maxf(d.y, 0.0)).length()
+	return global_position.distance_to(target_pos)
+
 # Clamps a movement destination to the nearest passable tile for this unit.
 # Call this before setting nav_agent.target_position.
 func _safe_destination(destination: Vector2) -> Vector2:
