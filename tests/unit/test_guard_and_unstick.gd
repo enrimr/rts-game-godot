@@ -81,6 +81,16 @@ func test_edge_distance_to_footprint() -> void:
 	# Unit at x=240: 40 px from centre, but only 40-36 = 4 px from the edge.
 	m.global_position = Vector2(240, 0)
 	assert_almost_eq(m._edge_distance_to(b), 4.0, 0.5, "edge distance ignores the 36 px half-extent")
-	# That 4 px is within BUILD_RANGE (24) even though 40 px to centre would
-	# have failed an old centre-distance check tuned for small buildings.
+	# That 4 px is within BUILD_RANGE even though 40 px to centre would have
+	# failed an old centre-distance check tuned for small buildings.
 	assert_lt(m._edge_distance_to(b), Villager.BUILD_RANGE, "builder is within reach at the edge")
+
+# 5 — BUILD_RANGE must clear the navmesh dead-zone around a building, or the
+#     builder physically can't get its centre close enough (regression: after
+#     the nav carve grew to 12 px the 24 px reach was too tight to satisfy).
+func test_build_range_clears_navmesh_dead_zone() -> void:
+	const NAV_CARVE_MARGIN: float = 12.0   # building_base._nav_bake_half_extents
+	const NAV_AGENT_RADIUS: float = 10.0   # game_world.tscn NavigationPolygon
+	var dead_zone: float = NAV_CARVE_MARGIN + NAV_AGENT_RADIUS
+	assert_gt(Villager.BUILD_RANGE, dead_zone,
+		"BUILD_RANGE (%d) must exceed the navmesh dead-zone (%d px) with headroom" % [int(Villager.BUILD_RANGE), int(dead_zone)])
