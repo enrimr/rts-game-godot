@@ -38,10 +38,12 @@ var _pending_transport_resource: String = ""    # resource type for the pending 
 var _pending_transport_drop_off: Node = null    # drop-off for the pending gather
 var _boarding_ship: Node = null                 # ship we're walking toward to board
 
-# Reach measured from the building's footprint EDGE (see _edge_distance_to),
-# so it works for any building size — a centre-distance threshold could never
-# be met on a large building like a Barracks/Stable/Archery Range.
-const BUILD_RANGE: float = 24.0
+# Reach measured from the building's footprint EDGE (see _edge_distance_to), so
+# it works for any building size. Must comfortably exceed the navmesh dead-zone
+# around a building — carve margin (12 px) + nav agent_radius (10 px) ≈ 22 px —
+# or a builder can never get its centre close enough to satisfy the check.
+# 40 px leaves headroom for RVO noise.
+const BUILD_RANGE: float = 40.0
 const DROP_OFF_RANGE: float = 72.0
 const GATHER_RANGE: float = 48.0
 const FALLBACK_RESOURCE_RANGE: float = 400.0
@@ -412,11 +414,11 @@ func _handle_building(delta: float) -> void:
 		_play_animation(_get_animation_name())
 		return
 
-	var build_pos: Vector2 = (build_target as Node2D).global_position
-	var dist: float = global_position.distance_to(build_pos)
-	if dist > BUILD_RANGE:
-		var approach: Vector2 = build_pos + (global_position - build_pos).normalized() * (BUILD_RANGE * 0.5)
-		nav_agent.target_position = _safe_destination(approach)
+	# Measure to the footprint edge (not the centre) so this matches the
+	# MOVING-state check and works for large buildings; approach the edge via
+	# _nav_target_for, which lands on walkable navmesh past the carve margin.
+	if _edge_distance_to(build_target) > BUILD_RANGE:
+		nav_agent.target_position = _safe_destination(_nav_target_for(build_target))
 		if _advance_stuck(delta):
 			_jitter_repath()
 			return
