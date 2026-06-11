@@ -206,7 +206,11 @@ func order_build(target: Node) -> void:
 	var bstate: Variant = target.get("state")
 	var is_under_construction: bool = bstate != null and (bstate as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION
 	if is_under_construction:
-		build_target.construction_complete.connect(_on_construction_complete, CONNECT_ONE_SHOT)
+		# Guard against a double connect: re-ordering the same builder onto a
+		# target it is already wired to (e.g. _order_build_all firing twice)
+		# would otherwise raise "signal already connected".
+		if not build_target.construction_complete.is_connected(_on_construction_complete):
+			build_target.construction_complete.connect(_on_construction_complete, CONNECT_ONE_SHOT)
 	# Always approach the footprint EDGE, never the centre: the centre sits
 	# inside the building's collider and is unreachable, which left builders
 	# stuck just outside large buildings (Barracks/Stable/Archery Range).
