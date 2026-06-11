@@ -274,8 +274,12 @@ func _nav_half_extents() -> Vector2:
 func _nav_bake_half_extents() -> Vector2:
 	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if cs != null and cs.shape is RectangleShape2D:
-		# 4 px — just enough to carve a clean gap in the nav mesh without blocking adjacent work spots
-		return (cs.shape as RectangleShape2D).size * 0.5 + Vector2(4.0, 4.0)
+		# 12 px (= unit radius). Grid placement keeps buildings aligned, so this
+		# wider carve no longer leaves sub-cell slivers: a gap between two
+		# buildings is either ≥1 empty cell (passable) or none. With the old 4 px
+		# margin, free placement produced ~few-px navmesh corridors a 24 px-wide
+		# unit could not traverse.
+		return (cs.shape as RectangleShape2D).size * 0.5 + Vector2(12.0, 12.0)
 	return Vector2(34.0, 34.0)
 
 # Returns the world-space obstacle polygon (4 corners) used by the nav bake.

@@ -615,16 +615,16 @@ func _process(delta: float) -> void:
 	_handle_camera(delta)
 	_handle_follow()
 	if _placing_building and is_instance_valid(_ghost):
-		var mouse_pos: Vector2 = get_global_mouse_position()
+		var mouse_pos: Vector2 = _snap_placement(get_global_mouse_position())
 		_ghost.visible = not _wall_drag_active
 		_ghost.global_position = mouse_pos
 		_ghost.rotation = _ghost_rotation
-		var terrain_ok: bool = not TerrainManager.is_ocean(mouse_pos)
+		var terrain_ok: bool = not TerrainManager.is_ocean(mouse_pos) and not _placement_overlaps(mouse_pos)
 		if _placing_id in OCEAN_BUILDINGS:
-			terrain_ok = TerrainManager.is_ocean(mouse_pos)
+			terrain_ok = TerrainManager.is_ocean(mouse_pos) and not _placement_overlaps(mouse_pos)
 		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if terrain_ok else Color(1.0, 0.2, 0.2, 0.5)
 	if _wall_drag_active:
-		_update_wall_drag_preview(get_global_mouse_position())
+		_update_wall_drag_preview(_snap_wall(get_global_mouse_position()))
 	if is_instance_valid(_drag_overlay):
 		var overlay: _DragOverlay = _drag_overlay as _DragOverlay
 		overlay.active = _dragging
@@ -800,7 +800,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var is_wall_drag: bool = _placing_id == "wall_segment"
 			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
 				if is_wall_drag and not _wall_drag_active:
-					_wall_drag_start = get_global_mouse_position()
+					_wall_drag_start = _snap_wall(get_global_mouse_position())
 					_wall_drag_active = true
 				elif is_wall_drag and _wall_drag_active:
 					_confirm_wall_drag(get_global_mouse_position())
@@ -1513,6 +1513,20 @@ func _start_placement(building_id: String) -> void:
 	_ghost_params_cached.shape = _ghost_shape_cached
 	_ghost_params_cached.collision_mask = 1
 
+# Snap a placement position to the building grid, sized to the ghost footprint
+# so edges stay flush with the lattice. Hold Alt for free (continuous) placement.
+func _snap_placement(world_pos: Vector2) -> Vector2:
+	if Input.is_key_pressed(KEY_ALT):
+		return world_pos
+	var size: Vector2 = _ghost_shape_cached.size if _ghost_shape_cached != null else Vector2(PlacementGrid.CELL_SIZE, PlacementGrid.CELL_SIZE)
+	return PlacementGrid.snap_footprint(world_pos, size)
+
+# Snap a wall endpoint to a cell centre so wall runs and gates share one grid.
+func _snap_wall(world_pos: Vector2) -> Vector2:
+	if Input.is_key_pressed(KEY_ALT):
+		return world_pos
+	return PlacementGrid.snap(world_pos)
+
 func _placement_overlaps(world_pos: Vector2) -> bool:
 	if _ghost_params_cached == null or _ghost_shape_cached == null:
 		return false
@@ -1568,7 +1582,8 @@ func _get_ghost_shape() -> RectangleShape2D:
 				return cs.shape as RectangleShape2D
 	return null
 
-func _confirm_placement(world_pos: Vector2) -> void:
+func _confirm_placement(raw_world_pos: Vector2) -> void:
+	var world_pos: Vector2 = _snap_placement(raw_world_pos)
 	if _placement_overlaps(world_pos):
 		return
 	var costs: Dictionary = BUILDING_COSTS.get(_placing_id, {})
@@ -1622,16 +1637,7 @@ func _cancel_placement() -> void:
 	_wall_cost_layer = null
 
 func _wall_segment_positions(start: Vector2, end: Vector2, step: float) -> Array[Vector2]:
-	var delta: Vector2 = end - start
-	var dist: float = delta.length()
-	if dist < step * 0.5:
-		return []
-	var dir: Vector2 = delta.normalized()
-	var count: int = maxi(1, int(dist / step))
-	var result: Array[Vector2] = []
-	for i: int in range(count):
-		result.append(start + dir * (step * 0.5 + i * step))
-	return result
+	return PlacementGrid.segment_positions(start, end, step)
 
 func _update_wall_drag_preview(end_pos: Vector2) -> void:
 	for g: Node2D in _wall_ghosts:
@@ -1674,8 +1680,9 @@ func _update_wall_drag_preview(end_pos: Vector2) -> void:
 	var vp_mouse: Vector2 = get_viewport().get_mouse_position()
 	_wall_cost_label.position = vp_mouse + Vector2(16.0, -24.0)
 
-func _confirm_wall_drag(end_pos: Vector2) -> void:
+func _confirm_wall_drag(raw_end_pos: Vector2) -> void:
 	const WALL_STEP: float = 16.0
+	var end_pos: Vector2 = _snap_wall(raw_end_pos)
 	var positions: Array[Vector2] = _wall_segment_positions(_wall_drag_start, end_pos, WALL_STEP)
 	if positions.is_empty():
 		_cancel_placement()

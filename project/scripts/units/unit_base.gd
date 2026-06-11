@@ -387,12 +387,13 @@ func _nav_target_for(target: Node) -> Vector2:
 	if cs != null and cs.shape is RectangleShape2D:
 		var half: Vector2 = (cs.shape as RectangleShape2D).size * 0.5
 		var to_self: Vector2 = global_position - target_pos
-		# Clamp the approach point to just outside the bounding box
+		# Clamp the approach point to just outside the bounding box, past the
+		# navmesh carve margin (12 px) so the destination is on walkable mesh.
 		var clamped: Vector2 = Vector2(
 			clampf(to_self.x, -half.x, half.x),
 			clampf(to_self.y, -half.y, half.y)
 		)
-		return target_pos + clamped + to_self.normalized() * 8.0
+		return target_pos + clamped + to_self.normalized() * 14.0
 	return target_pos
 
 # Distance from this unit to the nearest point on a target's footprint (its
