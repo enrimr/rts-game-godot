@@ -458,7 +458,9 @@ func _create_player_town_center() -> void:
 	tc.name = "DropOffNode"
 	tc.set("player_id", 0)
 	add_child(tc)
-	tc.set("state", BuildingBase.BuildingState.COMPLETE)
+	# Already built — full progress, COMPLETE state, no blueprint tint or
+	# progress bar (set('state', COMPLETE) alone left it translucent/unbuilt).
+	tc.call("force_complete")
 	drop_off = tc
 
 func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
