@@ -1837,7 +1837,10 @@ func _on_action_requested(action_id: String) -> void:
 			_order_gather_nearest_resource(ResourceNode.ResourceType.FOOD_HUNT)
 		"train:villager":
 			if is_instance_valid(_selected_building) and _selected_building.has_method("order_train"):
-				if _selected_building is TownCenter or _selected_building is TownCenterBuilding:
+				# TownCenterBuildable is now also the player's STARTING TC, so it
+				# must be accepted here too or the villager button does nothing.
+				if _selected_building is TownCenter or _selected_building is TownCenterBuilding \
+						or _selected_building is TownCenterBuildable:
 					_selected_building.order_train()
 		"train:militia", "train:pikeman", \
 		"train:menceyes_guard", \
