@@ -1170,11 +1170,9 @@ func _find_animal_at(world_pos: Vector2) -> Animal:
 	return null
 
 func _order_interact_animal(animal: Animal) -> void:
-	# Own sheep: move selected units toward it (to escort / bring closer)
-	# Enemy or wild animals: attack
-	if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
-		_order_move_all((animal as Node2D).global_position)
-		return
+	# Right-clicking any animal (own herded sheep included) sends the selected
+	# units to slaughter it for food — that's how a sheep yields meat. If no
+	# gatherer is selected (e.g. only soldiers), they still attack it.
 	for unit: Node in _selected_units:
 		if not is_instance_valid(unit):
 			continue
