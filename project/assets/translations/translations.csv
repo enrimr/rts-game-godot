@@ -118,6 +118,14 @@ HERO_PLUNDER_ABILITY,Plunder,Saqueo
 HERO_KNIGHT_ERRANT_CHARGE_ABILITY,Knight Errant's Charge,Acometida del Caballero Errante
 HERO_CALIMA_ABILITY,Calima,Calima
 HERO_TRADE_ROUTE_ABILITY,Trade Route,Ruta Comercial
+HERO_MOUNTAIN_VOICE_ABILITY,Mountain Voice,Voz de la Montaña
+HERO_FATES_ARROW_ABILITY,Fate's Arrow,Flecha del Destino
+HERO_SANDSTORM_ABILITY,Sandstorm,Tormenta de Arena
+HERO_HONOR_DUEL_ABILITY,Honor Duel,Duelo de Honor
+HERO_BOARDING_ACTION_ABILITY,Boarding Action,Abordaje
+HERO_CALL_TO_ARMS_ABILITY,Call to Arms,Llamada a las Armas
+HERO_RISING_TIDE_ABILITY,Rising Tide,Marea Creciente
+HERO_MERCENARY_PACT_ABILITY,Mercenary Pact,Pacto Mercenario
 GAMEOVER_CHARTS,Match Charts,Gráficas de Partida
 GAMEOVER_CHARTS_CLOSE,Close,Cerrar
 CHART_POPULATION,Population,Población
