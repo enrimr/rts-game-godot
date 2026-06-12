@@ -1,10 +1,8 @@
-[gd_scene load_steps=9 format=3 uid="uid://placeholder_game_world"]
+[gd_scene load_steps=7 format=3 uid="uid://placeholder_game_world"]
 
 [ext_resource type="Script" path="res://scripts/game/game_world.gd" id="1_gwscript"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/hud.tscn" id="2_hud"]
 [ext_resource type="Script" path="res://scripts/map/map_manager.gd" id="3_mapmgr"]
-[ext_resource type="Script" path="res://scripts/economy/drop_off_building.gd" id="4_dropoff"]
-[ext_resource type="Script" path="res://scripts/buildings/town_center.gd" id="6_tc"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_1"]
 agent_radius = 10.0
@@ -39,69 +37,6 @@ navigation_polygon = SubResource("NavigationPolygon_2")
 
 [node name="MapManager" type="Node" parent="."]
 script = ExtResource("3_mapmgr")
-
-[node name="DropOffNode" type="Node2D" parent="."]
-position = Vector2(0.0, 0.0)
-script = ExtResource("6_tc")
-player_id = 0
-
-[node name="DropOff" type="Node2D" parent="DropOffNode"]
-script = ExtResource("4_dropoff")
-player_id = 0
-
-[node name="Body" type="Node2D" parent="DropOffNode"]
-
-[node name="MainWalls" type="Polygon2D" parent="DropOffNode/Body"]
-color = Color(0.55, 0.18, 0.12, 1.0)
-polygon = PackedVector2Array(-40, 40, 40, 40, 40, -32, 32, -40, -32, -40, -40, -32)
-
-[node name="Keep" type="Polygon2D" parent="DropOffNode/Body"]
-color = Color(0.62, 0.22, 0.15, 1.0)
-polygon = PackedVector2Array(-18, 18, 18, 18, 18, -18, -18, -18)
-
-[node name="TowerNW" type="Polygon2D" parent="DropOffNode/Body"]
-color = Color(0.45, 0.14, 0.10, 1.0)
-polygon = PackedVector2Array(-40, -18, -26, -18, -26, -40, -40, -40)
-
-[node name="TowerNE" type="Polygon2D" parent="DropOffNode/Body"]
-color = Color(0.45, 0.14, 0.10, 1.0)
-polygon = PackedVector2Array(26, -18, 40, -18, 40, -40, 26, -40)
-
-[node name="TowerSW" type="Polygon2D" parent="DropOffNode/Body"]
-color = Color(0.45, 0.14, 0.10, 1.0)
-polygon = PackedVector2Array(-40, 18, -26, 18, -26, 40, -40, 40)
-
-[node name="TowerSE" type="Polygon2D" parent="DropOffNode/Body"]
-color = Color(0.45, 0.14, 0.10, 1.0)
-polygon = PackedVector2Array(26, 18, 40, 18, 40, 40, 26, 40)
-
-[node name="Gate" type="Polygon2D" parent="DropOffNode/Body"]
-color = Color(0.20, 0.08, 0.06, 1.0)
-polygon = PackedVector2Array(-12, 40, 12, 40, 12, 22, -12, 22)
-
-[node name="DropOffLabel" type="Label" parent="DropOffNode"]
-offset_left = -48.0
-offset_top = -58.0
-offset_right = 48.0
-offset_bottom = -44.0
-text = "Town Center"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-mouse_filter = 2
-
-[node name="TrainingBar" type="ProgressBar" parent="DropOffNode"]
-offset_left = -40.0
-offset_top = 42.0
-offset_right = 40.0
-offset_bottom = 50.0
-max_value = 100.0
-value = 0.0
-show_percentage = false
-mouse_filter = 2
-
-[node name="NavigationObstacle2D" type="NavigationObstacle2D" parent="DropOffNode"]
-avoidance_enabled = true
 
 [node name="UnitsLayer" type="Node2D" parent="."]
 

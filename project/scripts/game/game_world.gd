@@ -3,6 +3,7 @@ extends Node2D
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const SCOUT_SCENE: PackedScene = preload("res://scenes/units/scout.tscn")
 const AI_TOWN_CENTER_SCENE: PackedScene = preload("res://scenes/buildings/town_center_ai.tscn")
+const PLAYER_TOWN_CENTER_SCENE: PackedScene = preload("res://scenes/buildings/town_center.tscn")
 
 const HERO_MALE_DATA: Dictionary = {
 	"guanches":    "res://resources/units/hero_bencomo.tres",
@@ -86,7 +87,12 @@ const UNIT_CLICK_RADIUS: float = 32.0
 @onready var units_layer: Node2D = $UnitsLayer
 @onready var buildings_layer: Node2D = $BuildingsLayer
 @onready var camera: Camera2D = $Camera2D
-@onready var drop_off: Node2D = $DropOffNode
+# The human player's Town Center. Instanced from the same scene as buildable
+# TCs (in _ready) and named "DropOffNode" so existing name-based lookups
+# (minimap, save_manager, fog) keep working. Previously this was a divergent
+# inline node in game_world.tscn with no physics collision (let you build on
+# top of it) and an old hand-built sprite.
+var drop_off: Node2D = null
 @onready var hud: CanvasLayer = $HUD
 @onready var _nav_region: NavigationRegion2D = $NavigationRegion2D
 
@@ -148,6 +154,7 @@ var _drag_overlay: Node2D = null
 
 func _ready() -> void:
 	add_to_group("world")
+	_create_player_town_center()
 	# Init all players — for a load, SaveManager will overwrite afterwards
 	var starting_res: Dictionary = MatchConfig.get_starting_resources()
 	ResourceManager.init_player(0, starting_res)
@@ -441,6 +448,18 @@ func _setup_ai_node_only(rival_id: int, _tc_pos: Vector2) -> void:
 	ai.set("buildings_layer", buildings_layer)
 	ai.set("drop_off", drop_off)
 	ai.set("enemy_town_center", drop_off)
+
+func _create_player_town_center() -> void:
+	# Same scene as buildable TCs, so the starting TC has the current visuals and
+	# a real collision body (blocks placement on top of it). Kept as a sibling
+	# named "DropOffNode" and marked COMPLETE so it can train villagers from the
+	# start (the buildable TC gates training on COMPLETE).
+	var tc: Node2D = PLAYER_TOWN_CENTER_SCENE.instantiate() as Node2D
+	tc.name = "DropOffNode"
+	tc.set("player_id", 0)
+	add_child(tc)
+	tc.set("state", BuildingBase.BuildingState.COMPLETE)
+	drop_off = tc
 
 func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	var rival_civ: String = MatchConfig.get_rival_civ_id(rival_id)
