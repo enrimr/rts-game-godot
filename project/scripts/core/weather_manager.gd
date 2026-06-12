@@ -28,8 +28,12 @@ enum WeatherType {
 
 signal weather_changed(weather_id: String, intensity: float)
 signal weather_cleared()
+## Emitted when the next weather has been chosen but hasn't started yet, so the
+## HUD can warn the player ("Calima incoming in Ns") and they can react.
+signal weather_incoming(weather_id: String, seconds_until: float)
 
-const RAMP_TIME: float = 10.0   # seconds to fade in / fade out
+const RAMP_TIME: float = 10.0       # seconds to fade in / fade out
+const FORECAST_TIME: float = 8.0    # warning window before a weather event ramps in
 
 # Minimum and maximum duration of the PEAK phase (seconds)
 const PEAK_DURATION: Dictionary = {
@@ -70,7 +74,8 @@ const COASTAL_ZONE_DEPTH: float = 400.0
 var current_weather: WeatherType = WeatherType.CLEAR
 var intensity: float = 0.0   # 0.0 → 1.0 (smoothly ramped)
 
-var _phase: String = "clear"   # "clear" | "ramp_in" | "peak" | "ramp_out"
+var _phase: String = "clear"   # "clear" | "forecast" | "ramp_in" | "peak" | "ramp_out"
+var _pending_weather: WeatherType = WeatherType.CLEAR   # chosen during "forecast"
 var _phase_timer: float = 0.0
 var _phase_duration: float = 0.0   # used for CLEAR and PEAK phases
 var _peak_duration: float = 0.0    # pre-generated when weather is picked; stable during ramp_in
@@ -92,6 +97,9 @@ func _process(delta: float) -> void:
 		"clear":
 			if _phase_timer >= _phase_duration:
 				_pick_next_weather()
+		"forecast":
+			if _phase_timer >= FORECAST_TIME:
+				_begin_incoming_weather()
 		"ramp_in":
 			intensity = clampf(_phase_timer / RAMP_TIME, 0.0, 1.0)
 			if _phase_timer >= RAMP_TIME:
@@ -144,6 +152,17 @@ func _pick_next_weather() -> void:
 		if roll < acc:
 			chosen = candidates[i]
 			break
+	# Enter the forecast window: the weather is chosen and announced, but not yet
+	# active (current_weather stays CLEAR so no penalties apply during the warning).
+	_pending_weather = chosen
+	_phase = "forecast"
+	_phase_timer = 0.0
+	intensity = 0.0
+	weather_incoming.emit(_weather_id_of(chosen), FORECAST_TIME)
+
+# Activates the weather chosen during the forecast window and starts its ramp-in.
+func _begin_incoming_weather() -> void:
+	var chosen: WeatherType = _pending_weather
 	current_weather = chosen
 	_peak_duration = randf_range(
 		(PEAK_DURATION[chosen] as Array)[0],
@@ -175,7 +194,10 @@ func _is_allowed_on_current_map(wtype: WeatherType) -> bool:
 	return allowed.has(MatchConfig.map_type)
 
 func get_weather_id() -> String:
-	match current_weather:
+	return _weather_id_of(current_weather)
+
+func _weather_id_of(wtype: WeatherType) -> String:
+	match wtype:
 		WeatherType.CALIMA:          return "calima"
 		WeatherType.ATLANTIC_STORM:  return "atlantic_storm"
 		WeatherType.SEA_FOG:         return "sea_fog"

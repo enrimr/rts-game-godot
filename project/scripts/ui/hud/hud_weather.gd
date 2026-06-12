@@ -29,6 +29,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	WeatherManager.weather_changed.connect(_on_weather_changed)
 	WeatherManager.weather_cleared.connect(hide_weather)
+	WeatherManager.weather_incoming.connect(_on_weather_incoming)
 
 func _process(_delta: float) -> void:
 	_update_pill()
@@ -37,14 +38,16 @@ func _on_weather_changed(weather_id: String, _intensity: float) -> void:
 	if weather_id != "clear":
 		show_weather(weather_id)
 
-func show_weather(weather_id: String) -> void:
-	var text: String = WEATHER_LABELS.get(weather_id, weather_id) as String
+## Pre-arrival warning so the player can react (reposition, rush the fleet…).
+func _on_weather_incoming(weather_id: String, seconds_until: float) -> void:
+	var name_text: String = WEATHER_LABELS.get(weather_id, weather_id) as String
 	var color: Color = WEATHER_COLORS.get(weather_id, Color.WHITE) as Color
+	_show_banner("⚠ " + name_text + tr(" se acerca") + " (%ds)" % int(round(seconds_until)), color.lightened(0.15))
 
-	# CanvasLayer children must be positioned with absolute px coords, not anchors.
-	# Use the actual viewport width so centering works at any resolution.
+# Full-width fading banner near the top of the screen. Reused by both the
+# "incoming" warning and the arrival announcement.
+func _show_banner(text: String, color: Color) -> void:
 	var vp_w: float = get_viewport().get_visible_rect().size.x
-	# --- announcement banner: full-width, centred vertically at ~110 px from top ---
 	if not is_instance_valid(_banner):
 		_banner = Label.new()
 		_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -63,6 +66,14 @@ func show_weather(weather_id: String) -> void:
 	_banner_tween.tween_interval(3.0)
 	_banner_tween.tween_property(_banner, "modulate:a", 0.0, 1.2)
 
+func show_weather(weather_id: String) -> void:
+	var text: String = WEATHER_LABELS.get(weather_id, weather_id) as String
+	var color: Color = WEATHER_COLORS.get(weather_id, Color.WHITE) as Color
+	_show_banner(text, color)
+
+	# CanvasLayer children must be positioned with absolute px coords, not anchors.
+	# Use the actual viewport width so centering works at any resolution.
+	var vp_w: float = get_viewport().get_visible_rect().size.x
 	# --- persistent pill: just below the top bar (~44 px) ---
 	if not is_instance_valid(_pill):
 		_pill = Label.new()
