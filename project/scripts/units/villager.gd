@@ -22,6 +22,12 @@ var drop_off_target: Node = null
 var build_target: Node = null
 var attack_target: Node = null
 
+# When hunting an Animal, remember it so that on its death we can auto-gather
+# the meat (FOOD_HUNT node) it drops, AoE2-style. _hunt_pos is the last known
+# position of the hunted animal, used to find the freshly-spawned food node.
+var _hunting: bool = false
+var _hunt_pos: Vector2 = Vector2.ZERO
+
 var _gather_timer: float = 0.0
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
@@ -164,6 +170,7 @@ func get_selection_sound() -> String:
 	return "select_villager"
 
 func order_gather(target: Node, resource_type: String, drop_off: Node) -> void:
+	_hunting = false
 	_stop_gathering_active()
 	_release_gather_target()
 	_unregister_from_build_target()
@@ -192,6 +199,7 @@ func order_drop_off(target: Node) -> void:
 	_start_move_to((target as Node2D).global_position)
 
 func order_build(target: Node) -> void:
+	_hunting = false
 	_stop_gathering_active()
 	_release_gather_target()
 	_cancel_transport()
@@ -217,6 +225,7 @@ func order_build(target: Node) -> void:
 	_start_move_to(_nav_target_for(target))
 
 func order_move(destination: Vector2) -> void:
+	_hunting = false
 	_stop_gathering_active()
 	_release_gather_target()
 	_attack_move_active = false
@@ -237,6 +246,8 @@ func order_attack(target: Node) -> void:
 	attack_target = target
 	gather_target = null
 	build_target = null
+	# Track animal hunts so we can auto-gather the meat once it dies.
+	_hunting = target is Animal
 	_destination_state = UnitState.ATTACKING
 	_start_move_to(_nav_target_for(target))
 
@@ -457,8 +468,14 @@ func _handle_attacking(delta: float) -> void:
 		attack_target = null
 		current_state = UnitState.IDLE
 		_play_animation(_get_animation_name())
+		# The hunted animal just died — go gather the meat it dropped.
+		if _hunting:
+			_hunting = false
+			_auto_gather_meat()
 		return
 
+	if _hunting:
+		_hunt_pos = (attack_target as Node2D).global_position
 	var target_pos: Vector2 = (attack_target as Node2D).global_position
 	var dist: float = global_position.distance_to(target_pos)
 	var attack_reach: float = _attack_reach_to(attack_target)
@@ -557,6 +574,29 @@ func _on_transport_garrison_changed(ship: Node, _current_size: int, _capacity: i
 	_cancel_transport()
 	if is_instance_valid(target) and not res.is_empty():
 		order_gather(target, res, drop)
+
+# After a hunt kill, find the meat (FOOD_HUNT node) that spawned where the
+# animal died and start gathering it automatically (AoE2 behaviour). Searched
+# by proximity to the animal's last position, deferred one frame because the
+# food node is created in the animal's _die() this same frame.
+func _auto_gather_meat() -> void:
+	call_deferred("_do_auto_gather_meat")
+
+func _do_auto_gather_meat() -> void:
+	var best: ResourceNode = null
+	var best_dist: float = 64.0   # only grab meat right where the animal fell
+	for node: Node in get_tree().get_nodes_in_group("resource_nodes"):
+		if not is_instance_valid(node) or not (node is ResourceNode):
+			continue
+		var rn: ResourceNode = node as ResourceNode
+		if rn.resource_type != ResourceNode.ResourceType.FOOD_HUNT:
+			continue
+		var d: float = _hunt_pos.distance_to((rn as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = rn
+	if best != null:
+		order_gather(best, best.get_resource_name(), _find_nearest_drop_off())
 
 func _find_nearest_same_resource() -> Node:
 	if carried_resource.is_empty():
