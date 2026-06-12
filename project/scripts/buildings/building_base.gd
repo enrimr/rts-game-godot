@@ -185,6 +185,18 @@ func _complete_construction() -> void:
 	construction_complete.emit()
 	EventBus.building_construction_complete.emit(self)
 
+# Mark a building as already-built without a construction phase (e.g. the
+# player's starting Town Center). Sets full progress and clears the
+# blueprint/under-construction visuals; does NOT play the build sound or emit
+# construction_complete, since nothing was actually constructed.
+func force_complete() -> void:
+	construction_progress = 100.0
+	state = BuildingState.COMPLETE
+	if is_instance_valid(_progress_bar):
+		_progress_bar.visible = false
+	if is_instance_valid(_body_node):
+		_body_node.modulate = Color(1.0, 1.0, 1.0, 1.0)
+
 func _refresh_visuals() -> void:
 	if is_instance_valid(_progress_bar):
 		_progress_bar.value = construction_progress
