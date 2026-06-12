@@ -222,6 +222,7 @@ PlacementGrid).
 - Stat modifiers: vision, movement speed, gather rate, projectile drift, building damage
 - Per-civ weather affinity: `CivilizationResource.weather_affinity` ({weather_id: resistance 0..1}) scales penalties per civilization (e.g. Guanches immune to Calima, Atlantes ignore the Atlantic Storm naval penalty); weather query methods take an optional `player_id`
 - Weather-based cloaking (Sea Fog coastal stealth)
+- Weather forecast: a `forecast` phase warns the player `FORECAST_TIME` seconds before an event ramps in (`WeatherManager.weather_incoming` signal → `HudWeather` banner); weather stays inactive (no penalties) during the warning
 - Visual effects overlay (rain, dust, ash, fog vignette)
 - Lobby-configurable frequency (Off/Normal/Frequent/Extreme)
 
