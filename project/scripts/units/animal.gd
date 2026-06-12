@@ -238,23 +238,58 @@ func _die() -> void:
 	food_node.set("initial_amount", FOOD_AMOUNT)
 	get_parent().get_parent().add_child(food_node)
 	food_node.global_position = global_position
-	var rect: ColorRect = ColorRect.new()
-	rect.color = Color(0.65, 0.18, 0.10, 1.0)
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.offset_left = -10.0
-	rect.offset_top = -10.0
-	rect.offset_right = 10.0
-	rect.offset_bottom = 10.0
-	food_node.add_child(rect)
-	var lbl: Label = Label.new()
-	lbl.text = "Food"
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl.offset_left = -20.0
-	lbl.offset_top = -24.0
-	lbl.offset_right = 20.0
-	lbl.offset_bottom = -12.0
-	lbl.add_theme_font_size_override("font_size", 9)
-	lbl.add_theme_color_override("font_color", Color(1, 1, 1))
-	food_node.add_child(lbl)
+	_build_carcass(food_node)
 	queue_free()
+
+# Procedural carcass sprite for the food drop (replaces the old red square):
+# a fallen body lying on a blood patch, with legs sticking up.
+func _build_carcass(parent: Node2D) -> void:
+	var blood: Color = Color(0.45, 0.10, 0.08, 0.55)
+	var hide: Color = Color(0.42, 0.30, 0.20, 1.0)      # brown carcass
+	var hide_dark: Color = Color(0.30, 0.21, 0.14, 1.0)
+	var bone: Color = Color(0.78, 0.74, 0.62, 1.0)
+
+	# Blood pool under the carcass (flat ellipse made of a polygon).
+	var pool: Polygon2D = Polygon2D.new()
+	pool.color = blood
+	var pts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(12):
+		var a: float = float(i) / 12.0 * TAU
+		pts.append(Vector2(cos(a) * 15.0, sin(a) * 8.0 + 2.0))
+	pool.polygon = pts
+	parent.add_child(pool)
+
+	# Body lying on its side (rounded rectangle-ish lump).
+	var body: Polygon2D = Polygon2D.new()
+	body.color = hide
+	body.polygon = PackedVector2Array([
+		Vector2(-12, 1), Vector2(-9, -5), Vector2(8, -6),
+		Vector2(12, -1), Vector2(10, 4), Vector2(-10, 4)])
+	parent.add_child(body)
+
+	# Belly shading.
+	var shade: Polygon2D = Polygon2D.new()
+	shade.color = hide_dark
+	shade.polygon = PackedVector2Array([Vector2(-10, 4), Vector2(10, 4), Vector2(8, 1), Vector2(-9, 1)])
+	parent.add_child(shade)
+
+	# Head drooping to the left.
+	var head: Polygon2D = Polygon2D.new()
+	head.color = hide_dark
+	head.polygon = PackedVector2Array([Vector2(-12, 1), Vector2(-17, 2), Vector2(-16, 5), Vector2(-11, 4)])
+	parent.add_child(head)
+
+	# Two stiff legs pointing up.
+	for lx: float in [-3.0, 4.0]:
+		var leg: Polygon2D = Polygon2D.new()
+		leg.color = hide_dark
+		leg.polygon = PackedVector2Array([
+			Vector2(lx - 1.2, -6), Vector2(lx + 1.2, -6),
+			Vector2(lx + 1.0, -13), Vector2(lx - 1.0, -13)])
+		parent.add_child(leg)
+		var hoof: Polygon2D = Polygon2D.new()
+		hoof.color = bone
+		hoof.polygon = PackedVector2Array([
+			Vector2(lx - 1.0, -13), Vector2(lx + 1.0, -13),
+			Vector2(lx + 1.0, -15), Vector2(lx - 1.0, -15)])
+		parent.add_child(hoof)
