@@ -163,7 +163,8 @@ func _ready() -> void:
 	for rival_id: int in MatchConfig.get_rival_player_ids():
 		ResourceManager.init_player(rival_id, starting_res)
 		PopulationManager.init_player(rival_id)
-		AgeManager.init_player(rival_id)
+		# Rivals start at the lobby-selected age too, not always Dark Age.
+		AgeManager.init_player(rival_id, MatchConfig.starting_age)
 
 	_apply_civilization()
 
