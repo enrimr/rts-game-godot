@@ -20,3 +20,6 @@ builds/
 *.exe
 *.x86_64
 *.app
+
+# Claude Code agent worktrees (never version these)
+.claude/worktrees/
