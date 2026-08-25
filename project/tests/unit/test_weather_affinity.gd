@@ -54,10 +54,17 @@ func test_shipped_affinities() -> void:
 	var guanches: CivilizationResource = load("res://resources/civilizations/guanches.tres") as CivilizationResource
 	var atlantes: CivilizationResource = load("res://resources/civilizations/atlantes.tres") as CivilizationResource
 	var britons: CivilizationResource  = load("res://resources/civilizations/britons.tres")  as CivilizationResource
+	var canarii: CivilizationResource  = load("res://resources/civilizations/canarii.tres")  as CivilizationResource
+	var castellanos: CivilizationResource = load("res://resources/civilizations/castellanos.tres") as CivilizationResource
+	var franks: CivilizationResource   = load("res://resources/civilizations/franks.tres")   as CivilizationResource
 	assert_eq(guanches.weather_affinity.get("calima", 1.0), 0.0, "Guanches immune to calima")
 	assert_eq(guanches.weather_affinity.get("volcanic_ash", 1.0), 0.5, "Guanches half ash penalty")
 	assert_eq(atlantes.weather_affinity.get("atlantic_storm", 1.0), 0.0, "Atlantes immune to storm at sea")
-	assert_eq(britons.weather_affinity.size(), 0, "Britons have no weather affinity")
+	assert_eq(britons.weather_affinity.get("atlantic_storm", 1.0), 0.5, "Britons half storm penalty")
+	assert_eq(canarii.weather_affinity.get("sea_fog", 1.0), 0.5, "Canarii half sea-fog penalty")
+	assert_eq(canarii.weather_affinity.get("trade_winds", 1.0), 0.5, "Canarii half headwind penalty")
+	assert_eq(castellanos.weather_affinity.get("calima", 1.0), 0.5, "Castellanos half calima penalty")
+	assert_eq(franks.weather_affinity.size(), 0, "Franks are the neutral continental baseline")
 
 # 6 — resource default
 func test_resource_default_empty() -> void:

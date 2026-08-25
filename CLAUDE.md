@@ -220,7 +220,8 @@ PlacementGrid).
 **Weather System:**
 - 5 procedural weather types (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash)
 - Stat modifiers: vision, movement speed, gather rate, projectile drift, building damage
-- Per-civ weather affinity: `CivilizationResource.weather_affinity` ({weather_id: resistance 0..1}) scales penalties per civilization (e.g. Guanches immune to Calima, Atlantes ignore the Atlantic Storm naval penalty); weather query methods take an optional `player_id`
+- Per-civ weather affinity: `CivilizationResource.weather_affinity` ({weather_id: resistance 0..1}) scales penalties per civilization (e.g. Guanches immune to Calima, Atlantes ignore the Atlantic Storm naval penalty); weather query methods take an optional `player_id`. Full matrix: Guanches (calima 0.0, volcanic_ash 0.5), Mahos (calima 0.5), Atlantes (atlantic_storm 0.0, sea_fog 0.5), Fenicios (atlantic_storm 0.5), Britons (atlantic_storm 0.5), Canarii (sea_fog 0.5, trade_winds 0.5), Castellanos (calima 0.5); Franks are the neutral continental baseline (no affinity)
+- Volcanic Ash is spatial: only rolls on Volcanic Coast maps and only affects positions within a caldera's radius + 800 px (`WeatherManager._in_volcanic_zone` queries `TerrainManager` CALDERA zones; calderaless maps fall back to whole-map coverage)
 - Weather-based cloaking (Sea Fog coastal stealth)
 - Weather forecast: a `forecast` phase warns the player `FORECAST_TIME` seconds before an event ramps in (`WeatherManager.weather_incoming` signal → `HudWeather` banner); weather stays inactive (no penalties) during the warning
 - Visual effects overlay (rain, dust, ash, fog vignette)

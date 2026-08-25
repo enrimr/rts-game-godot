@@ -11,5 +11,6 @@ unique_unit_ids = ["longbowman"]
 unique_technology_ids = []
 starting_bonuses = {}
 stat_multipliers = {"archer_range_bonus_per_age": 1.0, "warship_attack_speed": 1.20}
+weather_affinity = {"atlantic_storm": 0.5}
 missing_units = ["heavy_cavalry_upgrades"]
 missing_technologies = []
