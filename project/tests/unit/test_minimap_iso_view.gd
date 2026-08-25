@@ -54,6 +54,43 @@ func test_camera_view_quad_empty_without_camera() -> void:
 	_mm.camera_node = null
 	assert_eq(_mm.camera_view_quad(_mm.size).size(), 0)
 
+# 1b — the drawn indicator never leaves the widget, so it stays visible even
+# when fully zoomed out (raw quad entirely outside the minimap rect)
+func test_clamped_view_quad_stays_visible_when_zoomed_out() -> void:
+	_mm._refresh_world_bounds()
+	# Zoom derived from the live viewport so the view provably exceeds the
+	# whole map regardless of the (tiny) headless test window size.
+	var vp: Vector2 = _mm.get_viewport().get_visible_rect().size
+	ISO.apply_to_camera(_cam, vp.x / (_mm._world_size * 10.0))
+	_cam.global_position = Vector2.ZERO
+	var raw: PackedVector2Array = _mm.camera_view_quad(_mm.size)
+	var widget: Rect2 = Rect2(Vector2.ZERO, _mm.size)
+	var all_outside: bool = true
+	for i: int in range(4):
+		if widget.has_point(raw[i]):
+			all_outside = false
+	assert_true(all_outside, "precondition: raw quad corners all off-widget")
+	var clamped: PackedVector2Array = _mm.clamped_view_quad(_mm.size)
+	assert_eq(clamped.size(), 5, "clamped quad stays a closed polyline")
+	var inset: float = _mm.VIEW_QUAD_INSET
+	var span: Rect2 = Rect2(clamped[0], Vector2.ZERO)
+	for i: int in range(4):
+		assert_true(widget.grow(-inset + 0.01).has_point(clamped[i]),
+			"corner %d clamped inside the widget" % i)
+		span = span.expand(clamped[i])
+	assert_gt(span.size.x, _mm.size.x * 0.5, "outline spans the widget, not a dot")
+	assert_gt(span.size.y, _mm.size.y * 0.5, "outline spans the widget, not a dot")
+
+func test_clamped_view_quad_matches_raw_quad_when_inside() -> void:
+	_mm._refresh_world_bounds()
+	ISO.apply_to_camera(_cam, 4.0)    # zoomed in: view well inside the map
+	_cam.global_position = Vector2.ZERO
+	var raw: PackedVector2Array = _mm.camera_view_quad(_mm.size)
+	var clamped: PackedVector2Array = _mm.clamped_view_quad(_mm.size)
+	for i: int in range(raw.size()):
+		assert_almost_eq(clamped[i].x, raw[i].x, 0.001, "corner %d unchanged" % i)
+		assert_almost_eq(clamped[i].y, raw[i].y, 0.001, "corner %d unchanged" % i)
+
 # 2 — right-click order lands at the right world spot and flashes
 func test_right_click_emits_move_order_at_world_spot() -> void:
 	_mm._refresh_world_bounds()

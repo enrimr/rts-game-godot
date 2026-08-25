@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://hud_main_scene"]
+[gd_scene load_steps=8 format=3 uid="uid://hud_main_scene"]
 
 [ext_resource type="Script" path="res://scripts/ui/hud_manager.gd" id="1_hudmgr"]
 [ext_resource type="Script" path="res://scripts/ui/resource_display.gd" id="2_resdisplay"]
@@ -8,7 +8,29 @@
 bg_color = Color(0.1, 0.1, 0.1, 0.85)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bottombar"]
-bg_color = Color(0.08, 0.08, 0.08, 0.9)
+bg_color = Color(0.07, 0.065, 0.055, 1)
+border_width_top = 2
+border_color = Color(0.32, 0.27, 0.18, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_minimapframe"]
+bg_color = Color(0.17, 0.14, 0.09, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52, 0.44, 0.28, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_minimapwell"]
+bg_color = Color(0.03, 0.03, 0.025, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.05, 0.04, 0.03, 1)
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hudmgr")
@@ -260,16 +282,35 @@ unique_name_in_owner = true
 
 [node name="MinimapPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
 layout_mode = 2
-custom_minimum_size = Vector2(220, 220)
+custom_minimum_size = Vector2(260, 260)
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_minimapframe")
 
-[node name="Minimap" type="Control" parent="HUDRoot/BottomBar/BottomLayout/MinimapPanel"]
+[node name="MinimapWell" type="Panel" parent="HUDRoot/BottomBar/BottomLayout/MinimapPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_minimapwell")
+
+[node name="Minimap" type="Control" parent="HUDRoot/BottomBar/BottomLayout/MinimapPanel/MinimapWell"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 script = ExtResource("3_minimap")
 unique_name_in_owner = true
 

@@ -112,15 +112,15 @@ func _build_idle_villager_button() -> void:
 	_idle_villager_btn.focus_mode = Control.FOCUS_NONE
 	_idle_villager_btn.add_theme_font_size_override("font_size", 22)
 	_idle_villager_btn.tooltip_text = tr("UI_IDLE_VILLAGER")
-	# Anchor to bottom-right, above minimap top (220px), flush with minimap left edge (220px from right)
+	# Anchor to bottom-right, above minimap top (260px), flush with minimap left edge (260px from right)
 	_idle_villager_btn.anchor_left   = 1.0
 	_idle_villager_btn.anchor_top    = 1.0
 	_idle_villager_btn.anchor_right  = 1.0
 	_idle_villager_btn.anchor_bottom = 1.0
-	_idle_villager_btn.offset_left   = -256.0
-	_idle_villager_btn.offset_top    = -260.0
-	_idle_villager_btn.offset_right  = -220.0
-	_idle_villager_btn.offset_bottom = -224.0
+	_idle_villager_btn.offset_left   = -296.0
+	_idle_villager_btn.offset_top    = -300.0
+	_idle_villager_btn.offset_right  = -260.0
+	_idle_villager_btn.offset_bottom = -264.0
 	var s: StyleBoxFlat = HudStyle.panel(Color(0.20, 0.40, 0.12, 0.92), 4)
 	_idle_villager_btn.add_theme_stylebox_override("normal", s)
 	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
@@ -182,10 +182,10 @@ func _build_idle_military_button() -> void:
 	_idle_military_btn.anchor_top    = 1.0
 	_idle_military_btn.anchor_right  = 1.0
 	_idle_military_btn.anchor_bottom = 1.0
-	_idle_military_btn.offset_left   = -296.0
-	_idle_military_btn.offset_top    = -260.0
-	_idle_military_btn.offset_right  = -260.0
-	_idle_military_btn.offset_bottom = -224.0
+	_idle_military_btn.offset_left   = -336.0
+	_idle_military_btn.offset_top    = -300.0
+	_idle_military_btn.offset_right  = -300.0
+	_idle_military_btn.offset_bottom = -264.0
 	var s: StyleBoxFlat = HudStyle.panel(Color(0.40, 0.12, 0.12, 0.92), 4)
 	_idle_military_btn.add_theme_stylebox_override("normal", s)
 	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
