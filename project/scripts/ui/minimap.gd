@@ -300,14 +300,7 @@ func _draw_overlay() -> void:
 	# four screen corners back to world and draw the resulting quad. The
 	# overlay layer clips, so it never bleeds outside the widget at map edges.
 	if camera_node != null:
-		var half: Vector2 = get_viewport().get_visible_rect().size * 0.5
-		var cam_pos: Vector2 = camera_node.global_position
-		var pts: PackedVector2Array = PackedVector2Array()
-		for corner: Vector2 in [Vector2(-half.x, -half.y), Vector2(half.x, -half.y),
-				half, Vector2(-half.x, half.y), Vector2(-half.x, -half.y)]:
-			var wp: Vector2 = cam_pos + IsoProjection.screen_delta_to_world(corner, camera_node.zoom)
-			pts.append(_to_mm(wp, ms))
-		_overlay.draw_polyline(pts, COLOR_CAMERA_RECT, 1.5)
+		_overlay.draw_polyline(camera_view_quad(ms), COLOR_CAMERA_RECT, 1.5)
 
 	# Attack / event flashes — expanding rings that fade out
 	for flash: Dictionary in _flashes:
@@ -324,6 +317,23 @@ func _draw_overlay() -> void:
 		_overlay.draw_circle(fp, 3.0, dot_col)
 
 	_overlay.draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
+
+## Minimap-space corners of the world region currently on screen. Under the
+## isometric camera the view is a rotated rectangle in world space, so the
+## four screen corners are unprojected through the live camera zoom/rotation.
+## The first corner repeats at the end so the result feeds draw_polyline as a
+## closed quad. Pure given (camera pos, camera zoom, viewport size) — tested.
+func camera_view_quad(ms: Vector2) -> PackedVector2Array:
+	var pts: PackedVector2Array = PackedVector2Array()
+	if camera_node == null:
+		return pts
+	var half: Vector2 = get_viewport().get_visible_rect().size * 0.5
+	var cam_pos: Vector2 = camera_node.global_position
+	for corner: Vector2 in [Vector2(-half.x, -half.y), Vector2(half.x, -half.y),
+			half, Vector2(-half.x, half.y), Vector2(-half.x, -half.y)]:
+		var wp: Vector2 = cam_pos + IsoProjection.screen_delta_to_world(corner, camera_node.zoom)
+		pts.append(_to_mm(wp, ms))
+	return pts
 
 # Click on minimap → move camera to that world position
 func _gui_input(event: InputEvent) -> void:
@@ -342,6 +352,9 @@ func _gui_input(event: InputEvent) -> void:
 func _move_camera_to(minimap_pos: Vector2) -> void:
 	if camera_node == null:
 		return
+	# Navigating via the minimap must win over camera-follow, or the follow
+	# handler re-centres on the selection next frame and the jump is undone.
+	EventBus.camera_follow_cancelled.emit()
 	var clamped: Vector2 = minimap_pos.clamp(Vector2.ZERO, size)
 	camera_node.global_position = _to_world(clamped, size)
 

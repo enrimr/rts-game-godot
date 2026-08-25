@@ -255,6 +255,10 @@ func _ready() -> void:
 		_following = false
 		_order_move_all(p)
 	)
+	# HUD-side camera controls (minimap click, dpad) emit this so their pans
+	# are not undone by the per-frame follow re-centre. Re-entrant no-op when
+	# this node is itself the emitter.
+	EventBus.camera_follow_cancelled.connect(func() -> void: _following = false)
 	EventBus.unit_selected.connect(_on_unit_selected_follow)
 	SelectionManager.selection_changed.connect(_on_selection_manager_changed)
 	EventBus.tutorial_spawn_enemy_scout.connect(_on_tutorial_spawn_enemy_scout)
@@ -680,11 +684,19 @@ class _FlashMarker extends Node2D:
 		set(v):
 			flash_t = v
 			queue_redraw()
+	# Drawn in world space on purpose: the iso camera turns the circle into a
+	# 2:1 ground ellipse and the world-axis square into the classic ground
+	# diamond, so the order marker reads as lying flat on the terrain.
 	func _draw() -> void:
 		var radius: float = 10.0 + flash_t * 10.0
 		var alpha: float = (1.0 - flash_t) * 0.85
-		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 24,
-			Color(flash_color.r, flash_color.g, flash_color.b, alpha), 2.0)
+		var col: Color = Color(flash_color.r, flash_color.g, flash_color.b, alpha)
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 24, col, 2.0)
+		var d: float = maxf(2.0, radius * (1.0 - flash_t) * 0.7)
+		var diamond: PackedVector2Array = PackedVector2Array([
+			Vector2(-d, -d), Vector2(d, -d), Vector2(d, d), Vector2(-d, d), Vector2(-d, -d),
+		])
+		draw_polyline(diamond, col, 1.5)
 
 func _handle_follow() -> void:
 	if not _following or _selected_units.is_empty():

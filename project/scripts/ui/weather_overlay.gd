@@ -26,6 +26,10 @@ func _ready() -> void:
 	var vp: Viewport = get_viewport()
 	if vp != null:
 		_viewport_size = vp.get_visible_rect().size
+		# Screen-space drawing: particle wrap bounds and the tint rect must
+		# track the live viewport, or a resize leaves uncovered screen bands.
+		vp.size_changed.connect(func() -> void:
+			_viewport_size = get_viewport().get_visible_rect().size)
 	_init_particles()
 
 func setup(_camera: Camera2D) -> void:

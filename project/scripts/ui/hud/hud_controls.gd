@@ -281,5 +281,8 @@ func _build_dpad() -> void:
 		btn.add_theme_stylebox_override("hover", sh)
 		_dpad.add_child(btn)
 		var move_dir: Vector2 = entry["dir"] as Vector2
-		btn.button_down.connect(func() -> void: _dpad_dir += move_dir)
+		btn.button_down.connect(func() -> void:
+			# Manual panning must win over camera-follow of the selection.
+			EventBus.camera_follow_cancelled.emit()
+			_dpad_dir += move_dir)
 		btn.button_up.connect(func() -> void: _dpad_dir -= move_dir)
