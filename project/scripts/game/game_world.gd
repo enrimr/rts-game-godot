@@ -174,7 +174,13 @@ func _ready() -> void:
 		_rng.seed = SaveManager.get_saved_rng_seed()
 		_saved_rng_seed = _rng.seed
 	else:
-		_rng.randomize()
+		# Tooling hook: a fixed seed makes visual-review runs reproducible
+		# (see tools/screenshot_runner.gd).
+		var env_seed: String = OS.get_environment("CALIMA_SEED")
+		if not env_seed.is_empty():
+			_rng.seed = int(env_seed)
+		else:
+			_rng.randomize()
 		_saved_rng_seed = _rng.seed
 
 	_setup_ambient_lighting()
