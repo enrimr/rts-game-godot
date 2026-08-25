@@ -40,6 +40,10 @@ const SPEED_MULT: Array[float] = [
 # LOS fraction kept by a unit under the laurisilva canopy.
 const LAURISILVA_VISION_MULT: float = 0.70
 
+# Ocean within this distance of the coast counts as shallow water (GDD M6):
+# amphibious units wade it at full speed instead of the deep-water 0.60.
+const SHALLOW_WATER_DEPTH: float = 120.0
+
 # Risco vantage (GDD M6): ranged units within this distance of a cliff edge
 # gain extra reach. The zone itself is impassable, so the GDD's "units on
 # top" translates to "standing beside the cliff".
@@ -131,7 +135,8 @@ func get_speed_mult(world_pos: Vector2, civ_id: String) -> float:
 			return SPEED_MULT[TerrainType.DUNE]
 		TerrainType.OCEAN:
 			if civ != null and civ.can_traverse_ocean:
-				return 0.60   # slowed but not blocked
+				# Shallows are waded at full speed; deep water swims slowly.
+				return 1.0 if is_shallow_water(world_pos) else 0.60
 			return 0.0
 		_:
 			return SPEED_MULT[t]
@@ -146,6 +151,10 @@ func get_vision_mult(world_pos: Vector2) -> float:
 	if get_terrain(world_pos) == TerrainType.LAURISILVA:
 		return LAURISILVA_VISION_MULT
 	return 1.0
+
+# True for ocean positions within SHALLOW_WATER_DEPTH of the coastline.
+func is_shallow_water(world_pos: Vector2) -> bool:
+	return is_ocean(world_pos) and distance_to_coast(world_pos) <= SHALLOW_WATER_DEPTH
 
 # True when world_pos stands beside a risco cliff — within `dist` px of the
 # zone edge.
