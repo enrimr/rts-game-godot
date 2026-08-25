@@ -225,7 +225,7 @@ Procedural weather events affect gameplay with stat modifiers and visual effects
 | **Atlantic Storm** | All maps | 40-90s | Naval speed −30%, fishing −50%, projectile drift (30 px cross-wind) |
 | **Sea Fog** | Coastal maps only | 60-120s | Coastal vision −60%, unit cloaking when in coastal zone (intensity ≥0.5) |
 | **Trade Winds** | All maps | 100-160s | Naval speed ±20% (alignment with wind), projectile drift (40 px with wind) |
-| **Volcanic Ash** | All maps | 40-80s | Vision −50%, gather −30%, building HP drain (2/s), covers entire map |
+| **Volcanic Ash** | Volcanic Coast | 40-80s | Vision −50%, gather −30%, building HP drain (2/s), around calderas (caldera radius + 800 px) |
 
 ### Weather Phases
 

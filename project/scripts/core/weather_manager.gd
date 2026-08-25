@@ -64,9 +64,10 @@ const WEATHER_MAP_ALLOWED: Dictionary = {
 	WeatherType.TRADE_WINDS:    [MatchConfig.MapType.ISLANDS, MatchConfig.MapType.VOLCANIC_COAST,
 	                              MatchConfig.MapType.DESERT_COAST, MatchConfig.MapType.STANDARD,
 	                              MatchConfig.MapType.PLAINS],
+	WeatherType.VOLCANIC_ASH:   [MatchConfig.MapType.VOLCANIC_COAST],
 }
 
-# Radius around the map centre affected by volcanic ash (px)
+# Distance beyond a caldera's edge still affected by volcanic ash (px)
 const VOLCANIC_ZONE_RADIUS: float = 800.0
 # Distance from coast (ocean-land boundary) inside which SEA_FOG applies to units
 const COASTAL_ZONE_DEPTH: float = 400.0
@@ -306,8 +307,17 @@ func get_building_damage_rate(world_pos: Vector2, player_id: int = -1) -> float:
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-func _in_volcanic_zone(_world_pos: Vector2) -> bool:
-	return true  # Volcanic ash covers the entire map when active
+func _in_volcanic_zone(world_pos: Vector2) -> bool:
+	var has_caldera: bool = false
+	for z: Dictionary in TerrainManager.get_zones():
+		if (z["type"] as TerrainManager.TerrainType) != TerrainManager.TerrainType.CALDERA:
+			continue
+		has_caldera = true
+		if world_pos.distance_to(z["center"] as Vector2) <= (z["radius"] as float) + VOLCANIC_ZONE_RADIUS:
+			return true
+	# A map without calderas (legacy save mid-event) keeps the old whole-map
+	# behaviour so an active ash event is never a silent no-op.
+	return not has_caldera
 
 func _in_coastal_zone(world_pos: Vector2) -> bool:
 	return TerrainManager.distance_to_coast(world_pos) <= COASTAL_ZONE_DEPTH

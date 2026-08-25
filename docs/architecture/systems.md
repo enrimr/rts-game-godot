@@ -311,9 +311,9 @@ Ages: Dark (0) → Feudal (1) → Castle (2) → Imperial (3). Advancing costs r
 | `atlantic_storm` | `ATLANTIC_STORM` | Rain & wind — naval speed −30%, fish gather −50%; projectile drift (crosswind) |
 | `sea_fog` | `SEA_FOG` | Coastal fog (≤400 px from coast) — vision −60%, enemy units cloaked when intensity ≥ 0.5 |
 | `trade_winds` | `TRADE_WINDS` | NE→SW wind — naval speed ±20% depending on heading; projectile drift along wind |
-| `volcanic_ash` | `VOLCANIC_ASH` | Central zone (≤800 px from origin) — gather −30%, vision −50%, buildings drain 2 HP/s |
+| `volcanic_ash` | `VOLCANIC_ASH` | Caldera zones (caldera radius + 800 px) — gather −30%, vision −50%, buildings drain 2 HP/s |
 
-Map-type restrictions: `SEA_FOG` only spawns on ISLANDS / VOLCANIC_COAST / DESERT_COAST.
+Map-type restrictions: `SEA_FOG` only spawns on ISLANDS / VOLCANIC_COAST / DESERT_COAST; `VOLCANIC_ASH` only on VOLCANIC_COAST (the only map type that generates calderas). `_in_volcanic_zone` checks the `TerrainManager` CALDERA zones; a map with no caldera (legacy save mid-event) falls back to whole-map coverage so an active event is never a no-op.
 
 ### Phase state machine
 
