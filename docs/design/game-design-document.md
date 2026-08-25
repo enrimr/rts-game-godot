@@ -105,9 +105,9 @@ Hero rules:
 | Sand / Dune | -20% infantry (heavy) | Yes | Mahos immune to penalty |
 | Malpaís (volcanic rock) | -50% | No | Guanches immune; not buildable |
 | Lava-cooled black sand | Normal | No | Coastal/decorative |
-| Laurisilva (dense forest) | -30% | No | High wood yield, reduces vision |
-| Risco (cliff edge) | No passage | No | Units on top: +2 attack range |
-| Shallow water | -40% (land units) | No | Atlantes immune |
+| Laurisilva (dense forest) | -35% | No | High wood yield (dense 260-wood forests), vision −30% under the canopy |
+| Risco (cliff edge) | No passage | No | Ranged units within 48 px of the cliff edge: +2 attack range |
+| Shallow water (ocean ≤120 px from coast) | Land units blocked; amphibious full speed | No | Atlantes wade shallows at full speed, deep water at 60% |
 | Ocean | Land units blocked | No | Ships only; fishing available |
 | Caldera (active) | Impassable | No | Control adjacent zone → +stone/min |
 
@@ -293,7 +293,7 @@ Players configure a skirmish before starting:
 | M3 | Age progression (4 ages), tech tree (8 techs), new units (Archer, Pikeman) | ✅ Done |
 | M4 | Naval gameplay (Dock, ships, Islands map, AI naval assault) | ✅ Done |
 | M5 | **Production-ready**: 8 civs with unique units/heroes, 21 technologies, weather system, save/load, 3 victory conditions, polish & bug fixes | ✅ Done |
-| M6 | Custom terrain tiles (malpaís, dune, risco, laurisilva) with civ traversal bonuses | 🚧 In progress |
+| M6 | Custom terrain (malpaís, dune, risco, laurisilva) with civ traversal bonuses and gameplay effects (laurisilva vision/wood, risco vantage, shallow water) | ✅ Done |
 | M7 | Multiplayer (LAN) | 📋 Planned |
 | M8 | Campaign mode with story missions | 📋 Planned |
 

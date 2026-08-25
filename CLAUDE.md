@@ -20,7 +20,7 @@ project/          ← Open this in Godot editor (contains project.godot)
     units/        ← UnitBase, Villager, military unit classes
     buildings/    ← BuildingBase and specific building scripts
     economy/      ← ResourceNode, drop-off logic
-    map/          ← MapManager (tilemap, fog of war, pathfinding)
+    map/          ← MapGenerator, FogOfWar, PlacementGrid, terrain overlays
     combat/       ← Projectiles, damage calculation
     ai/           ← AIPlayer coordinator + AIConstruction, AIEconomy, AIMilitary, AINaval modules
     research/     ← TechTree, ResearchQueue
@@ -58,7 +58,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/population_manager.gd` | Per-player population current/cap tracking |
 | `project/scripts/core/save_manager.gd` | Complete game save/load system, JSON-based, 99 save slots |
 | `project/scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
-| `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries |
+| `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries, terrain gameplay effects (laurisilva vision mult, risco vantage, shallow water) |
 | `project/scripts/core/audio_manager.gd` | Spatial audio playback, distance attenuation |
 | `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
 | **Unit Classes** ||
@@ -293,7 +293,6 @@ PlacementGrid).
 ### Known Limitations (Planned for Future Milestones)
 
 - No multiplayer (LAN planned for M7)
-- Custom terrain tiles in progress (malpaís, dune, risco, laurisilva)
 - Tutorial mode exists but incomplete
 - Some unique unit abilities partially implemented
 - Mercenary system exists but UI incomplete
