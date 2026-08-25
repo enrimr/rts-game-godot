@@ -102,7 +102,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | ResourceDisplay | `scripts/ui/resource_display.gd` | HBoxContainer showing one resource icon + amount |
 | UnitPortrait | `scripts/ui/unit_portrait.gd` | PanelContainer showing unit name + HP bar in selection grid |
 | WeatherOverlay | `scripts/ui/weather_overlay.gd` | Screen-space visual effects (rain, dust, ash, fog) driven by WeatherManager |
-| Minimap | `scripts/ui/minimap.gd` | Minimap with right-click move orders, resource/unit/building icons |
+| Minimap | `scripts/ui/minimap.gd` | Minimap with right-click move orders, resource/unit/building icons; entity content redraws on a 5 Hz tick, overlay (camera rect/flashes) only while changing |
 
 ## Autoloads Registration
 

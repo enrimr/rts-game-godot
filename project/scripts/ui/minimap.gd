@@ -17,6 +17,11 @@ const COLOR_GRID:           Color = Color(1.0,  1.0,  1.0,  0.06)
 const FLASH_DURATION:   float = 1.5
 const FLASH_RADIUS_MAX: float = 14.0
 
+# Entities (fog, resources, buildings, units) redraw on this decoupled tick
+# instead of every frame — a minimap dot moving at 5 Hz is imperceptible, but
+# iterating every unit/resource per frame is not.
+const CONTENT_REDRAW_INTERVAL: float = 0.2
+
 # Each entry: {world_pos: Vector2, timer: float, color: Color}
 var _flashes: Array[Dictionary] = []
 
@@ -29,25 +34,68 @@ var fog: FogOfWar = null
 # until the unit is close enough to actually "see" the individual trees.
 const MINIMAP_RESOURCE_SIGHT_FRACTION: float = 0.30
 
-# Cached per-frame: own units with (position, sight_radius_px)
+# Cached per content tick: own units with (position, sight_radius_px)
 var _own_unit_sights: Array[Dictionary] = []
+
+# Content (entities) draws at CONTENT_REDRAW_INTERVAL; the overlay (camera
+# rect + flashes) draws only while something on it is actually changing.
+var _content: Control = null
+var _overlay: Control = null
+var _content_timer: float = CONTENT_REDRAW_INTERVAL
+var _last_cam_pos: Vector2 = Vector2.INF
+var _last_cam_zoom: Vector2 = Vector2.INF
+var _last_vp_size: Vector2 = Vector2.INF
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
+	_content = _make_layer("ContentLayer")
+	_content.draw.connect(_draw_content)
+	_overlay = _make_layer("OverlayLayer")
+	_overlay.draw.connect(_draw_overlay)
 	EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
 	EventBus.minimap_move_order.connect(_on_minimap_move_order)
 	EventBus.hero_low_hp.connect(_on_hero_low_hp)
 
+func _make_layer(layer_name: String) -> Control:
+	var layer: Control = Control.new()
+	layer.name = layer_name
+	layer.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(layer)
+	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	return layer
+
 func _process(delta: float) -> void:
+	var overlay_dirty: bool = not _flashes.is_empty()
 	var i: int = _flashes.size() - 1
 	while i >= 0:
 		_flashes[i]["timer"] -= delta
 		if _flashes[i]["timer"] <= 0.0:
 			_flashes.remove_at(i)
 		i -= 1
-	_cache_own_unit_sights()
-	queue_redraw()
+	if _camera_view_changed():
+		overlay_dirty = true
+	if overlay_dirty:
+		_overlay.queue_redraw()
+	_content_timer += delta
+	if _content_timer >= CONTENT_REDRAW_INTERVAL:
+		_content_timer = 0.0
+		_cache_own_unit_sights()
+		_content.queue_redraw()
+
+# True when the camera rect drawn on the overlay would differ from the last
+# drawn one (camera moved/zoomed or the viewport was resized).
+func _camera_view_changed() -> bool:
+	if camera_node == null:
+		return false
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	if camera_node.global_position == _last_cam_pos \
+			and camera_node.zoom == _last_cam_zoom and vp == _last_vp_size:
+		return false
+	_last_cam_pos = camera_node.global_position
+	_last_cam_zoom = camera_node.zoom
+	_last_vp_size = vp
+	return true
 
 func _cache_own_unit_sights() -> void:
 	_own_unit_sights.clear()
@@ -93,16 +141,21 @@ func _on_hero_low_hp(player_id: int) -> void:
 			add_flash((unit as Node2D).global_position, Color(1.0, 0.90, 0.10))
 			return
 
-func _draw() -> void:
-	var ms: Vector2 = size
+func _refresh_world_bounds() -> void:
 	var mh: float = TerrainManager.minimap_map_half
 	_world_min = Vector2(-mh, -mh)
 	_world_size = mh * 2.0
 
+# Terrain, fog, resources, buildings and units — the expensive iteration,
+# redrawn on the decoupled CONTENT_REDRAW_INTERVAL tick.
+func _draw_content() -> void:
+	var ms: Vector2 = size
+	_refresh_world_bounds()
+
 	if TerrainManager.minimap_texture != null:
-		draw_texture_rect(TerrainManager.minimap_texture, Rect2(Vector2.ZERO, ms), false)
+		_content.draw_texture_rect(TerrainManager.minimap_texture, Rect2(Vector2.ZERO, ms), false)
 	else:
-		draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BG)
+		_content.draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BG)
 
 	# Fog of war overlay — drawn over terrain, under units/buildings
 	if fog != null:
@@ -114,21 +167,19 @@ func _draw() -> void:
 				if state == FogOfWar.STATE_VISIBLE:
 					continue
 				var fog_col: Color = Color(0.0, 0.0, 0.0, 1.0) if state == FogOfWar.STATE_UNEXPLORED else Color(0.0, 0.0, 0.0, 0.55)
-				draw_rect(Rect2(Vector2(cx * cell_w, cy * cell_h), Vector2(cell_w + 1.0, cell_h + 1.0)), fog_col)
+				_content.draw_rect(Rect2(Vector2(cx * cell_w, cy * cell_h), Vector2(cell_w + 1.0, cell_h + 1.0)), fog_col)
 
 	# Subtle grid lines every 25% of the map
 	for i: int in range(1, 4):
 		var t: float = float(i) * 0.25
-		draw_line(Vector2(ms.x * t, 0.0), Vector2(ms.x * t, ms.y), COLOR_GRID, 1.0)
-		draw_line(Vector2(0.0, ms.y * t), Vector2(ms.x, ms.y * t), COLOR_GRID, 1.0)
+		_content.draw_line(Vector2(ms.x * t, 0.0), Vector2(ms.x * t, ms.y), COLOR_GRID, 1.0)
+		_content.draw_line(Vector2(0.0, ms.y * t), Vector2(ms.x, ms.y * t), COLOR_GRID, 1.0)
 
 	if world_node == null:
-		draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
 		return
 
 	# Resources: show when an own unit is within sight range of the node.
 	# Remembered (explored but not in sight) nodes show dimmed.
-	# Uses _own_unit_sights cached in _process to avoid per-frame iteration.
 	for rn_node: Node in get_tree().get_nodes_in_group("resource_nodes"):
 		if not is_instance_valid(rn_node) or not (rn_node is ResourceNode):
 			continue
@@ -145,7 +196,7 @@ func _draw() -> void:
 		if not in_sight:
 			col.a = 0.4
 		var mp: Vector2 = _to_mm(rpos, ms)
-		draw_rect(Rect2(mp - Vector2(2.5, 2.5), Vector2(5.0, 5.0)), col)
+		_content.draw_rect(Rect2(mp - Vector2(2.5, 2.5), Vector2(5.0, 5.0)), col)
 
 	# Buildings layer
 	var buildings_layer: Node = world_node.get_node_or_null("BuildingsLayer")
@@ -159,7 +210,7 @@ func _draw() -> void:
 				continue
 			var mp: Vector2 = _to_mm((building as Node2D).global_position, ms)
 			var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.7, 0.5, 0.2)
-			draw_rect(Rect2(mp - Vector2(3.5, 3.5), Vector2(7.0, 7.0)), col)
+			_content.draw_rect(Rect2(mp - Vector2(3.5, 3.5), Vector2(7.0, 7.0)), col)
 
 	# Town Center (DropOffNode in world root)
 	var drop_off: Node = world_node.get_node_or_null("DropOffNode")
@@ -167,7 +218,7 @@ func _draw() -> void:
 		var mp: Vector2 = _to_mm((drop_off as Node2D).global_position, ms)
 		var pid: Variant = drop_off.get("player_id")
 		var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.7, 0.5, 0.2)
-		draw_rect(Rect2(mp - Vector2(5.0, 5.0), Vector2(10.0, 10.0)), col)
+		_content.draw_rect(Rect2(mp - Vector2(5.0, 5.0), Vector2(10.0, 10.0)), col)
 
 	# Units
 	var units_layer: Node = world_node.get_node_or_null("UnitsLayer")
@@ -181,10 +232,15 @@ func _draw() -> void:
 				continue
 			var mp: Vector2 = _to_mm((unit as Node2D).global_position, ms)
 			if unit is Animal:
-				draw_circle(mp, 2.5, COLOR_ANIMAL)
+				_content.draw_circle(mp, 2.5, COLOR_ANIMAL)
 				continue
 			var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.8, 0.8, 0.8)
-			draw_circle(mp, 3.0, col)
+			_content.draw_circle(mp, 3.0, col)
+
+# Camera rect, flashes and border — cheap, redrawn only while changing.
+func _draw_overlay() -> void:
+	var ms: Vector2 = size
+	_refresh_world_bounds()
 
 	# Camera viewport rectangle — clamped to minimap bounds so it never
 	# bleeds outside the widget when the camera is near a map edge.
@@ -194,7 +250,7 @@ func _draw() -> void:
 		var r_min: Vector2 = _to_mm(cam_pos - vp_world * 0.5, ms).clamp(Vector2.ZERO, ms)
 		var r_max: Vector2 = _to_mm(cam_pos + vp_world * 0.5, ms).clamp(Vector2.ZERO, ms)
 		if r_max.x > r_min.x and r_max.y > r_min.y:
-			draw_rect(Rect2(r_min, r_max - r_min), COLOR_CAMERA_RECT, false, 1.5)
+			_overlay.draw_rect(Rect2(r_min, r_max - r_min), COLOR_CAMERA_RECT, false, 1.5)
 
 	# Attack / event flashes — expanding rings that fade out
 	for flash: Dictionary in _flashes:
@@ -204,16 +260,17 @@ func _draw() -> void:
 		var col: Color = flash["color"]
 		col.a = alpha
 		var fp: Vector2 = _to_mm(flash["world_pos"], ms)
-		draw_circle(fp, radius, col)
+		_overlay.draw_circle(fp, radius, col)
 		# Solid dot at origin so it is visible at t=0
 		var dot_col: Color = flash["color"]
 		dot_col.a = alpha * 0.6
-		draw_circle(fp, 3.0, dot_col)
+		_overlay.draw_circle(fp, 3.0, dot_col)
 
-	draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
+	_overlay.draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
 
 # Click on minimap → move camera to that world position
 func _gui_input(event: InputEvent) -> void:
+	_refresh_world_bounds()
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
