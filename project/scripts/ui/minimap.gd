@@ -57,6 +57,7 @@ func _ready() -> void:
 	_content = _make_layer("ContentLayer")
 	_content.draw.connect(_draw_content)
 	_overlay = _make_layer("OverlayLayer")
+	_overlay.clip_contents = true
 	_overlay.draw.connect(_draw_overlay)
 	EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
@@ -294,15 +295,19 @@ func _draw_overlay() -> void:
 	var ms: Vector2 = size
 	_refresh_world_bounds()
 
-	# Camera viewport rectangle — clamped to minimap bounds so it never
-	# bleeds outside the widget when the camera is near a map edge.
+	# Camera viewport indicator — the world region on screen is a rotated
+	# rectangle under the isometric camera (see IsoProjection), so project the
+	# four screen corners back to world and draw the resulting quad. The
+	# overlay layer clips, so it never bleeds outside the widget at map edges.
 	if camera_node != null:
-		var vp_world: Vector2 = get_viewport().get_visible_rect().size / camera_node.zoom
+		var half: Vector2 = get_viewport().get_visible_rect().size * 0.5
 		var cam_pos: Vector2 = camera_node.global_position
-		var r_min: Vector2 = _to_mm(cam_pos - vp_world * 0.5, ms).clamp(Vector2.ZERO, ms)
-		var r_max: Vector2 = _to_mm(cam_pos + vp_world * 0.5, ms).clamp(Vector2.ZERO, ms)
-		if r_max.x > r_min.x and r_max.y > r_min.y:
-			_overlay.draw_rect(Rect2(r_min, r_max - r_min), COLOR_CAMERA_RECT, false, 1.5)
+		var pts: PackedVector2Array = PackedVector2Array()
+		for corner: Vector2 in [Vector2(-half.x, -half.y), Vector2(half.x, -half.y),
+				half, Vector2(-half.x, half.y), Vector2(-half.x, -half.y)]:
+			var wp: Vector2 = cam_pos + IsoProjection.screen_delta_to_world(corner, camera_node.zoom)
+			pts.append(_to_mm(wp, ms))
+		_overlay.draw_polyline(pts, COLOR_CAMERA_RECT, 1.5)
 
 	# Attack / event flashes — expanding rings that fade out
 	for flash: Dictionary in _flashes:

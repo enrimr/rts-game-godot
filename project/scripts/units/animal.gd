@@ -194,8 +194,18 @@ func _convert_to(owner_id: int) -> void:
 	_nav.target_position = global_position
 	velocity = Vector2.ZERO
 
+# Ownership marker: the same colour stripe at the feet every unit uses, kept
+# upright (see IsoBillboard) — never a full-body repaint, which makes the
+# animal unreadable. Re-conversion just recolours the existing stripe.
 func _on_converted() -> void:
-	_body_torso.color = Color(0.78, 0.55, 0.18, 1.0)
+	var stripe: ColorRect = get_node_or_null("PlayerColorStripe") as ColorRect
+	if stripe == null:
+		PlayerColors.apply_color_stripe(self, player_id, 16.0, 10.0)
+		stripe = get_node_or_null("PlayerColorStripe") as ColorRect
+		if stripe != null:
+			IsoBillboard.make_upright(stripe)
+	else:
+		stripe.color = PlayerColors.get_color(player_id)
 
 func _start_flee(from_source: Node) -> void:
 	current_state = AnimalState.FLEEING

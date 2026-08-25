@@ -73,6 +73,9 @@ static func _make_rally_marker() -> Node2D:
 		Vector2(-6.0, 0.0), Vector2(6.0, 0.0),
 		Vector2(0.0, 0.0), Vector2(0.0, -12.0),
 	])
+	# The pole stands upright on the projected ground (see IsoBillboard);
+	# the base circle below stays flat as the classic ground ring.
+	IsoBillboard.make_upright(line)
 	root.add_child(line)
 	var circle: Line2D = Line2D.new()
 	circle.width = 1.0

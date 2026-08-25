@@ -40,7 +40,3 @@ func _check_nearest_owner() -> void:
 		return
 	var nearest_pid: int = best_body.get("player_id") as int
 	_try_convert(nearest_pid)
-
-func _on_converted() -> void:
-	# Tint by team color
-	_body_torso.color = PlayerColors.get_color(player_id)
