@@ -40,6 +40,7 @@ const _LEG_FREQ: float = 3.2    # stride cycles per second
 
 func _ready() -> void:
 	health = max_health
+	_health_bar.visible = false
 	_origin = global_position
 	_pick_wander_target()
 	add_to_group("animals")
@@ -107,6 +108,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 		return
 	health -= amount
 	_health_bar.value = (health / max_health) * 100.0
+	_health_bar.visible = health < max_health - 0.01
 	if is_instance_valid(_hit_tween):
 		_hit_tween.kill()
 	modulate = Color(1.0, 0.2, 0.2, 1.0)

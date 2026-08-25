@@ -140,7 +140,8 @@ func _setup_iso_billboard() -> void:
 # Overridable: which visual children stand upright. Ground-plane buildings
 # (e.g. Farm) override this to keep their body flat.
 func _iso_upright_children() -> Array:
-	return ["Body", "NameLabel", "HealthBar", "ConstructionBar", "TrainingBar", "FoodBar"]
+	return ["Body", "NameLabel", "HealthBar", "ConstructionBar", "TrainingBar",
+		"FoodBar", "PlayerColorStripe"]
 
 # Recolours team-accent polygons (flags, roofs, banners) to the owner's colour so
 # buildings are identifiable at a glance. Any Polygon2D/Line2D under Body whose

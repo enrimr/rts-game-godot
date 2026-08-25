@@ -50,6 +50,8 @@ func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -
 	_unit_upgrades[from_id] = to_res.id
 
 func _process(delta: float) -> void:
+	if is_instance_valid(_train_bar):
+		_train_bar.visible = not _train_queue.is_empty()
 	if state != BuildingState.COMPLETE or _train_queue.is_empty():
 		return
 	var entry: Dictionary = _train_queue[0] as Dictionary

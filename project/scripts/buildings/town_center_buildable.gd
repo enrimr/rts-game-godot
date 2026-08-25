@@ -47,6 +47,8 @@ func _process_hero_respawn(delta: float) -> void:
 		_do_respawn_hero(data)
 
 func _process_training(delta: float) -> void:
+	if is_instance_valid(_train_bar):
+		_train_bar.visible = not _train_queue.is_empty()
 	if _train_queue.is_empty():
 		return
 	var train_time: float = VILLAGER_DATA.train_time

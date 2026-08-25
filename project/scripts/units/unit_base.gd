@@ -57,6 +57,7 @@ func _ready() -> void:
 			health *= 0.5
 		health_bar.max_value = health
 		health_bar.value = health
+	_refresh_health_bar()
 	_last_position = global_position
 	if is_instance_valid(attack_range_area):
 		attack_range_area.monitoring = true
@@ -73,10 +74,12 @@ func _ready() -> void:
 	call_deferred("_setup_iso_billboard")
 
 # Stand the unit's art upright on the projected ground (see IsoBillboard).
-# SelectionIndicator, GroundShadow and the colour stripe stay ground-projected.
+# SelectionIndicator and GroundShadow stay ground-projected (a circle reads as
+# the classic iso selection ellipse); the colour stripe is uprighted too, or it
+# would render as a diagonal slash instead of an underline at the feet.
 func _setup_iso_billboard() -> void:
 	IsoBillboard.setup_entity(self,
-		["Body", "HealthBar", "GatherIndicator", "AnimatedSprite2D"])
+		["Body", "HealthBar", "GatherIndicator", "AnimatedSprite2D", "PlayerColorStripe"])
 
 func _add_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, 20.0, 4.0)
@@ -199,6 +202,7 @@ func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -
 	health = new_max * ratio
 	health_bar.max_value = new_max
 	health_bar.value = health
+	_refresh_health_bar()
 
 func set_selected(value: bool) -> void:
 	is_selected = value
@@ -216,10 +220,16 @@ func move_to(target_position: Vector2) -> void:
 	nav_agent.target_position = target_position
 	current_state = UnitState.MOVING
 
+# AoE2 convention: the health bar only shows once the unit has taken damage.
+func _refresh_health_bar() -> void:
+	if is_instance_valid(health_bar):
+		health_bar.visible = health < health_bar.max_value - 0.01
+
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
 	EventBus.damage_dealt.emit(self, amount, source)
 	health_bar.value = health
+	_refresh_health_bar()
 	_flash_hit()
 	if health <= 0.0:
 		die()

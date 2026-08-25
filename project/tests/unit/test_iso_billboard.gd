@@ -101,6 +101,30 @@ func test_make_upright_control_preserves_screen_offset() -> void:
 	assert_almost_eq(projected_offset.x, -10.0, EPS, "still 10 px left on screen")
 	assert_almost_eq(projected_offset.y, -22.0, EPS, "still 22 px above on screen")
 
+func test_setup_entity_uprights_listed_children_only() -> void:
+	# The colour stripe must stand upright (screen-space underline at the feet,
+	# not a diagonal slash); ground decals like the selection circle stay flat.
+	var root: Node2D = add_child_autofree(Node2D.new())
+	var body: Node2D = Node2D.new()
+	body.name = "Body"
+	var stripe: ColorRect = ColorRect.new()
+	stripe.name = "PlayerColorStripe"
+	stripe.position = Vector2(-10.0, 7.0)
+	var selection: Node2D = Node2D.new()
+	selection.name = "SelectionIndicator"
+	root.add_child(body)
+	root.add_child(stripe)
+	root.add_child(selection)
+	BB.setup_entity(root, ["Body", "PlayerColorStripe", "MissingChildIsSkipped"])
+	assert_true(body.has_meta(BB.META_UPRIGHT), "body stands upright")
+	assert_true(stripe.has_meta(BB.META_UPRIGHT), "stripe stands upright")
+	assert_almost_eq(stripe.rotation, BB.UPRIGHT_ROTATION, EPS)
+	var stripe_screen: Vector2 = ISO.world_to_screen(stripe.position)
+	assert_almost_eq(stripe_screen.x, -10.0, EPS, "authored screen offset kept")
+	assert_almost_eq(stripe_screen.y, 7.0, EPS, "authored screen offset kept")
+	assert_false(selection.has_meta(BB.META_UPRIGHT), "selection base stays a ground ellipse")
+	assert_almost_eq(selection.rotation, 0.0, EPS)
+
 # --- drawn nodes (resource nodes, carcasses) --------------------------------------
 
 func test_setup_drawn_node_uprights_parts_but_not_ground_decals() -> void:
