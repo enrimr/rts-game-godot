@@ -185,9 +185,6 @@ func test_manage_research_starts_research_on_idle_building() -> void:
 	fake_tm.available_techs = [forging]
 	fake_tm.researching_tech = null
 
-	# Inject fake TechManager for this test.
-	var real_tm: Object = TechManager
-	var sm: ScriptedStub = null  # unused; we patch via set_indexed instead
 	# GUT doesn't support autoload replacement easily, so we stub the method
 	# by temporarily overriding ai to call our fake via a wrapper approach.
 	# Instead, use a minimal Blacksmith that we pass to a direct sub-call test:

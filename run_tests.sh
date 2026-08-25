@@ -18,7 +18,7 @@ cd "$PROJECT_DIR"
 # -gdir runs every test in the directory. -gexit makes Godot return the GUT
 # exit code (non-zero on failure) so CI can gate on it.
 if [[ "$TARGET" == *.gd ]]; then
-  exec "$GODOT" --headless -s addons/gut/gut_cmdln.gd -gselect="$TARGET" -gexit
+  exec "$GODOT" --headless -s addons/gut/gut_cmdln.gd -gdir="$(dirname "$TARGET")" -gselect="$(basename "$TARGET")" -gexit
 else
   exec "$GODOT" --headless -s addons/gut/gut_cmdln.gd -gdir="$TARGET" -gexit
 fi

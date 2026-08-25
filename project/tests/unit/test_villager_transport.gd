@@ -51,14 +51,12 @@ class FakeResource extends Node2D:
 		return 0.0
 	func get_resource_name() -> String:
 		return "wood"
-	func is_in_group(_g: String) -> bool:
-		return false
 
 ## ── Minimal stub: a drop-off building.
 class FakeDropOff extends Node2D:
 	var player_id: int = 0
-	func is_in_group(g: String) -> bool:
-		return g == "drop_off_buildings"
+	func _init() -> void:
+		add_to_group("drop_off_buildings")
 
 ## ── Minimal stub for a build target (under-construction building).
 class FakeBuildTarget extends Node2D:
@@ -82,29 +80,12 @@ class FakeUnit extends Node2D:
 # Helpers
 # ---------------------------------------------------------------------------
 
+const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
+
+# Instantiating the shipped scene keeps the test resilient to new @onready
+# node requirements (Body rig, HealthBar, SelectionIndicator…).
 func _make_villager() -> Villager:
-	var v: Villager = Villager.new()
-
-	# Inject stub AnimatedSprite2D so @onready doesn't crash.
-	var spr: AnimatedSprite2D = AnimatedSprite2D.new()
-	spr.name = "AnimatedSprite2D"
-	v.add_child(spr)
-
-	# Inject stub Label for gather indicator.
-	var lbl: Label = Label.new()
-	lbl.name = "GatherIndicator"
-	v.add_child(lbl)
-
-	# NavigationAgent2D required by UnitBase._ready.
-	var nav: NavigationAgent2D = NavigationAgent2D.new()
-	nav.name = "NavigationAgent2D"
-	v.add_child(nav)
-
-	# CollisionShape2D (optional but referenced by some UnitBase paths).
-	var col: CollisionShape2D = CollisionShape2D.new()
-	col.name = "CollisionShape2D"
-	v.add_child(col)
-
+	var v: Villager = VILLAGER_SCENE.instantiate() as Villager
 	v.player_id = 0
 	add_child_autofree(v)
 	return v
@@ -292,7 +273,9 @@ func test_repeated_board_never_accumulates_listeners() -> void:
 
 func test_garrison_changed_resumes_gather_after_unload() -> void:
 	var v: Villager = _make_villager()
-	var fake_ship: FakeTransport = FakeTransport.new()
+	# The handler hard-casts _boarding_ship to TransportShip, so this test
+	# needs the real ship scene rather than FakeTransport.
+	var fake_ship: TransportShip = (preload("res://scenes/units/transport_ship.tscn").instantiate()) as TransportShip
 	var fake_res: FakeResource = FakeResource.new()
 	var fake_drop: FakeDropOff = FakeDropOff.new()
 	add_child_autofree(fake_ship)

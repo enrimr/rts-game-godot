@@ -1,5 +1,7 @@
 extends Node
 
+class_name AIPlayer
+
 const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const BUILDING_SCENES: Dictionary = {
 	"barracks":       "res://scenes/buildings/barracks.tscn",
