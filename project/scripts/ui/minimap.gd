@@ -37,6 +37,12 @@ const MINIMAP_RESOURCE_SIGHT_FRACTION: float = 0.30
 # Cached per content tick: own units with (position, sight_radius_px)
 var _own_unit_sights: Array[Dictionary] = []
 
+# Enemy buildings the player has seen at least once, drawn dimmed at their
+# last known position while fogged (AoE2-style). Keyed by instance id;
+# entries are forgotten only when the spot is re-observed and the building
+# is gone. Value: {pos: Vector2, pid: int}
+var _known_enemy_buildings: Dictionary = {}
+
 # Content (entities) draws at CONTENT_REDRAW_INTERVAL; the overlay (camera
 # rect + flashes) draws only while something on it is actually changing.
 var _content: Control = null
@@ -81,6 +87,7 @@ func _process(delta: float) -> void:
 	if _content_timer >= CONTENT_REDRAW_INTERVAL:
 		_content_timer = 0.0
 		_cache_own_unit_sights()
+		_update_enemy_building_memory()
 		_content.queue_redraw()
 
 # True when the camera rect drawn on the overlay would differ from the last
@@ -212,6 +219,18 @@ func _draw_content() -> void:
 			var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.7, 0.5, 0.2)
 			_content.draw_rect(Rect2(mp - Vector2(3.5, 3.5), Vector2(7.0, 7.0)), col)
 
+	# Last-known-position ghosts of enemy buildings under fog (memory is
+	# maintained by _update_enemy_building_memory on the content tick)
+	if fog != null:
+		for entry: Dictionary in _known_enemy_buildings.values():
+			var epos: Vector2 = entry["pos"] as Vector2
+			if fog.get_cell_state(epos) != FogOfWar.STATE_EXPLORED:
+				continue  # visible spots draw the live dot instead
+			var gcol: Color = PlayerColors.get_color(entry["pid"] as int)
+			gcol.a = 0.55
+			var gp: Vector2 = _to_mm(epos, ms)
+			_content.draw_rect(Rect2(gp - Vector2(3.5, 3.5), Vector2(7.0, 7.0)), gcol)
+
 	# Town Center (DropOffNode in world root)
 	var drop_off: Node = world_node.get_node_or_null("DropOffNode")
 	if drop_off != null and _fog_allows_see((drop_off as Node2D).global_position, true):
@@ -236,6 +255,39 @@ func _draw_content() -> void:
 				continue
 			var col: Color = PlayerColors.get_color(pid as int) if pid != null else Color(0.8, 0.8, 0.8)
 			_content.draw_circle(mp, 3.0, col)
+
+# Runs on the content tick: records every enemy building currently in a
+# VISIBLE fog cell at its last known position, then forgets entries whose
+# spot has been re-observed without the building.
+func _update_enemy_building_memory() -> void:
+	if world_node == null or fog == null:
+		return
+	var buildings_layer: Node = world_node.get_node_or_null("BuildingsLayer")
+	if buildings_layer != null:
+		for building: Node in buildings_layer.get_children():
+			if not is_instance_valid(building):
+				continue
+			var pid: Variant = building.get("player_id")
+			if pid == null or (pid as int) == 0:
+				continue
+			var bpos: Vector2 = (building as Node2D).global_position
+			if fog.get_cell_state(bpos) == FogOfWar.STATE_VISIBLE:
+				_known_enemy_buildings[building.get_instance_id()] = {"pos": bpos, "pid": pid as int}
+	_prune_known_enemy_buildings()
+
+# Forget a remembered enemy building only once its spot is re-observed
+# (cell VISIBLE) and the building no longer exists there — while fogged the
+# ghost persists even if the building was destroyed, exactly like AoE2.
+func _prune_known_enemy_buildings() -> void:
+	if fog == null:
+		return
+	for id: int in _known_enemy_buildings.keys():
+		var entry: Dictionary = _known_enemy_buildings[id]
+		if fog.get_cell_state(entry["pos"] as Vector2) != FogOfWar.STATE_VISIBLE:
+			continue
+		var obj: Object = instance_from_id(id)
+		if obj == null or not is_instance_valid(obj) or not (obj as Node).is_inside_tree():
+			_known_enemy_buildings.erase(id)
 
 # Camera rect, flashes and border — cheap, redrawn only while changing.
 func _draw_overlay() -> void:

@@ -245,7 +245,7 @@ PlacementGrid).
 
 **UI/UX:**
 - HUD: resource display, population counter, age indicator, unit selection grid (40 max)
-- Minimap with right-click move orders, resource/unit/building icons
+- Minimap with right-click move orders, resource/unit/building icons; enemy buildings remembered at last known position under fog (AoE2-style), forgotten only when re-scouted and gone
 - Weather banner and countdown pill
 - In-game pause menu (Resume, Settings, Surrender, Exit)
 - Game-over screen with victory/defeat message
