@@ -14,6 +14,11 @@ const R_RES_OTHER: float      = 22.0
 # Tighter packing radius for forest zones — trees placed at 26 px minimum spacing
 const FOREST_NODE_RADIUS: float = 13.0
 
+# Laurisilva zone forests: tree count per 100 px of zone radius, and per-tree
+# wood amount (regular forests carry 180) — the laurel forest yields more.
+const LAURISILVA_TREES_PER_100PX: float = 6.0
+const LAURISILVA_WOOD_AMOUNT: float = 260.0
+
 const RES_COLORS: Dictionary = {
 	ResourceNode.ResourceType.WOOD:       Color(0.10, 0.55, 0.10, 1.0),
 	ResourceNode.ResourceType.GOLD:       Color(0.90, 0.75, 0.10, 1.0),
@@ -201,9 +206,23 @@ func _run(parent: Node2D, units_layer: Node2D,
 			_spawn_neutral_resources(parent)
 			_spawn_scattered_resources(parent, tc_positions)
 
+	_spawn_laurisilva_forests(parent)
 	_add_nav_obstacles(parent)
 	TerrainManager.bake_minimap_texture(_map_half, 256)
 	return {"tc_positions": tc_positions}
+
+# Laurisilva is the wood-rich biome (GDD M6): fill each laurel-forest zone
+# with a tight, high-yield tree cluster so controlling it is an economic
+# decision. Runs after zone painting and regular resource spawning so the
+# occupancy grid already contains everything else.
+func _spawn_laurisilva_forests(parent: Node2D) -> void:
+	for z: Dictionary in TerrainManager.get_zones():
+		if (z["type"] as TerrainManager.TerrainType) != TerrainManager.TerrainType.LAURISILVA:
+			continue
+		var radius: float = z["radius"] as float
+		var count: int = maxi(3, roundi(radius / 100.0 * LAURISILVA_TREES_PER_100PX * _res_mult))
+		_spawn_forest_zone(parent, z["center"] as Vector2, count,
+			LAURISILVA_WOOD_AMOUNT * _res_mult, radius * 0.75, true)
 
 # Distribute N TCs evenly around a ring, with small random jitter per position.
 # For 2 players this reproduces the classic face-to-face layout.

@@ -37,6 +37,9 @@ const SPEED_MULT: Array[float] = [
 	0.00,  # CALDERA (impassable)
 ]
 
+# LOS fraction kept by a unit under the laurisilva canopy.
+const LAURISILVA_VISION_MULT: float = 0.70
+
 const BUILDABLE: Array[bool] = [
 	true,   # GRASS
 	false,  # MALPAIS
@@ -129,6 +132,13 @@ func get_speed_mult(world_pos: Vector2, civ_id: String) -> float:
 func is_buildable(world_pos: Vector2) -> bool:
 	var t: TerrainType = get_terrain(world_pos)
 	return BUILDABLE[t]
+
+# Vision multiplier for a unit standing at world_pos — the laurisilva canopy
+# shortens line of sight (GDD M6). Multiplied into the fog-of-war LOS radius.
+func get_vision_mult(world_pos: Vector2) -> float:
+	if get_terrain(world_pos) == TerrainType.LAURISILVA:
+		return LAURISILVA_VISION_MULT
+	return 1.0
 
 func is_ocean(world_pos: Vector2) -> bool:
 	return get_terrain(world_pos) == TerrainType.OCEAN

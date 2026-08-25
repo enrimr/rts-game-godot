@@ -140,7 +140,10 @@ func _reveal_from_units() -> void:
 			if udata is UnitResource:
 				los = (udata as UnitResource).line_of_sight
 		var weather_mult: float = WeatherManager.get_vision_multiplier((unit as Node2D).global_position, 0)
-		_mark_circle((unit as Node2D).global_position, los * 64.0 * weather_mult)
+		# Terrain factor: laurisilva canopy shortens LOS. Buildings skip this —
+		# laurisilva is not buildable, so their factor is always 1.0.
+		var terrain_mult: float = TerrainManager.get_vision_mult((unit as Node2D).global_position)
+		_mark_circle((unit as Node2D).global_position, los * 64.0 * weather_mult * terrain_mult)
 
 func _reveal_from_buildings() -> void:
 	# Buildings layer
