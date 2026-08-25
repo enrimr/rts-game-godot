@@ -70,6 +70,13 @@ func _ready() -> void:
 	call_deferred("_add_player_color_stripe")
 	call_deferred("_add_ground_shadow")
 	call_deferred("_apply_gender_appearance")
+	call_deferred("_setup_iso_billboard")
+
+# Stand the unit's art upright on the projected ground (see IsoBillboard).
+# SelectionIndicator, GroundShadow and the colour stripe stay ground-projected.
+func _setup_iso_billboard() -> void:
+	IsoBillboard.setup_entity(self,
+		["Body", "HealthBar", "GatherIndicator", "AnimatedSprite2D"])
 
 func _add_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, 20.0, 4.0)
@@ -86,6 +93,7 @@ func _add_ground_shadow() -> void:
 
 func _process(delta: float) -> void:
 	_anim_time += delta
+	IsoBillboard.update_depth(self)
 	_animate_body(delta)
 	if _path_visible and is_instance_valid(_path_line):
 		var pts: PackedVector2Array = nav_agent.get_current_navigation_path()
@@ -107,16 +115,18 @@ func _animate_body(_delta: float) -> void:
 	# Determine facing direction based on state and target
 	_update_body_orientation(body)
 
-	# Apply rotation animation if the body supports it (Node2D)
+	# Apply rotation animation if the body supports it (Node2D). Rotations
+	# compose on top of the upright billboard base angle (see IsoBillboard).
 	if body is Node2D:
 		match current_state:
 			UnitState.ATTACKING:
 				var swing: float = sin(t * TAU * 3.5)
-				(body as Node2D).rotation = swing * 0.20
+				(body as Node2D).rotation = IsoBillboard.UPRIGHT_ROTATION + swing * 0.20
 			UnitState.MOVING:
-				(body as Node2D).rotation = sin(t * TAU * 2.8) * 0.08
+				(body as Node2D).rotation = IsoBillboard.UPRIGHT_ROTATION + sin(t * TAU * 2.8) * 0.08
 			_:
-				(body as Node2D).rotation = move_toward((body as Node2D).rotation, 0.0, _delta * 4.0)
+				(body as Node2D).rotation = move_toward((body as Node2D).rotation,
+					IsoBillboard.UPRIGHT_ROTATION, _delta * 4.0)
 
 func _update_body_orientation(body: Node) -> void:
 	var target_pos: Vector2 = Vector2.ZERO

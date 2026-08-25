@@ -55,6 +55,7 @@ func set_selected(value: bool) -> void:
 	if value:
 		if not is_instance_valid(_selection_ring):
 			_selection_ring = Node2D.new()
+			_selection_ring.set_meta(IsoBillboard.META_GROUND, true)
 			var line: Line2D = Line2D.new()
 			line.default_color = Color(1.0, 0.85, 0.2, 0.85)
 			line.width = 1.5
@@ -83,6 +84,7 @@ func set_being_gathered(value: bool) -> void:
 		if child is Polygon2D:
 			child.queue_free()
 	MapGenerator._draw_tree_stump(self, _visual_scale)
+	IsoBillboard.setup_drawn_node(self)
 
 func gather(amount: float) -> float:
 	var gathered: float = minf(amount, remaining_amount)

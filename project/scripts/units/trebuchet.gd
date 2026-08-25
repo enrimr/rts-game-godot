@@ -228,7 +228,7 @@ func _spawn_projectile(target_pos: Vector2) -> void:
 		Vector2(-3.5, 3.5), Vector2(-5, 0), Vector2(-3.5, -3.5),
 		Vector2(0, -5), Vector2(3.5, -3.5)
 	])
-	boulder.z_index = 10
+	boulder.z_index = IsoBillboard.Z_AIRBORNE
 	parent.add_child(boulder)
 	boulder.global_position = global_position + Vector2(0.0, -30.0)
 
@@ -262,7 +262,7 @@ func _spawn_impact_flash(target_pos: Vector2) -> void:
 		return
 	var flash: Polygon2D = Polygon2D.new()
 	flash.color = Color(1.0, 0.6, 0.1, 0.85)
-	flash.z_index = 11
+	flash.z_index = IsoBillboard.Z_AIRBORNE + 1
 	flash.polygon = PackedVector2Array([
 		Vector2(12, 0), Vector2(8, 8), Vector2(0, 12),
 		Vector2(-8, 8), Vector2(-12, 0), Vector2(-8, -8),

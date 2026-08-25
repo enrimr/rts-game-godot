@@ -46,6 +46,10 @@ func _ready() -> void:
 	_nav.velocity_computed.connect(_on_velocity_computed)
 	_convert_area.body_entered.connect(_on_body_entered_range)
 	_collect_legs()
+	call_deferred("_setup_iso_billboard")
+
+func _setup_iso_billboard() -> void:
+	IsoBillboard.setup_entity(self, ["Body", "HealthBar"])
 
 # Gathers the leg polygons (deer has 4, sheep has 2) with their rest position and
 # a stride phase so diagonal legs swing together (a natural trot/walk).
@@ -61,6 +65,7 @@ func _collect_legs() -> void:
 			_legs.append({"node": leg, "base": leg.position, "phase": phases[leg_name]})
 
 func _process(delta: float) -> void:
+	IsoBillboard.update_depth(self)
 	if _legs.is_empty():
 		return
 	var moving: bool = current_state != AnimalState.DEAD and velocity.length_squared() > 4.0
@@ -239,6 +244,7 @@ func _die() -> void:
 	get_parent().get_parent().add_child(food_node)
 	food_node.global_position = global_position
 	_build_carcass(food_node)
+	IsoBillboard.setup_drawn_node(food_node)
 	queue_free()
 
 # Procedural carcass sprite for the food drop (replaces the old red square):
@@ -250,7 +256,9 @@ func _build_carcass(parent: Node2D) -> void:
 	var bone: Color = Color(0.78, 0.74, 0.62, 1.0)
 
 	# Blood pool under the carcass (flat ellipse made of a polygon).
+	# z < 0 marks it as a ground decal so IsoBillboard keeps it flat.
 	var pool: Polygon2D = Polygon2D.new()
+	pool.z_index = -1
 	pool.color = blood
 	var pts: PackedVector2Array = PackedVector2Array()
 	for i: int in range(12):

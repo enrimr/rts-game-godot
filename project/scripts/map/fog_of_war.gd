@@ -53,7 +53,7 @@ func _ready() -> void:
 	_sprite.centered = false
 	_sprite.position = MAP_ORIGIN
 	add_child(_sprite)
-	z_index = 10
+	z_index = IsoBillboard.Z_FOG
 
 func setup(units: Node, buildings: Node, drop_off: Node, world: Node = null) -> void:
 	_units_node = units

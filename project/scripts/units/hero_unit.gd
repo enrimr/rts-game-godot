@@ -490,7 +490,7 @@ const CALIMA_RADIUS: float = 180.0
 # and _cloaked_units so _end_ability() can clean up on hero death or expiry.
 func _spawn_calima_cloud() -> void:
 	var cloud: Node2D = Node2D.new()
-	cloud.z_index = 50
+	cloud.z_index = IsoBillboard.Z_AIRBORNE + 2
 	cloud.global_position = global_position
 	var cloud_color: Color = Color(0.85, 0.78, 0.60, 0.45)
 	cloud.draw.connect(func() -> void:

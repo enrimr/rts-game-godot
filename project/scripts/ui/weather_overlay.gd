@@ -22,7 +22,7 @@ var _overlay_color: Color = Color(0.0, 0.0, 0.0, 0.0)
 var _target_overlay: Color = Color(0.0, 0.0, 0.0, 0.0)
 
 func _ready() -> void:
-	z_index = 15
+	z_index = IsoBillboard.Z_WEATHER
 	var vp: Viewport = get_viewport()
 	if vp != null:
 		_viewport_size = vp.get_visible_rect().size

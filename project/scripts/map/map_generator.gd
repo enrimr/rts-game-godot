@@ -2089,6 +2089,8 @@ static func create_resource_node(parent: Node2D, pos: Vector2,
 		obstacle.avoidance_enabled = true
 		node.add_child(obstacle)
 
+	IsoBillboard.setup_drawn_node(node)
+
 # Builds the visual Polygon2D children for a resource node.
 # Returns the effective collision radius.
 static func _build_resource_visual(node: Node2D,

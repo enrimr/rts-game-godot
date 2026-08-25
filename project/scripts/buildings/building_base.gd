@@ -128,7 +128,19 @@ func _ready() -> void:
 	call_deferred("_apply_player_color_stripe")
 	call_deferred("_apply_team_accents")
 	call_deferred("_add_ground_shadow")
+	call_deferred("_setup_iso_billboard")
 	_setup_nav_obstacle()
+
+# Stand the building's art upright on the projected ground (see IsoBillboard).
+# The footprint selection rectangle, ground shadow and colour stripe stay
+# ground-projected so they read as flat on the diamond.
+func _setup_iso_billboard() -> void:
+	IsoBillboard.setup_entity(self, _iso_upright_children())
+
+# Overridable: which visual children stand upright. Ground-plane buildings
+# (e.g. Farm) override this to keep their body flat.
+func _iso_upright_children() -> Array:
+	return ["Body", "NameLabel", "HealthBar", "ConstructionBar", "TrainingBar", "FoodBar"]
 
 # Recolours team-accent polygons (flags, roofs, banners) to the owner's colour so
 # buildings are identifiable at a glance. Any Polygon2D/Line2D under Body whose

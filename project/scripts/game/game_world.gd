@@ -272,7 +272,7 @@ func _ready() -> void:
 		minimap.fog = _fog
 
 	_drag_overlay = _DragOverlay.new()
-	_drag_overlay.z_index = 20
+	_drag_overlay.z_index = IsoBillboard.Z_DRAG_SELECT
 	add_child(_drag_overlay)
 
 	var weather_overlay: Node2D = load("res://scripts/ui/weather_overlay.gd").new() as Node2D
