@@ -358,6 +358,10 @@ func _attack_reach_to(target: Node) -> float:
 	var flat_bonus: float = CivBonusManager.get_archer_range_flat(player_id) \
 		if unit_data.id in CivBonusManager._ARCHER_IDS else 0.0
 	var base: float = unit_data.attack_range * 32.0 * range_mult + flat_bonus * 32.0
+	# Risco vantage: ranged units shooting from beside a cliff reach farther.
+	if unit_data.damage_type == UnitResource.DamageType.PIERCE \
+			and TerrainManager.is_near_risco(global_position):
+		base += TerrainManager.RISCO_RANGE_BONUS_TILES * 32.0
 	if not is_instance_valid(target):
 		return base
 	# Prefer CollisionShape2D rectangle (buildings with StaticBody2D)

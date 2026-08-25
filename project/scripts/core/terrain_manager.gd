@@ -40,6 +40,13 @@ const SPEED_MULT: Array[float] = [
 # LOS fraction kept by a unit under the laurisilva canopy.
 const LAURISILVA_VISION_MULT: float = 0.70
 
+# Risco vantage (GDD M6): ranged units within this distance of a cliff edge
+# gain extra reach. The zone itself is impassable, so the GDD's "units on
+# top" translates to "standing beside the cliff".
+const RISCO_BONUS_DISTANCE: float = 48.0
+# Extra attack range (in tiles, 1 tile = 32 px) granted by the vantage.
+const RISCO_RANGE_BONUS_TILES: float = 2.0
+
 const BUILDABLE: Array[bool] = [
 	true,   # GRASS
 	false,  # MALPAIS
@@ -139,6 +146,16 @@ func get_vision_mult(world_pos: Vector2) -> float:
 	if get_terrain(world_pos) == TerrainType.LAURISILVA:
 		return LAURISILVA_VISION_MULT
 	return 1.0
+
+# True when world_pos stands beside a risco cliff — within `dist` px of the
+# zone edge.
+func is_near_risco(world_pos: Vector2, dist: float = RISCO_BONUS_DISTANCE) -> bool:
+	for z: Dictionary in _zones:
+		if (z["type"] as TerrainType) != TerrainType.RISCO:
+			continue
+		if world_pos.distance_to(z["center"] as Vector2) <= (z["radius"] as float) + dist:
+			return true
+	return false
 
 func is_ocean(world_pos: Vector2) -> bool:
 	return get_terrain(world_pos) == TerrainType.OCEAN
