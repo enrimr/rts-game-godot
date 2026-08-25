@@ -87,7 +87,8 @@ func _player_tc_position() -> Vector2:
 
 func _shoot(world_pos: Vector2, zoom: float, name_base: String) -> void:
 	_camera.global_position = world_pos
-	_camera.zoom = Vector2(zoom, zoom)
+	# Compose with the isometric Y squash so shots match real gameplay framing.
+	_camera.zoom = IsoProjection.camera_zoom(zoom)
 	# Let the renderer settle (interpolation, redraws) before grabbing pixels.
 	for _i: int in range(6):
 		await get_tree().process_frame

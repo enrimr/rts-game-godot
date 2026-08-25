@@ -154,6 +154,9 @@ var _drag_overlay: Node2D = null
 
 func _ready() -> void:
 	add_to_group("world")
+	# Isometric projection lives entirely in the camera; the scene's zoom.x is
+	# kept as the starting user zoom. Game logic below stays cartesian.
+	IsoProjection.apply_to_camera(camera, IsoProjection.user_zoom_from(camera.zoom))
 	_create_player_town_center()
 	# Init all players — for a load, SaveManager will overwrite afterwards
 	var starting_res: Dictionary = MatchConfig.get_starting_resources()
@@ -747,7 +750,7 @@ func _handle_camera(delta: float) -> void:
 		if _following:
 			_following = false
 			EventBus.camera_follow_cancelled.emit()
-		camera.position += dir.normalized() * CAMERA_SPEED * delta
+		camera.position += IsoProjection.screen_dir_to_world(dir) * CAMERA_SPEED * delta
 		if not _camera_moved_emitted:
 			_camera_moved_emitted = true
 			EventBus.camera_moved.emit()
@@ -796,7 +799,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseMotion and _panning:
 		var motion: InputEventMouseMotion = event as InputEventMouseMotion
-		camera.position -= motion.relative / camera.zoom.x
+		camera.position -= IsoProjection.screen_delta_to_world(motion.relative, camera.zoom)
 		get_viewport().set_input_as_handled()
 		if not _camera_moved_emitted:
 			_camera_moved_emitted = true
@@ -861,17 +864,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			_handle_right_click(get_global_mouse_position())
 
 func _zoom(step: float) -> void:
-	camera.zoom = (camera.zoom + Vector2(step, step)).clamp(
-		Vector2(CAMERA_ZOOM_MIN, CAMERA_ZOOM_MIN),
-		Vector2(CAMERA_ZOOM_MAX, CAMERA_ZOOM_MAX))
+	set_zoom(get_zoom() + step)
 
 func get_zoom() -> float:
-	return camera.zoom.x
+	return IsoProjection.user_zoom_from(camera.zoom)
 
 func set_zoom(value: float) -> void:
-	camera.zoom = Vector2(value, value).clamp(
-		Vector2(CAMERA_ZOOM_MIN, CAMERA_ZOOM_MIN),
-		Vector2(CAMERA_ZOOM_MAX, CAMERA_ZOOM_MAX))
+	camera.zoom = IsoProjection.camera_zoom(
+		clampf(value, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX))
 
 # --- Selection ---
 

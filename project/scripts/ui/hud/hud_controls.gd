@@ -42,7 +42,8 @@ func _process(delta: float) -> void:
 	if _dpad_dir != Vector2.ZERO:
 		var cam: Camera2D = _camera()
 		if cam != null:
-			cam.position += _dpad_dir * CAMERA_PAN_SPEED * delta
+			# Pan along SCREEN axes so the dpad feels right under the iso rotation.
+			cam.position += IsoProjection.screen_dir_to_world(_dpad_dir) * CAMERA_PAN_SPEED * delta
 
 func set_dpad_visible(visible: bool) -> void:
 	if is_instance_valid(_dpad):
