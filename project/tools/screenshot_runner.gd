@@ -38,6 +38,13 @@ func _ready() -> void:
 	MatchConfig.rival_count = 1
 	var map_env: String = OS.get_environment("CALIMA_MAP")
 	MatchConfig.map_type = int(map_env) if not map_env.is_empty() else MatchConfig.MapType.STANDARD
+	# Optional civ overrides so reviewers can capture each civilization's look.
+	var civ_env: String = OS.get_environment("CALIMA_CIV")
+	if not civ_env.is_empty():
+		MatchConfig.player_civ_id = civ_env
+	var rival_env: String = OS.get_environment("CALIMA_RIVAL_CIV")
+	if not rival_env.is_empty() and MatchConfig.rival_civ_ids.size() > 0:
+		MatchConfig.rival_civ_ids[0] = rival_env
 
 	_world = (load("res://scenes/game/game_world.tscn") as PackedScene).instantiate() as Node2D
 	add_child(_world)
