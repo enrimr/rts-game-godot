@@ -10,7 +10,7 @@ var _progress_bar: ColorRect = null
 func setup(index: int, label: String, color: Color, is_active: bool,
 		is_blocked: bool = false, icon: Texture2D = null) -> void:
 	slot_index = index
-	custom_minimum_size = Vector2(44.0, 44.0)
+	custom_minimum_size = Vector2(50.0, 50.0)
 
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	# With an entity icon the colour drops to a dark backdrop (like the

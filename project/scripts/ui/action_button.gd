@@ -16,9 +16,9 @@ func _ready() -> void:
 	# set_entity_icon may run before _ready (buttons are configured before
 	# add_child) — don't clobber the wide icon-layout minimum it already set.
 	if _icon_rect == null:
-		custom_minimum_size = Vector2(60.0, 44.0)
+		custom_minimum_size = Vector2(64.0, 48.0)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_font_size_override("font_size", 14)
+	add_theme_font_size_override("font_size", 16)
 	focus_mode = FOCUS_NONE
 
 ## Entity-creating actions (train unit / build building) show the runtime-baked
@@ -26,7 +26,7 @@ func _ready() -> void:
 ## layout gives the icon twice the surface of the old stacked one.
 func set_entity_icon(texture: Texture2D, entity_name: String, key_hint: String = "") -> void:
 	text = ""
-	custom_minimum_size = Vector2(175.0, 56.0)
+	custom_minimum_size = Vector2(195.0, 62.0)
 	if _icon_rect == null:
 		_build_icon_layout()
 	_icon_rect.texture = texture
@@ -69,7 +69,7 @@ func _build_icon_layout() -> void:
 	_icon_rect = TextureRect.new()
 	_icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_icon_rect.custom_minimum_size = Vector2(46.0, 46.0)
+	_icon_rect.custom_minimum_size = Vector2(52.0, 52.0)
 	# Fixed square, centered — never stretched, never outside the button.
 	_icon_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -80,7 +80,7 @@ func _build_icon_layout() -> void:
 	_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_name_label.size_flags_vertical = Control.SIZE_FILL
-	_name_label.add_theme_font_size_override("font_size", 13)
+	_name_label.add_theme_font_size_override("font_size", 16)
 	_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layout.add_child(_name_label)

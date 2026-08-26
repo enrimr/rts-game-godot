@@ -9,7 +9,7 @@ var _icon_backdrop: ColorRect
 var _icon_rect: TextureRect
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(66.0, 66.0)
+	custom_minimum_size = Vector2(74.0, 74.0)
 
 	var layout: VBoxContainer = VBoxContainer.new()
 	layout.add_theme_constant_override("separation", 2)
@@ -17,7 +17,7 @@ func _ready() -> void:
 
 	# Baked entity icon over a player-colour backdrop fills most of the portrait
 	var icon_holder: Control = Control.new()
-	icon_holder.custom_minimum_size = Vector2(0.0, 44.0)
+	icon_holder.custom_minimum_size = Vector2(0.0, 50.0)
 	icon_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	icon_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	layout.add_child(icon_holder)
@@ -37,7 +37,7 @@ func _ready() -> void:
 	_name_label = Label.new()
 	_name_label.name = "NameLabel"
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name_label.add_theme_font_size_override("font_size", 9)
+	_name_label.add_theme_font_size_override("font_size", 11)
 	_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	layout.add_child(_name_label)
 
