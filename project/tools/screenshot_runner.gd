@@ -42,9 +42,18 @@ func _ready() -> void:
 	var civ_env: String = OS.get_environment("CALIMA_CIV")
 	if not civ_env.is_empty():
 		MatchConfig.player_civ_id = civ_env
+	# CALIMA_RIVAL_CIV accepts a comma-separated list; its length sets the
+	# rival count (multi-player review matches), overridable via CALIMA_RIVALS.
 	var rival_env: String = OS.get_environment("CALIMA_RIVAL_CIV")
-	if not rival_env.is_empty() and MatchConfig.rival_civ_ids.size() > 0:
-		MatchConfig.rival_civ_ids[0] = rival_env
+	if not rival_env.is_empty():
+		var civ_list: PackedStringArray = rival_env.split(",", false)
+		MatchConfig.rival_civ_ids.clear()
+		for c: String in civ_list:
+			MatchConfig.rival_civ_ids.append(c.strip_edges())
+		MatchConfig.rival_count = MatchConfig.rival_civ_ids.size()
+	var rivals_env: String = OS.get_environment("CALIMA_RIVALS")
+	if not rivals_env.is_empty():
+		MatchConfig.rival_count = int(rivals_env)
 
 	_world = (load("res://scenes/game/game_world.tscn") as PackedScene).instantiate() as Node2D
 	add_child(_world)
