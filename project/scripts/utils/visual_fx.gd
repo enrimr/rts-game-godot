@@ -59,30 +59,24 @@ static func add_ground_ring(parent: Node2D, ring_name: String, rx: float, ry: fl
 	parent.add_child(ring)
 	return ring
 
-## Player-colour ownership marker: a small filled ground ellipse ("plinth")
-## seated under the unit's feet, replacing the old screen-space colour stripe
-## that read as a floating bar under the rotated camera. `rx` and `offset_y`
-## are SCREEN-space pixels. Idempotent: re-calling recolours the existing
-## plinth (used when a unit changes owner).
+## Player-colour ownership marker: a thin ground-aligned ellipse OUTLINE under
+## the unit's feet, visible ONLY while the unit is selected. The old always-on
+## filled disc made every unit look like it stood in a pond and drowned the
+## selection state; unselected units now keep just their soft ground shadow.
+## `rx` and `offset_y` are SCREEN-space pixels. Idempotent: re-calling
+## recolours the existing ring (used when a unit changes owner).
 static func add_ground_plinth(parent: Node2D, player_id: int, rx: float, offset_y: float) -> void:
 	var color: Color = PlayerColors.get_color(player_id)
-	color.a = 0.85
+	color.a = 0.9
 	var existing: Node = parent.get_node_or_null("PlayerColorStripe")
-	if existing is Polygon2D:
-		(existing as Polygon2D).color = color
-		return
-	if existing != null:
-		# Legacy ColorRect stripe from an older save/spawner — replace it.
+	if existing != null and not (existing is Line2D):
+		# Legacy filled plinth or ColorRect stripe from an older save — replace.
 		existing.name = "PlayerColorStripeOld"
 		existing.queue_free()
-	var plinth: Polygon2D = Polygon2D.new()
-	plinth.name = "PlayerColorStripe"
-	plinth.color = color
-	plinth.z_index = SHADOW_Z
-	plinth.position = IsoProjection.screen_to_world(Vector2(0.0, offset_y))
-	plinth.polygon = _projected_ellipse_points(rx, rx * 0.5, 16)
-	plinth.set_meta(IsoBillboard.META_GROUND, true)
-	parent.add_child(plinth)
+	var ring: Line2D = add_ground_ring(parent, "PlayerColorStripe", rx, rx * 0.5,
+		color, 1.8, offset_y, SHADOW_Z)
+	var sel: Variant = parent.get("is_selected")
+	ring.visible = sel is bool and (sel as bool)
 
 ## Converts a scene-authored filled SelectionCircle (a flat world-space disc
 ## that shears into a blob under the projection) into a ground-aligned ellipse

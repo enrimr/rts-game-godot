@@ -109,6 +109,9 @@ func _face_movement(vel: Vector2) -> void:
 
 func set_selected(value: bool) -> void:
 	_selection_indicator.visible = value
+	var plinth: Node = get_node_or_null("PlayerColorStripe")
+	if plinth is CanvasItem:
+		(plinth as CanvasItem).visible = value
 
 func take_damage(amount: float, source: Node = null) -> void:
 	if current_state == AnimalState.DEAD:

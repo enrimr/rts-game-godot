@@ -222,6 +222,9 @@ func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -
 func set_selected(value: bool) -> void:
 	is_selected = value
 	selection_indicator.visible = value
+	var plinth: Node = get_node_or_null("PlayerColorStripe")
+	if plinth is CanvasItem:
+		(plinth as CanvasItem).visible = value
 	if value:
 		var col: Color = Color(0.0, 1.0, 0.0, 0.8) if player_id == 0 else Color(1.0, 0.85, 0.0, 0.85)
 		var circle: Node = selection_indicator.get_node_or_null("SelectionCircle")
