@@ -74,13 +74,19 @@ static func _bake_async(target: ImageTexture, scene_path: String, player_id: int
 	if entity.has_method("force_complete"):
 		entity.call("force_complete")
 
-	# Two frames flush the call_deferred visual passes (massing, billboard,
-	# dress, team accents) before bounds are measured.
-	await tree.process_frame
-	await tree.process_frame
+	# Four frames flush the call_deferred visual passes (massing, billboard,
+	# dress, team accents): the chains re-defer internally, so two frames
+	# measured bounds before late polygons (foundation, contact shadow)
+	# existed — icons framed low and buildings visually spilled the frame.
+	for _i: int in range(4):
+		await tree.process_frame
 	if not is_instance_valid(viewport) or not is_instance_valid(entity):
 		return
 	_strip_groups(entity)
+	# Icons show only the art: hide UI overlays (HP/food/construction bars,
+	# nameplates) so they neither render nor stretch the measured bounds —
+	# a baked-in bar under the entity read as art spilling out of the button.
+	_hide_ui_overlays(entity)
 
 	var bounds: Rect2 = _screen_bounds(entity)
 	var zoom: float = clampf(FRAME_FILL * float(ICON_SIZE) / maxf(bounds.size.x, bounds.size.y),
@@ -104,6 +110,16 @@ static func _bake_async(target: ImageTexture, scene_path: String, player_id: int
 		viewport.free()
 
 ## Removes the node subtree from every non-internal scene group.
+static func _hide_ui_overlays(root: Node) -> void:
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		if node is ProgressBar or node is Label \
+				or node.name.begins_with("PlayerColorStripe"):
+			(node as CanvasItem).visible = false
+		for child: Node in node.get_children():
+			stack.append(child)
+
 static func _strip_groups(root: Node) -> void:
 	var stack: Array[Node] = [root]
 	while not stack.is_empty():
