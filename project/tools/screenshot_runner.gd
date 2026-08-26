@@ -19,6 +19,10 @@ extends Node
 ##   02_tc_medium.png    player TC + surroundings, zoom 1.4
 ##   03_overview.png     whole map diamond, fog revealed, fit-to-frame zoom
 ##   04_tc_late.png      player TC after more in-game seconds (units moving)
+##
+## CALIMA_SELECT=1 adds two HUD-review shots:
+##   06_selection.png       starting villagers selected (portraits + actions)
+##   07_building_panel.png  player TC selected (train button + action grid)
 
 var _shot_dir: String = ""
 var _world: Node2D = null
@@ -81,6 +85,9 @@ func _run() -> void:
 	await get_tree().create_timer(4.0).timeout
 	Engine.time_scale = 1.0
 	await _shoot(tc_pos, 2.0, "04_tc_late")
+
+	if OS.get_environment("CALIMA_SELECT") == "1":
+		await _shoot_selection_panels(tc_pos)
 
 	if OS.get_environment("CALIMA_PREVIEW") == "1":
 		await _shoot_placement_preview(tc_pos)
@@ -157,12 +164,50 @@ func _shoot_placement_preview(tc_pos: Vector2) -> void:
 		push_error("SCREENSHOT_RUNNER: failed to save " + path)
 	_world.call("_cancel_placement")
 
+# CALIMA_SELECT=1: selects the starting villagers, then the player TC, and
+# captures the bottom HUD (baked-icon portraits + action grid) for review.
+func _shoot_selection_panels(tc_pos: Vector2) -> void:
+	_camera.global_position = tc_pos
+	_camera.zoom = IsoProjection.camera_zoom(2.0)
+
+	var villagers: Array = []
+	for node: Node in _world.find_children("*", "CharacterBody2D", true, false):
+		if node is Villager and (node.get("player_id") as int) == 0:
+			villagers.append(node)
+	if villagers.is_empty():
+		push_error("SCREENSHOT_RUNNER: no player villagers found for CALIMA_SELECT")
+	else:
+		SelectionManager.select(villagers)
+		# Generous settle: portrait/action icons bake asynchronously over frames.
+		await _grab("06_selection", 40)
+
+	# Group members are the DropOff marker children; the selectable building
+	# (with the training queue) is their parent TC root.
+	var tc: Node = null
+	for marker: Node in get_tree().get_nodes_in_group("drop_off_buildings"):
+		if (marker.get("player_id") as int) != 0:
+			continue
+		var building: Node = marker.get_parent()
+		if building != null and building.has_method("get_hero_respawn_fraction"):
+			tc = building
+			break
+	if tc == null:
+		push_error("SCREENSHOT_RUNNER: player TC not found for CALIMA_SELECT")
+		return
+	SelectionManager.select([])
+	EventBus.building_selected.emit(tc)
+	await _grab("07_building_panel", 40)
+	EventBus.building_selected.emit(null)
+
 func _shoot(world_pos: Vector2, zoom: float, name_base: String) -> void:
 	_camera.global_position = world_pos
 	# Compose with the isometric Y squash so shots match real gameplay framing.
 	_camera.zoom = IsoProjection.camera_zoom(zoom)
+	await _grab(name_base, 6)
+
+func _grab(name_base: String, settle_frames: int) -> void:
 	# Let the renderer settle (interpolation, redraws) before grabbing pixels.
-	for _i: int in range(6):
+	for _i: int in range(settle_frames):
 		await get_tree().process_frame
 	var img: Image = get_viewport().get_texture().get_image()
 	var path: String = _shot_dir.path_join(name_base + ".png")
