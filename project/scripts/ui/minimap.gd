@@ -56,6 +56,8 @@ var _last_vp_size: Vector2 = Vector2.INF
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
 	_content = _make_layer("ContentLayer")
+	# Fog cells extend past the playable rect; clip so they never overpaint the frame.
+	_content.clip_contents = true
 	_content.draw.connect(_draw_content)
 	_overlay = _make_layer("OverlayLayer")
 	_overlay.clip_contents = true
@@ -166,17 +168,23 @@ func _draw_content() -> void:
 	else:
 		_content.draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BG)
 
-	# Fog of war overlay — drawn over terrain, under units/buildings
+	# Fog of war overlay — drawn over terrain, under units/buildings. The fog
+	# grid covers its own fixed world rect (FogOfWar.MAP_ORIGIN + GRID*CELL),
+	# which is larger than the playable map, so cells are mapped through the
+	# same world->widget transform as every dot — previously the grid was
+	# stretched to the widget and the reveal sat offset from the units in it.
 	if fog != null:
-		var cell_w: float = ms.x / float(FogOfWar.GRID_W)
-		var cell_h: float = ms.y / float(FogOfWar.GRID_H)
+		var fog_origin: Vector2 = _to_mm(FogOfWar.MAP_ORIGIN, ms)
+		var cell_px: Vector2 = Vector2(FogOfWar.CELL_SIZE, FogOfWar.CELL_SIZE) / _world_size * ms
+		var col_unexplored: Color = Color(FogOfWar.SHROUD_RGB, 1.0)
+		var col_explored: Color = Color(FogOfWar.SHROUD_RGB, 0.55)
 		for cy: int in range(FogOfWar.GRID_H):
 			for cx: int in range(FogOfWar.GRID_W):
 				var state: int = fog._cells[cy * FogOfWar.GRID_W + cx]
 				if state == FogOfWar.STATE_VISIBLE:
 					continue
-				var fog_col: Color = Color(0.0, 0.0, 0.0, 1.0) if state == FogOfWar.STATE_UNEXPLORED else Color(0.0, 0.0, 0.0, 0.55)
-				_content.draw_rect(Rect2(Vector2(cx * cell_w, cy * cell_h), Vector2(cell_w + 1.0, cell_h + 1.0)), fog_col)
+				var fog_col: Color = col_unexplored if state == FogOfWar.STATE_UNEXPLORED else col_explored
+				_content.draw_rect(Rect2(fog_origin + Vector2(cx, cy) * cell_px, cell_px + Vector2.ONE), fog_col)
 
 	# Subtle grid lines every 25% of the map
 	for i: int in range(1, 4):

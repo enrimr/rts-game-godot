@@ -312,6 +312,9 @@ func _ready() -> void:
 ## Adds a per-map-type ambient colour wash (CanvasModulate) and a full-screen
 ## vignette. Both are subtle — they tint and frame the scene without obscuring it.
 func _setup_ambient_lighting() -> void:
+	# Out-of-map void matches the unexplored fog shroud — one consistent
+	# darkness instead of the engine-default light-gray backdrop.
+	RenderingServer.set_default_clear_color(FogOfWar.SHROUD_RGB)
 	var ambient: Color = Color(1.0, 1.0, 1.0, 1.0)
 	match MatchConfig.map_type:
 		MatchConfig.MapType.DESERT_COAST:
