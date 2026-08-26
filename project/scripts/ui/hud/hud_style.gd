@@ -40,11 +40,23 @@ static func command_well() -> StyleBoxFlat:
 
 ## Overlays a subtle vertical light-to-shade gradient on a panel (procedural
 ## GradientTexture2D, no external assets). Drawn behind existing children.
-## Dark font outline so text stays readable over ANY background colour —
-## white on yellow/light action buttons was washing out.
+static var _bold_font: FontVariation = null
+
+## Synthetic bold of the default UI font: the outline eats into thin white
+## glyphs, so outlined text needs the extra stroke weight to stay bright.
+static func bold_font() -> FontVariation:
+	if _bold_font == null:
+		_bold_font = FontVariation.new()
+		_bold_font.base_font = ThemeDB.fallback_font
+		_bold_font.variation_embolden = 0.85
+	return _bold_font
+
+## Dark font outline + bold weight so text stays readable over ANY
+## background colour — white on yellow/light action buttons was washing out.
 static func add_text_outline(ctrl: Control, size: int = 4) -> void:
 	ctrl.add_theme_color_override("font_outline_color", Color(0.10, 0.08, 0.05, 0.9))
 	ctrl.add_theme_constant_override("outline_size", size)
+	ctrl.add_theme_font_override("font", bold_font())
 
 static func add_top_sheen(panel: Control, strength: float = 0.10) -> void:
 	var gradient: Gradient = Gradient.new()

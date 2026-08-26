@@ -27,7 +27,7 @@ func _ready() -> void:
 ## layout gives the icon twice the surface of the old stacked one.
 func set_entity_icon(texture: Texture2D, entity_name: String, key_hint: String = "") -> void:
 	text = ""
-	custom_minimum_size = Vector2(195.0, 62.0)
+	custom_minimum_size = Vector2(220.0, 62.0)
 	if _icon_rect == null:
 		_build_icon_layout()
 	_icon_rect.texture = texture
