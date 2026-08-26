@@ -1,5 +1,8 @@
 # Refactor isométrico — página de progreso en vivo
 
+> **📊 Informe final con capturas y comparativas A/B:**
+> [`iso-refactor/informe-refactor-isometrico-2026-08-26.html`](iso-refactor/informe-refactor-isometrico-2026-08-26.html)
+
 **Rama:** `feature/isometric` · **Iniciado:** 2026-08-25 · Actualizada por los agentes tras cada ronda.
 Vista en vivo de agentes: `/workflows` en Claude Code.
 
