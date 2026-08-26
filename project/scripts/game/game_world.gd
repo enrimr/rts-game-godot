@@ -219,7 +219,7 @@ func _ready() -> void:
 		for i: int in range(3):
 			var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
 			units_layer.add_child(v)
-			v.global_position = drop_off.global_position + Vector2(i * 40 - 40, 60.0)
+			v.global_position = drop_off.global_position + _starting_villager_offset(i)
 			v.set("player_id", 0)
 			v.set("civ_id", MatchConfig.player_civ_id)
 			PopulationManager.add_unit(0)
@@ -500,7 +500,7 @@ func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	for i: int in range(3):
 		var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
 		units_layer.add_child(v)
-		v.global_position = tc.global_position + Vector2(i * 40 - 40, 60.0)
+		v.global_position = tc.global_position + _starting_villager_offset(i)
 		v.set("player_id", rival_id)
 		v.set("civ_id", rival_civ)
 		PopulationManager.add_unit(rival_id)
@@ -526,6 +526,17 @@ func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	ai.set("enemy_town_center", drop_off)
 
 	_spawn_hero(rival_id, tc_pos)
+
+# Starting-villager offsets are planned in SCREEN space and unprojected: the
+# old straight world row (i*40) projected onto the squashed diagonal, so the
+# figures half-overlapped in front of the TC.
+const _STARTING_VILLAGER_SCREEN_OFFSETS: Array[Vector2] = [
+	Vector2(-55.0, 38.0), Vector2(0.0, 52.0), Vector2(55.0, 38.0),
+]
+
+func _starting_villager_offset(i: int) -> Vector2:
+	var idx: int = clampi(i, 0, _STARTING_VILLAGER_SCREEN_OFFSETS.size() - 1)
+	return IsoProjection.screen_to_world(_STARTING_VILLAGER_SCREEN_OFFSETS[idx])
 
 func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void:
 	if building is Wonder:
