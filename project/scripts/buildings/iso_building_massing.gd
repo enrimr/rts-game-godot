@@ -261,10 +261,32 @@ static func apply(building: Node2D) -> bool:
 	var b: Builder = Builder.new(body)
 	_build(key, b, half.x, half.y)
 	_add_scaffold_rig(building, b, half.x, half.y)
+	_add_contact_shadow(building, half)
 	_place_overlays(building, b, half)
 	building.set_meta("massing_top_y", b.top_y)
 	building.set_meta("massing_bot_y", b.bot_y)
 	return true
+
+## Ground-contact shadow matching the iso footprint: the collision rect grown
+## a few px, authored in WORLD space on the building root so the camera
+## projection lays it flat as a diamond hugging the footprint — this seats the
+## volume on the terrain instead of the old detached ellipse. Idempotent.
+static func _add_contact_shadow(building: Node2D, half: Vector2) -> void:
+	if building.get_node_or_null("FootprintShadow") != null:
+		return
+	var grow: float = 7.0
+	var shadow: Polygon2D = Polygon2D.new()
+	shadow.name = "FootprintShadow"
+	shadow.color = Color(0.0, 0.0, 0.0, 0.22)
+	shadow.z_index = -2
+	shadow.polygon = PackedVector2Array([
+		Vector2(-half.x - grow, -half.y - grow),
+		Vector2(half.x + grow, -half.y - grow),
+		Vector2(half.x + grow, half.y + grow),
+		Vector2(-half.x - grow, half.y + grow),
+	])
+	shadow.set_meta(IsoBillboard.META_GROUND, true)
+	building.add_child(shadow)
 
 static func _massing_key(building: Node2D) -> String:
 	var data: Resource = building.get("building_data") as Resource
@@ -374,7 +396,11 @@ static func _house(b: Builder, hx: float, hy: float) -> void:
 
 static func _town_center(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON_STONE)
-	b.walls(0, 0, hx - 4.0, hy - 4.0, 0.0, 20.0, C_STONE)
+	# Foundation plinth: a low stone course wider than the keep walls that
+	# seats the volume on the ground diamond instead of floating on it.
+	b.walls(0, 0, hx - 1.0, hy - 1.0, 0.0, 3.5, C_STONE_DARK.lightened(0.06))
+	b.flat_roof(0, 0, hx - 1.0, hy - 1.0, 3.5, C_STONE_DARK.lightened(0.22), "PlinthTop")
+	b.walls(0, 0, hx - 4.0, hy - 4.0, 3.5, 20.0, C_STONE)
 	b.flat_roof(0, 0, hx - 2.0, hy - 2.0, 20.0, C_STONE.lightened(0.10), "Parapet")
 	b.opening_right(0, 0, hx - 4.0, hy - 4.0, 0.32, 0.58, 0.0, 14.0, C_DOOR, "Gatehouse")
 	b.opening_left(0, 0, hx - 4.0, hy - 4.0, 0.34, 0.5, 6.0, 13.0, C_WINDOW, "Window")

@@ -66,12 +66,13 @@ func _ready() -> void:
 	EventBus.hero_died.connect(_on_hero_died)
 
 func _add_player_color_stripe() -> void:
-	var bottom: float = 40.0
-	var width: float = 80.0
 	if has_meta("massing_bot_y"):
-		bottom = (get_meta("massing_bot_y") as float) + 3.0
-		width = 72.0
-	PlayerColors.apply_color_stripe(self, player_id, width, bottom)
+		# Ground trim along the near footprint edges — a screen-space bar
+		# would cut through the lower wall corner under the projection.
+		PlayerColors.apply_iso_ownership_trim(self, player_id,
+			IsoBuildingMassing._half_extents(self))
+		return
+	PlayerColors.apply_color_stripe(self, player_id, 80.0, 40.0)
 
 func _apply_team_accents() -> void:
 	var body: Node = get_node_or_null("Body")
@@ -89,7 +90,10 @@ func _apply_team_accents() -> void:
 			(node as Line2D).default_color = tint
 
 func _setup_iso_billboard() -> void:
-	VisualFx.add_ground_shadow(self, 42.0, 22.0, 15.0)
+	# The massing pass already seats the volume with a footprint contact
+	# shadow; only non-massed fallbacks need the detached ellipse.
+	if not has_meta("massing_bot_y"):
+		VisualFx.add_ground_shadow(self, 42.0, 22.0, 15.0)
 	IsoBillboard.setup_entity(self, ["Body", "Label", "HealthBar",
 		"TrainingBar", "PlayerColorStripe"])
 

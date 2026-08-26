@@ -167,6 +167,10 @@ func _apply_team_accents() -> void:
 			(node as Line2D).default_color = tint
 
 func _add_ground_shadow() -> void:
+	# Iso-massed buildings get a footprint-matching contact shadow from the
+	# massing pass; a second detached ellipse would read as floating.
+	if has_meta("massing_bot_y"):
+		return
 	var rx: float = 30.0
 	var ry: float = 14.0
 	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
@@ -243,10 +247,11 @@ func _apply_player_color_stripe() -> void:
 		w = h.x * 2.0
 		b = h.y
 	if has_meta("massing_bot_y"):
-		# With iso massing the stripe sits just under the footprint diamond's
-		# near corner instead of the old flat-facade baseline.
-		b = (get_meta("massing_bot_y") as float) + 3.0
-		w = w * 0.9
+		# With iso massing the ownership marker is a ground trim along the two
+		# near footprint edges — a screen-space bar would cut through the walls.
+		var half: Vector2 = IsoBuildingMassing._half_extents(self)
+		PlayerColors.apply_iso_ownership_trim(self, player_id, half)
+		return
 	PlayerColors.apply_color_stripe(self, player_id, w, b)
 
 func take_damage(amount: float, source: Node = null) -> void:
