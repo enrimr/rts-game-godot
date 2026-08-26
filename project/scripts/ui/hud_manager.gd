@@ -448,12 +448,12 @@ func _render_action_page() -> void:
 		var key_hint: String = ("[%s] " % _key_label(key_int)) if key_int > 0 else ""
 		var raw: bool = data.get("raw_label", false) as bool
 		var translated_label: String = (data["label"] as String) if raw else tr(data["label"] as String)
-		btn.text = key_hint + translated_label
+		btn.text = (key_hint + translated_label).to_upper()
 		var color: Color = data["color"] as Color
 		var cost: Dictionary = data.get("cost", {}) as Dictionary
 		btn.set_meta("cost", cost)
 		btn.set_meta("base_color", color)
-		btn.set_meta("base_label", translated_label)
+		btn.set_meta("base_label", translated_label.to_upper())
 		var can_pay: bool = cost.is_empty() or ResourceManager.can_afford(local_player_id, cost)
 		var locked: bool = (data.get("locked", false) as bool) \
 			or (btn.action_id == "destroy" and _tutorial_gates_active)

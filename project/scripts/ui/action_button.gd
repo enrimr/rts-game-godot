@@ -18,7 +18,7 @@ func _ready() -> void:
 	if _icon_rect == null:
 		custom_minimum_size = Vector2(64.0, 48.0)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_font_size_override("font_size", 16)
+	add_theme_font_size_override("font_size", 18)
 	HudStyle.add_text_outline(self)
 	focus_mode = FOCUS_NONE
 
@@ -27,11 +27,12 @@ func _ready() -> void:
 ## layout gives the icon twice the surface of the old stacked one.
 func set_entity_icon(texture: Texture2D, entity_name: String, key_hint: String = "") -> void:
 	text = ""
-	custom_minimum_size = Vector2(220.0, 62.0)
+	custom_minimum_size = Vector2(250.0, 64.0)
 	if _icon_rect == null:
 		_build_icon_layout()
 	_icon_rect.texture = texture
-	_icon_caption = "%s  %s" % [entity_name, key_hint] if not key_hint.is_empty() else entity_name
+	var caps_name: String = entity_name.to_upper()
+	_icon_caption = "%s  %s" % [caps_name, key_hint] if not key_hint.is_empty() else caps_name
 	_name_label.text = _icon_caption
 
 func has_entity_icon() -> bool:
@@ -81,7 +82,7 @@ func _build_icon_layout() -> void:
 	_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_name_label.size_flags_vertical = Control.SIZE_FILL
-	_name_label.add_theme_font_size_override("font_size", 16)
+	_name_label.add_theme_font_size_override("font_size", 18)
 	HudStyle.add_text_outline(_name_label)
 	_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
