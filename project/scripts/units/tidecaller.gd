@@ -104,7 +104,7 @@ func _apply_tidal_pulse() -> void:
 	circle.radius = TIDAL_SPLASH_RADIUS
 	query.shape = circle
 	query.transform = Transform2D(0.0, global_position)
-	query.collision_mask = 1
+	query.collision_mask = 3
 	var results: Array[Dictionary] = space.intersect_shape(query, 32)
 	var splash_base: float = _get_effective_attack() * TIDAL_SPLASH_FRACTION
 	for result: Dictionary in results:

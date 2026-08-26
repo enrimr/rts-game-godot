@@ -120,7 +120,7 @@ func _fire_at(target_pos: Vector2) -> void:
 	circle.radius = SPLASH_RADIUS
 	query.shape = circle
 	query.transform = Transform2D(0.0, drifted_target)
-	query.collision_mask = 1
+	query.collision_mask = 3
 	var results: Array[Dictionary] = space.intersect_shape(query, 32)
 	for result: Dictionary in results:
 		var body: Node = result["collider"] as Node

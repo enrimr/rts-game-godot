@@ -49,7 +49,7 @@ static func find_spawn_pos(origin: Vector2, space: PhysicsDirectSpaceState2D,
 	var shape: CircleShape2D = CircleShape2D.new()
 	shape.radius = step * 0.45
 	query.shape = shape
-	query.collision_mask = 1
+	query.collision_mask = 3
 	# Ring 0 = the offset just outside the building
 	for ring: int in range(1, max_rings + 1):
 		var r: float = step * float(ring)

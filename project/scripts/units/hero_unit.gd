@@ -596,7 +596,7 @@ func _create_sandstorm() -> void:
 	shape.shape = circle
 	_sandstorm_area.add_child(shape)
 	_sandstorm_area.collision_layer = 0
-	_sandstorm_area.collision_mask = 1
+	_sandstorm_area.collision_mask = 3
 	_sandstorm_area.global_position = global_position
 	get_parent().add_child(_sandstorm_area)
 
@@ -676,7 +676,7 @@ func _boarding_dash() -> void:
 	# Query all bodies along the path
 	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
 	var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_pos, end_pos)
-	query.collision_mask = 1
+	query.collision_mask = 3
 	query.hit_from_inside = true
 
 	# Instant teleport (simplified - full implementation would lerp)
@@ -762,7 +762,7 @@ func _create_tidal_wave() -> void:
 	circle.radius = 250.0
 	query.shape = circle
 	query.transform = Transform2D(0.0, global_position)
-	query.collision_mask = 1
+	query.collision_mask = 3
 	var results: Array[Dictionary] = space.intersect_shape(query, 64)
 
 	for result: Dictionary in results:

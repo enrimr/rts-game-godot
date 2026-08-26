@@ -13,7 +13,7 @@ radius = 38.0
 [node name="Conquistador" type="CharacterBody2D"]
 script = ExtResource("1_cqscr")
 unit_data = ExtResource("2_cqdat")
-collision_layer = 1
+collision_layer = 2
 collision_mask = 1
 
 [node name="Body" type="Node2D" parent="."]
@@ -106,7 +106,7 @@ show_percentage = false
 mouse_filter = 2
 
 [node name="AttackRange" type="Area2D" parent="."]
-collision_mask = 1
+collision_mask = 3
 monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackRange"]
