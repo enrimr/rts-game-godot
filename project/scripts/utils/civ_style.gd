@@ -49,9 +49,11 @@ const STYLES: Dictionary = {
 		"roof": Roof.GABLED, "roof_color": Color(0.35, 0.38, 0.46),
 		"trim": Color(0.32, 0.24, 0.18), "headgear": "cap",
 	},
-	"britons": {    # grey ashlar keeps, dark steep roofs
+	"britons": {    # grey ashlar keeps, near-black charcoal roofs
+		# Charcoal (not slate) so the roof-first read never collides with the
+		# franks slate gable — flagged by the blind identifiability critic.
 		"wall": Color(0.60, 0.60, 0.62), "wall_shade": Color(0.45, 0.45, 0.48),
-		"roof": Roof.GABLED, "roof_color": Color(0.25, 0.26, 0.30),
+		"roof": Roof.GABLED, "roof_color": Color(0.15, 0.16, 0.18),
 		"trim": Color(0.50, 0.42, 0.30), "headgear": "hood",
 	},
 	"castellanos": {  # cream stucco, terracotta hips
@@ -65,8 +67,11 @@ const STYLES: Dictionary = {
 		"trim": Color(0.28, 0.55, 0.52), "headgear": "circlet",
 	},
 	"fenicios": {   # sandstone traders, purple awnings
+		# Purple-washed roof plane: the trim line alone is 1-2 px and vanishes
+		# at medium zoom, leaving fenicios confusable with the guanches flat
+		# roof — flagged by the blind identifiability critic.
 		"wall": Color(0.80, 0.72, 0.58), "wall_shade": Color(0.64, 0.56, 0.44),
-		"roof": Roof.FLAT, "roof_color": Color(0.70, 0.62, 0.48),
+		"roof": Roof.FLAT, "roof_color": Color(0.60, 0.46, 0.56),
 		"trim": Color(0.45, 0.20, 0.42), "headgear": "wrap",
 	},
 }
