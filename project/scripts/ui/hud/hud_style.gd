@@ -23,6 +23,43 @@ static func command_bar() -> StyleBoxFlat:
 	s.border_blend = true
 	return s
 
+## Command-button category accents (thin bottom edge on the square buttons).
+const ACCENT_ECONOMY: Color = Color(0.38, 0.62, 0.28)
+const ACCENT_COMBAT: Color = Color(0.76, 0.26, 0.18)
+const ACCENT_UTILITY: Color = Color(0.34, 0.50, 0.74)
+const ACCENT_PRODUCTION: Color = Color(0.74, 0.57, 0.22)
+
+## Square command-button chrome: dark neutral well with a thin category-colour
+## accent along the bottom edge. All HUD icon buttons (action grid, speed,
+## idle, follow, menu, pagination) share this so the command UI reads as one
+## system. States: "normal", "hover", "pressed", "disabled", "active".
+static func command_button(accent: Color, state: String = "normal") -> StyleBoxFlat:
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.corner_radius_top_left = 5
+	s.corner_radius_top_right = 5
+	s.corner_radius_bottom_left = 5
+	s.corner_radius_bottom_right = 5
+	s.border_width_bottom = 3
+	s.border_color = accent
+	match state:
+		"hover":
+			s.bg_color = Color(0.185, 0.155, 0.115, 0.97)
+			s.border_color = accent.lightened(0.25)
+		"pressed":
+			s.bg_color = Color(0.075, 0.062, 0.050, 0.97)
+		"disabled":
+			s.bg_color = Color(0.105, 0.095, 0.085, 0.92)
+			s.border_color = Color(0.30, 0.29, 0.27)
+		"active":
+			s.bg_color = Color(0.13, 0.11, 0.085, 0.97).lerp(accent, 0.22)
+			s.border_color = accent.lightened(0.35)
+			s.border_width_left = 2
+			s.border_width_right = 2
+			s.border_width_top = 2
+		_:
+			s.bg_color = Color(0.135, 0.112, 0.085, 0.97)
+	return s
+
 ## Recessed inner well framing the portraits + action grid area.
 static func command_well() -> StyleBoxFlat:
 	var s: StyleBoxFlat = StyleBoxFlat.new()

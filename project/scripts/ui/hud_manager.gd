@@ -23,7 +23,34 @@ signal pending_action_cancelled()
 @onready var _train_queue_row: HBoxContainer = %TrainQueueRow
 @onready var _pause_overlay: ColorRect = %PauseOverlay
 
-const DESTROY_ACTION: Dictionary = {"id": "destroy", "label": "ACTION_DESTROY", "color": Color(0.55, 0.05, 0.05), "cost": {}, "key": KEY_DELETE, "description": "TOOLTIP_DESTROY"}
+## Destroy shows a skull for units and a crumbling building for structures.
+const DESTROY_ACTION: Dictionary = {"id": "destroy", "label": "ACTION_DESTROY", "glyph": "destroy_unit", "cost": {}, "key": KEY_DELETE, "description": "TOOLTIP_DESTROY"}
+const DESTROY_BUILDING_ACTION: Dictionary = {"id": "destroy", "label": "ACTION_DESTROY", "glyph": "destroy", "cost": {}, "key": KEY_DELETE, "description": "TOOLTIP_DESTROY"}
+
+## Command id -> UiIcons glyph. Entity actions (train:/build:/market:hire:)
+## use IconBaker miniatures instead; anything else falls back to a short
+## text abbreviation. Per-action dicts may override with a "glyph" key.
+const ACTION_GLYPHS: Dictionary = {
+	"gather_wood": "gather_wood",
+	"gather_gold": "gather_gold",
+	"gather_stone": "gather_stone",
+	"gather_food": "gather_food",
+	"build_menu": "build",
+	"repair": "repair",
+	"move_to": "move",
+	"stop": "stop",
+	"attack_move": "attack",
+	"attack_ground": "attack_ground",
+	"cover_fire": "cover_fire",
+	"show_path": "patrol_route",
+	"scout_explore": "patrol_route",
+	"scout_explore_stop": "patrol_route",
+	"advance_age": "age_up",
+	"hero_ability": "ability",
+	"unload": "unload",
+	"back": "page_prev",
+	"gate_lock": "gate_lock",
+}
 
 const VILLAGER_ACTIONS: Array = [
 	{"id": "gather_wood",  "label": "ACTION_WOOD",         "color": Color(0.20, 0.55, 0.15), "cost": {}, "key": KEY_C, "description": "TOOLTIP_GATHER_WOOD"},
@@ -104,7 +131,7 @@ const TRANSPORT_ACTIONS: Array = [
 ]
 
 const BUILDING_ACTIONS: Array = [
-	DESTROY_ACTION,
+	DESTROY_BUILDING_ACTION,
 ]
 
 const DOCK_UNIT_DEFS: Array = [
@@ -114,8 +141,8 @@ const DOCK_UNIT_DEFS: Array = [
 ]
 
 const GATE_ACTIONS: Array = [
-	{"id": "gate_lock", "label": "UI_GATE_LOCK", "color": Color(0.55, 0.15, 0.10), "cost": {}, "key": KEY_O, "description": "TOOLTIP_GATE_LOCK"},
-	DESTROY_ACTION,
+	{"id": "gate_lock", "label": "UI_GATE_LOCK", "cost": {}, "key": KEY_O, "description": "TOOLTIP_GATE_LOCK"},
+	DESTROY_BUILDING_ACTION,
 ]
 
 var _mercenary_cooldown_refresh_timer: float = 0.0
@@ -146,8 +173,8 @@ const ACTION_COLS: int = 5
 const ACTION_ROWS: int = 2
 const PAGE_SIZE: int = ACTION_COLS * ACTION_ROWS  # 10
 var _action_page: int = 0
-var _page_prev_btn: Button = null
-var _page_next_btn: Button = null
+var _page_prev_btn: ActionButton = null
+var _page_next_btn: ActionButton = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -216,9 +243,38 @@ func _action_icon_scene(action_id: String) -> String:
 		path = "res://scenes/units/%s.tscn" % action_id.trim_prefix("train:")
 	elif action_id.begins_with("build:"):
 		path = "res://scenes/buildings/%s.tscn" % action_id.trim_prefix("build:")
+	elif action_id.begins_with("market:hire:"):
+		path = "res://scenes/units/%s.tscn" % action_id.trim_prefix("market:hire:")
 	else:
 		return ""
 	return path if ResourceLoader.exists(path) else ""
+
+## Thin accent edge colour by action category: economy green, combat red,
+## production gold, everything else utility blue.
+func _accent_for_action(action_id: String) -> Color:
+	if action_id.begins_with("market:hire:") or action_id.begins_with("train:") \
+			or action_id.begins_with("research:") or action_id == "advance_age":
+		return HudStyle.ACCENT_PRODUCTION
+	if action_id.begins_with("gather_") or action_id.begins_with("build") \
+			or action_id.begins_with("market:") or action_id == "repair":
+		return HudStyle.ACCENT_ECONOMY
+	if action_id in ["attack_move", "attack_ground", "cover_fire", "stop",
+			"destroy", "hero_ability"]:
+		return HudStyle.ACCENT_COMBAT
+	return HudStyle.ACCENT_UTILITY
+
+## Short fallback code for glyph-less actions: word initials, or the first
+## three letters of a single-word name. The full name lives in the tooltip.
+func _abbreviate(title: String) -> String:
+	var words: PackedStringArray = title.strip_edges().split(" ", false)
+	if words.is_empty():
+		return "?"
+	if words.size() == 1:
+		return words[0].substr(0, 3).to_upper()
+	var abbr: String = ""
+	for w: String in words.slice(0, 3):
+		abbr += w.substr(0, 1).to_upper()
+	return abbr
 
 func _process(delta: float) -> void:
 	if MatchConfig.player_civ_id == "fenicios" and is_instance_valid(_selected_building) and _selected_building is Market:
@@ -260,14 +316,12 @@ func _process(delta: float) -> void:
 				if btn.action_id != "hero_ability":
 					continue
 				var cd_frac: float = hero.get_cooldown_fraction()
-				var ability_name: String = tr("HERO_%s_ABILITY" % udata.hero_ability_id.to_upper())
-				var key_hint: String = "[Q] "
 				if cd_frac <= 0.0:
-					btn.text = key_hint + ability_name + "\n" + tr("HERO_ABILITY_READY")
+					btn.set_badge("")
 					btn.modulate = Color(1.0, 1.0, 1.0)
 				else:
 					var cd_secs: int = int(udata.hero_ability_cooldown * cd_frac)
-					btn.text = key_hint + ability_name + "\n" + tr("HERO_ABILITY_COOLDOWN") % cd_secs
+					btn.set_badge("%ds" % cd_secs)
 					btn.modulate = Color(0.65, 0.65, 0.65)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -442,103 +496,82 @@ func _render_action_page() -> void:
 	for entry: Variant in page_actions:
 		var data: Dictionary = entry as Dictionary
 		var btn: ActionButton = ActionButton.new()
-		btn.custom_minimum_size = Vector2(64.0, 56.0)
 		btn.action_id = data["id"] as String
 		var key_int: int = data.get("key", -1) as int
-		var key_hint: String = ("[%s] " % _key_label(key_int)) if key_int > 0 else ""
+		var key_hint: String = _key_label(key_int) if key_int > 0 else ""
 		var raw: bool = data.get("raw_label", false) as bool
 		var translated_label: String = (data["label"] as String) if raw else tr(data["label"] as String)
-		btn.text = (key_hint + translated_label).to_upper()
-		var color: Color = data["color"] as Color
+		var lines: PackedStringArray = translated_label.split("\n")
+		var title: String = lines[0].strip_edges()
+		var extra: String = " ".join(lines.slice(1)).strip_edges() if lines.size() > 1 else ""
 		var cost: Dictionary = data.get("cost", {}) as Dictionary
 		btn.set_meta("cost", cost)
-		btn.set_meta("base_color", color)
-		btn.set_meta("base_label", translated_label.to_upper())
 		var can_pay: bool = cost.is_empty() or ResourceManager.can_afford(local_player_id, cost)
 		var locked: bool = (data.get("locked", false) as bool) \
 			or (btn.action_id == "destroy" and _tutorial_gates_active)
-		var enabled: bool = can_pay and not locked
-		var effective_color: Color = color if enabled else Color(0.25, 0.25, 0.25)
-		var style: StyleBoxFlat = StyleBoxFlat.new()
-		style.bg_color = effective_color
-		style.corner_radius_top_left = 4
-		style.corner_radius_top_right = 4
-		style.corner_radius_bottom_left = 4
-		style.corner_radius_bottom_right = 4
-		var is_upgrade: bool = data.get("is_upgrade", false) as bool
-		btn.set_meta("is_upgrade", is_upgrade)
-		if is_upgrade:
-			style.border_color = Color(0.85, 0.72, 0.10)
-			style.border_width_left = 2
-			style.border_width_right = 2
-			style.border_width_top = 2
-			style.border_width_bottom = 2
-		btn.add_theme_stylebox_override("normal", style)
-		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
-		hover_style.bg_color = effective_color.lightened(0.25)
-		btn.add_theme_stylebox_override("hover", hover_style)
-		btn.disabled = not enabled
+		btn.set_meta("locked", locked)
+		btn.set_hotkey(key_hint)
+		btn.set_accent(_accent_for_action(btn.action_id))
+		# Icon-first button: full name, hotkey, costs and description live here.
+		var tooltip: String = title if key_hint.is_empty() else "%s  [%s]" % [title, key_hint]
+		if not extra.is_empty():
+			tooltip += "\n" + extra
 		var desc: String = data.get("description", "") as String
 		if not desc.is_empty():
-			btn.tooltip_text = tr(desc)
+			tooltip += "\n" + tr(desc)
+		btn.tooltip_text = tooltip
 		var icon_scene: String = _action_icon_scene(btn.action_id)
+		var glyph: String = data.get("glyph", ACTION_GLYPHS.get(btn.action_id, "")) as String
 		if not icon_scene.is_empty():
-			# Wide layout: icon left, name + hotkey beside it; extra label
-			# lines (costs) move into the tooltip.
-			var lines: PackedStringArray = translated_label.split("\n")
-			btn.set_entity_icon(IconBaker.get_icon(icon_scene, local_player_id),
-				lines[0], key_hint.strip_edges())
-			if lines.size() > 1:
-				var extra: String = " ".join(lines.slice(1))
-				btn.tooltip_text = extra if btn.tooltip_text.is_empty() \
-					else btn.tooltip_text + "\n" + extra
-		btn.set_icon_enabled(enabled)
+			btn.set_entity_icon(IconBaker.get_icon(icon_scene, local_player_id))
+		elif not glyph.is_empty():
+			btn.set_glyph(UiIcons.get_icon(glyph))
+		else:
+			btn.set_abbreviation(data.get("abbr", _abbreviate(title)) as String)
+		var badge: String = data.get("badge", "") as String
+		if not badge.is_empty():
+			btn.set_badge(badge)
+		var is_upgrade: bool = data.get("is_upgrade", false) as bool
+		btn.set_meta("is_upgrade", is_upgrade)
+		btn.set_upgrade(is_upgrade)
+		var toggled: bool = data.get("active", false) as bool
+		btn.set_meta("toggled", toggled)
+		btn.set_active(toggled)
+		btn.set_enabled(can_pay and not locked)
 		btn.action_pressed.connect(_on_action_button_pressed)
 		_action_grid.add_child(btn)
 
 	if needs_paging:
-		# Pad so ◀ ▶ always land on the last two slots of the grid (positions 8 and 9)
+		# Pad so prev/next always land on the last two slots of the grid.
 		var filled: int = page_actions.size()
 		var spacers_needed: int = slots - filled
 		for _i: int in range(maxi(0, spacers_needed)):
 			var spacer: Control = Control.new()
-			spacer.custom_minimum_size = Vector2(64.0, 56.0)
+			spacer.custom_minimum_size = ActionButton.BTN_SIZE
 			_action_grid.add_child(spacer)
 
 		var max_page: int = ceili(float(total) / float(slots)) - 1
-		_page_prev_btn = _make_page_btn("◀")
-		_page_prev_btn.disabled = _action_page <= 0
+		_page_prev_btn = _make_page_btn("page_prev")
+		_page_prev_btn.set_enabled(_action_page > 0)
 		_page_prev_btn.pressed.connect(func() -> void:
 			_action_page = maxi(0, _action_page - 1)
 			_render_action_page()
 			_refresh_button_states())
 		_action_grid.add_child(_page_prev_btn)
 
-		_page_next_btn = _make_page_btn("▶")
-		_page_next_btn.disabled = _action_page >= max_page
+		_page_next_btn = _make_page_btn("page_next")
+		_page_next_btn.set_enabled(_action_page < max_page)
 		_page_next_btn.pressed.connect(func() -> void:
 			_action_page = mini(_action_page + 1, max_page)
 			_render_action_page()
 			_refresh_button_states())
 		_action_grid.add_child(_page_next_btn)
 
-func _make_page_btn(label: String) -> Button:
-	var btn: Button = Button.new()
-	HudStyle.add_text_outline(btn)
-	btn.text = label
-	btn.custom_minimum_size = Vector2(64.0, 56.0)
-	btn.focus_mode = Control.FOCUS_NONE
-	btn.add_theme_font_size_override("font_size", 20)
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.20, 0.20, 0.28, 0.95)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
-	btn.add_theme_stylebox_override("normal", style)
-	var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
-	hover_style.bg_color = Color(0.30, 0.30, 0.40, 0.95)
-	btn.add_theme_stylebox_override("hover", hover_style)
+func _make_page_btn(glyph: String) -> ActionButton:
+	var btn: ActionButton = ActionButton.new()
+	btn.set_glyph(UiIcons.get_icon(glyph))
+	btn.set_accent(HudStyle.ACCENT_UTILITY)
+	btn.tooltip_text = tr("UI_PAGE_PREV") if glyph == "page_prev" else tr("UI_PAGE_NEXT")
 	return btn
 
 func _get_queue_size() -> int:
@@ -563,30 +596,13 @@ func _refresh_button_states() -> void:
 		if not (child is ActionButton):
 			continue
 		var btn: ActionButton = child as ActionButton
+		if btn == _page_prev_btn or btn == _page_next_btn:
+			continue
 		var cost: Dictionary = btn.get_meta("cost", {}) as Dictionary
-		var base_color: Color = btn.get_meta("base_color", Color(0.3, 0.3, 0.3)) as Color
 		var is_train: bool = btn.action_id.begins_with("train:")
+		var locked: bool = btn.get_meta("locked", false) as bool
 		var can_pay: bool = cost.is_empty() or ResourceManager.can_afford(local_player_id, cost)
-		var enabled: bool = can_pay and (not is_train or not queue_full)
-		btn.disabled = not enabled
-		btn.set_icon_enabled(enabled)
-		var effective_color: Color = base_color if enabled else Color(0.25, 0.25, 0.25)
-		var style: StyleBoxFlat = StyleBoxFlat.new()
-		style.bg_color = effective_color
-		style.corner_radius_top_left = 4
-		style.corner_radius_top_right = 4
-		style.corner_radius_bottom_left = 4
-		style.corner_radius_bottom_right = 4
-		if btn.get_meta("is_upgrade", false) as bool:
-			style.border_color = Color(0.85, 0.72, 0.10)
-			style.border_width_left = 2
-			style.border_width_right = 2
-			style.border_width_top = 2
-			style.border_width_bottom = 2
-		btn.add_theme_stylebox_override("normal", style)
-		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
-		hover_style.bg_color = effective_color.lightened(0.25)
-		btn.add_theme_stylebox_override("hover", hover_style)
+		btn.set_enabled(can_pay and not locked and (not is_train or not queue_full))
 
 func _on_action_button_pressed(action_id: String) -> void:
 	for child: Node in _action_grid.get_children():
@@ -643,16 +659,8 @@ func _disable_action_button(target_id: String) -> void:
 			continue
 		var btn: ActionButton = child as ActionButton
 		if btn.action_id == target_id:
-			btn.disabled = true
-			btn.set_icon_enabled(false)
-			var grey: StyleBoxFlat = StyleBoxFlat.new()
-			grey.bg_color = Color(0.25, 0.25, 0.25)
-			grey.corner_radius_top_left = 4
-			grey.corner_radius_top_right = 4
-			grey.corner_radius_bottom_left = 4
-			grey.corner_radius_bottom_right = 4
-			btn.add_theme_stylebox_override("normal", grey)
-			btn.add_theme_stylebox_override("hover", grey)
+			btn.set_meta("locked", true)
+			btn.set_enabled(false)
 			break
 
 func _highlight_pending_button(active_id: String) -> void:
@@ -660,21 +668,9 @@ func _highlight_pending_button(active_id: String) -> void:
 		if not (child is ActionButton):
 			continue
 		var btn: ActionButton = child as ActionButton
-		var base_color: Color = btn.get_meta("base_color", Color(0.3, 0.3, 0.3)) as Color
-		var is_active: bool = btn.action_id == active_id and not active_id.is_empty()
-		var effective_color: Color = base_color.lightened(0.45) if is_active else base_color
-		if btn.disabled:
-			effective_color = Color(0.25, 0.25, 0.25)
-		var style: StyleBoxFlat = StyleBoxFlat.new()
-		style.bg_color = effective_color
-		style.corner_radius_top_left = 4
-		style.corner_radius_top_right = 4
-		style.corner_radius_bottom_left = 4
-		style.corner_radius_bottom_right = 4
-		btn.add_theme_stylebox_override("normal", style)
-		var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
-		hover_style.bg_color = effective_color.lightened(0.25)
-		btn.add_theme_stylebox_override("hover", hover_style)
+		var is_pending: bool = btn.action_id == active_id and not active_id.is_empty()
+		# Persistent toggles (e.g. scout auto-explore) keep their lit frame.
+		btn.set_active(is_pending or (btn.get_meta("toggled", false) as bool))
 
 func _on_game_started() -> void:
 	IconBaker.clear_cache()   # civ picks can change between matches
@@ -779,7 +775,7 @@ func _on_building_selected(building: Node) -> void:
 
 	var bstate: Variant = building.get("state")
 	if bstate != null and (bstate as int) != BuildingBase.BuildingState.COMPLETE:
-		_populate_buttons([DESTROY_ACTION])
+		_populate_buttons([DESTROY_BUILDING_ACTION])
 		return
 
 	if building.has_method("is_respawning_hero") or building is TownCenterBuildable:
@@ -844,7 +840,9 @@ func _refresh_gate_toggle_label(gate: Gate) -> void:
 		var btn: ActionButton = child as ActionButton
 		if btn.action_id != "gate_lock":
 			continue
-		btn.text = "[O] " + (tr("UI_GATE_UNLOCK") if gate.locked else tr("UI_GATE_LOCK"))
+		# The glyph shows the action to perform: closed padlock = lock it.
+		btn.set_glyph(UiIcons.get_icon("gate_unlock" if gate.locked else "gate_lock"))
+		btn.tooltip_text = "%s  [O]" % (tr("UI_GATE_UNLOCK") if gate.locked else tr("UI_GATE_LOCK"))
 
 func _on_population_changed(player_id: int, _current: int, _cap: int) -> void:
 	# HudResourceBar updates the population label; the action menu refreshes the
@@ -942,12 +940,12 @@ func _populate_transport_buttons(ship: TransportShip) -> void:
 		actions.append({
 			"id": "unload",
 			"label": tr("UI_UNLOAD") + " (%d/%d)" % [garrison.size(), cap],
-			"color": Color(0.20, 0.45, 0.65),
 			"cost": {},
 			"key": KEY_U,
 			"raw_label": true,
+			"badge": str(garrison.size()),
 		})
-	actions.append({"id": "stop", "label": "ACTION_STOP", "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X})
+	actions.append({"id": "stop", "label": "ACTION_STOP", "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
 	_unit_status_label.text = tr("UI_GARRISON_STATUS") % [garrison.size(), cap]
@@ -984,7 +982,7 @@ func _populate_tc_actions() -> void:
 			"locked": advancing or (is_tutorial and _tutorial_step < 7),
 		})
 
-	actions.append(DESTROY_ACTION)
+	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
 
 	if AgeManager.is_advancing(local_player_id):
@@ -1028,14 +1026,14 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 		var is_upgrade: bool = tech.upgrade_from_unit_id != ""
 		actions.append({
 			"id": "research:%s" % tech.id,
-			"label": ("▲ " if is_upgrade else "") + tech.display_name + cost_str,
+			"label": tech.display_name + cost_str,
 			"color": Color(0.45, 0.32, 0.10) if is_upgrade else Color(0.25, 0.45, 0.55),
 			"cost": tech_costs,
 			"key": 0,
 			"raw_label": true,
 			"is_upgrade": is_upgrade,
 		})
-	actions.append(DESTROY_ACTION)
+	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
 	_build_research_bar(barracks)
 
@@ -1060,7 +1058,7 @@ func _populate_archery_range_actions(archery_range: ArcheryRange) -> void:
 			"cost": costs,
 			"key": _archery_range_key_for(uid),
 		})
-	actions.append(DESTROY_ACTION)
+	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
 	_build_research_bar(archery_range)
 
@@ -1108,7 +1106,7 @@ func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
 			"raw_label": true,
 			"locked": is_active,
 		})
-	actions.append(DESTROY_ACTION)
+	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
 	_build_research_bar(blacksmith)
 
@@ -1147,14 +1145,14 @@ func _populate_stable_actions(stable: Stable) -> void:
 		var is_upgrade: bool = tech.upgrade_from_unit_id != ""
 		actions.append({
 			"id": "research:%s" % tech.id,
-			"label": ("▲ " if is_upgrade else "") + tech.display_name + cost_str,
+			"label": tech.display_name + cost_str,
 			"color": Color(0.45, 0.32, 0.10) if is_upgrade else Color(0.25, 0.45, 0.55),
 			"cost": tech_costs,
 			"key": 0,
 			"raw_label": true,
 			"is_upgrade": is_upgrade,
 		})
-	actions.append(DESTROY_ACTION)
+	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
 	_build_research_bar(stable)
 
@@ -1181,7 +1179,7 @@ func _populate_research_only_actions(building: Node, research_type: TechnologyRe
 			"raw_label": true,
 			"locked": is_active,
 		})
-	actions.append(DESTROY_ACTION)
+	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
 	_build_research_bar(building)
 
@@ -1202,12 +1200,12 @@ func _populate_market_actions(market: Market) -> void:
 	var br_w: int = market.get_buy_rate(local_player_id, "wood")
 	var br_s: int = market.get_buy_rate(local_player_id, "stone")
 	var actions: Array = [
-		{"id": "market:sell:food",  "label": "Sell Food\n(%d→1G)" % sr_f,  "color": Color(0.60, 0.30, 0.15), "cost": {"food":  sr_f}, "key": KEY_NONE, "raw_label": true},
-		{"id": "market:sell:wood",  "label": "Sell Wood\n(%d→1G)" % sr_w,  "color": Color(0.30, 0.55, 0.20), "cost": {"wood":  sr_w}, "key": KEY_NONE, "raw_label": true},
-		{"id": "market:sell:stone", "label": "Sell Stone\n(%d→1G)" % sr_s, "color": Color(0.55, 0.55, 0.55), "cost": {"stone": sr_s}, "key": KEY_NONE, "raw_label": true},
-		{"id": "market:buy:food",   "label": "Buy Food\n(1G→%d)" % br_f,   "color": Color(0.65, 0.20, 0.10), "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
-		{"id": "market:buy:wood",   "label": "Buy Wood\n(1G→%d)" % br_w,   "color": Color(0.20, 0.45, 0.15), "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
-		{"id": "market:buy:stone",  "label": "Buy Stone\n(1G→%d)" % br_s,  "color": Color(0.45, 0.45, 0.45), "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
+		{"id": "market:sell:food",  "label": "Sell Food\n(%d→1G)" % sr_f,  "abbr": "-F", "cost": {"food":  sr_f}, "key": KEY_NONE, "raw_label": true},
+		{"id": "market:sell:wood",  "label": "Sell Wood\n(%d→1G)" % sr_w,  "abbr": "-W", "cost": {"wood":  sr_w}, "key": KEY_NONE, "raw_label": true},
+		{"id": "market:sell:stone", "label": "Sell Stone\n(%d→1G)" % sr_s, "abbr": "-S", "cost": {"stone": sr_s}, "key": KEY_NONE, "raw_label": true},
+		{"id": "market:buy:food",   "label": "Buy Food\n(1G→%d)" % br_f,   "abbr": "+F", "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
+		{"id": "market:buy:wood",   "label": "Buy Wood\n(1G→%d)" % br_w,   "abbr": "+W", "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
+		{"id": "market:buy:stone",  "label": "Buy Stone\n(1G→%d)" % br_s,  "abbr": "+S", "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
 	]
 	if MatchConfig.player_civ_id == "fenicios":
 		var current_age: int = AgeManager.get_age(local_player_id)
@@ -1229,13 +1227,13 @@ func _populate_market_actions(market: Market) -> void:
 			actions.append({
 				"id": "market:hire:%s" % uid,
 				"label": label,
-				"color": Color(0.55, 0.35, 0.65),
 				"cost": {"gold": gold_cost},
 				"key": KEY_NONE,
 				"raw_label": true,
 				"locked": on_cooldown,
+				"badge": ("%ds" % int(ceil(cooldown_remaining))) if on_cooldown else "",
 			})
-	actions.append(DESTROY_ACTION)
+	actions.append(DESTROY_BUILDING_ACTION)
 	_active_actions = actions
 	_action_grid.columns = ACTION_COLS
 	_render_action_page()
@@ -1282,7 +1280,7 @@ func _populate_dock_actions(dock: Dock) -> void:
 		"key": KEY_P,
 		"raw_label": true,
 	})
-	actions.append(DESTROY_ACTION)
+	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
 
 func _populate_trebuchet_buttons(treb: Trebuchet) -> void:
@@ -1304,9 +1302,10 @@ func _populate_scout_buttons(scout: Scout) -> void:
 		{"id": "stop",        "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	]
 	if scout.is_exploring():
-		actions.append({"id": "scout_explore_stop", "label": "ACTION_SCOUT_EXPLORE_STOP", "color": Color(0.65, 0.35, 0.10), "cost": {}, "key": KEY_E, "description": "TOOLTIP_SCOUT_EXPLORE_STOP"})
+		# Same looping-path glyph; the lit frame marks auto-explore as engaged.
+		actions.append({"id": "scout_explore_stop", "label": "ACTION_SCOUT_EXPLORE_STOP", "cost": {}, "key": KEY_E, "description": "TOOLTIP_SCOUT_EXPLORE_STOP", "active": true})
 	else:
-		actions.append({"id": "scout_explore", "label": "ACTION_SCOUT_EXPLORE", "color": Color(0.15, 0.55, 0.25), "cost": {}, "key": KEY_E, "description": "TOOLTIP_SCOUT_EXPLORE"})
+		actions.append({"id": "scout_explore", "label": "ACTION_SCOUT_EXPLORE", "cost": {}, "key": KEY_E, "description": "TOOLTIP_SCOUT_EXPLORE"})
 	actions.append(DESTROY_ACTION)
 	_populate_buttons(actions)
 
@@ -1332,7 +1331,7 @@ func _populate_siege_workshop_actions(workshop: SiegeWorkshop) -> void:
 			"cost": costs,
 			"key": key_map.get(uid, KEY_NONE) as Key,
 		})
-	actions.append(DESTROY_ACTION)
+	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
 
 func _build_age_advance_bar() -> void:
@@ -1508,11 +1507,7 @@ func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> vo
 		var aid: String = btn.action_id
 		if not aid.begins_with("train:"):
 			continue
-		if btn.has_entity_icon():
-			btn.set_train_queue_badge(queue.size(), max_queue)
-		else:
-			var base_label: String = btn.get_meta("base_label", btn.text) as String
-			btn.text = base_label + "\n%d/%d" % [queue.size(), max_queue]
+		btn.set_train_queue_badge(queue.size(), max_queue)
 	_refresh_button_states()
 	# Rebuild the visual queue row
 	for slot: Node in _train_queue_row.get_children():
@@ -1570,22 +1565,15 @@ func _build_follow_button() -> void:
 	var detail_panel: Node = get_node_or_null("HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel")
 	if detail_panel == null:
 		return
+	# Square icon button: binoculars glyph, same command-button chrome as the
+	# action grid. The lit frame marks camera-follow as engaged.
 	_follow_btn = Button.new()
-	_follow_btn.text = "📷 Seguir"
 	_follow_btn.focus_mode = Control.FOCUS_NONE
 	_follow_btn.visible = false
-	_follow_btn.custom_minimum_size = Vector2(0, 24)
-	_follow_btn.add_theme_font_size_override("font_size", 15)
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.15, 0.25, 0.45, 0.9)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
-	_follow_btn.add_theme_stylebox_override("normal", style)
-	var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
-	hover_style.bg_color = Color(0.25, 0.40, 0.65, 0.9)
-	_follow_btn.add_theme_stylebox_override("hover", hover_style)
+	_follow_btn.custom_minimum_size = Vector2(38.0, 34.0)
+	_follow_btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_follow_btn.add_child(UiIcons.icon_rect("follow", 4.0))
+	_apply_follow_style(false)
 	_follow_btn.pressed.connect(_on_follow_pressed)
 	detail_panel.add_child(_follow_btn)
 
@@ -1597,17 +1585,16 @@ func _set_follow_active(active: bool) -> void:
 	_following = active
 	if not is_instance_valid(_follow_btn):
 		return
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.10, 0.55, 0.20, 0.9) if active else Color(0.15, 0.25, 0.45, 0.9)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
-	_follow_btn.add_theme_stylebox_override("normal", style)
-	var hover_style: StyleBoxFlat = style.duplicate() as StyleBoxFlat
-	hover_style.bg_color = style.bg_color.lightened(0.2)
-	_follow_btn.add_theme_stylebox_override("hover", hover_style)
-	_follow_btn.text = ("📷 Siguiendo" if active else "📷 Seguir")
+	_apply_follow_style(active)
+
+func _apply_follow_style(active: bool) -> void:
+	var accent: Color = HudStyle.ACCENT_UTILITY
+	_follow_btn.add_theme_stylebox_override("normal",
+		HudStyle.command_button(accent, "active" if active else "normal"))
+	_follow_btn.add_theme_stylebox_override("hover",
+		HudStyle.command_button(accent, "active" if active else "hover"))
+	_follow_btn.add_theme_stylebox_override("pressed", HudStyle.command_button(accent, "pressed"))
+	_follow_btn.tooltip_text = tr("UI_FOLLOWING") if active else tr("UI_FOLLOW_CAMERA")
 
 func _on_building_construction_complete(building: Node) -> void:
 	if is_instance_valid(_selected_building) and _selected_building == building:
@@ -1811,11 +1798,10 @@ func _build_pause_menu_button() -> void:
 	if hud_root == null:
 		return
 	var btn: Button = Button.new()
-	btn.text = "☰"
 	btn.custom_minimum_size = Vector2(36, 36)
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.add_theme_font_size_override("font_size", 22)
-	btn.tooltip_text = "Menu (Esc)"
+	btn.tooltip_text = tr("UI_MENU")
+	btn.add_child(UiIcons.icon_rect("menu", 5.0))
 	# Anchor to top-right corner
 	btn.anchor_left   = 1.0
 	btn.anchor_top    = 0.0
@@ -1825,16 +1811,12 @@ func _build_pause_menu_button() -> void:
 	btn.offset_top    =  31.0
 	btn.offset_right  = -31.0
 	btn.offset_bottom =  67.0
-	var s: StyleBoxFlat = StyleBoxFlat.new()
-	s.bg_color = Color(0.12, 0.12, 0.18, 0.92)
-	s.corner_radius_top_left = 4
-	s.corner_radius_top_right = 4
-	s.corner_radius_bottom_left = 4
-	s.corner_radius_bottom_right = 4
-	btn.add_theme_stylebox_override("normal", s)
-	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
-	sh.bg_color = Color(0.28, 0.28, 0.42, 0.97)
-	btn.add_theme_stylebox_override("hover", sh)
+	btn.add_theme_stylebox_override("normal",
+		HudStyle.command_button(HudStyle.ACCENT_UTILITY, "normal"))
+	btn.add_theme_stylebox_override("hover",
+		HudStyle.command_button(HudStyle.ACCENT_UTILITY, "hover"))
+	btn.add_theme_stylebox_override("pressed",
+		HudStyle.command_button(HudStyle.ACCENT_UTILITY, "pressed"))
 	btn.pressed.connect(_menus.open_pause_menu)
 	hud_root.add_child(btn)
 
@@ -1881,15 +1863,8 @@ func _apply_tutorial_villager_gates() -> void:
 			continue
 		var btn: ActionButton = child as ActionButton
 		if btn.action_id == "build_menu" and _tutorial_step < 3:
-			btn.disabled = true
-			var style: StyleBoxFlat = StyleBoxFlat.new()
-			style.bg_color = Color(0.25, 0.25, 0.25)
-			style.corner_radius_top_left = 4
-			style.corner_radius_top_right = 4
-			style.corner_radius_bottom_left = 4
-			style.corner_radius_bottom_right = 4
-			btn.add_theme_stylebox_override("normal", style)
-			btn.add_theme_stylebox_override("hover", style)
+			btn.set_meta("locked", true)
+			btn.set_enabled(false)
 
 func show_wonder_timer(owner_pid: int) -> void:
 	if not is_instance_valid(_wonder_label):

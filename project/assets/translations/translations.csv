@@ -336,3 +336,9 @@ HERO_CLEITO_ABILITY,Rising Tide,Marea Creciente
 HERO_CLEITO_ABILITY_DESC,"Creates a 250px wave: allies heal 60HP and gain +30% speed for 8s; enemies take 20 damage and -20% speed for 4s.",Crea una ola de 250px: aliados curan 60HP y ganan +30% velocidad durante 8s; enemigos reciben 20 de daño y -20% velocidad durante 4s.
 HERO_ELISSA_ABILITY,Mercenary Pact,Pacto Mercenario
 HERO_ELISSA_ABILITY_DESC,"Spends 400 gold to permanently convert one enemy unit (non-hero) within 200px.",Gasta 400 de oro para convertir permanentemente una unidad enemiga (no héroe) dentro de 200px.
+UI_FOLLOW_CAMERA,Follow camera,Seguir con la cámara
+UI_FOLLOWING,Following,Siguiendo
+UI_GAME_SPEED,Game speed x%d,Velocidad x%d
+UI_MENU,Menu (Esc),Menú (Esc)
+UI_PAGE_PREV,Previous page,Página anterior
+UI_PAGE_NEXT,Next page,Página siguiente

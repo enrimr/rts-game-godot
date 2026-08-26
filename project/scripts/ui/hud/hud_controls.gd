@@ -59,19 +59,20 @@ func _build_speed_buttons() -> void:
 	if _hud_root == null:
 		return
 	var speeds: Array = [1, 2, 4]
-	# Place to the left of the ☰ menu button (which ends at offset_right=-31)
+	var glyphs: Array = ["speed1", "speed2", "speed3"]
+	# Place to the left of the menu button (which ends at offset_right=-31)
 	# Each button 36px wide, 4px gap between them
 	var btn_w: float = 36.0
 	var gap: float = 4.0
 	var menu_left: float = -69.0  # offset_left of the menu button
 	for i: int in range(speeds.size()):
-		var speed: int = speeds[speeds.size() - 1 - i]  # right to left: 4, 2, 1
+		var idx: int = speeds.size() - 1 - i  # right to left: x4, x2, x1
+		var speed: int = speeds[idx]
 		var btn: Button = Button.new()
-		btn.text = "x%d" % speed
 		btn.custom_minimum_size = Vector2(btn_w, 36.0)
 		btn.focus_mode = Control.FOCUS_NONE
-		btn.add_theme_font_size_override("font_size", 16)
-		HudStyle.add_text_outline(btn)
+		btn.tooltip_text = tr("UI_GAME_SPEED") % speed
+		btn.add_child(UiIcons.icon_rect(glyphs[idx] as String, 5.0))
 		btn.anchor_left   = 1.0
 		btn.anchor_top    = 0.0
 		btn.anchor_right  = 1.0
@@ -81,11 +82,10 @@ func _build_speed_buttons() -> void:
 		btn.offset_left   = right_offset - btn_w
 		btn.offset_top    = 31.0
 		btn.offset_bottom = 67.0
-		var s: StyleBoxFlat = HudStyle.panel(Color(0.12, 0.22, 0.12, 0.92) if speed == 1 else Color(0.12, 0.12, 0.18, 0.92), 4)
-		btn.add_theme_stylebox_override("normal", s)
-		var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
-		sh.bg_color = Color(0.28, 0.28, 0.42, 0.97)
-		btn.add_theme_stylebox_override("hover", sh)
+		btn.add_theme_stylebox_override("hover",
+			HudStyle.command_button(HudStyle.ACCENT_UTILITY, "hover"))
+		btn.add_theme_stylebox_override("pressed",
+			HudStyle.command_button(HudStyle.ACCENT_UTILITY, "pressed"))
 		var sp: int = speed
 		btn.pressed.connect(func() -> void: set_game_speed(sp))
 		_hud_root.add_child(btn)
@@ -95,23 +95,20 @@ func _build_speed_buttons() -> void:
 
 func set_game_speed(speed: int) -> void:
 	GameManager.set_game_speed(float(speed))
-	var active_bg: Color = Color(0.12, 0.42, 0.12, 0.95)
-	var inactive_bg: Color = Color(0.12, 0.12, 0.18, 0.92)
 	var speeds: Array = [1, 2, 4]
 	for i: int in range(_speed_buttons.size()):
 		if not is_instance_valid(_speed_buttons[i]):
 			continue
-		var s: StyleBoxFlat = HudStyle.panel(active_bg if speeds[i] == speed else inactive_bg, 4)
-		_speed_buttons[i].add_theme_stylebox_override("normal", s)
+		_speed_buttons[i].add_theme_stylebox_override("normal", HudStyle.command_button(
+			HudStyle.ACCENT_UTILITY, "active" if speeds[i] == speed else "normal"))
 
 func _build_idle_villager_button() -> void:
 	if _hud_root == null:
 		return
 	_idle_villager_btn = Button.new()
-	_idle_villager_btn.text = "👷"
 	_idle_villager_btn.custom_minimum_size = Vector2(36, 36)
 	_idle_villager_btn.focus_mode = Control.FOCUS_NONE
-	_idle_villager_btn.add_theme_font_size_override("font_size", 22)
+	_idle_villager_btn.add_child(UiIcons.icon_rect("idle_villager", 3.0))
 	_idle_villager_btn.tooltip_text = tr("UI_IDLE_VILLAGER")
 	# Anchor to bottom-right, above minimap top (260px), flush with minimap left edge (260px from right)
 	_idle_villager_btn.anchor_left   = 1.0
@@ -122,11 +119,14 @@ func _build_idle_villager_button() -> void:
 	_idle_villager_btn.offset_top    = -300.0
 	_idle_villager_btn.offset_right  = -260.0
 	_idle_villager_btn.offset_bottom = -264.0
-	var s: StyleBoxFlat = HudStyle.panel(Color(0.20, 0.40, 0.12, 0.92), 4)
-	_idle_villager_btn.add_theme_stylebox_override("normal", s)
-	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
-	sh.bg_color = Color(0.32, 0.58, 0.18, 0.97)
-	_idle_villager_btn.add_theme_stylebox_override("hover", sh)
+	_idle_villager_btn.add_theme_stylebox_override("normal",
+		HudStyle.command_button(HudStyle.ACCENT_ECONOMY, "normal"))
+	_idle_villager_btn.add_theme_stylebox_override("hover",
+		HudStyle.command_button(HudStyle.ACCENT_ECONOMY, "hover"))
+	_idle_villager_btn.add_theme_stylebox_override("pressed",
+		HudStyle.command_button(HudStyle.ACCENT_ECONOMY, "pressed"))
+	_idle_villager_btn.add_theme_stylebox_override("disabled",
+		HudStyle.command_button(HudStyle.ACCENT_ECONOMY, "disabled"))
 	_idle_villager_btn.pressed.connect(_on_idle_villager_pressed)
 	_hud_root.add_child(_idle_villager_btn)
 
@@ -173,10 +173,9 @@ func _build_idle_military_button() -> void:
 	if _hud_root == null:
 		return
 	_idle_military_btn = Button.new()
-	_idle_military_btn.text = "⚔"
 	_idle_military_btn.custom_minimum_size = Vector2(36, 36)
 	_idle_military_btn.focus_mode = Control.FOCUS_NONE
-	_idle_military_btn.add_theme_font_size_override("font_size", 22)
+	_idle_military_btn.add_child(UiIcons.icon_rect("idle_military", 3.0))
 	_idle_military_btn.tooltip_text = tr("UI_IDLE_MILITARY")
 	# Anchor to bottom-right, same row as villager button, 4px to the left of it
 	_idle_military_btn.anchor_left   = 1.0
@@ -187,11 +186,14 @@ func _build_idle_military_button() -> void:
 	_idle_military_btn.offset_top    = -300.0
 	_idle_military_btn.offset_right  = -300.0
 	_idle_military_btn.offset_bottom = -264.0
-	var s: StyleBoxFlat = HudStyle.panel(Color(0.40, 0.12, 0.12, 0.92), 4)
-	_idle_military_btn.add_theme_stylebox_override("normal", s)
-	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
-	sh.bg_color = Color(0.60, 0.18, 0.18, 0.97)
-	_idle_military_btn.add_theme_stylebox_override("hover", sh)
+	_idle_military_btn.add_theme_stylebox_override("normal",
+		HudStyle.command_button(HudStyle.ACCENT_COMBAT, "normal"))
+	_idle_military_btn.add_theme_stylebox_override("hover",
+		HudStyle.command_button(HudStyle.ACCENT_COMBAT, "hover"))
+	_idle_military_btn.add_theme_stylebox_override("pressed",
+		HudStyle.command_button(HudStyle.ACCENT_COMBAT, "pressed"))
+	_idle_military_btn.add_theme_stylebox_override("disabled",
+		HudStyle.command_button(HudStyle.ACCENT_COMBAT, "disabled"))
 	_idle_military_btn.pressed.connect(_on_idle_military_pressed)
 	_hud_root.add_child(_idle_military_btn)
 
