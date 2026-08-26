@@ -96,7 +96,7 @@ func _setup_iso_billboard() -> void:
 	# shadow; only non-massed fallbacks need the detached ellipse.
 	if not has_meta("massing_bot_y"):
 		VisualFx.add_ground_shadow(self, 42.0, 22.0, 15.0)
-	IsoBillboard.setup_entity(self, ["Body", "Label", "HealthBar",
+	IsoBillboard.setup_entity(self, ["Body", "NameLabel", "HealthBar",
 		"TrainingBar", "PlayerColorStripe"])
 
 func _on_hero_died(died_player_id: int, hero_data: UnitResource) -> void:

@@ -42,6 +42,12 @@ func _ready() -> void:
 		get_tree().quit(1)
 		return
 	DirAccess.make_dir_recursive_absolute(_shot_dir)
+	# Optional: render the whole gallery in one civilization's style
+	# (CivStyle resolves through MatchConfig; pids 1-3 are used below).
+	var civ: String = OS.get_environment("CALIMA_CIV")
+	if not civ.is_empty():
+		MatchConfig.player_civ_id = civ
+		MatchConfig.rival_civ_ids = [civ, civ, civ]
 
 	var bg: Polygon2D = Polygon2D.new()
 	bg.color = Color(0.32, 0.52, 0.28)

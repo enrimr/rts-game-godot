@@ -90,7 +90,7 @@ polygon = PackedVector2Array(-10, 40, 10, 40, 10, 26, 6, 22, -6, 22, -10, 26)
 color = Color(0.18, 0.11, 0.06, 1.0)
 polygon = PackedVector2Array(-1, 40, 1, 40, 1, 24, -1, 24)
 
-[node name="Label" type="Label" parent="."]
+[node name="NameLabel" type="Label" parent="."]
 offset_left = -48.0
 offset_top = -58.0
 offset_right = 48.0
