@@ -66,6 +66,9 @@ func _run() -> void:
 	Engine.time_scale = 1.0
 	await _shoot(tc_pos, 2.0, "04_tc_late")
 
+	if OS.get_environment("CALIMA_PREVIEW") == "1":
+		await _shoot_placement_preview(tc_pos)
+
 	# Overview goes last: fog is revealed so the reviewer can inspect the whole
 	# projected map, which would otherwise be near-black unexplored fog.
 	var fog: Node = _world.get("_fog") as Node
@@ -112,6 +115,31 @@ func _player_tc_position() -> Vector2:
 		if (b.get("player_id") as int) == 0:
 			return (b as Node2D).global_position
 	return Vector2.ZERO
+
+# CALIMA_PREVIEW=1: exercises the real Barracks placement path (ghost building
+# + ground-diamond footprint + snap-grid lattice) near the TC and captures it
+# as 05_preview.png, then cancels so the flow leaves no side effects.
+func _shoot_placement_preview(tc_pos: Vector2) -> void:
+	ResourceManager.add_resource(0, "wood", 200.0)
+	_camera.global_position = tc_pos
+	_camera.zoom = IsoProjection.camera_zoom(2.0)
+	if not _world.has_method("_start_placement"):
+		push_error("SCREENSHOT_RUNNER: game world lacks _start_placement")
+		return
+	_world.call("_start_placement", "barracks")
+	# The ghost follows the mouse each frame; park the cursor over a clear spot
+	# beside the TC so the preview and its snap grid land on open ground.
+	var offset_screen: Vector2 = IsoProjection.world_to_screen(Vector2(260.0, -60.0), 2.0)
+	get_viewport().warp_mouse(get_viewport().get_visible_rect().size * 0.5 + offset_screen)
+	for _i: int in range(6):
+		await get_tree().process_frame
+	var img: Image = get_viewport().get_texture().get_image()
+	var path: String = _shot_dir.path_join("05_preview.png")
+	if img.save_png(path) == OK:
+		print("SCREENSHOT_RUNNER: saved ", path)
+	else:
+		push_error("SCREENSHOT_RUNNER: failed to save " + path)
+	_world.call("_cancel_placement")
 
 func _shoot(world_pos: Vector2, zoom: float, name_base: String) -> void:
 	_camera.global_position = world_pos
