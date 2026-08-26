@@ -1521,7 +1521,13 @@ func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> vo
 		var entry: Dictionary = queue[i] as Dictionary
 		var slot: TrainQueueSlot = TrainQueueSlot.new()
 		_train_queue_row.add_child(slot)
-		slot.setup(i, entry["label"] as String, entry["color"] as Color, i == 0, i == 0 and pop_blocked)
+		# Queue slots show the entity's baked icon (like the selection
+		# portraits); entries without a scene fall back to the letter.
+		var scene_path: String = entry.get("scene", "") as String
+		var icon: Texture2D = IconBaker.get_icon(scene_path, local_player_id) \
+			if not scene_path.is_empty() else null
+		slot.setup(i, entry["label"] as String, entry["color"] as Color,
+			i == 0, i == 0 and pop_blocked, icon)
 		slot.cancel_requested.connect(_on_cancel_train_slot)
 
 func _update_train_queue_progress() -> void:

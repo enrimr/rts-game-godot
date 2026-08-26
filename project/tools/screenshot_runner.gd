@@ -185,17 +185,27 @@ func _shoot_selection_panels(tc_pos: Vector2) -> void:
 	# (with the training queue) is their parent TC root.
 	var tc: Node = null
 	for marker: Node in get_tree().get_nodes_in_group("drop_off_buildings"):
-		if (marker.get("player_id") as int) != 0:
-			continue
 		var building: Node = marker.get_parent()
-		if building != null and building.has_method("get_hero_respawn_fraction"):
-			tc = building
-			break
+		if building == null or not building.has_method("get_hero_respawn_fraction"):
+			continue
+		# Ownership must come from the BUILDING root: the DropOff marker child
+		# has no player_id, and (null as int) == 0 made this pick the AI's TC
+		# depending on group iteration order (intermittent empty panel).
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) != 0:
+			continue
+		tc = building
+		break
 	if tc == null:
 		push_error("SCREENSHOT_RUNNER: player TC not found for CALIMA_SELECT")
 		return
 	SelectionManager.select([])
 	EventBus.building_selected.emit(tc)
+	# Queue a couple of villagers so the training-queue slots (entity icons)
+	# are visible in the capture. Starting food covers them.
+	if tc.has_method("order_train"):
+		tc.call("order_train")
+		tc.call("order_train")
 	await _grab("07_building_panel", 40)
 	EventBus.building_selected.emit(null)
 

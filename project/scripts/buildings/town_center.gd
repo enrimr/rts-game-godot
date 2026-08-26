@@ -130,7 +130,7 @@ func order_train() -> bool:
 		return false
 	if not ResourceManager.spend_resource(player_id, VILLAGER_COSTS):
 		return false
-	_train_queue.append({"unit_id": "villager", "label": "V", "color": Color(0.6, 0.45, 0.2), "costs": VILLAGER_COSTS})
+	_train_queue.append({"unit_id": "villager", "scene": "res://scenes/units/villager.tscn", "label": "V", "color": Color(0.6, 0.45, 0.2), "costs": VILLAGER_COSTS})
 	EventBus.train_queue_changed.emit(self, _train_queue.duplicate(), MAX_QUEUE)
 	return true
 
