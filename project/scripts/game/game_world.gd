@@ -130,6 +130,13 @@ var _ghost: Node2D = null
 var _ghost_rotation: float = 0.0
 var _ghost_shape_cached: RectangleShape2D = null
 var _ghost_params_cached: PhysicsShapeQueryParameters2D = null
+var _ghost_footprint: Node2D = null
+
+const PLACEMENT_OK_FILL: Color = Color(0.35, 1.0, 0.45, 0.22)
+const PLACEMENT_OK_LINE: Color = Color(0.45, 1.0, 0.55, 0.9)
+const PLACEMENT_BAD_FILL: Color = Color(1.0, 0.25, 0.2, 0.28)
+const PLACEMENT_BAD_LINE: Color = Color(1.0, 0.35, 0.3, 0.9)
+const PLACEMENT_GRID_LINE: Color = Color(1.0, 1.0, 1.0, 0.18)
 
 # Wall drag placement state
 var _wall_drag_active: bool = false
@@ -656,6 +663,11 @@ func _process(delta: float) -> void:
 		if _placing_id in OCEAN_BUILDINGS:
 			terrain_ok = TerrainManager.is_ocean(mouse_pos) and not _placement_overlaps(mouse_pos)
 		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if terrain_ok else Color(1.0, 0.2, 0.2, 0.5)
+		if is_instance_valid(_ghost_footprint):
+			_ghost_footprint.visible = _ghost.visible
+			_ghost_footprint.global_position = mouse_pos
+			_ghost_footprint.rotation = _ghost_rotation
+			_tint_placement_footprint(terrain_ok)
 	if _wall_drag_active:
 		_update_wall_drag_preview(_snap_wall(get_global_mouse_position()))
 	if is_instance_valid(_drag_overlay):
@@ -1541,6 +1553,63 @@ func _start_placement(building_id: String) -> void:
 	_ghost_params_cached.shape = _ghost_shape_cached
 	_ghost_params_cached.collision_mask = 1
 
+	# Sibling of the ghost so its validity colours are not multiplied by the
+	# ghost's red/white modulate. World-space geometry: the camera projection
+	# renders it as the footprint ground diamond plus the 16 px snap lattice.
+	_ghost_footprint = _make_placement_footprint(
+		_ghost_shape_cached.size if _ghost_shape_cached != null
+		else Vector2(PlacementGrid.CELL_SIZE, PlacementGrid.CELL_SIZE))
+	buildings_layer.add_child(_ghost_footprint)
+
+# Ground footprint indicator for the placement ghost: a filled rect with an
+# outline and internal grid lines every placement cell, all in world space so
+# they project onto the terrain as 2:1 diamonds.
+func _make_placement_footprint(size: Vector2) -> Node2D:
+	var root: Node2D = Node2D.new()
+	root.name = "PlacementFootprint"
+	root.z_index = 5
+	var half: Vector2 = size * 0.5
+	var fill: Polygon2D = Polygon2D.new()
+	fill.name = "Fill"
+	fill.polygon = PackedVector2Array([
+		Vector2(-half.x, -half.y), Vector2(half.x, -half.y),
+		Vector2(half.x, half.y), Vector2(-half.x, half.y),
+	])
+	fill.color = PLACEMENT_OK_FILL
+	root.add_child(fill)
+	var cell: float = PlacementGrid.CELL_SIZE
+	var gx: float = -half.x + cell
+	while gx < half.x - 0.5:
+		root.add_child(_grid_line(Vector2(gx, -half.y), Vector2(gx, half.y)))
+		gx += cell
+	var gy: float = -half.y + cell
+	while gy < half.y - 0.5:
+		root.add_child(_grid_line(Vector2(-half.x, gy), Vector2(half.x, gy)))
+		gy += cell
+	var outline: Line2D = Line2D.new()
+	outline.name = "Outline"
+	outline.width = 1.5
+	outline.default_color = PLACEMENT_OK_LINE
+	outline.closed = true
+	outline.points = fill.polygon
+	root.add_child(outline)
+	return root
+
+func _grid_line(from: Vector2, to: Vector2) -> Line2D:
+	var line: Line2D = Line2D.new()
+	line.width = 1.0
+	line.default_color = PLACEMENT_GRID_LINE
+	line.points = PackedVector2Array([from, to])
+	return line
+
+func _tint_placement_footprint(ok: bool) -> void:
+	var fill: Polygon2D = _ghost_footprint.get_node_or_null("Fill") as Polygon2D
+	if fill != null:
+		fill.color = PLACEMENT_OK_FILL if ok else PLACEMENT_BAD_FILL
+	var outline: Line2D = _ghost_footprint.get_node_or_null("Outline") as Line2D
+	if outline != null:
+		outline.default_color = PLACEMENT_OK_LINE if ok else PLACEMENT_BAD_LINE
+
 # Snap a placement position to the building grid, sized to the ghost footprint
 # so edges stay flush with the lattice. Hold Alt for free (continuous) placement.
 func _snap_placement(world_pos: Vector2) -> Vector2:
@@ -1649,6 +1718,9 @@ func _cancel_placement() -> void:
 	if is_instance_valid(_ghost):
 		_ghost.queue_free()
 	_ghost = null
+	if is_instance_valid(_ghost_footprint):
+		_ghost_footprint.queue_free()
+	_ghost_footprint = null
 	_ghost_shape_cached = null
 	_ghost_params_cached = null
 	_wall_drag_active = false
@@ -1676,15 +1748,24 @@ func _update_wall_drag_preview(end_pos: Vector2) -> void:
 	const WALL_STEP: float = 16.0
 	var positions: Array[Vector2] = _wall_segment_positions(_wall_drag_start, end_pos, WALL_STEP)
 
+	# World-space cell squares: the camera projection renders each one as a
+	# 16 px ground diamond of the snap lattice.
+	var cell_pts: PackedVector2Array = PackedVector2Array([
+		Vector2(-8.0, -8.0), Vector2(8.0, -8.0), Vector2(8.0, 8.0), Vector2(-8.0, 8.0),
+	])
 	for pos: Vector2 in positions:
 		var ghost: Node2D = Node2D.new()
 		ghost.global_position = pos
-		var rect: ColorRect = ColorRect.new()
-		rect.size = Vector2(16.0, 16.0)
-		rect.position = Vector2(-8.0, -8.0)
-		rect.color = Color(0.4, 0.7, 1.0, 0.45)
-		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ghost.add_child(rect)
+		var cell: Polygon2D = Polygon2D.new()
+		cell.polygon = cell_pts
+		cell.color = Color(0.4, 0.7, 1.0, 0.4)
+		ghost.add_child(cell)
+		var rim: Line2D = Line2D.new()
+		rim.width = 1.0
+		rim.closed = true
+		rim.default_color = Color(0.6, 0.85, 1.0, 0.8)
+		rim.points = cell_pts
+		ghost.add_child(rim)
 		ghost.z_index = 5
 		buildings_layer.add_child(ghost)
 		_wall_ghosts.append(ghost)

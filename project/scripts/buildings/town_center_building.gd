@@ -59,11 +59,39 @@ var _train_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("buildings")
+	IsoBuildingMassing.apply(self)
 	call_deferred("_add_player_color_stripe")
+	call_deferred("_apply_team_accents")
+	call_deferred("_setup_iso_billboard")
 	EventBus.hero_died.connect(_on_hero_died)
 
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 80.0, 40.0)
+	var bottom: float = 40.0
+	var width: float = 80.0
+	if has_meta("massing_bot_y"):
+		bottom = (get_meta("massing_bot_y") as float) + 3.0
+		width = 72.0
+	PlayerColors.apply_color_stripe(self, player_id, width, bottom)
+
+func _apply_team_accents() -> void:
+	var body: Node = get_node_or_null("Body")
+	if body == null:
+		return
+	var col: Color = PlayerColors.get_color(player_id)
+	var dark: Color = Color(col.r * 0.7, col.g * 0.7, col.b * 0.7, 1.0)
+	for node: Node in body.get_children():
+		if not node.name.begins_with("Team"):
+			continue
+		var tint: Color = dark if node.name.contains("Dark") else col
+		if node is Polygon2D:
+			(node as Polygon2D).color = tint
+		elif node is Line2D:
+			(node as Line2D).default_color = tint
+
+func _setup_iso_billboard() -> void:
+	VisualFx.add_ground_shadow(self, 42.0, 22.0, 15.0)
+	IsoBillboard.setup_entity(self, ["Body", "Label", "HealthBar",
+		"TrainingBar", "PlayerColorStripe"])
 
 func _on_hero_died(died_player_id: int, hero_data: UnitResource) -> void:
 	if died_player_id != player_id:
