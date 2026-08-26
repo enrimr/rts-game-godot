@@ -45,6 +45,7 @@ func set_selected(value: bool) -> void:
 	else:
 		if is_instance_valid(_selection_line):
 			_selection_line.visible = false
+	VisualFx.set_nameplate_visible(self, value)
 	if is_instance_valid(_rally_marker):
 		_rally_marker.visible = value and rally_point != Vector2.ZERO
 
@@ -68,6 +69,7 @@ var _train_timer: float = 0.0
 @onready var _train_bar: ProgressBar = get_node_or_null("TrainingBar")
 
 func _ready() -> void:
+	VisualFx.set_nameplate_visible(self, false)
 	call_deferred("_add_player_color_stripe")
 	EventBus.hero_died.connect(_on_hero_died)
 

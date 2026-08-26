@@ -97,6 +97,7 @@ func set_selected(value: bool) -> void:
 	else:
 		if is_instance_valid(_selection_line):
 			_selection_line.visible = false
+	VisualFx.set_nameplate_visible(self, value)
 	_show_rally_marker(value)
 
 func _footprint_rect() -> Rect2:
@@ -129,6 +130,7 @@ func _ready() -> void:
 		health = max_health
 	IsoBuildingMassing.apply(self)
 	_refresh_visuals()
+	VisualFx.set_nameplate_visible(self, false)
 	call_deferred("_apply_player_color_stripe")
 	call_deferred("_apply_team_accents")
 	call_deferred("_add_ground_shadow")

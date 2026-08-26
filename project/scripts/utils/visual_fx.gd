@@ -6,6 +6,13 @@ class_name VisualFx
 const SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.22)
 const SHADOW_Z: int = -1   # below the Body, above the terrain (terrain is z <= -6)
 
+## Shows/hides a building's floating "NameLabel" nameplate. Nameplates appear
+## only while selected — a permanently floating name reads as debug UI.
+static func set_nameplate_visible(parent: Node2D, nameplate_visible: bool) -> void:
+	var label: Label = parent.get_node_or_null("NameLabel") as Label
+	if label != null:
+		label.visible = nameplate_visible
+
 ## Adds a soft elliptical shadow under `parent`, sized `rx` × `ry`, nudged down
 ## by `offset_y`. All three are SCREEN-space pixels: the shadow is a ground
 ## decal, so its polygon is authored as the world-space preimage of the wanted
