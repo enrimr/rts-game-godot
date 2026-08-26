@@ -21,7 +21,7 @@ func _ready() -> void:
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 12.0, 11.0)
+	VisualFx.add_ground_plinth(self, player_id, 6.6, 10.0)
 
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)

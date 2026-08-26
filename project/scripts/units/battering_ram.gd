@@ -14,7 +14,7 @@ func _ready() -> void:
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 36.0, 6.0)
+	VisualFx.add_ground_plinth(self, player_id, 19.8, 5.0)
 
 func _on_auto_attack_target(target: Node) -> void:
 	# Only auto-attacks buildings — does not chase units

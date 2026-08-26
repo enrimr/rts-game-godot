@@ -89,8 +89,12 @@ var _fd_original_pid: int = -1               # FORCED_DIPLOMACY original player_
 var _calima_cloud: Node2D = null             # CALIMA cloud node in the scene
 var _cloaked_units: Array[Node] = []         # CALIMA units that were cloaked
 
-# Visual ring showing the hero is a hero (gold circle)
+# Visual ring showing the hero is a hero: a gold ground-aligned ellipse
+# under the feet, always visible.
 var _hero_ring: Node2D = null
+const HERO_RING_COLOR: Color = Color(1.0, 0.84, 0.25, 0.9)
+const HERO_RING_RX: float = 13.0   # screen px; sits inside the selection ring
+const HERO_FOOT_Y: float = 10.0    # matches the militia plinth foot anchor
 
 # Rocinante passive (Don Quijote): base speed stored to apply delay on attack
 var _quijote_attack_delay: float = 0.0
@@ -192,15 +196,8 @@ func _apply_female_appearance() -> void:
 	body.add_child(circlet)
 
 func _build_hero_ring() -> void:
-	_hero_ring = Node2D.new()
-	_hero_ring.z_index = -1
-	add_child(_hero_ring)
-
-func _draw_hero_ring() -> void:
-	if not is_instance_valid(_hero_ring):
-		return
-	# Drawn via a child Node2D that overrides _draw
-	pass
+	_hero_ring = VisualFx.add_ground_ring(self, "HeroRing",
+		HERO_RING_RX, HERO_RING_RX * 0.5, HERO_RING_COLOR, 1.8, HERO_FOOT_Y, -1)
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)

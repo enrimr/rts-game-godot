@@ -30,6 +30,9 @@ var _legs: Array[Dictionary] = []
 var _walk_time: float = 0.0
 const _LEG_SWING: float = 2.2   # px of fore/aft swing
 const _LEG_FREQ: float = 3.2    # stride cycles per second
+# Screen-space distance from the anchor down to the hooves, where ground
+# markers (selection ring, owner plinth) sit.
+const FOOT_ANCHOR_Y: float = 9.0
 
 @onready var _health_bar: ProgressBar = $HealthBar
 @onready var _selection_indicator: Node2D = $SelectionIndicator
@@ -51,6 +54,7 @@ func _ready() -> void:
 
 func _setup_iso_billboard() -> void:
 	IsoBillboard.setup_entity(self, ["Body", "HealthBar"])
+	VisualFx.make_ground_selection_ring(_selection_indicator, FOOT_ANCHOR_Y)
 
 # Gathers the leg polygons (deer has 4, sheep has 2) with their rest position and
 # a stride phase so diagonal legs swing together (a natural trot/walk).
@@ -91,14 +95,17 @@ func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	move_and_slide()
 	_face_movement(safe_velocity)
 
-# Flips the body to face the travel direction. The sprite is drawn facing right
-# (head at +x), so scale.x = 1 faces right, -1 faces left. A small horizontal
-# dead zone avoids flicker when moving almost straight up or down.
+# Flips the body to face the travel direction AS PROJECTED ON SCREEN: under
+# the rotated camera, world +x is a screen diagonal, so the decision axis is
+# the projected screen x. The sprite is drawn facing right (head at +x), so
+# scale.x = 1 faces screen-right, -1 screen-left. A small horizontal dead zone
+# avoids flicker when moving almost straight up or down on screen.
 func _face_movement(vel: Vector2) -> void:
 	if not is_instance_valid(_body):
 		return
-	if absf(vel.x) > 2.0:
-		_body.scale.x = -1.0 if vel.x < 0.0 else 1.0
+	var screen_dx: float = IsoProjection.world_to_screen(vel).x
+	if absf(screen_dx) > 2.0:
+		_body.scale.x = -1.0 if screen_dx < 0.0 else 1.0
 
 func set_selected(value: bool) -> void:
 	_selection_indicator.visible = value
@@ -194,18 +201,12 @@ func _convert_to(owner_id: int) -> void:
 	_nav.target_position = global_position
 	velocity = Vector2.ZERO
 
-# Ownership marker: the same colour stripe at the feet every unit uses, kept
-# upright (see IsoBillboard) — never a full-body repaint, which makes the
-# animal unreadable. Re-conversion just recolours the existing stripe.
+# Ownership marker: the same ground-ellipse plinth at the feet every unit
+# uses — never a full-body repaint, which makes the animal unreadable.
+# Re-conversion just recolours the existing plinth (add_ground_plinth is
+# idempotent-recolour).
 func _on_converted() -> void:
-	var stripe: ColorRect = get_node_or_null("PlayerColorStripe") as ColorRect
-	if stripe == null:
-		PlayerColors.apply_color_stripe(self, player_id, 16.0, 10.0)
-		stripe = get_node_or_null("PlayerColorStripe") as ColorRect
-		if stripe != null:
-			IsoBillboard.make_upright(stripe)
-	else:
-		stripe.color = PlayerColors.get_color(player_id)
+	VisualFx.add_ground_plinth(self, player_id, 8.5, FOOT_ANCHOR_Y)
 
 func _start_flee(from_source: Node) -> void:
 	current_state = AnimalState.FLEEING

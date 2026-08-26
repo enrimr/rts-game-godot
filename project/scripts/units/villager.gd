@@ -67,7 +67,7 @@ func _ready() -> void:
 # Narrower player-colour stripe placed at the villager's feet so it doesn't
 # cover the redesigned body (the base 20 px stripe sat across the waist).
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 12.0, 11.0)
+	VisualFx.add_ground_plinth(self, player_id, 7.0, 10.0)
 
 func _process(delta: float) -> void:
 	_anim_time += delta
@@ -748,10 +748,11 @@ func _update_villager_orientation(body: Node) -> void:
 			target_pos = global_position + velocity.normalized() * 10.0
 			has_target = true
 
-	# Flip body horizontally based on target direction
+	# Flip based on the SCREEN-projected direction (see UnitBase note: world +x
+	# is a screen diagonal under the rotated camera).
 	if has_target:
-		var direction: float = target_pos.x - global_position.x
-		if abs(direction) > 5.0:  # Dead zone to prevent flickering
+		var direction: float = IsoProjection.world_to_screen(target_pos - global_position).x
+		if absf(direction) > 3.5:  # Dead zone to prevent flickering
 			var new_scale_x: float = -1.0 if direction < 0.0 else 1.0
 			# Handle both Node2D and Control types
 			if body is Node2D:

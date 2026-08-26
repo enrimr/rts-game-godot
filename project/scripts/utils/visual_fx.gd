@@ -35,6 +35,74 @@ static func _projected_ellipse_points(rx: float, ry: float, steps: int) -> Packe
 		pts.append(IsoProjection.screen_to_world(Vector2(cos(a) * rx, sin(a) * ry)))
 	return pts
 
+## Adds a ground-aligned ellipse OUTLINE under `parent` — the genre-classic
+## selection/status ring. `rx`/`ry` and `offset_y` are SCREEN-space pixels
+## (the ring is a ground decal: points are the world-space preimage of the
+## wanted on-screen ellipse, so the camera projection lays it flat on the
+## ground plane). Idempotent per `ring_name`: an existing ring is restyled.
+static func add_ground_ring(parent: Node2D, ring_name: String, rx: float, ry: float,
+		color: Color, width: float, offset_y: float, z: int = 0) -> Line2D:
+	var existing: Line2D = parent.get_node_or_null(ring_name) as Line2D
+	if existing != null:
+		existing.default_color = color
+		return existing
+	var ring: Line2D = Line2D.new()
+	ring.name = ring_name
+	ring.closed = true
+	ring.width = width
+	ring.default_color = color
+	ring.joint_mode = Line2D.LINE_JOINT_ROUND
+	ring.z_index = z
+	ring.position = IsoProjection.screen_to_world(Vector2(0.0, offset_y))
+	ring.points = _projected_ellipse_points(rx, ry, 28)
+	ring.set_meta(IsoBillboard.META_GROUND, true)
+	parent.add_child(ring)
+	return ring
+
+## Player-colour ownership marker: a small filled ground ellipse ("plinth")
+## seated under the unit's feet, replacing the old screen-space colour stripe
+## that read as a floating bar under the rotated camera. `rx` and `offset_y`
+## are SCREEN-space pixels. Idempotent: re-calling recolours the existing
+## plinth (used when a unit changes owner).
+static func add_ground_plinth(parent: Node2D, player_id: int, rx: float, offset_y: float) -> void:
+	var color: Color = PlayerColors.get_color(player_id)
+	color.a = 0.85
+	var existing: Node = parent.get_node_or_null("PlayerColorStripe")
+	if existing is Polygon2D:
+		(existing as Polygon2D).color = color
+		return
+	if existing != null:
+		# Legacy ColorRect stripe from an older save/spawner — replace it.
+		existing.name = "PlayerColorStripeOld"
+		existing.queue_free()
+	var plinth: Polygon2D = Polygon2D.new()
+	plinth.name = "PlayerColorStripe"
+	plinth.color = color
+	plinth.z_index = SHADOW_Z
+	plinth.position = IsoProjection.screen_to_world(Vector2(0.0, offset_y))
+	plinth.polygon = _projected_ellipse_points(rx, rx * 0.5, 16)
+	plinth.set_meta(IsoBillboard.META_GROUND, true)
+	parent.add_child(plinth)
+
+## Converts a scene-authored filled SelectionCircle (a flat world-space disc
+## that shears into a blob under the projection) into a ground-aligned ellipse
+## ring under the feet. Radius and colour are taken from the authored polygon;
+## `foot_y` is the SCREEN-space distance from the anchor down to the feet.
+## Idempotent (skips once the ring exists).
+static func make_ground_selection_ring(indicator: Node2D, foot_y: float) -> void:
+	if indicator == null or indicator.get_node_or_null("SelectionCircle") is Line2D:
+		return
+	var poly: Polygon2D = indicator.get_node_or_null("SelectionCircle") as Polygon2D
+	if poly == null:
+		return
+	var radius: float = 0.0
+	for p: Vector2 in poly.polygon:
+		radius = maxf(radius, absf(p.x))
+	var color: Color = poly.color
+	poly.name = "SelectionCircleOld"
+	poly.queue_free()
+	add_ground_ring(indicator, "SelectionCircle", radius, radius * 0.5, color, 2.2, foot_y)
+
 # Names a human unit's head polygon goes by across the unit scenes. The first
 # one found marks the unit as "human" (ships/siege/animals have none).
 const _HEAD_NODES: Array = ["Head", "RiderHead"]

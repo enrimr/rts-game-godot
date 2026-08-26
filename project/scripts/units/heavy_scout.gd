@@ -14,7 +14,7 @@ func _ready() -> void:
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 18.0, 13.0)
+	VisualFx.add_ground_plinth(self, player_id, 9.9, 12.0)
 
 func _add_ground_shadow() -> void:
 	VisualFx.add_ground_shadow(self, 15.0, 4.5, 11.0)

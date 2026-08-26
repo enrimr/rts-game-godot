@@ -15,7 +15,7 @@ func _ready() -> void:
 
 # Narrower stripe at the feet so the team colour doesn't cover the soldier body.
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 12.0, 11.0)
+	VisualFx.add_ground_plinth(self, player_id, 6.6, 10.0)
 
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
