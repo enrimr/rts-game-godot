@@ -19,6 +19,7 @@ func _ready() -> void:
 		custom_minimum_size = Vector2(64.0, 48.0)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_theme_font_size_override("font_size", 16)
+	HudStyle.add_text_outline(self)
 	focus_mode = FOCUS_NONE
 
 ## Entity-creating actions (train unit / build building) show the runtime-baked
@@ -81,6 +82,7 @@ func _build_icon_layout() -> void:
 	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_name_label.size_flags_vertical = Control.SIZE_FILL
 	_name_label.add_theme_font_size_override("font_size", 16)
+	HudStyle.add_text_outline(_name_label)
 	_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layout.add_child(_name_label)

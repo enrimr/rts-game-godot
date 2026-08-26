@@ -524,6 +524,7 @@ func _render_action_page() -> void:
 
 func _make_page_btn(label: String) -> Button:
 	var btn: Button = Button.new()
+	HudStyle.add_text_outline(btn)
 	btn.text = label
 	btn.custom_minimum_size = Vector2(64.0, 56.0)
 	btn.focus_mode = Control.FOCUS_NONE

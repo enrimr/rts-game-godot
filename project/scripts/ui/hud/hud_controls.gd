@@ -71,6 +71,7 @@ func _build_speed_buttons() -> void:
 		btn.custom_minimum_size = Vector2(btn_w, 36.0)
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.add_theme_font_size_override("font_size", 16)
+		HudStyle.add_text_outline(btn)
 		btn.anchor_left   = 1.0
 		btn.anchor_top    = 0.0
 		btn.anchor_right  = 1.0

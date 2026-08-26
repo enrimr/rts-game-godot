@@ -38,6 +38,7 @@ func _ready() -> void:
 	_name_label.name = "NameLabel"
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_name_label.add_theme_font_size_override("font_size", 11)
+	HudStyle.add_text_outline(_name_label, 3)
 	_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	layout.add_child(_name_label)
 

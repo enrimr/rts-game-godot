@@ -72,6 +72,7 @@ func setup(index: int, label: String, color: Color, is_active: bool,
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lbl.add_theme_font_size_override("font_size", 18)
+		HudStyle.add_text_outline(lbl)
 		lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		if is_blocked:
