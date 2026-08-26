@@ -41,6 +41,8 @@ func _ready() -> void:
 	super._ready()
 
 func _process(delta: float) -> void:
+	if is_instance_valid(_train_bar):
+		_train_bar.visible = not _train_queue.is_empty()
 	if state != BuildingState.COMPLETE or _train_queue.is_empty():
 		return
 	var entry: Dictionary = _train_queue[0] as Dictionary

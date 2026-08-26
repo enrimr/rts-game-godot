@@ -12,6 +12,7 @@ var _lifetime: float = 0.0
 const MAX_LIFETIME: float = 3.0
 
 func _ready() -> void:
+	z_index = IsoBillboard.Z_AIRBORNE
 	var shaft: Polygon2D = Polygon2D.new()
 	shaft.color = Color(0.72, 0.60, 0.28, 1.0)
 	shaft.polygon = PackedVector2Array([Vector2(-8, -1), Vector2(6, -1), Vector2(6, 1), Vector2(-8, 1)])

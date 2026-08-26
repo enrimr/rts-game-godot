@@ -31,7 +31,7 @@ func _ready() -> void:
 	_refresh_packed_label()
 
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 28.0, 6.0)
+	VisualFx.add_ground_plinth(self, player_id, 15.4, 5.0)
 
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
@@ -174,7 +174,7 @@ func _apply_splash_damage(target_pos: Vector2) -> void:
 	circle.radius = SPLASH_RADIUS
 	query.shape = circle
 	query.transform = Transform2D(0.0, target_pos)
-	query.collision_mask = 1
+	query.collision_mask = 3
 	var results: Array[Dictionary] = space.intersect_shape(query, 32)
 	for result: Dictionary in results:
 		var body: Node = result["collider"] as Node
@@ -228,7 +228,7 @@ func _spawn_projectile(target_pos: Vector2) -> void:
 		Vector2(-3.5, 3.5), Vector2(-5, 0), Vector2(-3.5, -3.5),
 		Vector2(0, -5), Vector2(3.5, -3.5)
 	])
-	boulder.z_index = 10
+	boulder.z_index = IsoBillboard.Z_AIRBORNE
 	parent.add_child(boulder)
 	boulder.global_position = global_position + Vector2(0.0, -30.0)
 
@@ -262,7 +262,7 @@ func _spawn_impact_flash(target_pos: Vector2) -> void:
 		return
 	var flash: Polygon2D = Polygon2D.new()
 	flash.color = Color(1.0, 0.6, 0.1, 0.85)
-	flash.z_index = 11
+	flash.z_index = IsoBillboard.Z_AIRBORNE + 1
 	flash.polygon = PackedVector2Array([
 		Vector2(12, 0), Vector2(8, 8), Vector2(0, 12),
 		Vector2(-8, 8), Vector2(-12, 0), Vector2(-8, -8),

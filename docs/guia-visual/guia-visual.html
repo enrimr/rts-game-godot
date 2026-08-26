@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía visual del juego · Calima: Flames of the Atlantic</title>
+<style>
+:root{
+  --bg:#faf8f4; --panel:#ffffff; --ink:#22201c; --muted:#6b675f; --line:#e5e0d6; --accent:#0e7a5f; --accent2:#8a5a12;
+}
+[data-theme="dark"]{
+  --bg:#141312; --panel:#1e1c1a; --ink:#ece8e0; --muted:#a29b8e; --line:#33302b; --accent:#4dc3a3; --accent2:#d9a44a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,'Segoe UI',Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+header{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:14px}
+h1{font-size:30px;margin:0 0 6px}
+h2{font-size:23px;margin:52px 0 10px;padding-top:16px;border-top:2px solid var(--line)}
+h3{font-size:18px;margin:30px 0 6px}
+.meta{color:var(--muted);font-size:14px}
+.lead{font-size:17px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media(max-width:760px){.pair,.quad{grid-template-columns:1fr}}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+figure img{width:100%;display:block}
+figure.solo{max-width:900px;margin:14px auto}
+figcaption{padding:8px 12px;font-size:13px;color:var(--muted)}
+figcaption b{color:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:12px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+.civ{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:22px 0}
+.civ h3{margin-top:0}
+.tagline{font-style:italic;color:var(--muted);margin:0 0 8px}
+.bonos{margin:8px 0;padding-left:20px}
+.bonos li{margin:3px 0}
+.uu{font-size:14px;color:var(--muted)}
+.uu b{color:var(--ink)}
+nav{font-size:14px;margin:10px 0 4px;line-height:2}
+nav a{color:var(--accent);text-decoration:none;margin-right:12px;white-space:nowrap}
+#theme-toggle{float:right;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px}
+code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:13px}
+.links{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:15px}
+.links a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <button id="theme-toggle">☾</button>
+  <h1>Calima: Flames of the Atlantic — Guía visual</h1>
+  <div class="meta">Estrategia en tiempo real · Godot 4 · las Islas Canarias de los siglos XV–XVI · arte procedural original · 26-08-2026</div>
+  <nav>
+    <a href="#juego">El juego</a><a href="#economia">Economía y edades</a><a href="#victoria">Victoria</a>
+    <a href="#civs">Las 8 civilizaciones</a><a href="#terreno">Terreno y clima</a><a href="#mapas">Mapas</a><a href="#partida">Una partida a 4</a>
+  </nav>
+</header>
+
+<p class="lead">Un RTS clásico ambientado en el archipiélago canario: pueblos nativos, potencias europeas y
+dos civilizaciones legendarias del Atlántico compiten por unas islas de volcanes, laurisilva y alisios.
+Recolecta, avanza de edad, entrena un ejército y elimina a tus rivales — o gana por maravilla o regicidio.</p>
+
+<h2 id="juego">El juego en una pantalla</h2>
+<figure class="solo"><img src="img/vista_juego.jpg" alt="Vista de juego">
+<figcaption><b>Tu base al empezar:</b> Centro Urbano (aquí, estilo guanche con ribete azul de jugador), tres aldeanos y un explorador montado.
+Arriba: recursos, población y edad. Abajo derecha: minimapa con el rombo indicador de cámara. La niebla de guerra
+oculta lo no explorado y recuerda en penumbra lo ya visto.</figcaption></figure>
+
+<h2 id="economia">Economía y edades</h2>
+<table>
+<tr><th>Recurso</th><th>De dónde sale</th><th>Para qué sirve</th></tr>
+<tr><td>🍖 Comida</td><td>Granjas, caza, pesca, bayas, ovejas</td><td>Aldeanos, tropa, avance de edad</td></tr>
+<tr><td>🪵 Madera</td><td>Árboles (la laurisilva es el bosque rico: árboles de 260)</td><td>Edificios, arqueros, barcos</td></tr>
+<tr><td>🪙 Oro</td><td>Minas de oro</td><td>Unidades avanzadas, tecnología, mercado</td></tr>
+<tr><td>🪨 Piedra</td><td>Canteras (y controlar una caldera da piedra pasiva)</td><td>Torres, murallas, castillos</td></tr>
+</table>
+<p>La población empieza en 15 y cada <b>Casa</b> suma +5. Se avanza por cuatro edades —
+<b>Oscura → Feudal → Castillos → Imperial</b> — pagando recursos y esperando un temporizador; cada edad
+desbloquea unidades, edificios y tecnologías (21 en total entre Herrería, Universidad y Templo).</p>
+
+<h2 id="victoria">Condiciones de victoria</h2>
+<table>
+<tr><th>Modo</th><th>Cómo se gana</th></tr>
+<tr><td><b>Conquista</b></td><td>Elimina todos los edificios y unidades enemigas</td></tr>
+<tr><td><b>Regicidio</b></td><td>Mata al héroe enemigo (cada civ tiene el suyo, con habilidad única)</td></tr>
+<tr><td><b>Maravilla</b></td><td>Construye la Maravilla y defiéndela hasta agotar el contador</td></tr>
+</table>
+
+<h2 id="civs">Las 8 civilizaciones</h2>
+<p>Cada civilización se reconoce a simple vista por su <b>arquitectura</b> (material y silueta de tejado) y el
+<b>vestuario</b> de sus unidades; el color solo marca al jugador. Cada una tiene bonos pasivos, una unidad única
+y un héroe con habilidad propia.</p>
+
+<div class="civ" id="guanches">
+<h3>Guanches — los señores del volcán</h3>
+<p class="tagline">Defensivos · terreno volcánico · infantería</p>
+<ul class="bonos">
+<li>Atraviesan el malpaís sin penalización (los demás van a rastras)</li>
+<li>Edificios de piedra +20% de vida · lanceros desde la Edad Oscura</li>
+<li>Inmunes a la Calima; media penalización de ceniza volcánica</li>
+</ul>
+<p class="uu"><b>Única:</b> Guardia del Mencey (infantería pesada anticaballería) · <b>Héroe:</b> Bencomo (+30% velocidad de ataque en área)</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/guanches_buildings.jpg" alt="Edificios guanches"><figcaption>Piedra volcánica oscura, tejados planos con parapeto</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/guanches_units.jpg" alt="Unidades guanches"><figcaption>Banda en la frente + Guardia del Mencey</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="canarii">
+<h3>Canarii — la economía del barranco</h3>
+<p class="tagline">Boom económico · arqueros baratos · terreno elevado</p>
+<ul class="bonos">
+<li>Aldeanos recolectan comida +15% · las casas sirven de punto de entrega</li>
+<li>Arqueros -20% de coste en comida</li>
+<li>Media penalización de niebla marina y alisios</li>
+</ul>
+<p class="uu"><b>Única:</b> Arquero del Barranco (+2 alcance junto a riscos) · <b>Héroe:</b> Doramas (fuerza a un enemigo a atacarle solo a él)</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/canarii_buildings.jpg" alt="Edificios canarii"><figcaption>Encalado blanco, tejados verdes a cuatro aguas</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/canarii_units.jpg" alt="Unidades canarii"><figcaption>Sin tocado, fajín — identidad sobria</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="mahos">
+<h3>Mahos — los jinetes de la duna</h3>
+<p class="tagline">Incursiones · caballería rápida · edificios baratos</p>
+<ul class="bonos">
+<li>Edificios -30% de madera (piedra seca)</li>
+<li>Exploradores y caballería ligera +25% de velocidad</li>
+<li>Visión extendida en dunas · media penalización de Calima</li>
+</ul>
+<p class="uu"><b>Única:</b> Razziador de Arenas (caballería de saqueo con velocidad pasiva) · <b>Héroe:</b> Guadarfía</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/mahos_buildings.jpg" alt="Edificios mahos"><figcaption>Adobe arena con cúpulas</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/mahos_units.jpg" alt="Unidades mahos"><figcaption>Turbante con cola rojiza + Razziador</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="franks">
+<h3>Francos — la carga feudal</h3>
+<p class="tagline">Caballería · granjas · edades baratas</p>
+<ul class="bonos">
+<li>Avanzar de edad cuesta -15%</li>
+<li>Caballería +15% de vida · granjas un 20% más rápidas de construir</li>
+</ul>
+<p class="uu"><b>Única:</b> Chevalier Normand (caballería media, carga con daño extra) · <b>Héroe:</b> Jean de Béthencourt</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/franks_buildings.jpg" alt="Edificios francos"><figcaption>Entramado crema, gabletes empinados de pizarra</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/franks_units.jpg" alt="Unidades francas"><figcaption>Gorro con visera + Chevalier</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="britons">
+<h3>Britanos — el alcance inglés</h3>
+<p class="tagline">Arqueros de élite · presión naval</p>
+<ul class="bonos">
+<li>Arqueros de a pie +1 de alcance por edad (desde Feudal)</li>
+<li>Barcos de guerra atacan +20% más rápido</li>
+<li>Media penalización de tormenta atlántica</li>
+</ul>
+<p class="uu"><b>Única:</b> Arquero de Arco Largo (alcance excepcional) · <b>Héroe:</b> Francis Drake</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/britons_buildings.jpg" alt="Edificios británicos"><figcaption>Sillería gris, tejados carbón casi negros</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/britons_units.jpg" alt="Unidades británicas"><figcaption>Capucha + Longbowman</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="castellanos">
+<h3>Castellanos — la potencia tardía</h3>
+<p class="tagline">Juego largo · tecnología gratis · roster completo</p>
+<ul class="bonos">
+<li>Cada avance de edad desbloquea una tecnología de Herrería gratuita</li>
+<li>Espadachines +15% de vida · torres y castillos con más alcance</li>
+<li>Media penalización de Calima</li>
+</ul>
+<p class="uu"><b>Única:</b> Conquistador (híbrido acorazado con Salvo Fire) · <b>Héroe:</b> Don Quijote de la Mancha</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/castellanos_buildings.jpg" alt="Edificios castellanos"><figcaption>Estuco crema, cuatro aguas terracota</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/castellanos_units.jpg" alt="Unidades castellanas"><figcaption>Cresta de casco + Conquistador</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="atlantes">
+<h3>Atlantes — los anfibios legendarios</h3>
+<p class="tagline">Costa · barcos rápidos · anfibio</p>
+<ul class="bonos">
+<li>Visión extendida en costa y agua · barcos atacan más rápido</li>
+<li>Sus unidades vadean el agua somera a velocidad completa y nadan el océano</li>
+<li>Inmunes a la tormenta atlántica; media penalización de niebla marina</li>
+</ul>
+<p class="uu"><b>Única:</b> Tidecaller (infantería a distancia anfibia, pulso de marea) · <b>Héroe:</b> Artaxerax</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/atlantes_buildings.jpg" alt="Edificios atlantes"><figcaption>Piedra clara verdosa, tejados escalonados bronce</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/atlantes_units.jpg" alt="Unidades atlantes"><figcaption>Diadema de bronce + Tidecaller</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="fenicios">
+<h3>Fenicios — los mercaderes del mar</h3>
+<p class="tagline">Comercio · flota barata · movilidad naval</p>
+<ul class="bonos">
+<li>Mercado desde la Edad Oscura · oro pasivo con mercantes atracados</li>
+<li>Barcos más baratos · pueden reclutar unidades de otras civs en el Mercado</li>
+<li>Media penalización de tormenta atlántica</li>
+</ul>
+<p class="uu"><b>Única:</b> Trirreme (galera de embestida, rápida) · <b>Héroe:</b> Hannón el Navegante</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/fenicios_buildings.jpg" alt="Edificios fenicios"><figcaption>Arenisca, tejados planos con lavado púrpura</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/fenicios_units.jpg" alt="Unidades fenicias"><figcaption>Pañuelo con cola púrpura + Trirreme</figcaption></figure>
+</div>
+</div>
+
+<h2 id="terreno">Terreno y clima</h2>
+<table>
+<tr><th>Terreno</th><th>Efecto</th></tr>
+<tr><td>Malpaís (lava)</td><td>-50% velocidad, no edificable — los Guanches lo cruzan gratis</td></tr>
+<tr><td>Duna</td><td>Penaliza infantería pesada — los Mahos, inmunes</td></tr>
+<tr><td>Laurisilva</td><td>-35% velocidad, visión -30% bajo el dosel, bosques de madera rica</td></tr>
+<tr><td>Risco</td><td>Impasable; unidades a distancia junto al borde: +2 de alcance</td></tr>
+<tr><td>Agua somera</td><td>Franja costera; los anfibios la vadean a velocidad completa</td></tr>
+<tr><td>Caldera</td><td>Impasable; controlar su entorno da piedra pasiva</td></tr>
+</table>
+<p>El clima es procedural y se anuncia con antelación: <b>Calima</b> (visión y recolección),
+<b>Tormenta Atlántica</b> (naval y pesca), <b>Niebla Marina</b> (ocultación costera), <b>Alisios</b>
+(velocidad naval según rumbo, deriva de proyectiles) y <b>Ceniza Volcánica</b> (daño a edificios cerca de
+calderas, solo en Costa Volcánica). Cada civilización resiste mejor el clima de su tierra.</p>
+
+<h2 id="mapas">Mapas y configuración</h2>
+<p><b>5 tipos de mapa</b> (Llanuras, Estándar, Costa Volcánica, Costa Desértica, Islas — este último exige
+armada y transportes), <b>4 modos de recursos</b> (Escaso→Combate Total), 3 modos de victoria, frecuencia
+de clima configurable y elección de civilización y género del héroe en el lobby. Partidas guardables en 99 huecos.</p>
+
+<h2 id="partida">Una partida a 4 jugadores</h2>
+<figure class="solo"><img src="img/partida4_mapa.jpg" alt="Mapa completo a 4 jugadores">
+<figcaption><b>El mapa completo</b> de una partida Guanches (azul, sur) vs Mahos (rojo, oeste) vs Francos (norte) vs
+Atlantes (púrpura, este), con la niebla revelada. Cada base se reconoce por su arquitectura; el minimapa lleva el color de jugador.</figcaption></figure>
+<div class="quad">
+<figure><img src="img/base_oeste_mahos.jpg" alt="Base maho"><figcaption><b>Base maho</b> — adobe y cúpulas, ribete rojo</figcaption></figure>
+<figure><img src="img/base_este_atlantes.jpg" alt="Base atlante"><figcaption><b>Base atlante</b> — piedra clara escalonada, ribete púrpura</figcaption></figure>
+<figure><img src="img/base_norte_franks.jpg" alt="Base franca"><figcaption><b>Base franca</b> — gabletes de pizarra</figcaption></figure>
+<figure><img src="img/base_sur_guanches.jpg" alt="Base guanche"><figcaption><b>Base guanche</b> — piedra volcánica, ribete azul</figcaption></figure>
+</div>
+
+<h2>Para seguir leyendo</h2>
+<div class="links">
+<ul>
+<li>📖 <a href="../guide_es.md">Guía completa del jugador</a> — lore, héroes, consejos navales, árbol tecnológico (markdown)</li>
+<li>🏛️ <a href="../analysis/civ-gallery/galeria-civilizaciones.html">Galería de civilizaciones</a> — los 20 edificios y el roster de cada civ</li>
+<li>📐 <a href="../analysis/iso-refactor/informe-refactor-isometrico-2026-08-26.html">Informe del refactor isométrico</a> — el antes/después con veredictos de crítica ciega</li>
+</ul>
+Capturas regenerables con <code>tools/screenshot_runner.tscn</code> (<code>CALIMA_CIV</code>, <code>CALIMA_RIVAL_CIV="a,b,c"</code>, <code>CALIMA_MAP</code>, <code>CALIMA_PREVIEW=1</code>).
+</div>
+
+<p class="meta" style="margin-top:32px">Guía visual generada el 26-08-2026 · todo el arte es Polygon2D procedural, original del proyecto.</p>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('theme-toggle');
+  var saved=null;try{saved=localStorage.getItem('guia-theme');}catch(e){}
+  if(!saved&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)saved='dark';
+  if(saved)root.setAttribute('data-theme',saved);
+  function sync(){btn.textContent=root.getAttribute('data-theme')==='dark'?'☀':'☾';}
+  sync();
+  btn.addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('guia-theme',next);}catch(e){}
+    sync();
+  });
+})();
+</script>
+</body>
+</html>

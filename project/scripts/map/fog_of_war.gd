@@ -11,9 +11,15 @@ const STATE_UNEXPLORED: int = 0
 const STATE_EXPLORED: int = 1
 const STATE_VISIBLE: int = 2
 
-const COLOR_UNEXPLORED: Color = Color(0.0, 0.0, 0.0, 1.0)
-const COLOR_EXPLORED: Color = Color(0.0, 0.0, 0.0, 0.6)
-const COLOR_VISIBLE: Color = Color(0.0, 0.0, 0.0, 0.0)
+# One shroud tint for every fog state (only alpha varies): unexplored space,
+# the explored dim layer and the out-of-map void (GameWorld sets the clear
+# colour to SHROUD_RGB) all read as the same night-blue darkness instead of
+# raw black tiles over a light-gray backdrop. The slight blue keeps explored
+# terrain from smearing into muddy dark green.
+const SHROUD_RGB: Color = Color(0.03, 0.04, 0.07)
+const COLOR_UNEXPLORED: Color = Color(SHROUD_RGB.r, SHROUD_RGB.g, SHROUD_RGB.b, 1.0)
+const COLOR_EXPLORED: Color = Color(SHROUD_RGB.r, SHROUD_RGB.g, SHROUD_RGB.b, 0.55)
+const COLOR_VISIBLE: Color = Color(SHROUD_RGB.r, SHROUD_RGB.g, SHROUD_RGB.b, 0.0)
 
 const UPDATE_INTERVAL: float = 0.12
 const EXPLORE_THRESHOLD: int = 350  # cells newly revealed to satisfy tutorial
@@ -49,11 +55,14 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = _texture
 	_sprite.scale = Vector2(CELL_SIZE, CELL_SIZE)
-	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	# Bilinear filtering turns the full-tile sawtooth teeth at the reveal
+	# frontier into a soft one-cell gradient (all states share SHROUD_RGB, so
+	# only alpha interpolates).
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_sprite.centered = false
 	_sprite.position = MAP_ORIGIN
 	add_child(_sprite)
-	z_index = 10
+	z_index = IsoBillboard.Z_FOG
 
 func setup(units: Node, buildings: Node, drop_off: Node, world: Node = null) -> void:
 	_units_node = units
@@ -67,6 +76,9 @@ func reveal_all() -> void:
 	_dirty_cells.fill(1)
 	_render()
 	_sprite.visible = false
+	# Stop ticking or the next tick demotes everything back to EXPLORED and the
+	# minimap re-darkens even though the world fog sprite is hidden.
+	set_process(false)
 	# Make all previously hidden enemy units and buildings visible
 	if is_instance_valid(_units_node):
 		for unit: Node in _units_node.get_children():

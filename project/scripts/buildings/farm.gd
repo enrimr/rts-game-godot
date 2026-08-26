@@ -19,6 +19,11 @@ func _ready() -> void:
 	super._ready()
 	construction_complete.connect(_on_construction_complete)
 
+# A farm is a ground feature: its field plots must stay projected flat on the
+# diamond instead of standing upright like walled buildings.
+func _iso_upright_children() -> Array:
+	return ["NameLabel", "HealthBar", "ConstructionBar", "FoodBar", "PlayerColorStripe"]
+
 func _on_construction_complete() -> void:
 	_remaining = max_food
 	_is_depleted = false

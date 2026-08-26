@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refactor isométrico — Informe final · Calima: Flames of the Atlantic</title>
+<style>
+:root{
+  --bg:#faf8f4; --panel:#ffffff; --ink:#22201c; --muted:#6b675f; --line:#e5e0d6;
+  --accent:#0e7a5f; --accent2:#8a5a12; --lose:#a33326; --win:#0e7a5f;
+}
+[data-theme="dark"]{
+  --bg:#141312; --panel:#1e1c1a; --ink:#ece8e0; --muted:#a29b8e; --line:#33302b;
+  --accent:#4dc3a3; --accent2:#d9a44a; --lose:#e07a6e; --win:#4dc3a3;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,'Segoe UI',Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+header{border-bottom:2px solid var(--line);padding-bottom:20px;margin-bottom:28px}
+h1{font-size:30px;margin:0 0 6px}
+h2{font-size:21px;margin:44px 0 12px;border-bottom:1px solid var(--line);padding-bottom:6px}
+h3{font-size:17px;margin:26px 0 8px}
+.meta{color:var(--muted);font-size:14px}
+.badge{display:inline-block;padding:3px 12px;border-radius:14px;font-size:13px;font-weight:700;margin-right:6px}
+.badge.win{background:var(--win);color:#fff}
+.badge.info{background:var(--accent2);color:#fff}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0 8px}
+@media(max-width:760px){.pair{grid-template-columns:1fr}}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+figure img{width:100%;display:block}
+figcaption{padding:8px 12px;font-size:13px;color:var(--muted)}
+figcaption b{color:var(--ink)}
+.solo{max-width:760px;margin:18px auto}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+blockquote{margin:16px 0;padding:14px 18px;background:var(--panel);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;font-size:15px}
+blockquote .who{display:block;margin-top:8px;color:var(--muted);font-size:13px}
+.gap{color:var(--lose);font-weight:600}
+ol li,ul li{margin:6px 0}
+#theme-toggle{float:right;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px}
+code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:13px}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <button id="theme-toggle">☾</button>
+  <h1>Refactor isométrico — Informe final</h1>
+  <div class="meta">Calima: Flames of the Atlantic · rama <code>feature/isometric</code> · 25–26 de agosto de 2026</div>
+  <p>
+    <span class="badge win">VEREDICTO: GANA EL ISOMÉTRICO</span>
+    <span class="badge info">278/278 tests</span>
+    <span class="badge info">~30 agentes · 11 rondas de crítica ciega</span>
+  </p>
+</header>
+
+<p>El juego se ha convertido de vista cenital a <b>proyección isométrica</b> manteniendo toda la lógica
+cartesiana intacta (proyección a nivel de cámara: rotación 45° + compresión vertical; entidades verticales
+por contra-transformación «billboard»). El trabajo se dividió en piezas juzgables por separado; cada pieza
+la construyó un agente <i>builder</i> y la juzgó un <b>crítico ciego con contexto fresco</b> que ejecutaba el
+juego real (harness <code>tools/screenshot_runner.tscn</code>, semilla fija) y comparaba capturas etiquetadas
+A/B sin saber cuál era cuál, con el lenguaje visual de los RTS isométricos clásicos como listón. Si la nueva
+versión perdía, el crítico nombraba <b>el mayor hueco</b> y el builder volvía a entrar. Todo el arte es
+procedural y original del proyecto.</p>
+
+<h2>El antes y el después</h2>
+
+<div class="pair">
+  <figure><img src="img/old_02_tc_medium.jpg" alt="Antes: vista cenital"><figcaption><b>ANTES</b> — top-down: TC de fachada plana, árboles-pegote, mapa circular flotando en negro.</figcaption></figure>
+  <figure><img src="img/new_02_tc_medium.jpg" alt="Después: vista isométrica"><figcaption><b>DESPUÉS</b> — isométrico: TC volumétrico (muros sombreados, tejado, torretas), figuras de pie con herramientas, montaña con falda de roca, niebla con gradiente, minimapa enmarcado.</figcaption></figure>
+</div>
+<div class="pair">
+  <figure><img src="img/old_01_tc_close.jpg" alt="Antes: primer plano"><figcaption><b>ANTES</b> — primer plano del TC.</figcaption></figure>
+  <figure><img src="img/new_01_tc_close.jpg" alt="Después: primer plano"><figcaption><b>DESPUÉS</b> — primer plano: anclaje al suelo, sombras de contacto, ribete de color de jugador en la huella.</figcaption></figure>
+</div>
+<div class="pair">
+  <figure><img src="img/old_03_overview.jpg" alt="Antes: vista general"><figcaption><b>ANTES</b> — vista general.</figcaption></figure>
+  <figure><img src="img/new_03_overview.jpg" alt="Después: vista general"><figcaption><b>DESPUÉS</b> — el mapa como rombo 2:1 legible con variedad de biomas; indicador de cámara en rombo en el minimapa.</figcaption></figure>
+</div>
+<div class="pair">
+  <figure><img src="img/old_04_tc_late.jpg" alt="Antes: partida avanzada"><figcaption><b>ANTES</b> — partida avanzada.</figcaption></figure>
+  <figure><img src="img/new_04_tc_late.jpg" alt="Después: partida avanzada"><figcaption><b>DESPUÉS</b> — partida avanzada: aldeanos repartidos (offsets desproyectados), sin anillos de selección en unidades no seleccionadas.</figcaption></figure>
+</div>
+
+<h2>Cómo evolucionó dentro de una pieza (P0, la proyección)</h2>
+<div class="pair">
+  <figure><img src="img/round_p0r1.jpg" alt="P0 ronda 1"><figcaption><b>P0 · ronda 1 — el crítico la RECHAZÓ</b>: «todo aplastado contra el suelo; el TC se lee como una losa y los árboles como tortitas».</figcaption></figure>
+  <figure><img src="img/round_p0r3.jpg" alt="P0 ronda 3"><figcaption><b>P0 · ronda 3 — APROBADA</b>: entidades de pie sobre el plano proyectado; «B gana en todas las tomas».</figcaption></figure>
+</div>
+
+<h2>Zonas que ningún A/B podía cubrir</h2>
+<div class="pair">
+  <figure><img src="img/new_islands.jpg" alt="Mapa de islas"><figcaption><b>Islas</b> — costas arenosas redondeadas con espuma; oleaje direccional tras el retoque del shader (82/18 oleaje/rizo).</figcaption></figure>
+  <figure><img src="img/new_preview.jpg" alt="Preview de colocación"><figcaption><b>Preview de colocación</b> — fantasma translúcido del Cuartel + huella en rombo verde + rejilla de snap de 16 px como diamantes (modo <code>CALIMA_PREVIEW=1</code> del harness).</figcaption></figure>
+</div>
+<div class="solo">
+  <figure><img src="img/new_islands_close.jpg" alt="Islas primer plano"><figcaption><b>Islas, primer plano</b> — frontera de niebla suave y unificada también sobre el agua.</figcaption></figure>
+</div>
+
+<h2>El veredicto del crítico ciego final</h2>
+<blockquote>
+«El set A muestra una escena genuinamente isométrica — TC volumétrico con tejado, torres y banderas; figuras
+ancladas con herramientas; explorador montado; ciervos y ovejas; frontera de niebla con gradiente suave que
+funde en un único color de vacío. El otro set es un prototipo plano: un TC de cartón de frente, unidades-pegote
+diminutas, bordes de niebla en bloques. […] A es, sin ambigüedad, la build que elegiría un jugador de RTS de la
+era clásica; sus huecos restantes son mobiliario de HUD y pulido de textura, no estructura.»
+<span class="who">— Crítico ciego de confirmación (contexto fresco, sin acceso a resúmenes ni historial), 26-08-2026. Veredicto idéntico al del primer crítico de experiencia completa.</span>
+</blockquote>
+
+<h2>Cronología de rondas y veredictos</h2>
+<table>
+<tr><th>Fase</th><th>Rondas</th><th>Resultado</th><th>Hueco que nombró el crítico al cerrar</th></tr>
+<tr><td><b>P0</b> Proyección de cámara</td><td>3</td><td>✅ (perdió 2 antes de ganar)</td><td>Edificios como fachadas planas → P2</td></tr>
+<tr><td><b>S1</b> Alisador (3 mapas)</td><td>1</td><td>✅ 5 incoherencias arregladas</td><td>Sombras, ovejas azules, rect. de cámara, mástil rally, «0%»</td></tr>
+<tr><td><b>P1</b> Unidades</td><td>1</td><td>✅</td><td>Elipse de selección siempre visible («ovejas en charcos»)</td></tr>
+<tr><td><b>P2</b> Edificios volumétricos</td><td>1</td><td>✅</td><td>TC sin anclaje al suelo; franja drop-off atraviesa muro</td></tr>
+<tr><td><b>P3</b> Terreno</td><td>1</td><td>✅</td><td>Hierba plana, «manchas de aceituna»</td></tr>
+<tr><td><b>P4</b> HUD/minimapa</td><td>2</td><td>✅ (1ª ronda: empate)</td><td>Contenido del minimapa sin llenar su panel</td></tr>
+<tr><td><b>Merge</b> P1–P4</td><td>—</td><td>✅ 1 conflicto (página de progreso)</td><td>—</td></tr>
+<tr><td><b>S2b</b> Alisador final</td><td>1</td><td>✅ 8 huecos cerrados (1 parcial)</td><td>—</td></tr>
+<tr><td><b>Final</b> Crítico de confirmación</td><td>2×</td><td>✅ <b>GANA el isométrico</b></td><td>HUD inferior vacío (mobiliario de UI)</td></tr>
+</table>
+
+<h2>Huecos restantes (pulido, no estructura)</h2>
+<ol>
+<li><span class="gap">HUD inferior</span> — franja negra casi vacía; pide barra de comandos clásica (retratos, panel de acciones con textura). Preexistente al refactor.</li>
+<li>Nameplates de edificios siempre visibles (deberían aparecer solo al seleccionar).</li>
+<li>Tiling de hierba en rombos algo repetitivo («damero») — bajar contraste.</li>
+<li>Agua en mar abierto con ruido a lo lejos; el agua se corta en seco en la frontera de niebla.</li>
+<li>Aldeanos se solapan al recolectar el mismo nodo (espaciado de pathfinding — aplazado con nota).</li>
+</ol>
+
+<div class="note">
+<b>Estado del repo</b>: rama <code>feature/isometric</code>, 37+ commits por delante de <code>main</code>, sin mergear
+ni pushear; ramas de pieza <code>iso/p1..p4</code> conservadas. Registro completo de rondas en
+<code>docs/analysis/iso-progress.md</code>. Reproducción de capturas:
+<code>CALIMA_SHOT_DIR=… CALIMA_SEED=42 [CALIMA_MAP=4|CALIMA_PREVIEW=1] godot --path project --resolution 1600x900 res://tools/screenshot_runner.tscn</code>.
+Nota: el rewrite del terreno cambió el consumo del RNG — la semilla 42 genera hoy un layout distinto (igual de válido) al de las primeras rondas.
+</div>
+
+<p class="meta" style="margin-top:36px">Informe generado por el orquestador del refactor · builders, críticos ciegos y alisadores con contexto fresco · todo el arte es procedural y original del proyecto.</p>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('theme-toggle');
+  var saved=null;try{saved=localStorage.getItem('iso-theme');}catch(e){}
+  if(!saved&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)saved='dark';
+  if(saved)root.setAttribute('data-theme',saved);
+  function sync(){btn.textContent=root.getAttribute('data-theme')==='dark'?'☀':'☾';}
+  sync();
+  btn.addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('iso-theme',next);}catch(e){}
+    sync();
+  });
+})();
+</script>
+</body>
+</html>

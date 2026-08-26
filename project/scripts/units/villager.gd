@@ -61,16 +61,18 @@ const BOARD_APPROACH_RANGE: float = 60.0
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
+	UnitDress.apply.call_deferred(self, player_id)
 	if is_instance_valid(_tool_poly):
 		_tool_base_pos = _tool_poly.position
 
 # Narrower player-colour stripe placed at the villager's feet so it doesn't
 # cover the redesigned body (the base 20 px stripe sat across the waist).
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 12.0, 11.0)
+	VisualFx.add_ground_plinth(self, player_id, 7.0, 10.0)
 
 func _process(delta: float) -> void:
 	_anim_time += delta
+	IsoBillboard.update_depth(self)
 	_animate_body(delta)
 
 func _animate_body(_delta: float) -> void:
@@ -86,7 +88,7 @@ func _animate_body(_delta: float) -> void:
 			# Chop: body leans forward/back (rotation), tool swings down, no position drift
 			var chop: float = sin(t * TAU * 2.5)
 			_body_node.position.x = 0.0
-			_body_node.rotation = chop * 0.18
+			_body_node.rotation = IsoBillboard.UPRIGHT_ROTATION + chop * 0.18
 			if is_instance_valid(_tool_poly):
 				_tool_poly.position = _tool_base_pos
 				_tool_poly.rotation = -chop * 0.55
@@ -96,7 +98,7 @@ func _animate_body(_delta: float) -> void:
 			# Hammer: faster forward lean, tool pivots hard, no position drift
 			var hammer: float = sin(t * TAU * 3.0)
 			_body_node.position.x = 0.0
-			_body_node.rotation = hammer * 0.14
+			_body_node.rotation = IsoBillboard.UPRIGHT_ROTATION + hammer * 0.14
 			if is_instance_valid(_tool_poly):
 				_tool_poly.position = _tool_base_pos
 				_tool_poly.rotation = -hammer * 0.70
@@ -105,7 +107,7 @@ func _animate_body(_delta: float) -> void:
 		UnitState.MOVING, UnitState.RETURNING:
 			# Walk: side-to-side shuffle (position.x) + head bob, no rotation
 			var walk: float = sin(t * TAU * 2.8)
-			_body_node.rotation = 0.0
+			_body_node.rotation = IsoBillboard.UPRIGHT_ROTATION
 			_body_node.position.x = walk * 2.5
 			if is_instance_valid(_head_poly):
 				_head_poly.position.y = abs(walk) * -1.5
@@ -116,7 +118,7 @@ func _animate_body(_delta: float) -> void:
 		UnitState.ATTACKING:
 			var swing: float = sin(t * TAU * 4.0)
 			_body_node.position.x = 0.0
-			_body_node.rotation = swing * 0.20
+			_body_node.rotation = IsoBillboard.UPRIGHT_ROTATION + swing * 0.20
 			if is_instance_valid(_tool_poly):
 				_tool_poly.position = _tool_base_pos
 				_tool_poly.rotation = -swing * 0.60
@@ -126,7 +128,7 @@ func _animate_body(_delta: float) -> void:
 			# Idle: very slow breathing sway
 			var idle: float = sin(t * TAU * 0.5)
 			_body_node.position.x = 0.0
-			_body_node.rotation = idle * 0.03
+			_body_node.rotation = IsoBillboard.UPRIGHT_ROTATION + idle * 0.03
 			if is_instance_valid(_head_poly):
 				_head_poly.position.y = idle * -0.5
 				_head_poly.rotation = 0.0
@@ -747,10 +749,11 @@ func _update_villager_orientation(body: Node) -> void:
 			target_pos = global_position + velocity.normalized() * 10.0
 			has_target = true
 
-	# Flip body horizontally based on target direction
+	# Flip based on the SCREEN-projected direction (see UnitBase note: world +x
+	# is a screen diagonal under the rotated camera).
 	if has_target:
-		var direction: float = target_pos.x - global_position.x
-		if abs(direction) > 5.0:  # Dead zone to prevent flickering
+		var direction: float = IsoProjection.world_to_screen(target_pos - global_position).x
+		if absf(direction) > 3.5:  # Dead zone to prevent flickering
 			var new_scale_x: float = -1.0 if direction < 0.0 else 1.0
 			# Handle both Node2D and Control types
 			if body is Node2D:

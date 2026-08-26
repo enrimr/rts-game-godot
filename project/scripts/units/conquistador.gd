@@ -24,7 +24,7 @@ func _ready() -> void:
 
 # Stripe + shadow sized for the warhorse footprint.
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 20.0, 14.0)
+	VisualFx.add_ground_plinth(self, player_id, 11.0, 13.0)
 
 func _add_ground_shadow() -> void:
 	VisualFx.add_ground_shadow(self, 16.0, 5.0, 12.0)

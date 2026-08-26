@@ -41,17 +41,22 @@ void fragment() {
 				+ sin((p.x + p.y) * 2.1 - t * 1.3) * 0.30
 				+ sin((p.x - p.y) * 4.3 + t * 0.7) * 0.20;
 
-	// Higher-frequency drifting ripples from value noise.
-	float ripple = value_noise(p * 6.0 + vec2(t * 0.6, -t * 0.4));
+	// Drifting ripples from value noise, stretched along the swell direction so
+	// they break the bands up without dissolving them into speckle.
+	float ripple = value_noise(vec2(p.x * 2.2, p.y * 5.0) + vec2(t * 0.6, -t * 0.4));
 
 	float h = swell * 0.5 + 0.5;
-	h = clamp(h * 0.7 + ripple * 0.3, 0.0, 1.0);
+	// Swell-dominant mix: the directional bands must survive the noise or the
+	// ocean reads as static speckle instead of rolling waves.
+	h = clamp(h * 0.82 + ripple * 0.18, 0.0, 1.0);
 
 	vec3 col = mix(water_deep.rgb, water_shallow.rgb, h);
 
-	// Foam: bright crests where swell+ripple peaks exceed a threshold.
-	float crest = smoothstep(1.0 - foam_amount, 1.0, h + ripple * 0.25);
+	// Foam: bright crests hugging the top of the swell bands.
+	float crest = smoothstep(1.0 - foam_amount, 1.0, h + ripple * 0.10);
 	col = mix(col, foam_color.rgb, crest * 0.6);
 
-	COLOR = vec4(col, 1.0);
+	// Preserve the polygon's own alpha so translucent sheets (shallow-water
+	// shelves layered over the deep ocean) blend instead of cutting hard.
+	COLOR = vec4(col, COLOR.a);
 }

@@ -107,6 +107,11 @@ var _selected_units: Array[Node] = []
 var _selected_building: Node = null
 var _selected_node: Node = null
 var _drag_start: Vector2 = Vector2.ZERO
+# Screen-space anchor of the drag: the band the player draws is a plain 2D
+# rectangle on the screen; world membership is tested by projecting units
+# into screen space (never by an axis-aligned world rect, which the iso
+# camera would render as a parallelogram).
+var _drag_start_screen: Vector2 = Vector2.ZERO
 var _dragging: bool = false
 var _last_click_time: float = -1.0
 var _last_click_unit_script: Script = null
@@ -130,6 +135,13 @@ var _ghost: Node2D = null
 var _ghost_rotation: float = 0.0
 var _ghost_shape_cached: RectangleShape2D = null
 var _ghost_params_cached: PhysicsShapeQueryParameters2D = null
+var _ghost_footprint: Node2D = null
+
+const PLACEMENT_OK_FILL: Color = Color(0.35, 1.0, 0.45, 0.22)
+const PLACEMENT_OK_LINE: Color = Color(0.45, 1.0, 0.55, 0.9)
+const PLACEMENT_BAD_FILL: Color = Color(1.0, 0.25, 0.2, 0.28)
+const PLACEMENT_BAD_LINE: Color = Color(1.0, 0.35, 0.3, 0.9)
+const PLACEMENT_GRID_LINE: Color = Color(1.0, 1.0, 1.0, 0.18)
 
 # Wall drag placement state
 var _wall_drag_active: bool = false
@@ -154,6 +166,9 @@ var _drag_overlay: Node2D = null
 
 func _ready() -> void:
 	add_to_group("world")
+	# Isometric projection lives entirely in the camera; the scene's zoom.x is
+	# kept as the starting user zoom. Game logic below stays cartesian.
+	IsoProjection.apply_to_camera(camera, IsoProjection.user_zoom_from(camera.zoom))
 	_create_player_town_center()
 	# Init all players — for a load, SaveManager will overwrite afterwards
 	var starting_res: Dictionary = MatchConfig.get_starting_resources()
@@ -174,7 +189,13 @@ func _ready() -> void:
 		_rng.seed = SaveManager.get_saved_rng_seed()
 		_saved_rng_seed = _rng.seed
 	else:
-		_rng.randomize()
+		# Tooling hook: a fixed seed makes visual-review runs reproducible
+		# (see tools/screenshot_runner.gd).
+		var env_seed: String = OS.get_environment("CALIMA_SEED")
+		if not env_seed.is_empty():
+			_rng.seed = int(env_seed)
+		else:
+			_rng.randomize()
 		_saved_rng_seed = _rng.seed
 
 	_setup_ambient_lighting()
@@ -203,7 +224,7 @@ func _ready() -> void:
 		for i: int in range(3):
 			var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
 			units_layer.add_child(v)
-			v.global_position = drop_off.global_position + Vector2(i * 40 - 40, 60.0)
+			v.global_position = drop_off.global_position + _starting_villager_offset(i)
 			v.set("player_id", 0)
 			v.set("civ_id", MatchConfig.player_civ_id)
 			PopulationManager.add_unit(0)
@@ -246,6 +267,10 @@ func _ready() -> void:
 		_following = false
 		_order_move_all(p)
 	)
+	# HUD-side camera controls (minimap click, dpad) emit this so their pans
+	# are not undone by the per-frame follow re-centre. Re-entrant no-op when
+	# this node is itself the emitter.
+	EventBus.camera_follow_cancelled.connect(func() -> void: _following = false)
 	EventBus.unit_selected.connect(_on_unit_selected_follow)
 	SelectionManager.selection_changed.connect(_on_selection_manager_changed)
 	EventBus.tutorial_spawn_enemy_scout.connect(_on_tutorial_spawn_enemy_scout)
@@ -263,7 +288,7 @@ func _ready() -> void:
 		minimap.fog = _fog
 
 	_drag_overlay = _DragOverlay.new()
-	_drag_overlay.z_index = 20
+	_drag_overlay.z_index = IsoBillboard.Z_DRAG_SELECT
 	add_child(_drag_overlay)
 
 	var weather_overlay: Node2D = load("res://scripts/ui/weather_overlay.gd").new() as Node2D
@@ -292,6 +317,9 @@ func _ready() -> void:
 ## Adds a per-map-type ambient colour wash (CanvasModulate) and a full-screen
 ## vignette. Both are subtle — they tint and frame the scene without obscuring it.
 func _setup_ambient_lighting() -> void:
+	# Out-of-map void matches the unexplored fog shroud — one consistent
+	# darkness instead of the engine-default light-gray backdrop.
+	RenderingServer.set_default_clear_color(FogOfWar.SHROUD_RGB)
 	var ambient: Color = Color(1.0, 1.0, 1.0, 1.0)
 	match MatchConfig.map_type:
 		MatchConfig.MapType.DESERT_COAST:
@@ -477,7 +505,7 @@ func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	for i: int in range(3):
 		var v: CharacterBody2D = VILLAGER_SCENE.instantiate()
 		units_layer.add_child(v)
-		v.global_position = tc.global_position + Vector2(i * 40 - 40, 60.0)
+		v.global_position = tc.global_position + _starting_villager_offset(i)
 		v.set("player_id", rival_id)
 		v.set("civ_id", rival_civ)
 		PopulationManager.add_unit(rival_id)
@@ -503,6 +531,17 @@ func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	ai.set("enemy_town_center", drop_off)
 
 	_spawn_hero(rival_id, tc_pos)
+
+# Starting-villager offsets are planned in SCREEN space and unprojected: the
+# old straight world row (i*40) projected onto the squashed diagonal, so the
+# figures half-overlapped in front of the TC.
+const _STARTING_VILLAGER_SCREEN_OFFSETS: Array[Vector2] = [
+	Vector2(-55.0, 38.0), Vector2(0.0, 52.0), Vector2(55.0, 38.0),
+]
+
+func _starting_villager_offset(i: int) -> Vector2:
+	var idx: int = clampi(i, 0, _STARTING_VILLAGER_SCREEN_OFFSETS.size() - 1)
+	return IsoProjection.screen_to_world(_STARTING_VILLAGER_SCREEN_OFFSETS[idx])
 
 func _on_building_destroyed_check_victory(building: Node, owner_id: int) -> void:
 	if building is Wonder:
@@ -647,21 +686,30 @@ func _process(delta: float) -> void:
 		if _placing_id in OCEAN_BUILDINGS:
 			terrain_ok = TerrainManager.is_ocean(mouse_pos) and not _placement_overlaps(mouse_pos)
 		_ghost.modulate = Color(1.0, 1.0, 1.0, 0.5) if terrain_ok else Color(1.0, 0.2, 0.2, 0.5)
+		if is_instance_valid(_ghost_footprint):
+			_ghost_footprint.visible = _ghost.visible
+			_ghost_footprint.global_position = mouse_pos
+			_ghost_footprint.rotation = _ghost_rotation
+			_tint_placement_footprint(terrain_ok)
 	if _wall_drag_active:
 		_update_wall_drag_preview(_snap_wall(get_global_mouse_position()))
 	if is_instance_valid(_drag_overlay):
 		var overlay: _DragOverlay = _drag_overlay as _DragOverlay
 		overlay.active = _dragging
 		if _dragging:
-			overlay.drag_rect = Rect2(_drag_start, Vector2.ZERO).expand(get_global_mouse_position())
+			overlay.drag_rect = Rect2(_drag_start_screen, Vector2.ZERO) \
+				.expand(get_viewport().get_mouse_position())
 		overlay.queue_redraw()
 
 class _DragOverlay extends Node2D:
-	var drag_rect: Rect2 = Rect2()
+	var drag_rect: Rect2 = Rect2()   # screen-space (viewport) coordinates
 	var active: bool = false
 	func _draw() -> void:
 		if not active:
 			return
+		# Cancel the iso camera transform so the band is a plain screen-space
+		# rectangle, like any classic RTS (same trick as weather_overlay).
+		draw_set_transform_matrix(get_canvas_transform().affine_inverse())
 		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.18), true)
 		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.75), false, 1.5)
 
@@ -671,11 +719,19 @@ class _FlashMarker extends Node2D:
 		set(v):
 			flash_t = v
 			queue_redraw()
+	# Drawn in world space on purpose: the iso camera turns the circle into a
+	# 2:1 ground ellipse and the world-axis square into the classic ground
+	# diamond, so the order marker reads as lying flat on the terrain.
 	func _draw() -> void:
 		var radius: float = 10.0 + flash_t * 10.0
 		var alpha: float = (1.0 - flash_t) * 0.85
-		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 24,
-			Color(flash_color.r, flash_color.g, flash_color.b, alpha), 2.0)
+		var col: Color = Color(flash_color.r, flash_color.g, flash_color.b, alpha)
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 24, col, 2.0)
+		var d: float = maxf(2.0, radius * (1.0 - flash_t) * 0.7)
+		var diamond: PackedVector2Array = PackedVector2Array([
+			Vector2(-d, -d), Vector2(d, -d), Vector2(d, d), Vector2(-d, d), Vector2(-d, -d),
+		])
+		draw_polyline(diamond, col, 1.5)
 
 func _handle_follow() -> void:
 	if not _following or _selected_units.is_empty():
@@ -741,7 +797,7 @@ func _handle_camera(delta: float) -> void:
 		if _following:
 			_following = false
 			EventBus.camera_follow_cancelled.emit()
-		camera.position += dir.normalized() * CAMERA_SPEED * delta
+		camera.position += IsoProjection.screen_dir_to_world(dir) * CAMERA_SPEED * delta
 		if not _camera_moved_emitted:
 			_camera_moved_emitted = true
 			EventBus.camera_moved.emit()
@@ -790,7 +846,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseMotion and _panning:
 		var motion: InputEventMouseMotion = event as InputEventMouseMotion
-		camera.position -= motion.relative / camera.zoom.x
+		camera.position -= IsoProjection.screen_delta_to_world(motion.relative, camera.zoom)
 		get_viewport().set_input_as_handled()
 		if not _camera_moved_emitted:
 			_camera_moved_emitted = true
@@ -846,34 +902,35 @@ func _unhandled_input(event: InputEvent) -> void:
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_drag_start = get_global_mouse_position()
+				_drag_start_screen = get_viewport().get_mouse_position()
 				_dragging = true
 			else:
 				if _dragging:
 					_dragging = false
-					_finish_selection(get_global_mouse_position())
+					_finish_selection()
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_handle_right_click(get_global_mouse_position())
 
 func _zoom(step: float) -> void:
-	camera.zoom = (camera.zoom + Vector2(step, step)).clamp(
-		Vector2(CAMERA_ZOOM_MIN, CAMERA_ZOOM_MIN),
-		Vector2(CAMERA_ZOOM_MAX, CAMERA_ZOOM_MAX))
+	set_zoom(get_zoom() + step)
 
 func get_zoom() -> float:
-	return camera.zoom.x
+	return IsoProjection.user_zoom_from(camera.zoom)
 
 func set_zoom(value: float) -> void:
-	camera.zoom = Vector2(value, value).clamp(
-		Vector2(CAMERA_ZOOM_MIN, CAMERA_ZOOM_MIN),
-		Vector2(CAMERA_ZOOM_MAX, CAMERA_ZOOM_MAX))
+	camera.zoom = IsoProjection.camera_zoom(
+		clampf(value, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX))
 
 # --- Selection ---
 
 const BUILDING_CLICK_RADIUS: float = 40.0
 
-func _finish_selection(release_pos: Vector2) -> void:
-	var rect: Rect2 = Rect2(_drag_start, Vector2.ZERO).expand(release_pos)
-	var is_click: bool = rect.get_area() < 10.0
+func _finish_selection() -> void:
+	# The band lives in screen space; a small screen area is a click regardless
+	# of the current zoom (a world-space area threshold was zoom-dependent).
+	var screen_rect: Rect2 = Rect2(_drag_start_screen, Vector2.ZERO) \
+		.expand(get_viewport().get_mouse_position())
+	var is_click: bool = screen_rect.get_area() < 25.0
 
 	for sel: Node in _selected_units:
 		if is_instance_valid(sel):
@@ -978,21 +1035,23 @@ func _finish_selection(release_pos: Vector2) -> void:
 			_selected_node = enemy_building
 			return
 	else:
-		# Drag: select all friendly units and owned animals inside the rectangle
+		# Drag: select all friendly units and owned animals whose projected
+		# screen position falls inside the screen-space band.
+		var to_screen: Transform2D = get_viewport().get_canvas_transform()
 		for unit: Node in units_layer.get_children():
 			if not is_instance_valid(unit):
 				continue
 			if unit is Animal:
 				var animal: Animal = unit as Animal
 				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
-					if rect.has_point((unit as Node2D).global_position):
+					if screen_rect.has_point(to_screen * (unit as Node2D).global_position):
 						animal.set_selected(true)
 						_selected_units.append(animal)
 				continue
 			var pid: Variant = unit.get("player_id")
 			if pid == null or (pid as int) != 0:
 				continue
-			if rect.has_point((unit as Node2D).global_position):
+			if screen_rect.has_point(to_screen * (unit as Node2D).global_position):
 				unit.set_selected(true)
 				_selected_units.append(unit)
 
@@ -1535,6 +1594,63 @@ func _start_placement(building_id: String) -> void:
 	_ghost_params_cached.shape = _ghost_shape_cached
 	_ghost_params_cached.collision_mask = 1
 
+	# Sibling of the ghost so its validity colours are not multiplied by the
+	# ghost's red/white modulate. World-space geometry: the camera projection
+	# renders it as the footprint ground diamond plus the 16 px snap lattice.
+	_ghost_footprint = _make_placement_footprint(
+		_ghost_shape_cached.size if _ghost_shape_cached != null
+		else Vector2(PlacementGrid.CELL_SIZE, PlacementGrid.CELL_SIZE))
+	buildings_layer.add_child(_ghost_footprint)
+
+# Ground footprint indicator for the placement ghost: a filled rect with an
+# outline and internal grid lines every placement cell, all in world space so
+# they project onto the terrain as 2:1 diamonds.
+func _make_placement_footprint(size: Vector2) -> Node2D:
+	var root: Node2D = Node2D.new()
+	root.name = "PlacementFootprint"
+	root.z_index = 5
+	var half: Vector2 = size * 0.5
+	var fill: Polygon2D = Polygon2D.new()
+	fill.name = "Fill"
+	fill.polygon = PackedVector2Array([
+		Vector2(-half.x, -half.y), Vector2(half.x, -half.y),
+		Vector2(half.x, half.y), Vector2(-half.x, half.y),
+	])
+	fill.color = PLACEMENT_OK_FILL
+	root.add_child(fill)
+	var cell: float = PlacementGrid.CELL_SIZE
+	var gx: float = -half.x + cell
+	while gx < half.x - 0.5:
+		root.add_child(_grid_line(Vector2(gx, -half.y), Vector2(gx, half.y)))
+		gx += cell
+	var gy: float = -half.y + cell
+	while gy < half.y - 0.5:
+		root.add_child(_grid_line(Vector2(-half.x, gy), Vector2(half.x, gy)))
+		gy += cell
+	var outline: Line2D = Line2D.new()
+	outline.name = "Outline"
+	outline.width = 1.5
+	outline.default_color = PLACEMENT_OK_LINE
+	outline.closed = true
+	outline.points = fill.polygon
+	root.add_child(outline)
+	return root
+
+func _grid_line(from: Vector2, to: Vector2) -> Line2D:
+	var line: Line2D = Line2D.new()
+	line.width = 1.0
+	line.default_color = PLACEMENT_GRID_LINE
+	line.points = PackedVector2Array([from, to])
+	return line
+
+func _tint_placement_footprint(ok: bool) -> void:
+	var fill: Polygon2D = _ghost_footprint.get_node_or_null("Fill") as Polygon2D
+	if fill != null:
+		fill.color = PLACEMENT_OK_FILL if ok else PLACEMENT_BAD_FILL
+	var outline: Line2D = _ghost_footprint.get_node_or_null("Outline") as Line2D
+	if outline != null:
+		outline.default_color = PLACEMENT_OK_LINE if ok else PLACEMENT_BAD_LINE
+
 # Snap a placement position to the building grid, sized to the ghost footprint
 # so edges stay flush with the lattice. Hold Alt for free (continuous) placement.
 func _snap_placement(world_pos: Vector2) -> Vector2:
@@ -1643,6 +1759,9 @@ func _cancel_placement() -> void:
 	if is_instance_valid(_ghost):
 		_ghost.queue_free()
 	_ghost = null
+	if is_instance_valid(_ghost_footprint):
+		_ghost_footprint.queue_free()
+	_ghost_footprint = null
 	_ghost_shape_cached = null
 	_ghost_params_cached = null
 	_wall_drag_active = false
@@ -1670,15 +1789,24 @@ func _update_wall_drag_preview(end_pos: Vector2) -> void:
 	const WALL_STEP: float = 16.0
 	var positions: Array[Vector2] = _wall_segment_positions(_wall_drag_start, end_pos, WALL_STEP)
 
+	# World-space cell squares: the camera projection renders each one as a
+	# 16 px ground diamond of the snap lattice.
+	var cell_pts: PackedVector2Array = PackedVector2Array([
+		Vector2(-8.0, -8.0), Vector2(8.0, -8.0), Vector2(8.0, 8.0), Vector2(-8.0, 8.0),
+	])
 	for pos: Vector2 in positions:
 		var ghost: Node2D = Node2D.new()
 		ghost.global_position = pos
-		var rect: ColorRect = ColorRect.new()
-		rect.size = Vector2(16.0, 16.0)
-		rect.position = Vector2(-8.0, -8.0)
-		rect.color = Color(0.4, 0.7, 1.0, 0.45)
-		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ghost.add_child(rect)
+		var cell: Polygon2D = Polygon2D.new()
+		cell.polygon = cell_pts
+		cell.color = Color(0.4, 0.7, 1.0, 0.4)
+		ghost.add_child(cell)
+		var rim: Line2D = Line2D.new()
+		rim.width = 1.0
+		rim.closed = true
+		rim.default_color = Color(0.6, 0.85, 1.0, 0.8)
+		rim.points = cell_pts
+		ghost.add_child(rim)
 		ghost.z_index = 5
 		buildings_layer.add_child(ghost)
 		_wall_ghosts.append(ghost)

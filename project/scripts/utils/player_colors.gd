@@ -13,10 +13,41 @@ const COLORS: Array[Color] = [
 
 const FALLBACK: Color = Color(0.7, 0.7, 0.7, 1.0)
 
+# Outward offset of the iso ownership trim from the footprint edges (world px).
+const TRIM_OFF: float = 4.5
+
 static func get_color(player_id: int) -> Color:
 	if player_id >= 0 and player_id < COLORS.size():
 		return COLORS[player_id]
 	return FALLBACK
+
+## Ground-projected ownership trim for iso-massed buildings: a team-colour
+## line laid flat in WORLD space just outside the footprint's two camera-facing
+## edges (+y and +x sides), so the projection renders it as an L along the
+## near edges of the ground diamond. Replaces the screen-space ColorRect
+## stripe, which cut horizontally through the lower wall corner. Idempotent:
+## re-calling recolours the existing trim.
+static func apply_iso_ownership_trim(parent_node: Node2D, player_id: int, half: Vector2) -> void:
+	var existing: Node = parent_node.get_node_or_null("PlayerColorStripe")
+	if existing is Line2D:
+		(existing as Line2D).default_color = get_color(player_id)
+		return
+	if existing != null:
+		existing.name = "PlayerColorStripeOld"
+		existing.queue_free()
+	var trim: Line2D = Line2D.new()
+	trim.name = "PlayerColorStripe"
+	trim.width = 4.5
+	trim.default_color = get_color(player_id)
+	trim.z_index = -1
+	trim.joint_mode = Line2D.LINE_JOINT_ROUND
+	trim.points = PackedVector2Array([
+		Vector2(-half.x - TRIM_OFF * 0.5, half.y + TRIM_OFF),
+		Vector2(half.x + TRIM_OFF, half.y + TRIM_OFF),
+		Vector2(half.x + TRIM_OFF, -half.y - TRIM_OFF * 0.5),
+	])
+	trim.set_meta(IsoBillboard.META_GROUND, true)
+	parent_node.add_child(trim)
 
 ## Adds a 4-px colored stripe at the bottom of `parent_node`.
 ## Must be called after `parent_node` is inside the scene tree.

@@ -16,69 +16,7 @@ building_data = ExtResource("2_data")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_1")
 
-[node name="Body" type="ColorRect" parent="."]
-offset_left = -40.0
-offset_top = -10.0
-offset_right = 40.0
-offset_bottom = 10.0
-color = Color(0.45, 0.32, 0.14, 1.0)
-mouse_filter = 2
-
-[node name="Planks" type="Polygon2D" parent="Body"]
-color = Color(0.36, 0.25, 0.10, 1.0)
-polygon = PackedVector2Array(38, 0, 42, 0, 42, 20, 38, 20)
-
-[node name="Planks2" type="Polygon2D" parent="Body"]
-color = Color(0.36, 0.25, 0.10, 1.0)
-polygon = PackedVector2Array(58, 0, 62, 0, 62, 20, 58, 20)
-
-[node name="TeamFlagPoleL" type="Polygon2D" parent="Body"]
-color = Color(0.3, 0.22, 0.12, 1.0)
-polygon = PackedVector2Array(3, -12, 5, -12, 5, -26, 3, -26)
-
-[node name="TeamPennantL" type="Polygon2D" parent="Body"]
-color = Color(1, 1, 1, 1)
-polygon = PackedVector2Array(5, -26, 14, -23, 5, -19)
-
-[node name="TeamFlagPoleR" type="Polygon2D" parent="Body"]
-color = Color(0.3, 0.22, 0.12, 1.0)
-polygon = PackedVector2Array(75, -12, 77, -12, 77, -26, 75, -26)
-
-[node name="TeamPennantR" type="Polygon2D" parent="Body"]
-color = Color(1, 1, 1, 1)
-polygon = PackedVector2Array(75, -26, 66, -23, 75, -19)
-
-[node name="Towers" type="ColorRect" parent="."]
-offset_left = -40.0
-offset_top = -22.0
-offset_right = -26.0
-offset_bottom = 10.0
-color = Color(0.55, 0.53, 0.50, 1.0)
-mouse_filter = 2
-
-[node name="TowerShade" type="ColorRect" parent="."]
-offset_left = -40.0
-offset_top = 4.0
-offset_right = -26.0
-offset_bottom = 10.0
-color = Color(0.45, 0.43, 0.40, 1.0)
-mouse_filter = 2
-
-[node name="Towers2" type="ColorRect" parent="."]
-offset_left = 26.0
-offset_top = -22.0
-offset_right = 40.0
-offset_bottom = 10.0
-color = Color(0.55, 0.53, 0.50, 1.0)
-mouse_filter = 2
-
-[node name="TowerShade2" type="ColorRect" parent="."]
-offset_left = 26.0
-offset_top = 4.0
-offset_right = 40.0
-offset_bottom = 10.0
-color = Color(0.45, 0.43, 0.40, 1.0)
-mouse_filter = 2
+[node name="Body" type="Node2D" parent="."]
 
 [node name="StateLabel" type="Label" parent="."]
 offset_left = -40.0
@@ -109,7 +47,7 @@ avoidance_enabled = false
 monitoring = true
 monitorable = false
 collision_layer = 0
-collision_mask = 1
+collision_mask = 3
 
 [node name="DetectShape" type="CollisionShape2D" parent="DetectArea"]
 shape = SubResource("RectangleShape2D_detect")

@@ -30,6 +30,9 @@ var _legs: Array[Dictionary] = []
 var _walk_time: float = 0.0
 const _LEG_SWING: float = 2.2   # px of fore/aft swing
 const _LEG_FREQ: float = 3.2    # stride cycles per second
+# Screen-space distance from the anchor down to the hooves, where ground
+# markers (selection ring, owner plinth) sit.
+const FOOT_ANCHOR_Y: float = 9.0
 
 @onready var _health_bar: ProgressBar = $HealthBar
 @onready var _selection_indicator: Node2D = $SelectionIndicator
@@ -40,12 +43,18 @@ const _LEG_FREQ: float = 3.2    # stride cycles per second
 
 func _ready() -> void:
 	health = max_health
+	_health_bar.visible = false
 	_origin = global_position
 	_pick_wander_target()
 	add_to_group("animals")
 	_nav.velocity_computed.connect(_on_velocity_computed)
 	_convert_area.body_entered.connect(_on_body_entered_range)
 	_collect_legs()
+	call_deferred("_setup_iso_billboard")
+
+func _setup_iso_billboard() -> void:
+	IsoBillboard.setup_entity(self, ["Body", "HealthBar"])
+	VisualFx.make_ground_selection_ring(_selection_indicator, FOOT_ANCHOR_Y)
 
 # Gathers the leg polygons (deer has 4, sheep has 2) with their rest position and
 # a stride phase so diagonal legs swing together (a natural trot/walk).
@@ -61,6 +70,7 @@ func _collect_legs() -> void:
 			_legs.append({"node": leg, "base": leg.position, "phase": phases[leg_name]})
 
 func _process(delta: float) -> void:
+	IsoBillboard.update_depth(self)
 	if _legs.is_empty():
 		return
 	var moving: bool = current_state != AnimalState.DEAD and velocity.length_squared() > 4.0
@@ -85,23 +95,30 @@ func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	move_and_slide()
 	_face_movement(safe_velocity)
 
-# Flips the body to face the travel direction. The sprite is drawn facing right
-# (head at +x), so scale.x = 1 faces right, -1 faces left. A small horizontal
-# dead zone avoids flicker when moving almost straight up or down.
+# Flips the body to face the travel direction AS PROJECTED ON SCREEN: under
+# the rotated camera, world +x is a screen diagonal, so the decision axis is
+# the projected screen x. The sprite is drawn facing right (head at +x), so
+# scale.x = 1 faces screen-right, -1 screen-left. A small horizontal dead zone
+# avoids flicker when moving almost straight up or down on screen.
 func _face_movement(vel: Vector2) -> void:
 	if not is_instance_valid(_body):
 		return
-	if absf(vel.x) > 2.0:
-		_body.scale.x = -1.0 if vel.x < 0.0 else 1.0
+	var screen_dx: float = IsoProjection.world_to_screen(vel).x
+	if absf(screen_dx) > 2.0:
+		_body.scale.x = -1.0 if screen_dx < 0.0 else 1.0
 
 func set_selected(value: bool) -> void:
 	_selection_indicator.visible = value
+	var plinth: Node = get_node_or_null("PlayerColorStripe")
+	if plinth is CanvasItem:
+		(plinth as CanvasItem).visible = value
 
 func take_damage(amount: float, source: Node = null) -> void:
 	if current_state == AnimalState.DEAD:
 		return
 	health -= amount
 	_health_bar.value = (health / max_health) * 100.0
+	_health_bar.visible = health < max_health - 0.01
 	if is_instance_valid(_hit_tween):
 		_hit_tween.kill()
 	modulate = Color(1.0, 0.2, 0.2, 1.0)
@@ -187,8 +204,12 @@ func _convert_to(owner_id: int) -> void:
 	_nav.target_position = global_position
 	velocity = Vector2.ZERO
 
+# Ownership marker: the same ground-ellipse plinth at the feet every unit
+# uses — never a full-body repaint, which makes the animal unreadable.
+# Re-conversion just recolours the existing plinth (add_ground_plinth is
+# idempotent-recolour).
 func _on_converted() -> void:
-	_body_torso.color = Color(0.78, 0.55, 0.18, 1.0)
+	VisualFx.add_ground_plinth(self, player_id, 8.5, FOOT_ANCHOR_Y)
 
 func _start_flee(from_source: Node) -> void:
 	current_state = AnimalState.FLEEING
@@ -239,6 +260,7 @@ func _die() -> void:
 	get_parent().get_parent().add_child(food_node)
 	food_node.global_position = global_position
 	_build_carcass(food_node)
+	IsoBillboard.setup_drawn_node(food_node)
 	queue_free()
 
 # Procedural carcass sprite for the food drop (replaces the old red square):
@@ -250,7 +272,9 @@ func _build_carcass(parent: Node2D) -> void:
 	var bone: Color = Color(0.78, 0.74, 0.62, 1.0)
 
 	# Blood pool under the carcass (flat ellipse made of a polygon).
+	# z < 0 marks it as a ground decal so IsoBillboard keeps it flat.
 	var pool: Polygon2D = Polygon2D.new()
+	pool.z_index = -1
 	pool.color = blood
 	var pts: PackedVector2Array = PackedVector2Array()
 	for i: int in range(12):

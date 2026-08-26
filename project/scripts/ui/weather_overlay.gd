@@ -22,10 +22,14 @@ var _overlay_color: Color = Color(0.0, 0.0, 0.0, 0.0)
 var _target_overlay: Color = Color(0.0, 0.0, 0.0, 0.0)
 
 func _ready() -> void:
-	z_index = 15
+	z_index = IsoBillboard.Z_WEATHER
 	var vp: Viewport = get_viewport()
 	if vp != null:
 		_viewport_size = vp.get_visible_rect().size
+		# Screen-space drawing: particle wrap bounds and the tint rect must
+		# track the live viewport, or a resize leaves uncovered screen bands.
+		vp.size_changed.connect(func() -> void:
+			_viewport_size = get_viewport().get_visible_rect().size)
 	_init_particles()
 
 func setup(_camera: Camera2D) -> void:

@@ -6,7 +6,12 @@ var _world_min: Vector2 = Vector2(-1800.0, -1800.0)
 var _world_size: float = 3600.0
 
 const COLOR_BG:             Color = Color(0.08, 0.18, 0.08, 1.0)
-const COLOR_BORDER:         Color = Color(0.0,  0.0,  0.0,  1.0)
+# Bronze rim matching the HUD frame so the map area reads against the dark well.
+const COLOR_BORDER:         Color = Color(0.52, 0.44, 0.28, 0.9)
+# Unexplored sits a step above the panel black so the world extent stays
+# legible early game (the old pure black merged with the well and made the
+# map look like a tiny blob in an empty frame).
+const COLOR_FOG_UNEXPLORED: Color = Color(0.055, 0.065, 0.10, 1.0)
 const COLOR_RESOURCE_WOOD:  Color = Color(0.15, 0.65, 0.15, 1.0)
 const COLOR_RESOURCE_GOLD:  Color = Color(0.95, 0.8,  0.1,  1.0)
 const COLOR_RESOURCE_STONE: Color = Color(0.75, 0.75, 0.75, 1.0)
@@ -16,6 +21,7 @@ const COLOR_GRID:           Color = Color(1.0,  1.0,  1.0,  0.06)
 
 const FLASH_DURATION:   float = 1.5
 const FLASH_RADIUS_MAX: float = 14.0
+const VIEW_QUAD_INSET:  float = 1.5
 
 # Entities (fog, resources, buildings, units) redraw on this decoupled tick
 # instead of every frame — a minimap dot moving at 5 Hz is imperceptible, but
@@ -55,8 +61,11 @@ var _last_vp_size: Vector2 = Vector2.INF
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
 	_content = _make_layer("ContentLayer")
+	# Fog cells extend past the playable rect; clip so they never overpaint the frame.
+	_content.clip_contents = true
 	_content.draw.connect(_draw_content)
 	_overlay = _make_layer("OverlayLayer")
+	_overlay.clip_contents = true
 	_overlay.draw.connect(_draw_overlay)
 	EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
@@ -164,17 +173,23 @@ func _draw_content() -> void:
 	else:
 		_content.draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BG)
 
-	# Fog of war overlay — drawn over terrain, under units/buildings
+	# Fog of war overlay — drawn over terrain, under units/buildings. The fog
+	# grid covers its own fixed world rect (FogOfWar.MAP_ORIGIN + GRID*CELL),
+	# which is larger than the playable map, so cells are mapped through the
+	# same world->widget transform as every dot — previously the grid was
+	# stretched to the widget and the reveal sat offset from the units in it.
 	if fog != null:
-		var cell_w: float = ms.x / float(FogOfWar.GRID_W)
-		var cell_h: float = ms.y / float(FogOfWar.GRID_H)
+		var fog_origin: Vector2 = _to_mm(FogOfWar.MAP_ORIGIN, ms)
+		var cell_px: Vector2 = Vector2(FogOfWar.CELL_SIZE, FogOfWar.CELL_SIZE) / _world_size * ms
+		var col_unexplored: Color = COLOR_FOG_UNEXPLORED
+		var col_explored: Color = Color(FogOfWar.SHROUD_RGB, 0.5)
 		for cy: int in range(FogOfWar.GRID_H):
 			for cx: int in range(FogOfWar.GRID_W):
 				var state: int = fog._cells[cy * FogOfWar.GRID_W + cx]
 				if state == FogOfWar.STATE_VISIBLE:
 					continue
-				var fog_col: Color = Color(0.0, 0.0, 0.0, 1.0) if state == FogOfWar.STATE_UNEXPLORED else Color(0.0, 0.0, 0.0, 0.55)
-				_content.draw_rect(Rect2(Vector2(cx * cell_w, cy * cell_h), Vector2(cell_w + 1.0, cell_h + 1.0)), fog_col)
+				var fog_col: Color = col_unexplored if state == FogOfWar.STATE_UNEXPLORED else col_explored
+				_content.draw_rect(Rect2(fog_origin + Vector2(cx, cy) * cell_px, cell_px + Vector2.ONE), fog_col)
 
 	# Subtle grid lines every 25% of the map
 	for i: int in range(1, 4):
@@ -294,15 +309,15 @@ func _draw_overlay() -> void:
 	var ms: Vector2 = size
 	_refresh_world_bounds()
 
-	# Camera viewport rectangle — clamped to minimap bounds so it never
-	# bleeds outside the widget when the camera is near a map edge.
+	# Camera viewport indicator — the world region on screen is a rotated
+	# rectangle under the isometric camera (see IsoProjection), so project the
+	# four screen corners back to world and draw the resulting quad. Each
+	# corner is clamped into the widget so the indicator stays visible even
+	# fully zoomed out, when the raw quad lies entirely outside the minimap
+	# (the overlay layer clips, so an unclamped quad would vanish).
 	if camera_node != null:
-		var vp_world: Vector2 = get_viewport().get_visible_rect().size / camera_node.zoom
-		var cam_pos: Vector2 = camera_node.global_position
-		var r_min: Vector2 = _to_mm(cam_pos - vp_world * 0.5, ms).clamp(Vector2.ZERO, ms)
-		var r_max: Vector2 = _to_mm(cam_pos + vp_world * 0.5, ms).clamp(Vector2.ZERO, ms)
-		if r_max.x > r_min.x and r_max.y > r_min.y:
-			_overlay.draw_rect(Rect2(r_min, r_max - r_min), COLOR_CAMERA_RECT, false, 1.5)
+		var quad: PackedVector2Array = clamped_view_quad(ms)
+		_overlay.draw_polyline(quad, COLOR_CAMERA_RECT, 2.0)
 
 	# Attack / event flashes — expanding rings that fade out
 	for flash: Dictionary in _flashes:
@@ -319,6 +334,34 @@ func _draw_overlay() -> void:
 		_overlay.draw_circle(fp, 3.0, dot_col)
 
 	_overlay.draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BORDER, false, 1.5)
+
+## Minimap-space corners of the world region currently on screen. Under the
+## isometric camera the view is a rotated rectangle in world space, so the
+## four screen corners are unprojected through the live camera zoom/rotation.
+## The first corner repeats at the end so the result feeds draw_polyline as a
+## closed quad. Pure given (camera pos, camera zoom, viewport size) — tested.
+func camera_view_quad(ms: Vector2) -> PackedVector2Array:
+	var pts: PackedVector2Array = PackedVector2Array()
+	if camera_node == null:
+		return pts
+	var half: Vector2 = get_viewport().get_visible_rect().size * 0.5
+	var cam_pos: Vector2 = camera_node.global_position
+	for corner: Vector2 in [Vector2(-half.x, -half.y), Vector2(half.x, -half.y),
+			half, Vector2(-half.x, half.y), Vector2(-half.x, -half.y)]:
+		var wp: Vector2 = cam_pos + IsoProjection.screen_delta_to_world(corner, camera_node.zoom)
+		pts.append(_to_mm(wp, ms))
+	return pts
+
+## camera_view_quad with every corner clamped into the widget (small inset so
+## the stroke never sits on the frame). Keeps the indicator readable at all
+## zoom levels: fully zoomed out it degenerates to a border-hugging outline.
+func clamped_view_quad(ms: Vector2) -> PackedVector2Array:
+	var quad: PackedVector2Array = camera_view_quad(ms)
+	var lo: Vector2 = Vector2(VIEW_QUAD_INSET, VIEW_QUAD_INSET)
+	var hi: Vector2 = ms - lo
+	for i: int in range(quad.size()):
+		quad[i] = quad[i].clamp(lo, hi)
+	return quad
 
 # Click on minimap → move camera to that world position
 func _gui_input(event: InputEvent) -> void:
@@ -337,6 +380,9 @@ func _gui_input(event: InputEvent) -> void:
 func _move_camera_to(minimap_pos: Vector2) -> void:
 	if camera_node == null:
 		return
+	# Navigating via the minimap must win over camera-follow, or the follow
+	# handler re-centres on the selection next frame and the jump is undone.
+	EventBus.camera_follow_cancelled.emit()
 	var clamped: Vector2 = minimap_pos.clamp(Vector2.ZERO, size)
 	camera_node.global_position = _to_world(clamped, size)
 

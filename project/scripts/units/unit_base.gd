@@ -57,6 +57,7 @@ func _ready() -> void:
 			health *= 0.5
 		health_bar.max_value = health
 		health_bar.value = health
+	_refresh_health_bar()
 	_last_position = global_position
 	if is_instance_valid(attack_range_area):
 		attack_range_area.monitoring = true
@@ -70,9 +71,29 @@ func _ready() -> void:
 	call_deferred("_add_player_color_stripe")
 	call_deferred("_add_ground_shadow")
 	call_deferred("_apply_gender_appearance")
+	call_deferred("_setup_iso_billboard")
+
+# Stand the unit's art upright on the projected ground (see IsoBillboard).
+# HealthBar/GatherIndicator are uprighted so they stay horizontal in screen
+# space above the head. SelectionIndicator, GroundShadow and the player-colour
+# plinth stay ground-projected: the authored filled selection disc is rebuilt
+# here into the genre-classic ellipse ring under the feet.
+func _setup_iso_billboard() -> void:
+	IsoBillboard.setup_entity(self,
+		["Body", "HealthBar", "GatherIndicator", "AnimatedSprite2D"])
+	VisualFx.make_ground_selection_ring(selection_indicator, _foot_anchor_y())
+
+# SCREEN-space distance from the unit anchor down to the feet, where ground
+# markers (selection ring, hero ring) sit. Derived from the ground shadow the
+# unit already placed at its feet; 9 px matches the default shadow offset.
+func _foot_anchor_y() -> float:
+	var shadow: Node2D = get_node_or_null("GroundShadow") as Node2D
+	if shadow != null:
+		return IsoProjection.world_to_screen(shadow.position).y
+	return 9.0
 
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 20.0, 4.0)
+	VisualFx.add_ground_plinth(self, player_id, 11.0, 6.0)
 
 # Applies the female look to human units. Non-human units (no head polygon) and
 # male units are left as-is. Subclasses that style gender themselves (HeroUnit)
@@ -86,6 +107,7 @@ func _add_ground_shadow() -> void:
 
 func _process(delta: float) -> void:
 	_anim_time += delta
+	IsoBillboard.update_depth(self)
 	_animate_body(delta)
 	if _path_visible and is_instance_valid(_path_line):
 		var pts: PackedVector2Array = nav_agent.get_current_navigation_path()
@@ -107,16 +129,18 @@ func _animate_body(_delta: float) -> void:
 	# Determine facing direction based on state and target
 	_update_body_orientation(body)
 
-	# Apply rotation animation if the body supports it (Node2D)
+	# Apply rotation animation if the body supports it (Node2D). Rotations
+	# compose on top of the upright billboard base angle (see IsoBillboard).
 	if body is Node2D:
 		match current_state:
 			UnitState.ATTACKING:
 				var swing: float = sin(t * TAU * 3.5)
-				(body as Node2D).rotation = swing * 0.20
+				(body as Node2D).rotation = IsoBillboard.UPRIGHT_ROTATION + swing * 0.20
 			UnitState.MOVING:
-				(body as Node2D).rotation = sin(t * TAU * 2.8) * 0.08
+				(body as Node2D).rotation = IsoBillboard.UPRIGHT_ROTATION + sin(t * TAU * 2.8) * 0.08
 			_:
-				(body as Node2D).rotation = move_toward((body as Node2D).rotation, 0.0, _delta * 4.0)
+				(body as Node2D).rotation = move_toward((body as Node2D).rotation,
+					IsoBillboard.UPRIGHT_ROTATION, _delta * 4.0)
 
 func _update_body_orientation(body: Node) -> void:
 	var target_pos: Vector2 = Vector2.ZERO
@@ -154,11 +178,15 @@ func _update_body_orientation(body: Node) -> void:
 			target_pos = global_position + velocity.normalized() * 10.0
 			has_target = true
 
-	# Flip body horizontally based on target direction. Small dead zone prevents
-	# flicker when the target is nearly straight above/below.
+	# Flip body horizontally based on the target direction AS PROJECTED ON
+	# SCREEN: under the rotated camera, world +x is a screen diagonal, so the
+	# decision axis must be the projected screen x or units read as walking
+	# backwards. The flip itself composes cleanly with the upright billboard
+	# basis (scale.x = -1 mirrors in screen space). Small dead zone prevents
+	# flicker when the target is nearly straight above/below on screen.
 	if has_target:
-		var direction: float = target_pos.x - global_position.x
-		if abs(direction) > 2.0:
+		var direction: float = IsoProjection.world_to_screen(target_pos - global_position).x
+		if absf(direction) > 2.0:
 			var new_scale_x: float = -1.0 if direction < 0.0 else 1.0
 			# Handle both Node2D (uses scale) and Control (uses size/scale differently)
 			if body is Node2D:
@@ -189,14 +217,20 @@ func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -
 	health = new_max * ratio
 	health_bar.max_value = new_max
 	health_bar.value = health
+	_refresh_health_bar()
 
 func set_selected(value: bool) -> void:
 	is_selected = value
 	selection_indicator.visible = value
+	var plinth: Node = get_node_or_null("PlayerColorStripe")
+	if plinth is CanvasItem:
+		(plinth as CanvasItem).visible = value
 	if value:
+		var col: Color = Color(0.0, 1.0, 0.0, 0.8) if player_id == 0 else Color(1.0, 0.85, 0.0, 0.85)
 		var circle: Node = selection_indicator.get_node_or_null("SelectionCircle")
-		if circle != null:
-			var col: Color = Color(0.0, 1.0, 0.0, 0.7) if player_id == 0 else Color(1.0, 0.85, 0.0, 0.85)
+		if circle is Line2D:
+			(circle as Line2D).default_color = col
+		elif circle is Polygon2D:
 			(circle as Polygon2D).color = col
 
 func get_selection_sound() -> String:
@@ -206,10 +240,16 @@ func move_to(target_position: Vector2) -> void:
 	nav_agent.target_position = target_position
 	current_state = UnitState.MOVING
 
+# AoE2 convention: the health bar only shows once the unit has taken damage.
+func _refresh_health_bar() -> void:
+	if is_instance_valid(health_bar):
+		health_bar.visible = health < health_bar.max_value - 0.01
+
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount
 	EventBus.damage_dealt.emit(self, amount, source)
 	health_bar.value = health
+	_refresh_health_bar()
 	_flash_hit()
 	if health <= 0.0:
 		die()

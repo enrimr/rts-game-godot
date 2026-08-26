@@ -45,6 +45,7 @@ func set_selected(value: bool) -> void:
 	else:
 		if is_instance_valid(_selection_line):
 			_selection_line.visible = false
+	VisualFx.set_nameplate_visible(self, value)
 	if is_instance_valid(_rally_marker):
 		_rally_marker.visible = value and rally_point != Vector2.ZERO
 
@@ -68,6 +69,7 @@ var _train_timer: float = 0.0
 @onready var _train_bar: ProgressBar = get_node_or_null("TrainingBar")
 
 func _ready() -> void:
+	VisualFx.set_nameplate_visible(self, false)
 	call_deferred("_add_player_color_stripe")
 	EventBus.hero_died.connect(_on_hero_died)
 
@@ -106,6 +108,8 @@ func _process(delta: float) -> void:
 			var data: UnitResource = _pending_hero_data
 			_pending_hero_data = null
 			_do_respawn_hero(data)
+	if is_instance_valid(_train_bar):
+		_train_bar.visible = not _train_queue.is_empty()
 	if _train_queue.is_empty():
 		return
 	var train_time: float = VILLAGER_DATA.train_time

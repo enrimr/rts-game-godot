@@ -18,11 +18,12 @@ var _explore_waypoint_cooldown: float = 0.0
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
+	UnitDress.apply.call_deferred(self, player_id)
 
 # Wider stripe under the horse's hooves so it reads as a mounted unit's banner
 # without covering the horse/rider.
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 18.0, 13.0)
+	VisualFx.add_ground_plinth(self, player_id, 9.9, 12.0)
 
 # Wider, lower shadow to match the horse's longer footprint.
 func _add_ground_shadow() -> void:

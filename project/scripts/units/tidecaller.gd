@@ -21,7 +21,7 @@ func _ready() -> void:
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 12.0, 11.0)
+	VisualFx.add_ground_plinth(self, player_id, 6.6, 10.0)
 
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
@@ -104,7 +104,7 @@ func _apply_tidal_pulse() -> void:
 	circle.radius = TIDAL_SPLASH_RADIUS
 	query.shape = circle
 	query.transform = Transform2D(0.0, global_position)
-	query.collision_mask = 1
+	query.collision_mask = 3
 	var results: Array[Dictionary] = space.intersect_shape(query, 32)
 	var splash_base: float = _get_effective_attack() * TIDAL_SPLASH_FRACTION
 	for result: Dictionary in results:

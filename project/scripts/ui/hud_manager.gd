@@ -1367,6 +1367,8 @@ func _poll_hp_bars() -> void:
 		var hp_v: Variant = _hp_bar_unit.get("health")
 		if hp_v != null:
 			_unit_hp_bar.value = (hp_v as float) / _hp_bar_max * 100.0
+	# An empty detail panel otherwise renders a bare "0%" bar.
+	_unit_hp_bar.visible = _unit_hp_bar.value > 0.0
 	for child: Node in _unit_portraits_grid.get_children():
 		if child is UnitPortrait:
 			(child as UnitPortrait).refresh()

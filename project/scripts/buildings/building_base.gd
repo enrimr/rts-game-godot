@@ -49,7 +49,7 @@ static func find_spawn_pos(origin: Vector2, space: PhysicsDirectSpaceState2D,
 	var shape: CircleShape2D = CircleShape2D.new()
 	shape.radius = step * 0.45
 	query.shape = shape
-	query.collision_mask = 1
+	query.collision_mask = 3
 	# Ring 0 = the offset just outside the building
 	for ring: int in range(1, max_rings + 1):
 		var r: float = step * float(ring)
@@ -73,6 +73,9 @@ static func _make_rally_marker() -> Node2D:
 		Vector2(-6.0, 0.0), Vector2(6.0, 0.0),
 		Vector2(0.0, 0.0), Vector2(0.0, -12.0),
 	])
+	# The pole stands upright on the projected ground (see IsoBillboard);
+	# the base circle below stays flat as the classic ground ring.
+	IsoBillboard.make_upright(line)
 	root.add_child(line)
 	var circle: Line2D = Line2D.new()
 	circle.width = 1.0
@@ -94,6 +97,7 @@ func set_selected(value: bool) -> void:
 	else:
 		if is_instance_valid(_selection_line):
 			_selection_line.visible = false
+	VisualFx.set_nameplate_visible(self, value)
 	_show_rally_marker(value)
 
 func _footprint_rect() -> Rect2:
@@ -124,11 +128,26 @@ func _ready() -> void:
 		var hp_mult: float = CivBonusManager.get_building_hp_multiplier(player_id, building_data.id)
 		max_health = building_data.max_health * hp_mult
 		health = max_health
+	IsoBuildingMassing.apply(self)
 	_refresh_visuals()
+	VisualFx.set_nameplate_visible(self, false)
 	call_deferred("_apply_player_color_stripe")
 	call_deferred("_apply_team_accents")
 	call_deferred("_add_ground_shadow")
+	call_deferred("_setup_iso_billboard")
 	_setup_nav_obstacle()
+
+# Stand the building's art upright on the projected ground (see IsoBillboard).
+# The footprint selection rectangle, ground shadow and colour stripe stay
+# ground-projected so they read as flat on the diamond.
+func _setup_iso_billboard() -> void:
+	IsoBillboard.setup_entity(self, _iso_upright_children())
+
+# Overridable: which visual children stand upright. Ground-plane buildings
+# (e.g. Farm) override this to keep their body flat.
+func _iso_upright_children() -> Array:
+	return ["Body", "ScaffoldRig", "NameLabel", "StateLabel", "HealthBar",
+		"ConstructionBar", "TrainingBar", "FoodBar", "PlayerColorStripe"]
 
 # Recolours team-accent polygons (flags, roofs, banners) to the owner's colour so
 # buildings are identifiable at a glance. Any Polygon2D/Line2D under Body whose
@@ -150,6 +169,10 @@ func _apply_team_accents() -> void:
 			(node as Line2D).default_color = tint
 
 func _add_ground_shadow() -> void:
+	# Iso-massed buildings get a footprint-matching contact shadow from the
+	# massing pass; a second detached ellipse would read as floating.
+	if has_meta("massing_bot_y"):
+		return
 	var rx: float = 30.0
 	var ry: float = 14.0
 	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
@@ -180,6 +203,7 @@ func _complete_construction() -> void:
 		_progress_bar.visible = false
 	if is_instance_valid(_body_node):
 		_body_node.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	_update_scaffold()
 	if player_id == 0:
 		AudioManager.play("build_complete")
 	construction_complete.emit()
@@ -196,6 +220,7 @@ func force_complete() -> void:
 		_progress_bar.visible = false
 	if is_instance_valid(_body_node):
 		_body_node.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	_update_scaffold()
 
 func _refresh_visuals() -> void:
 	if is_instance_valid(_progress_bar):
@@ -205,6 +230,15 @@ func _refresh_visuals() -> void:
 	if is_instance_valid(_body_node):
 		var alpha: float = 0.4 + construction_progress / 100.0 * 0.6
 		_body_node.modulate = Color(1.0, 1.0, 1.0, alpha)
+	_update_scaffold()
+
+# Wooden scaffold rig (generated with the iso massing) framing the volume
+# while it is being built; hidden on placement ghosts and finished buildings.
+func _update_scaffold() -> void:
+	var rig: Node2D = get_node_or_null("ScaffoldRig") as Node2D
+	if rig != null:
+		rig.visible = state == BuildingState.UNDER_CONSTRUCTION \
+			and construction_progress < 100.0
 
 func _apply_player_color_stripe() -> void:
 	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
@@ -214,6 +248,12 @@ func _apply_player_color_stripe() -> void:
 		var h: Vector2 = (cs.shape as RectangleShape2D).size * 0.5
 		w = h.x * 2.0
 		b = h.y
+	if has_meta("massing_bot_y"):
+		# With iso massing the ownership marker is a ground trim along the two
+		# near footprint edges — a screen-space bar would cut through the walls.
+		var half: Vector2 = IsoBuildingMassing._half_extents(self)
+		PlayerColors.apply_iso_ownership_trim(self, player_id, half)
+		return
 	PlayerColors.apply_color_stripe(self, player_id, w, b)
 
 func take_damage(amount: float, source: Node = null) -> void:

@@ -44,6 +44,7 @@ func set_selected(value: bool) -> void:
 	else:
 		if is_instance_valid(_selection_line):
 			_selection_line.visible = false
+	VisualFx.set_nameplate_visible(self, value)
 	if is_instance_valid(_rally_marker):
 		_rally_marker.visible = value and rally_point != Vector2.ZERO
 
@@ -59,11 +60,44 @@ var _train_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("buildings")
+	IsoBuildingMassing.apply(self)
+	VisualFx.set_nameplate_visible(self, false)
 	call_deferred("_add_player_color_stripe")
+	call_deferred("_apply_team_accents")
+	call_deferred("_setup_iso_billboard")
 	EventBus.hero_died.connect(_on_hero_died)
 
 func _add_player_color_stripe() -> void:
+	if has_meta("massing_bot_y"):
+		# Ground trim along the near footprint edges — a screen-space bar
+		# would cut through the lower wall corner under the projection.
+		PlayerColors.apply_iso_ownership_trim(self, player_id,
+			IsoBuildingMassing._half_extents(self))
+		return
 	PlayerColors.apply_color_stripe(self, player_id, 80.0, 40.0)
+
+func _apply_team_accents() -> void:
+	var body: Node = get_node_or_null("Body")
+	if body == null:
+		return
+	var col: Color = PlayerColors.get_color(player_id)
+	var dark: Color = Color(col.r * 0.7, col.g * 0.7, col.b * 0.7, 1.0)
+	for node: Node in body.get_children():
+		if not node.name.begins_with("Team"):
+			continue
+		var tint: Color = dark if node.name.contains("Dark") else col
+		if node is Polygon2D:
+			(node as Polygon2D).color = tint
+		elif node is Line2D:
+			(node as Line2D).default_color = tint
+
+func _setup_iso_billboard() -> void:
+	# The massing pass already seats the volume with a footprint contact
+	# shadow; only non-massed fallbacks need the detached ellipse.
+	if not has_meta("massing_bot_y"):
+		VisualFx.add_ground_shadow(self, 42.0, 22.0, 15.0)
+	IsoBillboard.setup_entity(self, ["Body", "NameLabel", "HealthBar",
+		"TrainingBar", "PlayerColorStripe"])
 
 func _on_hero_died(died_player_id: int, hero_data: UnitResource) -> void:
 	if died_player_id != player_id:
@@ -104,6 +138,8 @@ func _process(delta: float) -> void:
 			var data: UnitResource = _pending_hero_data
 			_pending_hero_data = null
 			_do_respawn_hero(data)
+	if is_instance_valid(_train_bar):
+		_train_bar.visible = not _train_queue.is_empty()
 	if _train_queue.is_empty():
 		return
 	var train_time: float = VILLAGER_DATA.train_time

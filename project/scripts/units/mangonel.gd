@@ -17,7 +17,7 @@ func _ready() -> void:
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
-	PlayerColors.apply_color_stripe(self, player_id, 28.0, 6.0)
+	VisualFx.add_ground_plinth(self, player_id, 15.4, 5.0)
 
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
@@ -120,7 +120,7 @@ func _fire_at(target_pos: Vector2) -> void:
 	circle.radius = SPLASH_RADIUS
 	query.shape = circle
 	query.transform = Transform2D(0.0, drifted_target)
-	query.collision_mask = 1
+	query.collision_mask = 3
 	var results: Array[Dictionary] = space.intersect_shape(query, 32)
 	for result: Dictionary in results:
 		var body: Node = result["collider"] as Node
