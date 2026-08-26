@@ -6,7 +6,12 @@ var _world_min: Vector2 = Vector2(-1800.0, -1800.0)
 var _world_size: float = 3600.0
 
 const COLOR_BG:             Color = Color(0.08, 0.18, 0.08, 1.0)
-const COLOR_BORDER:         Color = Color(0.0,  0.0,  0.0,  1.0)
+# Bronze rim matching the HUD frame so the map area reads against the dark well.
+const COLOR_BORDER:         Color = Color(0.52, 0.44, 0.28, 0.9)
+# Unexplored sits a step above the panel black so the world extent stays
+# legible early game (the old pure black merged with the well and made the
+# map look like a tiny blob in an empty frame).
+const COLOR_FOG_UNEXPLORED: Color = Color(0.055, 0.065, 0.10, 1.0)
 const COLOR_RESOURCE_WOOD:  Color = Color(0.15, 0.65, 0.15, 1.0)
 const COLOR_RESOURCE_GOLD:  Color = Color(0.95, 0.8,  0.1,  1.0)
 const COLOR_RESOURCE_STONE: Color = Color(0.75, 0.75, 0.75, 1.0)
@@ -176,8 +181,8 @@ func _draw_content() -> void:
 	if fog != null:
 		var fog_origin: Vector2 = _to_mm(FogOfWar.MAP_ORIGIN, ms)
 		var cell_px: Vector2 = Vector2(FogOfWar.CELL_SIZE, FogOfWar.CELL_SIZE) / _world_size * ms
-		var col_unexplored: Color = Color(FogOfWar.SHROUD_RGB, 1.0)
-		var col_explored: Color = Color(FogOfWar.SHROUD_RGB, 0.55)
+		var col_unexplored: Color = COLOR_FOG_UNEXPLORED
+		var col_explored: Color = Color(FogOfWar.SHROUD_RGB, 0.5)
 		for cy: int in range(FogOfWar.GRID_H):
 			for cx: int in range(FogOfWar.GRID_W):
 				var state: int = fog._cells[cy * FogOfWar.GRID_W + cx]
