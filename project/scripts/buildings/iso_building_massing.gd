@@ -12,7 +12,13 @@ extends Object
 ##
 ## Every generated polygon is a plain Polygon2D child of Body, so the existing
 ## team-accent pass in building_base (`Team*` name prefix) keeps recolouring
-## roofs, flags and awnings, and the construction alpha fade keeps working.
+## flags, awnings and merlons, and the construction alpha fade keeps working.
+##
+## Civ identity: walls, trim and the ROOF SILHOUETTE come from CivStyle
+## (per-civilization material + one of five roof shapes via Builder.civ_roof),
+## so the same building type reads differently per civ at a glance. Ownership
+## stays exclusively on the player-coloured Team* accents and stripes — the
+## roof itself is civ material, never player colour.
 ##
 ## Geometry: a world-local point (x, y) at height h projects to screen
 ##   ((x - y) * K, (x + y) * K * 0.5 - h)      with K = sqrt(2) / 2,
@@ -20,9 +26,7 @@ extends Object
 
 const K: float = 0.7071067811865476
 
-# Shared material tones.
-const C_TIMBER: Color = Color(0.76, 0.62, 0.42)
-const C_STONE: Color = Color(0.66, 0.62, 0.55)
+# Shared material tones (civ-agnostic details; walls/roofs come from CivStyle).
 const C_STONE_DARK: Color = Color(0.52, 0.49, 0.44)
 const C_WOOD_DARK: Color = Color(0.42, 0.30, 0.16)
 const C_DOOR: Color = Color(0.28, 0.17, 0.08)
@@ -42,12 +46,27 @@ static func gp(x: float, y: float, h: float = 0.0) -> Vector2:
 
 class Builder extends RefCounted:
 	var body: Node2D
+	var style: Dictionary = CivStyle.DEFAULT_STYLE
 	var top_y: float = INF
 	var bot_y: float = -INF
 	var _n: int = 0
 
-	func _init(body_node: Node2D) -> void:
+	func _init(body_node: Node2D, style_dict: Dictionary = {}) -> void:
 		body = body_node
+		if not style_dict.is_empty():
+			style = style_dict
+
+	func wall() -> Color:
+		return style.wall as Color
+
+	func wall2() -> Color:
+		return style.wall_shade as Color
+
+	func trim() -> Color:
+		return style.trim as Color
+
+	func roof() -> Color:
+		return style.roof_color as Color
 
 	func poly(base_name: String, color: Color, pts: PackedVector2Array) -> Polygon2D:
 		var p: Polygon2D = Polygon2D.new()
@@ -170,6 +189,77 @@ class Builder extends RefCounted:
 		poly(dark_name, cd, _tri(w, s, a, h, ht))
 		poly(light_name, cl, _tri(s, e, a, h, ht))
 
+	## Civilization-identity roof: dispatches on the owner civ's Roof silhouette
+	## and tints it with the civ roof material colour. Ownership never rides on
+	## the roof — it stays on the Team* accents (flags, awnings, merlons).
+	## `gable_wall` overrides the gable-triangle colour when the walls below are
+	## not the civ's base wall tone (alpha 0 = use style.wall).
+	func civ_roof(cx: float, cy: float, hx: float, hy: float,
+			h: float, rise: float, along_x: bool = true,
+			gable_wall: Color = Color(0.0, 0.0, 0.0, 0.0)) -> void:
+		var rc: Color = roof()
+		var wc: Color = wall() if gable_wall.a == 0.0 else gable_wall
+		match int(style.roof):
+			CivStyle.Roof.FLAT:
+				_flat_parapet_roof(cx, cy, hx, hy, h, rise, rc)
+			CivStyle.Roof.DOMED:
+				_dome_roof(cx, cy, hx, hy, h, rise, rc)
+			CivStyle.Roof.STEPPED:
+				_stepped_roof(cx, cy, hx, hy, h, rise, rc)
+			CivStyle.Roof.GABLED:
+				gable_roof(cx, cy, hx, hy, h, rise * 1.75, along_x, wc, false, rc)
+				_ridge_cap(cx, cy, hx, hy, h + rise * 1.75, along_x, 1.0)
+			_:
+				hip_roof(cx, cy, hx, hy, h, rise, along_x, false, rc)
+				_ridge_cap(cx, cy, hx, hy, h + rise, along_x, 0.45)
+
+	## Trim-coloured beam capping a roof ridge.
+	func _ridge_cap(cx: float, cy: float, hx: float, hy: float,
+			ht: float, along_x: bool, span: float) -> void:
+		var p0: Vector2 = Vector2(cx - hx * span, cy) if along_x else Vector2(cx, cy - hy * span)
+		var p1: Vector2 = Vector2(cx + hx * span, cy) if along_x else Vector2(cx, cy + hy * span)
+		poly("RidgeBeam", trim(), Builder._quad(p0, p1, p1, p0, ht - 0.2, ht + 1.5))
+
+	## FLAT: low slab enclosed by a parapet with a trim course — squat profile.
+	func _flat_parapet_roof(cx: float, cy: float, hx: float, hy: float,
+			h: float, rise: float, rc: Color) -> void:
+		var lip: float = clampf(rise * 0.35, 3.0, 6.0)
+		walls(cx, cy, hx, hy, h, h + lip, rc)
+		walls(cx, cy, hx, hy, h + lip - 1.5, h + lip, trim())
+		flat_roof(cx, cy, hx, hy, h + lip, rc.lightened(0.14), "Parapet")
+		flat_roof(cx, cy, maxf(hx - 4.0, hx * 0.55), maxf(hy - 4.0, hy * 0.55),
+			h + lip - 1.5, rc.darkened(0.10), "RoofTerrace")
+
+	## DOMED: low rounded dome on a short drum, trim finial at the apex.
+	func _dome_roof(cx: float, cy: float, hx: float, hy: float,
+			h: float, rise: float, rc: Color) -> void:
+		var deck_h: float = 2.5
+		walls(cx, cy, hx, hy, h, h + deck_h, wall())
+		flat_roof(cx, cy, hx, hy, h + deck_h, wall().lightened(0.10), "RoofDeck")
+		var c0: Vector2 = IsoBuildingMassing.gp(cx, cy, h + deck_h)
+		var r: float = (hx + hy) * IsoBuildingMassing.K * 0.55
+		var dh: float = maxf(rise, r * 0.55)
+		poly("Dome", rc.darkened(0.18), Builder._dome_pts(c0, r, dh))
+		poly("DomeLight", rc.lightened(0.05),
+			Builder._dome_pts(c0 + Vector2(r * 0.22, 0.0), r * 0.6, dh * 0.8))
+		poly("Finial", trim(), PackedVector2Array([
+			c0 + Vector2(-1.2, -dh + 1.0), c0 + Vector2(1.2, -dh + 1.0),
+			c0 + Vector2(1.2, -dh - 3.5), c0 + Vector2(-1.2, -dh - 3.5),
+		]))
+
+	## STEPPED: two stacked slabs, ziggurat-like, trim band on the upper edge.
+	func _stepped_roof(cx: float, cy: float, hx: float, hy: float,
+			h: float, rise: float, rc: Color) -> void:
+		var h1: float = h + rise * 0.5
+		walls(cx, cy, hx, hy, h, h1, rc)
+		flat_roof(cx, cy, hx, hy, h1, rc.lightened(0.10), "StepLow")
+		var ix: float = maxf(hx * 0.58, minf(hx, 6.0))
+		var iy: float = maxf(hy * 0.58, minf(hy, 6.0))
+		var h2: float = h1 + rise * 0.55
+		walls(cx, cy, ix, iy, h1, h2, rc.darkened(0.05))
+		walls(cx, cy, ix, iy, h2 - 1.4, h2, trim())
+		flat_roof(cx, cy, ix, iy, h2, rc.lightened(0.20), "StepTop")
+
 	## Door/window opening on the front-right (+x) wall face; t runs 0..1 from
 	## the bottom corner (S) to the right corner (E).
 	func opening_right(cx: float, cy: float, hx: float, hy: float,
@@ -243,6 +333,18 @@ class Builder extends RefCounted:
 			IsoBuildingMassing.gp(c2.x, c2.y, h_c),
 		])
 
+	## Screen-space dome silhouette: top arc rising `dh` above centre `c0`,
+	## closed by a shallow elliptical bulge along the bottom.
+	static func _dome_pts(c0: Vector2, r: float, dh: float) -> PackedVector2Array:
+		var pts: PackedVector2Array = PackedVector2Array()
+		for i: int in range(13):
+			var a: float = PI * float(i) / 12.0
+			pts.append(c0 + Vector2(cos(a) * r, -sin(a) * dh))
+		for i: int in range(1, 12):
+			var a: float = PI + PI * float(i) / 12.0
+			pts.append(c0 + Vector2(cos(a) * r, -sin(a) * r * 0.18))
+		return pts
+
 
 ## Entry point: rebuilds `building`'s Body with isometric massing if a recipe
 ## exists for it. Returns false (leaving authored art untouched) for
@@ -258,7 +360,9 @@ static func apply(building: Node2D) -> bool:
 	for child: Node in body.get_children():
 		body.remove_child(child)
 		child.queue_free()
-	var b: Builder = Builder.new(body)
+	var pid_v: Variant = building.get("player_id")
+	var style: Dictionary = CivStyle.style_for_player((pid_v as int) if pid_v is int else 0)
+	var b: Builder = Builder.new(body, style)
 	_build(key, b, half.x, half.y)
 	_add_scaffold_rig(building, b, half.x, half.y)
 	_add_contact_shadow(building, half)
@@ -374,8 +478,8 @@ static func _build(key: String, b: Builder, hx: float, hy: float) -> void:
 		"temple": _temple(b, hx, hy)
 		"market": _market(b, hx, hy)
 		"siege_workshop": _siege_workshop(b, hx, hy)
-		"lumber_camp": _camp(b, hx, hy, C_TIMBER, true)
-		"mining_camp": _camp(b, hx, hy, C_STONE, false)
+		"lumber_camp": _camp(b, hx, hy, true)
+		"mining_camp": _camp(b, hx, hy, false)
 		"dock": _dock(b, hx, hy)
 		"watch_tower": _watch_tower(b, hx, hy)
 		"wonder": _wonder(b, hx, hy)
@@ -389,8 +493,8 @@ static func _house(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON)
 	var wx: float = hx - 3.0
 	var wy: float = hy - 3.0
-	b.walls(0, 0, wx, wy, 0.0, 17.0, C_TIMBER)
-	b.hip_roof(0, 0, wx + 3.0, wy + 3.0, 16.0, 12.0, true)
+	b.walls(0, 0, wx, wy, 0.0, 17.0, b.wall())
+	b.civ_roof(0, 0, wx + 3.0, wy + 3.0, 16.0, 12.0, true)
 	b.opening_right(0, 0, wx, wy, 0.25, 0.5, 0.0, 11.0, C_DOOR, "Door")
 	b.opening_left(0, 0, wx, wy, 0.3, 0.55, 5.0, 11.0, C_WINDOW, "Window")
 
@@ -398,18 +502,18 @@ static func _town_center(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON_STONE)
 	# Foundation plinth: a low stone course wider than the keep walls that
 	# seats the volume on the ground diamond instead of floating on it.
-	b.walls(0, 0, hx - 1.0, hy - 1.0, 0.0, 3.5, C_STONE_DARK.lightened(0.06))
-	b.flat_roof(0, 0, hx - 1.0, hy - 1.0, 3.5, C_STONE_DARK.lightened(0.22), "PlinthTop")
-	b.walls(0, 0, hx - 4.0, hy - 4.0, 3.5, 20.0, C_STONE)
-	b.flat_roof(0, 0, hx - 2.0, hy - 2.0, 20.0, C_STONE.lightened(0.10), "Parapet")
+	b.walls(0, 0, hx - 1.0, hy - 1.0, 0.0, 3.5, b.wall2().lightened(0.06))
+	b.flat_roof(0, 0, hx - 1.0, hy - 1.0, 3.5, b.wall2().lightened(0.22), "PlinthTop")
+	b.walls(0, 0, hx - 4.0, hy - 4.0, 3.5, 20.0, b.wall())
+	b.flat_roof(0, 0, hx - 2.0, hy - 2.0, 20.0, b.wall().lightened(0.10), "WalkTop")
 	b.opening_right(0, 0, hx - 4.0, hy - 4.0, 0.32, 0.58, 0.0, 14.0, C_DOOR, "Gatehouse")
 	b.opening_left(0, 0, hx - 4.0, hy - 4.0, 0.34, 0.5, 6.0, 13.0, C_WINDOW, "Window")
-	b.walls(0, 0, 22.0, 22.0, 20.0, 38.0, C_STONE.lightened(0.06))
-	b.hip_roof(0, 0, 26.0, 26.0, 37.0, 14.0, true)
+	b.walls(0, 0, 22.0, 22.0, 20.0, 38.0, b.wall().lightened(0.06))
+	b.civ_roof(0, 0, 26.0, 26.0, 37.0, 14.0, true)
 	for t: Vector2 in [Vector2(-hx + 10.0, hy - 10.0), Vector2(hx - 10.0, -hy + 10.0)]:
-		b.walls(t.x, t.y, 9.0, 9.0, 0.0, 32.0, C_STONE_DARK)
-		b.flat_roof(t.x, t.y, 10.5, 10.5, 32.0, C_STONE_DARK.lightened(0.18), "TowerCap")
-		b.pyramid_roof(t.x, t.y, 10.5, 10.5, 33.0, 9.0)
+		b.walls(t.x, t.y, 9.0, 9.0, 0.0, 32.0, b.wall2())
+		b.flat_roof(t.x, t.y, 10.5, 10.5, 32.0, b.wall2().lightened(0.18), "TowerCap")
+		b.pyramid_roof(t.x, t.y, 10.5, 10.5, 33.0, 9.0, false, b.roof())
 	b.flag(-hx + 10.0, hy - 10.0, 42.0, 56.0, true)
 	b.flag(hx - 10.0, -hy + 10.0, 42.0, 56.0)
 
@@ -417,8 +521,8 @@ static func _barracks(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON_STONE)
 	var wx: float = hx - 4.0
 	var wy: float = hy - 4.0
-	b.walls(0, 0, wx, wy, 0.0, 20.0, C_STONE)
-	b.gable_roof(0, 0, wx + 3.0, wy + 3.0, 19.0, 13.0, true, C_STONE)
+	b.walls(0, 0, wx, wy, 0.0, 20.0, b.wall())
+	b.civ_roof(0, 0, wx + 3.0, wy + 3.0, 19.0, 13.0, true)
 	b.opening_right(0, 0, wx, wy, 0.28, 0.6, 0.0, 15.0, C_DOOR, "Door")
 	b.opening_left(0, 0, wx, wy, 0.2, 0.32, 6.0, 13.0, Color(0.2, 0.18, 0.16), "Slit")
 	b.opening_left(0, 0, wx, wy, 0.55, 0.67, 6.0, 13.0, Color(0.2, 0.18, 0.16), "Slit")
@@ -430,8 +534,8 @@ static func _archery_range(b: Builder, hx: float, hy: float) -> void:
 	b.ground_ellipse(hx - 16.0, hy - 16.0, 9.0, Color(0.9, 0.88, 0.8), "TargetOuter")
 	b.ground_ellipse(hx - 16.0, hy - 16.0, 5.5, Color(0.75, 0.2, 0.15), "TargetMid")
 	b.ground_ellipse(hx - 16.0, hy - 16.0, 2.2, Color(0.95, 0.9, 0.5), "TargetPin")
-	b.walls(-6.0, -6.0, wx, wx, 0.0, 17.0, C_TIMBER)
-	b.gable_roof(-6.0, -6.0, wx + 3.0, wx + 3.0, 16.0, 11.0, false, C_TIMBER)
+	b.walls(-6.0, -6.0, wx, wx, 0.0, 17.0, b.wall())
+	b.civ_roof(-6.0, -6.0, wx + 3.0, wx + 3.0, 16.0, 11.0, false)
 	b.opening_left(-6.0, -6.0, wx, wx, 0.3, 0.6, 0.0, 12.0, C_DOOR, "Door")
 	b.flag(-6.0, -6.0 - wx, 27.0, 44.0)
 
@@ -439,8 +543,8 @@ static func _stable(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON)
 	var wx: float = hx - 10.0
 	var wy: float = hy - 16.0
-	b.walls(-4.0, -8.0, wx, wy, 0.0, 16.0, C_TIMBER)
-	b.hip_roof(-4.0, -8.0, wx + 4.0, wy + 4.0, 15.0, 11.0, true)
+	b.walls(-4.0, -8.0, wx, wy, 0.0, 16.0, b.wall())
+	b.civ_roof(-4.0, -8.0, wx + 4.0, wy + 4.0, 15.0, 11.0, true)
 	b.opening_right(-4.0, -8.0, wx, wy, 0.2, 0.75, 0.0, 13.0, C_WOOD_DARK, "BarnDoor")
 	var fy: float = hy - 5.0
 	for i: int in range(5):
@@ -454,8 +558,8 @@ static func _blacksmith(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON_STONE)
 	var wx: float = hx - 6.0
 	var wy: float = hy - 6.0
-	b.walls(0, 0, wx, wy, 0.0, 16.0, C_STONE_DARK)
-	b.gable_roof(0, 0, wx + 3.0, wy + 3.0, 15.0, 10.0, true, C_STONE_DARK)
+	b.walls(0, 0, wx, wy, 0.0, 16.0, b.wall2())
+	b.civ_roof(0, 0, wx + 3.0, wy + 3.0, 15.0, 10.0, true, b.wall2())
 	b.opening_right(0, 0, wx, wy, 0.3, 0.62, 0.0, 12.0, Color(0.95, 0.5, 0.15), "ForgeGlow")
 	b.walls(-wx + 8.0, -wy + 8.0, 4.5, 4.5, 15.0, 36.0, Color(0.36, 0.32, 0.28))
 	b.flat_roof(-wx + 8.0, -wy + 8.0, 5.5, 5.5, 36.0, Color(0.25, 0.22, 0.20), "ChimneyCap")
@@ -465,8 +569,8 @@ static func _university(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON_STONE)
 	var wx: float = hx - 5.0
 	var wy: float = hy - 5.0
-	b.walls(0, 0, wx, wy, 0.0, 24.0, C_STONE.lightened(0.08))
-	b.hip_roof(0, 0, wx + 3.0, wy + 3.0, 23.0, 13.0, false)
+	b.walls(0, 0, wx, wy, 0.0, 24.0, b.wall().lightened(0.05))
+	b.civ_roof(0, 0, wx + 3.0, wy + 3.0, 23.0, 13.0, false)
 	for t: Array in [[0.2, 0.32], [0.44, 0.56], [0.68, 0.8]]:
 		b.opening_right(0, 0, wx, wy, t[0], t[1], 9.0, 18.0, C_WINDOW, "Window")
 	b.opening_left(0, 0, wx, wy, 0.35, 0.6, 0.0, 15.0, C_DOOR, "Portal")
@@ -476,21 +580,21 @@ static func _temple(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON_STONE)
 	var wx: float = hx - 5.0
 	var wy: float = hy - 5.0
-	b.walls(0, 0, wx, wy, 0.0, 18.0, C_STONE.lightened(0.12))
-	b.flat_roof(0, 0, wx + 2.0, wy + 2.0, 18.0, C_STONE.lightened(0.2), "Cornice")
+	b.walls(0, 0, wx, wy, 0.0, 18.0, b.wall().lightened(0.10))
+	b.flat_roof(0, 0, wx + 2.0, wy + 2.0, 18.0, b.wall().lightened(0.18), "Cornice")
 	for t: Array in [[0.14, 0.2], [0.36, 0.42], [0.58, 0.64], [0.8, 0.86]]:
-		b.opening_right(0, 0, wx, wy, t[0], t[1], 0.0, 16.0, C_STONE.lightened(0.28), "Column")
+		b.opening_right(0, 0, wx, wy, t[0], t[1], 0.0, 16.0, b.wall().lightened(0.28), "Column")
 	b.opening_left(0, 0, wx, wy, 0.38, 0.62, 0.0, 14.0, C_DOOR, "Portal")
-	b.walls(0, 0, 17.0, 17.0, 18.0, 26.0, C_STONE.lightened(0.05))
-	b.pyramid_roof(0, 0, 19.0, 19.0, 26.0, 16.0)
+	b.walls(0, 0, 17.0, 17.0, 18.0, 26.0, b.wall().lightened(0.04))
+	b.civ_roof(0, 0, 19.0, 19.0, 26.0, 14.0, true)
 	b.flag(0, 0, 42.0, 54.0)
 
 static func _market(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON)
 	var wx: float = hx - 14.0
 	var wy: float = hy - 14.0
-	b.walls(-6.0, -6.0, wx, wy, 0.0, 13.0, C_TIMBER)
-	b.hip_roof(-6.0, -6.0, wx + 4.0, wy + 4.0, 12.0, 9.0, true)
+	b.walls(-6.0, -6.0, wx, wy, 0.0, 13.0, b.wall())
+	b.civ_roof(-6.0, -6.0, wx + 4.0, wy + 4.0, 12.0, 9.0, true)
 	var s: Vector2 = Vector2(-6.0 + wx, -6.0 + wy)
 	var e: Vector2 = Vector2(-6.0 + wx, -6.0 - wy)
 	b.poly("TeamAwning", Color.WHITE, PackedVector2Array([
@@ -499,26 +603,27 @@ static func _market(b: Builder, hx: float, hy: float) -> void:
 	]))
 	for st: Vector2 in [Vector2(hx - 12.0, hy - 24.0), Vector2(hx - 26.0, hy - 10.0)]:
 		b.walls(st.x, st.y, 6.0, 6.0, 0.0, 7.0, C_WOOD_DARK.lightened(0.2))
-		b.hip_roof(st.x, st.y, 8.0, 8.0, 7.0, 4.0, true)
+		b.hip_roof(st.x, st.y, 8.0, 8.0, 7.0, 4.0, true, false, b.roof())
 	b.flag(-6.0, -6.0 - wy, 22.0, 38.0)
 
 static func _siege_workshop(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON_STONE)
 	var wx: float = hx - 5.0
 	var wy: float = hy - 5.0
-	b.walls(0, 0, wx, wy, 0.0, 19.0, C_WOOD_DARK.lightened(0.25))
-	b.gable_roof(0, 0, wx + 3.0, wy + 3.0, 18.0, 12.0, false, C_WOOD_DARK.lightened(0.25))
+	b.walls(0, 0, wx, wy, 0.0, 19.0, b.wall2())
+	b.civ_roof(0, 0, wx + 3.0, wy + 3.0, 18.0, 12.0, false, b.wall2())
 	b.opening_left(0, 0, wx, wy, 0.22, 0.72, 0.0, 15.0, Color(0.16, 0.12, 0.08), "Bay")
 	b.opening_right(0, 0, wx, wy, 0.4, 0.52, 7.0, 14.0, C_WINDOW, "Window")
 	b.post(hx - 8.0, hy - 8.0, 12.0, 2.2, C_WOOD_DARK, "Crane")
 	b.flag(0, -wy, 30.0, 46.0)
 
-static func _camp(b: Builder, hx: float, hy: float, wall_c: Color, is_lumber: bool) -> void:
+static func _camp(b: Builder, hx: float, hy: float, is_lumber: bool) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON)
+	var wall_c: Color = b.wall() if is_lumber else b.wall2()
 	var wx: float = hx - 9.0
 	var wy: float = hy - 9.0
 	b.walls(-4.0, -4.0, wx, wy, 0.0, 13.0, wall_c)
-	b.gable_roof(-4.0, -4.0, wx + 3.0, wy + 3.0, 12.0, 9.0, true, wall_c)
+	b.civ_roof(-4.0, -4.0, wx + 3.0, wy + 3.0, 12.0, 9.0, true, wall_c)
 	b.opening_right(-4.0, -4.0, wx, wy, 0.28, 0.6, 0.0, 10.0, C_DOOR, "Door")
 	if is_lumber:
 		for i: int in range(3):
@@ -545,19 +650,20 @@ static func _dock(b: Builder, hx: float, hy: float) -> void:
 		b.post(hx - 1.0, hy - t * hy * 2.0, 6.0, 2.0, C_WOOD_DARK, "Mooring")
 	var cx: float = -hx + 16.0
 	var cy: float = -hy + 13.0
-	b.walls(cx, cy, 13.0, 11.0, 0.0, 13.0, C_TIMBER)
-	b.gable_roof(cx, cy, 16.0, 14.0, 12.0, 9.0, true, C_TIMBER)
+	b.walls(cx, cy, 13.0, 11.0, 0.0, 13.0, b.wall())
+	b.civ_roof(cx, cy, 16.0, 14.0, 12.0, 9.0, true)
 	b.opening_right(cx, cy, 13.0, 11.0, 0.3, 0.62, 0.0, 10.0, C_DOOR, "Door")
 	b.flag(cx, cy + 11.0, 23.0, 40.0, true)
 
 static func _watch_tower(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON_STONE)
 	var wx: float = hx - 3.0
-	b.walls(0, 0, wx, wx, 0.0, 42.0, C_STONE_DARK)
+	b.walls(0, 0, wx, wx, 0.0, 42.0, b.wall2())
 	b.opening_right(0, 0, wx, wx, 0.35, 0.55, 24.0, 34.0, Color(0.15, 0.13, 0.11), "Slit")
 	b.opening_left(0, 0, wx, wx, 0.38, 0.52, 24.0, 34.0, Color(0.12, 0.1, 0.09), "Slit")
-	b.walls(0, 0, wx + 2.5, wx + 2.5, 42.0, 50.0, C_STONE)
-	b.flat_roof(0, 0, wx + 2.5, wx + 2.5, 50.0, C_STONE.lightened(0.15), "Deck")
+	b.walls(0, 0, wx + 2.5, wx + 2.5, 42.0, 50.0, b.wall())
+	b.walls(0, 0, wx + 2.5, wx + 2.5, 42.0, 43.6, b.trim())
+	b.flat_roof(0, 0, wx + 2.5, wx + 2.5, 50.0, b.wall().lightened(0.15), "Deck")
 	var pw: float = wx + 2.5
 	for t: float in [0.08, 0.42, 0.76]:
 		b.opening_left(0, 0, pw, pw, t, t + 0.16, 50.0, 55.0, C_STONE_DARK, "TeamMerlon")
@@ -566,24 +672,24 @@ static func _watch_tower(b: Builder, hx: float, hy: float) -> void:
 
 static func _wonder(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, Color(0.72, 0.68, 0.58, 0.95))
-	b.walls(0, 0, hx - 3.0, hy - 3.0, 0.0, 10.0, C_STONE.lightened(0.2))
-	b.flat_roof(0, 0, hx - 3.0, hy - 3.0, 10.0, C_STONE.lightened(0.3), "Terrace")
+	b.walls(0, 0, hx - 3.0, hy - 3.0, 0.0, 10.0, b.wall().lightened(0.18))
+	b.flat_roof(0, 0, hx - 3.0, hy - 3.0, 10.0, b.wall().lightened(0.28), "Terrace")
 	var t2: float = 26.0
-	b.walls(0, 0, t2, t2, 10.0, 34.0, C_STONE.lightened(0.15))
+	b.walls(0, 0, t2, t2, 10.0, 34.0, b.wall().lightened(0.12))
 	for t: Array in [[0.1, 0.18], [0.3, 0.38], [0.5, 0.58], [0.7, 0.78]]:
-		b.opening_right(0, 0, t2, t2, t[0], t[1], 10.0, 32.0, C_STONE.lightened(0.32), "Column")
-		b.opening_left(0, 0, t2, t2, t[0], t[1], 10.0, 32.0, C_STONE.lightened(0.05), "Column")
+		b.opening_right(0, 0, t2, t2, t[0], t[1], 10.0, 32.0, b.wall().lightened(0.30), "Column")
+		b.opening_left(0, 0, t2, t2, t[0], t[1], 10.0, 32.0, b.wall().lightened(0.04), "Column")
 	b.flat_roof(0, 0, t2 + 3.0, t2 + 3.0, 34.0, Color(0.85, 0.72, 0.35), "GoldBand")
 	b.pyramid_roof(0, 0, t2 + 1.0, t2 + 1.0, 35.0, 22.0)
 	for c: Vector2 in [Vector2(-hx + 8.0, hy - 8.0), Vector2(hx - 8.0, -hy + 8.0),
 			Vector2(hx - 8.0, hy - 8.0)]:
-		b.walls(c.x, c.y, 3.5, 3.5, 10.0, 30.0, C_STONE.lightened(0.25))
+		b.walls(c.x, c.y, 3.5, 3.5, 10.0, 30.0, b.wall().lightened(0.22))
 		b.pyramid_roof(c.x, c.y, 4.5, 4.5, 30.0, 6.0, false, Color(0.85, 0.72, 0.35))
 	b.flag(0, 0, 58.0, 76.0)
 
 static func _wall_segment(b: Builder, hx: float, hy: float) -> void:
-	b.walls(0, 0, hx, hy, 0.0, 13.0, C_STONE)
-	b.flat_roof(0, 0, hx, hy, 13.0, C_STONE.lightened(0.12), "Walk")
+	b.walls(0, 0, hx, hy, 0.0, 13.0, b.wall())
+	b.flat_roof(0, 0, hx, hy, 13.0, b.wall().lightened(0.12), "Walk")
 	b.opening_left(0, 0, hx, hy, 0.05, 0.45, 13.0, 16.5, Color.WHITE, "TeamMerlon")
 	b.opening_right(0, 0, hx, hy, 0.55, 0.95, 13.0, 16.5, Color.WHITE, "TeamMerlonDark")
 
@@ -620,8 +726,8 @@ static func _gate(b: Builder, hx: float, hy: float) -> void:
 		Vector2(-leaf_x, hy - 2.0), Vector2(leaf_x, hy - 2.0),
 		Vector2(leaf_x, hy - 2.0), Vector2(-leaf_x, hy - 2.0), 8.0, 10.5))
 	for tx: float in [-hx + 7.0, hx - 7.0]:
-		b.walls(tx, 0, 7.0, hy, 0.0, 26.0, C_STONE_DARK)
-		b.flat_roof(tx, 0, 8.5, hy + 1.5, 26.0, C_STONE_DARK.lightened(0.18), "TowerCap")
-		b.pyramid_roof(tx, 0, 8.5, hy + 1.5, 27.0, 7.0)
+		b.walls(tx, 0, 7.0, hy, 0.0, 26.0, b.wall2())
+		b.flat_roof(tx, 0, 8.5, hy + 1.5, 26.0, b.wall2().lightened(0.18), "TowerCap")
+		b.pyramid_roof(tx, 0, 8.5, hy + 1.5, 27.0, 7.0, false, b.roof())
 	b.flag(-hx + 7.0, 0, 34.0, 48.0, true)
 	b.flag(hx - 7.0, 0, 34.0, 48.0)

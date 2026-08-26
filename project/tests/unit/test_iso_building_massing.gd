@@ -1,10 +1,19 @@
 extends GutTest
 
 ## Contract tests for the procedural isometric building massing: projection
-## math, generated Body volumes, team-accent naming, scaffold state and
-## overlay (label/bar) placement.
+## math, generated Body volumes, per-civ styling (CivStyle walls + the five
+## roof silhouettes), team-accent naming, scaffold state and overlay
+## (label/bar) placement.
 
 const EPS: float = 0.001
+
+var _saved_civ: String
+
+func before_each() -> void:
+	_saved_civ = MatchConfig.player_civ_id
+
+func after_each() -> void:
+	MatchConfig.player_civ_id = _saved_civ
 
 func test_gp_projects_square_to_two_to_one_diamond() -> void:
 	var right: Vector2 = IsoBuildingMassing.gp(24.0, -24.0)
@@ -23,18 +32,61 @@ func _instance_house() -> Node2D:
 	var house: Node2D = (load("res://scenes/buildings/house.tscn") as PackedScene).instantiate() as Node2D
 	return house
 
-func test_apply_builds_walls_roof_and_footprint() -> void:
+func _house_prefixes_for_civ(civ: String) -> Dictionary:
+	MatchConfig.player_civ_id = civ
 	var house: Node2D = _instance_house()
 	add_child_autofree(house)
-	var body: Node2D = house.get_node("Body") as Node2D
 	var prefixes: Dictionary = {}
-	for child: Node in body.get_children():
+	for child: Node in (house.get_node("Body") as Node2D).get_children():
 		prefixes[String(child.name).split("_")[0]] = true
+	return prefixes
+
+func test_apply_builds_walls_roof_and_footprint() -> void:
+	var prefixes: Dictionary = _house_prefixes_for_civ("canarii")
 	assert_true(prefixes.has("Footprint"), "massing has a ground footprint diamond")
 	assert_true(prefixes.has("WallL"), "massing has the front-left wall face")
 	assert_true(prefixes.has("WallR"), "massing has the front-right wall face")
-	assert_true(prefixes.has("TeamRoof"), "roof plane is named for the team-accent pass")
-	assert_true(prefixes.has("TeamRoofDark"), "shaded roof plane keeps the Dark accent variant")
+	assert_true(prefixes.has("RoofLight"), "hipped civ gets a sunlit roof facet")
+	assert_true(prefixes.has("RoofDark"), "hipped civ gets a shaded roof facet")
+	assert_false(prefixes.has("TeamRoof"),
+		"roof is civ material identity, never a player-colour accent")
+
+func test_roof_silhouette_follows_civ_style() -> void:
+	var flat: Dictionary = _house_prefixes_for_civ("guanches")
+	assert_true(flat.has("Parapet") and flat.has("RoofTerrace"),
+		"FLAT roof builds a parapet slab and recessed terrace")
+	var domed: Dictionary = _house_prefixes_for_civ("mahos")
+	assert_true(domed.has("Dome") and domed.has("Finial"),
+		"DOMED roof builds a dome with a trim finial")
+	var stepped: Dictionary = _house_prefixes_for_civ("atlantes")
+	assert_true(stepped.has("StepLow") and stepped.has("StepTop"),
+		"STEPPED roof stacks two slabs")
+	var gabled: Dictionary = _house_prefixes_for_civ("franks")
+	assert_true(gabled.has("Gable") and gabled.has("RidgeBeam"),
+		"GABLED roof has an end gable and a trim ridge beam")
+
+func test_walls_take_civ_material_colour() -> void:
+	MatchConfig.player_civ_id = "mahos"
+	var house: Node2D = _instance_house()
+	add_child_autofree(house)
+	var style: Dictionary = CivStyle.style_for_civ("mahos")
+	var expected: Color = (style.wall as Color).darkened(IsoBuildingMassing.WALL_R_DARKEN)
+	for child: Node in (house.get_node("Body") as Node2D).get_children():
+		if String(child.name).begins_with("WallR"):
+			assert_almost_eq((child as Polygon2D).color.r, expected.r, EPS,
+				"front-right wall uses the civ wall material")
+			return
+	fail_test("house has no WallR face")
+
+func test_ownership_accents_stay_team_named() -> void:
+	MatchConfig.player_civ_id = "guanches"
+	var barracks: Node2D = (load("res://scenes/buildings/barracks.tscn") as PackedScene).instantiate() as Node2D
+	add_child_autofree(barracks)
+	var has_team: bool = false
+	for child: Node in (barracks.get_node("Body") as Node2D).get_children():
+		if String(child.name).begins_with("Team"):
+			has_team = true
+	assert_true(has_team, "player-colour accents (flags) survive the civ styling pass")
 
 func test_apply_records_massing_extents_meta() -> void:
 	var house: Node2D = _instance_house()
