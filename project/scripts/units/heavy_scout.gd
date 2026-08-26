@@ -12,6 +12,7 @@ var _destination_state: UnitState = UnitState.IDLE
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
+	UnitDress.apply.call_deferred(self, player_id)
 
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 9.9, 12.0)

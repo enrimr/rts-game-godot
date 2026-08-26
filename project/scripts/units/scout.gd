@@ -18,6 +18,7 @@ var _explore_waypoint_cooldown: float = 0.0
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
+	UnitDress.apply.call_deferred(self, player_id)
 
 # Wider stripe under the horse's hooves so it reads as a mounted unit's banner
 # without covering the horse/rider.

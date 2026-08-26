@@ -16,6 +16,7 @@ func get_selection_sound() -> String:
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
+	UnitDress.apply.call_deferred(self, player_id)
 
 # Narrower stripe at the feet so the team colour doesn't cover the archer body.
 func _add_player_color_stripe() -> void:

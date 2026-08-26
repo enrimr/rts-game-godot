@@ -61,6 +61,7 @@ const BOARD_APPROACH_RANGE: float = 60.0
 func _ready() -> void:
 	super._ready()
 	nav_agent.velocity_computed.connect(_on_velocity_computed)
+	UnitDress.apply.call_deferred(self, player_id)
 	if is_instance_valid(_tool_poly):
 		_tool_base_pos = _tool_poly.position
 
