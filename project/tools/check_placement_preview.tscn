@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://check_placement_preview"]
+
+[ext_resource type="Script" path="res://tools/check_placement_preview.gd" id="1_pp"]
+
+[node name="CheckPlacementPreview" type="Node"]
+script = ExtResource("1_pp")

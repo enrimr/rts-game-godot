@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://check_building_gallery"]
+
+[ext_resource type="Script" path="res://tools/check_building_gallery.gd" id="1_gallery"]
+
+[node name="CheckBuildingGallery" type="Node2D"]
+script = ExtResource("1_gallery")

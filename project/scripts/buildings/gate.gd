@@ -9,7 +9,7 @@ var locked: bool = false  # when true, auto-open is suppressed
 
 @onready var _collision: CollisionShape2D = get_node_or_null("CollisionShape2D")
 @onready var _obstacle: NavigationObstacle2D = get_node_or_null("NavigationObstacle2D")
-@onready var _body: ColorRect = get_node_or_null("Body")
+@onready var _body: Node2D = get_node_or_null("Body")
 @onready var _open_label: Label = get_node_or_null("StateLabel")
 @onready var _detect_area: Area2D = get_node_or_null("DetectArea")
 
@@ -95,11 +95,20 @@ func _apply_state() -> void:
 		_collision.set_deferred("disabled", is_open)
 	if is_instance_valid(_obstacle):
 		_obstacle.set_deferred("avoidance_enabled", not is_open)
+	# The iso massing draws the wooden leaf as "GateLeaf*" polygons between
+	# the stone towers; tint them by state (open reads translucent/raised).
 	if is_instance_valid(_body):
+		var leaf_tint: Color = COLOR_CLOSED
 		if locked:
-			_body.color = COLOR_LOCKED
-		else:
-			_body.color = COLOR_OPEN if is_open else COLOR_CLOSED
+			leaf_tint = COLOR_LOCKED
+		elif is_open:
+			leaf_tint = COLOR_OPEN
+		for child: Node in _body.get_children():
+			if child is Polygon2D and child.name.begins_with("GateLeaf"):
+				var p: Polygon2D = child as Polygon2D
+				var shade: float = 0.25 if child.name.contains("Plank") or child.name.contains("Brace") else 0.0
+				p.color = leaf_tint.darkened(shade)
+				p.color.a = leaf_tint.a
 	if is_instance_valid(_open_label):
 		if locked:
 			_open_label.text = "LOCKED"
