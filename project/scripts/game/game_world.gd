@@ -107,6 +107,11 @@ var _selected_units: Array[Node] = []
 var _selected_building: Node = null
 var _selected_node: Node = null
 var _drag_start: Vector2 = Vector2.ZERO
+# Screen-space anchor of the drag: the band the player draws is a plain 2D
+# rectangle on the screen; world membership is tested by projecting units
+# into screen space (never by an axis-aligned world rect, which the iso
+# camera would render as a parallelogram).
+var _drag_start_screen: Vector2 = Vector2.ZERO
 var _dragging: bool = false
 var _last_click_time: float = -1.0
 var _last_click_unit_script: Script = null
@@ -692,15 +697,19 @@ func _process(delta: float) -> void:
 		var overlay: _DragOverlay = _drag_overlay as _DragOverlay
 		overlay.active = _dragging
 		if _dragging:
-			overlay.drag_rect = Rect2(_drag_start, Vector2.ZERO).expand(get_global_mouse_position())
+			overlay.drag_rect = Rect2(_drag_start_screen, Vector2.ZERO) \
+				.expand(get_viewport().get_mouse_position())
 		overlay.queue_redraw()
 
 class _DragOverlay extends Node2D:
-	var drag_rect: Rect2 = Rect2()
+	var drag_rect: Rect2 = Rect2()   # screen-space (viewport) coordinates
 	var active: bool = false
 	func _draw() -> void:
 		if not active:
 			return
+		# Cancel the iso camera transform so the band is a plain screen-space
+		# rectangle, like any classic RTS (same trick as weather_overlay).
+		draw_set_transform_matrix(get_canvas_transform().affine_inverse())
 		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.18), true)
 		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.75), false, 1.5)
 
@@ -893,11 +902,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_drag_start = get_global_mouse_position()
+				_drag_start_screen = get_viewport().get_mouse_position()
 				_dragging = true
 			else:
 				if _dragging:
 					_dragging = false
-					_finish_selection(get_global_mouse_position())
+					_finish_selection()
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_handle_right_click(get_global_mouse_position())
 
@@ -915,9 +925,12 @@ func set_zoom(value: float) -> void:
 
 const BUILDING_CLICK_RADIUS: float = 40.0
 
-func _finish_selection(release_pos: Vector2) -> void:
-	var rect: Rect2 = Rect2(_drag_start, Vector2.ZERO).expand(release_pos)
-	var is_click: bool = rect.get_area() < 10.0
+func _finish_selection() -> void:
+	# The band lives in screen space; a small screen area is a click regardless
+	# of the current zoom (a world-space area threshold was zoom-dependent).
+	var screen_rect: Rect2 = Rect2(_drag_start_screen, Vector2.ZERO) \
+		.expand(get_viewport().get_mouse_position())
+	var is_click: bool = screen_rect.get_area() < 25.0
 
 	for sel: Node in _selected_units:
 		if is_instance_valid(sel):
@@ -1022,21 +1035,23 @@ func _finish_selection(release_pos: Vector2) -> void:
 			_selected_node = enemy_building
 			return
 	else:
-		# Drag: select all friendly units and owned animals inside the rectangle
+		# Drag: select all friendly units and owned animals whose projected
+		# screen position falls inside the screen-space band.
+		var to_screen: Transform2D = get_viewport().get_canvas_transform()
 		for unit: Node in units_layer.get_children():
 			if not is_instance_valid(unit):
 				continue
 			if unit is Animal:
 				var animal: Animal = unit as Animal
 				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
-					if rect.has_point((unit as Node2D).global_position):
+					if screen_rect.has_point(to_screen * (unit as Node2D).global_position):
 						animal.set_selected(true)
 						_selected_units.append(animal)
 				continue
 			var pid: Variant = unit.get("player_id")
 			if pid == null or (pid as int) != 0:
 				continue
-			if rect.has_point((unit as Node2D).global_position):
+			if screen_rect.has_point(to_screen * (unit as Node2D).global_position):
 				unit.set_selected(true)
 				_selected_units.append(unit)
 
