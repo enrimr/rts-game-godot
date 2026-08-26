@@ -71,6 +71,7 @@ const TERRAIN_SHADER: Shader = preload("res://assets/shaders/terrain.gdshader")
 const LAVA_SHADER: Shader = preload("res://assets/shaders/lava.gdshader")
 var _terrain_material: ShaderMaterial = null
 var _water_material: ShaderMaterial = null
+var _shallow_material: ShaderMaterial = null
 var _lava_material: ShaderMaterial = null
 # Per-terrain-type base material (grain/variation tuned to the surface).
 var _terrain_materials_by_type: Dictionary = {}
@@ -120,6 +121,19 @@ func _get_water_material() -> ShaderMaterial:
 		_water_material = ShaderMaterial.new()
 		_water_material.shader = WATER_SHADER
 	return _water_material
+
+# Brighter, choppier water tuning for the coastal shelf: shoals read turquoise
+# with more visible foam than the open deep-blue ocean.
+func _get_shallow_material() -> ShaderMaterial:
+	if _shallow_material == null:
+		_shallow_material = ShaderMaterial.new()
+		_shallow_material.shader = WATER_SHADER
+		_shallow_material.set_shader_parameter("water_deep", Color(0.10, 0.36, 0.55))
+		_shallow_material.set_shader_parameter("water_shallow", Color(0.30, 0.64, 0.72))
+		_shallow_material.set_shader_parameter("foam_amount", 0.30)
+		_shallow_material.set_shader_parameter("wave_scale", 0.016)
+		_shallow_material.set_shader_parameter("wave_speed", 0.75)
+	return _shallow_material
 
 func _get_lava_material() -> ShaderMaterial:
 	if _lava_material == null:
@@ -368,7 +382,7 @@ func _paint_standard(parent: Node2D) -> void:
 
 func _paint_volcanic_coast(parent: Node2D) -> void:
 	var h: float = _map_half
-	_paint_coastal_ocean(parent, h)
+	_paint_coastal_ocean(parent, h, _tc(TerrainManager.TerrainType.GRASS))
 	_paint_rect_bg(parent, h, _tc(TerrainManager.TerrainType.GRASS))
 	_paint_ground_scatter(parent, h, TerrainManager.TerrainType.GRASS)
 	# Large central caldera + malpaís bands radiating from it
@@ -398,7 +412,7 @@ func _paint_volcanic_coast(parent: Node2D) -> void:
 
 func _paint_desert_coast(parent: Node2D) -> void:
 	var h: float = _map_half
-	_paint_coastal_ocean(parent, h)
+	_paint_coastal_ocean(parent, h, _tc(TerrainManager.TerrainType.DUNE))
 	_paint_rect_bg(parent, h, _tc(TerrainManager.TerrainType.DUNE))
 	_paint_ground_scatter(parent, h, TerrainManager.TerrainType.DUNE)
 	# Register full map as dune zone so TerrainManager knows
@@ -508,28 +522,31 @@ func _paint_risco(parent: Node2D, center: Vector2, radius: float, variant: int =
 		parent.add_child(ppoly)
 	_paint_terrain_variant(parent, center, radius, TerrainManager.TerrainType.RISCO, variant)
 
-	# Peaks — more peaks, wider base to fill the zone
+	# Peaks — upright rock outcrops. The silhouette is authored in screen space
+	# and mounted on an IsoBillboard-uprighted child so the camera projection
+	# doesn't shear it into a smeared grey parallelogram; only the cast shadow
+	# stays ground-flat (projected). Each peak anchor sits in the entity depth
+	# band so units in front of / behind the crag occlude correctly.
 	var peak_count: int = _rng.randi_range(3, 6)
-	for pi: int in range(peak_count):
+	for _pi: int in range(peak_count):
 		# Spread peaks across most of the zone so the base is well covered
 		var spread: float = _rng.randf_range(0.0, radius * 0.60)
 		var dir_angle: float = _rng.randf() * TAU
 		var peak_center: Vector2 = center + Vector2(cos(dir_angle), sin(dir_angle)) * spread
 
-		# Wide base: pw can exceed the local spread so adjacent peaks overlap at ground level
-		var ph: float = _rng.randf_range(radius * 0.55, radius * 1.0)
-		var pw: float = _rng.randf_range(radius * 0.75, radius * 1.2)
+		var ph: float = _rng.randf_range(radius * 0.45, radius * 0.85)
+		var pw: float = _rng.randf_range(radius * 0.70, radius * 1.1)
 		var tilt: float = _rng.randf_range(-0.18, 0.18)
 
 		# Cast shadow: flat ellipse pooled at the peak base, offset toward the
-		# shadow side (left, since the sunlit face is the right flank). Drawn just
-		# under the rock base so the peak reads as standing on the ground.
+		# shadow side (left, since the sunlit face is the right flank). Stays in
+		# world space so it hugs the ground plane under projection.
 		var shadow_cast: Polygon2D = Polygon2D.new()
 		shadow_cast.color = Color(0.10, 0.09, 0.08, 0.30)
 		shadow_cast.z_index = -8
 		var sh_rx: float = pw * 0.55
-		var sh_ry: float = pw * 0.18
-		var sh_center: Vector2 = peak_center + Vector2(-pw * 0.22, ph * 0.06)
+		var sh_ry: float = pw * 0.30
+		var sh_center: Vector2 = peak_center + Vector2(-pw * 0.20, pw * 0.05)
 		var sh_pts: PackedVector2Array = PackedVector2Array()
 		for ssi: int in range(14):
 			var ssa: float = TAU * float(ssi) / 14.0
@@ -537,54 +554,58 @@ func _paint_risco(parent: Node2D, center: Vector2, radius: float, variant: int =
 		shadow_cast.polygon = sh_pts
 		parent.add_child(shadow_cast)
 
-		var tip: Vector2 = peak_center + Vector2(tilt * pw, -ph)
-		var base_l: Vector2 = peak_center + Vector2(-pw * 0.5 + _rng.randf_range(-pw * 0.08, pw * 0.08), _rng.randf_range(-ph * 0.05, ph * 0.10))
-		var base_r: Vector2 = peak_center + Vector2( pw * 0.5 + _rng.randf_range(-pw * 0.08, pw * 0.08), _rng.randf_range(-ph * 0.05, ph * 0.10))
-		# Extra mid-flank jagged vertices for more craggy silhouette
-		var jag_l: Vector2 = peak_center + Vector2(-pw * 0.30 + _rng.randf_range(-pw * 0.08, pw * 0.06), -ph * _rng.randf_range(0.38, 0.58))
-		var jag_r: Vector2 = peak_center + Vector2( pw * 0.30 + _rng.randf_range(-pw * 0.06, pw * 0.08), -ph * _rng.randf_range(0.35, 0.55))
-		var jag2_l: Vector2 = peak_center + Vector2(-pw * 0.42 + _rng.randf_range(-pw * 0.05, pw * 0.05), -ph * _rng.randf_range(0.15, 0.32))
-		var jag2_r: Vector2 = peak_center + Vector2( pw * 0.42 + _rng.randf_range(-pw * 0.05, pw * 0.05), -ph * _rng.randf_range(0.12, 0.30))
+		var anchor: Node2D = Node2D.new()
+		anchor.position = peak_center
+		anchor.z_index = IsoBillboard.depth_z(peak_center)
+		parent.add_child(anchor)
+		var body: Node2D = Node2D.new()
+		anchor.add_child(body)
+		IsoBillboard.make_upright(body)
 
-		var z_base: int = -7 if pi < peak_count / 2 else -6
+		# Silhouette vertices relative to the base centre, screen space (Y up).
+		var tip: Vector2 = Vector2(tilt * pw, -ph)
+		var base_l: Vector2 = Vector2(-pw * 0.5 + _rng.randf_range(-pw * 0.08, pw * 0.08), _rng.randf_range(-ph * 0.05, ph * 0.10))
+		var base_r: Vector2 = Vector2( pw * 0.5 + _rng.randf_range(-pw * 0.08, pw * 0.08), _rng.randf_range(-ph * 0.05, ph * 0.10))
+		# Extra mid-flank jagged vertices for more craggy silhouette
+		var jag_l: Vector2 = Vector2(-pw * 0.30 + _rng.randf_range(-pw * 0.08, pw * 0.06), -ph * _rng.randf_range(0.38, 0.58))
+		var jag_r: Vector2 = Vector2( pw * 0.30 + _rng.randf_range(-pw * 0.06, pw * 0.08), -ph * _rng.randf_range(0.35, 0.55))
+		var jag2_l: Vector2 = Vector2(-pw * 0.42 + _rng.randf_range(-pw * 0.05, pw * 0.05), -ph * _rng.randf_range(0.15, 0.32))
+		var jag2_r: Vector2 = Vector2( pw * 0.42 + _rng.randf_range(-pw * 0.05, pw * 0.05), -ph * _rng.randf_range(0.12, 0.30))
 
 		# Dark rock base — full wide mountain silhouette
 		var base_poly: Polygon2D = Polygon2D.new()
 		base_poly.color = Color(0.32, 0.29, 0.25)
-		base_poly.z_index = z_base
 		base_poly.polygon = PackedVector2Array([base_l, jag2_l, jag_l, tip, jag_r, jag2_r, base_r])
-		parent.add_child(base_poly)
+		body.add_child(base_poly)
 
 		# Mid-slope face — right half lighter (sunlit side)
 		var face: Polygon2D = Polygon2D.new()
 		face.color = Color(0.54, 0.50, 0.45)
-		face.z_index = z_base
 		var mid_base: Vector2 = (tip + base_r) * 0.5 + Vector2(0.0, ph * 0.08)
 		face.polygon = PackedVector2Array([tip, jag_r, jag2_r, base_r, mid_base])
-		parent.add_child(face)
+		body.add_child(face)
 
 		# Shadow side — left darker area
 		var shadow: Polygon2D = Polygon2D.new()
 		shadow.color = Color(0.18, 0.16, 0.14, 0.75)
-		shadow.z_index = z_base
 		var mid_left: Vector2 = base_l + (tip - base_l) * 0.38
 		shadow.polygon = PackedVector2Array([base_l, jag2_l, jag_l, mid_left])
-		parent.add_child(shadow)
+		body.add_child(shadow)
 
-		# Snow cap — wider irregular patch at apex
-		var snow_h: float = ph * _rng.randf_range(0.20, 0.32)
-		var snow_w: float = pw * _rng.randf_range(0.18, 0.28)
-		var snow: Polygon2D = Polygon2D.new()
-		snow.color = Color(0.90, 0.89, 0.87, 0.92)
-		snow.z_index = z_base
-		snow.polygon = PackedVector2Array([
-			tip,
-			tip + Vector2(-snow_w * 0.6, snow_h * 0.4) + Vector2(_rng.randf_range(-2.0, 2.0), 0.0),
-			tip + Vector2(-snow_w, snow_h),
-			tip + Vector2( snow_w, snow_h),
-			tip + Vector2( snow_w * 0.6, snow_h * 0.4) + Vector2(_rng.randf_range(-2.0, 2.0), 0.0),
-		])
-		parent.add_child(snow)
+		# Snow cap — only the taller crags carry one
+		if ph > radius * 0.62:
+			var snow_h: float = ph * _rng.randf_range(0.20, 0.32)
+			var snow_w: float = pw * _rng.randf_range(0.18, 0.28)
+			var snow: Polygon2D = Polygon2D.new()
+			snow.color = Color(0.90, 0.89, 0.87, 0.92)
+			snow.polygon = PackedVector2Array([
+				tip,
+				tip + Vector2(-snow_w * 0.6, snow_h * 0.4) + Vector2(_rng.randf_range(-2.0, 2.0), 0.0),
+				tip + Vector2(-snow_w, snow_h),
+				tip + Vector2( snow_w, snow_h),
+				tip + Vector2( snow_w * 0.6, snow_h * 0.4) + Vector2(_rng.randf_range(-2.0, 2.0), 0.0),
+			])
+			body.add_child(snow)
 
 func _paint_malpais(parent: Node2D, center: Vector2, radius: float, variant: int = 0) -> void:
 	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.MALPAIS), variant, TerrainManager.TerrainType.MALPAIS)
@@ -1361,9 +1382,11 @@ func _paint_ocean_bg(parent: Node2D, half: float) -> void:
 # Surrounds a coast-type map with animated ocean. The water sheet sits behind
 # the opaque land background (z -10), so it only shows in the outer ring beyond
 # the playable rectangle — the continent reads as sea-girt without any walkable
-# water inside the play area. A wavy land fringe just inside the border breaks
-# the otherwise ruler-straight shoreline.
-func _paint_coastal_ocean(parent: Node2D, half: float) -> void:
+# water inside the play area. The land-water transition is built from irregular
+# multi-harmonic outlines (never a ruler-straight frame): sand beach, a thin
+# surf-foam rim, then an animated turquoise shallow-water shelf fading into the
+# deep ocean.
+func _paint_coastal_ocean(parent: Node2D, half: float, land_col: Color) -> void:
 	var ocean_half: float = half * 1.35
 	var water: Polygon2D = Polygon2D.new()
 	water.color = Color(1, 1, 1, 1)   # tinted by shader
@@ -1375,16 +1398,35 @@ func _paint_coastal_ocean(parent: Node2D, half: float) -> void:
 	])
 	parent.add_child(water)
 
-	# Beach + foam frame around the land perimeter. These rects are larger than
-	# the playable land (±half); the opaque land background painted afterwards
-	# (z -9) covers their centres, leaving only the outer sand/foam rings showing
-	# over the water — a soft shore instead of a hard green/blue edge.
-	_paint_rect_outline_fill(parent, half * 1.085, SHORE_FOAM, -9)
-	_paint_rect_outline_fill(parent, half * 1.040, SHORE_SAND, -9)
+	# Shallow-water shelf: brighter animated water hugging the coast so the map
+	# border reads as shoals. Translucent so the deep ocean tints it and the
+	# outer boundary blends instead of stepping.
+	var shallow: Polygon2D = Polygon2D.new()
+	shallow.color = Color(1, 1, 1, 0.85)
+	shallow.z_index = -10
+	shallow.material = _get_shallow_material()
+	shallow.polygon = _wavy_rect_outline(half * 1.055, half * 0.10)
+	parent.add_child(shallow)
+
+	# Surf-foam rim: pale sliver between the beach and the shallows. Its outline
+	# wanders independently of the sand's, so the rim breathes from nothing to a
+	# wide wash along the coast.
+	var foam: Polygon2D = Polygon2D.new()
+	foam.color = SHORE_FOAM
+	foam.z_index = -9
+	foam.polygon = _wavy_rect_outline(half * 1.030, half * 0.045)
+	parent.add_child(foam)
+
+	# Sand beach: opaque band from the land edge out into the surf.
+	var sand: Polygon2D = Polygon2D.new()
+	sand.color = SHORE_SAND
+	sand.z_index = -9
+	sand.material = _get_terrain_material()
+	sand.polygon = _wavy_rect_outline(half * 1.005, half * 0.050)
+	parent.add_child(sand)
 
 	# Irregular shoreline fringe: a band of land-coloured blobs hugging the inner
 	# edge of the border so the coast bleeds organically into the sea.
-	var fringe_col: Color = _tc(TerrainManager.TerrainType.GRASS)
 	var step: float = half * 0.12
 	var t: float = -half
 	while t <= half:
@@ -1400,7 +1442,7 @@ func _paint_coastal_ocean(parent: Node2D, half: float) -> void:
 			var br: float = _rng.randf_range(half * 0.04, half * 0.085)
 			var bpts: PackedVector2Array = _smooth_blob(blob_pos, br, 14, 0.20)
 			var bpoly: Polygon2D = Polygon2D.new()
-			bpoly.color = fringe_col
+			bpoly.color = land_col
 			bpoly.z_index = -9
 			bpoly.material = _get_terrain_material()
 			bpoly.polygon = bpts
@@ -1439,12 +1481,14 @@ const SHORE_FOAM: Color = Color(0.82, 0.90, 0.94, 0.45)
 func _paint_shore(parent: Node2D, land_pts: PackedVector2Array, center: Vector2) -> void:
 	if land_pts.size() < 3:
 		return
-	# Foam band: widest, faint, sits just in the water (z -9, above the ocean).
-	# Sand beach: narrower, opaque, just outside the land edge (z -9).
-	# Both widths breathe around the coastline (variation arg) so the beach is
-	# broad in places and thin in others, like a real shore. The foam always
-	# extends past the sand because its base scale is larger.
-	_paint_shore_ring(parent, land_pts, center, 1.13, 0.05, SHORE_FOAM, -9)
+	# Outside-in: an animated turquoise shallow-water shelf (widest, translucent
+	# so the deep ocean blends through), a pale surf-foam rim, then the opaque
+	# sand beach hugging the land edge. All three widths breathe independently
+	# around the coastline (variation arg) so the shore is broad in places and
+	# thin in others, like a real coast.
+	_paint_shore_ring(parent, land_pts, center, 1.17, 0.055, Color(1, 1, 1, 0.85), -9,
+		_get_shallow_material())
+	_paint_shore_ring(parent, land_pts, center, 1.085, 0.030, SHORE_FOAM, -9)
 	_paint_shore_ring(parent, land_pts, center, 1.06, 0.035, SHORE_SAND, -9)
 
 # Draws one ring by scaling the land outline outward from `center`. The scale
@@ -1452,7 +1496,8 @@ func _paint_shore(parent: Node2D, land_pts: PackedVector2Array, center: Vector2)
 # the perimeter, so the band's width varies along the coast instead of being a
 # uniform offset. Follows the (already smooth) land outline so no new spikes.
 func _paint_shore_ring(parent: Node2D, land_pts: PackedVector2Array,
-		center: Vector2, base_scale: float, variation: float, col: Color, z: int) -> void:
+		center: Vector2, base_scale: float, variation: float, col: Color, z: int,
+		mat: ShaderMaterial = null) -> void:
 	var n: int = land_pts.size()
 	var freq_a: int = _rng.randi_range(2, 3)
 	var freq_b: int = _rng.randi_range(4, 6)
@@ -1472,32 +1517,36 @@ func _paint_shore_ring(parent: Node2D, land_pts: PackedVector2Array,
 	var poly: Polygon2D = Polygon2D.new()
 	poly.color = col
 	poly.z_index = z
-	if col.a >= 0.99:
+	if mat != null:
+		poly.material = mat
+	elif col.a >= 0.99:
 		poly.material = _get_terrain_material()
 	poly.polygon = clipped
 	parent.add_child(poly)
 
-# Filled square of half-extent `half` with a gently undulating outline, used for
-# the coastal beach/foam frames. Drawn under the land rect so only its margin
-# beyond the land shows. The outward bulge follows a smooth sine along each edge
-# (rather than per-point jitter) so the shoreline rolls instead of spiking.
-func _paint_rect_outline_fill(parent: Node2D, half: float, col: Color, z: int) -> void:
+# Closed outline of a square of half-extent `base_half` whose border bulges
+# outward by up to `amp`, driven by two sine harmonics plus a slow width
+# envelope. Enough low- and mid-frequency movement that the coast undulates in
+# capes and coves instead of reading as a straight frame. The bulge is always
+# >= 0 so the outline never dents inside the base square.
+func _wavy_rect_outline(base_half: float, amp: float) -> PackedVector2Array:
 	var pts: PackedVector2Array = PackedVector2Array()
-	const PER_SIDE: int = 18
+	const PER_SIDE: int = 36
 	var corners: Array = [
-		[Vector2(-half, -half), Vector2( half, -half)],
-		[Vector2( half, -half), Vector2( half,  half)],
-		[Vector2( half,  half), Vector2(-half,  half)],
-		[Vector2(-half,  half), Vector2(-half, -half)],
+		[Vector2(-base_half, -base_half), Vector2( base_half, -base_half)],
+		[Vector2( base_half, -base_half), Vector2( base_half,  base_half)],
+		[Vector2( base_half,  base_half), Vector2(-base_half,  base_half)],
+		[Vector2(-base_half,  base_half), Vector2(-base_half, -base_half)],
 	]
-	# Random phase/frequency per call so foam and sand frames aren't identical.
-	var freq: float = float(_rng.randi_range(3, 5))
-	var phase: float = _rng.randf() * TAU
-	# A second, slower wave modulates the bulge amplitude so the band's width
-	# varies along the coast (broad here, thin there) rather than a uniform roll.
-	var amp_freq: float = float(_rng.randi_range(1, 2))
+	# Random phases/frequencies per call so no two bands are identical.
+	var freq_a: float = float(_rng.randi_range(4, 6))
+	var freq_b: float = float(_rng.randi_range(9, 14))
+	var phase_a: float = _rng.randf() * TAU
+	var phase_b: float = _rng.randf() * TAU
+	# A slow wave modulates the bulge amplitude so the band's width varies
+	# along the coast (broad here, thin there) rather than a uniform roll.
+	var amp_freq: float = float(_rng.randi_range(2, 3))
 	var amp_phase: float = _rng.randf() * TAU
-	var amp: float = half * 0.035
 	var total: int = PER_SIDE * corners.size()
 	var idx: float = 0.0
 	for edge: Array in corners:
@@ -1507,20 +1556,15 @@ func _paint_rect_outline_fill(parent: Node2D, half: float, col: Color, z: int) -
 			var f: float = float(s) / float(PER_SIDE)
 			var p: Vector2 = a.lerp(b, f)
 			var perim: float = idx / float(total)   # 0..1 around the whole frame
-			# Width envelope wanders between ~40% and 100% of amp.
-			var env: float = 0.40 + (sin(perim * TAU * amp_freq + amp_phase) * 0.5 + 0.5) * 0.60
-			# Smooth outward bulge (always >= 0 so the edge never dents inward).
-			var bulge: float = (sin(perim * TAU * freq + phase) * 0.5 + 0.5) * amp * env
+			# Width envelope wanders between ~30% and 100% of amp.
+			var env: float = 0.30 + (sin(perim * TAU * amp_freq + amp_phase) * 0.5 + 0.5) * 0.70
+			var wave: float = sin(perim * TAU * freq_a + phase_a) * 0.62 \
+					+ sin(perim * TAU * freq_b + phase_b) * 0.38
+			var bulge: float = (wave * 0.5 + 0.5) * amp * env
 			var n: Vector2 = p.normalized()
 			pts.append(p + n * bulge)
 			idx += 1.0
-	var poly: Polygon2D = Polygon2D.new()
-	poly.color = col
-	poly.z_index = z
-	if col.a >= 0.99:
-		poly.material = _get_terrain_material()
-	poly.polygon = pts
-	parent.add_child(poly)
+	return pts
 
 # ── Registry helpers ─────────────────────────────────────────────────────────
 
@@ -1940,10 +1984,12 @@ func _spawn_resource_islets(parent: Node2D, center0: Vector2, center1: Vector2,
 		if not found:
 			continue
 
-		# Build and paint the islet polygon
+		# Build and paint the islet polygon (same shore treatment as the main
+		# islands so it doesn't sit as a hard green cut on the ocean)
 		var poly: PackedVector2Array = _make_island_poly(islet_center, islet_radius)
 		_land_polys.append(poly)
 		TerrainManager.set_land_polys(_land_polys, true)
+		_paint_shore(parent, poly, islet_center)
 		_paint_polygon(parent, poly, _tc(TerrainManager.TerrainType.GRASS))
 
 		# Pick a random template and spawn its resources on the islet

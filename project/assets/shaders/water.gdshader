@@ -53,5 +53,7 @@ void fragment() {
 	float crest = smoothstep(1.0 - foam_amount, 1.0, h + ripple * 0.25);
 	col = mix(col, foam_color.rgb, crest * 0.6);
 
-	COLOR = vec4(col, 1.0);
+	// Preserve the polygon's own alpha so translucent sheets (shallow-water
+	// shelves layered over the deep ocean) blend instead of cutting hard.
+	COLOR = vec4(col, COLOR.a);
 }
