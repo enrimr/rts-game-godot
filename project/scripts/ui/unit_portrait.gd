@@ -5,7 +5,8 @@ extends PanelContainer
 
 var _name_label: Label
 var _hp_bar: ProgressBar
-var _color_stripe: ColorRect
+var _icon_backdrop: ColorRect
+var _icon_rect: TextureRect
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(56.0, 56.0)
@@ -14,16 +15,30 @@ func _ready() -> void:
 	layout.add_theme_constant_override("separation", 2)
 	add_child(layout)
 
-	# Color block — fills most of the portrait, replaced later by unit icon
-	_color_stripe = ColorRect.new()
-	_color_stripe.custom_minimum_size = Vector2(0.0, 32.0)
-	_color_stripe.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	layout.add_child(_color_stripe)
+	# Baked entity icon over a player-colour backdrop fills most of the portrait
+	var icon_holder: Control = Control.new()
+	icon_holder.custom_minimum_size = Vector2(0.0, 34.0)
+	icon_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.add_child(icon_holder)
+
+	_icon_backdrop = ColorRect.new()
+	_icon_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_icon_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_holder.add_child(_icon_backdrop)
+
+	_icon_rect = TextureRect.new()
+	_icon_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_holder.add_child(_icon_rect)
 
 	_name_label = Label.new()
 	_name_label.name = "NameLabel"
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name_label.add_theme_font_size_override("font_size", 11)
+	_name_label.add_theme_font_size_override("font_size", 9)
+	_name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	layout.add_child(_name_label)
 
 	_hp_bar = ProgressBar.new()
@@ -49,8 +64,11 @@ func setup(unit: Node) -> void:
 			if name_val != null and not (name_val as String).is_empty():
 				display_name = name_val as String
 
-	_color_stripe.color = PlayerColors.get_color(pid).darkened(0.25)
-	_name_label.text = display_name.left(6)
+	_icon_backdrop.color = PlayerColors.get_color(pid).darkened(0.55)
+	var scene_path: String = unit.scene_file_path if is_instance_valid(unit) else ""
+	if not scene_path.is_empty():
+		_icon_rect.texture = IconBaker.get_icon(scene_path, pid)
+	_name_label.text = display_name.left(8)
 
 	var hp_percent: float = 100.0
 	if is_instance_valid(unit):

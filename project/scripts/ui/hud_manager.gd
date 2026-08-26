@@ -196,6 +196,29 @@ func _ready() -> void:
 	_match_stats = HudMatchStats.new()
 	_match_stats.init(local_player_id, _clock_label, get_node("HUDRoot"))
 	add_child(_match_stats)
+	_style_command_bar()
+
+func _style_command_bar() -> void:
+	var bottom_bar: PanelContainer = get_node_or_null("HUDRoot/BottomBar") as PanelContainer
+	if bottom_bar != null:
+		bottom_bar.add_theme_stylebox_override("panel", HudStyle.command_bar())
+		HudStyle.add_top_sheen(bottom_bar)
+	var selection_panel: Panel = get_node_or_null(
+		"HUDRoot/BottomBar/BottomLayout/SelectionPanel") as Panel
+	if selection_panel != null:
+		selection_panel.add_theme_stylebox_override("panel", HudStyle.command_well())
+
+## Maps an entity-creating action to the scene it spawns; icons come from
+## rendering that real scene (IconBaker), so they follow the player's civ style.
+func _action_icon_scene(action_id: String) -> String:
+	var path: String = ""
+	if action_id.begins_with("train:"):
+		path = "res://scenes/units/%s.tscn" % action_id.trim_prefix("train:")
+	elif action_id.begins_with("build:"):
+		path = "res://scenes/buildings/%s.tscn" % action_id.trim_prefix("build:")
+	else:
+		return ""
+	return path if ResourceLoader.exists(path) else ""
 
 func _process(delta: float) -> void:
 	if MatchConfig.player_civ_id == "fenicios" and is_instance_valid(_selected_building) and _selected_building is Market:
@@ -458,6 +481,18 @@ func _render_action_page() -> void:
 		var desc: String = data.get("description", "") as String
 		if not desc.is_empty():
 			btn.tooltip_text = tr(desc)
+		var icon_scene: String = _action_icon_scene(btn.action_id)
+		if not icon_scene.is_empty():
+			# Icon on top, name caption below; extra label lines (costs) move
+			# into the tooltip where the small caption cannot fit them.
+			var lines: PackedStringArray = translated_label.split("\n")
+			btn.set_entity_icon(IconBaker.get_icon(icon_scene, local_player_id),
+				key_hint + lines[0])
+			if lines.size() > 1:
+				var extra: String = " ".join(lines.slice(1))
+				btn.tooltip_text = extra if btn.tooltip_text.is_empty() \
+					else btn.tooltip_text + "\n" + extra
+		btn.set_icon_enabled(enabled)
 		btn.action_pressed.connect(_on_action_button_pressed)
 		_action_grid.add_child(btn)
 
@@ -533,6 +568,7 @@ func _refresh_button_states() -> void:
 		var can_pay: bool = cost.is_empty() or ResourceManager.can_afford(local_player_id, cost)
 		var enabled: bool = can_pay and (not is_train or not queue_full)
 		btn.disabled = not enabled
+		btn.set_icon_enabled(enabled)
 		var effective_color: Color = base_color if enabled else Color(0.25, 0.25, 0.25)
 		var style: StyleBoxFlat = StyleBoxFlat.new()
 		style.bg_color = effective_color
@@ -607,6 +643,7 @@ func _disable_action_button(target_id: String) -> void:
 		var btn: ActionButton = child as ActionButton
 		if btn.action_id == target_id:
 			btn.disabled = true
+			btn.set_icon_enabled(false)
 			var grey: StyleBoxFlat = StyleBoxFlat.new()
 			grey.bg_color = Color(0.25, 0.25, 0.25)
 			grey.corner_radius_top_left = 4
@@ -639,6 +676,7 @@ func _highlight_pending_button(active_id: String) -> void:
 		btn.add_theme_stylebox_override("hover", hover_style)
 
 func _on_game_started() -> void:
+	IconBaker.clear_cache()   # civ picks can change between matches
 	_controls.set_game_speed(1)
 	update_age(AgeManager.get_age(local_player_id))
 	var starting: Dictionary = ResourceManager.get_resources(local_player_id)
@@ -1469,8 +1507,11 @@ func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> vo
 		var aid: String = btn.action_id
 		if not aid.begins_with("train:"):
 			continue
-		var base_label: String = btn.get_meta("base_label", btn.text) as String
-		btn.text = base_label + "\n%d/%d" % [queue.size(), max_queue]
+		if btn.has_entity_icon():
+			btn.set_train_queue_badge(queue.size(), max_queue)
+		else:
+			var base_label: String = btn.get_meta("base_label", btn.text) as String
+			btn.text = base_label + "\n%d/%d" % [queue.size(), max_queue]
 	_refresh_button_states()
 	# Rebuild the visual queue row
 	for slot: Node in _train_queue_row.get_children():
