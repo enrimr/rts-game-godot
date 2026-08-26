@@ -9,7 +9,7 @@ var _icon_backdrop: ColorRect
 var _icon_rect: TextureRect
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(56.0, 56.0)
+	custom_minimum_size = Vector2(66.0, 66.0)
 
 	var layout: VBoxContainer = VBoxContainer.new()
 	layout.add_theme_constant_override("separation", 2)
@@ -17,7 +17,7 @@ func _ready() -> void:
 
 	# Baked entity icon over a player-colour backdrop fills most of the portrait
 	var icon_holder: Control = Control.new()
-	icon_holder.custom_minimum_size = Vector2(0.0, 34.0)
+	icon_holder.custom_minimum_size = Vector2(0.0, 44.0)
 	icon_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	icon_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	layout.add_child(icon_holder)

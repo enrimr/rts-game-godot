@@ -17,7 +17,7 @@ extends Object
 
 const ICON_SIZE: int = 96
 ## Fraction of the icon square the entity's screen bounds are scaled to fill.
-const FRAME_FILL: float = 0.84
+const FRAME_FILL: float = 0.94
 const MIN_ZOOM: float = 0.05
 const MAX_ZOOM: float = 8.0
 const FALLBACK_BOUNDS: Rect2 = Rect2(-24.0, -40.0, 48.0, 56.0)

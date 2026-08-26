@@ -483,11 +483,11 @@ func _render_action_page() -> void:
 			btn.tooltip_text = tr(desc)
 		var icon_scene: String = _action_icon_scene(btn.action_id)
 		if not icon_scene.is_empty():
-			# Icon on top, name caption below; extra label lines (costs) move
-			# into the tooltip where the small caption cannot fit them.
+			# Wide layout: icon left, name + hotkey beside it; extra label
+			# lines (costs) move into the tooltip.
 			var lines: PackedStringArray = translated_label.split("\n")
 			btn.set_entity_icon(IconBaker.get_icon(icon_scene, local_player_id),
-				key_hint + lines[0])
+				lines[0], key_hint.strip_edges())
 			if lines.size() > 1:
 				var extra: String = " ".join(lines.slice(1))
 				btn.tooltip_text = extra if btn.tooltip_text.is_empty() \
