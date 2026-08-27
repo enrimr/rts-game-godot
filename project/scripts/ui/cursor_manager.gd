@@ -77,6 +77,7 @@ static func set_context(id: String) -> void:
 static func prebake() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
+	_bake("default")
 	for id: String in CONTEXT_IDS:
 		_bake(id)
 
@@ -87,9 +88,12 @@ static func _apply(id: String) -> void:
 	if OS.get_environment("CALIMA_NO_CURSORS") == "1":
 		return
 	var texture: ImageTexture = _textures.get(id) as ImageTexture
-	if id == "default" or texture == null:
+	if id == "default":
+		texture = _textures.get("default") as ImageTexture
+	if texture == null:
+		# Default not baked yet (or unknown id): fall back to the OS arrow.
 		if OS.get_environment("CALIMA_CURSOR_DEBUG") == "1":
-			printerr("CURSOR_APPLY reset (id='", id, "', baked=", texture != null, ")")
+			printerr("CURSOR_APPLY reset (id='", id, "', baked=false)")
 		Input.set_custom_mouse_cursor(null)
 		return
 	# Probe the VRAM readback ourselves first: on macOS it can transiently
@@ -129,15 +133,19 @@ static func _bake(id: String) -> void:
 	# Composite cursor: the context glyph shrinks to the bottom-right and a
 	# small pointer arrow sits top-left, so the cursor still reads as "the
 	# cursor" and marks the exact click point.
-	var glyph_root: Node2D = Node2D.new()
-	glyph_root.scale = Vector2(0.62, 0.62)
-	glyph_root.position = Vector2(BAKE_SIZE * 0.36, BAKE_SIZE * 0.36)
-	root.add_child(glyph_root)
-	if id == "board":
-		_build_board(glyph_root)
+	if id == "default":
+		# The signature tabona alone, larger — Calima's default pointer.
+		_add_pointer_arrow(root, 1.55)
 	else:
-		UiIcons._build(id, glyph_root)
-	_add_pointer_arrow(root)
+		var glyph_root: Node2D = Node2D.new()
+		glyph_root.scale = Vector2(0.62, 0.62)
+		glyph_root.position = Vector2(BAKE_SIZE * 0.36, BAKE_SIZE * 0.36)
+		root.add_child(glyph_root)
+		if id == "board":
+			_build_board(glyph_root)
+		else:
+			UiIcons._build(id, glyph_root)
+		_add_pointer_arrow(root)
 	tree.root.add_child.call_deferred(viewport)
 	await tree.process_frame
 	await tree.process_frame
@@ -163,25 +171,57 @@ static func _bake(id: String) -> void:
 			if current_id == apply_id:
 				_apply(apply_id)).call_deferred()
 
-## Small two-tone pointer arrow (original art) drawn in bake space (64 px);
-## its tip lands on HOTSPOT after the downscale to CURSOR_SIZE.
-static func _add_pointer_arrow(root: Node2D) -> void:
+## Calima's signature pointer: a "tabona" — the Guanche obsidian knife —
+## as an original faceted shard whose natural point doubles as the arrow tip.
+## Basalt body, darker facet, bone cutting edge, gold handle wrap. Drawn in
+## bake space (64 px); the tip lands on HOTSPOT after the downscale.
+static func _add_pointer_arrow(root: Node2D, pointer_scale: float = 1.0) -> void:
 	var tip: Vector2 = Vector2(3.0, 3.0)
 	var pts: PackedVector2Array = PackedVector2Array([
-		Vector2(3, 3), Vector2(3, 32), Vector2(11, 25),
-		Vector2(16, 36), Vector2(22, 33), Vector2(17, 22), Vector2(26, 21),
+		Vector2(3, 3), Vector2(4, 34), Vector2(12, 27),
+		Vector2(18, 39), Vector2(25, 35), Vector2(18, 24), Vector2(27, 20),
 	])
+	var holder: Node2D = Node2D.new()
+	holder.position = tip
+	holder.scale = Vector2(pointer_scale, pointer_scale)
+	root.add_child(holder)
+
 	var backing: Polygon2D = Polygon2D.new()
 	var back_pts: PackedVector2Array = PackedVector2Array()
 	for pt: Vector2 in pts:
-		back_pts.append(tip + (pt - tip) * 1.18)
+		back_pts.append((pt - tip) * 1.16)
 	backing.polygon = back_pts
-	backing.color = Color(0.08, 0.07, 0.06, 0.95)
-	root.add_child(backing)
-	var fill: Polygon2D = Polygon2D.new()
-	fill.polygon = pts
-	fill.color = Color(0.96, 0.96, 0.94)
-	root.add_child(fill)
+	backing.color = Color(0.07, 0.06, 0.06, 0.95)
+	holder.add_child(backing)
+
+	var body: Polygon2D = Polygon2D.new()
+	var body_pts: PackedVector2Array = PackedVector2Array()
+	for pt: Vector2 in pts:
+		body_pts.append(pt - tip)
+	body.polygon = body_pts
+	body.color = Color(0.24, 0.22, 0.21)
+	holder.add_child(body)
+
+	var facet: Polygon2D = Polygon2D.new()
+	facet.polygon = PackedVector2Array([
+		Vector2(0, 0), Vector2(24, 17), Vector2(15, 21), Vector2(9, 24), Vector2(1, 17),
+	])
+	facet.color = Color(0.17, 0.155, 0.15)
+	holder.add_child(facet)
+
+	var edge: Polygon2D = Polygon2D.new()
+	edge.polygon = PackedVector2Array([
+		Vector2(0, 0), Vector2(1, 31), Vector2(3.5, 28), Vector2(2.5, 4),
+	])
+	edge.color = Color(0.80, 0.73, 0.58)
+	holder.add_child(edge)
+
+	var band: Polygon2D = Polygon2D.new()
+	band.polygon = PackedVector2Array([
+		Vector2(13, 30), Vector2(19, 27), Vector2(21, 31), Vector2(15, 34),
+	])
+	band.color = Color(0.72, 0.55, 0.22)
+	holder.add_child(band)
 
 ## Embark counterpart of the UiIcons "unload" glyph: same raft, arrow rising
 ## into it. Drawn here (not in ui_icons.gd) with the shared geometry helpers.
