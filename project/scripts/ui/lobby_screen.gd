@@ -31,15 +31,17 @@ const CIV_DETAILS: Dictionary = {
 const AGE_KEYS: Array[String] = ["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"]
 const DEFAULT_RIVAL_CIVS: Array[String] = ["castellanos", "franks", "atlantes"]
 const MAX_RIVALS: int = 3
-# Height reserved for rivals section: MAX_RIVALS × (row_h + gap) = 3 × (38+8) = 138
-const RIVALS_FIXED_H: float = 138.0
+# Height reserved for the single-row rivals section (compact lobby layout)
+const RIVALS_FIXED_H: float = 46.0
+# Fixed label column so inline setting rows align vertically
+const SETTING_LABEL_W: float = 200.0
 
 var _player_civ_index: int = 0
 var _player_civ_btns: Array[Button] = []
 var _player_civ_desc_label: Label = null  # kept for legacy reference, detail uses _rebuild_civ_detail
 
 var _rival_civ_indices: Array[int] = [0, 0, 0]
-var _rivals_section: VBoxContainer = null
+var _rivals_section: HBoxContainer = null
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
@@ -98,14 +100,14 @@ func _build() -> void:
 	card.add_child(margin)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 16)
+	vbox.add_theme_constant_override("separation", 12)
 	margin.add_child(vbox)
 
 	# Title
 	var title: Label = Label.new()
 	title.text = tr("LOBBY_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
 	vbox.add_child(title)
 	vbox.add_child(_make_sep())
@@ -117,59 +119,52 @@ func _build() -> void:
 
 	# ── Left column ─────────────────────────────────────────────────────────
 	var left: VBoxContainer = VBoxContainer.new()
-	left.add_theme_constant_override("separation", 12)
+	left.add_theme_constant_override("separation", 8)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(left)
 
 	# Map type
-	left.add_child(_make_label(tr("LOBBY_MAP_TYPE")))
 	var type_opts: Array[String] = [
 		tr("LOBBY_MAPTYPE_PLAINS"), tr("LOBBY_MAPTYPE_STANDARD"),
 		tr("LOBBY_MAPTYPE_VOLCANIC"), tr("LOBBY_MAPTYPE_DESERT"), tr("LOBBY_MAPTYPE_ISLANDS"),
 	]
-	left.add_child(_make_option_row(type_opts, MatchConfig.map_type,
+	left.add_child(_make_setting_row(tr("LOBBY_MAP_TYPE"), type_opts, MatchConfig.map_type,
 		func(i: int) -> void: MatchConfig.map_type = i))
 
 	# Map size
-	left.add_child(_make_label(tr("LOBBY_MAP_SIZE")))
 	var size_opts: Array[String] = [tr("LOBBY_MAP_SMALL"), tr("LOBBY_MAP_MEDIUM"), tr("LOBBY_MAP_LARGE")]
-	left.add_child(_make_option_row(size_opts, MatchConfig.map_size,
+	left.add_child(_make_setting_row(tr("LOBBY_MAP_SIZE"), size_opts, MatchConfig.map_size,
 		func(i: int) -> void: MatchConfig.map_size = i))
 
 	# Starting resources
-	left.add_child(_make_label(tr("LOBBY_RESOURCES")))
 	var res_opts: Array[String] = [tr("LOBBY_RES_SCARCE"), tr("LOBBY_RES_NORMAL"), tr("LOBBY_RES_ABUNDANT"), tr("LOBBY_RES_FULL_COMBAT")]
-	left.add_child(_make_option_row(res_opts, MatchConfig.resources,
+	left.add_child(_make_setting_row(tr("LOBBY_RESOURCES"), res_opts, MatchConfig.resources,
 		func(i: int) -> void: MatchConfig.resources = i))
 
 	# Starting age
-	left.add_child(_make_label(tr("LOBBY_STARTING_AGE")))
 	var age_opts: Array[String] = []
 	for k: String in AGE_KEYS:
 		age_opts.append(tr(k))
-	left.add_child(_make_option_row(age_opts, MatchConfig.starting_age,
+	left.add_child(_make_setting_row(tr("LOBBY_STARTING_AGE"), age_opts, MatchConfig.starting_age,
 		func(i: int) -> void: MatchConfig.starting_age = i))
 
 	# Victory condition
-	left.add_child(_make_label(tr("LOBBY_VICTORY_MODE")))
 	var victory_opts: Array[String] = [tr("LOBBY_VICTORY_CONQUEST"), tr("LOBBY_VICTORY_REGICIDE"), tr("LOBBY_VICTORY_WONDER")]
-	left.add_child(_make_option_row(victory_opts, MatchConfig.victory_mode,
+	left.add_child(_make_setting_row(tr("LOBBY_VICTORY_MODE"), victory_opts, MatchConfig.victory_mode,
 		func(i: int) -> void: MatchConfig.victory_mode = i))
 
 	# Hero gender selection
-	left.add_child(_make_label(tr("LOBBY_HERO_GENDER")))
 	var hero_gender_opts: Array[String] = [tr("LOBBY_HERO_RANDOM"), tr("LOBBY_HERO_MALE"), tr("LOBBY_HERO_FEMALE")]
-	left.add_child(_make_option_row(hero_gender_opts, MatchConfig.hero_gender,
+	left.add_child(_make_setting_row(tr("LOBBY_HERO_GENDER"), hero_gender_opts, MatchConfig.hero_gender,
 		func(i: int) -> void: MatchConfig.hero_gender = i))
 
 	# Weather
-	left.add_child(_make_label(tr("LOBBY_WEATHER_FREQUENCY")))
 	var weather_opts: Array[String] = [
 		tr("LOBBY_WEATHER_OFF"), tr("LOBBY_WEATHER_NORMAL"),
 		tr("LOBBY_WEATHER_FREQUENT"), tr("LOBBY_WEATHER_EXTREME"),
 	]
 	var weather_initial: int = 0 if not MatchConfig.weather_enabled else MatchConfig.weather_frequency
-	left.add_child(_make_option_row(weather_opts, weather_initial,
+	left.add_child(_make_setting_row(tr("LOBBY_WEATHER_FREQUENCY"), weather_opts, weather_initial,
 		func(i: int) -> void:
 			MatchConfig.weather_enabled = i > 0
 			MatchConfig.weather_frequency = i))
@@ -177,9 +172,8 @@ func _build() -> void:
 	left.add_child(_make_sep())
 
 	# Rival count
-	left.add_child(_make_label(tr("LOBBY_RIVAL_COUNT")))
 	var rival_opts: Array[String] = ["1", "2", "3"]
-	left.add_child(_make_option_row(rival_opts, MatchConfig.rival_count - 1,
+	left.add_child(_make_setting_row(tr("LOBBY_RIVAL_COUNT"), rival_opts, MatchConfig.rival_count - 1,
 		func(i: int) -> void:
 			MatchConfig.rival_count = i + 1
 			_sync_rival_config_to_match()
@@ -192,19 +186,18 @@ func _build() -> void:
 	rivals_clip.clip_contents = true
 	left.add_child(rivals_clip)
 
-	_rivals_section = VBoxContainer.new()
-	_rivals_section.add_theme_constant_override("separation", 8)
+	_rivals_section = HBoxContainer.new()
+	_rivals_section.add_theme_constant_override("separation", 10)
 	_rivals_section.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	rivals_clip.add_child(_rivals_section)
 	_rebuild_rivals_section()
 
 	# AI difficulty
-	left.add_child(_make_label(tr("LOBBY_AI_DIFFICULTY")))
 	var diff_opts: Array[String] = [
 		tr("LOBBY_DIFFICULTY_EASY"), tr("LOBBY_DIFFICULTY_NORMAL"), tr("LOBBY_DIFFICULTY_HARD"),
 	]
 	var diff_initial: int = clampi(GameSettings.difficulty, 0, 2)
-	left.add_child(_make_option_row(diff_opts, diff_initial,
+	left.add_child(_make_setting_row(tr("LOBBY_AI_DIFFICULTY"), diff_opts, diff_initial,
 		func(i: int) -> void: GameSettings.difficulty = i))
 
 	# ── Right column: player civ ─────────────────────────────────────────────
@@ -294,20 +287,23 @@ func _build() -> void:
 func _rebuild_rivals_section() -> void:
 	for child: Node in _rivals_section.get_children():
 		child.queue_free()
+	# One compact cell per rival, all on a single row: "1: [civ v]" ...
 	for ri: int in range(MatchConfig.rival_count):
-		var row: HBoxContainer = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
-		_rivals_section.add_child(row)
-		var lbl: Label = _make_label(tr("LOBBY_RIVAL") + " %d:" % (ri + 1))
+		var cell: HBoxContainer = HBoxContainer.new()
+		cell.add_theme_constant_override("separation", 4)
+		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_rivals_section.add_child(cell)
+		var lbl: Label = _make_label("%d:" % (ri + 1))
 		lbl.add_theme_color_override("font_color", Color(1.0, 0.55, 0.35))
-		lbl.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		row.add_child(lbl)
+		lbl.tooltip_text = tr("LOBBY_RIVAL") + " %d" % (ri + 1)
+		cell.add_child(lbl)
 		var captured_ri: int = ri
 		var dropdown: OptionButton = _make_civ_dropdown(_rival_civ_indices[ri],
 			func(i: int) -> void:
 				_rival_civ_indices[captured_ri] = i
 				_sync_rival_config_to_match())
-		row.add_child(dropdown)
+		dropdown.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cell.add_child(dropdown)
 
 # --- Civ detail panel ---
 
@@ -406,6 +402,21 @@ func _make_option_row(labels: Array[String], initial: int, on_select: Callable) 
 		btns[i].pressed.connect(func() -> void:
 			on_select.call(captured_i)
 			_apply_btn_styles(btns, captured_i))
+	return row
+
+# Compact single-line setting: fixed-width label left, segmented options
+# right — halves the card height vs the stacked label-above-row layout.
+func _make_setting_row(label_text: String, labels: Array[String], initial: int,
+		on_select: Callable) -> HBoxContainer:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var lbl: Label = _make_label(label_text)
+	lbl.custom_minimum_size = Vector2(SETTING_LABEL_W, 0)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(lbl)
+	var opts: HBoxContainer = _make_option_row(labels, initial, on_select)
+	opts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(opts)
 	return row
 
 func _refresh_civ_highlight(btns: Array[Button], selected: int) -> void:

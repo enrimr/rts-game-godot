@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://calima_lobby_check"]
+
+[ext_resource type="Script" path="res://tools/check_lobby.gd" id="1_lobbycheck"]
+
+[node name="LobbyCheck" type="Control"]
+script = ExtResource("1_lobbycheck")
