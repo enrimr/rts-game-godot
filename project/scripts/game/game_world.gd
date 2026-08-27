@@ -153,6 +153,10 @@ var _wall_cost_label: Label = null
 # Pending action waiting for a map click ("move_to" or "attack_move")
 var _pending_action: String = ""
 
+# Contextual mouse cursor: hover resolution is throttled, not per mouse event.
+var _cursor_timer: float = 0.0
+const CURSOR_UPDATE_INTERVAL: float = 0.1
+
 # Wonder mode: per-player countdown. Key = player_id, value = seconds remaining.
 var _wonder_timers: Dictionary = {}  # int -> float
 var _nav_rebake_timer: float = 0.0
@@ -301,6 +305,8 @@ func _ready() -> void:
 	EventBus.building_destroyed.connect(func(_b: Node, _pid: int) -> void: _request_nav_rebake())
 	EventBus.gate_state_changed.connect(func(_g: Node) -> void: _request_nav_rebake())
 	_request_nav_rebake()
+
+	CursorManager.prebake()
 
 	var player_list: Array[Dictionary] = [{"id": 0}]
 	for rival_id: int in MatchConfig.get_rival_player_ids():
@@ -700,6 +706,65 @@ func _process(delta: float) -> void:
 			overlay.drag_rect = Rect2(_drag_start_screen, Vector2.ZERO) \
 				.expand(get_viewport().get_mouse_position())
 		overlay.queue_redraw()
+	_cursor_timer += delta
+	if _cursor_timer >= CURSOR_UPDATE_INTERVAL:
+		_cursor_timer = 0.0
+		CursorManager.set_context(_resolve_cursor_context())
+
+func _exit_tree() -> void:
+	CursorManager.set_context("default")
+
+## Feeds CursorManager.resolve_context (the pure, tested mapping) with the
+## current selection and whatever right-click target sits under the mouse,
+## reusing the same _find_*_at helpers _handle_right_click uses — in the same
+## priority order, so cursor and click never disagree.
+func _resolve_cursor_context() -> String:
+	if _selected_units.is_empty() or _placing_building or _wall_drag_active \
+			or not _pending_action.is_empty():
+		return "default"
+	if _is_mouse_over_hud() or get_viewport().gui_get_hovered_control() != null:
+		return "default"
+	var has_villagers: bool = false
+	var has_military: bool = false
+	var has_land_units: bool = false
+	for unit: Node in _selected_units:
+		if not is_instance_valid(unit) or unit is Animal:
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) != 0:
+			continue
+		if unit is Villager:
+			has_villagers = true
+		elif unit.has_method("order_attack"):
+			has_military = true
+		if not (unit is ShipBase):
+			has_land_units = true
+	var world_pos: Vector2 = get_global_mouse_position()
+	var target_kind: String = "none"
+	var target_resource: String = ""
+	var transport: TransportShip = _find_own_transport_at(world_pos)
+	if transport != null and not transport.is_full():
+		target_kind = "transport"
+	elif _find_enemy_unit_at(world_pos) != null:
+		target_kind = "enemy"
+	elif _find_animal_at(world_pos) != null:
+		target_kind = "animal"
+	elif _find_enemy_building_at(world_pos) != null:
+		target_kind = "enemy"
+	else:
+		var resource_node: ResourceNode = _find_resource_at(world_pos)
+		if resource_node != null:
+			target_kind = "resource"
+			target_resource = resource_node.get_resource_name()
+		elif _find_farm_at(world_pos) != null:
+			target_kind = "resource"
+			target_resource = "food"
+		elif _find_own_construction_at(world_pos) != null:
+			target_kind = "construction"
+		elif _find_own_damaged_building_at(world_pos) != null:
+			target_kind = "damaged"
+	return CursorManager.resolve_context(has_villagers, has_military,
+		has_land_units, target_kind, target_resource)
 
 class _DragOverlay extends Node2D:
 	var drag_rect: Rect2 = Rect2()   # screen-space (viewport) coordinates
