@@ -135,7 +135,7 @@ static func _bake(id: String) -> void:
 	# cursor" and marks the exact click point.
 	if id == "default":
 		# The signature tabona alone, larger — Calima's default pointer.
-		_add_pointer_arrow(root, 1.55)
+		_add_pointer_arrow(root, 1.15)
 	else:
 		var glyph_root: Node2D = Node2D.new()
 		glyph_root.scale = Vector2(0.62, 0.62)
@@ -171,57 +171,85 @@ static func _bake(id: String) -> void:
 			if current_id == apply_id:
 				_apply(apply_id)).call_deferred()
 
-## Calima's signature pointer: a "tabona" — the Guanche obsidian knife —
-## as an original faceted shard whose natural point doubles as the arrow tip.
-## Basalt body, darker facet, bone cutting edge, gold handle wrap. Drawn in
-## bake space (64 px); the tip lands on HOTSPOT after the downscale.
+## Calima's signature pointer: an original slender knife-pointer blending the
+## tabona (Guanche volcanic-glass blade) with the naife canario silhouette —
+## steel blade with a bone edge, brass ferrule, and the naife's iconic ringed
+## handle (alternating bone / horn / brass bands). Authored tip-up in local
+## space, rotated to the pointer diagonal; the blade tip lands on HOTSPOT.
 static func _add_pointer_arrow(root: Node2D, pointer_scale: float = 1.0) -> void:
-	var tip: Vector2 = Vector2(3.0, 3.0)
-	var pts: PackedVector2Array = PackedVector2Array([
-		Vector2(3, 3), Vector2(4, 34), Vector2(12, 27),
-		Vector2(18, 39), Vector2(25, 35), Vector2(18, 24), Vector2(27, 20),
-	])
 	var holder: Node2D = Node2D.new()
-	holder.position = tip
+	holder.position = Vector2(3.0, 3.0)
+	holder.rotation = -PI / 4.0
 	holder.scale = Vector2(pointer_scale, pointer_scale)
 	root.add_child(holder)
 
+	var silhouette: PackedVector2Array = PackedVector2Array([
+		Vector2(0, 0), Vector2(5, 15), Vector2(5.5, 24.5),
+		Vector2(4.2, 39), Vector2(-4.2, 39), Vector2(-5.5, 24.5), Vector2(-5, 15),
+	])
 	var backing: Polygon2D = Polygon2D.new()
 	var back_pts: PackedVector2Array = PackedVector2Array()
-	for pt: Vector2 in pts:
-		back_pts.append((pt - tip) * 1.16)
+	for pt: Vector2 in silhouette:
+		back_pts.append(pt * 1.14 + Vector2(0, -0.8))
 	backing.polygon = back_pts
 	backing.color = Color(0.07, 0.06, 0.06, 0.95)
 	holder.add_child(backing)
 
-	var body: Polygon2D = Polygon2D.new()
-	var body_pts: PackedVector2Array = PackedVector2Array()
-	for pt: Vector2 in pts:
-		body_pts.append(pt - tip)
-	body.polygon = body_pts
-	body.color = Color(0.24, 0.22, 0.21)
-	holder.add_child(body)
+	# Blade: steel with a darker right facet and a bone-bright cutting edge.
+	var blade: Polygon2D = Polygon2D.new()
+	blade.polygon = PackedVector2Array([
+		Vector2(0, 0), Vector2(5, 15), Vector2(5.3, 22), Vector2(-5.3, 22), Vector2(-5, 15),
+	])
+	blade.color = Color(0.70, 0.72, 0.76)
+	holder.add_child(blade)
 
 	var facet: Polygon2D = Polygon2D.new()
 	facet.polygon = PackedVector2Array([
-		Vector2(0, 0), Vector2(24, 17), Vector2(15, 21), Vector2(9, 24), Vector2(1, 17),
+		Vector2(0, 0), Vector2(5, 15), Vector2(5.3, 22), Vector2(0, 22),
 	])
-	facet.color = Color(0.17, 0.155, 0.15)
+	facet.color = Color(0.52, 0.55, 0.60)
 	holder.add_child(facet)
 
 	var edge: Polygon2D = Polygon2D.new()
 	edge.polygon = PackedVector2Array([
-		Vector2(0, 0), Vector2(1, 31), Vector2(3.5, 28), Vector2(2.5, 4),
+		Vector2(0, 0), Vector2(-5, 15), Vector2(-3.4, 16.5), Vector2(-0.6, 3.2),
 	])
-	edge.color = Color(0.80, 0.73, 0.58)
+	edge.color = Color(0.93, 0.92, 0.87)
 	holder.add_child(edge)
 
-	var band: Polygon2D = Polygon2D.new()
-	band.polygon = PackedVector2Array([
-		Vector2(13, 30), Vector2(19, 27), Vector2(21, 31), Vector2(15, 34),
+	# Brass ferrule between blade and handle.
+	var ferrule: Polygon2D = Polygon2D.new()
+	ferrule.polygon = PackedVector2Array([
+		Vector2(-5.3, 22), Vector2(5.3, 22), Vector2(5.1, 25), Vector2(-5.1, 25),
 	])
-	band.color = Color(0.72, 0.55, 0.22)
-	holder.add_child(band)
+	ferrule.color = Color(0.74, 0.57, 0.24)
+	holder.add_child(ferrule)
+
+	# Naife handle: alternating bone / dark horn rings, brass mid-band,
+	# tapering slightly toward a dark pommel.
+	var ring_colors: Array[Color] = [
+		Color(0.85, 0.78, 0.62), Color(0.24, 0.19, 0.15),
+		Color(0.74, 0.57, 0.24), Color(0.85, 0.78, 0.62),
+	]
+	var y0: float = 25.0
+	var ring_h: float = 3.0
+	for i: int in range(ring_colors.size()):
+		var top_w: float = 5.0 - 0.25 * float(i)
+		var bot_w: float = 5.0 - 0.25 * float(i + 1)
+		var ring: Polygon2D = Polygon2D.new()
+		ring.polygon = PackedVector2Array([
+			Vector2(-top_w, y0), Vector2(top_w, y0),
+			Vector2(bot_w, y0 + ring_h), Vector2(-bot_w, y0 + ring_h),
+		])
+		ring.color = ring_colors[i]
+		holder.add_child(ring)
+		y0 += ring_h
+	var pommel: Polygon2D = Polygon2D.new()
+	pommel.polygon = PackedVector2Array([
+		Vector2(-4.0, y0), Vector2(4.0, y0), Vector2(3.0, y0 + 2.2), Vector2(-3.0, y0 + 2.2),
+	])
+	pommel.color = Color(0.20, 0.16, 0.13)
+	holder.add_child(pommel)
 
 ## Embark counterpart of the UiIcons "unload" glyph: same raft, arrow rising
 ## into it. Drawn here (not in ui_icons.gd) with the shared geometry helpers.
