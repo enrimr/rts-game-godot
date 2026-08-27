@@ -384,3 +384,5 @@ BUILDING_FARM,Farm,Granja
 BUILDING_FISH_TRAP,Fish Trap,Trampa para Peces
 BUILDING_LUMBER_CAMP,Lumber Camp,Campamento Maderero
 BUILDING_MINING_CAMP,Mining Camp,Campamento Minero
+UI_HERO,Hero,Héroe
+UI_HERO_WIDGET_TOOLTIP,Your hero — if they fall the match is lost. Click to center the camera.,Tu héroe — si cae pierdes la partida. Click para centrar la cámara.
