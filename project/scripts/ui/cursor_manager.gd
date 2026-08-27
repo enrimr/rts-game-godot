@@ -86,6 +86,8 @@ static func _apply(id: String) -> void:
 		return
 	var texture: ImageTexture = _textures.get(id) as ImageTexture
 	if id == "default" or texture == null:
+		if OS.is_debug_build():
+			printerr("CURSOR_APPLY reset (id='", id, "', baked=", texture != null, ")")
 		Input.set_custom_mouse_cursor(null)
 		return
 	# Probe the VRAM readback ourselves first: on macOS it can transiently
