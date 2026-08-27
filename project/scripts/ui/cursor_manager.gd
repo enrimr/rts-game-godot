@@ -14,7 +14,9 @@ extends Object
 
 const BAKE_SIZE: int = 64
 const CURSOR_SIZE: int = 32
-const HOTSPOT: Vector2 = Vector2(16.0, 16.0)
+# Hotspot on the pointer-arrow tip: the composite cursor (small arrow
+# top-left + context glyph bottom-right) clicks exactly where the arrow points.
+const HOTSPOT: Vector2 = Vector2(2.0, 2.0)
 const OUTLINE_COLOR: Color = Color(0.08, 0.07, 0.06)
 const OUTLINE_ALPHA: float = 0.85
 
@@ -124,10 +126,18 @@ static func _bake(id: String) -> void:
 	viewport.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	var root: Node2D = Node2D.new()
 	viewport.add_child(root)
+	# Composite cursor: the context glyph shrinks to the bottom-right and a
+	# small pointer arrow sits top-left, so the cursor still reads as "the
+	# cursor" and marks the exact click point.
+	var glyph_root: Node2D = Node2D.new()
+	glyph_root.scale = Vector2(0.62, 0.62)
+	glyph_root.position = Vector2(BAKE_SIZE * 0.36, BAKE_SIZE * 0.36)
+	root.add_child(glyph_root)
 	if id == "board":
-		_build_board(root)
+		_build_board(glyph_root)
 	else:
-		UiIcons._build(id, root)
+		UiIcons._build(id, glyph_root)
+	_add_pointer_arrow(root)
 	tree.root.add_child.call_deferred(viewport)
 	await tree.process_frame
 	await tree.process_frame
@@ -152,6 +162,26 @@ static func _bake(id: String) -> void:
 		(func() -> void:
 			if current_id == apply_id:
 				_apply(apply_id)).call_deferred()
+
+## Small two-tone pointer arrow (original art) drawn in bake space (64 px);
+## its tip lands on HOTSPOT after the downscale to CURSOR_SIZE.
+static func _add_pointer_arrow(root: Node2D) -> void:
+	var tip: Vector2 = Vector2(3.0, 3.0)
+	var pts: PackedVector2Array = PackedVector2Array([
+		Vector2(3, 3), Vector2(3, 32), Vector2(11, 25),
+		Vector2(16, 36), Vector2(22, 33), Vector2(17, 22), Vector2(26, 21),
+	])
+	var backing: Polygon2D = Polygon2D.new()
+	var back_pts: PackedVector2Array = PackedVector2Array()
+	for pt: Vector2 in pts:
+		back_pts.append(tip + (pt - tip) * 1.18)
+	backing.polygon = back_pts
+	backing.color = Color(0.08, 0.07, 0.06, 0.95)
+	root.add_child(backing)
+	var fill: Polygon2D = Polygon2D.new()
+	fill.polygon = pts
+	fill.color = Color(0.96, 0.96, 0.94)
+	root.add_child(fill)
 
 ## Embark counterpart of the UiIcons "unload" glyph: same raft, arrow rising
 ## into it. Drawn here (not in ui_icons.gd) with the shared geometry helpers.

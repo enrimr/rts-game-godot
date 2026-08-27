@@ -29,5 +29,14 @@ func _run() -> void:
 	for id: String in ids:
 		CursorManager.set_context(id as String)
 		await get_tree().process_frame
+	# Dump the baked cursor images for visual review when a dir is given.
+	var dump_dir: String = OS.get_environment("CALIMA_SHOT_DIR")
+	if not dump_dir.is_empty():
+		DirAccess.make_dir_recursive_absolute(dump_dir)
+		await get_tree().create_timer(1.0).timeout
+		for id: String in CursorManager._images.keys():
+			var img: Image = CursorManager._images[id] as Image
+			img.save_png(dump_dir.path_join("cursor_" + id + ".png"))
+		print("CHECK_CURSOR_CYCLE: dumped ", CursorManager._images.size(), " cursors")
 	print("CHECK_CURSOR_CYCLE: done")
 	get_tree().quit(0)
