@@ -40,7 +40,7 @@ const C_BONE: Color = Color(0.93, 0.90, 0.83)
 const C_PALE: Color = Color(0.90, 0.87, 0.80)
 const C_BLUE: Color = Color(0.55, 0.74, 0.94)
 const C_VIOLET: Color = Color(0.68, 0.44, 0.84)
-const C_BODY: Color = Color(0.34, 0.36, 0.42)
+const C_BODY: Color = Color(0.47, 0.50, 0.58)
 const C_PARCH: Color = Color(0.88, 0.79, 0.60)
 const C_SAND: Color = Color(0.81, 0.67, 0.43)
 const C_DARK: Color = Color(0.14, 0.12, 0.10)
@@ -94,7 +94,9 @@ static func _bake_async(target: ImageTexture, id: String) -> void:
 	var root: Node2D = Node2D.new()
 	viewport.add_child(root)
 	_build(id, root)
-	tree.root.add_child(viewport)
+	# Deferred: icons are typically requested from _ready while the scene root
+	# is still setting up its children (add_child would fail there).
+	tree.root.add_child.call_deferred(viewport)
 	await tree.process_frame
 	await tree.process_frame
 	await RenderingServer.frame_post_draw
@@ -258,16 +260,18 @@ static func _build(id: String, root: Node2D) -> void:
 				Vector2(57, 14), Vector2(50.5, 16.5), Vector2(48, 23),
 				Vector2(45.5, 16.5), Vector2(39, 14), Vector2(45.5, 11.5)]), C_GOLD)
 		"destroy":
-			_rect(root, 14.0, 26.0, 36.0, 30.0, C_STONE)
-			_poly(root, PackedVector2Array([Vector2(10, 28), Vector2(32, 10),
-				Vector2(54, 28)]), Color(0.52, 0.28, 0.20))
-			_rect(root, 28.0, 42.0, 8.0, 14.0, C_DARK)
-			_stroke(root, PackedVector2Array([Vector2(32, 27), Vector2(27, 34),
-				Vector2(34, 40), Vector2(29, 48), Vector2(33, 56)]), C_DARK, 3.0)
-			_poly(root, PackedVector2Array([Vector2(52, 38), Vector2(59, 41),
-				Vector2(56, 47), Vector2(50, 44)]), C_STONE)
-			_poly(root, PackedVector2Array([Vector2(55, 52), Vector2(60, 54),
-				Vector2(57, 58), Vector2(53, 56)]), C_STONE)
+			_rect(root, 12.0, 26.0, 34.0, 30.0, C_STONE)
+			_poly(root, PackedVector2Array([Vector2(8, 28), Vector2(29, 10),
+				Vector2(50, 28)]), Color(0.52, 0.28, 0.20))
+			# Bold lightning crack splitting the wall top to bottom.
+			_poly(root, PackedVector2Array([Vector2(27, 26), Vector2(34, 26),
+				Vector2(28, 36), Vector2(36, 36), Vector2(27, 49), Vector2(33, 49),
+				Vector2(29, 56), Vector2(23, 56), Vector2(29, 45), Vector2(22, 45),
+				Vector2(30, 33), Vector2(24, 33)]), C_DARK, C_DARK)
+			_poly(root, PackedVector2Array([Vector2(50, 34), Vector2(59, 38),
+				Vector2(55, 46), Vector2(48, 41)]), C_STONE)
+			_poly(root, PackedVector2Array([Vector2(53, 51), Vector2(60, 53),
+				Vector2(56, 59), Vector2(51, 56)]), C_STONE)
 		"destroy_unit":
 			_circle(root, Vector2(32, 26), 16.0, C_BONE)
 			_rect(root, 24.0, 38.0, 16.0, 11.0, C_BONE)
@@ -321,11 +325,11 @@ static func _build(id: String, root: Node2D) -> void:
 		"patrol_route":
 			for i: int in range(1, 8):
 				var a: float = TAU * float(i) / 8.0
-				_circle(root, Vector2(32, 34) + Vector2(cos(a) * 18.0, sin(a) * 12.0),
-					2.8, C_PALE)
+				_circle(root, Vector2(32, 34) + Vector2(cos(a) * 18.0, sin(a) * 13.0),
+					3.6, C_PALE)
 			# Arrowhead on the loop's right side, pointing along travel.
-			_poly(root, PackedVector2Array([Vector2(50, 43), Vector2(45, 30),
-				Vector2(55, 30)]), C_BLUE)
+			_poly(root, PackedVector2Array([Vector2(50, 47), Vector2(43, 28),
+				Vector2(57, 28)]), C_BLUE)
 		"follow":
 			# Binoculars, front view: two capsule barrels + bridge + lenses.
 			for cx: float in [21.0, 43.0]:
@@ -355,9 +359,11 @@ static func _build(id: String, root: Node2D) -> void:
 			_circle(root, Vector2(32, 38), 3.5, C_DARK)
 			_bar(root, Vector2(32, 40), Vector2(32, 47), 3.0, C_DARK)
 		"gate_unlock":
-			_stroke(root, PackedVector2Array([Vector2(24, 29), Vector2(24, 20),
-				Vector2(27, 13), Vector2(33, 10), Vector2(40, 12),
-				Vector2(44, 18), Vector2(44.5, 23)]), C_STEEL, 5.0)
+			# Shackle swung wide open: only the left leg enters the body, the
+			# free end hangs past the body's right edge.
+			_stroke(root, PackedVector2Array([Vector2(24, 29), Vector2(23, 18),
+				Vector2(27, 10), Vector2(35, 7), Vector2(44, 9),
+				Vector2(51, 16), Vector2(53, 24)]), C_STEEL, 5.0)
 			_poly(root, PackedVector2Array([Vector2(20, 29), Vector2(44, 29),
 				Vector2(46, 31), Vector2(46, 52), Vector2(44, 54), Vector2(20, 54),
 				Vector2(18, 52), Vector2(18, 31)]), C_GOLD)
@@ -403,13 +409,16 @@ static func _build(id: String, root: Node2D) -> void:
 			_chevron(_group(root, Vector2(34, 32), 0.0))
 			_chevron(_group(root, Vector2(48, 32), 0.0))
 		"idle_villager":
+			# Figure sitting on a rock, legs bent forward, sleep mark above.
 			var skin: Color = Color(0.85, 0.72, 0.55)
-			_circle(root, Vector2(22, 21), 6.5, skin)
-			_poly(root, PackedVector2Array([Vector2(14, 29), Vector2(28, 29),
-				Vector2(30, 44), Vector2(14, 46)]), Color(0.55, 0.48, 0.36))
-			_bar(root, Vector2(27, 42), Vector2(41, 44), 7.0, Color(0.55, 0.48, 0.36))
-			_bar(root, Vector2(39, 45), Vector2(39, 56), 5.0, skin)
-			_z_mark(root, Vector2(40, 8))
+			var tunic: Color = Color(0.55, 0.48, 0.36)
+			_rect(root, 12.0, 44.0, 18.0, 12.0, C_STONE)
+			_circle(root, Vector2(23, 17), 7.5, skin)
+			_poly(root, PackedVector2Array([Vector2(15, 26), Vector2(30, 26),
+				Vector2(32, 44), Vector2(15, 44)]), tunic)
+			_bar(root, Vector2(29, 40), Vector2(45, 42), 8.0, tunic)
+			_bar(root, Vector2(43, 43), Vector2(43, 57), 5.5, skin)
+			_z_mark(root, Vector2(40, 6))
 		"idle_military":
 			_poly(root, PackedVector2Array([Vector2(12, 14), Vector2(44, 14),
 				Vector2(44, 32), Vector2(40, 42), Vector2(28, 52), Vector2(16, 42),
