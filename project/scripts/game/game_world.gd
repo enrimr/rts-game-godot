@@ -412,6 +412,20 @@ func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	hero.global_position = tc_pos + Vector2(85.0, 85.0)
 	units_layer.add_child(hero)
 	EventBus.unit_spawned.emit(hero, player_id)
+	_settle_hero_spawn(hero, tc_pos)
+
+# The starting offset can land on a villager: the spawn spiral would avoid it,
+# but physics hasn't synced any body yet during _ready. Settle the hero onto a
+# properly distributed free spot around the TC once the space is queryable.
+func _settle_hero_spawn(hero: Node2D, tc_pos: Vector2) -> void:
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	if not is_instance_valid(hero):
+		return
+	# Wider spiral step than trained units: more clearance so the hero never
+	# reads as glued to a starting villager.
+	hero.global_position = BuildingBase.find_spawn_pos(tc_pos,
+		get_world_2d().direct_space_state, 46.0)
 
 func _on_tutorial_spawn_enemy_scout(near_pos: Vector2) -> void:
 	var militia_scene: PackedScene = load("res://scenes/units/militia.tscn") as PackedScene
@@ -1598,6 +1612,9 @@ func _order_move_all(world_pos: Vector2) -> void:
 	var slots: Array[Vector2] = _formation_slots(world_pos, count)
 	for i: int in range(count):
 		valid_units[i].order_move(slots[i])
+	# Ground flash where the player clicked — move was the only order
+	# without click feedback (gather/attack flash their target already).
+	_flash_point(world_pos, Color(0.35, 1.0, 0.45, 1.0))
 	EventBus.unit_command_issued.emit(valid_units, {"type": "move", "pos": world_pos})
 
 ## Returns world-space positions for `count` units in concentric rings around `center`.
