@@ -27,7 +27,14 @@ const CONTEXT_IDS: Array[String] = [
 const GATHER_RESOURCES: Array[String] = ["wood", "gold", "stone", "food"]
 
 static var current_id: String = "default"
-static var _textures: Dictionary = {}   # id -> ImageTexture (ready to apply)
+static var _textures: Dictionary = {}   # id -> ImageTexture (kept for tooling)
+# id -> Image (CPU copy). The cursor is applied from this image directly:
+# Input.set_custom_mouse_cursor(texture) re-reads the texture from VRAM, and
+# that readback can transiently fail on macOS (occluded window, display
+# switch), which surfaces as 'Parameter "imgrep" is null' in the DisplayServer.
+# Feeding the CPU image to DisplayServer.cursor_set_custom_image avoids the
+# readback entirely.
+static var _images: Dictionary = {}
 static var _baking: Dictionary = {}     # id -> true while the bake is in flight
 
 ## Pure mapping: what would a right-click do with this selection on this target?
@@ -74,11 +81,11 @@ static func prebake() -> void:
 static func _apply(id: String) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
-	var texture: Texture2D = _textures.get(id) as Texture2D
-	if id == "default" or texture == null:
-		Input.set_custom_mouse_cursor(null)
+	var img: Image = _images.get(id) as Image
+	if id == "default" or img == null or img.is_empty():
+		DisplayServer.cursor_set_custom_image(null)
 		return
-	Input.set_custom_mouse_cursor(texture, Input.CURSOR_ARROW, HOTSPOT)
+	DisplayServer.cursor_set_custom_image(img, DisplayServer.CURSOR_ARROW, HOTSPOT)
 
 static func _bake(id: String) -> void:
 	if _textures.has(id) or _baking.get(id, false):
@@ -111,7 +118,9 @@ static func _bake(id: String) -> void:
 	if img == null or img.is_empty():
 		return
 	img.resize(CURSOR_SIZE, CURSOR_SIZE, Image.INTERPOLATE_LANCZOS)
-	_textures[id] = ImageTexture.create_from_image(_with_outline(img))
+	var outlined: Image = _with_outline(img)
+	_images[id] = outlined
+	_textures[id] = ImageTexture.create_from_image(outlined)
 	if current_id == id:
 		_apply(id)
 

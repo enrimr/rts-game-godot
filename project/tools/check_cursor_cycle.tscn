@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://calima_cursor_cycle"]
+
+[ext_resource type="Script" path="res://tools/check_cursor_cycle.gd" id="1_ccycle"]
+
+[node name="CursorCycleCheck" type="Control"]
+script = ExtResource("1_ccycle")
