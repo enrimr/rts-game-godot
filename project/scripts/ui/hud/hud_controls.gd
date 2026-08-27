@@ -16,8 +16,10 @@ var _speed_buttons: Array[Button] = []
 var _dpad: Control = null
 var _dpad_dir: Vector2 = Vector2.ZERO
 var _idle_villager_btn: Button = null
+var _idle_villager_badge: Label = null
 var _idle_villager_index: int = 0
 var _idle_military_btn: Button = null
+var _idle_military_badge: Label = null
 var _idle_military_index: int = 0
 var _idle_check_timer: float = 0.0
 
@@ -128,27 +130,74 @@ func _build_idle_villager_button() -> void:
 	_idle_villager_btn.add_theme_stylebox_override("disabled",
 		HudStyle.command_button(HudStyle.ACCENT_ECONOMY, "disabled"))
 	_idle_villager_btn.pressed.connect(_on_idle_villager_pressed)
+	_idle_villager_badge = _make_count_badge(_idle_villager_btn)
 	_hud_root.add_child(_idle_villager_btn)
 
+## Small count badge in the top-right corner of a command button, matching the
+## ActionButton badge look. Hidden while the count is 0.
+func _make_count_badge(btn: Button) -> Label:
+	var badge: Label = Label.new()
+	badge.add_theme_font_size_override("font_size", 13)
+	badge.add_theme_color_override("font_color", Color(1.0, 0.92, 0.55))
+	HudStyle.add_text_outline(badge, 3)
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	badge.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	badge.grow_vertical = Control.GROW_DIRECTION_END
+	badge.anchor_left = 1.0
+	badge.anchor_top = 0.0
+	badge.anchor_right = 1.0
+	badge.anchor_bottom = 0.0
+	badge.offset_left = -28.0
+	badge.offset_top = 1.0
+	badge.offset_right = -3.0
+	badge.offset_bottom = 18.0
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.visible = false
+	btn.add_child(badge)
+	return badge
+
+func _update_count_badge(badge: Label, count: int) -> void:
+	if not is_instance_valid(badge):
+		return
+	badge.text = str(count)
+	badge.visible = count > 0
+
+## Shared idle-unit filter for the cycle buttons and their count badges.
+## Static and tree-free so the counting logic is unit-testable.
+static func filter_idle_units(units: Array, player_id: int, military: bool) -> Array[Node]:
+	var result: Array[Node] = []
+	for entry: Variant in units:
+		var unit: Node = entry as Node
+		if unit == null or not is_instance_valid(unit):
+			continue
+		if unit.get("player_id") != player_id:
+			continue
+		var is_gatherer: bool = unit.has_method("order_gather")
+		if military:
+			if is_gatherer:
+				continue
+			if unit.get("unit_data") == null:
+				continue
+			if unit is Animal or unit is ShipBase:
+				continue
+		elif not is_gatherer:
+			continue
+		var state: Variant = unit.get("current_state")
+		if state != null and (state as int) == UnitBase.UnitState.IDLE:
+			result.append(unit)
+	return result
+
 func _get_idle_villagers() -> Array[Node]:
+	return filter_idle_units(_units_layer_children(), local_player_id, false)
+
+func _units_layer_children() -> Array[Node]:
 	var world: Node = get_tree().get_nodes_in_group("world").front()
 	if world == null:
 		return []
 	var units_layer: Node = world.get_node_or_null("UnitsLayer")
 	if units_layer == null:
 		return []
-	var result: Array[Node] = []
-	for unit: Node in units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		if unit.get("player_id") != local_player_id:
-			continue
-		if not unit.has_method("order_gather"):
-			continue
-		var state: Variant = unit.get("current_state")
-		if state != null and (state as int) == UnitBase.UnitState.IDLE:
-			result.append(unit)
-	return result
+	return units_layer.get_children()
 
 func _update_idle_villager_button() -> void:
 	if not is_instance_valid(_idle_villager_btn):
@@ -156,6 +205,7 @@ func _update_idle_villager_button() -> void:
 	var idle: Array[Node] = _get_idle_villagers()
 	_idle_villager_btn.disabled = idle.is_empty()
 	_idle_villager_btn.tooltip_text = tr("UI_IDLE_VILLAGER") + " (%d)" % idle.size()
+	_update_count_badge(_idle_villager_badge, idle.size())
 
 func _on_idle_villager_pressed() -> void:
 	var idle: Array[Node] = _get_idle_villagers()
@@ -195,31 +245,11 @@ func _build_idle_military_button() -> void:
 	_idle_military_btn.add_theme_stylebox_override("disabled",
 		HudStyle.command_button(HudStyle.ACCENT_COMBAT, "disabled"))
 	_idle_military_btn.pressed.connect(_on_idle_military_pressed)
+	_idle_military_badge = _make_count_badge(_idle_military_btn)
 	_hud_root.add_child(_idle_military_btn)
 
 func _get_idle_military() -> Array[Node]:
-	var world: Node = get_tree().get_nodes_in_group("world").front()
-	if world == null:
-		return []
-	var units_layer: Node = world.get_node_or_null("UnitsLayer")
-	if units_layer == null:
-		return []
-	var result: Array[Node] = []
-	for unit: Node in units_layer.get_children():
-		if not is_instance_valid(unit):
-			continue
-		if unit.get("player_id") != local_player_id:
-			continue
-		if unit.get("unit_data") == null:
-			continue
-		if unit.has_method("order_gather"):
-			continue
-		if unit is Animal or unit is ShipBase:
-			continue
-		var state: Variant = unit.get("current_state")
-		if state != null and (state as int) == UnitBase.UnitState.IDLE:
-			result.append(unit)
-	return result
+	return filter_idle_units(_units_layer_children(), local_player_id, true)
 
 func _update_idle_military_button() -> void:
 	if not is_instance_valid(_idle_military_btn):
@@ -227,6 +257,7 @@ func _update_idle_military_button() -> void:
 	var idle: Array[Node] = _get_idle_military()
 	_idle_military_btn.disabled = idle.is_empty()
 	_idle_military_btn.tooltip_text = tr("UI_IDLE_MILITARY") + " (%d)" % idle.size()
+	_update_count_badge(_idle_military_badge, idle.size())
 
 func _on_idle_military_pressed() -> void:
 	var idle: Array[Node] = _get_idle_military()
