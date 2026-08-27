@@ -84,7 +84,7 @@ func _build() -> void:
 	scroll.add_child(outer)
 
 	var card: PanelContainer = PanelContainer.new()
-	card.custom_minimum_size = Vector2(860, 0)
+	card.custom_minimum_size = Vector2(960, 0)
 	var sty: StyleBoxFlat = StyleBoxFlat.new()
 	sty.bg_color = Color(0.08, 0.08, 0.12, 0.97)
 	sty.corner_radius_top_left    = 8
@@ -203,7 +203,7 @@ func _build() -> void:
 	# ── Right column: player civ ─────────────────────────────────────────────
 	var right: VBoxContainer = VBoxContainer.new()
 	right.add_theme_constant_override("separation", 10)
-	right.custom_minimum_size = Vector2(300, 0)
+	right.custom_minimum_size = Vector2(340, 0)
 	right.size_flags_horizontal = Control.SIZE_SHRINK_END
 	right.size_flags_vertical = Control.SIZE_SHRINK_BEGIN  # align to top
 	columns.add_child(right)
@@ -229,6 +229,7 @@ func _build() -> void:
 	detail_sty.corner_radius_bottom_left = 5
 	detail_sty.corner_radius_bottom_right = 5
 	detail_panel.add_theme_stylebox_override("panel", detail_sty)
+	detail_panel.custom_minimum_size = Vector2(0, 240)
 
 	var detail_margin: MarginContainer = MarginContainer.new()
 	for side: String in ["left", "right", "top", "bottom"]:
@@ -316,7 +317,7 @@ func _rebuild_civ_detail(vbox: VBoxContainer, civ_idx: int) -> void:
 	var details: Dictionary = CIV_DETAILS.get(civ_id, {}) as Dictionary
 
 	# Description
-	_add_detail_text(vbox, tr(civ["desc_key"] as String), Color(0.80, 0.80, 0.80))
+	_add_detail_text(vbox, tr(civ["desc_key"] as String), Color(0.80, 0.80, 0.80), 4)
 
 	vbox.add_child(HSeparator.new())
 
@@ -362,12 +363,20 @@ func _add_detail_row(vbox: VBoxContainer, label: String, value: String, val_colo
 	val.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(val)
 
-func _add_detail_text(vbox: VBoxContainer, text: String, color: Color) -> void:
+# Height of one wrapped line at the detail font size (14 px + leading).
+const DETAIL_LINE_H: float = 21.0
+
+func _add_detail_text(vbox: VBoxContainer, text: String, color: Color,
+		min_lines: int = 0) -> void:
 	var lbl: Label = Label.new()
 	lbl.text = text
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl.add_theme_font_size_override("font_size", 14)
 	lbl.add_theme_color_override("font_color", color)
+	# Reserving a fixed line count keeps the detail card height stable when
+	# switching between civs with shorter and longer descriptions.
+	if min_lines > 0:
+		lbl.custom_minimum_size = Vector2(0, DETAIL_LINE_H * float(min_lines))
 	vbox.add_child(lbl)
 
 # --- Helpers ---

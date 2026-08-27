@@ -212,7 +212,7 @@ CIV_BRITONS_DESC,Naval raiders and master archers. Foot archers gain range each 
 CIV_CASTELLANOS_NAME,Castellanos,Castellanos
 CIV_CASTELLANOS_DESC,Late-game powerhouse. Each age advance unlocks a free technology and swordsmen are exceptionally tough.,Potencia del juego tardío. Cada avance de edad desbloquea una tecnología gratuita y los espadachines son excepcionalmente resistentes.
 CIV_ATLANTES_NAME,Atlantes,Atlantes
-CIV_ATLANTES_DESC,Mysterious seafarers. Build on ocean tiles, move freely through shallow water and dominate the coast.,Navegantes misteriosos. Construyen sobre el océano, se mueven libremente por aguas poco profundas y dominan la costa.
+CIV_ATLANTES_DESC,"Mysterious seafarers. Build on ocean tiles, move freely through shallow water and dominate the coast.","Navegantes misteriosos. Construyen sobre el océano, se mueven libremente por aguas poco profundas y dominan la costa."
 CIV_FENICIOS_NAME,Fenicios,Fenicios
 CIV_FENICIOS_DESC,Ancient traders. Market available from the start and merchant ships generate passive gold.,Comerciantes ancestrales. El mercado está disponible desde el inicio y los barcos mercantes generan oro pasivo.
 CIV_GUANCHES_UNIQUE_UNIT,Menceyes Guard,Guardia Menceyes
@@ -321,21 +321,21 @@ LOBBY_HERO_MALE,Male,Masculino
 LOBBY_HERO_FEMALE,Female,Femenino
 LOBBY_HERO_RANDOM_DESC,One hero will be randomly selected at match start,Un héroe será seleccionado aleatoriamente al inicio de la partida
 HERO_DACIL_ABILITY,Mountain Voice,Voz de la Montaña
-HERO_DACIL_ABILITY_DESC,"Grants nearby allies +2 armor and +50% healing rate for 12s.",Otorga a aliados cercanos +2 armadura y +50% tasa de curación durante 12s.
+HERO_DACIL_ABILITY_DESC,Grants nearby allies +2 armor and +50% healing rate for 12s.,Otorga a aliados cercanos +2 armadura y +50% tasa de curación durante 12s.
 HERO_GUAYARMINA_ABILITY,Fate's Arrow,Flecha del Destino
-HERO_GUAYARMINA_ABILITY_DESC,"Fires an unblockable arrow dealing 80 damage (ignores armor). Cooldown halved if target dies.",Dispara una flecha imparable que hace 80 de daño (ignora armadura). Enfriamiento reducido a la mitad si el objetivo muere.
+HERO_GUAYARMINA_ABILITY_DESC,Fires an unblockable arrow dealing 80 damage (ignores armor). Cooldown halved if target dies.,Dispara una flecha imparable que hace 80 de daño (ignora armadura). Enfriamiento reducido a la mitad si el objetivo muere.
 HERO_TIBIABIN_ABILITY,Sandstorm,Tormenta de Arena
-HERO_TIBIABIN_ABILITY_DESC,"Creates a 200px sandstorm for 10s: enemies take 3dmg/s, -40% speed, -50% projectile accuracy.",Crea una tormenta de arena de 200px durante 10s: enemigos reciben 3 daño/s, -40% velocidad, -50% precisión de proyectiles.
+HERO_TIBIABIN_ABILITY_DESC,"Creates a 200px sandstorm for 10s: enemies take 3dmg/s, -40% speed, -50% projectile accuracy.","Crea una tormenta de arena de 200px durante 10s: enemigos reciben 3 daño/s, -40% velocidad, -50% precisión de proyectiles."
 HERO_CATALINA_ABILITY,Honor Duel,Duelo de Honor
-HERO_CATALINA_ABILITY_DESC,"Challenges an enemy hero: both deal +100% damage to each other, -50% to others for 15s. Heals 50% HP if wins.",Desafía a un héroe enemigo: ambos hacen +100% daño entre sí, -50% a otros durante 15s. Cura 50% HP si gana.
+HERO_CATALINA_ABILITY_DESC,"Challenges an enemy hero: both deal +100% damage to each other, -50% to others for 15s. Heals 50% HP if wins.","Desafía a un héroe enemigo: ambos hacen +100% daño entre sí, -50% a otros durante 15s. Cura 50% HP si gana."
 HERO_GRACE_ABILITY,Boarding Action,Abordaje
-HERO_GRACE_ABILITY_DESC,"Dashes 200px in a line, dealing 30 damage and stunning enemies for 2s. 100 damage to buildings.",Se lanza 200px en línea, haciendo 30 de daño y aturdiendo enemigos durante 2s. 100 de daño a edificios.
+HERO_GRACE_ABILITY_DESC,"Dashes 200px in a line, dealing 30 damage and stunning enemies for 2s. 100 damage to buildings.","Se lanza 200px en línea, haciendo 30 de daño y aturdiendo enemigos durante 2s. 100 de daño a edificios."
 HERO_DULCINEA_ABILITY,Call to Arms,Llamada a las Armas
-HERO_DULCINEA_ABILITY_DESC,"Summons 3 temporary Militia (+20% HP/attack) for 40s. They don't count as casualties.",Invoca 3 Milicia temporales (+20% HP/ataque) durante 40s. No cuentan como bajas.
+HERO_DULCINEA_ABILITY_DESC,Summons 3 temporary Militia (+20% HP/attack) for 40s. They don't count as casualties.,Invoca 3 Milicia temporales (+20% HP/ataque) durante 40s. No cuentan como bajas.
 HERO_CLEITO_ABILITY,Rising Tide,Marea Creciente
-HERO_CLEITO_ABILITY_DESC,"Creates a 250px wave: allies heal 60HP and gain +30% speed for 8s; enemies take 20 damage and -20% speed for 4s.",Crea una ola de 250px: aliados curan 60HP y ganan +30% velocidad durante 8s; enemigos reciben 20 de daño y -20% velocidad durante 4s.
+HERO_CLEITO_ABILITY_DESC,Creates a 250px wave: allies heal 60HP and gain +30% speed for 8s; enemies take 20 damage and -20% speed for 4s.,Crea una ola de 250px: aliados curan 60HP y ganan +30% velocidad durante 8s; enemigos reciben 20 de daño y -20% velocidad durante 4s.
 HERO_ELISSA_ABILITY,Mercenary Pact,Pacto Mercenario
-HERO_ELISSA_ABILITY_DESC,"Spends 400 gold to permanently convert one enemy unit (non-hero) within 200px.",Gasta 400 de oro para convertir permanentemente una unidad enemiga (no héroe) dentro de 200px.
+HERO_ELISSA_ABILITY_DESC,Spends 400 gold to permanently convert one enemy unit (non-hero) within 200px.,Gasta 400 de oro para convertir permanentemente una unidad enemiga (no héroe) dentro de 200px.
 UI_FOLLOW_CAMERA,Follow camera,Seguir con la cámara
 UI_FOLLOWING,Following,Siguiendo
 UI_GAME_SPEED,Game speed x%d,Velocidad x%d

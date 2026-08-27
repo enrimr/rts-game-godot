@@ -24,6 +24,12 @@ func _ready() -> void:
 	var lobby: Control = LobbyScreen.new()
 	add_child(lobby)
 	lobby.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# CALIMA_LOBBY_CIV: select a civ button by index to review its detail card.
+	var civ_env: String = OS.get_environment("CALIMA_LOBBY_CIV")
+	if not civ_env.is_empty():
+		var btns: Array[Button] = lobby._player_civ_btns
+		var idx: int = clampi(int(civ_env), 0, btns.size() - 1)
+		btns[idx].pressed.emit()
 	_run(shot_dir)
 
 func _run(shot_dir: String) -> void:
