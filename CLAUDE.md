@@ -125,7 +125,21 @@ docs/             ← Architecture and design documentation
 | `project/scripts/ui/hud/hud_match_stats.gd` | `HudMatchStats` — match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays |
 | `project/scripts/ui/hud/hud_menus.gd` | `HudMenus` — in-game pause menu, settings panel, save-slot picker, surrender flow |
 | `project/scripts/ui/hud/hud_controls.gd` | `HudControls` — game-speed buttons, camera dpad (with panning), idle-villager/idle-military cycle buttons |
-| `project/scripts/ui/hud/hud_style.gd` | `HudStyle` — shared StyleBoxFlat panel/button factory used by HUD components |
+| `project/scripts/ui/hud/hud_style.gd` | `HudStyle` — shared StyleBoxFlat panel/button factory, bold font + text outline helpers |
+| `project/scripts/ui/hud/hud_hero_widget.gd` | `HudHeroWidget` — persistent hero portrait + HP card in Regicide matches (click centers camera) |
+| `project/scripts/ui/hud/hud_control_groups.gd` | `HudControlGroups` — clickable chips for assigned control groups (dominant-type miniature + count) |
+| `project/scripts/ui/ui_icons.gd` | `UiIcons` — procedural glyph library (37+ command/resource/stat glyphs, baked once, cost-row builders) |
+| `project/scripts/ui/action_button.gd` | `ActionButton` — uniform square command button: glyph/entity miniature, hotkey badge, queue badge, category accent |
+| `project/scripts/ui/cursor_manager.gd` | `CursorManager` — contextual mouse cursors (tabona/naife pointer + context glyph); pure resolve_context mapping |
+| `project/scripts/ui/train_queue_slot.gd` | `TrainQueueSlot` — training queue slot with entity miniature, progress veil, cancel |
+| `project/scripts/utils/icon_baker.gd` | `IconBaker` — runtime-baked entity miniatures (civ-styled) for buttons/portraits/queue |
+| `project/scripts/utils/iso_projection.gd` | `IsoProjection` — camera-level isometric math (world/screen, zoom composition) |
+| `project/scripts/utils/iso_billboard.gd` | `IsoBillboard` — upright entities on the projected ground, depth sort, z constants |
+| `project/scripts/utils/civ_style.gd` | `CivStyle` — per-civ visual identity (wall/roof silhouette/trim/headgear) |
+| `project/scripts/utils/unit_dress.gd` | `UnitDress` — per-civ headgear/sash decoration of shared unit rigs |
+| `project/scripts/utils/entity_names.gd` | `EntityNames` — localized unit/building display names with fallback |
+| `project/scripts/utils/alert_ring.gd` | `AlertRing` — ring buffer of attack-alert positions for the SPACE jump |
+| `project/scripts/utils/visual_fx.gd` | `VisualFx` — ground shadows, selection plinths, nameplate visibility |
 | `project/scripts/ui/resource_display.gd` | HBoxContainer showing one resource icon + amount |
 | `project/scripts/ui/unit_portrait.gd` | PanelContainer showing unit name + HP bar in selection grid |
 | `project/scripts/ui/weather_overlay.gd` | Screen-space visual effects (rain, dust, ash, fog) driven by WeatherManager |
@@ -253,7 +267,7 @@ PlacementGrid).
 - Match lobby with civ selection, map type, resource mode, victory mode, weather settings
 - Tooltips for all buttons (buildings, units, technologies)
 - Camera follow selected units
-- Control groups (Ctrl+1..9)
+- Control groups: Ctrl/Cmd+1..9 assign, 1..9 recall, clickable HUD chips (double-click centers camera); SPACE jumps to the last attack alert (5-entry ring, clickable attack toasts)
 
 **Polish:**
 - Procedural body animation for all units (walk, attack, work)
