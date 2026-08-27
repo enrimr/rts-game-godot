@@ -24,7 +24,11 @@ const GLYPHS: Array[String] = [
 	"follow", "age_up", "gate_lock", "gate_unlock", "ability", "unload",
 	"close", "menu", "speed1", "speed2", "speed3",
 	"idle_villager", "idle_military", "page_prev", "page_next",
+	"res_food", "res_wood", "res_gold", "res_stone",
 ]
+
+## Stockpile display order shared by every cost row.
+const RES_ORDER: Array[String] = ["food", "wood", "gold", "stone"]
 
 # ── Palette (flat fills; outlines derive as darkened shades) ──────────────────
 const C_WOOD: Color = Color(0.56, 0.38, 0.19)
@@ -76,6 +80,42 @@ static func icon_rect(id: String, inset: float = 5.0) -> TextureRect:
 	rect.offset_right = -inset
 	rect.offset_bottom = -inset
 	return rect
+
+## One "icon + text" cell (e.g. a resource amount or a unit stat), mouse
+## transparent so it never steals hover from the control it annotates.
+static func amount_chip(glyph_id: String, text: String, icon_px: float = 15.0,
+		font_size: int = 13) -> HBoxContainer:
+	var chip: HBoxContainer = HBoxContainer.new()
+	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.add_theme_constant_override("separation", 3)
+	var icon: TextureRect = TextureRect.new()
+	icon.texture = get_icon(glyph_id)
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.custom_minimum_size = Vector2(icon_px, icon_px)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.add_child(icon)
+	var label: Label = Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", font_size)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.add_child(label)
+	return chip
+
+## Renders a cost dictionary ({"food": 50, ...}) as a row of mini resource
+## glyphs with amounts, in stockpile order. Reusable anywhere the HUD shows
+## a price.
+static func cost_row(costs: Dictionary, icon_px: float = 15.0,
+		font_size: int = 13) -> HBoxContainer:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 9)
+	for res: String in RES_ORDER:
+		var amount: int = int(costs.get(res, 0) as float)
+		if amount <= 0:
+			continue
+		row.add_child(amount_chip("res_" + res, str(amount), icon_px, font_size))
+	return row
 
 static func _bake_async(target: ImageTexture, id: String) -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
@@ -425,6 +465,33 @@ static func _build(id: String, root: Node2D) -> void:
 				Vector2(12, 32)]), C_RED)
 			_circle(root, Vector2(28, 28), 5.0, C_GOLD)
 			_z_mark(root, Vector2(46, 8))
+		"res_food":
+			# Wheat ear: bold kernel pairs on a single stalk (readable at 14 px).
+			_bar(root, Vector2(32, 58), Vector2(32, 24), 4.0, Color(0.80, 0.63, 0.24))
+			_poly(root, _ellipse_pts(Vector2(22, 38), 6.5, 10.0, -35.0), C_GOLD)
+			_poly(root, _ellipse_pts(Vector2(42, 38), 6.5, 10.0, 35.0), C_GOLD)
+			_poly(root, _ellipse_pts(Vector2(23, 22), 6.5, 10.0, -35.0), C_GOLD)
+			_poly(root, _ellipse_pts(Vector2(41, 22), 6.5, 10.0, 35.0), C_GOLD)
+			_poly(root, _ellipse_pts(Vector2(32, 10), 6.0, 9.0, 0.0), C_GOLD)
+		"res_wood":
+			# Single log, cut end facing right.
+			_rect(root, 6.0, 22.0, 42.0, 20.0, C_LOG)
+			_circle(root, Vector2(48, 32), 10.0, C_LOG_END)
+			_circle(root, Vector2(48, 32), 4.5, C_LOG)
+		"res_gold":
+			# Faceted nugget with a light glint.
+			_poly(root, PackedVector2Array([Vector2(20, 14), Vector2(44, 12),
+				Vector2(56, 30), Vector2(48, 50), Vector2(22, 52),
+				Vector2(8, 32)]), C_GOLD)
+			_poly(root, PackedVector2Array([Vector2(24, 20), Vector2(40, 18),
+				Vector2(34, 34), Vector2(20, 32)]), C_GOLD.lightened(0.35))
+		"res_stone":
+			# Cut block: lit top face, shaded side face.
+			_poly(root, PackedVector2Array([Vector2(10, 28), Vector2(20, 16),
+				Vector2(58, 16), Vector2(48, 28)]), C_STONE.lightened(0.25))
+			_poly(root, PackedVector2Array([Vector2(48, 28), Vector2(58, 16),
+				Vector2(58, 42), Vector2(48, 54)]), C_STONE.darkened(0.20))
+			_rect(root, 10.0, 28.0, 38.0, 26.0, C_STONE)
 		"page_prev":
 			_poly(root, PackedVector2Array([Vector2(43, 13), Vector2(43, 51),
 				Vector2(17, 32)]), C_PALE)

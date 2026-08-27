@@ -169,6 +169,13 @@ var _weather: HudWeather = null
 var _match_stats: HudMatchStats = null
 var _resource_bar: HudResourceBar = null
 var _hero_widget: HudHeroWidget = null
+var _detail_panel: VBoxContainer = null
+var _cost_strip: HBoxContainer = null   # icon+amount price row shown while hovering a paid action
+
+const DETAIL_PANEL_PATH: String = "HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel"
+const RESOURCE_DISPLAY_NAMES: Dictionary = {
+	"food": "Food", "wood": "Wood", "gold": "Gold", "stone": "Stone",
+}
 
 const ACTION_COLS: int = 5
 const ACTION_ROWS: int = 2
@@ -213,15 +220,14 @@ func _ready() -> void:
 	_hero_widget = HudHeroWidget.new()
 	_hero_widget.init(local_player_id, get_node("HUDRoot"))
 	add_child(_hero_widget)
-	var control_groups: HudControlGroups = HudControlGroups.new()
-	control_groups.init(local_player_id, get_node("HUDRoot"))
-	add_child(control_groups)
 	_menus = HudMenus.new()
 	_menus.init(
 		_start_tutorial,
 		func() -> bool: return _tutorial_overlay != null and is_instance_valid(_tutorial_overlay),
 		func(visible: bool) -> void: _controls.set_dpad_visible(visible))
 	add_child(_menus)
+	_detail_panel = get_node_or_null(DETAIL_PANEL_PATH) as VBoxContainer
+	_build_cost_strip()
 	_build_follow_button()
 	_build_notifications()
 	_build_pause_menu_button()
@@ -443,6 +449,7 @@ func toggle_pause(is_paused: bool) -> void:
 # --- Private ---
 
 func _clear_action_buttons() -> void:
+	_hide_cost_strip()
 	_active_actions = []
 	_action_page = 0
 	for child: Node in _action_grid.get_children():
@@ -521,12 +528,19 @@ func _render_action_page() -> void:
 		btn.set_accent(_accent_for_action(btn.action_id))
 		# Icon-first button: full name, hotkey, costs and description live here.
 		var tooltip: String = title if key_hint.is_empty() else "%s  [%s]" % [title, key_hint]
-		if not extra.is_empty():
+		# Raw "500F 175W" cost tokens are replaced by the hover cost strip plus a
+		# readable plain-text line (accessibility fallback); other extras stay.
+		if not extra.is_empty() and not _is_cost_tokens(extra):
 			tooltip += "\n" + extra
+		if not cost.is_empty():
+			tooltip += "\n" + _cost_tooltip_line(cost)
 		var desc: String = data.get("description", "") as String
 		if not desc.is_empty():
 			tooltip += "\n" + tr(desc)
 		btn.tooltip_text = tooltip
+		if not cost.is_empty():
+			btn.mouse_entered.connect(_show_cost_strip.bind(cost))
+			btn.mouse_exited.connect(_hide_cost_strip)
 		var icon_scene: String = _action_icon_scene(btn.action_id)
 		var glyph: String = data.get("glyph", ACTION_GLYPHS.get(btn.action_id, "")) as String
 		if not icon_scene.is_empty():
@@ -1417,6 +1431,55 @@ func _poll_hp_bars() -> void:
 	for child: Node in _unit_portraits_grid.get_children():
 		if child is UnitPortrait:
 			(child as UnitPortrait).refresh()
+
+# ── Cost strip & unit stats row ───────────────────────────────────────────────
+
+func _build_cost_strip() -> void:
+	if _detail_panel == null:
+		return
+	_cost_strip = HBoxContainer.new()
+	_cost_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cost_strip.visible = false
+	_detail_panel.add_child(_cost_strip)
+
+func _show_cost_strip(costs: Dictionary) -> void:
+	if not is_instance_valid(_cost_strip):
+		return
+	for child: Node in _cost_strip.get_children():
+		child.queue_free()
+	if costs.is_empty():
+		_cost_strip.visible = false
+		return
+	_cost_strip.add_child(UiIcons.cost_row(costs, 16.0, 14))
+	_cost_strip.visible = true
+
+func _hide_cost_strip() -> void:
+	if is_instance_valid(_cost_strip):
+		_cost_strip.visible = false
+
+## Plain-text price line for tooltips ("60 Food, 25 Gold").
+func _cost_tooltip_line(costs: Dictionary) -> String:
+	var parts: PackedStringArray = PackedStringArray()
+	for res: String in UiIcons.RES_ORDER:
+		var amount: int = int(costs.get(res, 0) as float)
+		if amount > 0:
+			parts.append("%d %s" % [amount, RESOURCE_DISPLAY_NAMES[res] as String])
+	return ", ".join(parts)
+
+## True when a label extra is nothing but "500F 175W"-style cost tokens, which
+## the cost strip and the plain-text tooltip line now cover.
+func _is_cost_tokens(text: String) -> bool:
+	var parts: PackedStringArray = text.split(" ", false)
+	if parts.is_empty():
+		return false
+	for p: String in parts:
+		if p.length() < 2:
+			return false
+		if p.substr(p.length() - 1) not in ["F", "W", "G", "S"]:
+			return false
+		if not p.substr(0, p.length() - 1).is_valid_int():
+			return false
+	return true
 
 func _on_hero_low_hp(player_id: int) -> void:
 	if player_id != 0:
