@@ -81,11 +81,20 @@ static func prebake() -> void:
 static func _apply(id: String) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
-	var img: Image = _images.get(id) as Image
-	if id == "default" or img == null or img.is_empty():
-		DisplayServer.cursor_set_custom_image(null)
+	var texture: ImageTexture = _textures.get(id) as ImageTexture
+	if id == "default" or texture == null:
+		Input.set_custom_mouse_cursor(null)
 		return
-	DisplayServer.cursor_set_custom_image(img, DisplayServer.CURSOR_ARROW, HOTSPOT)
+	# Probe the VRAM readback ourselves first: on macOS it can transiently
+	# fail (occluded window, display switch) and passing the texture then
+	# raises 'Parameter "imgrep" is null' inside the DisplayServer. If the
+	# probe fails we skip this transition; the next context change retries.
+	# (Applying a raw Image via DisplayServer.cursor_set_custom_image avoids
+	# the readback but silently no-ops on macOS, so the texture path stays.)
+	var probe: Image = texture.get_image()
+	if probe == null or probe.is_empty():
+		return
+	Input.set_custom_mouse_cursor(texture, Input.CURSOR_ARROW, HOTSPOT)
 
 static func _bake(id: String) -> void:
 	if _textures.has(id) or _baking.get(id, false):
