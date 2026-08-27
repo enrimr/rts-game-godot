@@ -168,6 +168,7 @@ var _hero_alert_overlay: ColorRect = null
 var _weather: HudWeather = null
 var _match_stats: HudMatchStats = null
 var _resource_bar: HudResourceBar = null
+var _hero_widget: HudHeroWidget = null
 
 const ACTION_COLS: int = 5
 const ACTION_ROWS: int = 2
@@ -209,6 +210,9 @@ func _ready() -> void:
 	_controls = HudControls.new()
 	_controls.init(local_player_id, get_node("HUDRoot"))
 	add_child(_controls)
+	_hero_widget = HudHeroWidget.new()
+	_hero_widget.init(local_player_id, get_node("HUDRoot"))
+	add_child(_hero_widget)
 	_menus = HudMenus.new()
 	_menus.init(
 		_start_tutorial,

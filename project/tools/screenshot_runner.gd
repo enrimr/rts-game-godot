@@ -13,6 +13,7 @@ extends Node
 ##   CALIMA_MAP        MatchConfig.MapType int (optional; default STANDARD)
 ##   CALIMA_WARMUP     seconds of gameplay before the first shot (default 6)
 ##   CALIMA_TIMESCALE  Engine.time_scale during warmup (default 3.0)
+##   CALIMA_VICTORY    MatchConfig.VictoryMode int (optional; 1 = REGICIDE)
 ##
 ## Shots taken (viewport captures — window occlusion does not matter):
 ##   01_tc_close.png     player TC close-up (units readable), zoom 2.4
@@ -42,6 +43,11 @@ func _ready() -> void:
 	MatchConfig.rival_count = 1
 	var map_env: String = OS.get_environment("CALIMA_MAP")
 	MatchConfig.map_type = int(map_env) if not map_env.is_empty() else MatchConfig.MapType.STANDARD
+	# CALIMA_VICTORY: MatchConfig.VictoryMode int (e.g. 1 = REGICIDE) so mode-
+	# gated HUD elements like the hero widget can be captured.
+	var victory_env: String = OS.get_environment("CALIMA_VICTORY")
+	if not victory_env.is_empty():
+		MatchConfig.victory_mode = int(victory_env)
 	# Optional civ overrides so reviewers can capture each civilization's look.
 	var civ_env: String = OS.get_environment("CALIMA_CIV")
 	if not civ_env.is_empty():
