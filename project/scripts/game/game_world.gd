@@ -404,7 +404,12 @@ func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	hero.set("player_id", player_id)
 	hero.set("civ_id", civ_id)
 	hero.set("is_female", use_female)
-	hero.global_position = tc_pos + Vector2(-80.0, -60.0)
+	# South-east of the TC in world space = in FRONT of it on screen under
+	# the iso projection. The old (-80,-60) offset landed the hero BEHIND the
+	# building's massing: correctly occluded by y-sort, i.e. invisible and
+	# seemingly unselectable. (No spawn-spiral here: physics hasn't synced
+	# the TC body yet during _ready, so the query would misreport "free".)
+	hero.global_position = tc_pos + Vector2(85.0, 85.0)
 	units_layer.add_child(hero)
 	EventBus.unit_spawned.emit(hero, player_id)
 

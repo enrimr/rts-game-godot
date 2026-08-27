@@ -128,7 +128,8 @@ func _do_respawn_hero(hero_data: UnitResource) -> void:
 	hero.set("unit_data", hero_data)
 	hero.set("player_id", player_id)
 	hero.set("civ_id", MatchConfig.get_rival_civ_id(player_id))
-	hero.global_position = global_position + Vector2(-80.0, -60.0)
+	hero.global_position = BuildingBase.find_spawn_pos(global_position,
+		get_world_2d().direct_space_state)
 	get_parent().add_child(hero)
 	EventBus.unit_spawned.emit(hero, player_id)
 	EventBus.hero_respawned.emit(player_id)
