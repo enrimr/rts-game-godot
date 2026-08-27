@@ -98,6 +98,9 @@ func _run() -> void:
 	if OS.get_environment("CALIMA_PREVIEW") == "1":
 		await _shoot_placement_preview(tc_pos)
 
+	if OS.get_environment("CALIMA_CURSOR") == "1":
+		await _check_cursor_context(tc_pos)
+
 	# Overview goes last: fog is revealed so the reviewer can inspect the whole
 	# projected map, which would otherwise be near-black unexplored fog.
 	var fog: Node = _world.get("_fog") as Node
@@ -232,3 +235,41 @@ func _grab(name_base: String, settle_frames: int) -> void:
 		push_error("SCREENSHOT_RUNNER: failed to save " + path)
 	else:
 		print("SCREENSHOT_RUNNER: saved ", path)
+
+# CALIMA_CURSOR=1: end-to-end cursor-context check — selects the villagers,
+# warps the real mouse over the nearest tree, and prints the resolved cursor
+# id plus the hovered-control gate state.
+func _check_cursor_context(tc_pos: Vector2) -> void:
+	var villagers: Array = []
+	for node: Node in _world.find_children("*", "CharacterBody2D", true, false):
+		if node is Villager and (node.get("player_id") as int) == 0:
+			villagers.append(node)
+	print("CURSOR_CHECK: selecting ", villagers.size(), " villagers")
+	SelectionManager.select(villagers)
+	_camera.global_position = tc_pos
+	_camera.zoom = IsoProjection.camera_zoom(1.4)
+	await get_tree().process_frame
+	var best: Node2D = null
+	var best_d: float = INF
+	for rn: Node in get_tree().get_nodes_in_group("resource_nodes"):
+		if (rn.get("resource_type") as int) != ResourceNode.ResourceType.WOOD:
+			continue
+		var d: float = (rn as Node2D).global_position.distance_to(tc_pos)
+		if d < best_d:
+			best_d = d
+			best = rn as Node2D
+	if best == null:
+		print("CURSOR_CHECK: no wood node found")
+		return
+	var screen: Vector2 = get_viewport().get_canvas_transform() * best.global_position
+	get_viewport().warp_mouse(screen)
+	await get_tree().create_timer(0.4).timeout
+	var hovered: Control = get_viewport().gui_get_hovered_control()
+	print("CURSOR_CHECK: over tree -> id=", CursorManager.current_id,
+		" hovered_control=", hovered.name if hovered != null else "<none>")
+	get_viewport().warp_mouse(get_viewport().get_visible_rect().size * 0.5)
+	await get_tree().create_timer(0.4).timeout
+	print("CURSOR_CHECK: over ground -> id=", CursorManager.current_id)
+	SelectionManager.select([])
+	await get_tree().create_timer(0.3).timeout
+	print("CURSOR_CHECK: no selection -> id=", CursorManager.current_id)
