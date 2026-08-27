@@ -86,7 +86,7 @@ static func _apply(id: String) -> void:
 		return
 	var texture: ImageTexture = _textures.get(id) as ImageTexture
 	if id == "default" or texture == null:
-		if OS.is_debug_build():
+		if OS.get_environment("CALIMA_CURSOR_DEBUG") == "1":
 			printerr("CURSOR_APPLY reset (id='", id, "', baked=", texture != null, ")")
 		Input.set_custom_mouse_cursor(null)
 		return
@@ -98,12 +98,12 @@ static func _apply(id: String) -> void:
 	# the readback but silently no-ops on macOS, so the texture path stays.)
 	var probe: Image = texture.get_image()
 	if probe == null or probe.is_empty():
-		if OS.is_debug_build():
+		if OS.get_environment("CALIMA_CURSOR_DEBUG") == "1":
 			printerr("CURSOR_APPLY skipped '", id, "': VRAM readback empty")
 		return
 	# Debug diagnostic: if the macOS 'imgrep is null' error ever fires, the
 	# line right before it in the log identifies the exact cursor and state.
-	if OS.is_debug_build():
+	if OS.get_environment("CALIMA_CURSOR_DEBUG") == "1":
 		printerr("CURSOR_APPLY '", id, "' img=", probe.get_width(), "x",
 			probe.get_height(), " fmt=", probe.get_format(),
 			" win_mode=", DisplayServer.window_get_mode())
