@@ -25,6 +25,7 @@ const GLYPHS: Array[String] = [
 	"close", "menu", "speed1", "speed2", "speed3",
 	"idle_villager", "idle_military", "page_prev", "page_next",
 	"res_food", "res_wood", "res_gold", "res_stone",
+	"stat_attack", "stat_armor", "stat_range", "stat_speed",
 ]
 
 ## Stockpile display order shared by every cost row.
@@ -492,6 +493,35 @@ static func _build(id: String, root: Node2D) -> void:
 			_poly(root, PackedVector2Array([Vector2(48, 28), Vector2(58, 16),
 				Vector2(58, 42), Vector2(48, 54)]), C_STONE.darkened(0.20))
 			_rect(root, 10.0, 28.0, 38.0, 26.0, C_STONE)
+		"stat_attack":
+			var sg: Node2D = _group(root, Vector2(32, 32), 45.0)
+			sg.scale = Vector2(1.15, 1.15)
+			_sword(sg)
+		"stat_armor":
+			_poly(root, PackedVector2Array([Vector2(12, 12), Vector2(52, 12),
+				Vector2(52, 32), Vector2(48, 42), Vector2(32, 54),
+				Vector2(16, 42), Vector2(12, 32)]), C_STEEL)
+			_circle(root, Vector2(32, 28), 6.0, C_GOLD)
+		"stat_range":
+			# Bow limb arc + string, arrow nocked and pointing right.
+			var arc: PackedVector2Array = PackedVector2Array()
+			for i: int in range(13):
+				var a: float = deg_to_rad(-70.0 + 140.0 * float(i) / 12.0)
+				arc.append(Vector2(20, 32) + Vector2(cos(a), sin(a)) * 26.0)
+			_stroke(root, arc, C_WOOD, 5.0)
+			_stroke(root, PackedVector2Array([arc[0], arc[12]]), C_PALE, 2.5)
+			_bar(root, Vector2(18, 32), Vector2(44, 32), 3.0, C_PALE)
+			_poly(root, PackedVector2Array([Vector2(56, 32), Vector2(43, 25),
+				Vector2(43, 39)]), C_STEEL)
+		"stat_speed":
+			# Boot facing right with motion dashes trailing behind.
+			_poly(root, PackedVector2Array([Vector2(24, 12), Vector2(38, 12),
+				Vector2(38, 32), Vector2(54, 40), Vector2(54, 48),
+				Vector2(24, 48)]), C_WOOD)
+			_rect(root, 22.0, 46.0, 34.0, 7.0, C_WOOD_DARK)
+			_stroke(root, PackedVector2Array([Vector2(8, 22), Vector2(18, 22)]), C_PALE, 3.5)
+			_stroke(root, PackedVector2Array([Vector2(6, 32), Vector2(16, 32)]), C_PALE, 3.5)
+			_stroke(root, PackedVector2Array([Vector2(8, 42), Vector2(18, 42)]), C_PALE, 3.5)
 		"page_prev":
 			_poly(root, PackedVector2Array([Vector2(43, 13), Vector2(43, 51),
 				Vector2(17, 32)]), C_PALE)

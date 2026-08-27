@@ -171,8 +171,15 @@ var _resource_bar: HudResourceBar = null
 var _hero_widget: HudHeroWidget = null
 var _detail_panel: VBoxContainer = null
 var _cost_strip: HBoxContainer = null   # icon+amount price row shown while hovering a paid action
+var _stats_row: HBoxContainer = null    # compact stat chips for a single-selected unit
+var _stats_unit: Node = null
+var _stat_labels: Dictionary = {}       # stat id -> Label inside _stats_row
+var _carry_chip: HBoxContainer = null
+var _carry_icon: TextureRect = null
+var _stats_timer: float = 0.0
 
 const DETAIL_PANEL_PATH: String = "HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel"
+const STATS_REFRESH_INTERVAL: float = 0.5
 const RESOURCE_DISPLAY_NAMES: Dictionary = {
 	"food": "Food", "wood": "Wood", "gold": "Gold", "stone": "Stone",
 }
@@ -297,6 +304,10 @@ func _process(delta: float) -> void:
 			_populate_market_actions(_selected_building as Market)
 	if is_instance_valid(_status_unit):
 		_unit_status_label.text = _get_unit_status(_status_unit)
+	_stats_timer += delta
+	if _stats_timer >= STATS_REFRESH_INTERVAL:
+		_stats_timer = 0.0
+		_refresh_stats_row()
 	_poll_hp_bars()
 	if is_instance_valid(_age_advance_bar):
 		_age_advance_bar.value = AgeManager.get_advance_progress(local_player_id) * 100.0
@@ -368,6 +379,7 @@ func update_selection(units: Array) -> void:
 	for child: Node in _unit_portraits_grid.get_children():
 		child.queue_free()
 	_clear_action_buttons()
+	_clear_stats_row()
 	_in_build_menu = false
 
 	if units.is_empty():
@@ -439,6 +451,9 @@ func update_selection(units: Array) -> void:
 			_apply_tutorial_villager_gates()
 		else:
 			_populate_buttons(UNIT_ACTIONS)
+
+		if capped.size() == 1 and unit_data != null:
+			_build_stats_row(first)
 
 func update_age(age: int) -> void:
 	_resource_bar.update_age(age)
@@ -756,6 +771,7 @@ func _on_building_selected(building: Node) -> void:
 	for child: Node in _unit_portraits_grid.get_children():
 		child.queue_free()
 	_clear_action_buttons()
+	_clear_stats_row()
 	_in_build_menu = false
 
 	_status_unit = null
@@ -1481,6 +1497,81 @@ func _is_cost_tokens(text: String) -> bool:
 			return false
 	return true
 
+func _clear_stats_row() -> void:
+	_stats_unit = null
+	_stat_labels = {}
+	_carry_chip = null
+	_carry_icon = null
+	if is_instance_valid(_stats_row):
+		_stats_row.queue_free()
+	_stats_row = null
+
+## Compact stat chips (attack / armor m|p / range / speed) for a single-selected
+## unit; villagers additionally get a carried-resource chip.
+func _build_stats_row(unit: Node) -> void:
+	_clear_stats_row()
+	if _detail_panel == null or not is_instance_valid(unit):
+		return
+	var udata: UnitResource = unit.get("unit_data") as UnitResource
+	if udata == null:
+		return
+	_stats_row = HBoxContainer.new()
+	_stats_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stats_row.add_theme_constant_override("separation", 10)
+	for stat: String in ["attack", "armor", "range", "speed"]:
+		# Melee reach tops out at 1.5 tiles; only true ranged units get the chip.
+		if stat == "range" and udata.attack_range <= 2.0:
+			continue
+		var chip: HBoxContainer = UiIcons.amount_chip("stat_" + stat, "")
+		_stat_labels[stat] = chip.get_child(1) as Label
+		_stats_row.add_child(chip)
+	if unit.get("carried_resource") != null and unit.get("carried_amount") != null:
+		_carry_chip = UiIcons.amount_chip("res_food", "")
+		_carry_icon = _carry_chip.get_child(0) as TextureRect
+		_stat_labels["carry"] = _carry_chip.get_child(1) as Label
+		_carry_chip.visible = false
+		_stats_row.add_child(_carry_chip)
+	_detail_panel.add_child(_stats_row)
+	# Sits right under the name / HP bar / status trio from the scene.
+	_detail_panel.move_child(_stats_row, 3)
+	_stats_unit = unit
+	_refresh_stats_row()
+
+func _refresh_stats_row() -> void:
+	if not is_instance_valid(_stats_row) or not is_instance_valid(_stats_unit):
+		return
+	var udata: UnitResource = _stats_unit.get("unit_data") as UnitResource
+	if udata == null:
+		return
+	var pid_v: Variant = _stats_unit.get("player_id")
+	var pid: int = pid_v as int if pid_v != null else 0
+	var uid: String = udata.id
+	if _stat_labels.has("attack"):
+		var atk: float = udata.attack * CivBonusManager.get_unit_attack_multiplier(pid, uid)
+		(_stat_labels["attack"] as Label).text = str(int(roundf(atk)))
+	if _stat_labels.has("armor"):
+		var armor_m: float = udata.armor_melee + CivBonusManager.get_unit_armor_bonus(pid)
+		var armor_p: float = udata.armor_pierce + CivBonusManager.get_archer_armor_pierce_bonus(pid)
+		(_stat_labels["armor"] as Label).text = "%d/%d" % [int(armor_m), int(armor_p)]
+	if _stat_labels.has("range"):
+		var rng: float = udata.attack_range * CivBonusManager.get_archer_range_multiplier(pid) \
+			+ CivBonusManager.get_archer_range_flat(pid)
+		(_stat_labels["range"] as Label).text = str(int(roundf(rng)))
+	if _stat_labels.has("speed"):
+		var spd: float = udata.move_speed * CivBonusManager.get_unit_speed_multiplier(pid, uid) \
+			* CivBonusManager.get_unit_move_speed_multiplier(pid)
+		(_stat_labels["speed"] as Label).text = "%.0f" % spd
+	if _stat_labels.has("carry") and is_instance_valid(_carry_chip):
+		var res: String = _stats_unit.get("carried_resource") as String
+		var amount: float = _stats_unit.get("carried_amount") as float
+		if res.is_empty() or amount <= 0.0:
+			_carry_chip.visible = false
+		else:
+			if UiIcons.has_glyph("res_" + res):
+				_carry_icon.texture = UiIcons.get_icon("res_" + res)
+			(_stat_labels["carry"] as Label).text = str(int(amount))
+			_carry_chip.visible = true
+
 func _on_hero_low_hp(player_id: int) -> void:
 	if player_id != 0:
 		return
@@ -1553,6 +1644,7 @@ func _on_resource_node_selected(node: Node) -> void:
 	for child: Node in _unit_portraits_grid.get_children():
 		child.queue_free()
 	_clear_action_buttons()
+	_clear_stats_row()
 	_hp_bar_unit = null
 	var rn: ResourceNode = node as ResourceNode
 	var res_name: String = rn.get_resource_name().capitalize()

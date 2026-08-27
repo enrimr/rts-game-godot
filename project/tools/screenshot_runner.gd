@@ -191,6 +191,9 @@ func _shoot_selection_panels(tc_pos: Vector2) -> void:
 		SelectionManager.save_group(1)
 		# Generous settle: portrait/action icons bake asynchronously over frames.
 		await _grab("06_selection", 40)
+		# Single selection adds the compact stat-chip row to the detail panel.
+		SelectionManager.select([villagers[0]])
+		await _grab("06b_single_villager", 40)
 
 	# Group members are the DropOff marker children; the selectable building
 	# (with the training queue) is their parent TC root.
@@ -217,8 +220,19 @@ func _shoot_selection_panels(tc_pos: Vector2) -> void:
 	if tc.has_method("order_train"):
 		tc.call("order_train")
 		tc.call("order_train")
+	# The cost strip normally appears on action-button hover; drive it directly
+	# so the capture can verify the icon+amount price row in the detail panel.
+	var hud: Node = _find_hud()
+	if hud != null:
+		hud.call("_show_cost_strip", {"food": 50})
 	await _grab("07_building_panel", 40)
 	EventBus.building_selected.emit(null)
+
+func _find_hud() -> Node:
+	for layer: Node in _world.find_children("*", "CanvasLayer", true, false):
+		if layer.has_method("update_selection"):
+			return layer
+	return null
 
 func _shoot(world_pos: Vector2, zoom: float, name_base: String) -> void:
 	_camera.global_position = world_pos
