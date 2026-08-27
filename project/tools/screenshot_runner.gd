@@ -187,6 +187,8 @@ func _shoot_selection_panels(tc_pos: Vector2) -> void:
 		push_error("SCREENSHOT_RUNNER: no player villagers found for CALIMA_SELECT")
 	else:
 		SelectionManager.select(villagers)
+		# Same code path as Ctrl+1: makes the control-group chip visible in shot 06.
+		SelectionManager.save_group(1)
 		# Generous settle: portrait/action icons bake asynchronously over frames.
 		await _grab("06_selection", 40)
 

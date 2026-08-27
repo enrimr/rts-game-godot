@@ -926,6 +926,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				_zoom(-CAMERA_ZOOM_STEP)
 				get_viewport().set_input_as_handled()
 				return
+			var group_id: int = ke.physical_keycode - KEY_0
+			if group_id >= 1 and group_id <= 9:
+				# Ctrl (or Cmd on macOS) + digit assigns; plain digit recalls.
+				if ke.ctrl_pressed or ke.meta_pressed:
+					SelectionManager.save_group(group_id)
+				else:
+					SelectionManager.recall_group(group_id)
+				get_viewport().set_input_as_handled()
+				return
 		return
 
 	if event is InputEventMouseMotion and _panning:
