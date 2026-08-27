@@ -171,9 +171,9 @@ func _building_name(building: Node) -> String:
 		return tr("ACTION_WONDER").split("\n")[0]
 	var bdata: Variant = building.get("building_data")
 	if bdata != null:
-		var dname: Variant = (bdata as Resource).get("display_name")
-		if dname != null:
-			return dname as String
+		var dname: String = EntityNames.building_name(bdata as Resource)
+		if not dname.is_empty():
+			return dname
 	# Fallback: use the node name, stripping trailing digits Godot adds
 	var n: String = building.name
 	return n.rstrip("0123456789")

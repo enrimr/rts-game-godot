@@ -342,3 +342,45 @@ UI_GAME_SPEED,Game speed x%d,Velocidad x%d
 UI_MENU,Menu (Esc),Menú (Esc)
 UI_PAGE_PREV,Previous page,Página anterior
 UI_PAGE_NEXT,Next page,Página siguiente
+UNIT_VILLAGER,Villager,Aldeano
+UNIT_MILITIA,Militia,Milicia
+UNIT_MAN_AT_ARMS,Man-at-Arms,Hombre de Armas
+UNIT_LONG_SWORDSMAN,Long Swordsman,Espadachín
+UNIT_PIKEMAN,Pikeman,Piquero
+UNIT_ARCHER,Archer,Arquero
+UNIT_SCOUT,Scout,Explorador
+UNIT_HEAVY_SCOUT,Heavy Scout,Explorador Pesado
+UNIT_KNIGHT,Knight,Caballero
+UNIT_BATTERING_RAM,Battering Ram,Ariete
+UNIT_MANGONEL,Mangonel,Manganela
+UNIT_TREBUCHET,Trebuchet,Trabuquete
+UNIT_FISHING_BOAT,Fishing Boat,Barco Pesquero
+UNIT_TRANSPORT_SHIP,Transport Ship,Barco de Transporte
+UNIT_WAR_GALLEY,War Galley,Galera de Guerra
+UNIT_LONGBOWMAN,Longbowman,Arquero de Tiro Largo
+UNIT_MENCEYES_GUARD,Menceyes Guard,Guardia del Mencey
+UNIT_RAVINE_ARCHER,Ravine Archer,Arquero del Barranco
+UNIT_SAND_RAIDER,Sand Raider,Saqueador de Dunas
+UNIT_CHEVALIER_NORMAND,Chevalier Normand,Chevalier Normando
+UNIT_CONQUISTADOR,Conquistador,Conquistador
+UNIT_TIDECALLER,Tidecaller,Invocador de Mareas
+UNIT_TRIREME,Trireme,Trirreme
+BUILDING_TOWN_CENTER,Town Center,Centro Urbano
+BUILDING_HOUSE,House,Casa
+BUILDING_BARRACKS,Barracks,Cuartel
+BUILDING_ARCHERY_RANGE,Archery Range,Galería de Tiro
+BUILDING_STABLE,Stable,Establo
+BUILDING_SIEGE_WORKSHOP,Siege Workshop,Taller de Asedio
+BUILDING_DOCK,Dock,Muelle
+BUILDING_BLACKSMITH,Blacksmith,Herrería
+BUILDING_UNIVERSITY,University,Universidad
+BUILDING_TEMPLE,Temple,Templo
+BUILDING_MARKET,Market,Mercado
+BUILDING_WONDER,Wonder,Maravilla
+BUILDING_WATCH_TOWER,Watch Tower,Torre de Vigilancia
+BUILDING_WALL_SEGMENT,Wall,Muralla
+BUILDING_GATE,Gate,Puerta
+BUILDING_FARM,Farm,Granja
+BUILDING_FISH_TRAP,Fish Trap,Trampa para Peces
+BUILDING_LUMBER_CAMP,Lumber Camp,Campamento Maderero
+BUILDING_MINING_CAMP,Mining Camp,Campamento Minero

@@ -61,9 +61,9 @@ func setup(unit: Node) -> void:
 			pid = pid_v as int
 		var unit_data: Variant = unit.get("unit_data")
 		if unit_data != null:
-			var name_val: Variant = (unit_data as Resource).get("display_name")
-			if name_val != null and not (name_val as String).is_empty():
-				display_name = name_val as String
+			var name_val: String = EntityNames.unit_name(unit_data as Resource)
+			if not name_val.is_empty():
+				display_name = name_val
 
 	_icon_backdrop.color = PlayerColors.get_color(pid).darkened(0.55)
 	var scene_path: String = unit.scene_file_path if is_instance_valid(unit) else ""
@@ -174,7 +174,7 @@ func _build_tooltip(u: Node) -> String:
 	var los: float = d.line_of_sight * los_mult
 
 	var b: String = ""
-	b += "[b]%s[/b]\n" % d.display_name
+	b += "[b]%s[/b]\n" % EntityNames.unit_name(d)
 	b += "HP: %d / %d%s\n" % [int(hp), int(max_hp), _bonus_bbcode(hp_mult, 1.0)]
 	b += "Ataque: %d%s\n" % [int(atk), _bonus_bbcode(atk_mult, 1.0)]
 	var armor_delta: float = (armor_m - d.armor_melee) + (armor_p - d.armor_pierce)

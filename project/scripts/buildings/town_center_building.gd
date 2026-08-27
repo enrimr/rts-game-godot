@@ -61,6 +61,9 @@ var _train_timer: float = 0.0
 func _ready() -> void:
 	add_to_group("buildings")
 	IsoBuildingMassing.apply(self)
+	var nameplate: Label = get_node_or_null("NameLabel") as Label
+	if nameplate != null:
+		nameplate.text = tr("UI_TOWN_CENTER")
 	VisualFx.set_nameplate_visible(self, false)
 	call_deferred("_add_player_color_stripe")
 	call_deferred("_apply_team_accents")

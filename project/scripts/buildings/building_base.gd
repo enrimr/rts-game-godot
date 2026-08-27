@@ -130,12 +130,21 @@ func _ready() -> void:
 		health = max_health
 	IsoBuildingMassing.apply(self)
 	_refresh_visuals()
+	_localize_nameplate()
 	VisualFx.set_nameplate_visible(self, false)
 	call_deferred("_apply_player_color_stripe")
 	call_deferred("_apply_team_accents")
 	call_deferred("_add_ground_shadow")
 	call_deferred("_setup_iso_billboard")
 	_setup_nav_obstacle()
+
+func _localize_nameplate() -> void:
+	var nameplate: Label = get_node_or_null("NameLabel") as Label
+	if nameplate == null or building_data == null:
+		return
+	var localized: String = EntityNames.building_name(building_data)
+	if not localized.is_empty():
+		nameplate.text = localized
 
 # Stand the building's art upright on the projected ground (see IsoBillboard).
 # The footprint selection rectangle, ground shadow and colour stripe stay

@@ -378,9 +378,9 @@ func update_selection(units: Array) -> void:
 		var display_name: String = tr("UI_UNIT")
 		var unit_data: Variant = first.get("unit_data")
 		if unit_data != null:
-			var name_val: Variant = (unit_data as Resource).get("display_name")
-			if name_val != null:
-				display_name = name_val as String
+			var name_val: String = EntityNames.unit_name(unit_data as Resource)
+			if not name_val.is_empty():
+				display_name = name_val
 		elif first is Animal:
 			var aname: Variant = first.get("animal_name")
 			display_name = aname as String if aname != null else tr("UI_ANIMAL")
@@ -748,9 +748,9 @@ func _on_building_selected(building: Node) -> void:
 	var display_name: String = tr("UI_BUILDING")
 	var bdata: Variant = building.get("building_data")
 	if bdata != null:
-		var dname: Variant = (bdata as Resource).get("display_name")
-		if dname != null:
-			display_name = dname as String
+		var dname: String = EntityNames.building_name(bdata as Resource)
+		if not dname.is_empty():
+			display_name = dname
 	_unit_name_label.text = display_name
 
 	var hp_v: Variant = building.get("health")
@@ -1008,7 +1008,7 @@ func _populate_barracks_actions(barracks: Barracks) -> void:
 		if data.cost_gold  > 0: costs["gold"] = data.cost_gold
 		actions.append({
 			"id": "train:" + uid,
-			"label": data.display_name + "\n" + cost_label,
+			"label": EntityNames.unit_name(data) + "\n" + cost_label,
 			"color": def["color"] as Color,
 			"cost": costs,
 			"key": _barracks_key_for(uid),
@@ -1053,7 +1053,7 @@ func _populate_archery_range_actions(archery_range: ArcheryRange) -> void:
 		if data.cost_gold  > 0: costs["gold"] = data.cost_gold
 		actions.append({
 			"id": "train:" + uid,
-			"label": data.display_name + "\n" + cost_label,
+			"label": EntityNames.unit_name(data) + "\n" + cost_label,
 			"color": def["color"] as Color,
 			"cost": costs,
 			"key": _archery_range_key_for(uid),
@@ -1127,7 +1127,7 @@ func _populate_stable_actions(stable: Stable) -> void:
 		var key_map: Dictionary = {"heavy_scout": KEY_H, "knight": KEY_K, "sand_raider": KEY_U, "chevalier_normand": KEY_U}
 		actions.append({
 			"id": "train:" + uid,
-			"label": data.display_name + "\n" + cost_label,
+			"label": EntityNames.unit_name(data) + "\n" + cost_label,
 			"color": def["color"] as Color,
 			"cost": costs,
 			"key": key_map.get(uid, KEY_NONE) as Key,
@@ -1326,7 +1326,7 @@ func _populate_siege_workshop_actions(workshop: SiegeWorkshop) -> void:
 		var key_map: Dictionary = {"battering_ram": KEY_B, "mangonel": KEY_M, "trebuchet": KEY_T}
 		actions.append({
 			"id": "train:" + uid,
-			"label": data.display_name + "\n" + cost_label,
+			"label": EntityNames.unit_name(data) + "\n" + cost_label,
 			"color": def["color"] as Color,
 			"cost": costs,
 			"key": key_map.get(uid, KEY_NONE) as Key,
