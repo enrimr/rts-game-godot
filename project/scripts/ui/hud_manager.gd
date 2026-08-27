@@ -227,6 +227,9 @@ func _ready() -> void:
 	_hero_widget = HudHeroWidget.new()
 	_hero_widget.init(local_player_id, get_node("HUDRoot"))
 	add_child(_hero_widget)
+	var control_groups: HudControlGroups = HudControlGroups.new()
+	control_groups.init(local_player_id, get_node("HUDRoot"))
+	add_child(control_groups)
 	_menus = HudMenus.new()
 	_menus.init(
 		_start_tutorial,
