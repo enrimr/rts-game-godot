@@ -18,7 +18,7 @@ const CURSOR_SIZE: int = 32
 # top-left + context glyph bottom-right) clicks exactly where the arrow points.
 const HOTSPOT: Vector2 = Vector2(2.0, 2.0)
 const OUTLINE_COLOR: Color = Color(0.08, 0.07, 0.06)
-const OUTLINE_ALPHA: float = 0.85
+const OUTLINE_ALPHA: float = 0.7
 
 ## Cursor ids with a baked texture. "default" (OS arrow) is implicit.
 const CONTEXT_IDS: Array[String] = [
@@ -190,9 +190,9 @@ static func _add_pointer_arrow(root: Node2D, pointer_scale: float = 1.0) -> void
 	var backing: Polygon2D = Polygon2D.new()
 	var back_pts: PackedVector2Array = PackedVector2Array()
 	for pt: Vector2 in silhouette:
-		back_pts.append(pt * 1.14 + Vector2(0, -0.8))
+		back_pts.append(pt * 1.08 + Vector2(0, -0.5))
 	backing.polygon = back_pts
-	backing.color = Color(0.07, 0.06, 0.06, 0.95)
+	backing.color = Color(0.07, 0.06, 0.06, 0.85)
 	holder.add_child(backing)
 
 	# Blade: steel with a darker right facet and a bone-bright cutting edge.
@@ -271,13 +271,14 @@ static func _with_outline(glyph: Image) -> Image:
 	for y: int in range(size):
 		for x: int in range(size):
 			var max_alpha: float = 0.0
-			for dy: int in range(-1, 2):
-				for dx: int in range(-1, 2):
-					var nx: int = x + dx
-					var ny: int = y + dy
-					if nx < 0 or ny < 0 or nx >= size or ny >= size:
-						continue
-					max_alpha = maxf(max_alpha, glyph.get_pixel(nx, ny).a)
+			# Cross kernel (no diagonals): a finer rim without corner bulges.
+			for off: Vector2i in [Vector2i(0, 0), Vector2i(1, 0),
+					Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var nx: int = x + off.x
+				var ny: int = y + off.y
+				if nx < 0 or ny < 0 or nx >= size or ny >= size:
+					continue
+				max_alpha = maxf(max_alpha, glyph.get_pixel(nx, ny).a)
 			if max_alpha > 0.0:
 				out.set_pixel(x, y, Color(OUTLINE_COLOR.r, OUTLINE_COLOR.g,
 					OUTLINE_COLOR.b, max_alpha * OUTLINE_ALPHA))
