@@ -97,12 +97,12 @@ static func _apply(id: String) -> void:
 	var probe: Image = texture.get_image()
 	if probe == null or probe.is_empty():
 		if OS.is_debug_build():
-			print("CURSOR_APPLY skipped '", id, "': VRAM readback empty")
+			printerr("CURSOR_APPLY skipped '", id, "': VRAM readback empty")
 		return
 	# Debug diagnostic: if the macOS 'imgrep is null' error ever fires, the
 	# line right before it in the log identifies the exact cursor and state.
 	if OS.is_debug_build():
-		print("CURSOR_APPLY '", id, "' img=", probe.get_width(), "x",
+		printerr("CURSOR_APPLY '", id, "' img=", probe.get_width(), "x",
 			probe.get_height(), " fmt=", probe.get_format(),
 			" win_mode=", DisplayServer.window_get_mode())
 	Input.set_custom_mouse_cursor(texture, Input.CURSOR_ARROW, HOTSPOT)
@@ -142,7 +142,14 @@ static func _bake(id: String) -> void:
 	_images[id] = outlined
 	_textures[id] = ImageTexture.create_from_image(outlined)
 	if current_id == id:
-		_apply(id)
+		# This resume point sits right after `await frame_post_draw`, i.e. at
+		# the renderer sync — calling the OS cursor API (AppKit on macOS)
+		# there fails intermittently ('Parameter "imgrep" is null'). Defer
+		# the re-apply to the next main-loop iteration.
+		var apply_id: String = id
+		(func() -> void:
+			if current_id == apply_id:
+				_apply(apply_id)).call_deferred()
 
 ## Embark counterpart of the UiIcons "unload" glyph: same raft, arrow rising
 ## into it. Drawn here (not in ui_icons.gd) with the shared geometry helpers.
