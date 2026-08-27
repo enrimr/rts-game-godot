@@ -123,6 +123,8 @@ var _pan_last_pos: Vector2 = Vector2.ZERO
 
 var _following: bool = false
 var _camera_moved_emitted: bool = false
+# Recent "under attack" positions for the SPACE jump-to-last-event hotkey.
+var _alert_ring: AlertRing = AlertRing.new()
 var _edge_scroll_timer: float = 0.0
 var _edge_scroll_last_mouse: Vector2 = Vector2.ZERO
 const EDGE_SCROLL_DELAY: float = 0.3
@@ -275,6 +277,9 @@ func _ready() -> void:
 	# are not undone by the per-frame follow re-centre. Re-entrant no-op when
 	# this node is itself the emitter.
 	EventBus.camera_follow_cancelled.connect(func() -> void: _following = false)
+	EventBus.player_entity_under_attack.connect(
+		func(pos: Vector2, _attacker: Node) -> void: _alert_ring.record(pos))
+	EventBus.building_destroyed.connect(_on_building_destroyed_alert)
 	EventBus.unit_selected.connect(_on_unit_selected_follow)
 	SelectionManager.selection_changed.connect(_on_selection_manager_changed)
 	EventBus.tutorial_spawn_enemy_scout.connect(_on_tutorial_spawn_enemy_scout)
@@ -843,6 +848,23 @@ func _on_selection_manager_changed(units: Array) -> void:
 		if is_instance_valid(u):
 			_selected_units.append(u)
 
+func _on_building_destroyed_alert(building: Node, owner_id: int) -> void:
+	if owner_id == 0 and building is Node2D and is_instance_valid(building):
+		_alert_ring.record((building as Node2D).global_position)
+
+func _jump_to_last_alert() -> void:
+	if not _alert_ring.has_entries():
+		return
+	jump_camera_to(_alert_ring.next_target(float(Time.get_ticks_msec()) / 1000.0))
+
+## Instant camera jump used by alert hotkeys and clickable notifications.
+## Cancels camera-follow so the per-frame re-centre does not undo the jump.
+func jump_camera_to(world_pos: Vector2) -> void:
+	_following = false
+	EventBus.camera_follow_cancelled.emit()
+	var mh: float = TerrainManager.minimap_map_half
+	camera.position = world_pos.clamp(Vector2(-mh, -mh), Vector2(mh, mh))
+
 const EDGE_SCROLL_MARGIN: float = 60.0
 
 func _handle_camera(delta: float) -> void:
@@ -933,6 +955,10 @@ func _unhandled_input(event: InputEvent) -> void:
 					SelectionManager.save_group(group_id)
 				else:
 					SelectionManager.recall_group(group_id)
+				get_viewport().set_input_as_handled()
+				return
+			if ke.physical_keycode == KEY_SPACE:
+				_jump_to_last_alert()
 				get_viewport().set_input_as_handled()
 				return
 		return

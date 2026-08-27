@@ -49,12 +49,19 @@ func _process(delta: float) -> void:
 
 # --- Public ---
 
-func push(text: String, color: Color = Color.WHITE, hold: float = 4.0) -> void:
+## Attack/loss toasts carry the event's world position: clicking them jumps
+## the camera there (world_pos = null keeps the toast click-through).
+func push(text: String, color: Color = Color.WHITE, hold: float = 4.0,
+		world_pos: Variant = null) -> void:
 	if _container.get_child_count() >= MAX_VISIBLE:
 		return
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.mouse_filter = MOUSE_FILTER_IGNORE
+	if world_pos is Vector2:
+		panel.mouse_filter = MOUSE_FILTER_STOP
+		panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		panel.gui_input.connect(_on_toast_gui_input.bind(world_pos as Vector2))
 	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 
 	var style: StyleBoxFlat = StyleBoxFlat.new()
@@ -97,7 +104,8 @@ func _on_unit_attacked(_attacker: Node, target: Node) -> void:
 	if _cd_unit > 0.0:
 		return
 	_cd_unit = CD_UNIT_ATTACK
-	push(tr("NOTIF_UNIT_ATTACK"), Color(1.0, 0.38, 0.28))
+	push(tr("NOTIF_UNIT_ATTACK"), Color(1.0, 0.38, 0.28), 4.0,
+		(target as Node2D).global_position if target is Node2D else null)
 
 func _on_damage_dealt(target: Node, _amount: float, source: Node) -> void:
 	# Only interested in player 0 buildings being hit by enemies
@@ -115,7 +123,8 @@ func _on_damage_dealt(target: Node, _amount: float, source: Node) -> void:
 	if _cd_building > 0.0:
 		return
 	_cd_building = CD_BUILDING_ATTACK
-	push(tr("NOTIF_BUILDING_ATTACK"), Color(1.0, 0.55, 0.20))
+	push(tr("NOTIF_BUILDING_ATTACK"), Color(1.0, 0.55, 0.20), 4.0,
+		(target as Node2D).global_position if target is Node2D else null)
 
 func _age_name(age: int) -> String:
 	return tr(["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"][clampi(age, 0, 3)])
@@ -143,7 +152,9 @@ func _on_construction_complete(building: Node) -> void:
 func _on_building_destroyed(building: Node, owner_id: int) -> void:
 	var bname: String = _building_name(building)
 	if owner_id == 0:
-		push(tr("NOTIF_BUILDING_DESTROYED_PLAYER") % bname, Color(1.0, 0.25, 0.25), 5.0)
+		var pos: Variant = (building as Node2D).global_position \
+			if building is Node2D and is_instance_valid(building) else null
+		push(tr("NOTIF_BUILDING_DESTROYED_PLAYER") % bname, Color(1.0, 0.25, 0.25), 5.0, pos)
 	else:
 		push(tr("NOTIF_BUILDING_DESTROYED_ENEMY"), Color(0.60, 0.95, 0.60))
 
@@ -165,6 +176,18 @@ func _on_hero_low_hp(player_id: int) -> void:
 	push(tr("NOTIF_HERO_LOW_HP"), Color(1.0, 0.20, 0.20), 6.0)
 
 # --- Helpers ---
+
+func _on_toast_gui_input(event: InputEvent, world_pos: Vector2) -> void:
+	var mb: InputEventMouseButton = event as InputEventMouseButton
+	if mb == null or not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
+		return
+	accept_event()
+	var world_nodes: Array[Node] = get_tree().get_nodes_in_group("world")
+	if world_nodes.is_empty():
+		return
+	var world: Node = world_nodes.front() as Node
+	if world.has_method("jump_camera_to"):
+		world.call("jump_camera_to", world_pos)
 
 func _building_name(building: Node) -> String:
 	if building is Wonder:
