@@ -5,9 +5,20 @@ extends GutTest
 ## What is covered:
 ##   1.  TerrainManager.get_vision_mult: reduced under laurisilva, 1.0 anywhere
 ##       else (grass, other zones).
-##   2.  MapGenerator._spawn_laurisilva_forests fills each laurisilva zone with
+##   2.  EntityPlacer.spawn_laurisilva_forests fills each laurisilva zone with
 ##       a tight wood cluster of above-normal yield, inside the zone.
 ##   3.  Maps without laurisilva zones spawn nothing extra.
+
+# Forest spawning only needs the RNG and the resource multiplier; the painter is
+# reached solely by the island/islet paths, so a bare instance is enough here.
+func _make_placer(rng_seed: int) -> EntityPlacer:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = rng_seed
+	var painter: TerrainPainter = TerrainPainter.new()
+	painter.setup(rng, 1800.0)
+	var placer: EntityPlacer = EntityPlacer.new()
+	placer.setup(rng, 1800.0, 1.0, painter, [])
+	return placer
 
 func before_each() -> void:
 	TerrainManager.reset()
@@ -34,11 +45,7 @@ func test_forest_spawned_inside_zone() -> void:
 
 	var parent: Node2D = Node2D.new()
 	add_child_autofree(parent)
-	var gen: MapGenerator = MapGenerator.new()
-	gen._rng = RandomNumberGenerator.new()
-	gen._rng.seed = 12345
-	gen._res_mult = 1.0
-	gen._spawn_laurisilva_forests(parent)
+	_make_placer(12345).spawn_laurisilva_forests(parent)
 
 	var trees: Array[Node] = []
 	for child: Node in parent.get_children():
@@ -56,8 +63,5 @@ func test_no_zone_spawns_nothing() -> void:
 	TerrainManager.add_zone(Vector2.ZERO, 300.0, TerrainManager.TerrainType.MALPAIS)
 	var parent: Node2D = Node2D.new()
 	add_child_autofree(parent)
-	var gen: MapGenerator = MapGenerator.new()
-	gen._rng = RandomNumberGenerator.new()
-	gen._res_mult = 1.0
-	gen._spawn_laurisilva_forests(parent)
+	_make_placer(1).spawn_laurisilva_forests(parent)
 	assert_eq(parent.get_child_count(), 0)
