@@ -223,7 +223,7 @@ theme_override_constants/separation = 4
 offset_left = 8.0
 offset_top = 6.0
 offset_right = -8.0
-offset_bottom = -18.0
+offset_bottom = -8.0
 
 [node name="TopRow" type="HBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox"]
 layout_mode = 2
@@ -240,7 +240,8 @@ unique_name_in_owner = true
 [node name="UnitDetailPanel" type="VBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow"]
 layout_mode = 2
 custom_minimum_size = Vector2(140, 0)
-theme_override_constants/separation = 4
+size_flags_vertical = 0
+theme_override_constants/separation = 3
 
 [node name="UnitNameLabel" type="Label" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel"]
 layout_mode = 2
@@ -250,8 +251,10 @@ unique_name_in_owner = true
 
 [node name="UnitHPBar" type="ProgressBar" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel"]
 layout_mode = 2
+custom_minimum_size = Vector2(0, 12)
 max_value = 100.0
 value = 0.0
+show_percentage = false
 unique_name_in_owner = true
 
 [node name="UnitStatusLabel" type="Label" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel"]

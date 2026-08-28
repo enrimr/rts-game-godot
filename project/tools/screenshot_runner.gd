@@ -197,6 +197,16 @@ func _shoot_selection_panels(tc_pos: Vector2) -> void:
 		# Single selection adds the compact stat-chip row to the detail panel.
 		SelectionManager.select([villagers[0]])
 		await _grab("06b_single_villager", 40)
+		# Large selection (>10) switches portraits to the compact 40 px tiles;
+		# repeating the same villagers is enough to exercise the layout.
+		var many_hud: Node = _find_hud()
+		if many_hud != null and many_hud.has_method("update_selection"):
+			var many: Array = []
+			for i: int in range(15):
+				many.append(villagers[i % villagers.size()])
+			many_hud.update_selection(many)
+			await _grab("06c_many_selected", 40)
+			SelectionManager.select([villagers[0]])
 
 	# Group members are the DropOff marker children; the selectable building
 	# (with the training queue) is their parent TC root.

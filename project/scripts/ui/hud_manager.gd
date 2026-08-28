@@ -375,10 +375,16 @@ func _unhandled_input(event: InputEvent) -> void:
 func update_resources(player_id: int, resources: Dictionary) -> void:
 	_resource_bar.update_resources(player_id, resources)
 
+## queue_free'd children still occupy container layout for the rest of the
+## frame; detach first so stale rows can never inflate the band's minimum size.
+func _free_children(node: Node) -> void:
+	for child: Node in node.get_children():
+		node.remove_child(child)
+		child.queue_free()
+
 func update_selection(units: Array) -> void:
 	cancel_pending()
-	for child: Node in _unit_portraits_grid.get_children():
-		child.queue_free()
+	_free_children(_unit_portraits_grid)
 	_clear_action_buttons()
 	_clear_stats_row()
 	_in_build_menu = false
@@ -392,10 +398,13 @@ func update_selection(units: Array) -> void:
 		return
 
 	var capped: Array = units.slice(0, 40)
+	var compact: bool = capped.size() > 10
+	_unit_portraits_grid.columns = 20 if compact else 10
 	for unit: Variant in capped:
 		if not is_instance_valid(unit):
 			continue
 		var portrait: UnitPortrait = UnitPortrait.new()
+		portrait.compact = compact
 		_unit_portraits_grid.add_child(portrait)
 		portrait.setup(unit)
 
@@ -467,10 +476,8 @@ func toggle_pause(is_paused: bool) -> void:
 func _clear_action_buttons() -> void:
 	_active_actions = []
 	_action_page = 0
-	for child: Node in _action_grid.get_children():
-		child.queue_free()
-	for child: Node in _train_queue_row.get_children():
-		child.queue_free()
+	_free_children(_action_grid)
+	_free_children(_train_queue_row)
 	if is_instance_valid(_page_prev_btn):
 		_page_prev_btn.queue_free()
 		_page_prev_btn = null
@@ -506,8 +513,7 @@ func _populate_buttons(actions: Array) -> void:
 	_render_action_page()
 
 func _render_action_page() -> void:
-	for child: Node in _action_grid.get_children():
-		child.queue_free()
+	_free_children(_action_grid)
 	if is_instance_valid(_page_prev_btn):
 		_page_prev_btn.queue_free()
 		_page_prev_btn = null
@@ -766,8 +772,7 @@ func _on_building_selected(building: Node) -> void:
 	_set_follow_active(false)
 	if is_instance_valid(_follow_btn):
 		_follow_btn.visible = false
-	for child: Node in _unit_portraits_grid.get_children():
-		child.queue_free()
+	_free_children(_unit_portraits_grid)
 	_clear_action_buttons()
 	_clear_stats_row()
 	_in_build_menu = false
@@ -955,8 +960,7 @@ func _populate_transport_buttons(ship: TransportShip) -> void:
 	var cap: int = ship.get_capacity()
 
 	# Fill portrait grid with garrisoned units; each portrait is clickable to unload that unit.
-	for child: Node in _unit_portraits_grid.get_children():
-		child.queue_free()
+	_free_children(_unit_portraits_grid)
 	for i: int in range(garrison.size()):
 		var garrisoned: Node = garrison[i] as Node
 		var portrait: UnitPortrait = UnitPortrait.new()
@@ -1610,8 +1614,7 @@ func _on_resource_node_selected(node: Node) -> void:
 		_selected_building.set_selected(false)
 	_selected_building = null
 	_status_unit = null
-	for child: Node in _unit_portraits_grid.get_children():
-		child.queue_free()
+	_free_children(_unit_portraits_grid)
 	_clear_action_buttons()
 	_clear_stats_row()
 	_hp_bar_unit = null
@@ -1693,20 +1696,22 @@ func _build_notifications() -> void:
 	get_node("HUDRoot").add_child(nd)
 
 func _build_follow_button() -> void:
-	var detail_panel: Node = get_node_or_null("HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow/UnitDetailPanel")
-	if detail_panel == null:
+	var top_row: Node = get_node_or_null("HUDRoot/BottomBar/BottomLayout/SelectionPanel/SelectionVBox/TopRow")
+	if top_row == null:
 		return
 	# Square icon button: binoculars glyph, same command-button chrome as the
-	# action grid. The lit frame marks camera-follow as engaged.
+	# action grid. The lit frame marks camera-follow as engaged. Sits as its own
+	# column right of the detail stack so it costs the band no vertical space.
 	_follow_btn = Button.new()
 	_follow_btn.focus_mode = Control.FOCUS_NONE
 	_follow_btn.visible = false
 	_follow_btn.custom_minimum_size = Vector2(38.0, 34.0)
 	_follow_btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_follow_btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_follow_btn.add_child(UiIcons.icon_rect("follow", 4.0))
 	_apply_follow_style(false)
 	_follow_btn.pressed.connect(_on_follow_pressed)
-	detail_panel.add_child(_follow_btn)
+	top_row.add_child(_follow_btn)
 
 func _on_follow_pressed() -> void:
 	_set_follow_active(not _following)
