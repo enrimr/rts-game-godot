@@ -224,7 +224,23 @@ func _shoot_selection_panels(tc_pos: Vector2) -> void:
 	# so the capture can verify the icon+amount price row in the detail panel.
 	var hud: Node = _find_hud()
 	if hud != null:
-		hud.call("_show_cost_strip", {"food": 50})
+		# Native tooltip popups are focus/idle dependent and unreliable in
+		# automated captures: mount the rich tooltip CONTENT directly (same
+		# control _make_custom_tooltip returns) and grab it as 08_tooltip.
+		var grid: Node = hud.get_node_or_null("%ActionButtonsGrid")
+		if grid != null:
+			for child: Node in grid.get_children():
+				if child is ActionButton and not (child as ActionButton).action_costs.is_empty():
+					var btn: ActionButton = child as ActionButton
+					var content: Control = btn._make_custom_tooltip(btn.tooltip_text) as Control
+					if content != null:
+						var frame: PanelContainer = PanelContainer.new()
+						frame.position = Vector2(500, 400)
+						hud.add_child(frame)
+						frame.add_child(content)
+						await _grab("08_tooltip", 10)
+						frame.queue_free()
+					break
 	await _grab("07_building_panel", 40)
 	EventBus.building_selected.emit(null)
 

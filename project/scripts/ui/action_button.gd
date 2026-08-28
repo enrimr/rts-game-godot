@@ -18,6 +18,8 @@ const ICON_DIM: Color = Color(0.42, 0.42, 0.42)
 const UPGRADE_GOLD: Color = Color(0.85, 0.72, 0.10)
 
 @export var action_id: String = ""
+## Resource costs shown as a glyph row inside this button's tooltip popup.
+var action_costs: Dictionary = {}
 
 var _accent: Color = HudStyle.ACCENT_UTILITY
 var _enabled_look: bool = true
@@ -184,3 +186,18 @@ func _restyle() -> void:
 	add_theme_stylebox_override("pressed", HudStyle.command_button(accent, "pressed"))
 	add_theme_stylebox_override("disabled", HudStyle.command_button(accent, "disabled"))
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+## Rich tooltip: the plain tooltip text plus the cost as a glyph row
+## (wood-log 25 instead of "25 Wood"), rendered inside the hover popup.
+func _make_custom_tooltip(for_text: String) -> Object:
+	if action_costs.is_empty():
+		return null   # default text tooltip
+	var box: VBoxContainer = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	if not for_text.strip_edges().is_empty():
+		var lbl: Label = Label.new()
+		lbl.text = for_text
+		lbl.add_theme_font_size_override("font_size", 13)
+		box.add_child(lbl)
+	box.add_child(UiIcons.cost_row(action_costs, 16.0, 14))
+	return box

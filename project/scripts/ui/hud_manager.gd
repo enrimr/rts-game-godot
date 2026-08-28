@@ -170,7 +170,6 @@ var _match_stats: HudMatchStats = null
 var _resource_bar: HudResourceBar = null
 var _hero_widget: HudHeroWidget = null
 var _detail_panel: VBoxContainer = null
-var _cost_strip: HBoxContainer = null   # icon+amount price row shown while hovering a paid action
 var _stats_row: HBoxContainer = null    # compact stat chips for a single-selected unit
 var _stats_unit: Node = null
 var _stat_labels: Dictionary = {}       # stat id -> Label inside _stats_row
@@ -237,7 +236,6 @@ func _ready() -> void:
 		func(visible: bool) -> void: _controls.set_dpad_visible(visible))
 	add_child(_menus)
 	_detail_panel = get_node_or_null(DETAIL_PANEL_PATH) as VBoxContainer
-	_build_cost_strip()
 	_build_follow_button()
 	_build_notifications()
 	_build_pause_menu_button()
@@ -467,7 +465,6 @@ func toggle_pause(is_paused: bool) -> void:
 # --- Private ---
 
 func _clear_action_buttons() -> void:
-	_hide_cost_strip()
 	_active_actions = []
 	_action_page = 0
 	for child: Node in _action_grid.get_children():
@@ -550,15 +547,13 @@ func _render_action_page() -> void:
 		# readable plain-text line (accessibility fallback); other extras stay.
 		if not extra.is_empty() and not _is_cost_tokens(extra):
 			tooltip += "\n" + extra
-		if not cost.is_empty():
-			tooltip += "\n" + _cost_tooltip_line(cost)
 		var desc: String = data.get("description", "") as String
 		if not desc.is_empty():
 			tooltip += "\n" + tr(desc)
 		btn.tooltip_text = tooltip
-		if not cost.is_empty():
-			btn.mouse_entered.connect(_show_cost_strip.bind(cost))
-			btn.mouse_exited.connect(_hide_cost_strip)
+		# Costs render as a glyph row inside the button's own tooltip popup
+		# (ActionButton._make_custom_tooltip).
+		btn.action_costs = cost
 		var icon_scene: String = _action_icon_scene(btn.action_id)
 		var glyph: String = data.get("glyph", ACTION_GLYPHS.get(btn.action_id, "")) as String
 		if not icon_scene.is_empty():
@@ -1451,48 +1446,7 @@ func _poll_hp_bars() -> void:
 		if child is UnitPortrait:
 			(child as UnitPortrait).refresh()
 
-# ── Cost strip & unit stats row ───────────────────────────────────────────────
-
-func _build_cost_strip() -> void:
-	if _detail_panel == null:
-		return
-	# Fixed-height slot inserted right under the HP bar: appending the strip
-	# at the end of the VBox both pushed the panel contents up on hover
-	# (reflow) and landed below the visible band of the bottom bar.
-	var slot: Control = Control.new()
-	slot.custom_minimum_size = Vector2(0, 22.0)
-	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_detail_panel.add_child(slot)
-	_detail_panel.move_child(slot, mini(2, _detail_panel.get_child_count() - 1))
-	_cost_strip = HBoxContainer.new()
-	_cost_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_cost_strip.visible = false
-	_cost_strip.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	slot.add_child(_cost_strip)
-
-func _show_cost_strip(costs: Dictionary) -> void:
-	if not is_instance_valid(_cost_strip):
-		return
-	for child: Node in _cost_strip.get_children():
-		child.queue_free()
-	if costs.is_empty():
-		_cost_strip.visible = false
-		return
-	_cost_strip.add_child(UiIcons.cost_row(costs, 16.0, 14))
-	_cost_strip.visible = true
-
-func _hide_cost_strip() -> void:
-	if is_instance_valid(_cost_strip):
-		_cost_strip.visible = false
-
-## Plain-text price line for tooltips ("60 Food, 25 Gold").
-func _cost_tooltip_line(costs: Dictionary) -> String:
-	var parts: PackedStringArray = PackedStringArray()
-	for res: String in UiIcons.RES_ORDER:
-		var amount: int = int(costs.get(res, 0) as float)
-		if amount > 0:
-			parts.append("%d %s" % [amount, RESOURCE_DISPLAY_NAMES[res] as String])
-	return ", ".join(parts)
+# ── Unit stats row ───────────────────────────────────────────────────────────
 
 ## True when a label extra is nothing but "500F 175W"-style cost tokens, which
 ## the cost strip and the plain-text tooltip line now cover.
@@ -1503,7 +1457,10 @@ func _is_cost_tokens(text: String) -> bool:
 	for p: String in parts:
 		if p.length() < 2:
 			return false
-		if p.substr(p.length() - 1) not in ["F", "W", "G", "S"]:
+		# English (Food/Wood/Gold/Stone) and Spanish (Comida/Madera/Oro/
+		# Piedra) label suffixes — the Spanish "50C" was leaking into
+		# tooltips next to the glyph cost row.
+		if p.substr(p.length() - 1) not in ["F", "W", "G", "S", "C", "M", "O", "P"]:
 			return false
 		if not p.substr(0, p.length() - 1).is_valid_int():
 			return false
