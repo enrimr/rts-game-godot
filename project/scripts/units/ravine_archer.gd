@@ -2,9 +2,6 @@ extends UnitBase
 
 class_name RavineArcher
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 var _stationary_timer: float = 0.0
 var _ambush_ready: bool = false
 var _ambush_used: bool = false
@@ -18,7 +15,6 @@ func get_selection_sound() -> String:
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 6.6, 10.0)

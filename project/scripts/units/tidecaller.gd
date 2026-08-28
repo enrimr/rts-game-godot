@@ -2,9 +2,6 @@ extends UnitBase
 
 class_name Tidecaller
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 
 const TIDAL_SPLASH_RADIUS: float = 65.0
 ## Splash deals a fraction of the primary hit, before armor
@@ -18,7 +15,6 @@ func _ready() -> void:
 	# TerrainManager does not block movement on water tiles.
 	civ_id = "atlantes"
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 6.6, 10.0)

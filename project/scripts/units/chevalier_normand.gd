@@ -2,9 +2,6 @@ extends UnitBase
 
 class_name ChevalierNormand
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 var _distance_moved: float = 0.0
 var _charge_ready: bool = false
 
@@ -13,7 +10,6 @@ const CHARGE_DAMAGE_MULTIPLIER: float = 2.5
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 # Stripe + shadow sized for the warhorse footprint.
 func _add_player_color_stripe() -> void:

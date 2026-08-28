@@ -20,7 +20,6 @@ var carried_resource: String = ""
 var carried_amount: float = 0.0
 var drop_off_target: Node = null
 var build_target: Node = null
-var attack_target: Node = null
 
 # When hunting an Animal, remember it so that on its death we can auto-gather
 # the meat (FOOD_HUNT node) it drops, AoE2-style. _hunt_pos is the last known
@@ -29,8 +28,6 @@ var _hunting: bool = false
 var _hunt_pos: Vector2 = Vector2.ZERO
 
 var _gather_timer: float = 0.0
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 var _farm_gathered: float = 0.0
 var _gather_blocked_retries: int = 0
 var _gathering_active: bool = false
@@ -60,7 +57,6 @@ const BOARD_APPROACH_RANGE: float = 60.0
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 	UnitDress.apply.call_deferred(self, player_id)
 	if is_instance_valid(_tool_poly):
 		_tool_base_pos = _tool_poly.position

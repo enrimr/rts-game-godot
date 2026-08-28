@@ -2,9 +2,6 @@ extends ShipBase
 
 class_name Trireme
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 var _gold_timer: float = 0.0
 
 const RAM_PUSH_DISTANCE: float = 40.0
@@ -15,7 +12,6 @@ const GOLD_TICK_INTERVAL: float = 30.0
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _on_velocity_computed(safe_vel: Vector2) -> void:
 	if current_state != UnitState.MOVING:

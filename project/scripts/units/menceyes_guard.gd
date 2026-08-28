@@ -2,9 +2,6 @@ extends UnitBase
 
 class_name MenceyesGuard
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 var _rage_timer: float = 0.0
 # Incoming rage bonus from a nearby MenceyesGuard — consumed each attack tick.
 var _rage_bonus: float = 0.0
@@ -18,7 +15,6 @@ const RAGE_DURATION: float = 3.0
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 6.6, 10.0)

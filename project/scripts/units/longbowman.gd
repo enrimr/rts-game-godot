@@ -4,9 +4,6 @@ class_name Longbowman
 
 const ARROW_SCENE: PackedScene = preload("res://scenes/combat/arrow.tscn")
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 var _cover_fire_pos: Vector2 = Vector2.ZERO
 var _cover_fire_pending: bool = false
 
@@ -18,7 +15,6 @@ func get_selection_sound() -> String:
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 6.6, 10.0)

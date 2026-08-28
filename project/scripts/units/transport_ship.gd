@@ -22,7 +22,6 @@ var _unloading: bool = false
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _on_velocity_computed(safe_vel: Vector2) -> void:
 	if current_state != UnitState.MOVING:

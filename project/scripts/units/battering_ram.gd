@@ -2,16 +2,12 @@ extends UnitBase
 
 class_name BatteringRam
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 
 func get_selection_sound() -> String:
 	return "select_siege"
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 19.8, 5.0)

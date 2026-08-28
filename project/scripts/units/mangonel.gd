@@ -8,13 +8,9 @@ const MIN_RANGE_RATIO: float = 0.35
 func get_selection_sound() -> String:
 	return "select_siege"
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 15.4, 5.0)

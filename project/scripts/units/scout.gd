@@ -5,19 +5,15 @@ class_name Scout
 const EXPLORE_DURATION: float = 60.0
 const EXPLORE_WAYPOINT_RADIUS: float = 400.0
 
-var attack_target: Node = null
 
 func get_selection_sound() -> String:
 	return "select_cavalry"
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 var _exploring: bool = false
 var _explore_timer: float = 0.0
 var _explore_waypoint_cooldown: float = 0.0
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 	UnitDress.apply.call_deferred(self, player_id)
 
 # Wider stripe under the horse's hooves so it reads as a mounted unit's banner

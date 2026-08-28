@@ -9,9 +9,6 @@ func get_selection_sound() -> String:
 # Trebuchet cannot fire when target is within this fraction of max range
 const MIN_RANGE_RATIO: float = 0.40
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 
 # Trebuchet must be "deployed" (unpacked) before it can fire.
 # While packed it moves freely; deploying/undeploying takes _deploy_time seconds.
@@ -27,7 +24,6 @@ const DEPLOY_TIME: float = 3.0
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 	_refresh_packed_label()
 
 func _add_player_color_stripe() -> void:

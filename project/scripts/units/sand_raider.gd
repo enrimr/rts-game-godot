@@ -2,9 +2,6 @@ extends UnitBase
 
 class_name SandRaider
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 var _retreating: bool = false
 var _retreat_destination: Vector2 = Vector2.ZERO
 
@@ -15,7 +12,6 @@ func get_selection_sound() -> String:
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 # Stripe + shadow sized for the horse footprint.
 func _add_player_color_stripe() -> void:

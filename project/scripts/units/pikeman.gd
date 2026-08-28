@@ -2,16 +2,12 @@ extends UnitBase
 
 class_name Pikeman
 
-var attack_target: Node = null
 
 func get_selection_sound() -> String:
 	return "select_infantry"
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 	UnitDress.apply.call_deferred(self, player_id)
 
 # Narrower stripe at the feet so the team colour doesn't cover the soldier body.

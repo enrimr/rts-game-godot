@@ -2,9 +2,6 @@ extends UnitBase
 
 class_name Conquistador
 
-var attack_target: Node = null
-var _attack_timer: float = 0.0
-var _destination_state: UnitState = UnitState.IDLE
 var _salvo_cooldown: float = 0.0
 var _salvo_active: bool = false
 var _salvo_shots_remaining: int = 0
@@ -20,7 +17,6 @@ func get_selection_sound() -> String:
 
 func _ready() -> void:
 	super._ready()
-	nav_agent.velocity_computed.connect(_on_velocity_computed)
 
 # Stripe + shadow sized for the warhorse footprint.
 func _add_player_color_stripe() -> void:

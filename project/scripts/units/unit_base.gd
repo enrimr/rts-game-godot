@@ -27,6 +27,13 @@ var is_female: bool = false:
 # during movement rather than ignoring them.
 var _attack_move_active: bool = false
 
+# ── Combat state machine (shared) ──────────────────────────────────────────
+# One canonical move/chase/strike machine for every combat unit. Leaf classes
+# customise through the hook methods below instead of copying the machine.
+var attack_target: Node = null
+var _attack_timer: float = 0.0
+var _destination_state: UnitState = UnitState.IDLE
+
 var _hit_tween: Tween = null
 var _hero_low_hp_fired: bool = false   # tracks if low-HP alert has been emitted this life
 var _anim_time: float = 0.0
@@ -66,6 +73,9 @@ func _ready() -> void:
 	if is_instance_valid(attack_range_area):
 		attack_range_area.monitoring = true
 		attack_range_area.body_entered.connect(_on_enemy_entered_range)
+	if is_instance_valid(nav_agent) \
+			and not nav_agent.velocity_computed.is_connected(_on_velocity_computed):
+		nav_agent.velocity_computed.connect(_on_velocity_computed)
 	if player_id == 0:
 		EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
 	EventBus.unit_upgrade_applied.connect(_on_unit_upgrade_applied)
@@ -373,9 +383,201 @@ func order_attack_move(destination: Vector2) -> void:
 		call("order_move", destination)
 	_attack_move_active = true
 
-# Override in subclasses to trigger attack logic.
+# Override in subclasses to trigger attack logic. The default (non-combat
+# units: villagers only via their own override, ships without weapons, etc.)
+# ignores the target so retaliation/guard signals don't send them to war.
 func _on_auto_attack_target(_target: Node) -> void:
 	_attack_move_active = false
+
+# ── Combat state machine ────────────────────────────────────────────────────
+# Canonical machine: order_* set the intent, _handle_movement travels (and
+# flips to ATTACKING when in position), _handle_attacking chases/strikes.
+# Units with their own machines (Villager, Trebuchet, transports) override the
+# top-level methods wholesale; everyone else overrides only the hooks.
+
+func _physics_process(delta: float) -> void:
+	match current_state:
+		UnitState.MOVING:
+			_handle_movement(delta)
+		UnitState.ATTACKING:
+			_handle_attacking(delta)
+	_combat_side_tick(delta)
+
+func order_move(destination: Vector2) -> void:
+	_attack_move_active = false
+	attack_target = null
+	_destination_state = UnitState.IDLE
+	_on_move_ordered()
+	_navigate_to(destination)
+	current_state = UnitState.MOVING
+
+func order_attack(target: Node) -> void:
+	if not _accepts_attack_order(target):
+		return
+	attack_target = target
+	_destination_state = UnitState.ATTACKING
+	_on_attack_ordered()
+	_move_destination = _nav_target_for(target)
+	nav_agent.target_position = _safe_destination(_move_destination)
+	current_state = UnitState.MOVING
+
+func _handle_movement(delta: float) -> void:
+	_on_movement_tick(delta)
+	if _handle_movement_override(delta):
+		return
+	if _destination_state == UnitState.ATTACKING and is_instance_valid(attack_target):
+		var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
+		if _in_attack_position(dist, _attack_reach_to(attack_target)):
+			current_state = UnitState.ATTACKING
+			_destination_state = UnitState.IDLE
+			nav_agent.set_velocity(Vector2.ZERO)
+			return
+	if nav_agent.is_navigation_finished():
+		_on_destination_reached()
+		current_state = _destination_state
+		_destination_state = UnitState.IDLE
+		nav_agent.set_velocity(Vector2.ZERO)
+		return
+	if _advance_stuck(delta):
+		_on_movement_stuck()
+		_unstick()
+		return
+	nav_agent.set_velocity(_nav_velocity())
+
+# ATTACKING is included on purpose: chase and kite steps issue set_velocity
+# while in that state, and gating on MOVING alone silently dropped them —
+# units froze the moment a target stepped out of reach.
+func _on_velocity_computed(safe_velocity: Vector2) -> void:
+	if current_state != UnitState.MOVING and current_state != UnitState.ATTACKING:
+		return
+	velocity = safe_velocity
+	move_and_slide()
+
+func _handle_attacking(delta: float) -> void:
+	if not is_instance_valid(attack_target):
+		attack_target = null
+		current_state = UnitState.IDLE
+		_on_target_lost()
+		return
+	if _attack_paused():
+		nav_agent.set_velocity(Vector2.ZERO)
+		return
+	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
+	var reach: float = _attack_reach_to(attack_target)
+	if _combat_reposition(dist, reach):
+		return
+	if dist > reach:
+		nav_agent.target_position = _safe_destination(_nav_target_for(attack_target))
+		if _advance_stuck(delta):
+			_unstick()
+			return
+		nav_agent.set_velocity(_nav_velocity())
+		return
+	nav_agent.set_velocity(Vector2.ZERO)
+	_attack_timer += delta
+	if _attack_timer >= _attack_interval():
+		_attack_timer = 0.0
+		_execute_strike(attack_target)
+
+func _attack_interval() -> float:
+	var speed: float = unit_data.attack_speed \
+		* CivBonusManager.get_attack_speed_multiplier(player_id, unit_data.id)
+	return 1.0 / maxf(speed, 0.01)
+
+# Direct-hit strike. Melee floor is 1 damage (genre convention; ships already
+# did this) so over-armoured targets chip instead of healing from negatives.
+func _execute_strike(target: Node) -> void:
+	if target.has_method("take_damage"):
+		target.take_damage(maxf(_strike_damage(target), 1.0), self)
+		var snd: String = _strike_sound()
+		if not snd.is_empty():
+			AudioManager.play_if_visible(snd, global_position, _strike_sound_db())
+		EventBus.unit_attacked.emit(self, target)
+	_after_strike(target)
+
+func _strike_damage(target: Node) -> float:
+	return _get_effective_attack_vs(target) - _get_target_armor(target)
+
+## Re-acquire something in range after the current target dies. Taunts win.
+func _scan_area_for_target() -> void:
+	if is_taunted and is_instance_valid(taunt_source):
+		order_attack(taunt_source)
+		return
+	if not is_instance_valid(attack_range_area):
+		return
+	for body: Node in attack_range_area.get_overlapping_bodies():
+		var pid: Variant = body.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		if body.get("unit_data") == null and not (body is Animal):
+			continue
+		if body.get("is_cloaked") == true:
+			continue
+		_on_auto_attack_target(body)
+		return
+
+# ── Combat machine hooks (override points for leaf classes) ────────────────
+
+## Gate for player/auto attack orders (e.g. taunted units refuse other targets).
+func _accepts_attack_order(_target: Node) -> bool:
+	return true
+
+## order_move housekeeping (clear pending cover fire, retreats, charges...).
+func _on_move_ordered() -> void:
+	pass
+
+## order_attack housekeeping.
+func _on_attack_ordered() -> void:
+	pass
+
+## Every MOVING frame, before any transition (e.g. charge distance tracking).
+func _on_movement_tick(_delta: float) -> void:
+	pass
+
+## Full-frame movement takeover; return true when handled (e.g. hit&run retreat).
+func _handle_movement_override(_delta: float) -> bool:
+	return false
+
+## Whether the unit may open fire from here (siege overrides add minimum range).
+func _in_attack_position(dist: float, reach: float) -> bool:
+	return dist <= reach
+
+## Ran when a plain move order arrives at its destination (cover fire release).
+func _on_destination_reached() -> void:
+	pass
+
+## Ran when movement is stuck, just before _unstick's recovery.
+func _on_movement_stuck() -> void:
+	pass
+
+## Target died or vanished. Default re-scans the range area for a new one.
+func _on_target_lost() -> void:
+	_scan_area_for_target()
+
+## While true the unit holds position and does not tick its attack timer.
+func _attack_paused() -> bool:
+	return false
+
+## In-combat repositioning (kiting, minimum range). Return true when the unit
+## moved this frame instead of attacking.
+func _combat_reposition(_dist: float, _reach: float) -> bool:
+	return false
+
+## Per-physics-frame side effects independent of state (auras, salvos, trickles).
+func _combat_side_tick(_delta: float) -> void:
+	pass
+
+## Impact sound for the default melee-style strike; empty string mutes it
+## (projectile units handle audio on impact instead).
+func _strike_sound() -> String:
+	return "hit_melee"
+
+func _strike_sound_db() -> float:
+	return -4.0
+
+## After a successful strike (splash damage, retreat trigger, charge reset...).
+func _after_strike(_target: Node) -> void:
+	pass
 
 # Armour the target reduces from THIS unit's attack. The attacker's
 # unit_data.damage_type selects which armour value applies: PIERCE attacks
@@ -541,9 +743,8 @@ func _unstick() -> void:
 	nav_agent.target_position = _safe_destination(
 		dest + Vector2(randf_range(-jitter, jitter), randf_range(-jitter, jitter)))
 
-# Give up the current move/chase and return to idle. Clears the various targets
-# generically (set() no-ops on subclasses that lack a given property) so an
-# abandoned unit is not immediately re-engaged by _handle_attacking next frame.
+# Give up the current move/chase and return to idle. Clears the combat targets
+# so an abandoned unit is not immediately re-engaged by _handle_attacking.
 func _abandon_movement() -> void:
 	_show_path_failure()
 	if is_instance_valid(nav_agent):
@@ -553,8 +754,6 @@ func _abandon_movement() -> void:
 		# failure fade ends (the stale path survived in the NavigationAgent).
 		nav_agent.target_position = global_position
 	_attack_move_active = false
-	if "attack_target" in self:
-		set("attack_target", null)
-	if "_destination_state" in self:
-		set("_destination_state", UnitState.IDLE)
+	attack_target = null
+	_destination_state = UnitState.IDLE
 	current_state = UnitState.IDLE
