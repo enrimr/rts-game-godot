@@ -19,8 +19,10 @@ const BUILD_RANGE: float = 56.0
 const GATHER_RATE: float = 0.8   # food/sec
 const CARRY_CAPACITY: float = 15.0
 
-func _ready() -> void:
-	super._ready()
+# UnitBase exposes order_attack on every unit; declaring the boat non-combat
+# makes it refuse attack orders and keeps it off the attack cursor.
+func is_combat_unit() -> bool:
+	return false
 
 func _on_velocity_computed(safe_vel: Vector2) -> void:
 	if current_state == UnitState.IDLE or current_state == UnitState.DEAD:

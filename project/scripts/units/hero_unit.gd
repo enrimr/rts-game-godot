@@ -199,8 +199,7 @@ func _build_hero_ring() -> void:
 	_hero_ring = VisualFx.add_ground_ring(self, "HeroRing",
 		HERO_RING_RX, HERO_RING_RX * 0.5, HERO_RING_COLOR, 1.8, HERO_FOOT_Y, -1)
 
-func _physics_process(delta: float) -> void:
-	super._physics_process(delta)
+func _combat_side_tick(delta: float) -> void:
 	if _cooldown_remaining > 0.0:
 		_cooldown_remaining -= delta
 		if _cooldown_remaining <= 0.0:
@@ -210,6 +209,10 @@ func _physics_process(delta: float) -> void:
 		_ability_timer -= delta
 		if _ability_timer <= 0.0:
 			_end_ability()
+	# The Rocinante stumble only counts down mid-combat, matching the original
+	# machine which decremented it inside _handle_attacking.
+	if current_state == UnitState.ATTACKING and _quijote_post_attack_penalty > 0.0:
+		_quijote_post_attack_penalty -= delta
 
 # Called by game_world when player right-clicks the hero or presses the ability key
 func use_ability() -> bool:
@@ -339,38 +342,16 @@ func _end_ability() -> void:
 		Ability.CALL_TO_ARMS:
 			_cleanup_summoned_militia()
 
-func _handle_attacking(delta: float) -> void:
-	if _quijote_attack_delay <= 0.0:
-		super._handle_attacking(delta)
-		return
-	# Rocinante passive: after each hit, _quijote_post_attack_penalty counts down
-	# before the attack timer resumes, making consecutive swings slower.
-	if _quijote_post_attack_penalty > 0.0:
-		_quijote_post_attack_penalty -= delta
-		return
-	if not is_instance_valid(attack_target):
-		attack_target = null
-		current_state = UnitState.IDLE
-		_scan_area_for_target()
-		return
-	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
-	var attack_reach: float = _attack_reach_to(attack_target)
-	if dist > attack_reach:
-		nav_agent.target_position = _nav_target_for(attack_target)
-		if _advance_stuck(delta):
-			_unstick()
-			return
-		nav_agent.set_velocity(_nav_velocity())
-		return
-	nav_agent.set_velocity(Vector2.ZERO)
-	_attack_timer += delta
-	if _attack_timer >= 1.0 / unit_data.attack_speed:
-		_attack_timer = 0.0
+# ── Combat machine hooks ──
+
+## Rocinante passive: after each hit the hero holds position while
+## _quijote_post_attack_penalty counts down, making consecutive swings slower.
+func _attack_paused() -> bool:
+	return _quijote_post_attack_penalty > 0.0
+
+func _after_strike(_target: Node) -> void:
+	if _quijote_attack_delay > 0.0:
 		_quijote_post_attack_penalty = _quijote_attack_delay
-		if attack_target.has_method("take_damage"):
-			attack_target.take_damage(_get_effective_attack_vs(attack_target) - _get_target_armor(attack_target), self)
-			AudioManager.play_if_visible("hit_melee", global_position, -4.0)
-			EventBus.unit_attacked.emit(self, attack_target)
 
 # --- Ability implementations ---
 

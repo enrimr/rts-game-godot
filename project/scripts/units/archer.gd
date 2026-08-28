@@ -74,6 +74,7 @@ func _combat_reposition(dist: float, reach: float) -> bool:
 # The arrow deals the damage and emits unit_attacked on impact.
 func _execute_strike(target: Node) -> void:
 	_launch_arrow(target)
+	_after_strike(target)
 
 func _launch_arrow(target: Node) -> void:
 	var arrow: Arrow = ARROW_SCENE.instantiate() as Arrow

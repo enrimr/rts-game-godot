@@ -20,8 +20,10 @@ var _garrison: Array[Node] = []   # stored land units (hidden, process disabled)
 var _unload_target: Vector2 = Vector2.ZERO
 var _unloading: bool = false
 
-func _ready() -> void:
-	super._ready()
+# UnitBase exposes order_attack on every unit; declaring the ship non-combat
+# makes it refuse attack orders and keeps it off the attack cursor.
+func is_combat_unit() -> bool:
+	return false
 
 func _on_velocity_computed(safe_vel: Vector2) -> void:
 	if current_state != UnitState.MOVING:

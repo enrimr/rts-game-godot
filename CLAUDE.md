@@ -63,7 +63,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/audio_manager.gd` | Spatial audio playback, distance attenuation |
 | `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
 | **Unit Classes** ||
-| `project/scripts/units/unit_base.gd` | Base class for all units; Area2D range detection, attack-move, stuck detection, body animation |
+| `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation |
 | `project/scripts/units/villager.gd` | Gathering and building logic, work/walk animation differentiation |
 | `project/scripts/units/hero_unit.gd` | Hero units with 8 unique abilities (extends Militia) |
 | `project/scripts/units/militia.gd` | Dark Age infantry |

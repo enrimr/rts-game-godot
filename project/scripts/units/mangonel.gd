@@ -8,29 +8,11 @@ const MIN_RANGE_RATIO: float = 0.35
 func get_selection_sound() -> String:
 	return "select_siege"
 
-
-func _ready() -> void:
-	super._ready()
-
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 15.4, 5.0)
 
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
-
-func _physics_process(delta: float) -> void:
-	match current_state:
-		UnitState.MOVING:
-			_handle_movement(delta)
-		UnitState.ATTACKING:
-			_handle_attacking(delta)
-
-func order_move(destination: Vector2) -> void:
-	_attack_move_active = false
-	attack_target = null
-	_destination_state = UnitState.IDLE
-	_navigate_to(destination)
-	current_state = UnitState.MOVING
 
 func order_attack_ground(world_pos: Vector2) -> void:
 	attack_target = null
@@ -39,68 +21,27 @@ func order_attack_ground(world_pos: Vector2) -> void:
 	nav_agent.set_velocity(Vector2.ZERO)
 	_fire_at(world_pos)
 
-func order_attack(target: Node) -> void:
-	attack_target = target
-	_destination_state = UnitState.ATTACKING
-	_move_destination = _nav_target_for(target)
-	nav_agent.target_position = _move_destination
-	current_state = UnitState.MOVING
+# ── Combat machine hooks ──
 
-func _handle_movement(delta: float) -> void:
-	if _destination_state == UnitState.ATTACKING and is_instance_valid(attack_target):
-		var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
-		var reach: float = _attack_reach_to(attack_target)
-		if dist <= reach and dist >= reach * MIN_RANGE_RATIO:
-			current_state = UnitState.ATTACKING
-			_destination_state = UnitState.IDLE
-			nav_agent.set_velocity(Vector2.ZERO)
-			return
-	if nav_agent.is_navigation_finished():
-		current_state = _destination_state
-		_destination_state = UnitState.IDLE
-		nav_agent.set_velocity(Vector2.ZERO)
-		return
-	if _advance_stuck(delta):
-		_unstick()
-		return
+# The approach only stops inside the firing band: past minimum range but
+# within reach, so the mangonel never parks on top of its target.
+func _in_attack_position(dist: float, reach: float) -> bool:
+	return dist <= reach and dist >= reach * MIN_RANGE_RATIO
+
+# Move away if target is too close (minimum range)
+func _combat_reposition(dist: float, reach: float) -> bool:
+	if dist >= reach * MIN_RANGE_RATIO:
+		return false
+	var away: Vector2 = global_position \
+		+ (global_position - (attack_target as Node2D).global_position).normalized() * 120.0
+	nav_agent.target_position = _safe_destination(away)
 	nav_agent.set_velocity(_nav_velocity())
+	return true
 
-func _on_velocity_computed(safe_velocity: Vector2) -> void:
-	if current_state != UnitState.MOVING:
-		return
-	velocity = safe_velocity
-	move_and_slide()
-
-func _handle_attacking(delta: float) -> void:
-	if not is_instance_valid(attack_target):
-		attack_target = null
-		current_state = UnitState.IDLE
-		return
-
-	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
-	var reach: float = _attack_reach_to(attack_target)
-	var min_range: float = reach * MIN_RANGE_RATIO
-
-	# Move away if target is too close (minimum range)
-	if dist < min_range:
-		var away: Vector2 = global_position + (global_position - (attack_target as Node2D).global_position).normalized() * 120.0
-		nav_agent.target_position = away
-		nav_agent.set_velocity(_nav_velocity())
-		return
-
-	if dist > reach:
-		nav_agent.target_position = _nav_target_for(attack_target)
-		if _advance_stuck(delta):
-			_unstick()
-			return
-		nav_agent.set_velocity(_nav_velocity())
-		return
-
-	nav_agent.set_velocity(Vector2.ZERO)
-	_attack_timer += delta
-	if _attack_timer >= 1.0 / unit_data.attack_speed:
-		_attack_timer = 0.0
-		_fire_at((attack_target as Node2D).global_position)
+# _fire_at deals the splash damage, emits unit_attacked and plays the impact
+# sound itself — no extra strike sound here.
+func _execute_strike(target: Node) -> void:
+	_fire_at((target as Node2D).global_position)
 
 func _fire_at(target_pos: Vector2) -> void:
 	# Drift impact point with wind/storm conditions

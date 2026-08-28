@@ -518,9 +518,14 @@ func _scan_area_for_target() -> void:
 
 # ── Combat machine hooks (override points for leaf classes) ────────────────
 
+## Whether this unit can fight. Drives the attack cursor / military filters in
+## game_world and the default attack-order gate below.
+func is_combat_unit() -> bool:
+	return true
+
 ## Gate for player/auto attack orders (e.g. taunted units refuse other targets).
 func _accepts_attack_order(_target: Node) -> bool:
-	return true
+	return is_combat_unit()
 
 ## order_move housekeeping (clear pending cover fire, retreats, charges...).
 func _on_move_ordered() -> void:

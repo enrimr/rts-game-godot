@@ -155,7 +155,7 @@ func _handle_attacking(delta: float) -> void:
 
 	nav_agent.set_velocity(Vector2.ZERO)
 	_attack_timer += delta
-	if _attack_timer >= 1.0 / unit_data.attack_speed:
+	if _attack_timer >= _attack_interval():
 		_attack_timer = 0.0
 		_fire_at((attack_target as Node2D).global_position)
 

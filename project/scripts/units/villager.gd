@@ -482,10 +482,10 @@ func _handle_attacking(delta: float) -> void:
 
 	nav_agent.set_velocity(Vector2.ZERO)
 	_attack_timer += delta
-	if _attack_timer >= 1.0 / unit_data.attack_speed:
+	if _attack_timer >= _attack_interval():
 		_attack_timer = 0.0
 		if attack_target.has_method("take_damage"):
-			attack_target.take_damage(_get_effective_attack_vs(attack_target) - _get_target_armor(attack_target), self)
+			attack_target.take_damage(maxf(_strike_damage(attack_target), 1.0), self)
 			AudioManager.play_if_visible("hit_melee", global_position, -4.0)
 			EventBus.unit_attacked.emit(self, attack_target)
 

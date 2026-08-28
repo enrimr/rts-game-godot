@@ -759,7 +759,7 @@ func _resolve_cursor_context() -> String:
 			continue
 		if unit is Villager:
 			has_villagers = true
-		elif unit.has_method("order_attack"):
+		elif unit.has_method("is_combat_unit") and unit.is_combat_unit():
 			has_military = true
 		if not (unit is ShipBase):
 			has_land_units = true
