@@ -2,6 +2,17 @@ extends Node
 
 var _population: Dictionary = {}   # player_id -> {current, cap}
 
+func _ready() -> void:
+	EventBus.unit_died.connect(_on_unit_died)
+
+## Deaths must refund population or every player slowly chokes on ghost pop
+## (nothing called remove_unit before). Heroes are pop-free on every spawn
+## path — initial spawn and TC respawn — so their deaths must not refund.
+func _on_unit_died(unit: Node, player_id: int) -> void:
+	if unit is HeroUnit:
+		return
+	remove_unit(player_id)
+
 func init_player(player_id: int) -> void:
 	_population[player_id] = {"current": 0, "cap": 15}
 

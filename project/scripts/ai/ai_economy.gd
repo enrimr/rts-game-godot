@@ -19,7 +19,7 @@ func manage_villagers() -> void:
 		for vil: Villager in _own_villagers():
 			if not is_instance_valid(vil.gather_target) or not (vil.gather_target is ResourceNode):
 				continue
-			var rt: ResourceNode.ResourceType = (vil.gather_target as ResourceNode).resource_type
+			var rt: ResourceNode.ResourceType = _food_bucket((vil.gather_target as ResourceNode).resource_type)
 			counts[rt] = (counts.get(rt, 0) as int) + 1
 			assigned_total += 1
 		for v: Villager in _own_villagers():
@@ -29,20 +29,28 @@ func manage_villagers() -> void:
 		return
 	var vcount: int = _count_of_type_villager()
 	var target: int = GameSettings.get_ai_villager_target()
-	if vcount < target and not PopulationManager.at_cap(_ai.player_id):
+	if vcount < target and not PopulationManager.at_cap(_ai.player_id) \
+			and not _ai.is_saving_for_age_up():
 		spawn_villager()
 	var counts: Dictionary = {}
 	var assigned_total: int = 0
 	for vil: Villager in _own_villagers():
 		if not is_instance_valid(vil.gather_target) or not (vil.gather_target is ResourceNode):
 			continue
-		var rt: ResourceNode.ResourceType = (vil.gather_target as ResourceNode).resource_type
+		var rt: ResourceNode.ResourceType = _food_bucket((vil.gather_target as ResourceNode).resource_type)
 		var n: int = counts.get(rt, 0) as int
 		counts[rt] = n + 1
 		assigned_total += 1
 	for v: Villager in _own_villagers():
 		if v.current_state == UnitBase.UnitState.IDLE:
 			_assign_villager(v, counts, assigned_total)
+
+## All food sources fill the same allocation bucket (keyed on FOOD_HUNT), so
+## berry/fish gatherers count against the food target instead of leaking out.
+func _food_bucket(rtype: ResourceNode.ResourceType) -> ResourceNode.ResourceType:
+	if rtype == ResourceNode.ResourceType.FOOD_BERRY or rtype == ResourceNode.ResourceType.FOOD_FISH:
+		return ResourceNode.ResourceType.FOOD_HUNT
+	return rtype
 
 func manage_age_advance() -> void:
 	if AgeManager.is_advancing(_ai.player_id):
@@ -165,6 +173,11 @@ func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> v
 		if want <= 0.0:
 			continue
 		var node: ResourceNode = find_nearest_resource(rtype, v.global_position)
+		# The food bucket is keyed on hunt, but game maps run out of huntables
+		# long before the food need does — fall back to berry patches so the AI
+		# does not starve into an eternal Dark Age once the fauna is gone.
+		if node == null and rtype == ResourceNode.ResourceType.FOOD_HUNT:
+			node = find_nearest_resource(ResourceNode.ResourceType.FOOD_BERRY, v.global_position)
 		if node == null:
 			continue
 		var current_frac: float = float(counts.get(rtype, 0) as int) / total

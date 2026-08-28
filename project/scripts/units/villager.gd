@@ -761,6 +761,10 @@ func _play_animation(anim_name: String) -> void:
 		animated_sprite.play(anim_name)
 
 func die() -> void:
+	# Same re-entry guard as UnitBase: the corpse lingers 1 s and further hits
+	# must not re-emit unit_died.
+	if current_state == UnitState.DEAD:
+		return
 	_stop_gathering_active()
 	_cancel_transport()
 	_unregister_from_build_target()

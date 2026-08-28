@@ -126,11 +126,17 @@ func _run_tick() -> void:
 	_construction.manage_military_buildings()
 	_construction.manage_advanced_buildings()
 	_military.manage_research()
-	_military.manage_military()
-	_military.manage_unique_barracks_unit()
-	_military.manage_stable_training()
-	_military.manage_siege_training()
+	# Age-up spends BEFORE training: with the reverse order the tick that
+	# finally banked the cost would immediately leak it into a unit queue and
+	# the AI livelocked a few food short of the next age forever.
 	_economy.manage_age_advance()
+	# While banking the age-up cost, training would eat the food faster than
+	# villagers deliver it and the AI would stay in the Dark Age forever.
+	if not is_saving_for_age_up():
+		_military.manage_military()
+		_military.manage_unique_barracks_unit()
+		_military.manage_stable_training()
+		_military.manage_siege_training()
 	if _is_naval_map():
 		_naval.manage_naval()
 		_naval.manage_naval_patrol()
@@ -247,3 +253,24 @@ func _check_elimination() -> void:
 
 func _is_naval_map() -> bool:
 	return MatchConfig.map_type == MatchConfig.MapType.ISLANDS
+
+var _banking_for_age: bool = false
+
+## True while the AI should bank resources for the next age instead of
+## spending them on training. Arms once the military minimum that
+## manage_age_advance requires is met; sticky (hysteresis) so raid losses
+## don't flip it off every time one soldier dies — only an army collapse
+## to half the minimum abandons the fund.
+func is_saving_for_age_up() -> bool:
+	if AgeManager.is_advancing(player_id) \
+			or AgeManager.get_age(player_id) >= GameManager.Age.IMPERIAL:
+		_banking_for_age = false
+		return false
+	var military: int = _military.count_military()
+	var min_mil: int = GameSettings.get_ai_age_advance_min_military()
+	if _banking_for_age:
+		if military < maxi(1, int(ceil(min_mil / 2.0))):
+			_banking_for_age = false
+	elif military >= min_mil:
+		_banking_for_age = true
+	return _banking_for_age

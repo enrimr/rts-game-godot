@@ -304,6 +304,11 @@ func take_damage(amount: float, source: Node = null) -> void:
 				_on_auto_attack_target(source)
 
 func die() -> void:
+	# Re-entry guard: a dying unit can absorb further hits before queue_free
+	# lands, and a second die() would double-emit unit_died (double population
+	# refund, duplicate kill triggers).
+	if current_state == UnitState.DEAD:
+		return
 	current_state = UnitState.DEAD
 	if player_id == 0:
 		AudioManager.play("unit_die", -6.0)

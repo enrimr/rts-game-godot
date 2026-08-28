@@ -113,4 +113,3 @@ mouse_filter = 2
 
 [node name="DropOff" type="Node2D" parent="."]
 script = ExtResource("2_dropoff")
-player_id = 1
