@@ -27,18 +27,6 @@ var _fog: FogOfWar = null
 
 var _selected_units: Array[Node] = []
 var _selected_building: Node = null
-var _selected_node: Node = null
-var _drag_start: Vector2 = Vector2.ZERO
-# Screen-space anchor of the drag: the band the player draws is a plain 2D
-# rectangle on the screen; world membership is tested by projecting units
-# into screen space (never by an axis-aligned world rect, which the iso
-# camera would render as a parallelogram).
-var _drag_start_screen: Vector2 = Vector2.ZERO
-var _dragging: bool = false
-var _last_click_time: float = -1.0
-var _last_click_unit_script: Script = null
-const DOUBLE_CLICK_SEC: float  = 0.35
-const DOUBLE_CLICK_RADIUS: float = 600.0
 
 # Pending action waiting for a map click ("move_to" or "attack_move")
 var _pending_action: String = ""
@@ -51,9 +39,7 @@ var _victory: WorldVictory = null
 var _camera_ctl: WorldCamera = null
 var _placement: WorldPlacement = null
 var _setup: WorldSetup = null
-
-# Drag-select rectangle overlay
-var _drag_overlay: Node2D = null
+var _selection: WorldSelection = null
 
 func _ready() -> void:
 	add_to_group("world")
@@ -65,6 +51,8 @@ func _ready() -> void:
 	_placement.setup(self)
 	_setup = WorldSetup.new()
 	_setup.setup(self)
+	_selection = WorldSelection.new()
+	_selection.setup(self)
 	# Isometric projection lives entirely in the camera; the scene's zoom.x is
 	# kept as the starting user zoom. Game logic below stays cartesian.
 	IsoProjection.apply_to_camera(camera, IsoProjection.user_zoom_from(camera.zoom))
@@ -172,9 +160,7 @@ func _ready() -> void:
 		minimap.camera_node = camera
 		minimap.fog = _fog
 
-	_drag_overlay = _DragOverlay.new()
-	_drag_overlay.z_index = IsoBillboard.Z_DRAG_SELECT
-	add_child(_drag_overlay)
+	_selection.create_drag_overlay()
 
 	var weather_overlay: Node2D = load("res://scripts/ui/weather_overlay.gd").new() as Node2D
 	weather_overlay.name = "WeatherOverlay"
@@ -233,13 +219,7 @@ func _process(delta: float) -> void:
 	_camera_ctl.handle_camera(delta)
 	_camera_ctl.handle_follow()
 	_placement.update_previews()
-	if is_instance_valid(_drag_overlay):
-		var overlay: _DragOverlay = _drag_overlay as _DragOverlay
-		overlay.active = _dragging
-		if _dragging:
-			overlay.drag_rect = Rect2(_drag_start_screen, Vector2.ZERO) \
-				.expand(get_viewport().get_mouse_position())
-		overlay.queue_redraw()
+	_selection.update_drag_overlay()
 	_cursor_timer += delta
 	if _cursor_timer >= CURSOR_UPDATE_INTERVAL:
 		_cursor_timer = 0.0
@@ -300,18 +280,6 @@ func _resolve_cursor_context() -> String:
 	return CursorManager.resolve_context(has_villagers, has_military,
 		has_land_units, target_kind, target_resource)
 
-class _DragOverlay extends Node2D:
-	var drag_rect: Rect2 = Rect2()   # screen-space (viewport) coordinates
-	var active: bool = false
-	func _draw() -> void:
-		if not active:
-			return
-		# Cancel the iso camera transform so the band is a plain screen-space
-		# rectangle, like any classic RTS (same trick as weather_overlay).
-		draw_set_transform_matrix(get_canvas_transform().affine_inverse())
-		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.18), true)
-		draw_rect(drag_rect, Color(0.3, 0.85, 0.3, 0.75), false, 1.5)
-
 class _FlashMarker extends Node2D:
 	var flash_color: Color = Color.WHITE
 	var flash_t: float = 0.0:
@@ -339,10 +307,7 @@ func _on_unit_selected_follow(units: Array) -> void:
 	_camera_ctl._on_unit_selected_follow(units)
 
 func _on_selection_manager_changed(units: Array) -> void:
-	_selected_units.clear()
-	for u: Node in units:
-		if is_instance_valid(u):
-			_selected_units.append(u)
+	_selection._on_selection_manager_changed(units)
 
 func _on_building_destroyed_alert(building: Node, owner_id: int) -> void:
 	_camera_ctl._on_building_destroyed_alert(building, owner_id)
@@ -383,13 +348,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_camera_ctl.zoom(-WorldCamera.CAMERA_ZOOM_STEP)
 				get_viewport().set_input_as_handled()
 				return
-			var group_id: int = ke.physical_keycode - KEY_0
-			if group_id >= 1 and group_id <= 9:
-				# Ctrl (or Cmd on macOS) + digit assigns; plain digit recalls.
-				if ke.ctrl_pressed or ke.meta_pressed:
-					SelectionManager.save_group(group_id)
-				else:
-					SelectionManager.recall_group(group_id)
+			if _selection.handle_group_hotkey(ke):
 				get_viewport().set_input_as_handled()
 				return
 			if ke.physical_keycode == KEY_SPACE:
@@ -436,14 +395,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 		if mb.button_index == MOUSE_BUTTON_LEFT:
-			if mb.pressed:
-				_drag_start = get_global_mouse_position()
-				_drag_start_screen = get_viewport().get_mouse_position()
-				_dragging = true
-			else:
-				if _dragging:
-					_dragging = false
-					_finish_selection()
+			_selection.handle_left_mouse(mb.pressed)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_handle_right_click(get_global_mouse_position())
 
@@ -453,143 +405,11 @@ func get_zoom() -> float:
 func set_zoom(value: float) -> void:
 	_camera_ctl.set_zoom(value)
 
-# --- Selection ---
+# --- Selection (implementation in WorldSelection) ---
 
+# Kept on GameWorld: _building_click_hit and the click radii are shared by
+# selection and the right-click/cursor pickers (moving to WorldCommands next).
 const BUILDING_CLICK_RADIUS: float = 40.0
-
-func _finish_selection() -> void:
-	# The band lives in screen space; a small screen area is a click regardless
-	# of the current zoom (a world-space area threshold was zoom-dependent).
-	var screen_rect: Rect2 = Rect2(_drag_start_screen, Vector2.ZERO) \
-		.expand(get_viewport().get_mouse_position())
-	var is_click: bool = screen_rect.get_area() < 25.0
-
-	for sel: Node in _selected_units:
-		if is_instance_valid(sel):
-			sel.set_selected(false)
-	_selected_units.clear()
-	if is_instance_valid(_selected_building) and _selected_building.has_method("set_selected"):
-		_selected_building.set_selected(false)
-	_selected_building = null
-	if is_instance_valid(_selected_node) and _selected_node.has_method("set_selected"):
-		_selected_node.set_selected(false)
-	_selected_node = null
-
-	if is_click:
-		# Click: select only the single nearest friendly unit within radius
-		var best_unit: Node = null
-		var best_dist: float = UNIT_CLICK_RADIUS
-		for unit: Node in units_layer.get_children():
-			if not is_instance_valid(unit):
-				continue
-			var unit2d: Node2D = unit as Node2D
-			var d: float = _drag_start.distance_to(unit2d.global_position)
-			if d >= best_dist:
-				continue
-			if unit is Animal:
-				var animal: Animal = unit as Animal
-				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
-					best_dist = d
-					best_unit = unit
-				continue
-			var pid: Variant = unit.get("player_id")
-			if pid == null or (pid as int) != 0:
-				continue
-			best_dist = d
-			best_unit = unit
-		if best_unit != null:
-			var now: float = Time.get_ticks_msec() / 1000.0
-			var unit_script: Script = best_unit.get_script() as Script
-			var is_double: bool = (now - _last_click_time) <= DOUBLE_CLICK_SEC \
-				and unit_script == _last_click_unit_script
-			_last_click_time = now
-			_last_click_unit_script = unit_script
-
-			if is_double:
-				# Select all friendly units of the same type within DOUBLE_CLICK_RADIUS
-				for unit: Node in units_layer.get_children():
-					if not is_instance_valid(unit):
-						continue
-					var pid: Variant = unit.get("player_id")
-					if pid == null or (pid as int) != 0:
-						continue
-					if unit.get_script() != unit_script:
-						continue
-					if (unit as Node2D).global_position.distance_to(
-							(best_unit as Node2D).global_position) > DOUBLE_CLICK_RADIUS:
-						continue
-					unit.set_selected(true)
-					if not _selected_units.has(unit):
-						_selected_units.append(unit)
-			else:
-				best_unit.set_selected(true)
-				_selected_units.append(best_unit)
-
-			AudioManager.play("ui_select")
-			SelectionManager.select(_selected_units)
-			return
-		# Check Town Center first
-		if is_instance_valid(drop_off) and _building_click_hit(drop_off as Node2D, _drag_start):
-			_selected_building = drop_off
-			EventBus.building_selected.emit(drop_off)
-			return
-		for building: Node in buildings_layer.get_children():
-			if not is_instance_valid(building):
-				continue
-			var b2d: Node2D = building as Node2D
-			if _building_click_hit(b2d, _drag_start):
-				_selected_building = building
-				EventBus.building_selected.emit(building)
-				return
-		for child: Node in get_children():
-			if not (child is ResourceNode):
-				continue
-			var rn: ResourceNode = child as ResourceNode
-			if _drag_start.distance_to(rn.global_position) < UNIT_CLICK_RADIUS:
-				rn.set_selected(true)
-				_selected_node = rn
-				EventBus.resource_node_selected.emit(rn)
-				return
-		# Enemy unit / wild animal / enemy building — inspect only (no command)
-		var enemy_unit: Node = _find_enemy_unit_at(_drag_start)
-		if enemy_unit != null:
-			enemy_unit.set_selected(true)
-			_selected_node = enemy_unit
-			return
-		var wild_animal: Animal = _find_animal_at(_drag_start)
-		if wild_animal != null and (wild_animal.current_state != Animal.AnimalState.OWNED or wild_animal.player_id != 0):
-			wild_animal.set_selected(true)
-			_selected_node = wild_animal
-			return
-		var enemy_building: Node = _find_enemy_building_at(_drag_start)
-		if enemy_building != null:
-			enemy_building.set_selected(true)
-			_selected_node = enemy_building
-			return
-	else:
-		# Drag: select all friendly units and owned animals whose projected
-		# screen position falls inside the screen-space band.
-		var to_screen: Transform2D = get_viewport().get_canvas_transform()
-		for unit: Node in units_layer.get_children():
-			if not is_instance_valid(unit):
-				continue
-			if unit is Animal:
-				var animal: Animal = unit as Animal
-				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
-					if screen_rect.has_point(to_screen * (unit as Node2D).global_position):
-						animal.set_selected(true)
-						_selected_units.append(animal)
-				continue
-			var pid: Variant = unit.get("player_id")
-			if pid == null or (pid as int) != 0:
-				continue
-			if screen_rect.has_point(to_screen * (unit as Node2D).global_position):
-				unit.set_selected(true)
-				_selected_units.append(unit)
-
-	if not _selected_units.is_empty():
-		AudioManager.play("ui_select")
-	SelectionManager.select(_selected_units)
 
 # --- Right-click: gather or move ---
 
