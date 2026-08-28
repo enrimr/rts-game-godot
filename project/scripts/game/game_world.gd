@@ -78,10 +78,6 @@ const COASTAL_BUILDINGS: Array = ["dock"]
 # Buildings that must be placed fully in ocean (all footprint probes in ocean terrain).
 const OCEAN_BUILDINGS: Array = ["fish_trap"]
 
-const CAMERA_SPEED: float = 400.0
-const CAMERA_ZOOM_MIN: float = 0.5
-const CAMERA_ZOOM_MAX: float = 2.0
-const CAMERA_ZOOM_STEP: float = 0.1
 const UNIT_CLICK_RADIUS: float = 32.0
 
 @onready var units_layer: Node2D = $UnitsLayer
@@ -118,18 +114,6 @@ var _last_click_unit_script: Script = null
 const DOUBLE_CLICK_SEC: float  = 0.35
 const DOUBLE_CLICK_RADIUS: float = 600.0
 
-var _panning: bool = false
-var _pan_last_pos: Vector2 = Vector2.ZERO
-
-var _following: bool = false
-var _camera_moved_emitted: bool = false
-# Recent "under attack" positions for the SPACE jump-to-last-event hotkey.
-var _alert_ring: AlertRing = AlertRing.new()
-var _edge_scroll_timer: float = 0.0
-var _edge_scroll_last_mouse: Vector2 = Vector2.ZERO
-const EDGE_SCROLL_DELAY: float = 0.3
-const EDGE_SCROLL_MOUSE_THRESHOLD: float = 4.0  # px — movement above this resets the timer
-
 # Build placement state
 var _placing_building: bool = false
 var _placing_id: String = ""
@@ -160,6 +144,7 @@ var _cursor_timer: float = 0.0
 const CURSOR_UPDATE_INTERVAL: float = 0.1
 
 var _victory: WorldVictory = null
+var _camera_ctl: WorldCamera = null
 
 var _nav_rebake_timer: float = 0.0
 var _nav_rebake_pending: bool = false
@@ -174,6 +159,8 @@ func _ready() -> void:
 	add_to_group("world")
 	_victory = WorldVictory.new()
 	_victory.setup(self)
+	_camera_ctl = WorldCamera.new()
+	_camera_ctl.setup(self)
 	# Isometric projection lives entirely in the camera; the scene's zoom.x is
 	# kept as the starting user zoom. Game logic below stays cartesian.
 	IsoProjection.apply_to_camera(camera, IsoProjection.user_zoom_from(camera.zoom))
@@ -272,21 +259,21 @@ func _ready() -> void:
 	EventBus.wonder_built.connect(_on_wonder_built)
 	EventBus.wonder_destroyed.connect(_on_wonder_destroyed)
 	EventBus.minimap_move_order.connect(func(p: Vector2) -> void:
-		_following = false
+		_camera_ctl.cancel_follow()
 		_order_move_all(p)
 	)
 	# HUD-side camera controls (minimap click, dpad) emit this so their pans
 	# are not undone by the per-frame follow re-centre. Re-entrant no-op when
 	# this node is itself the emitter.
-	EventBus.camera_follow_cancelled.connect(func() -> void: _following = false)
+	EventBus.camera_follow_cancelled.connect(func() -> void: _camera_ctl.cancel_follow())
 	EventBus.player_entity_under_attack.connect(
-		func(pos: Vector2, _attacker: Node) -> void: _alert_ring.record(pos))
+		func(pos: Vector2, _attacker: Node) -> void: _camera_ctl.record_alert(pos))
 	EventBus.building_destroyed.connect(_on_building_destroyed_alert)
 	EventBus.unit_selected.connect(_on_unit_selected_follow)
 	SelectionManager.selection_changed.connect(_on_selection_manager_changed)
 	EventBus.tutorial_spawn_enemy_scout.connect(_on_tutorial_spawn_enemy_scout)
 	EventBus.tutorial_highlight_unit.connect(_on_tutorial_highlight_unit)
-	EventBus.tutorial_reset_camera_flag.connect(func() -> void: _camera_moved_emitted = false)
+	EventBus.tutorial_reset_camera_flag.connect(func() -> void: _camera_ctl.reset_moved_flag())
 
 	_fog = FogOfWar.new()
 	add_child(_fog)
@@ -600,8 +587,8 @@ func _process(delta: float) -> void:
 			_nav_rebake_pending = false
 			_do_nav_rebake()
 	_victory.tick(delta)
-	_handle_camera(delta)
-	_handle_follow()
+	_camera_ctl.handle_camera(delta)
+	_camera_ctl.handle_follow()
 	if _placing_building and is_instance_valid(_ghost):
 		var mouse_pos: Vector2 = _snap_placement(get_global_mouse_position())
 		_ghost.visible = not _wall_drag_active
@@ -717,25 +704,11 @@ class _FlashMarker extends Node2D:
 		])
 		draw_polyline(diamond, col, 1.5)
 
-func _handle_follow() -> void:
-	if not _following or _selected_units.is_empty():
-		return
-	var centroid: Vector2 = Vector2.ZERO
-	var count: int = 0
-	for unit: Node in _selected_units:
-		if is_instance_valid(unit):
-			centroid += (unit as Node2D).global_position
-			count += 1
-	if count == 0:
-		_following = false
-		return
-	camera.position = centroid / float(count)
-
 func toggle_follow() -> void:
-	_following = not _following
+	_camera_ctl.toggle_follow()
 
-func _on_unit_selected_follow(_units: Array) -> void:
-	_following = false
+func _on_unit_selected_follow(units: Array) -> void:
+	_camera_ctl._on_unit_selected_follow(units)
 
 func _on_selection_manager_changed(units: Array) -> void:
 	_selected_units.clear()
@@ -744,66 +717,11 @@ func _on_selection_manager_changed(units: Array) -> void:
 			_selected_units.append(u)
 
 func _on_building_destroyed_alert(building: Node, owner_id: int) -> void:
-	if owner_id == 0 and building is Node2D and is_instance_valid(building):
-		_alert_ring.record((building as Node2D).global_position)
-
-func _jump_to_last_alert() -> void:
-	if not _alert_ring.has_entries():
-		return
-	jump_camera_to(_alert_ring.next_target(float(Time.get_ticks_msec()) / 1000.0))
+	_camera_ctl._on_building_destroyed_alert(building, owner_id)
 
 ## Instant camera jump used by alert hotkeys and clickable notifications.
-## Cancels camera-follow so the per-frame re-centre does not undo the jump.
 func jump_camera_to(world_pos: Vector2) -> void:
-	_following = false
-	EventBus.camera_follow_cancelled.emit()
-	var mh: float = TerrainManager.minimap_map_half
-	camera.position = world_pos.clamp(Vector2(-mh, -mh), Vector2(mh, mh))
-
-const EDGE_SCROLL_MARGIN: float = 60.0
-
-func _handle_camera(delta: float) -> void:
-	# Keyboard input — immediate response
-	# Use is_physical_key_pressed to bypass UI focus interception of arrow keys
-	var key_dir: Vector2 = Vector2.ZERO
-	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):  key_dir.x -= 1.0
-	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): key_dir.x += 1.0
-	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):    key_dir.y -= 1.0
-	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):  key_dir.y += 1.0
-
-	var edge_dir: Vector2 = Vector2.ZERO
-	if GameSettings.edge_scroll_enabled:
-		var vp: Vector2 = get_viewport().get_visible_rect().size
-		var mp: Vector2 = get_viewport().get_mouse_position()
-		if mp.x < EDGE_SCROLL_MARGIN:          edge_dir.x -= 1.0
-		elif mp.x > vp.x - EDGE_SCROLL_MARGIN: edge_dir.x += 1.0
-		if mp.y < EDGE_SCROLL_MARGIN:          edge_dir.y -= 1.0
-		elif mp.y > vp.y - EDGE_SCROLL_MARGIN: edge_dir.y += 1.0
-
-		if edge_dir != Vector2.ZERO:
-			# Reset timer if the mouse is still moving — only count time while stationary in the margin
-			if mp.distance_to(_edge_scroll_last_mouse) > EDGE_SCROLL_MOUSE_THRESHOLD:
-				_edge_scroll_timer = 0.0
-			else:
-				_edge_scroll_timer += delta
-		else:
-			_edge_scroll_timer = 0.0
-		_edge_scroll_last_mouse = mp
-
-	var dir: Vector2 = key_dir
-	if GameSettings.edge_scroll_enabled and _edge_scroll_timer >= EDGE_SCROLL_DELAY:
-		dir += edge_dir
-
-	if dir != Vector2.ZERO:
-		if _following:
-			_following = false
-			EventBus.camera_follow_cancelled.emit()
-		camera.position += IsoProjection.screen_dir_to_world(dir) * CAMERA_SPEED * delta
-		if not _camera_moved_emitted:
-			_camera_moved_emitted = true
-			EventBus.camera_moved.emit()
-	var mh: float = TerrainManager.minimap_map_half
-	camera.position = camera.position.clamp(Vector2(-mh, -mh), Vector2(mh, mh))
+	_camera_ctl.jump_camera_to(world_pos)
 
 func _is_mouse_over_hud() -> bool:
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
@@ -836,11 +754,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if ke.pressed and not ke.echo:
 			if ke.unicode == 43 or ke.physical_keycode == KEY_KP_ADD:
-				_zoom(CAMERA_ZOOM_STEP)
+				_camera_ctl.zoom(WorldCamera.CAMERA_ZOOM_STEP)
 				get_viewport().set_input_as_handled()
 				return
 			if ke.unicode == 45 or ke.physical_keycode == KEY_KP_SUBTRACT:
-				_zoom(-CAMERA_ZOOM_STEP)
+				_camera_ctl.zoom(-WorldCamera.CAMERA_ZOOM_STEP)
 				get_viewport().set_input_as_handled()
 				return
 			var group_id: int = ke.physical_keycode - KEY_0
@@ -853,37 +771,30 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 			if ke.physical_keycode == KEY_SPACE:
-				_jump_to_last_alert()
+				_camera_ctl.jump_to_last_alert()
 				get_viewport().set_input_as_handled()
 				return
 		return
 
-	if event is InputEventMouseMotion and _panning:
-		var motion: InputEventMouseMotion = event as InputEventMouseMotion
-		camera.position -= IsoProjection.screen_delta_to_world(motion.relative, camera.zoom)
+	if event is InputEventMouseMotion and _camera_ctl.is_panning():
+		_camera_ctl.apply_pan_motion(event as InputEventMouseMotion)
 		get_viewport().set_input_as_handled()
-		if not _camera_moved_emitted:
-			_camera_moved_emitted = true
-			EventBus.camera_moved.emit()
 		return
 
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
 
 		if mb.button_index == MOUSE_BUTTON_MIDDLE:
-			_panning = mb.pressed
-			if _panning and _following:
-				_following = false
-				EventBus.camera_follow_cancelled.emit()
+			_camera_ctl.set_panning(mb.pressed)
 			get_viewport().set_input_as_handled()
 			return
 
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
-			_zoom(CAMERA_ZOOM_STEP)
+			_camera_ctl.zoom(WorldCamera.CAMERA_ZOOM_STEP)
 			get_viewport().set_input_as_handled()
 			return
 		if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
-			_zoom(-CAMERA_ZOOM_STEP)
+			_camera_ctl.zoom(-WorldCamera.CAMERA_ZOOM_STEP)
 			get_viewport().set_input_as_handled()
 			return
 
@@ -925,15 +836,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_handle_right_click(get_global_mouse_position())
 
-func _zoom(step: float) -> void:
-	set_zoom(get_zoom() + step)
-
 func get_zoom() -> float:
-	return IsoProjection.user_zoom_from(camera.zoom)
+	return _camera_ctl.get_zoom()
 
 func set_zoom(value: float) -> void:
-	camera.zoom = IsoProjection.camera_zoom(
-		clampf(value, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX))
+	_camera_ctl.set_zoom(value)
 
 # --- Selection ---
 
