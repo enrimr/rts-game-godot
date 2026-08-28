@@ -343,3 +343,8 @@ func _check_path_display(tc_pos: Vector2) -> void:
 	print("PATH_CHECK: failed style color=", line.default_color if line != null else null,
 		" failed_flag=", villager.get("_path_failed"))
 	await _shoot(villager.global_position, 1.4, "10_path_failed")
+	# After the fade the line must STAY hidden (a stale nav path used to
+	# repaint the cyan route on an idle unit).
+	await get_tree().create_timer(3.2).timeout
+	print("PATH_CHECK: post-fade visible=", line.visible if line != null else null,
+		" points_now=", (villager.get("nav_agent") as NavigationAgent2D).get_current_navigation_path().size())

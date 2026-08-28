@@ -548,6 +548,10 @@ func _abandon_movement() -> void:
 	_show_path_failure()
 	if is_instance_valid(nav_agent):
 		nav_agent.set_velocity(Vector2.ZERO)
+		# Giving up means having no destination: clearing the target empties
+		# the agent's path, or the cyan route would repaint after the red
+		# failure fade ends (the stale path survived in the NavigationAgent).
+		nav_agent.target_position = global_position
 	_attack_move_active = false
 	if "attack_target" in self:
 		set("attack_target", null)
