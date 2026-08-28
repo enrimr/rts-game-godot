@@ -337,3 +337,9 @@ func _check_path_display(tc_pos: Vector2) -> void:
 	await _shoot(villager.global_position, 1.4, "09_path")
 	if line != null:
 		print("PATH_CHECK: after grab visible=", line.visible)
+	# Force the give-up path style (red fading route) and capture it.
+	villager.call("_abandon_movement")
+	await get_tree().create_timer(0.4).timeout
+	print("PATH_CHECK: failed style color=", line.default_color if line != null else null,
+		" failed_flag=", villager.get("_path_failed"))
+	await _shoot(villager.global_position, 1.4, "10_path_failed")

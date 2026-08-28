@@ -36,6 +36,9 @@ var _last_position: Vector2 = Vector2.ZERO
 # Original requested destination — kept so we can re-issue after escaping a stuck.
 var _move_destination: Vector2 = Vector2.ZERO
 
+const PATH_COLOR: Color = Color(0.3, 0.85, 1.0, 0.8)
+const PATH_FAIL_COLOR: Color = Color(1.0, 0.32, 0.25, 0.9)
+const PATH_FAIL_FADE: float = 2.5
 const STUCK_TIMEOUT: float = 1.2
 const STUCK_THRESHOLD: float = 6.0
 const MAX_STUCK_RETRIES: int = 6
@@ -47,6 +50,7 @@ const GUARD_RADIUS: float = 250.0
 @onready var attack_range_area: Area2D = get_node_or_null("AttackRange")
 
 var _path_line: Line2D = null
+var _path_failed: bool = false   # freezes the red gave-up route during its fade
 var _path_visible: bool = false
 
 func _ready() -> void:
@@ -109,7 +113,7 @@ func _process(delta: float) -> void:
 	_anim_time += delta
 	IsoBillboard.update_depth(self)
 	_animate_body(delta)
-	if _path_visible and is_instance_valid(_path_line):
+	if _path_visible and is_instance_valid(_path_line) and not _path_failed:
 		var pts: PackedVector2Array = nav_agent.get_current_navigation_path()
 		if pts.size() >= 2:
 			var local_pts: PackedVector2Array = PackedVector2Array()
@@ -199,11 +203,33 @@ func toggle_path_display() -> void:
 	if _path_visible and _path_line == null:
 		_path_line = Line2D.new()
 		_path_line.width = 2.0
-		_path_line.default_color = Color(0.3, 0.85, 1.0, 0.8)
+		_path_line.default_color = PATH_COLOR
 		_path_line.z_index = 10
 		add_child(_path_line)
 	if is_instance_valid(_path_line):
 		_path_line.visible = _path_visible
+		if not _path_visible:
+			_reset_path_style()
+
+## When the unit gives up on a blocked destination, the last attempted route
+## freezes in red and fades out — telling the player "this path is impossible".
+func _show_path_failure() -> void:
+	if not _path_visible or not is_instance_valid(_path_line) \
+			or _path_line.points.size() < 2:
+		return
+	_path_failed = true
+	_path_line.default_color = PATH_FAIL_COLOR
+	_path_line.visible = true
+	var tween: Tween = create_tween()
+	tween.tween_property(_path_line, "modulate:a", 0.0, PATH_FAIL_FADE)
+	tween.tween_callback(_reset_path_style)
+
+func _reset_path_style() -> void:
+	_path_failed = false
+	if is_instance_valid(_path_line):
+		_path_line.default_color = PATH_COLOR
+		_path_line.modulate.a = 1.0
+		_path_line.visible = false
 
 func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -> void:
 	if pid != player_id:
@@ -460,6 +486,7 @@ func _safe_destination(destination: Vector2) -> Vector2:
 
 # Sets the nav target and records the original destination for unstick recovery.
 func _navigate_to(destination: Vector2) -> void:
+	_reset_path_style()
 	_move_destination = destination
 	nav_agent.target_position = _safe_destination(destination)
 
@@ -518,6 +545,7 @@ func _unstick() -> void:
 # generically (set() no-ops on subclasses that lack a given property) so an
 # abandoned unit is not immediately re-engaged by _handle_attacking next frame.
 func _abandon_movement() -> void:
+	_show_path_failure()
 	if is_instance_valid(nav_agent):
 		nav_agent.set_velocity(Vector2.ZERO)
 	_attack_move_active = false
