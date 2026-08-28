@@ -209,7 +209,7 @@ theme_override_constants/separation = 0
 [node name="SelectionPanel" type="Panel" parent="HUDRoot/BottomBar/BottomLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(700, 160)
+custom_minimum_size = Vector2(700, 240)
 mouse_filter = 2
 
 [node name="SelectionVBox" type="VBoxContainer" parent="HUDRoot/BottomBar/BottomLayout/SelectionPanel"]
@@ -218,7 +218,7 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 1
 theme_override_constants/separation = 4
 offset_left = 8.0
 offset_top = 6.0
