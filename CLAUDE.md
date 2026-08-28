@@ -111,6 +111,14 @@ docs/             ← Architecture and design documentation
 | `project/scripts/buildings/fish_trap.gd` | Naval renewable food source |
 | `project/scripts/buildings/lumber_camp.gd` | Wood drop-off |
 | `project/scripts/buildings/mining_camp.gd` | Gold/stone drop-off |
+| **Game World (scene root + controllers)** ||
+| `project/scripts/game/game_world.gd` | Scene root and thin dispatcher (~385 lines): scene node refs, shared match state (`drop_off`, `_selected_units`, `_ai_town_centers`, `_fog`, saved-game fields), `_ready` wiring, `_process`/`_unhandled_input` routing into the controllers below, and the stable external surface (`jump_camera_to`, `get_zoom`/`set_zoom`, `_start_placement`, …) |
+| `project/scripts/game/world_setup.gd` | `WorldSetup` — match bootstrap: civs, player/AI town centers, hero spawn, tutorial spawns, ambient lighting, AI debug overlay |
+| `project/scripts/game/world_victory.gd` | `WorldVictory` — victory/defeat/elimination checks, Wonder countdown, game-over flow |
+| `project/scripts/game/world_camera.gd` | `WorldCamera` — pan/zoom/edge-scroll, camera follow, alert ring + SPACE jump |
+| `project/scripts/game/world_selection.gd` | `WorldSelection` — click/drag/double-click selection, control-group hotkeys |
+| `project/scripts/game/world_commands.gd` | `WorldCommands` — right-click dispatch, target pickers (visible-facade building hit-test), order fan-outs, formations, pending actions, HUD action router, mercenaries |
+| `project/scripts/game/world_placement.gd` | `WorldPlacement` — building placement ghost/grid-snap, wall drag, coastal/ocean checks, navmesh rebake |
 | **AI Systems** ||
 | `project/scripts/ai/world_query.gd` | `WorldQuery` — read-only query service over the unit/building layers (own/enemy/all, of_type/in_state/nearest_to); the AI queries it instead of walking the scene tree. Exposed lazily as `AIPlayer.world` |
 | `project/scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic; owns the `world: WorldQuery` getter |

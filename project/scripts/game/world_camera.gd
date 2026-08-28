@@ -15,7 +15,6 @@ var _world  # GameWorld — untyped so dynamic access works
 
 var _following: bool = false
 var _panning: bool = false
-var _pan_last_pos: Vector2 = Vector2.ZERO
 var _camera_moved_emitted: bool = false
 # Recent "under attack" positions for the SPACE jump-to-last-event hotkey.
 var _alert_ring: AlertRing = AlertRing.new()
