@@ -83,7 +83,7 @@ func set_being_gathered(value: bool) -> void:
 	for child: Node in get_children():
 		if child is Polygon2D:
 			child.queue_free()
-	MapGenerator._draw_tree_stump(self, _visual_scale)
+	ResourceVisuals.draw_tree_stump(self, _visual_scale)
 	IsoBillboard.setup_drawn_node(self)
 
 func gather(amount: float) -> float:

@@ -630,7 +630,7 @@ func _restore_resource_nodes(world: Node, data: Dictionary) -> void:
 		var initial: float = rnd.get("initial_amount", 100.0) as float
 		var pos_arr: Array = rnd.get("position", [0.0, 0.0]) as Array
 		var pos: Vector2 = Vector2(pos_arr[0] as float, pos_arr[1] as float)
-		MapGenerator.create_resource_node(world as Node2D, pos, rtype, initial, rng, res_script)
+		ResourceVisuals.create_resource_node(world as Node2D, pos, rtype, initial, rng, res_script)
 		# _ready() ran synchronously; override remaining amount on the just-added node
 		var rn: Node = world.get_children().back()
 		if rn is ResourceNode:
