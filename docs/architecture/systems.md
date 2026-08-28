@@ -39,7 +39,8 @@ Uses Godot's built-in `NavigationAgent2D` on each unit. Navigation regions are u
 
 ## NavMesh Carving
 
-`MapGenerator._add_nav_obstacles(parent)` runs at map generation time:
+`NavMeshBuilder.build(parent, map_half, land_polys)` runs at map generation time
+(called from `MapGenerator._run`):
 
 - Creates `NavigationObstacle2D` nodes for every malpaís, risco, and caldera zone, parented inside the scene's `NavigationRegion2D`.
 - On **Islands** maps, the default nav polygon (which would span the full map area including ocean) is replaced with per-island land polygons so the baked mesh never covers ocean tiles.

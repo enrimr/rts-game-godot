@@ -20,7 +20,9 @@ project/          ← Open this in Godot editor (contains project.godot)
     units/        ← UnitBase, Villager, military unit classes
     buildings/    ← BuildingBase and specific building scripts
     economy/      ← ResourceNode, drop-off logic
-    map/          ← MapGenerator, FogOfWar, PlacementGrid, terrain overlays
+    map/          ← MapGenerator + its modules (TerrainPainter, EntityPlacer,
+                    NavMeshBuilder, MapMaterials, TerrainDetail, ResourceVisuals),
+                    FogOfWar, PlacementGrid, terrain overlays
     combat/       ← Projectiles, damage calculation
     ai/           ← AIPlayer coordinator + AIConstruction, AIEconomy, AIMilitary, AINaval modules
     research/     ← TechTree, ResearchQueue
@@ -119,6 +121,14 @@ docs/             ← Architecture and design documentation
 | `project/scripts/game/world_selection.gd` | `WorldSelection` — click/drag/double-click selection, control-group hotkeys |
 | `project/scripts/game/world_commands.gd` | `WorldCommands` — right-click dispatch, target pickers (visible-facade building hit-test), order fan-outs, formations, pending actions, HUD action router, mercenaries |
 | `project/scripts/game/world_placement.gd` | `WorldPlacement` — building placement ghost/grid-snap, wall drag, coastal/ocean checks, navmesh rebake |
+| **Map Generation (pipeline + modules)** ||
+| `project/scripts/map/map_generator.gd` | `MapGenerator` — thin pipeline (~150 lines): reads `MatchConfig`, sequences painter → placer → nav builder per map type, returns `{tc_positions}`. Owns the shared `RandomNumberGenerator` and the land-polygon array |
+| `project/scripts/map/map_materials.gd` | `MapMaterials` — lazily cached shader materials (terrain per type, deep/shallow water, lava), terrain colour table, `STAIN_TILE` grid |
+| `project/scripts/map/terrain_detail.gd` | `TerrainDetail` — tile-dithered ground decals and per-biome detail variants (grass/dune/malpaís/risco/laurisilva/caldera) |
+| `project/scripts/map/terrain_painter.gd` | `TerrainPainter` — backgrounds, per-map-type zone layouts, zone visuals, shorelines, island polygons; owns `MapMaterials` + `TerrainDetail` |
+| `project/scripts/map/entity_placer.gd` | `EntityPlacer` — spatial-hash occupancy grid (`SPATIAL_CELL = 140`) plus every spawn: TC ring, starting units, animals, player/neutral/scattered resources, laurisilva forests, fish, resource islets |
+| `project/scripts/map/resource_visuals.gd` | `ResourceVisuals` — static resource-node art library; also used by `SaveManager` on load and by `ResourceNode` for tree stumps |
+| `project/scripts/map/nav_mesh_builder.gd` | `NavMeshBuilder` — land/ocean `NavigationPolygon` carving, terrain-zone obstacles (skipped for civs that traverse them), ocean boundary walls |
 | **AI Systems** ||
 | `project/scripts/ai/world_query.gd` | `WorldQuery` — read-only query service over the unit/building layers (own/enemy/all, of_type/in_state/nearest_to); the AI queries it instead of walking the scene tree. Exposed lazily as `AIPlayer.world` |
 | `project/scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic; owns the `world: WorldQuery` getter |
@@ -189,6 +199,21 @@ Uses the [GUT](https://github.com/bitwes/Gut) addon (vendored at
 editor. There are also standalone headless harnesses under `project/tools/`
 (`check_*.gd`) for things GUT can't easily reach (HUD scene load, WorldQuery,
 PlacementGrid).
+
+`project/tools/check_map_gen.tscn` is the map-generation regression gate: it
+prints a deterministic census (TC positions, zone checksum, per-type resource
+counts/amounts/position checksum, animals, nav outlines/obstacles, RNG state,
+scene node counts) for every map type at a fixed seed. Capture it before
+touching map generation and diff it after — the numbers must not move unless
+the change is meant to alter the map.
+
+```sh
+$GODOT --headless --path project res://tools/check_map_gen.tscn   # env: CALIMA_SEED, CALIMA_MAPS, CALIMA_RIVALS
+```
+
+Note: GUT silently *skips* a test script that fails to parse while still
+reporting "all passed" — always check the `Scripts` count in the summary and run
+`$GODOT --headless --path project --import` after adding a new `class_name`.
 
 ## Current Status
 

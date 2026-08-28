@@ -1,8 +1,35 @@
 # Map Generation
 
-> **Source files:** `project/scripts/map/map_generator.gd` · `project/scripts/core/terrain_manager.gd`
+> **Source files:** `project/scripts/map/map_generator.gd` ·
+> `terrain_painter.gd` · `terrain_detail.gd` · `map_materials.gd` ·
+> `entity_placer.gd` · `resource_visuals.gd` · `nav_mesh_builder.gd` ·
+> `project/scripts/core/terrain_manager.gd`
 >
-> **Keep in sync:** update this document whenever either file changes.
+> **Keep in sync:** update this document whenever any of those files changes.
+
+---
+
+## Module layout
+
+`MapGenerator` only sequences the pipeline (~150 lines). The work lives in
+`RefCounted` modules it owns, each wired through an explicit `setup(...)` call so
+there is no back-reference to the generator:
+
+| Module | Responsibility |
+|---|---|
+| `MapMaterials` | Shared shader materials (terrain per type, deep/shallow water, lava) + the terrain colour table and `STAIN_TILE` grid |
+| `TerrainDetail` | Tile-dithered ground decals and per-biome detail variants (grass/dune/malpaís/risco/laurisilva/caldera) |
+| `TerrainPainter` | Backgrounds, per-map-type zone layouts, zone visuals, shorelines, island polygons; owns `MapMaterials` + `TerrainDetail` |
+| `EntityPlacer` | Occupancy grid (spatial hash) and every spawn: TC ring, starting units, animals, resources, laurisilva forests, fish, islets |
+| `ResourceVisuals` | Static art library for resource nodes (also used by `SaveManager` when restoring a save and by `ResourceNode` for stumps) |
+| `NavMeshBuilder` | Land/ocean `NavigationPolygon` carving, zone obstacles, ocean boundary walls |
+
+All modules receive the **same** `RandomNumberGenerator` instance, so a given
+seed always produces the same map regardless of how the code is split.
+`project/tools/check_map_gen.tscn` prints a deterministic census (TC positions,
+zone checksum, per-type resource counts/amounts, animals, nav outlines, RNG
+state) and is the regression gate for changes here — capture it before a change,
+diff it after.
 
 ---
 
@@ -21,15 +48,18 @@ world-space coordinates, one per player (index 0 = human player, 1…N = AI riva
 The whole pipeline runs inside `MapGenerator._run()` and follows a fixed order:
 
 ```
-1. Terrain background & zones
-2. Town-center positions (TC ring)
-3. Navigation mesh update
-4. Animals
-5. Player resources (per-TC)
-6. Neutral resources
-7. Nav obstacles bake
-8. Minimap texture bake
+1. Town-center positions (TC ring) + footprint registration
+2. Terrain background & zones            (TerrainPainter)
+3. Animals                               (EntityPlacer)
+4. Player resources (per-TC)             (EntityPlacer)
+5. Neutral + scattered resources         (EntityPlacer)
+6. Laurisilva forests                    (EntityPlacer)
+7. Navigation meshes, obstacles, walls   (NavMeshBuilder)
+8. Minimap texture bake                  (TerrainManager)
 ```
+
+Town centers are placed and registered *first* so the occupancy grid rejects any
+later spawn that would land on a starting base.
 
 ---
 
@@ -64,7 +94,7 @@ scale automatically.
 
 ## TC placement
 
-For every map type except Islands, town centers are placed with `_place_tc_ring()`:
+For every map type except Islands, town centers are placed with `EntityPlacer.place_tc_ring()`:
 
 - N positions are distributed evenly around a circle of radius `_map_half * 0.48`.
 - The ring starts at a random angle so no player has a fixed compass advantage.
@@ -127,7 +157,7 @@ This means specific overrides (e.g. grass oases) should be added after the base 
 
 ## Visual painting
 
-After zones are registered in `TerrainManager`, `_flush_terrain_zones_visual()` iterates them
+After zones are registered in `TerrainManager`, `TerrainPainter.flush_zone_visuals()` iterates them
 and creates Polygon2D scene-tree nodes for each:
 
 | Zone type | Nodes created |
@@ -193,7 +223,7 @@ Placed around map centre regardless of TC positions.
 
 ### Scattered resources (land maps)
 
-`_spawn_scattered_resources()` runs after neutral resources on all non-Islands maps.
+`EntityPlacer.spawn_scattered_resources()` runs after neutral resources on all non-Islands maps.
 Deposits are placed at **random positions across the full map**, with a 500 px minimum distance from any TC.
 This ensures the mid-map and map edges are not empty.
 
@@ -234,14 +264,15 @@ Objects are indexed into a grid of 140 px cells (`SPATIAL_CELL`).
 Collision checks scan only the 3×3 neighbourhood of cells around the candidate point,
 making each check O(1) amortised instead of O(n).
 
-`_find_free_arc()` and `_find_free_near()` attempt up to `MAX_PLACE_TRIES` (30) random
+`EntityPlacer._find_free_arc()` and `_find_free_near()` attempt up to `MAX_PLACE_TRIES` (30) random
 positions before giving up. Forest zones use `count × 12` attempts.
 
 ---
 
 ## Navigation meshes
 
-Two `NavigationRegion2D` nodes live in the scene:
+Carved by `NavMeshBuilder.build(parent, map_half, land_polys)`. Two
+`NavigationRegion2D` nodes live in the scene:
 
 | Node | Navigation layer | Used by |
 |---|---|---|
