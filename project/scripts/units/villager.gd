@@ -70,11 +70,6 @@ func _ready() -> void:
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 7.0, 10.0)
 
-func _process(delta: float) -> void:
-	_anim_time += delta
-	IsoBillboard.update_depth(self)
-	_animate_body(delta)
-
 func _animate_body(_delta: float) -> void:
 	if not is_instance_valid(_body_node):
 		return

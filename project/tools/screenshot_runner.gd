@@ -101,6 +101,9 @@ func _run() -> void:
 	if OS.get_environment("CALIMA_CURSOR") == "1":
 		await _check_cursor_context(tc_pos)
 
+	if OS.get_environment("CALIMA_PATH") == "1":
+		await _check_path_display(tc_pos)
+
 	# Overview goes last: fog is revealed so the reviewer can inspect the whole
 	# projected map, which would otherwise be near-black unexplored fog.
 	var fog: Node = _world.get("_fog") as Node
@@ -305,3 +308,32 @@ func _check_cursor_context(tc_pos: Vector2) -> void:
 	SelectionManager.select([])
 	await get_tree().create_timer(0.3).timeout
 	print("CURSOR_CHECK: no selection -> id=", CursorManager.current_id)
+
+# CALIMA_PATH=1: toggles the show-path display on a villager, orders a long
+# move, and captures mid-journey so the route line is reviewable.
+func _check_path_display(tc_pos: Vector2) -> void:
+	var villager: Node2D = null
+	for node: Node in _world.find_children("*", "CharacterBody2D", true, false):
+		if node is Villager and (node.get("player_id") as int) == 0:
+			villager = node as Node2D
+			break
+	if villager == null:
+		print("PATH_CHECK: no villager")
+		return
+	villager.call("toggle_path_display")
+	villager.call("order_move", tc_pos + Vector2(700.0, 500.0))
+	await get_tree().create_timer(1.0).timeout
+	# Read the actual path line property: the first Line2D child is the
+	# selection ring (28 ellipse segments), which fooled an earlier probe.
+	var line: Line2D = villager.get("_path_line") as Line2D
+	print("PATH_CHECK: line=", line != null,
+		" visible=", line.visible if line != null else false,
+		" points=", line.points.size() if line != null else -1,
+		" path_visible_flag=", villager.get("_path_visible"),
+		" nav_pts_now=", (villager.get("nav_agent") as NavigationAgent2D).get_current_navigation_path().size(),
+		" unit_z=", villager.z_index)
+	if line != null:
+		line.visible = true
+	await _shoot(villager.global_position, 1.4, "09_path")
+	if line != null:
+		print("PATH_CHECK: after grab visible=", line.visible)
