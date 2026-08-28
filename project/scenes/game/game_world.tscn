@@ -39,6 +39,7 @@ navigation_polygon = SubResource("NavigationPolygon_2")
 [node name="BuildingsLayer" type="Node2D" parent="."]
 
 [node name="Camera2D" type="Camera2D" parent="."]
+process_callback = 0
 position = Vector2(0.0, 0.0)
 zoom = Vector2(1.5, 1.5)
 
