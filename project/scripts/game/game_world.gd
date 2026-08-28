@@ -1116,7 +1116,7 @@ func _finish_selection() -> void:
 			SelectionManager.select(_selected_units)
 			return
 		# Check Town Center first
-		if is_instance_valid(drop_off) and _drag_start.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
+		if is_instance_valid(drop_off) and _building_click_hit(drop_off as Node2D, _drag_start):
 			_selected_building = drop_off
 			EventBus.building_selected.emit(drop_off)
 			return
@@ -1124,7 +1124,7 @@ func _finish_selection() -> void:
 			if not is_instance_valid(building):
 				continue
 			var b2d: Node2D = building as Node2D
-			if _drag_start.distance_to(b2d.global_position) < BUILDING_CLICK_RADIUS:
+			if _building_click_hit(b2d, _drag_start):
 				_selected_building = building
 				EventBus.building_selected.emit(building)
 				return
@@ -1368,13 +1368,13 @@ func _find_gate_at(world_pos: Vector2) -> Gate:
 
 func _find_drop_off_at(world_pos: Vector2) -> Node:
 	# Town Center
-	if is_instance_valid(drop_off) and world_pos.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS:
+	if is_instance_valid(drop_off) and _building_click_hit(drop_off as Node2D, world_pos):
 		return drop_off
 	for building: Node in buildings_layer.get_children():
 		if not is_instance_valid(building):
 			continue
 		var b2d: Node2D = building as Node2D
-		if world_pos.distance_to(b2d.global_position) >= BUILDING_CLICK_RADIUS:
+		if not _building_click_hit(b2d, world_pos):
 			continue
 		# Dock — drop-off for fishing boats
 		if building is Dock:
@@ -1469,21 +1469,49 @@ func _find_enemy_unit_at(world_pos: Vector2) -> Node:
 			return unit
 	return null
 
+## True when a click at `world_pos` lands on `building` as the player SEES it:
+## the world-space footprint, or the upright massing volume the iso projection
+## draws up-screen from the origin. A distance-to-origin test misses most of a
+## large building's base and all of its elevation (the whole visible facade of
+## a Town Center resolved to "nothing", silently degrading attack clicks).
+func _building_click_hit(building: Node2D, world_pos: Vector2) -> bool:
+	var local: Vector2 = world_pos - building.global_position
+	var half: Vector2 = Vector2(BUILDING_CLICK_RADIUS, BUILDING_CLICK_RADIUS)
+	var cs: CollisionShape2D = building.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if cs != null and cs.shape is RectangleShape2D:
+		half = (cs.shape as RectangleShape2D).size * 0.5 + Vector2(6.0, 6.0)
+	if absf(local.x) <= half.x and absf(local.y) <= half.y:
+		return true
+	# Massing test in screen space; ground-plane buildings (farms) have no
+	# massing metadata and fall back to a shallow band over the footprint.
+	var s: Vector2 = IsoProjection.world_to_screen(local)
+	var half_w: float = (half.x + half.y) * 0.7071
+	var top_y: float = (building.get_meta("massing_top_y") as float) \
+		if building.has_meta("massing_top_y") else -half_w * 0.5
+	var bot_y: float = (building.get_meta("massing_bot_y") as float) \
+		if building.has_meta("massing_bot_y") else half_w * 0.5
+	return absf(s.x) <= half_w and s.y >= top_y - 4.0 and s.y <= bot_y + 4.0
+
 func _find_enemy_building_at(world_pos: Vector2) -> Node:
-	# Check enemy Town Center
-	if is_instance_valid(_ai_town_center):
-		if world_pos.distance_to((_ai_town_center as Node2D).global_position) < BUILDING_CLICK_RADIUS:
-			return _ai_town_center
-	# Check buildings layer
+	# Front-most (greatest projected origin y) wins when facades overlap.
+	var best: Node = null
+	var best_depth: float = -INF
+	if is_instance_valid(_ai_town_center) and _building_click_hit(_ai_town_center, world_pos):
+		best = _ai_town_center
+		best_depth = IsoProjection.world_to_screen((_ai_town_center as Node2D).global_position).y
 	for building: Node in buildings_layer.get_children():
 		if not is_instance_valid(building):
 			continue
 		var pid: Variant = building.get("player_id")
 		if pid == null or (pid as int) == 0:
 			continue
-		if world_pos.distance_to((building as Node2D).global_position) < BUILDING_CLICK_RADIUS:
-			return building
-	return null
+		if not _building_click_hit(building as Node2D, world_pos):
+			continue
+		var depth: float = IsoProjection.world_to_screen((building as Node2D).global_position).y
+		if depth > best_depth:
+			best_depth = depth
+			best = building
+	return best
 
 func _find_own_construction_at(world_pos: Vector2) -> Node:
 	for building: Node in buildings_layer.get_children():
@@ -1492,7 +1520,7 @@ func _find_own_construction_at(world_pos: Vector2) -> Node:
 		var pid: Variant = building.get("player_id")
 		if pid == null or (pid as int) != 0:
 			continue
-		if world_pos.distance_to((building as Node2D).global_position) < BUILDING_CLICK_RADIUS:
+		if _building_click_hit(building as Node2D, world_pos):
 			var state_val: Variant = building.get("state")
 			if state_val != null and (state_val as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 				return building
@@ -1513,7 +1541,7 @@ func _find_own_damaged_building_at(world_pos: Vector2) -> Node:
 			return false
 		return true
 
-	if is_instance_valid(drop_off) and world_pos.distance_to(drop_off.global_position) < BUILDING_CLICK_RADIUS and check.call(drop_off):
+	if is_instance_valid(drop_off) and _building_click_hit(drop_off as Node2D, world_pos) and check.call(drop_off):
 		return drop_off
 	for building: Node in buildings_layer.get_children():
 		if not is_instance_valid(building):
@@ -1521,7 +1549,7 @@ func _find_own_damaged_building_at(world_pos: Vector2) -> Node:
 		var pid: Variant = building.get("player_id")
 		if pid == null or (pid as int) != 0:
 			continue
-		if world_pos.distance_to((building as Node2D).global_position) < BUILDING_CLICK_RADIUS and check.call(building):
+		if _building_click_hit(building as Node2D, world_pos) and check.call(building):
 			return building
 	return null
 
