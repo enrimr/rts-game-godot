@@ -1456,10 +1456,19 @@ func _poll_hp_bars() -> void:
 func _build_cost_strip() -> void:
 	if _detail_panel == null:
 		return
+	# Fixed-height slot inserted right under the HP bar: appending the strip
+	# at the end of the VBox both pushed the panel contents up on hover
+	# (reflow) and landed below the visible band of the bottom bar.
+	var slot: Control = Control.new()
+	slot.custom_minimum_size = Vector2(0, 22.0)
+	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_detail_panel.add_child(slot)
+	_detail_panel.move_child(slot, mini(2, _detail_panel.get_child_count() - 1))
 	_cost_strip = HBoxContainer.new()
 	_cost_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cost_strip.visible = false
-	_detail_panel.add_child(_cost_strip)
+	_cost_strip.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	slot.add_child(_cost_strip)
 
 func _show_cost_strip(costs: Dictionary) -> void:
 	if not is_instance_valid(_cost_strip):
