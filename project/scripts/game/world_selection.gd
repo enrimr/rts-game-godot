@@ -4,8 +4,8 @@ class_name WorldSelection extends RefCounted
 ## double click-select, building/resource click-select, control-group hotkeys
 ## and the SelectionManager mirror. Shared selection state (_selected_units,
 ## _selected_building) stays on GameWorld — the command handlers read it too.
-## _building_click_hit / the _find_*_at pickers also stay on GameWorld until
-## the WorldCommands extraction; they are reached through _world.
+## _building_click_hit / the _find_*_at pickers live on WorldCommands and are
+## reached through _world._commands.
 
 const DOUBLE_CLICK_SEC: float = 0.35
 const DOUBLE_CLICK_RADIUS: float = 600.0
@@ -98,7 +98,7 @@ func _finish_selection() -> void:
 	if is_click:
 		# Click: select only the single nearest friendly unit within radius
 		var best_unit: Node = null
-		var best_dist: float = _world.UNIT_CLICK_RADIUS
+		var best_dist: float = WorldCommands.UNIT_CLICK_RADIUS
 		for unit: Node in _world.units_layer.get_children():
 			if not is_instance_valid(unit):
 				continue
@@ -149,7 +149,7 @@ func _finish_selection() -> void:
 			SelectionManager.select(_world._selected_units)
 			return
 		# Check Town Center first
-		if is_instance_valid(_world.drop_off) and _world._building_click_hit(_world.drop_off as Node2D, _drag_start):
+		if is_instance_valid(_world.drop_off) and _world._commands._building_click_hit(_world.drop_off as Node2D, _drag_start):
 			_world._selected_building = _world.drop_off
 			EventBus.building_selected.emit(_world.drop_off)
 			return
@@ -157,7 +157,7 @@ func _finish_selection() -> void:
 			if not is_instance_valid(building):
 				continue
 			var b2d: Node2D = building as Node2D
-			if _world._building_click_hit(b2d, _drag_start):
+			if _world._commands._building_click_hit(b2d, _drag_start):
 				_world._selected_building = building
 				EventBus.building_selected.emit(building)
 				return
@@ -165,23 +165,23 @@ func _finish_selection() -> void:
 			if not (child is ResourceNode):
 				continue
 			var rn: ResourceNode = child as ResourceNode
-			if _drag_start.distance_to(rn.global_position) < _world.UNIT_CLICK_RADIUS:
+			if _drag_start.distance_to(rn.global_position) < WorldCommands.UNIT_CLICK_RADIUS:
 				rn.set_selected(true)
 				_selected_node = rn
 				EventBus.resource_node_selected.emit(rn)
 				return
 		# Enemy unit / wild animal / enemy building — inspect only (no command)
-		var enemy_unit: Node = _world._find_enemy_unit_at(_drag_start)
+		var enemy_unit: Node = _world._commands._find_enemy_unit_at(_drag_start)
 		if enemy_unit != null:
 			enemy_unit.set_selected(true)
 			_selected_node = enemy_unit
 			return
-		var wild_animal: Animal = _world._find_animal_at(_drag_start)
+		var wild_animal: Animal = _world._commands._find_animal_at(_drag_start)
 		if wild_animal != null and (wild_animal.current_state != Animal.AnimalState.OWNED or wild_animal.player_id != 0):
 			wild_animal.set_selected(true)
 			_selected_node = wild_animal
 			return
-		var enemy_building: Node = _world._find_enemy_building_at(_drag_start)
+		var enemy_building: Node = _world._commands._find_enemy_building_at(_drag_start)
 		if enemy_building != null:
 			enemy_building.set_selected(true)
 			_selected_node = enemy_building
