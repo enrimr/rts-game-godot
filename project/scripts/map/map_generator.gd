@@ -2,14 +2,15 @@ class_name MapGenerator
 
 ## Generates a symmetric random map and paints procedural terrain zones.
 ## Placement order: background → terrain zones → TCs → units → animals → resources.
-
+##
+## The generator itself only sequences the pipeline; the work lives in the
+## modules below (TerrainPainter for ground visuals, EntityPlacer for anything
+## occupying space, NavMeshBuilder for pathfinding geometry).
 
 var _rng: RandomNumberGenerator = null
 var _map_half: float = 1800.0
 var _res_mult: float = 1.0
 
-# Polygon2D pool reused for terrain patches
-var _terrain_root: Node2D = null
 # Land polygons for island map (used by TerrainManager)
 var _land_polys: Array = []
 
@@ -36,11 +37,6 @@ func _run(parent: Node2D, units_layer: Node2D,
 	_rng = rng
 	_painter.setup(rng, _map_half)
 	_placer.setup(rng, _map_half, _res_mult, _painter, _land_polys)
-
-	# Terrain root — plain Node2D; polygon clipping is done in _add_polygon_clipped
-	_terrain_root = Node2D.new()
-	_terrain_root.z_index = -9
-	parent.add_child(_terrain_root as Node2D)
 
 	var player_count: int = 1 + MatchConfig.rival_count
 	var tc_positions: Array[Vector2] = []
