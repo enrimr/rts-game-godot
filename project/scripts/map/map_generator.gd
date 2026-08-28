@@ -39,9 +39,6 @@ const RES_LABELS: Dictionary = {
 const ANIMAL_SCENE: String   = "res://scenes/units/animal.tscn"
 const SHEEP_SCENE:  String   = "res://scenes/units/sheep.tscn"
 
-# --- Terrain visual colours ---
-static func _tc(t: TerrainManager.TerrainType) -> Color:
-	return TerrainManager.COLORS[t]
 
 # Placement registry — flat arrays for fast iteration
 var _placed_pos: PackedVector2Array = PackedVector2Array()
@@ -64,89 +61,10 @@ var _land_polys: Array = []
 # Cached resource node script — loaded once per generation
 var _res_node_script: Script = null
 
-# Shared shader materials — one instance reused across all base terrain / ocean
-# polygons so we never allocate hundreds of ShaderMaterials.
-const WATER_SHADER: Shader = preload("res://assets/shaders/water.gdshader")
-const TERRAIN_SHADER: Shader = preload("res://assets/shaders/terrain.gdshader")
-const LAVA_SHADER: Shader = preload("res://assets/shaders/lava.gdshader")
-var _terrain_material: ShaderMaterial = null
-var _water_material: ShaderMaterial = null
-var _shallow_material: ShaderMaterial = null
-var _lava_material: ShaderMaterial = null
-# Per-terrain-type base material (grain/variation tuned to the surface).
-var _terrain_materials_by_type: Dictionary = {}
+# Shared shader materials for this generation
+var _mat: MapMaterials = MapMaterials.new()
 
-# Terrain types whose edges get a soft fade-out halo into neighbouring ground.
-# Contrasting, impassable special zones — grass/dune backgrounds are excluded.
-const _GRADIENT_TERRAINS: Array = [
-	TerrainManager.TerrainType.MALPAIS,
-	TerrainManager.TerrainType.CALDERA,
-	TerrainManager.TerrainType.RISCO,
-	TerrainManager.TerrainType.LAURISILVA,
-]
 
-# Grain/variation tuning per terrain type: rougher surfaces get more grain.
-# `mottle`/`dirt_amount` drive the shader's tile checker: only the open ground
-# types (grass, dune) swap cells toward the dry-dirt tint.
-const _TERRAIN_SHADER_PARAMS: Dictionary = {
-	TerrainManager.TerrainType.GRASS:      {"variation": 0.16, "grain": 0.06, "detail_scale": 0.022, "mottle": 0.16, "dirt_amount": 0.10},
-	TerrainManager.TerrainType.DUNE:       {"variation": 0.10, "grain": 0.04, "detail_scale": 0.018, "mottle": 0.10, "dirt_amount": 0.06, "dirt_tint": Color(0.62, 0.52, 0.30)},
-	TerrainManager.TerrainType.MALPAIS:    {"variation": 0.22, "grain": 0.10, "detail_scale": 0.030, "mottle": 0.12, "dirt_amount": 0.0},
-	TerrainManager.TerrainType.RISCO:      {"variation": 0.20, "grain": 0.09, "detail_scale": 0.028, "mottle": 0.12, "dirt_amount": 0.0},
-	TerrainManager.TerrainType.LAURISILVA: {"variation": 0.18, "grain": 0.05, "detail_scale": 0.024, "mottle": 0.10, "dirt_amount": 0.0},
-	TerrainManager.TerrainType.CALDERA:    {"variation": 0.24, "grain": 0.08, "detail_scale": 0.032, "mottle": 0.14, "dirt_amount": 0.0},
-}
-
-# World-space edge of the terrain shader's tile checker (`tile_size`). The
-# tile-dithered stains and zone borders snap to the same grid so decals and
-# shader mottling read as one tileset.
-const STAIN_TILE: float = 26.0
-
-func _get_terrain_material() -> ShaderMaterial:
-	if _terrain_material == null:
-		_terrain_material = ShaderMaterial.new()
-		_terrain_material.shader = TERRAIN_SHADER
-	return _terrain_material
-
-# Returns a shared terrain material tuned for `terrain`, or the default grass-tuned
-# one when the type has no specific entry.
-func _get_terrain_material_for(terrain: int) -> ShaderMaterial:
-	if not _TERRAIN_SHADER_PARAMS.has(terrain):
-		return _get_terrain_material()
-	if _terrain_materials_by_type.has(terrain):
-		return _terrain_materials_by_type[terrain] as ShaderMaterial
-	var mat: ShaderMaterial = ShaderMaterial.new()
-	mat.shader = TERRAIN_SHADER
-	var params: Dictionary = _TERRAIN_SHADER_PARAMS[terrain] as Dictionary
-	for key: String in params:
-		mat.set_shader_parameter(key, params[key])
-	_terrain_materials_by_type[terrain] = mat
-	return mat
-
-func _get_water_material() -> ShaderMaterial:
-	if _water_material == null:
-		_water_material = ShaderMaterial.new()
-		_water_material.shader = WATER_SHADER
-	return _water_material
-
-# Brighter, choppier water tuning for the coastal shelf: shoals read turquoise
-# with more visible foam than the open deep-blue ocean.
-func _get_shallow_material() -> ShaderMaterial:
-	if _shallow_material == null:
-		_shallow_material = ShaderMaterial.new()
-		_shallow_material.shader = WATER_SHADER
-		_shallow_material.set_shader_parameter("water_deep", Color(0.10, 0.36, 0.55))
-		_shallow_material.set_shader_parameter("water_shallow", Color(0.30, 0.64, 0.72))
-		_shallow_material.set_shader_parameter("foam_amount", 0.30)
-		_shallow_material.set_shader_parameter("wave_scale", 0.016)
-		_shallow_material.set_shader_parameter("wave_speed", 0.75)
-	return _shallow_material
-
-func _get_lava_material() -> ShaderMaterial:
-	if _lava_material == null:
-		_lava_material = ShaderMaterial.new()
-		_lava_material.shader = LAVA_SHADER
-	return _lava_material
 
 # ── Public entry point ──────────────────────────────────────────────────────
 
@@ -182,7 +100,7 @@ func _run(parent: Node2D, units_layer: Node2D,
 				_register(tc, R_TC)
 				_register_unit_cluster(tc)
 			# No terrain zones — scatter grass variants over the flat base
-			_paint_rect_bg(parent, _map_half, _tc(TerrainManager.TerrainType.GRASS))
+			_paint_rect_bg(parent, _map_half, MapMaterials.color_for(TerrainManager.TerrainType.GRASS))
 			_paint_ground_scatter(parent, _map_half, TerrainManager.TerrainType.GRASS)
 			_spawn_animals_multi(units_layer, tc_positions)
 			for i: int in range(tc_positions.size()):
@@ -285,7 +203,7 @@ func _run_islands(parent: Node2D, units_layer: Node2D,
 		_land_polys.append(poly)
 		TerrainManager.set_land_polys(_land_polys, true)
 		_paint_shore(parent, poly, center)
-		_paint_polygon(parent, poly, _tc(TerrainManager.TerrainType.GRASS))
+		_paint_polygon(parent, poly, MapMaterials.color_for(TerrainManager.TerrainType.GRASS))
 		_scatter_island_terrain(center, island_radius)
 
 	_flush_terrain_zones_visual(parent)
@@ -370,7 +288,7 @@ func _spawn_island_resources(parent: Node2D, tc: Vector2,
 
 func _paint_standard(parent: Node2D) -> void:
 	var h: float = _map_half
-	_paint_rect_bg(parent, h, _tc(TerrainManager.TerrainType.GRASS))
+	_paint_rect_bg(parent, h, MapMaterials.color_for(TerrainManager.TerrainType.GRASS))
 	_paint_ground_scatter(parent, h, TerrainManager.TerrainType.GRASS)
 	var configs: Array = [
 		[3, h * 0.06, h * 0.14, TerrainManager.TerrainType.LAURISILVA],
@@ -389,8 +307,8 @@ func _paint_standard(parent: Node2D) -> void:
 
 func _paint_volcanic_coast(parent: Node2D) -> void:
 	var h: float = _map_half
-	_paint_coastal_ocean(parent, h, _tc(TerrainManager.TerrainType.GRASS))
-	_paint_rect_bg(parent, h, _tc(TerrainManager.TerrainType.GRASS))
+	_paint_coastal_ocean(parent, h, MapMaterials.color_for(TerrainManager.TerrainType.GRASS))
+	_paint_rect_bg(parent, h, MapMaterials.color_for(TerrainManager.TerrainType.GRASS))
 	_paint_ground_scatter(parent, h, TerrainManager.TerrainType.GRASS)
 	# Large central caldera + malpaís bands radiating from it
 	var caldera_pos: Vector2 = Vector2(_rng.randf_range(-h * 0.1, h * 0.1),
@@ -419,8 +337,8 @@ func _paint_volcanic_coast(parent: Node2D) -> void:
 
 func _paint_desert_coast(parent: Node2D) -> void:
 	var h: float = _map_half
-	_paint_coastal_ocean(parent, h, _tc(TerrainManager.TerrainType.DUNE))
-	_paint_rect_bg(parent, h, _tc(TerrainManager.TerrainType.DUNE),
+	_paint_coastal_ocean(parent, h, MapMaterials.color_for(TerrainManager.TerrainType.DUNE))
+	_paint_rect_bg(parent, h, MapMaterials.color_for(TerrainManager.TerrainType.DUNE),
 		TerrainManager.TerrainType.DUNE)
 	_paint_ground_scatter(parent, h, TerrainManager.TerrainType.DUNE)
 	# Register full map as dune zone so TerrainManager knows
@@ -430,7 +348,7 @@ func _paint_desert_coast(parent: Node2D) -> void:
 		var oasis: Vector2 = Vector2(side * h * 0.35, _rng.randf_range(-h * 0.2, h * 0.2))
 		TerrainManager.add_zone(oasis, h * 0.18, TerrainManager.TerrainType.GRASS)
 		_paint_circle_patch(parent, oasis, h * 0.18,
-			_tc(TerrainManager.TerrainType.GRASS), _rng.randi() % 3)
+			MapMaterials.color_for(TerrainManager.TerrainType.GRASS), _rng.randi() % 3)
 	# Risco ridge on east edge
 	for _i: int in range(3):
 		var rpos: Vector2 = Vector2(_rng.randf_range(h * 0.55, h * 0.75),
@@ -459,13 +377,13 @@ func _flush_terrain_zones_visual(parent: Node2D) -> void:
 			TerrainManager.TerrainType.CALDERA:
 				_paint_caldera(parent, center, radius, variant)
 			_:
-				_paint_circle_patch(parent, center, radius, _tc(t), variant)
+				_paint_circle_patch(parent, center, radius, MapMaterials.color_for(t), variant)
 
 # ── Per-terrain painters ──────────────────────────────────────────────────────
 
 func _paint_laurisilva(parent: Node2D, center: Vector2, radius: float, variant: int = 0) -> void:
 	# Base: dark green blob
-	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.LAURISILVA), variant, TerrainManager.TerrainType.LAURISILVA)
+	_paint_circle_patch(parent, center, radius, MapMaterials.color_for(TerrainManager.TerrainType.LAURISILVA), variant, TerrainManager.TerrainType.LAURISILVA)
 	# Batch all canopies into a single Polygon2D per colour group to minimise
 	# scene-tree nodes. We use 3 colour groups; each gets one Polygon2D with
 	# all canopy outlines appended as a single closed polygon (separated by a
@@ -509,7 +427,7 @@ func _paint_laurisilva(parent: Node2D, center: Vector2, radius: float, variant: 
 	_paint_terrain_variant(parent, center, radius, TerrainManager.TerrainType.LAURISILVA, variant)
 
 func _paint_risco(parent: Node2D, center: Vector2, radius: float, variant: int = 0) -> void:
-	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.RISCO), variant, TerrainManager.TerrainType.RISCO)
+	_paint_circle_patch(parent, center, radius, MapMaterials.color_for(TerrainManager.TerrainType.RISCO), variant, TerrainManager.TerrainType.RISCO)
 
 	# Scattered ground pebbles across the rock zone base for texture
 	var pebble_count: int = _rng.randi_range(14, 22)
@@ -616,7 +534,7 @@ func _paint_risco(parent: Node2D, center: Vector2, radius: float, variant: int =
 			body.add_child(snow)
 
 func _paint_malpais(parent: Node2D, center: Vector2, radius: float, variant: int = 0) -> void:
-	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.MALPAIS), variant, TerrainManager.TerrainType.MALPAIS)
+	_paint_circle_patch(parent, center, radius, MapMaterials.color_for(TerrainManager.TerrainType.MALPAIS), variant, TerrainManager.TerrainType.MALPAIS)
 
 	# Dark lava rock fragments scattered across the zone
 	var all_pts: PackedVector2Array = PackedVector2Array()
@@ -650,7 +568,7 @@ func _paint_malpais(parent: Node2D, center: Vector2, radius: float, variant: int
 		crack_line.default_color = Color(0.72, 0.22, 0.05, 0.65)
 		crack_line.width = _rng.randf_range(1.0, 2.0)
 		crack_line.z_index = -6
-		crack_line.material = _get_lava_material()
+		crack_line.material = _mat.lava()
 		crack_line.add_point(crack_start)
 		var seg_len: float = _rng.randf_range(radius * 0.15, radius * 0.35)
 		var dir_a: float = _rng.randf() * TAU
@@ -664,7 +582,7 @@ func _paint_malpais(parent: Node2D, center: Vector2, radius: float, variant: int
 	_paint_terrain_variant(parent, center, radius, TerrainManager.TerrainType.MALPAIS, variant)
 
 func _paint_caldera(parent: Node2D, center: Vector2, radius: float, variant: int = 0) -> void:
-	_paint_circle_patch(parent, center, radius, _tc(TerrainManager.TerrainType.CALDERA), 0, TerrainManager.TerrainType.CALDERA)
+	_paint_circle_patch(parent, center, radius, MapMaterials.color_for(TerrainManager.TerrainType.CALDERA), 0, TerrainManager.TerrainType.CALDERA)
 	_paint_circle_patch(parent, center, radius * 0.55, Color(0.06, 0.04, 0.04))
 
 	var crack_count: int = _rng.randi_range(3, 5)
@@ -698,7 +616,7 @@ func _paint_caldera(parent: Node2D, center: Vector2, radius: float, variant: int
 		crack_bright.default_color = Color(1.0, 0.45, 0.05, 0.85)
 		crack_bright.width = _rng.randf_range(1.5, 3.0)
 		crack_bright.z_index = -6
-		crack_bright.material = _get_lava_material()
+		crack_bright.material = _mat.lava()
 		for pt: Vector2 in main_pts:
 			crack_bright.add_point(pt)
 		parent.add_child(crack_bright)
@@ -734,7 +652,7 @@ func _paint_caldera(parent: Node2D, center: Vector2, radius: float, variant: int
 			bbright.default_color = Color(1.0, 0.45, 0.05, 0.85)
 			bbright.width = _rng.randf_range(1.0, 2.0)
 			bbright.z_index = -6
-			bbright.material = _get_lava_material()
+			bbright.material = _mat.lava()
 			for pt: Vector2 in branch_pts:
 				bbright.add_point(pt)
 			parent.add_child(bbright)
@@ -766,7 +684,7 @@ func _paint_caldera(parent: Node2D, center: Vector2, radius: float, variant: int
 		var dot_poly: Polygon2D = Polygon2D.new()
 		dot_poly.color = Color(1.0, 0.6, 0.1, 0.7)
 		dot_poly.z_index = -5
-		dot_poly.material = _get_lava_material()
+		dot_poly.material = _mat.lava()
 		dot_poly.polygon = dot_pts
 		parent.add_child(dot_poly)
 	_paint_terrain_variant(parent, center, radius, TerrainManager.TerrainType.CALDERA, variant)
@@ -778,7 +696,7 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 	# cutting as hard circles.
 	# A terrain-tuned grain/variation shader runs on the base blobs so the zone
 	# floor isn't a flat colour beneath its detail decals.
-	var base_mat: ShaderMaterial = _get_terrain_material_for(terrain) if terrain >= 0 else null
+	var base_mat: ShaderMaterial = _mat.terrain_for(terrain) if terrain >= 0 else null
 
 	# Smooth, rounded base outline (low-frequency harmonics instead of per-vertex
 	# jitter so the edge undulates in soft lobes rather than spikes).
@@ -789,7 +707,7 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 	# so the blend hugs the real silhouette instead of a circle. Drawn first
 	# (below the opaque base blob) so only the outer fringe shows. Only
 	# contrasting special zones get this — grass/dune patches don't need it.
-	if terrain in _GRADIENT_TERRAINS:
+	if terrain in MapMaterials.GRADIENT_TERRAINS:
 		_paint_edge_gradient(parent, pts, center, col)
 
 	var pts_clipped: PackedVector2Array = _clip_poly_to_map(pts)
@@ -833,13 +751,13 @@ func _paint_circle_patch(parent: Node2D, center: Vector2,
 	if t_int >= 0:
 		_paint_terrain_variant(parent, center, radius, t_int, variant)
 
-# Appends one STAIN_TILE-grid square to a batched multi-square polygon,
+# Appends one MapMaterials.STAIN_TILE-grid square to a batched multi-square polygon,
 # bridging back through the first point (same degenerate-edge batching used by
 # the laurisilva canopies) so hundreds of squares cost one Polygon2D.
 func _append_tile_square(pts: PackedVector2Array, origin: Vector2) -> void:
 	if pts.size() > 0:
 		pts.append(pts[0])
-	var t: float = STAIN_TILE
+	var t: float = MapMaterials.STAIN_TILE
 	pts.append(origin)
 	pts.append(origin + Vector2(t, 0.0))
 	pts.append(origin + Vector2(t, t))
@@ -851,7 +769,7 @@ func _append_tile_square(pts: PackedVector2Array, origin: Vector2) -> void:
 # instead of an amorphous soft-alpha blob. Appends into `pts` for batching.
 func _append_tile_stain(pts: PackedVector2Array, center: Vector2,
 		radius: float, coverage: float) -> void:
-	var t: float = STAIN_TILE
+	var t: float = MapMaterials.STAIN_TILE
 	var x: float = floor((center.x - radius) / t) * t
 	while x < center.x + radius:
 		var y: float = floor((center.y - radius) / t) * t
@@ -870,7 +788,7 @@ func _paint_edge_gradient(parent: Node2D, outline: PackedVector2Array,
 		center: Vector2, col: Color, _rings: int = 3, _spread: float = 0.14, z: int = -8) -> void:
 	if outline.size() < 3:
 		return
-	var t: float = STAIN_TILE
+	var t: float = MapMaterials.STAIN_TILE
 	var limit: float = _map_half - t
 	var pts: PackedVector2Array = PackedVector2Array()
 	var n: int = outline.size()
@@ -976,7 +894,7 @@ func _paint_grass_v0(parent: Node2D, center: Vector2, radius: float) -> void:
 		var gr: float = radius * _rng.randf_range(0.07, 0.16)
 		var gpos: Vector2 = center + Vector2(cos(ga), sin(ga)) * gd
 		var target: PackedVector2Array = light_pts if _rng.randi() % 3 == 0 else dark_pts
-		_append_tile_stain(target, gpos, maxf(gr, STAIN_TILE), 0.85)
+		_append_tile_stain(target, gpos, maxf(gr, MapMaterials.STAIN_TILE), 0.85)
 	_add_stain_poly(parent, light_pts, Color(0.28, 0.52, 0.18, 0.45))
 	_add_stain_poly(parent, dark_pts, Color(0.16, 0.36, 0.12, 0.55))
 	var blade_count: int = _rng.randi_range(12, 20)
@@ -1003,7 +921,7 @@ func _paint_grass_v1(parent: Node2D, center: Vector2, radius: float) -> void:
 		var gd: float = _rng.randf_range(0.0, radius * 0.85)
 		var gr: float = radius * _rng.randf_range(0.08, 0.18)
 		var gpos: Vector2 = center + Vector2(cos(ga), sin(ga)) * gd
-		_append_tile_stain(base_pts, gpos, maxf(gr, STAIN_TILE), 0.8)
+		_append_tile_stain(base_pts, gpos, maxf(gr, MapMaterials.STAIN_TILE), 0.8)
 	_add_stain_poly(parent, base_pts, Color(0.14, 0.34, 0.10, 0.50))
 	var flower_colors: Array = [
 		Color(0.95, 0.95, 0.90, 0.85),
@@ -1044,7 +962,7 @@ func _paint_grass_v2(parent: Node2D, center: Vector2, radius: float) -> void:
 		var pr: float = radius * _rng.randf_range(0.09, 0.20)
 		var ppos: Vector2 = center + Vector2(cos(pa), sin(pa)) * pd
 		var target: PackedVector2Array = gold_pts if _rng.randi() % 2 == 0 else olive_pts
-		_append_tile_stain(target, ppos, maxf(pr, STAIN_TILE), 0.8)
+		_append_tile_stain(target, ppos, maxf(pr, MapMaterials.STAIN_TILE), 0.8)
 	_add_stain_poly(parent, gold_pts, Color(0.52, 0.48, 0.18, 0.45))
 	_add_stain_poly(parent, olive_pts, Color(0.42, 0.38, 0.14, 0.40))
 	var blade_count: int = _rng.randi_range(10, 16)
@@ -1361,7 +1279,7 @@ func _paint_caldera_detail_v0(parent: Node2D, center: Vector2, radius: float) ->
 	var pool: Polygon2D = Polygon2D.new()
 	pool.color = Color(1.0, 0.35, 0.02, 0.75)
 	pool.z_index = -5
-	pool.material = _get_lava_material()
+	pool.material = _mat.lava()
 	pool.polygon = pool_pts
 	parent.add_child(pool)
 
@@ -1403,7 +1321,7 @@ func _paint_rect_bg(parent: Node2D, half: float, col: Color,
 	var poly: Polygon2D = Polygon2D.new()
 	poly.color = col
 	poly.z_index = -9
-	poly.material = _get_terrain_material_for(terrain)
+	poly.material = _mat.terrain_for(terrain)
 	poly.polygon = PackedVector2Array([
 		Vector2(-half, -half), Vector2(half, -half),
 		Vector2(half, half),   Vector2(-half, half),
@@ -1414,7 +1332,7 @@ func _paint_ocean_bg(parent: Node2D, half: float) -> void:
 	var poly: Polygon2D = Polygon2D.new()
 	poly.color = Color(1, 1, 1, 1)   # tinted by shader
 	poly.z_index = -9
-	poly.material = _get_water_material()
+	poly.material = _mat.water()
 	poly.polygon = PackedVector2Array([
 		Vector2(-half, -half), Vector2(half, -half),
 		Vector2(half, half),   Vector2(-half, half),
@@ -1433,7 +1351,7 @@ func _paint_coastal_ocean(parent: Node2D, half: float, land_col: Color) -> void:
 	var water: Polygon2D = Polygon2D.new()
 	water.color = Color(1, 1, 1, 1)   # tinted by shader
 	water.z_index = -10
-	water.material = _get_water_material()
+	water.material = _mat.water()
 	water.polygon = PackedVector2Array([
 		Vector2(-ocean_half, -ocean_half), Vector2(ocean_half, -ocean_half),
 		Vector2(ocean_half, ocean_half),   Vector2(-ocean_half, ocean_half),
@@ -1446,7 +1364,7 @@ func _paint_coastal_ocean(parent: Node2D, half: float, land_col: Color) -> void:
 	var shallow: Polygon2D = Polygon2D.new()
 	shallow.color = Color(1, 1, 1, 0.85)
 	shallow.z_index = -10
-	shallow.material = _get_shallow_material()
+	shallow.material = _mat.shallow()
 	shallow.polygon = _wavy_rect_outline(half * 1.055, half * 0.10)
 	parent.add_child(shallow)
 
@@ -1463,7 +1381,7 @@ func _paint_coastal_ocean(parent: Node2D, half: float, land_col: Color) -> void:
 	var sand: Polygon2D = Polygon2D.new()
 	sand.color = SHORE_SAND
 	sand.z_index = -9
-	sand.material = _get_terrain_material()
+	sand.material = _mat.terrain()
 	sand.polygon = _wavy_rect_outline(half * 1.005, half * 0.050)
 	parent.add_child(sand)
 
@@ -1486,7 +1404,7 @@ func _paint_coastal_ocean(parent: Node2D, half: float, land_col: Color) -> void:
 			var bpoly: Polygon2D = Polygon2D.new()
 			bpoly.color = land_col
 			bpoly.z_index = -9
-			bpoly.material = _get_terrain_material()
+			bpoly.material = _mat.terrain()
 			bpoly.polygon = bpts
 			parent.add_child(bpoly)
 		t += step
@@ -1509,7 +1427,7 @@ func _paint_polygon(parent: Node2D, pts: PackedVector2Array, col: Color) -> void
 	var poly: Polygon2D = Polygon2D.new()
 	poly.color = col
 	poly.z_index = -8
-	poly.material = _get_terrain_material_for(TerrainManager.TerrainType.GRASS)
+	poly.material = _mat.terrain_for(TerrainManager.TerrainType.GRASS)
 	poly.polygon = pts
 	parent.add_child(poly)
 
@@ -1529,7 +1447,7 @@ func _paint_shore(parent: Node2D, land_pts: PackedVector2Array, center: Vector2)
 	# around the coastline (variation arg) so the shore is broad in places and
 	# thin in others, like a real coast.
 	_paint_shore_ring(parent, land_pts, center, 1.17, 0.055, Color(1, 1, 1, 0.85), -9,
-		_get_shallow_material())
+		_mat.shallow())
 	_paint_shore_ring(parent, land_pts, center, 1.085, 0.030, SHORE_FOAM, -9)
 	_paint_shore_ring(parent, land_pts, center, 1.06, 0.035, SHORE_SAND, -9)
 
@@ -1562,7 +1480,7 @@ func _paint_shore_ring(parent: Node2D, land_pts: PackedVector2Array,
 	if mat != null:
 		poly.material = mat
 	elif col.a >= 0.99:
-		poly.material = _get_terrain_material()
+		poly.material = _mat.terrain()
 	poly.polygon = clipped
 	parent.add_child(poly)
 
@@ -2032,7 +1950,7 @@ func _spawn_resource_islets(parent: Node2D, center0: Vector2, center1: Vector2,
 		_land_polys.append(poly)
 		TerrainManager.set_land_polys(_land_polys, true)
 		_paint_shore(parent, poly, islet_center)
-		_paint_polygon(parent, poly, _tc(TerrainManager.TerrainType.GRASS))
+		_paint_polygon(parent, poly, MapMaterials.color_for(TerrainManager.TerrainType.GRASS))
 
 		# Pick a random template and spawn its resources on the islet
 		var template: Array = ISLET_TEMPLATES[_rng.randi() % ISLET_TEMPLATES.size()] as Array
