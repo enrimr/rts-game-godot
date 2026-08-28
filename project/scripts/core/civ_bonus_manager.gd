@@ -142,17 +142,20 @@ func get_unit_armor_bonus(player_id: int) -> float:
 	return get_multiplier(player_id, "unit_armor_melee")
 
 func get_attack_speed_multiplier(player_id: int, unit_id: String) -> float:
+	# Generic key composes with the category-specific ones (same pattern as
+	# unit_attack in get_unit_attack_multiplier), so a future tech/civ bonus can
+	# speed up melee units too — no civ sets it yet, defaults to 1.0.
+	var global_mult: float = get_multiplier(player_id, "unit_attack_speed")
 	# britons warship_attack_speed, atlantes ship_attack_speed (also naval unique units)
 	if unit_id == "war_galley" or unit_id == "warship" or unit_id == "tidecaller" or unit_id == "trireme":
 		var britons_mult: float = get_multiplier(player_id, "warship_attack_speed")
 		var atlantes_mult: float = get_multiplier(player_id, "ship_attack_speed")
-		# Return the one that actually has a bonus (differs from 1.0)
-		if britons_mult != 1.0:
-			return britons_mult
-		return atlantes_mult
+		# Use the one that actually has a bonus (differs from 1.0)
+		var naval_mult: float = britons_mult if britons_mult != 1.0 else atlantes_mult
+		return naval_mult * global_mult
 	if unit_id in _ARCHER_IDS:
-		return get_multiplier(player_id, "archer_attack_speed")
-	return 1.0
+		return get_multiplier(player_id, "archer_attack_speed") * global_mult
+	return global_mult
 
 func get_archer_armor_pierce_bonus(player_id: int) -> float:
 	return get_multiplier(player_id, "archer_armor_pierce")

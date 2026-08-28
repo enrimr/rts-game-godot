@@ -307,6 +307,31 @@ func test_attack_interval_applies_civ_attack_speed_multiplier() -> void:
 		"_attack_interval must equal 1 / (attack_speed × manager multiplier)")
 
 
+# 8b. The generic unit_attack_speed key reaches EVERY unit id — melee included —
+#     and composes multiplicatively with the category-specific keys.
+func test_attack_interval_applies_generic_unit_attack_speed() -> void:
+	var melee: HookRecorder = _make_recorder("militia")
+	melee.unit_data.attack_speed = 1.0
+	assert_almost_eq(melee._attack_interval(), 1.0, 0.0001,
+		"Baseline melee interval must be 1.0 s before injecting the generic key")
+
+	(CivBonusManager._multipliers[TEST_PID] as Dictionary)["unit_attack_speed"] = 1.25
+	assert_eq(CivBonusManager.get_attack_speed_multiplier(TEST_PID, "militia"), 1.25,
+		"Generic unit_attack_speed must apply to melee ids")
+	assert_almost_eq(melee._attack_interval(), 1.0 / 1.25, 0.0001,
+		"Melee interval must shrink under the generic multiplier")
+
+	(CivBonusManager._multipliers[TEST_PID] as Dictionary)["archer_attack_speed"] = 2.0
+	assert_almost_eq(CivBonusManager.get_attack_speed_multiplier(TEST_PID, "archer"),
+		2.0 * 1.25, 0.0001,
+		"Generic key must compose multiplicatively with archer_attack_speed")
+
+	(CivBonusManager._multipliers[TEST_PID] as Dictionary)["ship_attack_speed"] = 1.5
+	assert_almost_eq(CivBonusManager.get_attack_speed_multiplier(TEST_PID, "war_galley"),
+		1.5 * 1.25, 0.0001,
+		"Generic key must compose multiplicatively with the naval keys")
+
+
 # ===========================================================================
 # _execute_strike
 # ===========================================================================
