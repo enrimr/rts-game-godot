@@ -82,6 +82,67 @@ const DEFAULT_STYLE: Dictionary = {
 	"trim": Color(0.42, 0.34, 0.26), "headgear": "none",
 }
 
+## Naval identity, consumed by ShipDress on the shared hulls (fishing boat,
+## transport, war galley). Ships are the one place where the *civ* has to read
+## from a distance without a head to hang the dress on, so the hull itself
+## carries the material and the sail carries the colour.
+##
+## naval fields:
+##   hull:   hull planking colour (HullShadow/gunwales derive from it)
+##   deck:   deck and superstructure
+##   sail:   sail cloth
+##   accent: sail band, oar blades, prow ornament
+##   motif:  prow ornament id — "fin" (tall dorsal fin), "eye" (painted eye),
+##           "beak" (short pointed cutwater), "none"
+const NAVAL: Dictionary = {
+	"guanches": {   # barely a seafaring people: undressed logs, undyed cloth
+		"hull": Color(0.38, 0.30, 0.22), "deck": Color(0.50, 0.41, 0.30),
+		"sail": Color(0.86, 0.83, 0.74), "accent": Color(0.45, 0.42, 0.38),
+		"motif": "none",
+	},
+	"canarii": {    # laurel-wood hulls, whitewashed sails
+		"hull": Color(0.34, 0.40, 0.26), "deck": Color(0.56, 0.52, 0.36),
+		"sail": Color(0.92, 0.91, 0.86), "accent": Color(0.22, 0.42, 0.24),
+		"motif": "beak",
+	},
+	"mahos": {      # sun-bleached desert craft
+		"hull": Color(0.62, 0.50, 0.34), "deck": Color(0.78, 0.66, 0.46),
+		"sail": Color(0.90, 0.82, 0.66), "accent": Color(0.55, 0.30, 0.16),
+		"motif": "beak",
+	},
+	"franks": {     # heavy continental timber, slate cloth
+		"hull": Color(0.32, 0.26, 0.20), "deck": Color(0.48, 0.42, 0.34),
+		"sail": Color(0.62, 0.66, 0.74), "accent": Color(0.35, 0.38, 0.46),
+		"motif": "beak",
+	},
+	"britons": {    # tarred oak, charcoal-banded sails
+		"hull": Color(0.28, 0.28, 0.30), "deck": Color(0.46, 0.45, 0.44),
+		"sail": Color(0.88, 0.88, 0.86), "accent": Color(0.15, 0.16, 0.18),
+		"motif": "beak",
+	},
+	"castellanos": {  # carracks: pale hull, terracotta canvas
+		"hull": Color(0.60, 0.52, 0.40), "deck": Color(0.82, 0.76, 0.62),
+		"sail": Color(0.88, 0.80, 0.68), "accent": Color(0.72, 0.36, 0.22),
+		"motif": "beak",
+	},
+	"atlantes": {   # the naval civ: sea-stone hulls, bronze fittings, teal sails
+		"hull": Color(0.46, 0.60, 0.62), "deck": Color(0.72, 0.78, 0.76),
+		"sail": Color(0.26, 0.52, 0.52), "accent": Color(0.78, 0.62, 0.32),
+		"motif": "fin",
+	},
+	"fenicios": {   # purple-dyed cloth and the painted eye of their triremes
+		"hull": Color(0.52, 0.44, 0.32), "deck": Color(0.74, 0.66, 0.50),
+		"sail": Color(0.86, 0.82, 0.72), "accent": Color(0.45, 0.20, 0.42),
+		"motif": "eye",
+	},
+}
+
+const DEFAULT_NAVAL: Dictionary = {
+	"hull": Color(0.40, 0.28, 0.14), "deck": Color(0.54, 0.40, 0.20),
+	"sail": Color(0.84, 0.80, 0.70), "accent": Color(0.42, 0.34, 0.26),
+	"motif": "none",
+}
+
 static func civ_id_for_player(player_id: int) -> String:
 	if player_id == 0:
 		return MatchConfig.player_civ_id
@@ -92,3 +153,9 @@ static func style_for_civ(civ_id: String) -> Dictionary:
 
 static func style_for_player(player_id: int) -> Dictionary:
 	return style_for_civ(civ_id_for_player(player_id))
+
+static func naval_for_civ(civ_id: String) -> Dictionary:
+	return NAVAL.get(civ_id, DEFAULT_NAVAL) as Dictionary
+
+static func naval_for_player(player_id: int) -> Dictionary:
+	return naval_for_civ(civ_id_for_player(player_id))

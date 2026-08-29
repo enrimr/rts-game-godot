@@ -29,7 +29,7 @@ Estas civilizaciones son anteriores al conflicto medieval. Sus ruinas salpican e
 
 La civilización perdida del mito. Escritores griegos — Platón, Plinio, Herodoto — situaron la Atlántida más allá de las Columnas de Hércules, en el mismo océano que estas islas ocupan. En *Calima*, los Atlantes no son una leyenda. Son un imperio en declive con el conocimiento náutico más avanzado del mundo, y ruinas por todas partes.
 
-**Cómo se juega:** Los Atlantes controlan el agua. Sus Invocadores de Mareas son las únicas tropas terrestres del juego que entran en el mar — vadean los bajíos a velocidad completa y nadan en mar abierto —, así que ninguna orilla detiene un ataque atlante. Su línea de visión en cualquier costa es mayor que la de cualquier otra civilización.
+**Cómo se juega:** Los Atlantes controlan el agua. Sus Invocadores de Mareas son las únicas tropas terrestres del juego que entran en el mar — vadean los bajíos a velocidad completa y nadan en mar abierto —, así que ninguna orilla detiene un ataque atlante. Su línea de visión en cualquier costa es mayor que la de cualquier otra civilización. Su flota es inconfundible: cascos de piedra marina clara con herrajes de bronce, una aleta de bronce en cada proa y velas turquesa.
 
 **Puntos fuertes:** Dominio naval, expansión costera, control estratégico del mapa  
 **Puntos débiles:** Sin caballería pesada; asedio limitado; pierde en mapas de tierra pura

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://calima_ship_gallery"]
+
+[ext_resource type="Script" path="res://tools/check_ship_gallery.gd" id="1_sgallery"]
+
+[node name="ShipGallery" type="Node2D"]
+script = ExtResource("1_sgallery")

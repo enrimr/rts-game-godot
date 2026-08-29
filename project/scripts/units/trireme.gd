@@ -14,6 +14,12 @@ const GOLD_TICK_INTERVAL: float = 30.0
 
 var _gold_timer: float = 0.0
 
+func _ready() -> void:
+	# Civ-unique hull: it is already painted in Fenicios colours (purple sail
+	# stripe, painted eye), so it opts out of the shared naval dress pass.
+	set_meta(ShipDress.META_APPLIED, true)
+	super._ready()
+
 func _on_auto_attack_target(target: Node) -> void:
 	order_attack(target)
 

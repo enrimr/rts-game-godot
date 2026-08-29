@@ -68,6 +68,13 @@
 | Barco transporte | 1 | 125m | 45 s | 150 | 80 | 0 | — |
 | Galera de guerra | 1 | 75m + 35o | 35 s | 120 | 85 | 6 | 5.5 |
 
+Estos tres cascos son comunes a todas las civilizaciones, pero se pintan con los
+colores navales del propietario (`CivStyle.NAVAL`, aplicado por `ShipDress`):
+es puramente estético, no cambia ninguna estadística. Las dos civilizaciones
+marineras añaden además un adorno de proa: la flota atlante navega con cascos de
+piedra marina clara, herrajes de bronce, aleta dorsal de bronce y velas
+turquesa; los fenicios llevan el ojo pintado de sus trirremes.
+
 ---
 
 ## Unidades Únicas

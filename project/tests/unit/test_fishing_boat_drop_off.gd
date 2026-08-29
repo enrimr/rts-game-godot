@@ -3,8 +3,8 @@ extends GutTest
 ## Fishing boats filling up and never unloading.
 ##
 ## A dock straddles the shoreline, so its own origin is normally *on land* — and
-## land is off the ocean navmesh. Ships pretend to be the amphibious "atlantes"
-## civ, so the base _safe_destination() considered that origin passable and left
+## land is off the ocean navmesh. Ships are amphibious, so the base
+## _safe_destination() considered that origin passable and left
 ## it alone: the agent reported navigation finished at once, the boat sat still
 ## with a full hold, and RETURNING re-set the same unreachable target forever.
 ## Boats now sail to the dock's offshore water_access_point().

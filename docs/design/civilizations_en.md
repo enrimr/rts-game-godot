@@ -68,6 +68,12 @@
 | Transport Ship | 1 | 125w | 45 s | 150 | 80 | 0 | — |
 | War Galley | 1 | 75w + 35g | 35 s | 120 | 85 | 6 | 5.5 |
 
+These three hulls are shared by every civilization, but they are painted in the
+owner's naval colours (`CivStyle.NAVAL` applied by `ShipDress`) — purely
+cosmetic, no stat difference. The two sea civs also get a prow ornament: the
+Atlantes fleet sails pale sea-stone hulls with bronze fittings, a bronze dorsal
+fin and teal sails; the Fenicios carry the painted eye of their triremes.
+
 ---
 
 ## Unique Units

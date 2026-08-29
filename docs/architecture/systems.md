@@ -241,7 +241,22 @@ The components self-wire to their own signals; `hud_manager` does not relay even
 
 ## Naval Units
 
-All naval units extend `ShipBase` (`scripts/units/ship_base.gd`), which itself extends `UnitBase`. `ShipBase` sets `civ_id = "atlantes"` on `_ready` so that the ocean terrain is treated as passable by `TerrainManager` for every ship regardless of the owning player's civilization.
+All naval units extend `ShipBase` (`scripts/units/ship_base.gd`), which itself extends `UnitBase`. `ShipBase` returns `true` from `is_amphibious()`, which is what makes ocean terrain passable for every ship regardless of the owning player's civilization. It used to force `civ_id = "atlantes"` for that same purpose; the hull now inherits the owner's civilization instead (`CivStyle.civ_id_for_player`), which is what the naval dress pass paints.
+
+### Naval civ identity
+
+`ShipDress` (`scripts/utils/ship_dress.gd`) is the naval counterpart of `UnitDress`:
+a ship has no head to hang headgear on, so the hull planking carries the civ
+material and the sail carries the civ colour, both read from `CivStyle.NAVAL`
+(`hull` / `deck` / `sail` / `accent` / `motif`).
+
+- Recolours the `Hull`, `HullShadow`, `Deck`, `Cabin`, `Ram`, gunwale/plank/bulwark/bench and `OarBlade*` polygons; retints an existing `SailStripe` or adds a `CivSailBand` when the sail is plain.
+- Adds a prow ornament for the two civs whose identity *is* the sea: the Atlantes bronze dorsal fin plus a bronze waterline stripe (`motif: "fin"`), and the Fenicios painted eye (`motif: "eye"`). Other civs get a short cutwater (`"beak"`) or nothing.
+- Applied deferred from `ShipBase._ready`, guarded by `META_APPLIED`, so it is idempotent and so HUD icons (`IconBaker` waits four frames) show the dressed hull.
+- Civ-unique hulls opt out by stamping `META_APPLIED` in their own `_ready` — the Trireme already carries Fenicios art.
+
+Reviewed with `tools/check_ship_gallery.tscn` (one civ per row, `CALIMA_CIVS` narrows
+the grid); gated by `tests/unit/test_ship_dress.gd`.
 
 ### Unit classes
 

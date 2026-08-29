@@ -52,11 +52,11 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | ChevalierNormand | `scripts/units/chevalier_normand.gd` | Franks cavalry: Lance Charge (×2.5 after 80 px movement) |
 | Longbowman | `scripts/units/longbowman.gd` | Britons archer: Armour Piercing (+4 vs cavalry), kiting AI |
 | Conquistador | `scripts/units/conquistador.gd` | Castellanos infantry: Salvo Fire (3 rapid shots, 12 s CD) |
-| Tidecaller | `scripts/units/tidecaller.gd` | Atlantes amphibious: Tidal Pulse (2 splash damage, 65 px) |
+| Tidecaller | `scripts/units/tidecaller.gd` | Atlantes amphibious: Tidal Pulse (2 splash damage, 65 px); walks into the sea on navigation layer 4 |
 | Trireme | `scripts/units/trireme.gd` | Fenicios ship: Ram (×2 vs ships, 40 px knockback), passive gold income |
 | Animal | `scripts/units/animal.gd` | Wildlife (deer, boar) |
 | Sheep | `scripts/units/sheep.gd` | Convertible livestock |
-| ShipBase | `scripts/units/ship_base.gd` | Base class for naval units; ocean passability via `civ_id` |
+| ShipBase | `scripts/units/ship_base.gd` | Base class for naval units; ocean passability via `is_amphibious()`, hull painted per civ by `ShipDress` |
 
 ### Building Classes (22 total)
 

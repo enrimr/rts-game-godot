@@ -160,7 +160,7 @@ func _do_spawn(scene_path: String) -> void:
 		return
 	var unit: Node2D = packed.instantiate() as Node2D
 	unit.set("player_id", player_id)
-	# civ_id set to "atlantes" by ShipBase._ready() — ocean passable
+	# civ_id is derived from player_id by ShipBase._ready() (it drives ShipDress)
 	get_parent().add_child(unit)
 	unit.global_position = _water_spawn_pos()
 	PopulationManager.add_unit(player_id)

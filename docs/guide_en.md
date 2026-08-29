@@ -29,7 +29,7 @@ These civilizations predate the medieval conflict. Their ruins dot the archipela
 
 The lost civilization of myth. Greek writers — Plato, Pliny, Herodotus — placed Atlantis beyond the Pillars of Hercules, in the very ocean these islands occupy. In *Calima*, the Atlantes are not a legend. They are a fading empire with the most advanced seafaring knowledge in the world, and ruins everywhere.
 
-**How they play:** Atlantes control the water. Their Tidecallers are the only land troops in the game that walk into the sea — wading the shallows at full speed and swimming open water — so a shoreline never stops an Atlantes push. Their line of sight along any coast is greater than any other civ.
+**How they play:** Atlantes control the water. Their Tidecallers are the only land troops in the game that walk into the sea — wading the shallows at full speed and swimming open water — so a shoreline never stops an Atlantes push. Their line of sight along any coast is greater than any other civ. Their fleet is unmistakable: pale sea-stone hulls with bronze fittings, a bronze fin at every prow and teal sails.
 
 **Strengths:** Naval dominance, coastal expansion, strategic map control  
 **Weaknesses:** No heavy cavalry; siege is limited; loses badly on pure land maps

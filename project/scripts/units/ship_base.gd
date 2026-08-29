@@ -12,10 +12,13 @@ func is_amphibious() -> bool:
 	return true
 
 func _ready() -> void:
-	# Cosmetic only since ocean access moved to is_amphibious(): every hull is
-	# dressed in Atlantes style by UnitDress.
-	civ_id = "atlantes"
+	# Ships used to force civ_id = "atlantes" to make the ocean passable. Water
+	# access is is_amphibious() now, so the hull can finally belong to the civ
+	# that built it — which is what ShipDress paints.
+	if civ_id.is_empty():
+		civ_id = CivStyle.civ_id_for_player(player_id)
 	super._ready()
+	ShipDress.apply.call_deferred(self, player_id)
 
 ## Ships can only follow the ocean navmesh, but the base implementation only asks
 ## whether the destination is *impassable* — and water is passable for anything

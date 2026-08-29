@@ -153,8 +153,9 @@ docs/             ← Architecture and design documentation
 | `project/scripts/utils/icon_baker.gd` | `IconBaker` — runtime-baked entity miniatures (civ-styled) for buttons/portraits/queue |
 | `project/scripts/utils/iso_projection.gd` | `IsoProjection` — camera-level isometric math (world/screen, zoom composition) |
 | `project/scripts/utils/iso_billboard.gd` | `IsoBillboard` — upright entities on the projected ground, depth sort, z constants |
-| `project/scripts/utils/civ_style.gd` | `CivStyle` — per-civ visual identity (wall/roof silhouette/trim/headgear) |
+| `project/scripts/utils/civ_style.gd` | `CivStyle` — per-civ visual identity (wall/roof silhouette/trim/headgear, plus the `NAVAL` hull/deck/sail/accent/motif palettes) |
 | `project/scripts/utils/unit_dress.gd` | `UnitDress` — per-civ headgear/sash decoration of shared unit rigs |
+| `project/scripts/utils/ship_dress.gd` | `ShipDress` — per-civ hull/deck/sail repaint + prow ornament of the shared hulls (Atlantes bronze fin, Fenicios eye); civ-unique hulls stamp `META_APPLIED` to opt out |
 | `project/scripts/utils/entity_names.gd` | `EntityNames` — localized unit/building display names with fallback |
 | `project/scripts/utils/alert_ring.gd` | `AlertRing` — ring buffer of attack-alert positions for the SPACE jump |
 | `project/scripts/utils/visual_fx.gd` | `VisualFx` — ground shadows, selection plinths, nameplate visibility |
@@ -215,6 +216,9 @@ CALIMA_RIVALS=3 CALIMA_MAP_SIZE=0 $GODOT --headless --path project res://tools/c
 $GODOT --headless --path project res://tools/check_nav_islands.tscn   # env: CALIMA_MAP
 # Amphibious: the Tidecaller swims off the beach, land units are refused water, passengers disembark dry
 $GODOT --headless --path project res://tools/check_amphibious.tscn
+# Naval civ identity (real renderer, not headless): every hull dressed for every civ
+CALIMA_SHOT_DIR=/tmp/calima-ships $GODOT --path project --resolution 1600x900 \
+  res://tools/check_ship_gallery.tscn   # env: CALIMA_CIVS=atlantes,fenicios
 ```
 
 Note: GUT silently *skips* a test script that fails to parse while still
@@ -268,7 +272,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Franks: Cheaper age advance, cavalry HP bonus, fast farms
 - Britons: Archer range +1/age, warship attack speed bonus
 - Castellanos: Free Blacksmith tech/age, balanced roster
-- Atlantes: Ship attack speed bonus, amphibious unique unit (Tidecaller wades shallows at full speed, swims deep water at `deep_water_speed` 0.60), harder to spot in Sea Fog (`fog_stealth` 0.5), +50 % vision within 400 px of a shore (`coastal_vision` 1.50, read by `FogOfWar._coastal_vision_mult`)
+- Atlantes: Ship attack speed bonus, distinct sea-stone/bronze fleet (`CivStyle.NAVAL`), amphibious unique unit (Tidecaller wades shallows at full speed, swims deep water at `deep_water_speed` 0.60), harder to spot in Sea Fog (`fog_stealth` 0.5), +50 % vision within 400 px of a shore (`coastal_vision` 1.50, read by `FogOfWar._coastal_vision_mult`)
 - Fenicios: Ship cost reduction, ramming naval unique unit
 
 **Weather System:**
