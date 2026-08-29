@@ -1,5 +1,62 @@
 # System Design Details
 
+## Command Pattern (player orders)
+
+Every simulation-mutating player intent is a `GameCommand`
+(`scripts/game/commands/game_command.gd`) submitted through the `CommandBus`
+autoload (`scripts/core/command_bus.gd`) — input/UI code decides *what* the
+player meant, the command *does* it. Commands carry only serializable data:
+entity IDs from the `EntityRegistry` autoload (`scripts/core/entity_registry.gd`),
+positions and type strings, never node pointers. `CommandBus.submit()`
+tick-stamps each command into the match log and executes it; the log is the
+foundation replays build on and the exact payload a LAN lockstep session will
+exchange (`save_log()` writes it as JSON lines, `command_from_dict()` rebuilds
+any entry).
+
+The nine command classes live in `scripts/game/commands/`:
+
+| Class | kind | Verbs / payload |
+|---|---|---|
+| `UnitPointCommand` | `unit_point` | move / attack_move (formation ring fan-out) / attack_ground; unit IDs + point |
+| `UnitTargetCommand` | `unit_target` | attack / gather (restores depleted farms & fish traps, routes fishing boats to their dock) / build / drop_off / board (walk-then-board poll); unit IDs + target ID |
+| `UnitActionCommand` | `unit_action` | stop / delete / hero_ability / trebuchet_toggle / scout_explore(_stop); unit IDs |
+| `TransportCommand` | `transport` | unload_all / unload_one(index) / move_unload(pos); transport ID |
+| `ProductionCommand` | `production` | train(unit_id — empty = the TC's no-arg signature) / cancel_train(index) / research(tech_id); building ID |
+| `BuildingActionCommand` | `building_action` | set_rally(pos) / gate_lock / delete (routes through take_damage); building ID |
+| `MarketCommand` | `market` | buy / sell / hire (spawns the Fenicios mercenary at the rally point); building ID + item |
+| `PlaceBuildingCommand` | `place_building` | building type + positions (a wall drag is ONE command with the whole run) + rotation + builder IDs; pays per site, stops when the stockpile runs out |
+| `AdvanceAgeCommand` | `advance_age` | player only |
+
+Ownership is validated at execute time (`GameCommand._own_entities` keeps only
+entities whose `player_id` matches the command's), so a hostile or replayed
+payload cannot order another player's units. Deeper validation (costs, rosters,
+queue caps) lives where it always did — `order_train`, `AgeManager`,
+`TechManager`, `Market` — so the commands stay thin.
+
+`EntityRegistry` assigns sequential IDs: `CommandBus.start_match(world)` (the
+last line of `GameWorld._ready`) rescans the world in tree order and the
+`unit_spawned` / `building_placed` signals register everything created after
+that, so identical simulations hand out identical IDs. `id_of()` lazily
+registers stragglers no signal covers.
+
+What does **not** go through the bus: selection, control groups, camera, HUD
+state, the placement ghost, `show_path` (debug visual) and all click feedback
+(flashes, order sounds) — local-only concerns that must not replay or cross
+the network. Known phase-2 work before lockstep: the AI modules still order
+their units directly, placement legality is only validated at the submission
+site, and the simulation itself (physics, RNG) is not yet deterministic.
+
+Migrating cover fire surfaced a real bug, now fixed: `_order_attack_ground_all`
+used to emit `minimap_move_order`, whose handler synchronously issued
+`_order_move_all` — the move overrode the just-issued attack-ground order, so
+cover fire cancelled itself.
+
+Gated by `tests/unit/test_command_bus.gd` (registry determinism, serialization
+round-trips for all nine kinds, ownership filtering, log stamping, formation
+determinism, replayed-entry equivalence) and `tools/check_command_bus.tscn`
+(a real match driven exclusively through the bus: move + train + place, log
+rebuildable and saved).
+
 ## Economy System
 
 Resources: Food, Wood, Gold, Stone (matching AoE2 exactly).

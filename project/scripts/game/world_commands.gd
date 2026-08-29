@@ -1,16 +1,15 @@
 class_name WorldCommands extends RefCounted
 
-## The order/command layer for the match: right-click intent resolution, the
-## click-target pickers (_find_*_at), order fan-outs over the current
-## selection, formation slots, pending map-click actions, the HUD action
-## router and the click-feedback flashes. Shared selection state
-## (_selected_units, _selected_building) stays on GameWorld; input dispatch
-## and the cursor-refresh timer stay in GameWorld._process/_unhandled_input.
+## The player's intent layer: right-click resolution, the click-target pickers
+## (_find_*_at), the HUD action router, pending map-click actions and the
+## click-feedback flashes. Every simulation mutation is packaged as a
+## GameCommand and submitted through the CommandBus autoload — this class
+## decides WHAT the player meant, the commands do it. UI feedback (audio,
+## flashes, selection changes, HUD refreshes) stays here: it is local-only and
+## must not replay or cross the network.
 
 const UNIT_CLICK_RADIUS: float = 32.0
 const BUILDING_CLICK_RADIUS: float = 40.0
-const MAX_BOARD_ATTEMPTS: int = 100  # 10 seconds (100 * 0.1s)
-const FORMATION_SPACING: float = 34.0  # px between formation slots
 
 var _world  # GameWorld — untyped so dynamic access works
 
@@ -19,6 +18,11 @@ var _pending_action: String = ""
 
 func setup(world) -> void:
 	_world = world
+
+## Registry IDs of the current live selection — the unit set every command
+## carries. Ownership is re-checked at execute time by the command itself.
+func _selection_ids() -> Array[int]:
+	return EntityRegistry.ids_of(_world.live_selection())
 
 ## Feeds CursorManager.resolve_context (the pure, tested mapping) with the
 ## current selection and whatever right-click target sits under the mouse,
@@ -97,23 +101,25 @@ class _FlashMarker extends Node2D:
 func _handle_right_click(world_pos: Vector2) -> void:
 	if _world._selected_units.is_empty():
 		if is_instance_valid(_world._selected_building) and _world._selected_building.has_method("set_rally_point"):
-			_world._selected_building.set_rally_point(world_pos)
+			CommandBus.submit(BuildingActionCommand.make(0, "set_rally",
+				EntityRegistry.id_of(_world._selected_building), world_pos))
 			_flash_target(_world._selected_building, Color(1.0, 0.92, 0.2, 1.0))
 		return
 
 	# 0a. Own transport ship clicked with boardable land units → board
 	var transport: TransportShip = _find_own_transport_at(world_pos)
 	if transport != null and not transport.is_full():
-		var any_boarded: bool = false
-		for unit: Node in _world.live_selection().duplicate():
+		var boardable: Array[int] = []
+		for unit: Node in _world.live_selection():
 			if not is_instance_valid(unit) or unit is ShipBase:
 				continue
 			var pid: Variant = unit.get("player_id")
 			if pid == null or (pid as int) != 0:
 				continue
-			_order_board(unit, transport)
-			any_boarded = true
-		if any_boarded:
+			boardable.append(EntityRegistry.id_of(unit))
+		if not boardable.is_empty():
+			CommandBus.submit(UnitTargetCommand.make(0, "board", boardable,
+				EntityRegistry.id_of(transport)))
 			_flash_target(transport, Color(0.4, 1.0, 0.4, 1.0))
 			return
 
@@ -122,7 +128,8 @@ func _handle_right_click(world_pos: Vector2) -> void:
 			and _world._selected_units[0] is TransportShip:
 		var ts: TransportShip = _world._selected_units[0] as TransportShip
 		if not ts._garrison.is_empty() and not TerrainManager.is_ocean(world_pos):
-			ts.order_move_then_unload(world_pos)
+			CommandBus.submit(TransportCommand.make(0, "move_unload",
+				EntityRegistry.id_of(ts), -1, world_pos))
 			return
 
 	# 1. Enemy unit clicked → attack
@@ -131,10 +138,12 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		_order_attack_all(enemy_unit)
 		return
 
-	# 2. Animal clicked
+	# 2. Animal clicked → send the selection to slaughter it for food (own
+	# herded sheep included — that's how a sheep yields meat); soldiers attack it.
 	var animal: Animal = _find_animal_at(world_pos)
 	if animal != null:
-		_order_interact_animal(animal)
+		CommandBus.submit(UnitTargetCommand.make(0, "attack", _selection_ids(),
+			EntityRegistry.id_of(animal)))
 		return
 
 	# 3. Enemy building clicked → attack
@@ -158,7 +167,9 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		if is_damaged and not any_carrying:
 			_order_build_all(drop_off_node)
 		else:
-			_order_drop_off_all(drop_off_node)
+			_flash_target(drop_off_node, Color(1.8, 1.8, 0.4, 1.0))
+			CommandBus.submit(UnitTargetCommand.make(0, "drop_off", _selection_ids(),
+				EntityRegistry.id_of(drop_off_node)))
 		return
 
 	# 5. Resource node → gather
@@ -167,16 +178,16 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		_order_gather_all(resource_node)
 		return
 
-	# 6. Farm → gather/restore
+	# 6. Farm → gather (the command restores a depleted farm first)
 	var farm: Farm = _find_farm_at(world_pos)
 	if farm != null:
-		_order_gather_farm(farm)
+		_order_gather_all(farm)
 		return
 
-	# 6b. Fish Trap clicked by fishing boat → gather/restore
+	# 6b. Fish Trap clicked by fishing boat → gather (idem restore)
 	var fish_trap: FishTrap = _find_fish_trap_at(world_pos)
 	if fish_trap != null:
-		_order_gather_fish_trap(fish_trap)
+		_order_gather_all(fish_trap)
 		return
 
 	# 7. Own gate → just move through it
@@ -200,11 +211,11 @@ func _handle_right_click(world_pos: Vector2) -> void:
 	_order_move_all(world_pos)
 
 func _order_attack_ground_all(world_pos: Vector2) -> void:
-	for unit: Node in _world.live_selection():
-		if is_instance_valid(unit) and unit.has_method("order_attack_ground"):
-			unit.call("order_attack_ground", world_pos)
+	# Deliberately does NOT emit minimap_move_order: that signal is wired to
+	# _order_move_all, so emitting it here synchronously overrode the freshly
+	# issued attack-ground with a plain move (cover fire cancelled itself).
+	CommandBus.submit(UnitPointCommand.make(0, "attack_ground", _selection_ids(), world_pos))
 	_flash_point(world_pos, Color(1.0, 0.6, 0.1, 1.0))
-	EventBus.minimap_move_order.emit(world_pos)
 
 func _find_own_transport_at(world_pos: Vector2) -> TransportShip:
 	for unit: Node in _world.units_layer.get_children():
@@ -217,41 +228,6 @@ func _find_own_transport_at(world_pos: Vector2) -> TransportShip:
 			return unit as TransportShip
 	return null
 
-func _order_board(unit: Node, transport: TransportShip) -> void:
-	# Make the unit walk toward the transport; board once in range.
-	# We use a lightweight polling approach: move the unit toward the ship
-	# and board immediately if already close, otherwise let movement handle it.
-	var dist: float = (unit as Node2D).global_position.distance_to(
-		(transport as Node2D).global_position)
-	if dist <= TransportShip.BOARD_RANGE:
-		transport.board(unit)
-		_world._selected_units.erase(unit)
-		SelectionManager.select(_world._selected_units)
-	else:
-		# Move toward ship; boarding completes when the unit arrives via _board_poll
-		if unit.has_method("order_move"):
-			unit.call("order_move", (transport as Node2D).global_position)
-		_start_board_poll(unit, transport)
-
-func _start_board_poll(unit: Node, transport: TransportShip, attempts: int = 0) -> void:
-	var timer: SceneTreeTimer = _world.get_tree().create_timer(0.1)
-	timer.timeout.connect(func() -> void:
-		if not is_instance_valid(unit) or not is_instance_valid(transport):
-			return
-		# Transport destroyed/moved/full - abort boarding
-		if transport.is_full():
-			return
-		var d: float = (unit as Node2D).global_position.distance_to(
-			(transport as Node2D).global_position)
-		if d <= TransportShip.BOARD_RANGE:
-			transport.board(unit)
-			_world._selected_units.erase(unit)
-			SelectionManager.select(_world._selected_units)
-		elif attempts < MAX_BOARD_ATTEMPTS:
-			_start_board_poll(unit, transport, attempts + 1)
-		# else: timeout - unit couldn't reach transport, silently abort
-	)
-
 func _find_animal_at(world_pos: Vector2) -> Animal:
 	for unit: Node in _world.units_layer.get_children():
 		if not (unit is Animal):
@@ -259,16 +235,6 @@ func _find_animal_at(world_pos: Vector2) -> Animal:
 		if world_pos.distance_to((unit as Node2D).global_position) < UNIT_CLICK_RADIUS:
 			return unit as Animal
 	return null
-
-func _order_interact_animal(animal: Animal) -> void:
-	# Right-clicking any animal (own herded sheep included) sends the selected
-	# units to slaughter it for food — that's how a sheep yields meat. If no
-	# gatherer is selected (e.g. only soldiers), they still attack it.
-	for unit: Node in _world.live_selection():
-		if not is_instance_valid(unit):
-			continue
-		if unit.has_method("order_attack"):
-			unit.order_attack(animal)
 
 func _find_gate_at(world_pos: Vector2) -> Gate:
 	for building: Node in _world.buildings_layer.get_children():
@@ -298,20 +264,6 @@ func _find_drop_off_at(world_pos: Vector2) -> Node:
 				return building
 	return null
 
-func _order_drop_off_all(target: Node) -> void:
-	_flash_target(target, Color(1.8, 1.8, 0.4, 1.0))
-	for unit: Node in _world.live_selection():
-		if not is_instance_valid(unit):
-			continue
-		if unit is FishingBoat:
-			var fb: FishingBoat = unit as FishingBoat
-			fb.drop_off_target = target
-			if fb.carried_amount > 0.0:
-				fb.current_state = UnitBase.UnitState.RETURNING
-				fb.nav_agent.target_position = fb._safe_destination((target as Node2D).global_position)
-		elif unit.has_method("order_drop_off"):
-			unit.order_drop_off(target)
-
 func _find_farm_at(world_pos: Vector2) -> Farm:
 	for building: Node in _world.buildings_layer.get_children():
 		if not (building is Farm):
@@ -323,23 +275,6 @@ func _find_farm_at(world_pos: Vector2) -> Farm:
 				return farm
 	return null
 
-func _order_gather_farm(farm: Farm) -> void:
-	_flash_target(farm, Color(1.8, 1.8, 0.4, 1.0))
-	if farm.is_depleted():
-		_order_restore_farm(farm)
-		return
-	for unit: Node in _world.live_selection():
-		if is_instance_valid(unit) and unit.has_method("order_gather"):
-			unit.order_gather(farm, "food", null)
-
-func _order_restore_farm(farm: Farm) -> void:
-	if not ResourceManager.spend_resource(0, farm.get_restore_cost()):
-		return
-	farm.restore()
-	for unit: Node in _world.live_selection():
-		if is_instance_valid(unit) and unit.has_method("order_gather"):
-			unit.order_gather(farm, "food", null)
-
 func _find_fish_trap_at(world_pos: Vector2) -> FishTrap:
 	for building: Node in _world.buildings_layer.get_children():
 		if not (building is FishTrap):
@@ -349,27 +284,6 @@ func _find_fish_trap_at(world_pos: Vector2) -> FishTrap:
 			if ft.state == BuildingBase.BuildingState.COMPLETE:
 				return ft
 	return null
-
-func _order_gather_fish_trap(fish_trap: FishTrap) -> void:
-	_flash_target(fish_trap, Color(1.8, 1.8, 0.4, 1.0))
-	if fish_trap.is_depleted():
-		_order_restore_fish_trap(fish_trap)
-		return
-	for unit: Node in _world.live_selection():
-		if unit is FishingBoat:
-			var fb: FishingBoat = unit as FishingBoat
-			var dock_node: Node = _find_nearest_dock(fb)
-			fb.order_fish(fish_trap, dock_node)
-
-func _order_restore_fish_trap(fish_trap: FishTrap) -> void:
-	if not ResourceManager.spend_resource(0, fish_trap.get_restore_cost()):
-		return
-	fish_trap.restore()
-	for unit: Node in _world.live_selection():
-		if unit is FishingBoat:
-			var fb: FishingBoat = unit as FishingBoat
-			var dock_node: Node = _find_nearest_dock(fb)
-			fb.order_fish(fish_trap, dock_node)
 
 func _find_enemy_unit_at(world_pos: Vector2) -> Node:
 	for unit: Node in _world.units_layer.get_children():
@@ -479,15 +393,13 @@ func _flash_target(node: Node, flash_color: Color = Color(2.0, 2.0, 2.0, 1.0)) -
 func _order_attack_all(target: Node) -> void:
 	AudioManager.play("cmd_attack")
 	_flash_target(target, Color(2.2, 0.4, 0.4, 1.0))
-	for unit: Node in _world.live_selection():
-		if is_instance_valid(unit) and unit.has_method("order_attack"):
-			unit.order_attack(target)
+	CommandBus.submit(UnitTargetCommand.make(0, "attack", _selection_ids(),
+		EntityRegistry.id_of(target)))
 
 func _order_build_all(building: Node) -> void:
 	_flash_target(building, Color(0.6, 1.8, 0.6, 1.0))
-	for unit: Node in _world.live_selection():
-		if is_instance_valid(unit) and unit.has_method("order_build"):
-			unit.order_build(building)
+	CommandBus.submit(UnitTargetCommand.make(0, "build", _selection_ids(),
+		EntityRegistry.id_of(building)))
 
 func _find_resource_at(world_pos: Vector2) -> ResourceNode:
 	for child: Node in _world.get_children():
@@ -497,34 +409,12 @@ func _find_resource_at(world_pos: Vector2) -> ResourceNode:
 				return rn
 	return null
 
-func _order_gather_all(resource_node: ResourceNode) -> void:
-	_flash_target(resource_node, Color(1.8, 1.8, 0.4, 1.0))
-	var resource_name: String = resource_node.get_resource_name()
-	var is_fish: bool = resource_node.resource_type == ResourceNode.ResourceType.FOOD_FISH
-	for unit: Node in _world.live_selection():
-		if not is_instance_valid(unit):
-			continue
-		if is_fish and unit is FishingBoat:
-			# Find the nearest friendly dock to use as drop-off
-			var dock_node: Node = _find_nearest_dock(unit as Node2D)
-			(unit as FishingBoat).order_fish(resource_node, dock_node)
-		elif not is_fish and unit.has_method("order_gather"):
-			unit.order_gather(resource_node, resource_name, _world.drop_off)
-
-func _find_nearest_dock(requester: Node2D) -> Node:
-	var best: Node = null
-	var best_dist: float = 9999999.0
-	for b: Node in _world.buildings_layer.get_children():
-		if not (b is Dock):
-			continue
-		var pid: Variant = b.get("player_id")
-		if pid == null or (pid as int) != 0:
-			continue
-		var d: float = requester.global_position.distance_to((b as Node2D).global_position)
-		if d < best_dist:
-			best_dist = d
-			best = b
-	return best
+## One gather entry point for resource nodes, farms and fish traps — the
+## GatherCommand sorts out fishing boats, drop-offs and depleted restores.
+func _order_gather_all(target: Node) -> void:
+	_flash_target(target, Color(1.8, 1.8, 0.4, 1.0))
+	CommandBus.submit(UnitTargetCommand.make(0, "gather", _selection_ids(),
+		EntityRegistry.id_of(target)))
 
 func _execute_pending_action(world_pos: Vector2) -> void:
 	var action: String = _pending_action
@@ -549,19 +439,7 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 
 func _order_attack_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")
-	var valid_units: Array[Node] = []
-	for u: Node in _world.live_selection():
-		if is_instance_valid(u) and u.has_method("order_move"):
-			valid_units.append(u)
-	var count: int = valid_units.size()
-	if count == 0:
-		return
-	var slots: Array[Vector2] = _formation_slots(world_pos, count)
-	for i: int in range(count):
-		if valid_units[i].has_method("order_attack_move"):
-			valid_units[i].order_attack_move(slots[i])
-		else:
-			valid_units[i].order_move(slots[i])
+	CommandBus.submit(UnitPointCommand.make(0, "attack_move", _selection_ids(), world_pos))
 
 ## Briefly shows a coloured expanding ring at `world_pos` to confirm a click order.
 func _flash_point(world_pos: Vector2, color: Color) -> void:
@@ -583,76 +461,37 @@ func _order_move_all(world_pos: Vector2) -> void:
 	for u: Node in _world.live_selection():
 		if is_instance_valid(u) and u.has_method("order_move"):
 			valid_units.append(u)
-	var count: int = valid_units.size()
-	if count == 0:
+	if valid_units.is_empty():
 		return
-	var slots: Array[Vector2] = _formation_slots(world_pos, count)
-	for i: int in range(count):
-		valid_units[i].order_move(slots[i])
+	CommandBus.submit(UnitPointCommand.make(0, "move",
+		EntityRegistry.ids_of(valid_units), world_pos))
 	# Ground flash where the player clicked — move was the only order
 	# without click feedback (gather/attack flash their target already).
 	_flash_point(world_pos, Color(0.35, 1.0, 0.45, 1.0))
 	EventBus.unit_command_issued.emit(valid_units, {"type": "move", "pos": world_pos})
 
-## Returns world-space positions for `count` units in concentric rings around `center`.
-## The formation faces away from the average origin of the selected units (nearest ring
-## is placed on the side closest to where units are coming from).
-func _formation_slots(center: Vector2, count: int) -> Array[Vector2]:
-	# Average position of selected units → direction they approach from
-	var avg_origin: Vector2 = Vector2.ZERO
-	for u: Node in _world.live_selection():
-		if is_instance_valid(u):
-			avg_origin += (u as Node2D).global_position
-	avg_origin /= float(_world._selected_units.size())
-	# "back" direction: from center toward average origin (units arrive from that side)
-	var back_dir: Vector2 = (avg_origin - center).normalized()
-	if back_dir == Vector2.ZERO:
-		back_dir = Vector2.DOWN
-
-	var slots: Array[Vector2] = []
-	slots.append(center)  # slot 0: the exact target point
-	if count == 1:
-		return slots
-
-	# Fill concentric rings: ring r has 6*r slots, radius r*FORMATION_SPACING
-	var ring: int = 1
-	while slots.size() < count:
-		var slots_in_ring: int = 6 * ring
-		var radius: float = ring * FORMATION_SPACING
-		# Start angle: point the first slot toward the back (approaching side)
-		var start_angle: float = back_dir.angle()
-		for s: int in range(slots_in_ring):
-			if slots.size() >= count:
-				break
-			var angle: float = start_angle + s * TAU / float(slots_in_ring)
-			slots.append(center + Vector2(cos(angle), sin(angle)) * radius)
-		ring += 1
-
-	return slots
-
 # --- HUD action buttons ---
+
+func _selected_building_id() -> int:
+	if not is_instance_valid(_world._selected_building):
+		return 0
+	return EntityRegistry.id_of(_world._selected_building)
 
 func _on_action_requested(action_id: String) -> void:
 	if action_id.begins_with("build:"):
 		_world._placement._start_placement(action_id.trim_prefix("build:"))
 		return
 	if action_id.begins_with("research:"):
-		var tech_id: String = action_id.substr("research:".length())
 		if is_instance_valid(_world._selected_building):
-			TechManager.start_research(0, tech_id, _world._selected_building)
+			CommandBus.submit(ProductionCommand.make(0, "research",
+				_selected_building_id(), action_id.substr("research:".length())))
 		return
 	if action_id.begins_with("market:"):
 		if is_instance_valid(_world._selected_building) and _world._selected_building is Market:
 			var parts: PackedStringArray = action_id.split(":")
 			if parts.size() == 3:
-				var op: String = parts[1]
-				var res: String = parts[2]
-				if op == "sell":
-					(_world._selected_building as Market).sell_lot(0, res)
-				elif op == "buy":
-					(_world._selected_building as Market).buy_lot(0, res)
-				elif op == "hire":
-					_hire_mercenary_from_market(_world._selected_building as Market, res)
+				CommandBus.submit(MarketCommand.make(0, parts[1],
+					_selected_building_id(), parts[2]))
 		return
 	match action_id:
 		"gather_wood":
@@ -669,81 +508,69 @@ func _on_action_requested(action_id: String) -> void:
 				# must be accepted here too or the villager button does nothing.
 				if _world._selected_building is TownCenter or _world._selected_building is TownCenterBuilding \
 						or _world._selected_building is TownCenterBuildable:
-					_world._selected_building.order_train()
+					CommandBus.submit(ProductionCommand.make(0, "train", _selected_building_id()))
 		"train:militia", "train:pikeman", \
 		"train:menceyes_guard", \
 		"train:conquistador", "train:tidecaller", "train:sand_raider":
 			if is_instance_valid(_world._selected_building) and _world._selected_building is Barracks:
-				(_world._selected_building as Barracks).order_train(action_id.trim_prefix("train:"))
+				CommandBus.submit(ProductionCommand.make(0, "train",
+					_selected_building_id(), action_id.trim_prefix("train:")))
 		"train:archer", "train:ravine_archer", "train:longbowman":
 			if is_instance_valid(_world._selected_building) and _world._selected_building is ArcheryRange:
-				(_world._selected_building as ArcheryRange).order_train(action_id.trim_prefix("train:"))
+				CommandBus.submit(ProductionCommand.make(0, "train",
+					_selected_building_id(), action_id.trim_prefix("train:")))
 		"train:scout", "train:heavy_scout", "train:knight":
 			if is_instance_valid(_world._selected_building) and _world._selected_building is Stable:
-				(_world._selected_building as Stable).order_train(action_id.trim_prefix("train:"))
+				CommandBus.submit(ProductionCommand.make(0, "train",
+					_selected_building_id(), action_id.trim_prefix("train:")))
 		"train:battering_ram", "train:mangonel", "train:trebuchet":
 			if is_instance_valid(_world._selected_building) and _world._selected_building is SiegeWorkshop:
-				(_world._selected_building as SiegeWorkshop).order_train(action_id.trim_prefix("train:"))
+				CommandBus.submit(ProductionCommand.make(0, "train",
+					_selected_building_id(), action_id.trim_prefix("train:")))
 		"trebuchet_deploy":
+			CommandBus.submit(UnitActionCommand.make(0, "trebuchet_toggle", _selection_ids()))
 			for unit: Node in _world.live_selection():
 				if unit is Trebuchet:
-					var treb: Trebuchet = unit as Trebuchet
-					if treb.is_deployed:
-						treb.order_undeploy()
-					else:
-						treb.order_deploy()
-					_world.hud.call_deferred("_populate_trebuchet_buttons", treb)
+					_world.hud.call_deferred("_populate_trebuchet_buttons", unit)
 					break
 		"train:fishing_boat", "train:transport_ship", "train:war_galley":
 			if is_instance_valid(_world._selected_building) and _world._selected_building is Dock:
-				(_world._selected_building as Dock).order_train(action_id.trim_prefix("train:"))
+				CommandBus.submit(ProductionCommand.make(0, "train",
+					_selected_building_id(), action_id.trim_prefix("train:")))
 		"advance_age":
-			AgeManager.start_advance(0)
+			CommandBus.submit(AdvanceAgeCommand.make(0))
 		"gate_lock":
 			if is_instance_valid(_world._selected_building) and _world._selected_building is Gate:
-				(_world._selected_building as Gate).toggle_lock()
+				CommandBus.submit(BuildingActionCommand.make(0, "gate_lock", _selected_building_id()))
 		"unload":
 			for unit: Node in _world.live_selection():
 				if unit is TransportShip:
-					(unit as TransportShip).unload_all()
+					CommandBus.submit(TransportCommand.make(0, "unload_all",
+						EntityRegistry.id_of(unit)))
 					break
 		"scout_explore":
-			for unit: Node in _world.live_selection():
-				if unit is Scout:
-					(unit as Scout).start_auto_explore()
+			CommandBus.submit(UnitActionCommand.make(0, "scout_explore", _selection_ids()))
 		"scout_explore_stop":
-			for unit: Node in _world.live_selection():
-				if unit is Scout:
-					(unit as Scout).stop_auto_explore()
+			CommandBus.submit(UnitActionCommand.make(0, "scout_explore_stop", _selection_ids()))
 		"show_path":
+			# Debug visual, local-only: not a simulation mutation.
 			for unit: Node in _world.live_selection():
 				if is_instance_valid(unit) and unit.has_method("toggle_path_display"):
 					unit.toggle_path_display()
 		"stop":
-			for unit: Node in _world.live_selection():
-				if is_instance_valid(unit) and unit.has_method("order_move"):
-					unit.order_move((unit as Node2D).global_position)
+			CommandBus.submit(UnitActionCommand.make(0, "stop", _selection_ids()))
 		"hero_ability":
-			for unit: Node in _world.live_selection():
-				if unit is HeroUnit:
-					(unit as HeroUnit).use_ability()
-					break
+			CommandBus.submit(UnitActionCommand.make(0, "hero_ability", _selection_ids()))
 		"destroy":
 			if is_instance_valid(_world._selected_building):
 				var target: Node = _world._selected_building
 				if target.has_method("set_selected"):
 					target.set_selected(false)
 				_world._selected_building = null
-				if target.has_method("take_damage"):
-					var hp: Variant = target.get("health")
-					var dmg: float = (hp as float + 1.0) if hp != null else 9999.0
-					target.take_damage(dmg)
-				elif target.has_method("queue_free"):
-					target.queue_free()
+				CommandBus.submit(BuildingActionCommand.make(0, "delete",
+					EntityRegistry.id_of(target)))
 			elif not _world._selected_units.is_empty():
-				for unit: Node in _world.live_selection():
-					if is_instance_valid(unit) and unit.has_method("die"):
-						unit.die()
+				CommandBus.submit(UnitActionCommand.make(0, "delete", _selection_ids()))
 				_world._selected_units.clear()
 				SelectionManager.select([])
 		_:
@@ -751,47 +578,21 @@ func _on_action_requested(action_id: String) -> void:
 				var idx: int = int(action_id.substr(12))
 				for unit: Node in _world.live_selection():
 					if unit is TransportShip:
-						(unit as TransportShip).unload_one(idx)
+						CommandBus.submit(TransportCommand.make(0, "unload_one",
+							EntityRegistry.id_of(unit), idx))
 						break
-
-func _hire_mercenary_from_market(market: Market, unit_id: String) -> void:
-	if not market.hire_mercenary(unit_id):
-		return
-	var scene_path: String = "res://scenes/units/%s.tscn" % unit_id
-	var packed: PackedScene = load(scene_path) as PackedScene
-	if packed == null:
-		return
-	var unit: Node2D = packed.instantiate() as Node2D
-	unit.set("player_id", 0)
-	unit.set("civ_id", "fenicios")
-	_world.units_layer.add_child(unit)
-	var spawn_pos: Vector2 = market.rally_point if market.rally_point != Vector2.ZERO \
-		else market.global_position + Vector2(60.0, 0.0)
-	unit.global_position = spawn_pos
-	PopulationManager.add_unit(0)
-	if unit.has_method("order_move") and market.rally_point != Vector2.ZERO:
-		unit.order_move(market.rally_point)
-	AudioManager.play("unit_ready")
-	EventBus.unit_spawned.emit(unit, 0)
 
 func _order_gather_nearest_resource(rtype: ResourceNode.ResourceType) -> void:
 	if _world._selected_units.is_empty():
 		return
-	var live: Array[Node] = []
-	for u: Node in _world.live_selection():
-		if is_instance_valid(u):
-			live.append(u)
-	_world._selected_units = live
+	var live: Array[Node] = _world.live_selection()
 	if live.is_empty():
 		return
 	var pivot: Vector2 = (live[0] as Node2D).global_position
 	var nearest: ResourceNode = _find_nearest_resource_of_type(rtype, pivot)
 	if nearest == null:
 		return
-	var resource_name: String = nearest.get_resource_name()
-	for unit: Node in live:
-		if is_instance_valid(unit) and unit.has_method("order_gather"):
-			unit.order_gather(nearest, resource_name, _world.drop_off)
+	_order_gather_all(nearest)
 
 func _find_nearest_resource_of_type(rtype: ResourceNode.ResourceType, from: Vector2) -> ResourceNode:
 	var best: ResourceNode = null

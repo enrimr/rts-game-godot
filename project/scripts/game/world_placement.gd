@@ -297,25 +297,13 @@ func _confirm_placement(raw_world_pos: Vector2) -> void:
 	var world_pos: Vector2 = _snap_placement(raw_world_pos)
 	if _placement_overlaps(world_pos):
 		return
-	var costs: Dictionary = BUILDING_COSTS.get(_placing_id, {})
-	if not ResourceManager.spend_resource(0, costs):
+	if not ResourceManager.can_afford(0, BUILDING_COSTS.get(_placing_id, {})):
 		_cancel_placement()
 		return
 
-	var scene: PackedScene = load(BUILDING_SCENES[_placing_id]) as PackedScene
-	var building: Node2D = scene.instantiate() as Node2D
-	building.global_position = world_pos
-	building.rotation = _ghost_rotation
-	building.set("player_id", 0)
-	building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
-	building.set_meta("building_id", _placing_id)
-	_world.buildings_layer.add_child(building)
-	AudioManager.play("build_place")
-	EventBus.building_placed.emit(building, 0)
-
-	for unit: Node in _world.live_selection():
-		if is_instance_valid(unit) and unit.has_method("order_build"):
-			unit.order_build(building)
+	CommandBus.submit(PlaceBuildingCommand.make(0, _placing_id,
+		[world_pos] as Array[Vector2], _ghost_rotation,
+		EntityRegistry.ids_of(_world.live_selection())))
 
 	if Input.is_key_pressed(KEY_SHIFT):
 		# Keep placement mode active for the same building type.
@@ -409,29 +397,10 @@ func _confirm_wall_drag(raw_end_pos: Vector2) -> void:
 		_cancel_placement()
 		return
 
-	var costs: Dictionary = BUILDING_COSTS.get("wall_segment", {})
-	var scene: PackedScene = load(BUILDING_SCENES["wall_segment"]) as PackedScene
-	var placed_count: int = 0
-
-	for seg_pos: Vector2 in positions:
-		if not ResourceManager.can_afford(0, costs):
-			break
-		if not ResourceManager.spend_resource(0, costs):
-			break
-		var building: Node2D = scene.instantiate() as Node2D
-		building.global_position = seg_pos
-		building.set("player_id", 0)
-		building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
-		building.set_meta("building_id", "wall_segment")
-		_world.buildings_layer.add_child(building)
-		EventBus.building_placed.emit(building, 0)
-		for unit: Node in _world.live_selection():
-			if is_instance_valid(unit) and unit.has_method("order_build"):
-				unit.order_build(building)
-		placed_count += 1
-
-	if placed_count > 0:
-		AudioManager.play("build_place")
+	# One command for the whole run; it pays per segment and stops when the
+	# stockpile runs out, exactly like the old inline loop.
+	CommandBus.submit(PlaceBuildingCommand.make(0, "wall_segment",
+		positions, 0.0, EntityRegistry.ids_of(_world.live_selection())))
 
 	var keep_id: String = _placing_id
 	_cancel_placement()

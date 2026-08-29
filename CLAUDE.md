@@ -38,12 +38,13 @@ docs/             ← Architecture and design documentation
 
 1. **EventBus pattern** — cross-system communication happens exclusively through signals on `EventBus` (autoload). Never call methods across system boundaries directly.
 2. **Data-driven resources** — all tuneable values live in `Resource` subclasses under `resources/`. Scripts read from resources; they do not hardcode stats.
-3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager`, `WeatherManager`, `AgeManager`, `AudioManager`, `TerrainManager`, `PopulationManager`, `SaveManager`, `GameSettings` — access these by name anywhere.
+3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `EntityRegistry`, `CommandBus`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager`, `WeatherManager`, `AgeManager`, `AudioManager`, `TerrainManager`, `PopulationManager`, `SaveManager`, `GameSettings` — access these by name anywhere.
 4. **Type hints everywhere** — every GDScript function must declare parameter types and return type.
 5. **Area2D for range detection** — attack ranges use Area2D nodes that monitor for enemies entering/leaving range, avoiding per-frame physics queries.
 6. **Outward spiral spawn positioning** — units spawn at free positions found via outward spiral physics query, preventing overlap.
 8. **Collision layers** — layer 1 = world (buildings, scenery, boundary walls); layer 2 = units (all CharacterBody2D units/animals/ships). Units use `collision_layer=2, collision_mask=1`: they physically collide only with the world — RVO avoidance (not physics) separates units from each other, preventing group jams. Detection Area2Ds (attack range, gate, sheep conversion) and unit-seeking physics queries must include bit 2 in their mask. Locked by `test_collision_layers.gd`.
 7. **Grid-snap placement** — the player's building/wall placement snaps to a 16 px grid via `PlacementGrid` (`scripts/map/placement_grid.gd`, pure/testable); units still move continuously. Hold **Alt** for free placement. AI placement is unchanged.
+9. **Command pattern** — every simulation-mutating player intent is a `GameCommand` (serializable: EntityRegistry IDs + positions, never node pointers) submitted through `CommandBus.submit()`, which tick-stamps it into the match log (replay/LAN foundation) and executes it. UI feedback and selection stay at the submission site; the AI still orders its units directly (phase 2).
 
 ## Key Files
 
@@ -64,6 +65,8 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries, terrain gameplay effects (laurisilva vision mult, risco vantage, shallow water); `get_speed_mult`/`is_impassable_for`/`nearest_passable` take an `amphibious` flag (ocean is opened by the unit, never by the civ), `deep_water_speed(civ_id)` reads the civ's `deep_water_speed` multiplier (default 0.60); `distance_to_coast` is analytic + memoized per 24 px cell (the weather/fog hot path — invalidate via `reset`/`add_zone`/`set_land_polys` only) |
 | `project/scripts/core/audio_manager.gd` | Spatial audio playback, distance attenuation |
 | `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
+| `project/scripts/core/command_bus.gd` | `CommandBus` autoload — single entry point for player intents: tick-stamped command log (replay/LAN foundation), `submit`/`command_from_dict`/`save_log`; bound per match via `start_match(world)` |
+| `project/scripts/core/entity_registry.gd` | `EntityRegistry` autoload — stable per-match numeric IDs for units/buildings/resource nodes (tree-order rescan + spawn-signal registration), `id_of`/`resolve` |
 | **Unit Classes** ||
 | `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation; `is_amphibious()` decides water permission per unit (false here — the ship/Tidecaller overrides open the sea) and feeds every `TerrainManager` query |
 | `project/scripts/units/villager.gd` | Gathering and building logic, work/walk animation differentiation |
@@ -119,7 +122,8 @@ docs/             ← Architecture and design documentation
 | `project/scripts/game/world_victory.gd` | `WorldVictory` — victory/defeat/elimination checks, Wonder countdown, game-over flow |
 | `project/scripts/game/world_camera.gd` | `WorldCamera` — pan/zoom/edge-scroll, camera follow, alert ring + SPACE jump |
 | `project/scripts/game/world_selection.gd` | `WorldSelection` — click/drag/double-click selection, control-group hotkeys |
-| `project/scripts/game/world_commands.gd` | `WorldCommands` — right-click dispatch, target pickers (visible-facade building hit-test), order fan-outs, formations, pending actions, HUD action router, mercenaries |
+| `project/scripts/game/world_commands.gd` | `WorldCommands` — the player's intent layer: right-click resolution, target pickers (visible-facade building hit-test), pending actions, HUD action router; every simulation mutation is packaged as a `GameCommand` and submitted through `CommandBus`, UI feedback (flashes, sounds) stays here |
+| `project/scripts/game/commands/game_command.gd` | `GameCommand` — command-pattern base: serializable payload (`to_dict`/`read`), execute-time ownership validation (`_own_entities`); 9 leaf commands in the same dir (`UnitPointCommand` move/attack-move/attack-ground + formation, `UnitTargetCommand` attack/gather/build/drop-off/board, `UnitActionCommand`, `TransportCommand`, `ProductionCommand`, `BuildingActionCommand`, `MarketCommand` incl. mercenary spawn, `PlaceBuildingCommand` incl. wall runs, `AdvanceAgeCommand`) |
 | `project/scripts/game/world_placement.gd` | `WorldPlacement` — building placement ghost/grid-snap, wall drag, coastal/ocean checks, navmesh rebake |
 | **Map Generation (pipeline + modules)** ||
 | `project/scripts/map/map_generator.gd` | `MapGenerator` — thin pipeline (~150 lines): reads `MatchConfig`, sequences painter → placer → nav builder per map type, returns `{tc_positions}`. Owns the shared `RandomNumberGenerator`, the land-polygon array and `_island_layout()` (solves island radius + ring distance so islands never overlap at any player count / map size) |
@@ -216,6 +220,8 @@ CALIMA_RIVALS=3 CALIMA_MAP_SIZE=0 $GODOT --headless --path project res://tools/c
 $GODOT --headless --path project res://tools/check_nav_islands.tscn   # env: CALIMA_MAP
 # Two diagonally placed buildings must not empty the navmesh (the bake-nudge gate)
 $GODOT --headless --path project res://tools/check_nav_bake_diag.tscn   # env: CALIMA_MAP, CALIMA_SEED
+# Command pattern: a real match driven through CommandBus (move/train/place + rebuildable log)
+$GODOT --headless --path project res://tools/check_command_bus.tscn   # env: CALIMA_SEED
 # Amphibious: the Tidecaller swims off the beach, land units are refused water, passengers disembark dry
 $GODOT --headless --path project res://tools/check_amphibious.tscn
 # Naval civ identity (real renderer, not headless): every hull dressed for every civ

@@ -180,10 +180,18 @@ func _ready() -> void:
 	AudioManager.play_music(MatchConfig.map_type)
 	GameManager.game_over.connect(_on_game_over)
 
+	# Boarding a transport hides the unit; drop it from the selection so the
+	# HUD does not keep showing (or ordering) a garrisoned ghost.
+	EventBus.garrison_changed.connect(_on_garrison_changed_prune_selection)
+
 	# Restore dynamic state from save (must be after start_game so GameState is PLAYING)
 	if SaveManager.pending_load:
 		SaveManager.restore_world(self)
 		camera.position = drop_off.global_position
+
+	# Last: every entity of the finished match setup (including a save restore)
+	# gets its deterministic EntityRegistry ID, and the command log starts.
+	CommandBus.start_match(self)
 
 # --- Match bootstrap (implementation in WorldSetup) ---
 
@@ -248,6 +256,20 @@ func live_selection() -> Array[Node]:
 			_selected_units.remove_at(i)
 		i -= 1
 	return _selected_units
+
+func _on_garrison_changed_prune_selection(ship: Node, _count: int, _capacity: int) -> void:
+	if not is_instance_valid(ship):
+		return
+	var garrison: Variant = ship.get("_garrison")
+	if not (garrison is Array):
+		return
+	var changed: bool = false
+	for unit: Variant in garrison as Array:
+		if is_instance_valid(unit) and unit is Node and _selected_units.has(unit):
+			_selected_units.erase(unit)
+			changed = true
+	if changed:
+		SelectionManager.select(_selected_units)
 
 func _on_building_destroyed_alert(building: Node, owner_id: int) -> void:
 	_camera_ctl._on_building_destroyed_alert(building, owner_id)

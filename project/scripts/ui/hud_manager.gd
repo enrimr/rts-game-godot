@@ -1628,7 +1628,8 @@ func _on_cancel_train_slot(index: int) -> void:
 	if not is_instance_valid(_selected_building):
 		return
 	if _selected_building.has_method("order_cancel_train"):
-		_selected_building.order_cancel_train(index)
+		CommandBus.submit(ProductionCommand.make(0, "cancel_train",
+			EntityRegistry.id_of(_selected_building), "", index))
 
 func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> void:
 	if building != _selected_building:

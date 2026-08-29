@@ -23,6 +23,8 @@ config/icon="res://assets/app/calima-fota.icon.180.png"
 [autoload]
 
 EventBus="*res://scripts/core/event_bus.gd"
+EntityRegistry="*res://scripts/core/entity_registry.gd"
+CommandBus="*res://scripts/core/command_bus.gd"
 GameManager="*res://scripts/core/game_manager.gd"
 ResourceManager="*res://scripts/core/resource_manager.gd"
 SelectionManager="*res://scripts/core/selection_manager.gd"
