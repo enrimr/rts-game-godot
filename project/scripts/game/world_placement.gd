@@ -443,6 +443,20 @@ func _request_nav_rebake() -> void:
 	_nav_rebake_pending = true
 	_nav_rebake_timer = NAV_REBAKE_DELAY
 
+# Walkable surface handed to the rebake: on Islands maps only the land polygons
+# NavMeshBuilder carved, otherwise the whole board. Baking the full rect on an
+# Islands map would erase the carving and hand land units a route across open sea.
+func _traversable_outlines() -> Array[PackedVector2Array]:
+	var out: Array[PackedVector2Array] = []
+	for lp: Variant in TerrainManager.get_land_polys():
+		out.append(lp as PackedVector2Array)
+	if out.is_empty():
+		out.append(PackedVector2Array([
+			Vector2(-3000.0, -3000.0), Vector2(3000.0, -3000.0),
+			Vector2(3000.0,  3000.0), Vector2(-3000.0,  3000.0),
+		]))
+	return out
+
 func _do_nav_rebake() -> void:
 	if not is_instance_valid(_world._nav_region):
 		return
@@ -457,10 +471,8 @@ func _do_nav_rebake() -> void:
 	nav_poly.cell_size = current.cell_size
 	_nav_bake_target = nav_poly
 	var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
-	source.add_traversable_outline(PackedVector2Array([
-		Vector2(-3000.0, -3000.0), Vector2(3000.0, -3000.0),
-		Vector2(3000.0,  3000.0), Vector2(-3000.0,  3000.0),
-	]))
+	for outline: PackedVector2Array in _traversable_outlines():
+		source.add_traversable_outline(outline)
 	for b: Node in _world.buildings_layer.get_children():
 		if not is_instance_valid(b) or not b.has_method("get_nav_obstacle_polygon"):
 			continue
