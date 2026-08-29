@@ -266,7 +266,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Franks: Cheaper age advance, cavalry HP bonus, fast farms
 - Britons: Archer range +1/age, warship attack speed bonus
 - Castellanos: Free Blacksmith tech/age, balanced roster
-- Atlantes: Ship attack speed bonus, amphibious unique unit, harder to spot in Sea Fog (`fog_stealth` 0.5)
+- Atlantes: Ship attack speed bonus, amphibious unique unit, harder to spot in Sea Fog (`fog_stealth` 0.5), +50 % vision within 400 px of a shore (`coastal_vision` 1.50, read by `FogOfWar._coastal_vision_mult`)
 - Fenicios: Ship cost reduction, ramming naval unique unit
 
 **Weather System:**

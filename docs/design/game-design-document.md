@@ -63,7 +63,7 @@ Eight civilizations across three historical layers. See `civilizations.md` for f
 
 | Layer | Civilization | Identity |
 |---|---|---|
-| Ancient | **Atlantes** | Naval masters, coastal builders, fog of war |
+| Ancient | **Atlantes** | Naval masters, coastal builders, fog of war (+50 % vision along their shores, harder to spot in Sea Fog) |
 | Ancient | **Fenicios** | Commerce, mercenaries, trade routes |
 | Native | **Guanches** | Volcanic terrain, durable infantry, stone fortresses |
 | Native | **Canarii** | Economy, balanced archers, elevated terrain bonus |

@@ -222,7 +222,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 | **Hero** | Artaxerax |
 | **Ability** | *Calima* — Shrouds nearby allied units in a calima veil for 12 s; cloaked units cannot be targeted by enemies · Cooldown 60 s |
 | **Unique Unit** | **Tidecaller** — 75 HP · 50f+70g · Age 2 · *Tidal Pulse*: each attack deals 2 AoE damage to all enemies within 65 px |
-| **Bonuses** | Coastal vision ×1.50 · Ship attack speed ×1.20 · No shallow water penalty · Can traverse ocean |
+| **Bonuses** | Coastal vision ×1.50 (units and buildings within 400 px of a shore) · Ship attack speed ×1.20 · Harder to spot in Sea Fog (found at 90 px instead of 180 px) · No shallow water penalty · Can traverse ocean |
 | **Restrictions** | No heavy cavalry · No siege workshop |
 
 **Strategy:** Absolute naval supremacy. Devastating on coastal and Islands maps.

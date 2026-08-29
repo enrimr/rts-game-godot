@@ -66,7 +66,31 @@ This means ship units — whose `civ_id` resolves to a civ that has ocean marked
 
 ## Fog of War
 
-Tracked per-player as a boolean grid. Revealed when any unit/building has line of sight of a cell. Stored in `MapManager._fog_revealed`.
+`FogOfWar` (`scripts/map/fog_of_war.gd`) keeps one 80×80 byte grid for the human
+player (`CELL_SIZE` = 50 px over a 4000 px map from `MAP_ORIGIN`). Three states per
+cell: `STATE_UNEXPLORED` / `STATE_EXPLORED` / `STATE_VISIBLE`. Every
+`UPDATE_INTERVAL` (0.12 s) `_tick()` demotes VISIBLE → EXPLORED, re-reveals from the
+player's units and buildings, repaints only the dirty cells into the shroud texture,
+and then applies entity visibility.
+
+Reveal radius per watcher is `line_of_sight × 64 px` multiplied by three factors:
+
+| Factor | Source | Notes |
+|---|---|---|
+| Weather | `WeatherManager.get_vision_multiplier(pos, 0)` | Calima / Sea Fog / Volcanic Ash, already scaled by civ weather affinity |
+| Terrain | `TerrainManager.get_vision_mult(pos)` | Laurisilva canopy −30%; buildings skip it (laurisilva is not buildable) |
+| Coast | `FogOfWar._coastal_vision_mult(pos)` | Civ `coastal_vision` multiplier, applied only inside `WeatherManager.COASTAL_ZONE_DEPTH` (400 px) of a shore |
+
+`_coastal_vision_mult` is the only reader of the `coastal_vision` civ multiplier:
+the Atlantes carry 1.50, so their units and buildings see 50 % further along any
+shore — the same band sea fog operates in — and exactly 1.0 inland. The
+`is_equal_approx(mult, 1.0)` fast path keeps the coast query out of the hot loop
+for the other seven civs. Gated by `tests/unit/test_coastal_vision.gd`.
+
+Visibility of entities is applied in `_apply_visibility()`: enemy units need a
+VISIBLE cell and must not be fog-cloaked (see the sea-fog cloak rules under
+[Weather System](#weather-system)), enemy buildings and resource nodes stay drawn
+once their cell is EXPLORED (AoE2-style memory).
 
 ## Tech Tree System
 
@@ -388,6 +412,10 @@ CLEAR ──(timer)──► RAMP_IN (10 s) ──► PEAK (variable) ──► 
 | `is_unit_cloaked_by_weather(world_pos) → bool` | `FogOfWar._apply_visibility` |
 | `fog_spot_range(player_id) → float` | `FogOfWar._breaks_fog_cloak` |
 | `get_building_damage_rate(world_pos) → float` | `BuildingBase._process` |
+
+`COASTAL_ZONE_DEPTH` (400 px) is public on purpose: besides bounding the sea-fog
+effects it is also the band `FogOfWar._coastal_vision_mult` uses for the Atlantes
+`coastal_vision` bonus, so "the coast" means one distance everywhere in the game.
 
 ### Visual overlay
 

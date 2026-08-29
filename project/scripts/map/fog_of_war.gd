@@ -155,7 +155,9 @@ func _reveal_from_units() -> void:
 		# Terrain factor: laurisilva canopy shortens LOS. Buildings skip this —
 		# laurisilva is not buildable, so their factor is always 1.0.
 		var terrain_mult: float = TerrainManager.get_vision_mult((unit as Node2D).global_position)
-		_mark_circle((unit as Node2D).global_position, los * 64.0 * weather_mult * terrain_mult)
+		var coast_mult: float = _coastal_vision_mult((unit as Node2D).global_position)
+		_mark_circle((unit as Node2D).global_position,
+			los * 64.0 * weather_mult * terrain_mult * coast_mult)
 
 func _reveal_from_buildings() -> void:
 	# Buildings layer
@@ -174,14 +176,29 @@ func _reveal_from_buildings() -> void:
 			if bdata is BuildingResource:
 				los = (bdata as BuildingResource).line_of_sight
 			var bweather_mult: float = WeatherManager.get_vision_multiplier((building as Node2D).global_position, 0)
-			_mark_circle((building as Node2D).global_position, los * 64.0 * bweather_mult)
+			var bcoast_mult: float = _coastal_vision_mult((building as Node2D).global_position)
+			_mark_circle((building as Node2D).global_position, los * 64.0 * bweather_mult * bcoast_mult)
 
 	# Town Center (drop_off_node in world root)
 	if is_instance_valid(_drop_off_node):
 		var pid: Variant = _drop_off_node.get("player_id")
 		if pid != null and (pid as int) == 0:
 			var tc_weather_mult: float = WeatherManager.get_vision_multiplier((_drop_off_node as Node2D).global_position, 0)
-			_mark_circle((_drop_off_node as Node2D).global_position, 8.0 * 64.0 * tc_weather_mult)
+			var tc_coast_mult: float = _coastal_vision_mult((_drop_off_node as Node2D).global_position)
+			_mark_circle((_drop_off_node as Node2D).global_position,
+				8.0 * 64.0 * tc_weather_mult * tc_coast_mult)
+
+## Civ line-of-sight bonus along one's own shores: the "coastal_vision" multiplier
+## applies inside the same band sea fog uses (COASTAL_ZONE_DEPTH), so the Atlantes
+## see 50 % further exactly where the fog hides things. The fast path keeps the
+## coast query out of the way for the civs without the bonus.
+func _coastal_vision_mult(world_pos: Vector2) -> float:
+	var mult: float = CivBonusManager.get_multiplier(0, "coastal_vision")
+	if is_equal_approx(mult, 1.0):
+		return 1.0
+	if TerrainManager.distance_to_coast(world_pos) > WeatherManager.COASTAL_ZONE_DEPTH:
+		return 1.0
+	return mult
 
 func _mark_circle(world_pos: Vector2, radius_px: float) -> void:
 	var cell: Vector2i = _world_to_cell(world_pos)
