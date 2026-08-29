@@ -235,6 +235,20 @@ func _on_unit_selected_follow(units: Array) -> void:
 func _on_selection_manager_changed(units: Array) -> void:
 	_selection._on_selection_manager_changed(units)
 
+## The selection every controller iterates, with freed units dropped in place.
+## Units die on their own schedule and nothing removes them from the list, so
+## this is the read barrier: the controllers reach the list through the untyped
+## `_world` reference, which makes GDScript validate each element against the
+## loop's declared type at runtime and raise "invalid previously freed instance"
+## before any is_instance_valid() guard in the loop body can run.
+func live_selection() -> Array[Node]:
+	var i: int = _selected_units.size() - 1
+	while i >= 0:
+		if not is_instance_valid(_selected_units[i]):
+			_selected_units.remove_at(i)
+		i -= 1
+	return _selected_units
+
 func _on_building_destroyed_alert(building: Node, owner_id: int) -> void:
 	_camera_ctl._on_building_destroyed_alert(building, owner_id)
 

@@ -33,7 +33,7 @@ func _resolve_cursor_context() -> String:
 	var has_villagers: bool = false
 	var has_military: bool = false
 	var has_land_units: bool = false
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if not is_instance_valid(unit) or unit is Animal:
 			continue
 		var pid: Variant = unit.get("player_id")
@@ -105,7 +105,7 @@ func _handle_right_click(world_pos: Vector2) -> void:
 	var transport: TransportShip = _find_own_transport_at(world_pos)
 	if transport != null and not transport.is_full():
 		var any_boarded: bool = false
-		for unit: Node in _world._selected_units.duplicate():
+		for unit: Node in _world.live_selection().duplicate():
 			if not is_instance_valid(unit) or unit is ShipBase:
 				continue
 			var pid: Variant = unit.get("player_id")
@@ -150,7 +150,7 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		var mhp: Variant = drop_off_node.get("max_health")
 		var is_damaged: bool = hp != null and mhp != null and (hp as float) < (mhp as float)
 		var any_carrying: bool = false
-		for u: Node in _world._selected_units:
+		for u: Node in _world.live_selection():
 			var ca: Variant = u.get("carried_amount")
 			if is_instance_valid(u) and ca != null and (ca as float) > 0.0:
 				any_carrying = true
@@ -200,7 +200,7 @@ func _handle_right_click(world_pos: Vector2) -> void:
 	_order_move_all(world_pos)
 
 func _order_attack_ground_all(world_pos: Vector2) -> void:
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if is_instance_valid(unit) and unit.has_method("order_attack_ground"):
 			unit.call("order_attack_ground", world_pos)
 	_flash_point(world_pos, Color(1.0, 0.6, 0.1, 1.0))
@@ -264,7 +264,7 @@ func _order_interact_animal(animal: Animal) -> void:
 	# Right-clicking any animal (own herded sheep included) sends the selected
 	# units to slaughter it for food — that's how a sheep yields meat. If no
 	# gatherer is selected (e.g. only soldiers), they still attack it.
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if not is_instance_valid(unit):
 			continue
 		if unit.has_method("order_attack"):
@@ -300,7 +300,7 @@ func _find_drop_off_at(world_pos: Vector2) -> Node:
 
 func _order_drop_off_all(target: Node) -> void:
 	_flash_target(target, Color(1.8, 1.8, 0.4, 1.0))
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if not is_instance_valid(unit):
 			continue
 		if unit is FishingBoat:
@@ -328,7 +328,7 @@ func _order_gather_farm(farm: Farm) -> void:
 	if farm.is_depleted():
 		_order_restore_farm(farm)
 		return
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if is_instance_valid(unit) and unit.has_method("order_gather"):
 			unit.order_gather(farm, "food", null)
 
@@ -336,7 +336,7 @@ func _order_restore_farm(farm: Farm) -> void:
 	if not ResourceManager.spend_resource(0, farm.get_restore_cost()):
 		return
 	farm.restore()
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if is_instance_valid(unit) and unit.has_method("order_gather"):
 			unit.order_gather(farm, "food", null)
 
@@ -355,7 +355,7 @@ func _order_gather_fish_trap(fish_trap: FishTrap) -> void:
 	if fish_trap.is_depleted():
 		_order_restore_fish_trap(fish_trap)
 		return
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if unit is FishingBoat:
 			var fb: FishingBoat = unit as FishingBoat
 			var dock_node: Node = _find_nearest_dock(fb)
@@ -365,7 +365,7 @@ func _order_restore_fish_trap(fish_trap: FishTrap) -> void:
 	if not ResourceManager.spend_resource(0, fish_trap.get_restore_cost()):
 		return
 	fish_trap.restore()
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if unit is FishingBoat:
 			var fb: FishingBoat = unit as FishingBoat
 			var dock_node: Node = _find_nearest_dock(fb)
@@ -479,13 +479,13 @@ func _flash_target(node: Node, flash_color: Color = Color(2.0, 2.0, 2.0, 1.0)) -
 func _order_attack_all(target: Node) -> void:
 	AudioManager.play("cmd_attack")
 	_flash_target(target, Color(2.2, 0.4, 0.4, 1.0))
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if is_instance_valid(unit) and unit.has_method("order_attack"):
 			unit.order_attack(target)
 
 func _order_build_all(building: Node) -> void:
 	_flash_target(building, Color(0.6, 1.8, 0.6, 1.0))
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if is_instance_valid(unit) and unit.has_method("order_build"):
 			unit.order_build(building)
 
@@ -501,7 +501,7 @@ func _order_gather_all(resource_node: ResourceNode) -> void:
 	_flash_target(resource_node, Color(1.8, 1.8, 0.4, 1.0))
 	var resource_name: String = resource_node.get_resource_name()
 	var is_fish: bool = resource_node.resource_type == ResourceNode.ResourceType.FOOD_FISH
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if not is_instance_valid(unit):
 			continue
 		if is_fish and unit is FishingBoat:
@@ -550,7 +550,7 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 func _order_attack_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")
 	var valid_units: Array[Node] = []
-	for u: Node in _world._selected_units:
+	for u: Node in _world.live_selection():
 		if is_instance_valid(u) and u.has_method("order_move"):
 			valid_units.append(u)
 	var count: int = valid_units.size()
@@ -580,7 +580,7 @@ func _flash_point(world_pos: Vector2, color: Color) -> void:
 func _order_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")
 	var valid_units: Array[Node] = []
-	for u: Node in _world._selected_units:
+	for u: Node in _world.live_selection():
 		if is_instance_valid(u) and u.has_method("order_move"):
 			valid_units.append(u)
 	var count: int = valid_units.size()
@@ -600,7 +600,7 @@ func _order_move_all(world_pos: Vector2) -> void:
 func _formation_slots(center: Vector2, count: int) -> Array[Vector2]:
 	# Average position of selected units → direction they approach from
 	var avg_origin: Vector2 = Vector2.ZERO
-	for u: Node in _world._selected_units:
+	for u: Node in _world.live_selection():
 		if is_instance_valid(u):
 			avg_origin += (u as Node2D).global_position
 	avg_origin /= float(_world._selected_units.size())
@@ -685,7 +685,7 @@ func _on_action_requested(action_id: String) -> void:
 			if is_instance_valid(_world._selected_building) and _world._selected_building is SiegeWorkshop:
 				(_world._selected_building as SiegeWorkshop).order_train(action_id.trim_prefix("train:"))
 		"trebuchet_deploy":
-			for unit: Node in _world._selected_units:
+			for unit: Node in _world.live_selection():
 				if unit is Trebuchet:
 					var treb: Trebuchet = unit as Trebuchet
 					if treb.is_deployed:
@@ -703,28 +703,28 @@ func _on_action_requested(action_id: String) -> void:
 			if is_instance_valid(_world._selected_building) and _world._selected_building is Gate:
 				(_world._selected_building as Gate).toggle_lock()
 		"unload":
-			for unit: Node in _world._selected_units:
+			for unit: Node in _world.live_selection():
 				if unit is TransportShip:
 					(unit as TransportShip).unload_all()
 					break
 		"scout_explore":
-			for unit: Node in _world._selected_units:
+			for unit: Node in _world.live_selection():
 				if unit is Scout:
 					(unit as Scout).start_auto_explore()
 		"scout_explore_stop":
-			for unit: Node in _world._selected_units:
+			for unit: Node in _world.live_selection():
 				if unit is Scout:
 					(unit as Scout).stop_auto_explore()
 		"show_path":
-			for unit: Node in _world._selected_units:
+			for unit: Node in _world.live_selection():
 				if is_instance_valid(unit) and unit.has_method("toggle_path_display"):
 					unit.toggle_path_display()
 		"stop":
-			for unit: Node in _world._selected_units:
+			for unit: Node in _world.live_selection():
 				if is_instance_valid(unit) and unit.has_method("order_move"):
 					unit.order_move((unit as Node2D).global_position)
 		"hero_ability":
-			for unit: Node in _world._selected_units:
+			for unit: Node in _world.live_selection():
 				if unit is HeroUnit:
 					(unit as HeroUnit).use_ability()
 					break
@@ -741,7 +741,7 @@ func _on_action_requested(action_id: String) -> void:
 				elif target.has_method("queue_free"):
 					target.queue_free()
 			elif not _world._selected_units.is_empty():
-				for unit: Node in _world._selected_units:
+				for unit: Node in _world.live_selection():
 					if is_instance_valid(unit) and unit.has_method("die"):
 						unit.die()
 				_world._selected_units.clear()
@@ -749,7 +749,7 @@ func _on_action_requested(action_id: String) -> void:
 		_:
 			if action_id.begins_with("unload_unit:"):
 				var idx: int = int(action_id.substr(12))
-				for unit: Node in _world._selected_units:
+				for unit: Node in _world.live_selection():
 					if unit is TransportShip:
 						(unit as TransportShip).unload_one(idx)
 						break
@@ -778,7 +778,7 @@ func _order_gather_nearest_resource(rtype: ResourceNode.ResourceType) -> void:
 	if _world._selected_units.is_empty():
 		return
 	var live: Array[Node] = []
-	for u: Node in _world._selected_units:
+	for u: Node in _world.live_selection():
 		if is_instance_valid(u):
 			live.append(u)
 	_world._selected_units = live

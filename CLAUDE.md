@@ -114,7 +114,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/buildings/lumber_camp.gd` | Wood drop-off |
 | `project/scripts/buildings/mining_camp.gd` | Gold/stone drop-off |
 | **Game World (scene root + controllers)** ||
-| `project/scripts/game/game_world.gd` | Scene root and thin dispatcher (~385 lines): scene node refs, shared match state (`drop_off`, `_selected_units`, `_ai_town_centers`, `_fog`, saved-game fields), `_ready` wiring, `_process`/`_unhandled_input` routing into the controllers below, and the stable external surface (`jump_camera_to`, `get_zoom`/`set_zoom`, `_start_placement`, …) |
+| `project/scripts/game/game_world.gd` | Scene root and thin dispatcher (~385 lines): scene node refs, shared match state (`drop_off`, `_selected_units`, `_ai_town_centers`, `_fog`, saved-game fields), `_ready` wiring, `_process`/`_unhandled_input` routing into the controllers below, and the stable external surface (`jump_camera_to`, `get_zoom`/`set_zoom`, `_start_placement`, `live_selection()` — the prune-on-read barrier every controller must use instead of `_selected_units`, …) |
 | `project/scripts/game/world_setup.gd` | `WorldSetup` — match bootstrap: civs, player/AI town centers, hero spawn, tutorial spawns, ambient lighting, AI debug overlay |
 | `project/scripts/game/world_victory.gd` | `WorldVictory` — victory/defeat/elimination checks, Wonder countdown, game-over flow |
 | `project/scripts/game/world_camera.gd` | `WorldCamera` — pan/zoom/edge-scroll, camera follow, alert ring + SPACE jump |

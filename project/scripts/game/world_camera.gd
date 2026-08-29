@@ -74,7 +74,7 @@ func handle_follow() -> void:
 		return
 	var centroid: Vector2 = Vector2.ZERO
 	var count: int = 0
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if is_instance_valid(unit):
 			centroid += (unit as Node2D).global_position
 			count += 1

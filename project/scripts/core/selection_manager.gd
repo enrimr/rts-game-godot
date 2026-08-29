@@ -13,6 +13,8 @@ var _selection_groups: Dictionary = {}  # int -> Array
 func select(units: Array) -> void:
 	_deselect_all()
 	for u in units.slice(0, MAX_SELECTION):
+		if not is_instance_valid(u):
+			continue
 		u.set_selected(true)
 		selected_units.append(u)
 	EventBus.unit_selected.emit(selected_units)
@@ -20,6 +22,8 @@ func select(units: Array) -> void:
 
 func add_to_selection(units: Array) -> void:
 	for u in units:
+		if not is_instance_valid(u):
+			continue
 		if u not in selected_units and selected_units.size() < MAX_SELECTION:
 			u.set_selected(true)
 			selected_units.append(u)

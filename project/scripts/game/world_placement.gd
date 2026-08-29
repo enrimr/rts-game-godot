@@ -314,7 +314,7 @@ func _confirm_placement(raw_world_pos: Vector2) -> void:
 	AudioManager.play("build_place")
 	EventBus.building_placed.emit(building, 0)
 
-	for unit: Node in _world._selected_units:
+	for unit: Node in _world.live_selection():
 		if is_instance_valid(unit) and unit.has_method("order_build"):
 			unit.order_build(building)
 
@@ -426,7 +426,7 @@ func _confirm_wall_drag(raw_end_pos: Vector2) -> void:
 		building.set_meta("building_id", "wall_segment")
 		_world.buildings_layer.add_child(building)
 		EventBus.building_placed.emit(building, 0)
-		for unit: Node in _world._selected_units:
+		for unit: Node in _world.live_selection():
 			if is_instance_valid(unit) and unit.has_method("order_build"):
 				unit.order_build(building)
 		placed_count += 1

@@ -75,7 +75,9 @@ func handle_left_mouse(pressed: bool) -> void:
 ## into the world's live selection list.
 func _on_selection_manager_changed(units: Array) -> void:
 	_world._selected_units.clear()
-	for u: Node in units:
+	# Variant loop variable on purpose: a freed entry in an untyped array aborts
+	# the loop on the typed assignment, before the guard below can drop it.
+	for u: Variant in units:
 		if is_instance_valid(u):
 			_world._selected_units.append(u)
 
@@ -84,7 +86,7 @@ func _finish_selection() -> void:
 		.expand(_world.get_viewport().get_mouse_position())
 	var is_click: bool = screen_rect.get_area() < CLICK_MAX_SCREEN_AREA
 
-	for sel: Node in _world._selected_units:
+	for sel: Node in _world.live_selection():
 		if is_instance_valid(sel):
 			sel.set_selected(false)
 	_world._selected_units.clear()
