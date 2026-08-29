@@ -61,11 +61,11 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/population_manager.gd` | Per-player population current/cap tracking |
 | `project/scripts/core/save_manager.gd` | Complete game save/load system, JSON-based, 99 save slots |
 | `project/scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
-| `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries, terrain gameplay effects (laurisilva vision mult, risco vantage, shallow water); `distance_to_coast` is analytic + memoized per 24 px cell (the weather/fog hot path — invalidate via `reset`/`add_zone`/`set_land_polys` only) |
+| `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries, terrain gameplay effects (laurisilva vision mult, risco vantage, shallow water); `get_speed_mult`/`is_impassable_for`/`nearest_passable` take an `amphibious` flag (ocean is opened by the unit, never by the civ), `deep_water_speed(civ_id)` reads the civ's `deep_water_speed` multiplier (default 0.60); `distance_to_coast` is analytic + memoized per 24 px cell (the weather/fog hot path — invalidate via `reset`/`add_zone`/`set_land_polys` only) |
 | `project/scripts/core/audio_manager.gd` | Spatial audio playback, distance attenuation |
 | `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
 | **Unit Classes** ||
-| `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation |
+| `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation; `is_amphibious()` decides water permission per unit (false here — the ship/Tidecaller overrides open the sea) and feeds every `TerrainManager` query |
 | `project/scripts/units/villager.gd` | Gathering and building logic, work/walk animation differentiation |
 | `project/scripts/units/hero_unit.gd` | Hero units with 8 unique abilities (extends Militia) |
 | `project/scripts/units/militia.gd` | Dark Age infantry |
@@ -80,7 +80,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/mangonel.gd` | Castle Age AoE siege; 72 px splash, minimum range |
 | `project/scripts/units/trebuchet.gd` | Imperial Age long-range siege; 48 px splash, deploy/undeploy mechanic |
 | `project/scripts/units/fishing_boat.gd` | Naval food gatherer |
-| `project/scripts/units/transport_ship.gd` | Naval troop transport, garrison 10 units |
+| `project/scripts/units/transport_ship.gd` | Naval troop transport, garrison 10 units; `_disembark_position()` always lands passengers on dry ground, even amphibious ones |
 | `project/scripts/units/war_galley.gd` | Feudal Age combat ship |
 | **Unique Units (8 civs)** ||
 | `project/scripts/units/menceyes_guard.gd` | Guanches infantry: Rage Aura at HP < 50% |
@@ -89,7 +89,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/chevalier_normand.gd` | Franks cavalry: Lance Charge (×2.5 after 80 px movement) |
 | `project/scripts/units/longbowman.gd` | Britons archer: Armour Piercing (+4 vs cavalry) |
 | `project/scripts/units/conquistador.gd` | Castellanos infantry: Salvo Fire (3 rapid shots, 12 s CD) |
-| `project/scripts/units/tidecaller.gd` | Atlantes amphibious: Tidal Pulse (2 splash damage) |
+| `project/scripts/units/tidecaller.gd` | Atlantes amphibious: Tidal Pulse (2 splash damage); the only land unit with `is_amphibious()` true (gated on the civ's `can_traverse_ocean`), rides navigation layer 4 |
 | `project/scripts/units/trireme.gd` | Fenicios ship: Ram (×2 vs ships, 40 px knockback) |
 | **Building Classes** ||
 | `project/scripts/buildings/building_base.gd` | Base class for all buildings; outward spiral spawn positioning, rally points |
@@ -128,7 +128,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/map/terrain_painter.gd` | `TerrainPainter` — backgrounds, per-map-type zone layouts, zone visuals, shorelines, island polygons; owns `MapMaterials` + `TerrainDetail` |
 | `project/scripts/map/entity_placer.gd` | `EntityPlacer` — spatial-hash occupancy grid (`SPATIAL_CELL = 140`) plus every spawn: TC ring, starting units, animals, player/neutral/scattered resources, laurisilva forests, fish, resource islets |
 | `project/scripts/map/resource_visuals.gd` | `ResourceVisuals` — static resource-node art library; also used by `SaveManager` on load and by `ResourceNode` for tree stumps |
-| `project/scripts/map/nav_mesh_builder.gd` | `NavMeshBuilder` — land/ocean `NavigationPolygon` baking via `NavigationServer2D.bake_from_source_geometry_data` (islands = traversable outlines on land, obstruction outlines on the ocean), terrain-zone obstacles (skipped for civs that traverse them), ocean boundary walls |
+| `project/scripts/map/nav_mesh_builder.gd` | `NavMeshBuilder` — bakes the three `NavigationPolygon` meshes via `NavigationServer2D.bake_from_source_geometry_data` (layer 1 land, layer 2 ocean, layer 4 `AMPHIBIOUS_LAYER` = the whole board, never carved because land and ocean are both inset by their agent radius and never touch), terrain-zone obstacles (skipped for civs that traverse them), ocean boundary walls |
 | **AI Systems** ||
 | `project/scripts/ai/world_query.gd` | `WorldQuery` — read-only query service over the unit/building layers (own/enemy/all, of_type/in_state/nearest_to); the AI queries it instead of walking the scene tree. Exposed lazily as `AIPlayer.world` |
 | `project/scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic; owns the `world: WorldQuery` getter |
@@ -213,6 +213,8 @@ $GODOT --headless --path project res://tools/check_map_gen.tscn   # env: CALIMA_
 CALIMA_RIVALS=3 CALIMA_MAP_SIZE=0 $GODOT --headless --path project res://tools/check_islands_layout.tscn
 # Islands: the runtime navmesh rebake keeps land carved and the ocean sailable
 $GODOT --headless --path project res://tools/check_nav_islands.tscn   # env: CALIMA_MAP
+# Amphibious: the Tidecaller swims off the beach, land units are refused water, passengers disembark dry
+$GODOT --headless --path project res://tools/check_amphibious.tscn
 ```
 
 Note: GUT silently *skips* a test script that fails to parse while still
@@ -266,7 +268,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Franks: Cheaper age advance, cavalry HP bonus, fast farms
 - Britons: Archer range +1/age, warship attack speed bonus
 - Castellanos: Free Blacksmith tech/age, balanced roster
-- Atlantes: Ship attack speed bonus, amphibious unique unit, harder to spot in Sea Fog (`fog_stealth` 0.5), +50 % vision within 400 px of a shore (`coastal_vision` 1.50, read by `FogOfWar._coastal_vision_mult`)
+- Atlantes: Ship attack speed bonus, amphibious unique unit (Tidecaller wades shallows at full speed, swims deep water at `deep_water_speed` 0.60), harder to spot in Sea Fog (`fog_stealth` 0.5), +50 % vision within 400 px of a shore (`coastal_vision` 1.50, read by `FogOfWar._coastal_vision_mult`)
 - Fenicios: Ship cost reduction, ramming naval unique unit
 
 **Weather System:**

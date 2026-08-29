@@ -6,11 +6,11 @@
 script = ExtResource("1_atlantes")
 id = "atlantes"
 display_name = "Atlantes"
-description = "Mysterious seafarers. Dominate coastal waters, build on ocean tiles, and move freely through shallow water."
+description = "Mysterious seafarers. Dominate coastal waters, see further along every shore, and wade the shallows with their Tidecallers."
 unique_unit_ids = ["tidecaller"]
 unique_technology_ids = []
 starting_bonuses = {}
-stat_multipliers = {"coastal_vision": 1.50, "fog_stealth": 0.5, "ship_attack_speed": 1.20, "shallow_water_penalty": 0.0}
+stat_multipliers = {"coastal_vision": 1.50, "deep_water_speed": 0.60, "fog_stealth": 0.5, "ship_attack_speed": 1.20}
 weather_affinity = {"atlantic_storm": 0.0, "sea_fog": 0.5}
 missing_units = ["heavy_cavalry", "siege_workshop"]
 missing_technologies = []

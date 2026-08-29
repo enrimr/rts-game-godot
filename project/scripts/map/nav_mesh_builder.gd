@@ -1,20 +1,41 @@
 class_name NavMeshBuilder extends RefCounted
 
-## Carves the two navigation meshes of a generated map and walls off the ocean.
+## Carves the three navigation meshes of a generated map and walls off the ocean.
 ##
-## Layer 1 (NavigationRegion2D)      → land units: covers land, excludes ocean
-## Layer 2 (OceanNavigationRegion2D) → ships:      covers ocean, excludes land
+## Layer 1 (NavigationRegion2D)            → land units: covers land, excludes ocean
+## Layer 2 (OceanNavigationRegion2D)       → ships:      covers ocean, excludes land
+## Layer 4 (AmphibiousNavigationRegion2D)  → amphibious units: the whole board
 ##
-## On Islands maps both meshes are carved from the land polygons.
-## On other maps there is no ocean so the ocean region stays as the full-map
+## On Islands maps the first two meshes are carved from the land polygons. The
+## amphibious mesh is never carved — that is the point: land and ocean are baked
+## with an agent radius, so each one ends ~10 px short of the shoreline and the
+## two never share an edge. An amphibious unit given both layers would still be
+## stuck on its island, so it gets its own single continuous mesh instead.
+##
+## On other maps there is no ocean, so the ocean region stays as the full-map
 ## default (ships won't be trained on those map types anyway).
+
+## Navigation layer bit of the amphibious mesh. Units that walk into water set
+## their NavigationAgent2D.navigation_layers to this (see Tidecaller).
+const AMPHIBIOUS_LAYER: int = 4
 
 func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 	var land_region: NavigationRegion2D = parent.get_node_or_null("NavigationRegion2D") as NavigationRegion2D
 	var ocean_region: NavigationRegion2D = parent.get_node_or_null("OceanNavigationRegion2D") as NavigationRegion2D
+	var amphibious_region: NavigationRegion2D = parent.get_node_or_null("AmphibiousNavigationRegion2D") as NavigationRegion2D
 
 	if land_region == null:
 		return
+
+	var half: float = map_half  # exact boundary — no overshoot
+	var board: Array[PackedVector2Array] = [PackedVector2Array([
+		Vector2(-half, -half), Vector2(half, -half),
+		Vector2(half,  half),  Vector2(-half,  half),
+	])]
+
+	# Amphibious mesh: everything inside the playable area, land and water alike.
+	if amphibious_region != null:
+		_bake(amphibious_region, board, [])
 
 	if MatchConfig.map_type == MatchConfig.MapType.ISLANDS and land_polys.size() > 0:
 		var islands: Array[PackedVector2Array] = []
@@ -27,11 +48,6 @@ func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 		# Ocean mesh: the whole board minus the islands, so ships sail
 		# everywhere except over land.
 		if ocean_region != null:
-			var half: float = map_half  # exact boundary — no overshoot
-			var board: Array[PackedVector2Array] = [PackedVector2Array([
-				Vector2(-half, -half), Vector2(half, -half),
-				Vector2(half,  half),  Vector2(-half,  half),
-			])]
 			_bake(ocean_region, board, islands)
 			# Physical walls so ships cannot sail past the map edge
 			_add_ocean_boundary_walls(parent, half)

@@ -704,10 +704,15 @@ func _edge_distance_to(target: Node) -> float:
 		return Vector2(maxf(d.x, 0.0), maxf(d.y, 0.0)).length()
 	return global_position.distance_to(target_pos)
 
+## True for units that can enter water. Land units stay on land no matter which
+## civ owns them; the Atlantes Tidecaller and every ship override this.
+func is_amphibious() -> bool:
+	return false
+
 # Clamps a movement destination to the nearest passable tile for this unit.
 # Call this before setting nav_agent.target_position.
 func _safe_destination(destination: Vector2) -> Vector2:
-	return TerrainManager.nearest_passable(destination, civ_id)
+	return TerrainManager.nearest_passable(destination, civ_id, is_amphibious())
 
 # Sets the nav target and records the original destination for unstick recovery.
 func _navigate_to(destination: Vector2) -> void:
@@ -728,7 +733,7 @@ func _nav_velocity() -> Vector2:
 		* CivBonusManager.get_unit_speed_multiplier(player_id, unit_data.id) \
 		* CivBonusManager.get_unit_move_speed_multiplier(player_id) \
 		* WeatherManager.get_move_speed_multiplier(global_position, player_id) \
-		* TerrainManager.get_speed_mult(global_position, civ_id)
+		* TerrainManager.get_speed_mult(global_position, civ_id, is_amphibious())
 	return dir.normalized() * spd
 
 # Tracks movement over time. Returns true once per stuck period so the

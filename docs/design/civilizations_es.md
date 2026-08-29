@@ -222,7 +222,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 | **Héroe** | Artaxerax |
 | **Habilidad** | *Calima* — Envuelve unidades aliadas cercanas en una niebla de calima durante 12 s; las unidades camufladas no pueden ser apuntadas por enemigos · Recarga 60 s |
 | **Unidad única** | **Invocador de Mareas** — 75 PV · 50c+70o · Edad 2 · *Pulso Mareal*: cada ataque hace 2 daño en área en 65 px |
-| **Bonificadores** | Visión costera ×1.50 (unidades y edificios a menos de 400 px de la costa) · Vel. ataque barcos ×1.20 · Más difíciles de detectar en la Niebla Marina (se descubren a 90 px en vez de 180 px) · Sin penalización en aguas poco profundas · Pueden atravesar océano |
+| **Bonificadores** | Visión costera ×1.50 (unidades y edificios a menos de 400 px de la costa) · Vel. ataque barcos ×1.20 · Más difíciles de detectar en la Niebla Marina (se descubren a 90 px en vez de 180 px) · Invocador de Mareas anfibio: vadea aguas someras a velocidad completa y nada en mar abierto a ×0.60 (`deep_water_speed`) |
 | **Restricciones** | Sin caballería pesada · Sin taller de asedio |
 
 **Estrategia:** Supremacía naval absoluta. Devastadores en mapas costeros y de islas.

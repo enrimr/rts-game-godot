@@ -41,8 +41,12 @@ const SPEED_MULT: Array[float] = [
 const LAURISILVA_VISION_MULT: float = 0.70
 
 # Ocean within this distance of the coast counts as shallow water (GDD M6):
-# amphibious units wade it at full speed instead of the deep-water 0.60.
+# amphibious units wade it at full speed instead of the deep-water fraction.
 const SHALLOW_WATER_DEPTH: float = 120.0
+
+# Speed kept by an amphibious unit swimming outside the shallow band. Civs may
+# override it with a "deep_water_speed" entry in their stat_multipliers.
+const DEEP_WATER_SPEED: float = 0.60
 
 # Risco vantage (GDD M6): ranged units within this distance of a cliff edge
 # gain extra reach. The zone itself is impassable, so the GDD's "units on
@@ -148,7 +152,9 @@ func get_terrain(world_pos: Vector2) -> TerrainType:
 	return TerrainType.GRASS
 
 # Speed multiplier for a unit at world_pos, taking civ immunity into account.
-func get_speed_mult(world_pos: Vector2, civ_id: String) -> float:
+# `amphibious` is the unit's own capability (UnitBase.is_amphibious): the civ flag
+# alone is not enough, or every Atlantes land unit would count as a swimmer.
+func get_speed_mult(world_pos: Vector2, civ_id: String, amphibious: bool = false) -> float:
 	var t: TerrainType = get_terrain(world_pos)
 	var civ: CivilizationResource = _get_civ(civ_id)
 	match t:
@@ -161,12 +167,27 @@ func get_speed_mult(world_pos: Vector2, civ_id: String) -> float:
 				return 1.0
 			return SPEED_MULT[TerrainType.DUNE]
 		TerrainType.OCEAN:
-			if civ != null and civ.can_traverse_ocean:
+			if amphibious:
 				# Shallows are waded at full speed; deep water swims slowly.
-				return 1.0 if is_shallow_water(world_pos) else 0.60
+				return 1.0 if is_shallow_water(world_pos) else deep_water_speed(civ_id)
 			return 0.0
 		_:
 			return SPEED_MULT[t]
+
+## Swim speed fraction in deep water for `civ_id`. Read straight off the civ
+## resource rather than through CivBonusManager: this is a terrain query with no
+## player_id in scope, and no technology touches the number.
+func deep_water_speed(civ_id: String) -> float:
+	var civ: CivilizationResource = _get_civ(civ_id)
+	if civ == null:
+		return DEEP_WATER_SPEED
+	return civ.stat_multipliers.get("deep_water_speed", DEEP_WATER_SPEED) as float
+
+## True when `civ_id` is allowed to field units that enter water at all. The unit
+## still has to declare itself amphibious — this is the civ-level gate.
+func civ_can_traverse_ocean(civ_id: String) -> bool:
+	var civ: CivilizationResource = _get_civ(civ_id)
+	return civ != null and civ.can_traverse_ocean
 
 func is_buildable(world_pos: Vector2) -> bool:
 	var t: TerrainType = get_terrain(world_pos)
@@ -197,12 +218,15 @@ func is_ocean(world_pos: Vector2) -> bool:
 	return get_terrain(world_pos) == TerrainType.OCEAN
 
 # Returns true if a unit with given civ_id cannot enter world_pos at all.
-func is_impassable_for(world_pos: Vector2, civ_id: String) -> bool:
+# Water is only open to units that declare themselves amphibious (see
+# UnitBase.is_amphibious); ordering a regular land unit into the sea has to fail
+# here, or its nav target lands off the mesh and the unit freezes on the spot.
+func is_impassable_for(world_pos: Vector2, civ_id: String, amphibious: bool = false) -> bool:
 	var t: TerrainType = get_terrain(world_pos)
 	var civ: CivilizationResource = _get_civ(civ_id)
 	match t:
 		TerrainType.OCEAN:
-			return civ == null or not civ.can_traverse_ocean
+			return not amphibious
 		TerrainType.RISCO, TerrainType.CALDERA:
 			return true
 		TerrainType.MALPAIS:
@@ -213,8 +237,8 @@ func is_impassable_for(world_pos: Vector2, civ_id: String) -> bool:
 # Returns the nearest passable position to world_pos for a unit with given civ_id.
 # Searches outward in concentric rings until a passable tile is found.
 # Returns world_pos itself if it is already passable (fast path).
-func nearest_passable(world_pos: Vector2, civ_id: String) -> Vector2:
-	if not is_impassable_for(world_pos, civ_id):
+func nearest_passable(world_pos: Vector2, civ_id: String, amphibious: bool = false) -> Vector2:
+	if not is_impassable_for(world_pos, civ_id, amphibious):
 		return world_pos
 	var step: float = 24.0
 	for ring: int in range(1, 30):
@@ -223,7 +247,7 @@ func nearest_passable(world_pos: Vector2, civ_id: String) -> Vector2:
 		for i: int in range(checks):
 			var a: float = TAU * i / checks
 			var candidate: Vector2 = world_pos + Vector2(cos(a), sin(a)) * r
-			if not is_impassable_for(candidate, civ_id):
+			if not is_impassable_for(candidate, civ_id, amphibious):
 				return candidate
 	return world_pos  # fallback — could not find passable tile
 

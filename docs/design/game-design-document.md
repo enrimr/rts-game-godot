@@ -63,7 +63,7 @@ Eight civilizations across three historical layers. See `civilizations.md` for f
 
 | Layer | Civilization | Identity |
 |---|---|---|
-| Ancient | **Atlantes** | Naval masters, coastal builders, fog of war (+50 % vision along their shores, harder to spot in Sea Fog) |
+| Ancient | **Atlantes** | Naval masters, coastal builders, fog of war (+50 % vision along their shores, harder to spot in Sea Fog), amphibious Tidecaller that walks into the sea |
 | Ancient | **Fenicios** | Commerce, mercenaries, trade routes |
 | Native | **Guanches** | Volcanic terrain, durable infantry, stone fortresses |
 | Native | **Canarii** | Economy, balanced archers, elevated terrain bonus |
@@ -107,15 +107,15 @@ Hero rules:
 | Lava-cooled black sand | Normal | No | Coastal/decorative |
 | Laurisilva (dense forest) | -35% | No | High wood yield (dense 260-wood forests), vision −30% under the canopy |
 | Risco (cliff edge) | No passage | No | Ranged units within 48 px of the cliff edge: +2 attack range |
-| Shallow water (ocean ≤120 px from coast) | Land units blocked; amphibious full speed | No | Atlantes wade shallows at full speed, deep water at 60% |
-| Ocean | Land units blocked | No | Ships only; fishing available |
+| Shallow water (ocean ≤120 px from coast) | Land units blocked; amphibious full speed | No | Only the Atlantes Tidecaller wades — the rest of their army stays dry |
+| Ocean | Land units blocked | No | Ships and amphibious units; the Tidecaller swims at 60% speed (`deep_water_speed`); fishing available |
 | Caldera (active) | Impassable | No | Control adjacent zone → +stone/min |
 
 ### Impassability enforcement
 
-`TerrainManager.is_impassable_for(world_pos, civ_id)` is the runtime gate. All unit movement orders resolve the final destination through `TerrainManager.nearest_passable` before assigning a nav agent target. If a requested position is inside an impassable zone the unit is redirected to the nearest reachable tile via a 30-ring radial search (24 px per ring).
+`TerrainManager.is_impassable_for(world_pos, civ_id, amphibious)` is the runtime gate. All unit movement orders resolve the final destination through `TerrainManager.nearest_passable` before assigning a nav agent target. If a requested position is inside an impassable zone the unit is redirected to the nearest reachable tile via a 30-ring radial search (24 px per ring). The `amphibious` argument comes from the unit itself (`UnitBase.is_amphibious()`), so water is opened per unit and not per civilization: an Atlantes militia is refused the sea, its Tidecaller is not.
 
-NavMesh carving (`MapGenerator._add_nav_obstacles`) backs this up at the mesh level: malpaís, risco, and caldera zones become `NavigationObstacle2D` nodes, and on Islands maps the nav polygon is replaced with per-island land polygons so the baked mesh never extends over ocean.
+NavMesh carving (`NavMeshBuilder.build`) backs this up at the mesh level: malpaís, risco, and caldera zones become `NavigationObstacle2D` nodes, and on Islands maps the nav polygon is replaced with per-island land polygons so the baked mesh never extends over ocean. Amphibious units walk a third, uncarved mesh that spans land and water (navigation layer 4).
 
 ---
 

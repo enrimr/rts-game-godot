@@ -89,6 +89,12 @@ func board(unit: Node) -> bool:
 	EventBus.garrison_changed.emit(self, _garrison.size(), CAPACITY)
 	return true
 
+## Dry ground beside the ship for a disembarking passenger. Deliberately asks for
+## a land tile even when the passenger is amphibious: troops land on the beach,
+## not in the surf, and an off-mesh drop used to leave the unit unable to path.
+func _disembark_position(around: Vector2, unit: Node) -> Vector2:
+	return TerrainManager.nearest_passable(around, unit.get("civ_id") as String)
+
 # Unload all garrisoned units near current position.
 func unload_all() -> void:
 	if _garrison.is_empty():
@@ -102,8 +108,7 @@ func unload_all() -> void:
 			continue
 		var angle: float = TAU * float(i) / float(count)
 		var offset: Vector2 = Vector2(cos(angle), sin(angle)) * UNLOAD_OFFSET
-		var land_pos: Vector2 = TerrainManager.nearest_passable(
-			global_position + offset, unit.get("civ_id") as String)
+		var land_pos: Vector2 = _disembark_position(global_position + offset, unit)
 		unit.set_process(true)
 		unit.set_physics_process(true)
 		unit.visible = true
@@ -122,9 +127,8 @@ func unload_one(index: int) -> void:
 		EventBus.garrison_changed.emit(self, _garrison.size(), CAPACITY)
 		return
 	var angle: float = randf() * TAU
-	var land_pos: Vector2 = TerrainManager.nearest_passable(
-		global_position + Vector2(cos(angle), sin(angle)) * UNLOAD_OFFSET,
-		unit.get("civ_id") as String)
+	var land_pos: Vector2 = _disembark_position(
+		global_position + Vector2(cos(angle), sin(angle)) * UNLOAD_OFFSET, unit)
 	unit.set_process(true)
 	unit.set_physics_process(true)
 	unit.visible = true

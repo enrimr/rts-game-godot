@@ -516,15 +516,16 @@
     {
       "id": "atlantes",
       "display_name": "Atlantes",
-      "description": "Navegantes misteriosos. Dominan las aguas costeras y pueden moverse libremente por el océano.",
+      "description": "Navegantes misteriosos. Dominan las aguas costeras, ven más lejos en cualquier orilla y vadean los bajíos con sus Invocadores de Mareas.",
       "hero_id": "artaxerax",
       "unique_unit_ids": ["tidecaller"],
-      "unique_unit": { "id": "tidecaller", "display_name": "Invocador de Mareas", "special_ability": "Pulso de Marea: cada ataque inflige 2 de daño en área a todos los enemigos en 65 px." },
+      "unique_unit": { "id": "tidecaller", "display_name": "Invocador de Mareas", "special_ability": "Pulso de Marea: cada ataque inflige 2 de daño en área a todos los enemigos en 65 px. Anfibio: vadea aguas someras a velocidad completa y nada en mar abierto al 60 % de velocidad." },
       "unique_technology_ids": [],
       "stat_multipliers": {
         "coastal_vision": 1.50,
         "ship_attack_speed": 1.20,
-        "shallow_water_penalty": 0.0
+        "fog_stealth": 0.5,
+        "deep_water_speed": 0.60
       },
       "missing_units": ["heavy_cavalry", "siege_workshop"],
       "missing_technologies": [],

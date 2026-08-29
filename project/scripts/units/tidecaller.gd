@@ -16,6 +16,13 @@ func _ready() -> void:
 	civ_id = "atlantes"
 	super._ready()
 
+## The one land unit that walks into the sea. Gated on the civ flag so a future
+## amphibious unit only needs `can_traverse_ocean` in its civ resource.
+## Its NavigationAgent2D rides the amphibious navigation layer
+## (NavMeshBuilder.AMPHIBIOUS_LAYER), the only mesh that spans land and water.
+func is_amphibious() -> bool:
+	return TerrainManager.civ_can_traverse_ocean(civ_id)
+
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 6.6, 10.0)
 

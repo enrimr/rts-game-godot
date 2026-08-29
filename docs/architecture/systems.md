@@ -18,6 +18,58 @@ damage = max(1, attacker.attack - target.armor_melee)
 
 Uses Godot's built-in `NavigationAgent2D` on each unit. Navigation regions are updated when buildings are placed or destroyed.
 
+Three `NavigationRegion2D` nodes live in `game_world.tscn`, distinguished by their
+`navigation_layers` bit; every agent picks exactly one of them:
+
+| Region | Layer | Agents | Surface |
+|---|---|---|---|
+| `NavigationRegion2D` | 1 | Land units | Land only (ocean excluded on Islands maps) |
+| `OceanNavigationRegion2D` | 2 | Ships | Ocean only (islands are obstructions) |
+| `AmphibiousNavigationRegion2D` | 4 (`NavMeshBuilder.AMPHIBIOUS_LAYER`) | Amphibious land units (Tidecaller) | The whole board, land and water alike |
+
+The amphibious mesh exists because a unit cannot simply be given layers 1 **and**
+2: both meshes are baked with an `agent_radius` of 10 px, so each one stops ~10 px
+short of the shoreline and the two never share an edge. An agent on both layers
+would still be trapped on its island. One continuous mesh is the only way across.
+
+`WorldPlacement._do_nav_rebake()` rebakes the land **and** amphibious regions after
+every building placement or demolition (`_rebake_region()`, one async bake per
+region, with the callback bound to its region). Without the second bake a
+Tidecaller would path straight through buildings the land mesh already routes
+around.
+
+## Amphibious Movement
+
+Water permission is a **unit** capability, not a civ flag:
+
+```gdscript
+# UnitBase — land units stay on land no matter which civ owns them
+func is_amphibious() -> bool:
+	return false
+```
+
+`ShipBase` returns `true`. `Tidecaller` returns
+`TerrainManager.civ_can_traverse_ocean(civ_id)`, so a future amphibious unit only
+needs `can_traverse_ocean = true` in its civilization resource. The flag is passed
+straight into the terrain queries (`get_speed_mult`, `is_impassable_for`,
+`nearest_passable`) through `UnitBase._safe_destination()` and `_nav_velocity()`.
+
+Two consequences that used to be bugs:
+
+- An Atlantes **land** unit is refused a water destination. Previously permission
+  came from the civ, so any Atlantes unit could be sent to sea, land on the
+  ocean-free land mesh, and freeze (an off-mesh `target_position` makes
+  `is_navigation_finished()` return true immediately).
+- `TransportShip._disembark_position()` deliberately asks for a *land* tile even
+  for an amphibious passenger, so troops land on the beach instead of being
+  dropped into the surf off the land mesh.
+
+Speeds in the water come from civ data rather than a hardcoded constant:
+`TerrainManager.deep_water_speed(civ_id)` reads `stat_multipliers.deep_water_speed`
+and falls back to `DEEP_WATER_SPEED` (0.60). Shallow water (ocean within
+`SHALLOW_WATER_DEPTH` of the coast) is waded at full speed. Gated by
+`tests/unit/test_shallow_water.gd` and the `tools/check_amphibious.tscn` harness.
+
 ## Terrain Impassability
 
 `TerrainManager` (autoload) is the single authority on whether a world position is passable for a given actor.
@@ -26,8 +78,11 @@ Uses Godot's built-in `NavigationAgent2D` on each unit. Navigation regions are u
 
 | Method | Signature | Description |
 |---|---|---|
-| `is_impassable_for` | `(world_pos: Vector2, civ_id: String) -> bool` | Returns `true` if the tile at `world_pos` is impassable for the given civilization |
-| `nearest_passable` | `(world_pos: Vector2, civ_id: String) -> Vector2` | Radial search (30 rings × 24 px step) returning the closest passable position |
+| `is_impassable_for` | `(world_pos: Vector2, civ_id: String, amphibious: bool = false) -> bool` | Returns `true` if the tile at `world_pos` is impassable for the given civilization; ocean is passable only for amphibious actors |
+| `nearest_passable` | `(world_pos: Vector2, civ_id: String, amphibious: bool = false) -> Vector2` | Radial search (30 rings × 24 px step) returning the closest passable position |
+| `get_speed_mult` | `(world_pos: Vector2, civ_id: String, amphibious: bool = false) -> float` | Terrain speed multiplier; `0.0` means blocked. Amphibious actors get `1.0` in shallow water and `deep_water_speed(civ_id)` beyond it |
+| `deep_water_speed` | `(civ_id: String) -> float` | `stat_multipliers.deep_water_speed` from the civ resource, default `DEEP_WATER_SPEED` (0.60) |
+| `civ_can_traverse_ocean` | `(civ_id: String) -> bool` | The `can_traverse_ocean` civ flag — the gate for amphibious *land* units |
 | `nearest_ocean` | `(world_pos: Vector2) -> Vector2` | Spiral search returning the closest ocean tile — used to guarantee ship spawns land in water |
 | `distance_to_coast` | `(world_pos: Vector2) -> float` | Distance to the nearest land/ocean boundary, `INF` on a landlocked map |
 | `bake_minimap_texture` | `() -> ImageTexture` | Generates a 256×256 terrain texture used by the minimap renderer |
@@ -46,11 +101,11 @@ Gated by `tests/unit/test_coast_distance.gd`.
 
 **Integration points:**
 
-- `UnitBase` carries a `civ_id: String = ""` property. Its `_safe_destination(destination: Vector2) -> Vector2` helper calls `TerrainManager.nearest_passable` before any nav agent assignment.
+- `UnitBase` carries a `civ_id: String = ""` property. Its `_safe_destination(destination: Vector2) -> Vector2` helper calls `TerrainManager.nearest_passable(destination, civ_id, is_amphibious())` before any nav agent assignment.
 - `ShipBase` overrides `_safe_destination` to snap to `nearest_ocean` instead: ships
-  masquerade as the amphibious `atlantes` civ, so `nearest_passable` considers land
-  passable and would leave a nav target on the shore — off the ocean navmesh, where
-  the agent reports "navigation finished" immediately and the ship never moves.
+  are amphibious, so `nearest_passable` considers land passable and would leave a
+  nav target on the shore — off the ocean navmesh, where the agent reports
+  "navigation finished" immediately and the ship never moves.
 - All unit `order_move` implementations (`Militia`, `Archer`, `Pikeman`, `Scout`, `HeavyScout`, `Knight`) and `Villager._start_move_to` call `_safe_destination` before setting `nav_agent.target_position`.
 - `Animal` nodes call `TerrainManager.nearest_passable(pos, "")` in `order_move`, `_pick_wander_target`, and `_start_flee` so fauna never path onto water or other impassable terrain.
 
@@ -60,9 +115,10 @@ Gated by `tests/unit/test_coast_distance.gd`.
 (called from `MapGenerator._run`):
 
 - Creates `NavigationObstacle2D` nodes for every malpaís, risco, and caldera zone, parented inside the scene's `NavigationRegion2D`.
-- On **Islands** maps, the default nav polygon (which would span the full map area including ocean) is replaced with per-island land polygons so the baked mesh never covers ocean tiles.
+- Bakes the amphibious mesh (layer 4) as the full playable square on **every** map type — it is never carved, which is the whole point of having it.
+- On **Islands** maps, the default nav polygon (which would span the full map area including ocean) is replaced with per-island land polygons so the baked mesh never covers ocean tiles, and the ocean mesh is baked as the board minus those islands.
 
-This means ship units — whose `civ_id` resolves to a civ that has ocean marked as passable — navigate a separate logical layer, while land units are physically blocked by the nav mesh boundaries.
+This means ships navigate their own layer, amphibious units navigate the continuous layer, and plain land units are physically blocked by the land mesh boundaries.
 
 ## Fog of War
 

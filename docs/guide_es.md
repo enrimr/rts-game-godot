@@ -29,15 +29,16 @@ Estas civilizaciones son anteriores al conflicto medieval. Sus ruinas salpican e
 
 La civilización perdida del mito. Escritores griegos — Platón, Plinio, Herodoto — situaron la Atlántida más allá de las Columnas de Hércules, en el mismo océano que estas islas ocupan. En *Calima*, los Atlantes no son una leyenda. Son un imperio en declive con el conocimiento náutico más avanzado del mundo, y ruinas por todas partes.
 
-**Cómo se juega:** Los Atlantes controlan el agua. Pueden construir plataformas flotantes sobre el océano — la única civilización que puede hacerlo — convirtiendo casillas marinas en suelo edificable. Sus unidades cruzan aguas poco profundas sin penalización. Su línea de visión en casillas costeras es mayor que la de cualquier otra civilización.
+**Cómo se juega:** Los Atlantes controlan el agua. Sus Invocadores de Mareas son las únicas tropas terrestres del juego que entran en el mar — vadean los bajíos a velocidad completa y nadan en mar abierto —, así que ninguna orilla detiene un ataque atlante. Su línea de visión en cualquier costa es mayor que la de cualquier otra civilización.
 
 **Puntos fuertes:** Dominio naval, expansión costera, control estratégico del mapa  
 **Puntos débiles:** Sin caballería pesada; asedio limitado; pierde en mapas de tierra pura
 
 **Bonificaciones pasivas:**
-- Visión extendida en casillas costeras y acuáticas
-- Pueden construir plataformas sobre casillas oceánicas (funcionan como tierra para colocar edificios)
-- Las unidades militares ignoran la penalización de movimiento en aguas poco profundas
+- +50 % de visión para unidades y edificios a menos de 400 px de una costa
+- Más difíciles de detectar en la Niebla Marina (los enemigos los descubren a 90 px en vez de 180 px)
+- Velocidad de ataque de barcos ×1.20; la Tormenta Atlántica nunca frena su flota
+- Invocador de Mareas anfibio: velocidad completa en aguas someras, 60 % en mar abierto
 
 **Unidad única:** *Tidecaller* — infantería a distancia entrenada en el Castillo, devastadora contra edificios costeros y barcos, frágil en combate en campo abierto
 
@@ -225,8 +226,8 @@ El archipiélago no es llano. Cada tipo de casilla cambia cómo se mueven y comb
 | Malpaís (roca volcánica) | Todas las unidades -50% velocidad | No edificable; Guanches inmunes |
 | Laurisilva (bosque denso) | Todas las unidades -30% velocidad | Muy alto rendimiento de madera; reduce visión |
 | Risco (borde del acantilado) | Impasable | Unidades adyacentes ganan +2 de alcance de ataque |
-| Agua poco profunda | Unidades terrestres -40% velocidad | Atlantes inmunes |
-| Océano | Unidades terrestres bloqueadas | Solo barcos; pesca disponible (Barcas Pesqueras) |
+| Agua poco profunda | Unidades terrestres bloqueadas | Solo la vadean las unidades anfibias — el Invocador de Mareas atlante, a velocidad completa |
+| Océano | Unidades terrestres bloqueadas | Barcos, y el Invocador de Mareas nadando al 60 % de velocidad; pesca disponible (Barcas Pesqueras) |
 | Caldera (cráter volcánico) | Impasable | Controlar zona adyacente: +piedra por minuto |
 
 ---

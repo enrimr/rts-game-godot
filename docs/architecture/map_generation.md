@@ -164,10 +164,11 @@ This means specific overrides (e.g. grass oases) should be added after the base 
 | `DUNE` | Yes | Speed × 0.80; Mahos immune |
 | `MALPAIS` | No* | Impassable; Guanches immune |
 | `RISCO` | No | Impassable; range bonus nearby |
-| `OCEAN` | No* | Ships only; Atlantes slowed but not blocked |
+| `OCEAN` | No* | Ships and amphibious units only; shallows at full speed, deep water × `deep_water_speed` |
 | `CALDERA` | No | Impassable |
 
-*Civ immunity overrides passability — see `TerrainManager.get_speed_mult()`.
+*Civ immunity overrides passability for land zones; ocean is opened by the unit's
+`is_amphibious()`, not by the civ — see `TerrainManager.get_speed_mult()`.
 
 ### Zone counts per map type
 
@@ -310,13 +311,19 @@ positions before giving up. Forest zones use `count × 12` attempts.
 
 ## Navigation meshes
 
-Carved by `NavMeshBuilder.build(parent, map_half, land_polys)`. Two
+Carved by `NavMeshBuilder.build(parent, map_half, land_polys)`. Three
 `NavigationRegion2D` nodes live in the scene:
 
 | Node | Navigation layer | Used by |
 |---|---|---|
 | `NavigationRegion2D` | Layer 1 | Land units |
 | `OceanNavigationRegion2D` | Layer 2 | Ships |
+| `AmphibiousNavigationRegion2D` | Layer 4 | Amphibious land units (Tidecaller) |
+
+The amphibious mesh is the full playable square, baked on every map type and never
+carved against the coastline: land and ocean are both inset by their 10 px
+`agent_radius`, so they never share an edge and an agent on both layers would still
+be stuck on its island. Only a single continuous mesh crosses the shore.
 
 On Islands maps both meshes are rebuilt from the procedural land polygons by
 `NavMeshBuilder._bake()`, which feeds a `NavigationMeshSourceGeometryData2D` to

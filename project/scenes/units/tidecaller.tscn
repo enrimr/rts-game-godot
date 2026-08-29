@@ -58,6 +58,7 @@ polygon = PackedVector2Array(3, -26, 5, -29, 7, -26, 5, -23)
 shape = SubResource("CapsuleShape2D_1")
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
+navigation_layers = 4
 path_desired_distance = 16.0
 target_desired_distance = 24.0
 avoidance_enabled = true

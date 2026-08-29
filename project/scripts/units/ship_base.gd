@@ -3,21 +3,25 @@ extends UnitBase
 class_name ShipBase
 
 ## Base class for all naval units. Water-only movement, no terrain speed penalty.
-## Ships use civ_id = "atlantes" internally so TerrainManager considers ocean passable.
+## Ocean access comes from is_amphibious(), not from the owning civ.
 
 func get_selection_sound() -> String:
 	return "select_naval"
 
+func is_amphibious() -> bool:
+	return true
+
 func _ready() -> void:
-	# Ships are always ocean-capable regardless of player civ
+	# Cosmetic only since ocean access moved to is_amphibious(): every hull is
+	# dressed in Atlantes style by UnitDress.
 	civ_id = "atlantes"
 	super._ready()
 
 ## Ships can only follow the ocean navmesh, but the base implementation only asks
-## whether the destination is *impassable* — and land is passable for the
-## "atlantes" civ ships pretend to be. A target on land (a dock's own origin, a
-## coastal click) therefore stayed off-mesh, so the agent reported navigation
-## finished immediately and the ship sat still.
+## whether the destination is *impassable* — and water is passable for anything
+## amphibious. A target on land (a dock's own origin, a coastal click) therefore
+## stayed off-mesh, so the agent reported navigation finished immediately and the
+## ship sat still.
 func _safe_destination(destination: Vector2) -> Vector2:
 	if TerrainManager.is_ocean(destination):
 		return destination

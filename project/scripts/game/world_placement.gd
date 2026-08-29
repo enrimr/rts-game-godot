@@ -79,7 +79,6 @@ var _wall_cost_label: Label = null
 
 var _nav_rebake_timer: float = 0.0
 var _nav_rebake_pending: bool = false
-var _nav_bake_target: NavigationPolygon = null   # temp poly being baked async
 var _nav_bake_failed: bool = false               # last bake produced an empty mesh
 
 func setup(world) -> void:
@@ -457,10 +456,26 @@ func _traversable_outlines() -> Array[PackedVector2Array]:
 		]))
 	return out
 
+## The amphibious mesh spans land and water alike, so a building rebake must not
+## carve it back to the islands — only the buildings standing on it matter.
+func _amphibious_outlines() -> Array[PackedVector2Array]:
+	return [PackedVector2Array([
+		Vector2(-3000.0, -3000.0), Vector2(3000.0, -3000.0),
+		Vector2(3000.0,  3000.0), Vector2(-3000.0,  3000.0),
+	])]
+
 func _do_nav_rebake() -> void:
-	if not is_instance_valid(_world._nav_region):
+	_rebake_region(_world._nav_region, _traversable_outlines())
+	# Keep the amphibious surface in step: without this a Tidecaller would path
+	# straight through buildings that the land mesh already routes around.
+	_rebake_region(
+		_world.get_node_or_null("AmphibiousNavigationRegion2D") as NavigationRegion2D,
+		_amphibious_outlines())
+
+func _rebake_region(region: NavigationRegion2D, traversable: Array[PackedVector2Array]) -> void:
+	if not is_instance_valid(region):
 		return
-	var current: NavigationPolygon = _world._nav_region.navigation_polygon
+	var current: NavigationPolygon = region.navigation_polygon
 	if current == null:
 		return
 	# Bake into a FRESH polygon (copying agent settings) rather than the live one.
@@ -469,9 +484,8 @@ func _do_nav_rebake() -> void:
 	var nav_poly: NavigationPolygon = NavigationPolygon.new()
 	nav_poly.agent_radius = current.agent_radius
 	nav_poly.cell_size = current.cell_size
-	_nav_bake_target = nav_poly
 	var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
-	for outline: PackedVector2Array in _traversable_outlines():
+	for outline: PackedVector2Array in traversable:
 		source.add_traversable_outline(outline)
 	for b: Node in _world.buildings_layer.get_children():
 		if not is_instance_valid(b) or not b.has_method("get_nav_obstacle_polygon"):
@@ -493,23 +507,22 @@ func _do_nav_rebake() -> void:
 		if rpoly.size() >= 3:
 			source.add_obstruction_outline(rpoly)
 	NavigationServer2D.bake_from_source_geometry_data_async(
-		nav_poly, source, Callable(self, "_on_nav_bake_done"))
+		nav_poly, source, Callable(self, "_on_nav_bake_done").bind(region, nav_poly))
 
-func _on_nav_bake_done() -> void:
-	if not is_instance_valid(_world) or not is_instance_valid(_world._nav_region) \
-			or _nav_bake_target == null:
+func _on_nav_bake_done(region: NavigationRegion2D, baked: NavigationPolygon) -> void:
+	if not is_instance_valid(_world) or not is_instance_valid(region) or baked == null:
 		return
 	# Only swap in the freshly baked mesh if the partition succeeded (non-empty).
 	# An empty result means the bake failed (Godot's convex partition can choke
 	# on certain overlapping obstruction layouts) — keep the existing navmesh so
 	# units never lose their walkable surface, and schedule a retry so the mesh
 	# catches up once the transient geometry settles (warn only once).
-	if _nav_bake_target.get_polygon_count() > 0:
-		_world._nav_region.navigation_polygon = _nav_bake_target
+	if baked.get_polygon_count() > 0:
+		region.navigation_polygon = baked
 		_nav_bake_failed = false
 	else:
 		if not _nav_bake_failed:
-			push_warning("Nav rebake produced an empty mesh; keeping the previous polygon and retrying.")
+			push_warning("Nav rebake produced an empty mesh for %s; keeping the previous polygon and retrying."
+				% region.name)
 			_nav_bake_failed = true
 		_request_nav_rebake()   # retry after the standard debounce delay
-	_nav_bake_target = null

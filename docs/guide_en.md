@@ -29,15 +29,16 @@ These civilizations predate the medieval conflict. Their ruins dot the archipela
 
 The lost civilization of myth. Greek writers — Plato, Pliny, Herodotus — placed Atlantis beyond the Pillars of Hercules, in the very ocean these islands occupy. In *Calima*, the Atlantes are not a legend. They are a fading empire with the most advanced seafaring knowledge in the world, and ruins everywhere.
 
-**How they play:** Atlantes control the water. They can build floating platforms on the ocean — the only civilization that can do this — turning sea tiles into buildable land. Their units cross shallow water without penalty. Their line of sight on coastal tiles is greater than any other civ.
+**How they play:** Atlantes control the water. Their Tidecallers are the only land troops in the game that walk into the sea — wading the shallows at full speed and swimming open water — so a shoreline never stops an Atlantes push. Their line of sight along any coast is greater than any other civ.
 
 **Strengths:** Naval dominance, coastal expansion, strategic map control  
 **Weaknesses:** No heavy cavalry; siege is limited; loses badly on pure land maps
 
 **Passive bonuses:**
-- Extended vision on coastal and water tiles
-- Can build platforms on ocean tiles (acts as land for building placement)
-- Military units ignore movement penalty in shallow water
+- +50% vision for units and buildings within 400 px of a shore
+- Harder to spot in Sea Fog (enemies find them at 90 px instead of 180 px)
+- Ship attack speed ×1.20; the Atlantic Storm never slows their fleet
+- Amphibious Tidecaller: full speed in shallow water, 60% speed in open ocean
 
 **Unique unit:** *Tidecaller* — a ranged infantry unit trained at the Castle, devastating against coastal buildings and ships, fragile in open-field combat
 
@@ -225,8 +226,8 @@ The archipelago is not flat. Every tile type changes how units move and fight.
 | Malpaís (volcanic rock) | All units -50% speed | Not buildable; Guanches immune |
 | Laurisilva (dense forest) | All units -30% speed | Very high wood yield; reduces vision |
 | Risco (cliff edge) | Impassable | Units adjacent gain +2 attack range |
-| Shallow water | Land units -40% speed | Atlantes immune |
-| Ocean | Land units blocked | Ships only; fishing available (Fishing Boats) |
+| Shallow water | Land units blocked | Only amphibious units wade it — the Atlantes Tidecaller, at full speed |
+| Ocean | Land units blocked | Ships, and the Tidecaller swimming at 60% speed; fishing available (Fishing Boats) |
 | Caldera (volcanic crater) | Impassable | Controlling adjacent zone: +stone per minute |
 
 ---
