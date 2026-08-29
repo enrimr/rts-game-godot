@@ -89,12 +89,9 @@ var _fd_original_pid: int = -1               # FORCED_DIPLOMACY original player_
 var _calima_cloud: Node2D = null             # CALIMA cloud node in the scene
 var _cloaked_units: Array[Node] = []         # CALIMA units that were cloaked
 
-# Visual ring showing the hero is a hero: a gold ground-aligned ellipse
-# under the feet, always visible.
-var _hero_ring: Node2D = null
-const HERO_RING_COLOR: Color = Color(1.0, 0.84, 0.25, 0.9)
-const HERO_RING_RX: float = 13.0   # screen px; sits inside the selection ring
-const HERO_FOOT_Y: float = 10.0    # matches the militia plinth foot anchor
+# Visual marking the hero as a hero: the animated golden energy aura behind
+# the figure (see HeroAura), always visible.
+var _hero_aura: HeroAura = null
 
 # Rocinante passive (Don Quijote): base speed stored to apply delay on attack
 var _quijote_attack_delay: float = 0.0
@@ -115,7 +112,7 @@ func _ready() -> void:
 		unit_data = unit_data.duplicate() as UnitResource
 		unit_data.move_speed *= 1.15
 		_quijote_attack_delay = 1.2
-	_build_hero_ring()
+	_build_hero_aura()
 	if is_female:
 		_apply_female_appearance()
 	# Update portrait label to hero initials instead of the militia default "M"
@@ -195,9 +192,16 @@ func _apply_female_appearance() -> void:
 		Vector2(3, -15), Vector2(3, -13)])
 	body.add_child(circlet)
 
-func _build_hero_ring() -> void:
-	_hero_ring = VisualFx.add_ground_ring(self, "HeroRing",
-		HERO_RING_RX, HERO_RING_RX * 0.5, HERO_RING_COLOR, 1.8, HERO_FOOT_Y, -1)
+func _build_hero_aura() -> void:
+	_hero_aura = HeroAura.new()
+	_hero_aura.name = "HeroAura"
+	add_child(_hero_aura)
+	# Before Body in tree order: the figure draws on top of the flames, the
+	# ground shadow (z -1) stays under both.
+	var body: Node = get_node_or_null("Body")
+	if body != null:
+		move_child(_hero_aura, body.get_index())
+	IsoBillboard.make_upright(_hero_aura)
 
 func _combat_side_tick(delta: float) -> void:
 	if _cooldown_remaining > 0.0:

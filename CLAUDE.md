@@ -149,7 +149,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/ui/hud/hud_weather.gd` | `HudWeather` — weather announcement banner + countdown pill (self-wires to WeatherManager) |
 | `project/scripts/ui/hud/hud_match_stats.gd` | `HudMatchStats` — match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays |
 | `project/scripts/ui/hud/hud_menus.gd` | `HudMenus` — in-game pause menu, settings panel, save-slot picker, surrender flow |
-| `project/scripts/ui/hud/hud_controls.gd` | `HudControls` — game-speed buttons, camera dpad (with panning), idle-villager/idle-military cycle buttons |
+| `project/scripts/ui/hud/hud_controls.gd` | `HudControls` — game-speed buttons, camera dpad (with panning), idle-villager/idle-military cycle buttons, locate-hero button (selects + centres camera; greyed while respawning) |
 | `project/scripts/ui/hud/hud_style.gd` | `HudStyle` — shared StyleBoxFlat panel/button factory, bold font + text outline helpers |
 | `project/scripts/ui/hud/hud_hero_widget.gd` | `HudHeroWidget` — persistent hero portrait + HP card in Regicide matches (click centers camera) |
 | `project/scripts/ui/hud/hud_control_groups.gd` | `HudControlGroups` — clickable chips for assigned control groups (dominant-type miniature + count) |
@@ -165,6 +165,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/utils/ship_dress.gd` | `ShipDress` — per-civ hull/deck/sail repaint + prow ornament of the shared hulls (Atlantes bronze fin, Fenicios eye); civ-unique hulls stamp `META_APPLIED` to opt out |
 | `project/scripts/utils/entity_names.gd` | `EntityNames` — localized unit/building display names with fallback |
 | `project/scripts/utils/alert_ring.gd` | `AlertRing` — ring buffer of attack-alert positions for the SPACE jump |
+| `project/scripts/utils/hero_aura.gd` | `HeroAura` — animated Dragon Ball-style golden flame aura behind the hero (3 additive layers, upright billboard space, inserted before Body so the figure reads on top); replaced the static gold ground ring |
 | `project/scripts/utils/visual_fx.gd` | `VisualFx` — ground shadows, selection plinths, nameplate visibility |
 | `project/scripts/ui/resource_display.gd` | HBoxContainer showing one resource icon + amount |
 | `project/scripts/ui/unit_portrait.gd` | PanelContainer showing unit name + HP bar in selection grid |
@@ -345,7 +346,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - 2D physics interpolation enabled (smooth movement at high render framerates)
 - Tall stone tower visual for Watch Tower
 - Selection indicators (green circle for player, yellow for allies)
-- Hero ring (gold circle) visual
+- Hero energy aura (animated Dragon Ball-style golden flame, `HeroAura`; reviewed via `tools/check_hero_aura.tscn` screenshots) + locate-hero HUD button next to the idle-unit buttons
 - Rally point markers for production buildings
 - Health bars for units/buildings (hidden when full HP)
 - Progressive damage fire/smoke on buildings (smoke <75% HP, flames <50%, heavy fire <25%; repair clears it)

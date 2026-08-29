@@ -21,6 +21,7 @@ var _idle_villager_index: int = 0
 var _idle_military_btn: Button = null
 var _idle_military_badge: Label = null
 var _idle_military_index: int = 0
+var _hero_btn: Button = null
 var _idle_check_timer: float = 0.0
 
 func init(player_id: int, hud_root: Control) -> void:
@@ -31,6 +32,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_idle_villager_button()
 	_build_idle_military_button()
+	_build_hero_button()
 	_build_dpad()
 	_build_speed_buttons()
 	set_game_speed(1)
@@ -41,6 +43,7 @@ func _process(delta: float) -> void:
 		_idle_check_timer = 0.0
 		_update_idle_villager_button()
 		_update_idle_military_button()
+		_update_hero_button()
 	if _dpad_dir != Vector2.ZERO:
 		var cam: Camera2D = _camera()
 		if cam != null:
@@ -270,6 +273,53 @@ func _on_idle_military_pressed() -> void:
 	var cam: Camera2D = _camera()
 	if cam != null:
 		cam.position = (unit as Node2D).global_position
+
+## Locate-hero button: one press selects the hero and centres the camera on
+## it. Sits in the idle-buttons row, left of the idle-military button.
+func _build_hero_button() -> void:
+	if _hud_root == null:
+		return
+	_hero_btn = Button.new()
+	_hero_btn.custom_minimum_size = Vector2(36, 36)
+	_hero_btn.focus_mode = Control.FOCUS_NONE
+	_hero_btn.add_child(UiIcons.icon_rect("locate_hero", 3.0))
+	_hero_btn.tooltip_text = tr("UI_LOCATE_HERO")
+	_hero_btn.anchor_left   = 1.0
+	_hero_btn.anchor_top    = 1.0
+	_hero_btn.anchor_right  = 1.0
+	_hero_btn.anchor_bottom = 1.0
+	_hero_btn.offset_left   = -376.0
+	_hero_btn.offset_top    = -300.0
+	_hero_btn.offset_right  = -340.0
+	_hero_btn.offset_bottom = -264.0
+	for style: String in ["normal", "hover", "pressed", "disabled"]:
+		_hero_btn.add_theme_stylebox_override(style,
+			HudStyle.command_button(HudStyle.ACCENT_PRODUCTION, style))
+	_hero_btn.pressed.connect(_on_hero_pressed)
+	_hud_root.add_child(_hero_btn)
+
+func _find_own_hero() -> Node:
+	for unit: Node in _units_layer_children():
+		if unit is HeroUnit and is_instance_valid(unit) \
+				and (unit.get("player_id") as int) == local_player_id:
+			return unit
+	return null
+
+func _update_hero_button() -> void:
+	if not is_instance_valid(_hero_btn):
+		return
+	# Greyed out while the hero is dead / respawning at the TC.
+	_hero_btn.disabled = _find_own_hero() == null
+
+func _on_hero_pressed() -> void:
+	var hero: Node = _find_own_hero()
+	if hero == null:
+		return
+	SelectionManager.select([hero])
+	var cam: Camera2D = _camera()
+	if cam != null:
+		EventBus.camera_follow_cancelled.emit()
+		cam.position = (hero as Node2D).global_position
 
 func _build_dpad() -> void:
 	if _hud_root == null:

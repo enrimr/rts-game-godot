@@ -23,7 +23,7 @@ const GLYPHS: Array[String] = [
 	"move", "stop", "attack", "attack_ground", "cover_fire", "patrol_route",
 	"follow", "age_up", "gate_lock", "gate_unlock", "ability", "unload",
 	"close", "menu", "speed1", "speed2", "speed3",
-	"idle_villager", "idle_military", "page_prev", "page_next",
+	"idle_villager", "idle_military", "locate_hero", "page_prev", "page_next",
 	"res_food", "res_wood", "res_gold", "res_stone",
 	"stat_attack", "stat_armor", "stat_range", "stat_speed",
 ]
@@ -466,6 +466,14 @@ static func _build(id: String, root: Node2D) -> void:
 				Vector2(12, 32)]), C_RED)
 			_circle(root, Vector2(28, 28), 5.0, C_GOLD)
 			_z_mark(root, Vector2(46, 8))
+		"locate_hero":
+			# Golden crown over a head — the hero locator.
+			var hero_skin: Color = Color(0.85, 0.72, 0.55)
+			_circle(root, Vector2(32, 36), 11.0, hero_skin)
+			_poly(root, PackedVector2Array([Vector2(16, 24), Vector2(22, 12),
+				Vector2(28, 21), Vector2(32, 8), Vector2(36, 21), Vector2(42, 12),
+				Vector2(48, 24), Vector2(46, 28), Vector2(18, 28)]), C_GOLD)
+			_circle(root, Vector2(32, 10), 2.6, Color(1.0, 0.95, 0.7))
 		"res_food":
 			# Wheat ear: bold kernel pairs on a single stalk (readable at 14 px).
 			_bar(root, Vector2(32, 58), Vector2(32, 24), 4.0, Color(0.80, 0.63, 0.24))
