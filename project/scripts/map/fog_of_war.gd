@@ -221,6 +221,7 @@ func _render() -> void:
 		_texture.update(_image)
 
 func _apply_visibility() -> void:
+	var own_positions: PackedVector2Array = _own_watcher_positions()
 	# Enemy units and animals: only visible when in a currently visible cell
 	if is_instance_valid(_units_node):
 		for unit: Node in _units_node.get_children():
@@ -232,7 +233,8 @@ func _apply_visibility() -> void:
 				continue
 			var was_visible: bool = (unit as Node2D).visible
 			var state: int = get_cell_state((unit as Node2D).global_position)
-			var fog_cloaked: bool = WeatherManager.is_unit_cloaked_by_weather((unit as Node2D).global_position)
+			var fog_cloaked: bool = WeatherManager.is_unit_cloaked_by_weather((unit as Node2D).global_position) \
+				and not _breaks_fog_cloak(unit, own_positions)
 			var now_visible: bool = (state == STATE_VISIBLE) and not fog_cloaked
 			(unit as Node2D).visible = now_visible
 			if now_visible and not was_visible:
@@ -258,6 +260,48 @@ func _apply_visibility() -> void:
 				continue
 			var state: int = get_cell_state((child as Node2D).global_position)
 			(child as Node2D).visible = (state >= STATE_EXPLORED)
+
+## Positions that can spot a fog-cloaked enemy at short range: every own unit and
+## every finished own building, gathered once per tick.
+func _own_watcher_positions() -> PackedVector2Array:
+	var out: PackedVector2Array = PackedVector2Array()
+	if is_instance_valid(_units_node):
+		for unit: Node in _units_node.get_children():
+			if not is_instance_valid(unit):
+				continue
+			var pid: Variant = unit.get("player_id")
+			if pid != null and (pid as int) == 0:
+				out.append((unit as Node2D).global_position)
+	if is_instance_valid(_buildings_node):
+		for building: Node in _buildings_node.get_children():
+			if not is_instance_valid(building):
+				continue
+			var pid: Variant = building.get("player_id")
+			if pid == null or (pid as int) != 0:
+				continue
+			var state_val: Variant = building.get("state")
+			if state_val != null and (state_val as int) != BuildingBase.BuildingState.COMPLETE:
+				continue
+			out.append((building as Node2D).global_position)
+	if is_instance_valid(_drop_off_node):
+		var tc_pid: Variant = _drop_off_node.get("player_id")
+		if tc_pid != null and (tc_pid as int) == 0:
+			out.append((_drop_off_node as Node2D).global_position)
+	return out
+
+## Sea fog hides units at distance, not the ones already at arm's length — and it
+## never hides a unit that is shooting. Without this the cloak wiped every enemy
+## off the screen on Islands maps, where the whole map lies inside the coastal band.
+func _breaks_fog_cloak(unit: Node, own_positions: PackedVector2Array) -> bool:
+	if unit.has_method("is_revealed_by_combat") and unit.call("is_revealed_by_combat"):
+		return true
+	var pid: Variant = unit.get("player_id")
+	var spot: float = WeatherManager.fog_spot_range(pid as int if pid != null else -1)
+	var pos: Vector2 = (unit as Node2D).global_position
+	for watcher: Vector2 in own_positions:
+		if pos.distance_squared_to(watcher) <= spot * spot:
+			return true
+	return false
 
 func _world_to_cell(world_pos: Vector2) -> Vector2i:
 	var rel: Vector2 = (world_pos - MAP_ORIGIN) / CELL_SIZE

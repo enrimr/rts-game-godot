@@ -266,7 +266,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Franks: Cheaper age advance, cavalry HP bonus, fast farms
 - Britons: Archer range +1/age, warship attack speed bonus
 - Castellanos: Free Blacksmith tech/age, balanced roster
-- Atlantes: Ship attack speed bonus, amphibious unique unit
+- Atlantes: Ship attack speed bonus, amphibious unique unit, harder to spot in Sea Fog (`fog_stealth` 0.5)
 - Fenicios: Ship cost reduction, ramming naval unique unit
 
 **Weather System:**
@@ -274,7 +274,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Stat modifiers: vision, movement speed, gather rate, projectile drift, building damage
 - Per-civ weather affinity: `CivilizationResource.weather_affinity` ({weather_id: resistance 0..1}) scales penalties per civilization (e.g. Guanches immune to Calima, Atlantes ignore the Atlantic Storm naval penalty); weather query methods take an optional `player_id`. Full matrix: Guanches (calima 0.0, volcanic_ash 0.5), Mahos (calima 0.5), Atlantes (atlantic_storm 0.0, sea_fog 0.5), Fenicios (atlantic_storm 0.5), Britons (atlantic_storm 0.5), Canarii (sea_fog 0.5, trade_winds 0.5), Castellanos (calima 0.5); Franks are the neutral continental baseline (no affinity)
 - Volcanic Ash is spatial: only rolls on Volcanic Coast maps and only affects positions within a caldera's radius + 800 px (`WeatherManager._in_volcanic_zone` queries `TerrainManager` CALDERA zones; calderaless maps fall back to whole-map coverage)
-- Weather-based cloaking (Sea Fog coastal stealth)
+- Weather-based cloaking (Sea Fog coastal stealth): the cloak breaks within `WeatherManager.fog_spot_range(owner)` of an own unit/building (180 px, ×`fog_stealth` — Atlantes 90 px) and for `UnitBase.COMBAT_REVEAL_TIME` after the hidden unit strikes; `FogOfWar._breaks_fog_cloak` owns both rules
 - Weather forecast: a `forecast` phase warns the player `FORECAST_TIME` seconds before an event ramps in (`WeatherManager.weather_incoming` signal → `HudWeather` banner); weather stays inactive (no penalties) during the warning
 - Visual effects overlay (rain, dust, ash, fog vignette)
 - Lobby-configurable frequency (Off/Normal/Frequent/Extreme)

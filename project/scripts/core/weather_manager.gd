@@ -71,6 +71,12 @@ const WEATHER_MAP_ALLOWED: Dictionary = {
 const VOLCANIC_ZONE_RADIUS: float = 800.0
 # Distance from coast (ocean-land boundary) inside which SEA_FOG applies to units
 const COASTAL_ZONE_DEPTH: float = 400.0
+# How close one of your own units/buildings has to be to spot an enemy hidden by
+# sea fog. Without this the cloak hid every enemy in the coastal band regardless
+# of line of sight — and on an Islands map the whole map is coastal, so entire
+# armies simply vanished. Scaled per civ by the "fog_stealth" multiplier: the
+# Atlantes are harder to find in their own fog.
+const FOG_SPOT_RANGE: float = 180.0
 
 var current_weather: WeatherType = WeatherType.CLEAR
 var intensity: float = 0.0   # 0.0 → 1.0 (smoothly ramped)
@@ -289,13 +295,19 @@ func get_projectile_drift() -> Vector2:
 			return perp * 30.0 * intensity
 	return Vector2.ZERO
 
-## True if an enemy unit at world_pos should be hidden due to sea fog.
+## True if an enemy unit at world_pos should be hidden due to sea fog. The cloak
+## still breaks at close range (fog_spot_range) or when the unit attacks — see
+## FogOfWar._apply_visibility, the only caller that can answer those.
 func is_unit_cloaked_by_weather(world_pos: Vector2) -> bool:
 	if intensity < 0.5:
 		return false
 	if current_weather != WeatherType.SEA_FOG:
 		return false
 	return _in_coastal_zone(world_pos)
+
+## Distance at which a hidden unit owned by `player_id` is spotted anyway.
+func fog_spot_range(player_id: int = -1) -> float:
+	return FOG_SPOT_RANGE * CivBonusManager.get_multiplier(player_id, "fog_stealth")
 
 ## HP drain per second for a building at world_pos from volcanic ash.
 func get_building_damage_rate(world_pos: Vector2, player_id: int = -1) -> float:

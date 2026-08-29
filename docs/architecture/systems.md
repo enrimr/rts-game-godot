@@ -341,9 +341,30 @@ Ages: Dark (0) → Feudal (1) → Castle (2) → Imperial (3). Advancing costs r
 |---|---|---|
 | `calima` | `CALIMA` | Saharan dust haze — land speed −15%, gather rate (food/wood) −20%, vision −40% |
 | `atlantic_storm` | `ATLANTIC_STORM` | Rain & wind — naval speed −30%, fish gather −50%; projectile drift (crosswind) |
-| `sea_fog` | `SEA_FOG` | Coastal fog (≤400 px from coast) — vision −60%, enemy units cloaked when intensity ≥ 0.5 |
+| `sea_fog` | `SEA_FOG` | Coastal fog (≤400 px from coast) — vision −60%, enemy units cloaked when intensity ≥ 0.5 (see the cloak rules below) |
 | `trade_winds` | `TRADE_WINDS` | NE→SW wind — naval speed ±20% depending on heading; projectile drift along wind |
 | `volcanic_ash` | `VOLCANIC_ASH` | Caldera zones (caldera radius + 800 px) — gather −30%, vision −50%, buildings drain 2 HP/s |
+
+### Sea-fog cloak rules
+
+`WeatherManager.is_unit_cloaked_by_weather(world_pos)` only answers the question
+"is this position inside an active fog bank?". Two things break the cloak, and
+`FogOfWar._apply_visibility` (the only caller with access to both sides) applies
+them through `_breaks_fog_cloak`:
+
+1. **Proximity.** An enemy within `WeatherManager.fog_spot_range(owner_id)` of any
+   own unit or finished own building is visible anyway. The base range is
+   `FOG_SPOT_RANGE` = 180 px, scaled by the owner civ's `fog_stealth` multiplier —
+   the Atlantes ship 0.5, so they have to be found at 90 px.
+2. **Attacking.** `UnitBase.is_revealed_by_combat()` stays true for
+   `COMBAT_REVEAL_TIME` (3 s) after the unit's last strike (`_last_strike_msec`,
+   stamped by the canonical machine in `_handle_attacking`). Firing gives your
+   position away.
+
+Without those rules the cloak hid *every* enemy inside the 400 px coastal band
+regardless of line of sight — and on an Islands map the entire playable area is
+inside that band, so whole armies became invisible while standing next to your
+own units. Gated by `tests/unit/test_fog_cloak_reveal.gd`.
 
 Map-type restrictions: `SEA_FOG` only spawns on ISLANDS / VOLCANIC_COAST / DESERT_COAST; `VOLCANIC_ASH` only on VOLCANIC_COAST (the only map type that generates calderas). `_in_volcanic_zone` checks the `TerrainManager` CALDERA zones; a map with no caldera (legacy save mid-event) falls back to whole-map coverage so an active event is never a no-op.
 
@@ -365,6 +386,7 @@ CLEAR ──(timer)──► RAMP_IN (10 s) ──► PEAK (variable) ──► 
 | `get_vision_multiplier(world_pos)` | `FogOfWar._reveal_from_units/buildings` |
 | `get_projectile_drift() → Vector2` | `Trebuchet._spawn_projectile`, `Mangonel._fire_at` |
 | `is_unit_cloaked_by_weather(world_pos) → bool` | `FogOfWar._apply_visibility` |
+| `fog_spot_range(player_id) → float` | `FogOfWar._breaks_fog_cloak` |
 | `get_building_damage_rate(world_pos) → float` | `BuildingBase._process` |
 
 ### Visual overlay

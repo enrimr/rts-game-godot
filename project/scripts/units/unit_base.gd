@@ -34,6 +34,11 @@ var attack_target: Node = null
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 
+# How long a unit stays visible after striking, even while hidden by sea fog:
+# opening fire gives your position away.
+const COMBAT_REVEAL_TIME: float = 3.0
+var _last_strike_msec: int = -1
+
 var _hit_tween: Tween = null
 var _hero_low_hp_fired: bool = false   # tracks if low-HP alert has been emitted this life
 var _anim_time: float = 0.0
@@ -482,6 +487,7 @@ func _handle_attacking(delta: float) -> void:
 	_attack_timer += delta
 	if _attack_timer >= _attack_interval():
 		_attack_timer = 0.0
+		_last_strike_msec = Time.get_ticks_msec()
 		_execute_strike(attack_target)
 
 func _attack_interval() -> float:
@@ -502,6 +508,13 @@ func _execute_strike(target: Node) -> void:
 
 func _strike_damage(target: Node) -> float:
 	return _get_effective_attack_vs(target) - _get_target_armor(target)
+
+## True for COMBAT_REVEAL_TIME after the last strike. Read by FogOfWar so a unit
+## shooting from inside a fog bank cannot stay invisible while it fires.
+func is_revealed_by_combat() -> bool:
+	if _last_strike_msec < 0:
+		return false
+	return float(Time.get_ticks_msec() - _last_strike_msec) / 1000.0 < COMBAT_REVEAL_TIME
 
 ## Re-acquire something in range after the current target dies. Taunts win.
 func _scan_area_for_target() -> void:

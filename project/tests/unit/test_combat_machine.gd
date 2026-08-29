@@ -449,6 +449,19 @@ func test_handle_attacking_strikes_when_interval_elapsed() -> void:
 	assert_eq(u._attack_timer, 0.0, "_attack_timer must reset after the strike")
 
 
+# 16b. Striking marks the unit revealed, so sea fog cannot hide it while it fires
+func test_strike_marks_the_unit_revealed_by_combat() -> void:
+	var u: HookRecorder = _make_recorder()
+	var target: FakeTarget = _make_target(0.0, u.global_position)
+	u.current_state = UnitBase.UnitState.ATTACKING
+	u.attack_target = target
+
+	assert_false(u.is_revealed_by_combat(), "A unit that never attacked is not revealed")
+	u._handle_attacking(1.0)
+	assert_true(u.is_revealed_by_combat(),
+		"Opening fire breaks the sea-fog cloak for COMBAT_REVEAL_TIME")
+
+
 # ===========================================================================
 # is_combat_unit
 # ===========================================================================
