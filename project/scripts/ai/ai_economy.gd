@@ -2,8 +2,6 @@ class_name AIEconomy extends RefCounted
 
 var _ai  # AIPlayer — untyped Variant so dynamic property access works at runtime
 
-const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
-
 func setup(ai) -> void:
 	_ai = ai
 
@@ -60,7 +58,7 @@ func manage_age_advance() -> void:
 	var military: int = _ai._military.count_military()
 	if military >= GameSettings.get_ai_age_advance_min_military() and AgeManager.can_advance(_ai.player_id):
 		_ai.debug_log("AGE ADVANCE started (mil=%d)" % military)
-		AgeManager.start_advance(_ai.player_id)
+		CommandBus.submit(AdvanceAgeCommand.make(_ai.player_id))
 
 func find_nearest_resource(rtype: ResourceNode.ResourceType, from: Vector2) -> ResourceNode:
 	var best: ResourceNode = null
@@ -109,29 +107,27 @@ func find_nearest_drop_off(rtype: ResourceNode.ResourceType) -> Node2D:
 			best = building as Node2D
 	return best if best != null else _base_drop_off()
 
-func redirect_villagers_to_drop_off(new_drop: Node2D, rtype: ResourceNode.ResourceType) -> void:
-	var reassigned: int = 0
+func redirect_villagers_to_drop_off(new_drop: Node2D, _rtype: ResourceNode.ResourceType) -> void:
+	var ids: Array[int] = []
 	for v: Villager in _own_villagers():
-		if reassigned >= 2:
+		if ids.size() >= 2:
 			break
 		var carried: Variant = v.get("carried_resource")
 		if carried != null and (carried as String) != "" and v.gather_target != null:
-			v.drop_off_target = new_drop
-			reassigned += 1
+			ids.append(EntityRegistry.id_of(v))
+	if not ids.is_empty():
+		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "set_drop_off", ids,
+			EntityRegistry.id_of(new_drop)))
 
 func spawn_villager() -> void:
 	if not is_instance_valid(_ai.town_center):
 		return
-	if not ResourceManager.spend_resource(_ai.player_id, {"food": 50}):
+	if not ResourceManager.can_afford(_ai.player_id, {"food": 50}):
 		return
 	_ai.debug_log("SPAWN villager")
-	var v: Node2D = VILLAGER_SCENE.instantiate() as Node2D
-	v.set("player_id", _ai.player_id)
-	v.set("civ_id", MatchConfig.get_rival_civ_id(_ai.player_id))
-	_ai.units_layer.add_child(v)
-	v.global_position = _ai.town_center.global_position + Vector2(randf_range(-50.0, 50.0), 60.0)
-	PopulationManager.add_unit(_ai.player_id)
-	EventBus.unit_spawned.emit(v, _ai.player_id)
+	var pos: Vector2 = _ai.town_center.global_position \
+		+ Vector2(MatchRng.randf_range(-50.0, 50.0), 60.0)
+	CommandBus.submit(SpawnUnitCommand.make(_ai.player_id, "villager", pos, {"food": 50}))
 
 func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> void:
 	var age: int = AgeManager.get_age(_ai.player_id)
@@ -192,7 +188,9 @@ func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> v
 	# (e.g. the Town Center was destroyed); order_gather tolerates a null target.
 	var nearest_drop: Node2D = find_nearest_drop_off(best_node.resource_type)
 	_ai.debug_log("GATHER villager → %s (deficit=%.2f)" % [best_node.get_resource_name(), best_deficit])
-	v.order_gather(best_node, best_node.get_resource_name(), nearest_drop)
+	CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "gather",
+		[EntityRegistry.id_of(v)] as Array[int], EntityRegistry.id_of(best_node),
+		EntityRegistry.id_of(nearest_drop) if nearest_drop != null else 0))
 
 func _count_of_type_villager() -> int:
 	return _own_villagers().size()

@@ -5,11 +5,6 @@ var _ai  # AIPlayer — untyped Variant so dynamic property access works at runt
 var _naval_transport: Node = null
 var _naval_scout_target: Vector2 = Vector2.ZERO
 
-const BUILDING_SCENES: Dictionary = {
-	"dock":      "res://scenes/buildings/dock.tscn",
-	"fish_trap": "res://scenes/buildings/fish_trap.tscn",
-}
-
 const GALLEY_RETREAT_HP_RATIO: float = 0.30
 const GALLEY_REJOIN_HP_RATIO: float  = 0.65
 
@@ -37,26 +32,34 @@ func manage_naval() -> void:
 
 	if age < GameManager.Age.FEUDAL:
 		if _count_naval("FishingBoat") < 2:
-			dk.order_train("fishing_boat")
+			_train_at(dk, "fishing_boat")
 		return
 
 	var ai_civ: String = MatchConfig.get_rival_civ_id(_ai.player_id)
 	var galley_target: int = 2 if age == GameManager.Age.FEUDAL else 3
 	if galleys < galley_target:
 		if ai_civ == "fenicios" and ResourceManager.can_afford(_ai.player_id, {"wood": 100, "gold": 50}):
-			dk.order_train("trireme")
+			_train_at(dk, "trireme")
 			return
 		if ResourceManager.can_afford(_ai.player_id, {"wood": 75, "gold": 35}):
-			dk.order_train("war_galley")
+			_train_at(dk, "war_galley")
 			return
 	if transports < 1 and ResourceManager.can_afford(_ai.player_id, {"wood": 125}):
-		dk.order_train("transport_ship")
+		_train_at(dk, "transport_ship")
 		return
 	if age >= GameManager.Age.CASTLE and galleys < 4:
 		if ai_civ == "fenicios" and ResourceManager.can_afford(_ai.player_id, {"wood": 100, "gold": 50}):
-			dk.order_train("trireme")
+			_train_at(dk, "trireme")
 		elif ResourceManager.can_afford(_ai.player_id, {"wood": 75, "gold": 35}):
-			dk.order_train("war_galley")
+			_train_at(dk, "war_galley")
+
+func _train_at(building: Node, unit_id: String) -> void:
+	CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
+		EntityRegistry.id_of(building), unit_id))
+
+func _move_unit(unit: Node, dest: Vector2) -> void:
+	CommandBus.submit(UnitPointCommand.make(_ai.player_id, "move",
+		[EntityRegistry.id_of(unit)] as Array[int], dest))
 
 func manage_naval_patrol() -> void:
 	var etc: Node2D = _ai._military.get_primary_enemy_tc()
@@ -72,10 +75,10 @@ func manage_naval_patrol() -> void:
 		if wg.current_state != UnitBase.UnitState.IDLE:
 			continue
 		var toward: Vector2 = etc.global_position
-		var jitter: Vector2 = Vector2(randf_range(-300.0, 300.0), randf_range(-300.0, 300.0))
-		var dest: Vector2 = wg.global_position.lerp(toward + jitter, randf_range(0.3, 0.7))
+		var jitter: Vector2 = Vector2(MatchRng.randf_range(-300.0, 300.0), MatchRng.randf_range(-300.0, 300.0))
+		var dest: Vector2 = wg.global_position.lerp(toward + jitter, MatchRng.randf_range(0.3, 0.7))
 		if TerrainManager.is_ocean(dest):
-			wg.order_move(dest)
+			_move_unit(wg, dest)
 
 func manage_fishing_boats() -> void:
 	var dock: Node = _find_own_dock()
@@ -90,11 +93,15 @@ func manage_fishing_boats() -> void:
 			continue
 
 		if fish_node != null:
-			fb.order_fish(fish_node, dock)
+			CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "gather",
+				[EntityRegistry.id_of(fb)] as Array[int], EntityRegistry.id_of(fish_node),
+				EntityRegistry.id_of(dock)))
 		else:
 			var trap: FishTrap = _find_own_fish_trap()
 			if trap != null:
-				fb.order_fish(trap, dock)
+				CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "gather",
+					[EntityRegistry.id_of(fb)] as Array[int], EntityRegistry.id_of(trap),
+					EntityRegistry.id_of(dock)))
 			else:
 				if ResourceManager.can_afford(_ai.player_id, _ai._construction._building_costs["fish_trap"]):
 					_build_fish_trap(fb, dock)
@@ -113,13 +120,14 @@ func launch_naval_assault() -> void:
 			continue
 		var enemy_ship: Node = _find_nearest_enemy_ship(wg.global_position)
 		if enemy_ship != null:
-			wg.order_attack(enemy_ship)
+			CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "attack",
+				[EntityRegistry.id_of(wg)] as Array[int], EntityRegistry.id_of(enemy_ship)))
 		elif wg.current_state == UnitBase.UnitState.IDLE:
 			var toward: Vector2 = etc.global_position
-			var jitter: Vector2 = Vector2(randf_range(-200.0, 200.0), randf_range(-200.0, 200.0))
-			var dest: Vector2 = wg.global_position.lerp(toward + jitter, randf_range(0.4, 0.8))
+			var jitter: Vector2 = Vector2(MatchRng.randf_range(-200.0, 200.0), MatchRng.randf_range(-200.0, 200.0))
+			var dest: Vector2 = wg.global_position.lerp(toward + jitter, MatchRng.randf_range(0.4, 0.8))
 			if TerrainManager.is_ocean(dest):
-				wg.order_move(dest)
+				_move_unit(wg, dest)
 
 	var military: int = _ai._military.count_military()
 	if military < 3:
@@ -132,24 +140,27 @@ func launch_naval_assault() -> void:
 	var ts: TransportShip = _naval_transport as TransportShip
 
 	if ts.get_garrison().size() > 0:
-		ts.order_move_then_unload(etc.global_position)
+		CommandBus.submit(TransportCommand.make(_ai.player_id, "move_unload",
+			EntityRegistry.id_of(ts), -1, etc.global_position))
 		return
 
 	if ts.current_state != UnitBase.UnitState.IDLE:
 		return
 
-	var boarded: int = 0
+	var troops: Array[int] = []
 	for unit: Node in _ai.world.own_units(_ai.player_id):
-		if ts.is_full() or boarded >= 4:
+		if ts.is_full() or troops.size() >= 4:
 			break
 		if not _ai._military.is_military_unit(unit):
 			continue
 		if unit.get("current_state") as int == UnitBase.UnitState.IDLE:
-			ts.board(unit)
-			boarded += 1
+			troops.append(EntityRegistry.id_of(unit))
 
-	if boarded > 0:
-		ts.order_move_then_unload(etc.global_position)
+	if not troops.is_empty():
+		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "board_instant",
+			troops, EntityRegistry.id_of(ts)))
+		CommandBus.submit(TransportCommand.make(_ai.player_id, "move_unload",
+			EntityRegistry.id_of(ts), -1, etc.global_position))
 
 func attack_with_idle_land_units() -> void:
 	if not is_instance_valid(_ai.town_center):
@@ -164,6 +175,7 @@ func attack_with_idle_land_units() -> void:
 	if target == null:
 		return
 	var enemy_origin: Vector2 = (target as Node2D).global_position
+	var landed: Array[int] = []
 	for unit: Node in _ai.world.own_units(_ai.player_id):
 		if not _ai._military.is_military_unit(unit):
 			continue
@@ -173,8 +185,10 @@ func attack_with_idle_land_units() -> void:
 		var upos: Vector2 = (unit as Node2D).global_position
 		# Only attack if the unit has already crossed the water onto the enemy island
 		if upos.distance_to(enemy_origin) < upos.distance_to(own_origin):
-			if unit.has_method("order_attack"):
-				unit.order_attack(target)
+			landed.append(EntityRegistry.id_of(unit))
+	if not landed.is_empty():
+		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "attack", landed,
+			EntityRegistry.id_of(target)))
 
 func _find_own_dock() -> Node:
 	for building: Node in _ai.world.own_buildings(_ai.player_id):
@@ -227,8 +241,8 @@ func _find_shore_position() -> Vector2:
 
 func _find_ocean_build_pos(origin: Vector2, min_r: float, max_r: float) -> Vector2:
 	for _i: int in range(24):
-		var angle: float = randf() * TAU
-		var dist: float = randf_range(min_r, max_r)
+		var angle: float = MatchRng.randf() * TAU
+		var dist: float = MatchRng.randf_range(min_r, max_r)
 		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * dist
 		if TerrainManager.is_ocean(pos):
 			return pos
@@ -240,37 +254,20 @@ func _build_dock_on_shore() -> void:
 	var pos: Vector2 = _find_shore_position()
 	if pos == Vector2.ZERO:
 		return
-	var scene_path: String = BUILDING_SCENES.get("dock", "") as String
-	var packed: PackedScene = load(scene_path) as PackedScene
-	if packed == null:
-		return
-	var b: Node2D = packed.instantiate() as Node2D
-	b.global_position = pos
-	b.set("player_id", _ai.player_id)
-	_ai.buildings_layer.add_child(b)
-	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
-	b.add_construction(100.0)
-	EventBus.building_placed.emit(b, _ai.player_id)
-	ResourceManager.spend_resource(_ai.player_id, _ai._construction._building_costs["dock"])
-	_ai._construction._built["dock"] = 1
+	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.make(_ai.player_id, "dock",
+		[pos] as Array[Vector2], 0.0, [] as Array[int], true,
+		_ai._construction._building_costs["dock"] as Dictionary)
+	CommandBus.submit(cmd)
+	if not cmd.last_placed.is_empty():
+		_ai._construction._built["dock"] = 1
 
 func _build_fish_trap(boat: FishingBoat, dock: Node) -> void:
 	var pos: Vector2 = _find_ocean_build_pos((dock as Node2D).global_position, 80.0, 200.0)
 	if pos == Vector2.ZERO:
 		return
-	var scene_path: String = BUILDING_SCENES.get("fish_trap", "") as String
-	var packed: PackedScene = load(scene_path) as PackedScene
-	if packed == null:
-		return
-	var b: Node2D = packed.instantiate() as Node2D
-	b.global_position = pos
-	b.set("player_id", _ai.player_id)
-	_ai.buildings_layer.add_child(b)
-	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
-	b.add_construction(100.0)
-	EventBus.building_placed.emit(b, _ai.player_id)
-	ResourceManager.spend_resource(_ai.player_id, _ai._construction._building_costs["fish_trap"])
-	boat.order_build(b)
+	CommandBus.submit(PlaceBuildingCommand.make(_ai.player_id, "fish_trap",
+		[pos] as Array[Vector2], 0.0, [EntityRegistry.id_of(boat)] as Array[int], true,
+		_ai._construction._building_costs["fish_trap"] as Dictionary))
 
 func _count_naval(type_name: String) -> int:
 	var count: int = 0
@@ -306,10 +303,10 @@ func _retreat_galley(wg: WarGalley) -> void:
 	if dock == null:
 		return
 	var dock_pos: Vector2 = (dock as Node2D).global_position
-	var jitter: Vector2 = Vector2(randf_range(-60.0, 60.0), randf_range(-60.0, 60.0))
+	var jitter: Vector2 = Vector2(MatchRng.randf_range(-60.0, 60.0), MatchRng.randf_range(-60.0, 60.0))
 	var dest: Vector2 = dock_pos + jitter
 	if TerrainManager.is_ocean(dest):
-		wg.order_move(dest)
+		_move_unit(wg, dest)
 
 func _find_nearest_enemy_ship(from: Vector2) -> Node:
 	var best: Node = null

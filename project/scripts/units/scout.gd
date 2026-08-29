@@ -55,18 +55,18 @@ func _combat_side_tick(delta: float) -> void:
 		_pick_explore_waypoint()
 
 func _pick_explore_waypoint() -> void:
-	_explore_waypoint_cooldown = randf_range(3.0, 7.0)
+	_explore_waypoint_cooldown = MatchRng.randf_range(3.0, 7.0)
 	var mh: float = TerrainManager.minimap_map_half * 0.92   # slight inset from edge
 	for _i: int in range(12):
 		var candidate: Vector2 = Vector2(
-			randf_range(-mh, mh),
-			randf_range(-mh, mh)
+			MatchRng.randf_range(-mh, mh),
+			MatchRng.randf_range(-mh, mh)
 		)
 		if not TerrainManager.is_impassable_for(candidate, civ_id):
 			order_move(candidate)
 			return
 	# Fallback: random direction from current position, clamped to map bounds.
-	var angle: float = randf_range(0.0, TAU)
-	var far: Vector2 = global_position + Vector2(cos(angle), sin(angle)) * randf_range(400.0, 1200.0)
+	var angle: float = MatchRng.randf_range(0.0, TAU)
+	var far: Vector2 = global_position + Vector2(cos(angle), sin(angle)) * MatchRng.randf_range(400.0, 1200.0)
 	far = far.clamp(Vector2(-mh, -mh), Vector2(mh, mh))
 	order_move(TerrainManager.nearest_passable(far, civ_id))

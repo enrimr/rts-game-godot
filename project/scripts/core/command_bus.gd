@@ -7,9 +7,10 @@ extends Node
 ## intents — the foundation replays build on, and the exact payload a LAN
 ## lockstep session will exchange instead of executing locally right away.
 ##
-## What does NOT go through the bus: selection, control groups, camera, HUD
-## state and other local-only UI concerns — and, for now, the AI modules,
-## which still order their units directly (they must migrate before lockstep).
+## The AI modules submit through the bus too, with their own player_id — the
+## whole simulation is driven by logged commands. What does NOT go through the
+## bus: selection, control groups, camera, HUD state and other local-only UI
+## concerns, plus AI-internal bookkeeping that mutates no game state.
 
 signal command_executed(command: GameCommand)
 
@@ -24,6 +25,7 @@ const KINDS: Dictionary = {
 	"market":          preload("res://scripts/game/commands/market_command.gd"),
 	"place_building":  preload("res://scripts/game/commands/place_building_command.gd"),
 	"advance_age":     preload("res://scripts/game/commands/advance_age_command.gd"),
+	"spawn_unit":      preload("res://scripts/game/commands/spawn_unit_command.gd"),
 }
 
 var _world: Node2D = null

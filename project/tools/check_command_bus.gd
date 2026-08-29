@@ -30,6 +30,10 @@ func _ready() -> void:
 	_check_move_progress()
 	_check_train_command()
 	_check_place_command()
+	# The AI ticks every ~2 s; a few ticks are enough for it to spawn villagers
+	# and assign gathering — all of which must land in the log as player-1 commands.
+	await get_tree().create_timer(6.0).timeout
+	_check_ai_commands()
 	_check_log()
 
 	print("COMMAND_BUS: %s" % ("done" if _failures == 0 else "FAILED (%d)" % _failures))
@@ -102,6 +106,19 @@ func _check_place_command() -> void:
 		_failures += 1
 	else:
 		print("    place OK: house site down, wood %d -> %d" % [wood_before, wood_after])
+
+func _check_ai_commands() -> void:
+	var ai_entries: int = 0
+	var kinds: Dictionary = {}
+	for entry: Dictionary in CommandBus.log_entries():
+		if (entry.get("player", 0) as int) != 0:
+			ai_entries += 1
+			kinds[entry.get("kind", "?")] = true
+	if ai_entries == 0:
+		print("    FAIL: the AI issued no commands through the bus")
+		_failures += 1
+	else:
+		print("    AI OK: %d rival commands logged (%s)" % [ai_entries, ", ".join(kinds.keys())])
 
 func _check_log() -> void:
 	var entries: Array[Dictionary] = CommandBus.log_entries()

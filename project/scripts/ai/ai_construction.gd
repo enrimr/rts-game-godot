@@ -192,11 +192,7 @@ func _build_pos_clear_footprint(pos: Vector2, footprint: float) -> bool:
 func _build(building_id: String) -> void:
 	if _build_cooldowns.has(building_id):
 		return
-	var scene_path: String = BUILDING_SCENES.get(building_id, "") as String
-	if scene_path.is_empty() or not is_instance_valid(_ai.town_center):
-		return
-	var packed: PackedScene = load(scene_path) as PackedScene
-	if packed == null:
+	if not is_instance_valid(_ai.town_center):
 		return
 	var zone: Dictionary = _get_build_zone(building_id)
 	var min_r: float = zone["min_r"] as float
@@ -211,15 +207,8 @@ func _build(building_id: String) -> void:
 		_record_build_fail(building_id)
 		return
 	_build_fail_counts.erase(building_id)
-	var b: Node2D = packed.instantiate() as Node2D
-	b.global_position = pos
-	b.set("player_id", _ai.player_id)
-	_ai.buildings_layer.add_child(b)
-	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
-	b.add_construction(100.0)
-	EventBus.building_placed.emit(b, _ai.player_id)
-	ResourceManager.spend_resource(_ai.player_id, _building_costs[building_id])
-	_built[building_id] = (_built.get(building_id, 0) as int) + 1
+	if _place(building_id, pos) == null:
+		return
 	_ai.debug_log("BUILD %s at (%.0f,%.0f)" % [building_id, pos.x, pos.y])
 
 func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType) -> void:
@@ -230,29 +219,29 @@ func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType)
 	if nearest == null:
 		_build(building_id)
 		return
-	var scene_path: String = BUILDING_SCENES.get(building_id, "") as String
-	if scene_path.is_empty():
-		return
-	var packed: PackedScene = load(scene_path) as PackedScene
-	if packed == null:
-		return
 	var max_r: float = _build_radius_for(building_id, 140.0)
 	var pos: Vector2 = _find_build_pos(nearest.global_position, 50.0, max_r, Vector2.ZERO, building_id)
 	if pos == Vector2.INF:
 		_record_build_fail(building_id)
 		return
 	_build_fail_counts.erase(building_id)
-	var b: Node2D = packed.instantiate() as Node2D
-	b.global_position = pos
-	b.set("player_id", _ai.player_id)
-	_ai.buildings_layer.add_child(b)
-	b.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
-	b.add_construction(100.0)
-	EventBus.building_placed.emit(b, _ai.player_id)
-	ResourceManager.spend_resource(_ai.player_id, _building_costs[building_id])
-	_built[building_id] = (_built.get(building_id, 0) as int) + 1
+	var b: Node = _place(building_id, pos)
+	if b == null:
+		return
 	_ai.debug_log("BUILD %s near resource at (%.0f,%.0f)" % [building_id, pos.x, pos.y])
-	_ai._economy.redirect_villagers_to_drop_off(b, rtype)
+	_ai._economy.redirect_villagers_to_drop_off(b as Node2D, rtype)
+
+## Places one AI building through the CommandBus (instant construction, .tres
+## costs) and keeps the local built-count in step. Returns the node, or null.
+func _place(building_id: String, pos: Vector2) -> Node:
+	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.make(_ai.player_id, building_id,
+		[pos] as Array[Vector2], 0.0, [] as Array[int], true,
+		_building_costs.get(building_id, {}) as Dictionary)
+	CommandBus.submit(cmd)
+	if cmd.last_placed.is_empty():
+		return null
+	_built[building_id] = (_built.get(building_id, 0) as int) + 1
+	return cmd.last_placed[0]
 
 ## Snaps a world position to the nearest GRID_STEP cell relative to TC origin.
 func _snap_to_grid(pos: Vector2, tc_origin: Vector2) -> Vector2:

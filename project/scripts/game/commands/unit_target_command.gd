@@ -2,33 +2,40 @@ class_name UnitTargetCommand extends GameCommand
 
 ## An entity-targeted order over a set of units: attack, gather (resource
 ## node / farm / fish trap, restoring a depleted one first), build/repair,
-## resource drop-off or transport boarding. The target is any registry ID;
-## only "attack" may target another player's entity.
+## resource drop-off, transport boarding or drop-off reassignment. The target
+## is any registry ID; only "attack" may target another player's entity.
+## `drop_id` optionally pins the drop-off building a gather order should use
+## (the AI assigns specific camps/docks; the player falls back to the TC).
 
 const MAX_BOARD_ATTEMPTS: int = 100   # 10 seconds of 0.1 s polls
 
 var verb: String = "attack"   # "attack" | "gather" | "build" | "drop_off" | "board"
+                              # | "board_instant" | "set_drop_off"
 var unit_ids: Array[int] = []
 var target_id: int = 0
+var drop_id: int = 0          # gather only; 0 = default drop-off
 
-static func make(p_player: int, p_verb: String, p_units: Array[int], p_target: int) -> UnitTargetCommand:
+static func make(p_player: int, p_verb: String, p_units: Array[int], p_target: int,
+		p_drop: int = 0) -> UnitTargetCommand:
 	var cmd: UnitTargetCommand = UnitTargetCommand.new()
 	cmd.player_id = p_player
 	cmd.verb = p_verb
 	cmd.unit_ids = p_units
 	cmd.target_id = p_target
+	cmd.drop_id = p_drop
 	return cmd
 
 func kind() -> String:
 	return "unit_target"
 
 func _payload() -> Dictionary:
-	return {"verb": verb, "units": encode_ids(unit_ids), "target": target_id}
+	return {"verb": verb, "units": encode_ids(unit_ids), "target": target_id, "drop": drop_id}
 
 func _read_payload(d: Dictionary) -> void:
 	verb = d.get("verb", "attack") as String
 	unit_ids = decode_ids(d.get("units"))
 	target_id = d.get("target", 0) as int
+	drop_id = d.get("drop", 0) as int
 
 func execute(world: Node2D) -> void:
 	var target: Node = EntityRegistry.resolve(target_id)
@@ -52,6 +59,18 @@ func execute(world: Node2D) -> void:
 			_execute_drop_off(units, target)
 		"board":
 			_execute_board(world, units, target)
+		"board_instant":
+			# The AI garrisons idle troops without the walk: distance is not
+			# checked, matching its pre-command behaviour.
+			if target is TransportShip:
+				for unit: Node in units:
+					if not (unit is ShipBase) and not (target as TransportShip).is_full():
+						(target as TransportShip).board(unit)
+		"set_drop_off":
+			var tpid: Variant = target.get("player_id")
+			if tpid != null and (tpid as int) == player_id:
+				for unit: Node in units:
+					unit.set("drop_off_target", target)
 
 func _execute_gather(world: Node2D, units: Array[Node], target: Node) -> void:
 	if target is Farm:
@@ -72,16 +91,18 @@ func _execute_gather(world: Node2D, units: Array[Node], target: Node) -> void:
 			trap.restore()
 		for unit: Node in units:
 			if unit is FishingBoat:
-				(unit as FishingBoat).order_fish(trap, _nearest_own_dock(world, unit as Node2D))
+				(unit as FishingBoat).order_fish(trap, _dock_for(world, unit as Node2D))
 		return
 	if target is ResourceNode:
 		var rn: ResourceNode = target as ResourceNode
 		var resource_name: String = rn.get_resource_name()
 		var is_fish: bool = rn.resource_type == ResourceNode.ResourceType.FOOD_FISH
-		var drop_off: Node = world.get("drop_off") as Node if player_id == 0 else null
+		var drop_off: Node = _own_entity(drop_id) if drop_id != 0 else null
+		if drop_off == null and player_id == 0:
+			drop_off = world.get("drop_off") as Node
 		for unit: Node in units:
 			if is_fish and unit is FishingBoat:
-				(unit as FishingBoat).order_fish(rn, _nearest_own_dock(world, unit as Node2D))
+				(unit as FishingBoat).order_fish(rn, _dock_for(world, unit as Node2D))
 			elif not is_fish and unit.has_method("order_gather"):
 				unit.call("order_gather", rn, resource_name, drop_off)
 
@@ -126,6 +147,15 @@ func _board_poll(world: Node2D, unit: Node, transport: TransportShip, attempts: 
 		elif attempts < MAX_BOARD_ATTEMPTS and is_instance_valid(world):
 			_board_poll(world, unit, transport, attempts + 1)
 	)
+
+## Dock a fishing order should unload at: the pinned drop_id when it is an own
+## dock, otherwise the nearest own dock.
+func _dock_for(world: Node2D, requester: Node2D) -> Node:
+	if drop_id != 0:
+		var pinned: Node = _own_entity(drop_id)
+		if pinned is Dock:
+			return pinned
+	return _nearest_own_dock(world, requester)
 
 func _nearest_own_dock(world: Node2D, requester: Node2D) -> Node:
 	var best: Node = null

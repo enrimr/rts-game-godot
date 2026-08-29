@@ -8,6 +8,7 @@ extends GutTest
 class StubUnit extends Node2D:
 	var player_id: int = 0
 	var orders: Array = []
+	var drop_off_target: Node = null
 	func order_move(destination: Vector2) -> void:
 		orders.append({"verb": "move", "pos": destination})
 	func order_attack_move(destination: Vector2) -> void:
@@ -92,15 +93,17 @@ func test_every_command_kind_round_trips() -> void:
 	var ids: Array[int] = [3, 7]
 	var commands: Array[GameCommand] = [
 		UnitPointCommand.make(0, "attack_move", ids, Vector2(100.0, -50.0)),
-		UnitTargetCommand.make(1, "gather", ids, 42),
+		UnitTargetCommand.make(1, "gather", ids, 42, 13),
 		UnitActionCommand.make(0, "hero_ability", ids),
 		TransportCommand.make(0, "unload_one", 9, 2, Vector2(5.0, 6.0)),
 		ProductionCommand.make(0, "train", 4, "knight", -1),
 		BuildingActionCommand.make(0, "set_rally", 4, Vector2(10.0, 20.0)),
 		MarketCommand.make(0, "hire", 8, "trireme"),
 		PlaceBuildingCommand.make(0, "house",
-			[Vector2(1.0, 2.0), Vector2(3.0, 4.0)] as Array[Vector2], PI * 0.5, ids),
+			[Vector2(1.0, 2.0), Vector2(3.0, 4.0)] as Array[Vector2], PI * 0.5, ids,
+			true, {"wood": 100}),
 		AdvanceAgeCommand.make(2),
+		SpawnUnitCommand.make(1, "villager", Vector2(9.0, 9.0), {"food": 50}),
 	]
 	for cmd: GameCommand in commands:
 		var d: Dictionary = cmd.to_dict()
@@ -198,6 +201,24 @@ func test_move_formation_first_slot_is_the_click() -> void:
 	for i: int in range(1, 4):
 		assert_almost_eq(slots[i].distance_to(Vector2(400.0, 300.0)),
 			UnitPointCommand.FORMATION_SPACING, 0.01, "ring 1 sits one spacing out")
+
+func test_set_drop_off_reassigns_own_units_only() -> void:
+	var camp: StubBarracks = StubBarracks.new()   # any own node with player_id
+	_world.add_child(camp)
+	var own: StubUnit = _spawn_unit(0)
+	var foreign: StubUnit = _spawn_unit(1)
+	CommandBus.submit(UnitTargetCommand.make(0, "set_drop_off",
+		EntityRegistry.ids_of([own, foreign]), EntityRegistry.id_of(camp)))
+	assert_eq(own.drop_off_target, camp, "own unit re-targets the new drop-off")
+	assert_null(foreign.drop_off_target, "foreign units are untouched")
+
+func test_spawn_unit_command_round_trips_costs() -> void:
+	var cmd: SpawnUnitCommand = SpawnUnitCommand.make(1, "villager",
+		Vector2(120.0, -40.0), {"food": 50})
+	var back: SpawnUnitCommand = CommandBus.command_from_dict(cmd.to_dict()) as SpawnUnitCommand
+	assert_eq(back.unit_type, "villager")
+	assert_eq(back.costs, {"food": 50})
+	assert_eq(back.pos, Vector2(120.0, -40.0))
 
 func test_move_formation_is_deterministic() -> void:
 	var units: Array[Node] = []

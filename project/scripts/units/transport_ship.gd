@@ -126,7 +126,7 @@ func unload_one(index: int) -> void:
 	if not is_instance_valid(unit):
 		EventBus.garrison_changed.emit(self, _garrison.size(), CAPACITY)
 		return
-	var angle: float = randf() * TAU
+	var angle: float = MatchRng.randf() * TAU
 	var land_pos: Vector2 = _disembark_position(
 		global_position + Vector2(cos(angle), sin(angle)) * UNLOAD_OFFSET, unit)
 	unit.set_process(true)

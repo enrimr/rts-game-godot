@@ -227,12 +227,12 @@ func _start_flee(from_source: Node) -> void:
 	_nav.target_position = global_position
 
 func _pick_wander_target() -> void:
-	_wander_timer = randf_range(3.0, 8.0)
+	_wander_timer = MatchRng.randf_range(3.0, 8.0)
 	# Try up to 10 candidates; skip any that land on impassable terrain (ocean,
 	# risco, caldera) so the animal stays on its home terrain type.
 	for _i: int in range(10):
-		var angle: float = randf() * TAU
-		var dist: float  = randf_range(60.0, WANDER_RADIUS)
+		var angle: float = MatchRng.randf() * TAU
+		var dist: float  = MatchRng.randf_range(60.0, WANDER_RADIUS)
 		var candidate: Vector2 = _origin + Vector2(cos(angle), sin(angle)) * dist
 		if not TerrainManager.is_impassable_for(candidate, ""):
 			_nav.target_position = candidate

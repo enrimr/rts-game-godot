@@ -78,10 +78,16 @@ func launch_attack() -> void:
 		idle_attackers.append(unit)
 
 	_ai.debug_log("ATTACK %d units → %d targets (aggr=%s)" % [idle_attackers.size(), target_count, AggressionLevel.keys()[_aggression]])
+	# Round-robin target assignment, batched into one command per target.
+	var by_target: Dictionary = {}   # target entity id → Array[int] of unit ids
 	for i: int in range(idle_attackers.size()):
-		var target: Node = targets[i % target_count]
-		if idle_attackers[i].has_method("order_attack"):
-			idle_attackers[i].order_attack(target)
+		var tid: int = EntityRegistry.id_of(targets[i % target_count])
+		if not by_target.has(tid):
+			by_target[tid] = [] as Array[int]
+		(by_target[tid] as Array[int]).append(EntityRegistry.id_of(idle_attackers[i]))
+	for tid: int in by_target:
+		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "attack",
+			by_target[tid] as Array[int], tid))
 
 func push_units_past_destroyed_building(destroyed: Node2D) -> void:
 	var next_target: Node = find_nearest_enemy_building()
@@ -90,6 +96,7 @@ func push_units_past_destroyed_building(destroyed: Node2D) -> void:
 	if next_target == null:
 		return
 	const PUSH_RADIUS: float = 300.0
+	var pushed: Array[int] = []
 	for unit: Node in _ai.world.own_units(_ai.player_id):
 		if not is_military_unit(unit):
 			continue
@@ -99,8 +106,10 @@ func push_units_past_destroyed_building(destroyed: Node2D) -> void:
 		var already_engaged: bool = existing_target != null and is_instance_valid(existing_target as Node) and existing_target != destroyed
 		if already_engaged:
 			continue
-		if unit.has_method("order_attack"):
-			unit.order_attack(next_target)
+		pushed.append(EntityRegistry.id_of(unit))
+	if not pushed.is_empty():
+		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "attack", pushed,
+			EntityRegistry.id_of(next_target)))
 
 func manage_military() -> void:
 	if _ai._construction._built.get("barracks", 0) as int == 0:
@@ -137,7 +146,8 @@ func manage_military() -> void:
 			if ar.get_queue().size() >= ar.get_max_queue():
 				continue
 			_ai.debug_log("TRAIN %s at archery_range" % unit_id)
-			ar.order_train(unit_id)
+			CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
+				EntityRegistry.id_of(ar), unit_id))
 			break
 	else:
 		for br: Barracks in WorldQuery.of_type(_ai.world.own_buildings(_ai.player_id), Barracks):
@@ -146,7 +156,8 @@ func manage_military() -> void:
 			if br.get_queue().size() >= br.get_max_queue():
 				continue
 			_ai.debug_log("TRAIN %s at barracks" % unit_id)
-			br.order_train(unit_id)
+			CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
+				EntityRegistry.id_of(br), unit_id))
 			break
 
 func manage_unique_barracks_unit() -> void:
@@ -174,7 +185,8 @@ func manage_unique_barracks_unit() -> void:
 			continue
 		if (building.get_queue() as Array).size() >= building.get_max_queue() as int:
 			continue
-		building.order_train(unique_id)
+		CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
+			EntityRegistry.id_of(building), unique_id))
 		break
 
 func manage_stable_training() -> void:
@@ -189,14 +201,18 @@ func manage_stable_training() -> void:
 			continue
 		if st.get_queue().size() >= st.get_max_queue():
 			continue
+		var stable_unit: String = ""
 		if age >= GameManager.Age.CASTLE and ai_civ == "franks" and ResourceManager.can_afford(_ai.player_id, {"food": 75, "gold": 65}):
-			st.order_train("chevalier_normand")
+			stable_unit = "chevalier_normand"
 		elif age >= GameManager.Age.CASTLE and ResourceManager.can_afford(_ai.player_id, {"food": 60, "gold": 75}):
-			st.order_train("knight")
+			stable_unit = "knight"
 		elif age >= GameManager.Age.FEUDAL and ai_civ == "mahos" and ResourceManager.can_afford(_ai.player_id, {"food": 60, "gold": 40}):
-			st.order_train("sand_raider")
+			stable_unit = "sand_raider"
 		elif age >= GameManager.Age.FEUDAL and ResourceManager.can_afford(_ai.player_id, {"food": 80, "gold": 30}):
-			st.order_train("heavy_scout")
+			stable_unit = "heavy_scout"
+		if not stable_unit.is_empty():
+			CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
+				EntityRegistry.id_of(st), stable_unit))
 		break
 
 func manage_siege_training() -> void:
@@ -210,12 +226,16 @@ func manage_siege_training() -> void:
 			continue
 		if sw.get_queue().size() >= sw.get_max_queue():
 			continue
+		var siege_unit: String = ""
 		if age >= GameManager.Age.IMPERIAL and ResourceManager.can_afford(_ai.player_id, {"wood": 200, "gold": 200}):
-			sw.order_train("trebuchet")
+			siege_unit = "trebuchet"
 		elif ResourceManager.can_afford(_ai.player_id, {"wood": 160, "gold": 135}):
-			sw.order_train("mangonel")
+			siege_unit = "mangonel"
 		elif ResourceManager.can_afford(_ai.player_id, {"wood": 160}):
-			sw.order_train("battering_ram")
+			siege_unit = "battering_ram"
+		if not siege_unit.is_empty():
+			CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
+				EntityRegistry.id_of(sw), siege_unit))
 		break
 
 const _TECH_PRIORITY: Array[String] = [
@@ -262,7 +282,8 @@ func manage_research() -> void:
 		var chosen: TechnologyResource = _pick_research(available)
 		if chosen != null:
 			_ai.debug_log("RESEARCH %s" % chosen.id)
-			TechManager.start_research(_ai.player_id, chosen.id, building)
+			CommandBus.submit(ProductionCommand.make(_ai.player_id, "research",
+				EntityRegistry.id_of(building), chosen.id))
 
 func _research_building_type(building: Node) -> int:
 	if building is Blacksmith:    return TechnologyResource.ResearchBuilding.BLACKSMITH
@@ -374,9 +395,13 @@ func _defend_base() -> void:
 			best_enemy = unit
 	if best_enemy == null:
 		return
+	var defenders: Array[int] = []
 	for unit: Node in _ai.world.own_units(_ai.player_id):
-		if is_military_unit(unit) and unit.has_method("order_attack"):
-			unit.order_attack(best_enemy)
+		if is_military_unit(unit):
+			defenders.append(EntityRegistry.id_of(unit))
+	if not defenders.is_empty():
+		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "attack", defenders,
+			EntityRegistry.id_of(best_enemy)))
 
 func _pick_unit_to_train(desired: Dictionary) -> String:
 	var militia_c: int = _count_of_type("Militia")

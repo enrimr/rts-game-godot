@@ -129,7 +129,7 @@ func _process(delta: float) -> void:
 func _start_clear() -> void:
 	_phase = "clear"
 	_phase_timer = 0.0
-	_phase_duration = randf_range(CLEAR_DURATION_MIN, CLEAR_DURATION_MAX)
+	_phase_duration = MatchRng.randf_range(CLEAR_DURATION_MIN, CLEAR_DURATION_MAX)
 	match MatchConfig.weather_frequency:
 		0:
 			_phase_duration *= 999.0  # effectively off
@@ -151,7 +151,7 @@ func _pick_next_weather() -> void:
 	var total: int = 0
 	for w: int in weights:
 		total += w
-	var roll: int = randi() % total
+	var roll: int = MatchRng.randi() % total
 	var acc: int = 0
 	var chosen: WeatherType = candidates[0]
 	for i: int in range(candidates.size()):
@@ -171,11 +171,11 @@ func _pick_next_weather() -> void:
 func _begin_incoming_weather() -> void:
 	var chosen: WeatherType = _pending_weather
 	current_weather = chosen
-	_peak_duration = randf_range(
+	_peak_duration = MatchRng.randf_range(
 		(PEAK_DURATION[chosen] as Array)[0],
 		(PEAK_DURATION[chosen] as Array)[1])
 	if chosen == WeatherType.TRADE_WINDS:
-		var angle: float = randf_range(0.0, TAU)
+		var angle: float = MatchRng.randf_range(0.0, TAU)
 		_wind_dir = Vector2(cos(angle), sin(angle))
 	_phase = "ramp_in"
 	_phase_timer = 0.0
@@ -291,7 +291,7 @@ func get_projectile_drift() -> Vector2:
 		WeatherType.ATLANTIC_STORM:
 			# Random cross-wind; evaluated once per projectile since it's called at fire time
 			var perp: Vector2 = Vector2(-_wind_dir.y, _wind_dir.x) if _wind_dir != Vector2.ZERO \
-				else Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized()
+				else Vector2(MatchRng.randf_range(-1.0, 1.0), MatchRng.randf_range(-1.0, 1.0)).normalized()
 			return perp * 30.0 * intensity
 	return Vector2.ZERO
 

@@ -83,6 +83,10 @@ func _ready() -> void:
 			_rng.randomize()
 		_saved_rng_seed = _rng.seed
 
+	# One seed drives every simulation RNG draw of the match (units, animals,
+	# weather, AI) — independent stream from the map generator's.
+	MatchRng.reset(_rng.seed)
+
 	_setup._setup_ambient_lighting()
 
 	var map_data: Dictionary = MapGenerator.generate(self, units_layer, _rng)

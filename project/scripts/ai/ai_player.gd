@@ -2,7 +2,6 @@ extends Node
 
 class_name AIPlayer
 
-const VILLAGER_SCENE: PackedScene = preload("res://scenes/units/villager.tscn")
 const BUILDING_SCENES: Dictionary = {
 	"barracks":       "res://scenes/buildings/barracks.tscn",
 	"archery_range":  "res://scenes/buildings/archery_range.tscn",
@@ -195,29 +194,25 @@ func _find_safest_villager() -> Villager:
 	return best
 
 func _build_new_tc(builder: Villager) -> void:
-	if not ResourceManager.spend_resource(player_id, {"wood": 275}):
-		return
 	var build_origin: Vector2 = builder.global_position
 	var pos: Vector2 = _find_safe_tc_position(build_origin)
 	if pos == Vector2.INF:
-		ResourceManager.add_resource(player_id, "wood", 275.0)
 		get_tree().create_timer(10.0).timeout.connect(_attempt_tc_rebuild)
 		return
-	var packed: PackedScene = load("res://scenes/buildings/town_center_ai.tscn") as PackedScene
-	if packed == null:
-		ResourceManager.add_resource(player_id, "wood", 275.0)
+	# The rebuilt TC goes through the bus like every other placement; it is NOT
+	# instant — the surviving villager raises it (the command orders the build).
+	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.make(player_id, "town_center_ai",
+		[pos] as Array[Vector2], 0.0, [EntityRegistry.id_of(builder)] as Array[int],
+		false, {"wood": 275})
+	CommandBus.submit(cmd)
+	if cmd.last_placed.is_empty():
 		return
-	var tc: Node2D = packed.instantiate() as Node2D
-	tc.global_position = pos
-	tc.set("player_id", player_id)
-	buildings_layer.add_child(tc)
+	var tc: Node2D = cmd.last_placed[0] as Node2D
 	town_center = tc
 	var new_drop: Node = tc.get_node_or_null("DropOff")
 	if new_drop != null:
 		drop_off = new_drop as Node2D
-	EventBus.building_placed.emit(tc, player_id)
 	_tc_rebuild_pending = true
-	builder.order_build(tc)
 
 func _find_safe_tc_position(origin: Vector2) -> Vector2:
 	var enemy_center: Vector2 = Vector2.ZERO
@@ -231,11 +226,11 @@ func _find_safe_tc_position(origin: Vector2) -> Vector2:
 		bias = (origin - enemy_center).normalized()
 	for _i: int in range(60):
 		var angle: float
-		if bias != Vector2.ZERO and randf() < 0.75:
-			angle = bias.angle() + randf_range(-PI / 3.0, PI / 3.0)
+		if bias != Vector2.ZERO and MatchRng.randf() < 0.75:
+			angle = bias.angle() + MatchRng.randf_range(-PI / 3.0, PI / 3.0)
 		else:
-			angle = randf() * TAU
-		var dist: float = randf_range(200.0, 600.0)
+			angle = MatchRng.randf() * TAU
+		var dist: float = MatchRng.randf_range(200.0, 600.0)
 		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * dist
 		if _construction.is_pos_clear(pos):
 			return pos

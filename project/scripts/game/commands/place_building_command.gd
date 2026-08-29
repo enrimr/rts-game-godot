@@ -4,22 +4,41 @@ class_name PlaceBuildingCommand extends GameCommand
 ## one command with the whole run of segment positions), paying per site and
 ## stopping when the stockpile runs out — then sends the chosen builders to
 ## work. Placement legality (overlap, terrain, coast) is validated at the
-## submission site where the ghost preview lives; the command re-validates
-## affordability because it spends.
+## submission site where the ghost preview / AI position search lives; the
+## command re-validates affordability because it spends.
+##
+## The AI places through the same command with `instant = true` (its buildings
+## complete immediately via add_construction) and a `costs_override`: the AI
+## pays the BuildingResource .tres costs, which are NOT the same table the
+## player pays (WorldPlacement.BUILDING_COSTS).
+
+## AI-only scenes the player build menu never offers.
+const EXTRA_SCENES: Dictionary = {
+	"town_center_ai": "res://scenes/buildings/town_center_ai.tscn",
+}
 
 var building_type: String = ""
 var positions: Array[Vector2] = []
 var build_rotation: float = 0.0
 var builder_ids: Array[int] = []
+var instant: bool = false
+var costs_override: Dictionary = {}
+
+## Nodes created by the last execute(), in placement order — a runtime result
+## for the submission site (the AI keeps refs to its new TC), never serialized.
+var last_placed: Array[Node] = []
 
 static func make(p_player: int, p_type: String, p_positions: Array[Vector2],
-		p_rotation: float, p_builders: Array[int]) -> PlaceBuildingCommand:
+		p_rotation: float, p_builders: Array[int], p_instant: bool = false,
+		p_costs: Dictionary = {}) -> PlaceBuildingCommand:
 	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.new()
 	cmd.player_id = p_player
 	cmd.building_type = p_type
 	cmd.positions = p_positions
 	cmd.build_rotation = p_rotation
 	cmd.builder_ids = p_builders
+	cmd.instant = p_instant
+	cmd.costs_override = p_costs
 	return cmd
 
 func kind() -> String:
@@ -29,8 +48,8 @@ func _payload() -> Dictionary:
 	var pts: Array = []
 	for p: Vector2 in positions:
 		pts.append(encode_vec(p))
-	return {"type": building_type, "positions": pts,
-		"rot": build_rotation, "builders": encode_ids(builder_ids)}
+	return {"type": building_type, "positions": pts, "rot": build_rotation,
+		"builders": encode_ids(builder_ids), "instant": instant, "costs": costs_override}
 
 func _read_payload(d: Dictionary) -> void:
 	building_type = d.get("type", "") as String
@@ -40,17 +59,30 @@ func _read_payload(d: Dictionary) -> void:
 			positions.append(decode_vec(p))
 	build_rotation = d.get("rot", 0.0) as float
 	builder_ids = decode_ids(d.get("builders"))
+	instant = d.get("instant", false) as bool
+	costs_override = d.get("costs", {}) as Dictionary
+
+func _scene_path() -> String:
+	if WorldPlacement.BUILDING_SCENES.has(building_type):
+		return WorldPlacement.BUILDING_SCENES[building_type] as String
+	return EXTRA_SCENES.get(building_type, "") as String
+
+func _costs() -> Dictionary:
+	if not costs_override.is_empty():
+		return costs_override
+	return WorldPlacement.BUILDING_COSTS.get(building_type, {})
 
 func execute(world: Node2D) -> void:
-	if not WorldPlacement.BUILDING_SCENES.has(building_type) or positions.is_empty():
+	last_placed.clear()
+	var scene_path: String = _scene_path()
+	if scene_path.is_empty() or positions.is_empty():
 		return
-	var costs: Dictionary = WorldPlacement.BUILDING_COSTS.get(building_type, {})
-	var scene: PackedScene = load(WorldPlacement.BUILDING_SCENES[building_type]) as PackedScene
+	var scene: PackedScene = load(scene_path) as PackedScene
 	if scene == null:
 		return
+	var costs: Dictionary = _costs()
 	var builders: Array[Node] = _own_entities(builder_ids)
 	var buildings_layer: Node = world.get("buildings_layer") as Node
-	var placed: int = 0
 	for pos: Vector2 in positions:
 		if not ResourceManager.spend_resource(player_id, costs):
 			break
@@ -58,13 +90,21 @@ func execute(world: Node2D) -> void:
 		building.global_position = pos
 		building.rotation = build_rotation
 		building.set("player_id", player_id)
-		building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
 		building.set_meta("building_id", building_type)
-		buildings_layer.add_child(building)
+		if instant:
+			# The AI's pre-command sequence: state and construction are applied
+			# AFTER _ready so add_construction completes the building in place.
+			buildings_layer.add_child(building)
+			building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
+			if building.has_method("add_construction"):
+				building.call("add_construction", 100.0)
+		else:
+			building.set("state", BuildingBase.BuildingState.UNDER_CONSTRUCTION)
+			buildings_layer.add_child(building)
 		EventBus.building_placed.emit(building, player_id)
 		for unit: Node in builders:
 			if unit.has_method("order_build"):
 				unit.call("order_build", building)
-		placed += 1
-	if placed > 0 and player_id == 0:
+		last_placed.append(building)
+	if not last_placed.is_empty() and player_id == 0:
 		AudioManager.play("build_place")

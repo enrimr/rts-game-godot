@@ -712,7 +712,7 @@ func _summon_militia() -> void:
 	_summoned_militia.clear()
 	for i: int in range(3):
 		var militia: CharacterBody2D = militia_scene.instantiate() as CharacterBody2D
-		var offset: Vector2 = Vector2(40.0 * (i - 1), 0.0).rotated(randf() * TAU)
+		var offset: Vector2 = Vector2(40.0 * (i - 1), 0.0).rotated(MatchRng.randf() * TAU)
 		militia.global_position = global_position + offset
 		militia.set("player_id", player_id)
 

@@ -13,19 +13,20 @@ foundation replays build on and the exact payload a LAN lockstep session will
 exchange (`save_log()` writes it as JSON lines, `command_from_dict()` rebuilds
 any entry).
 
-The nine command classes live in `scripts/game/commands/`:
+The ten command classes live in `scripts/game/commands/`:
 
 | Class | kind | Verbs / payload |
 |---|---|---|
 | `UnitPointCommand` | `unit_point` | move / attack_move (formation ring fan-out) / attack_ground; unit IDs + point |
-| `UnitTargetCommand` | `unit_target` | attack / gather (restores depleted farms & fish traps, routes fishing boats to their dock) / build / drop_off / board (walk-then-board poll); unit IDs + target ID |
+| `UnitTargetCommand` | `unit_target` | attack / gather (restores depleted farms & fish traps, routes fishing boats to their dock; optional `drop_id` pins the drop-off, used by the AI) / build / drop_off / board (walk-then-board poll) / board_instant (the AI's distance-free garrison) / set_drop_off; unit IDs + target ID |
 | `UnitActionCommand` | `unit_action` | stop / delete / hero_ability / trebuchet_toggle / scout_explore(_stop); unit IDs |
 | `TransportCommand` | `transport` | unload_all / unload_one(index) / move_unload(pos); transport ID |
 | `ProductionCommand` | `production` | train(unit_id — empty = the TC's no-arg signature) / cancel_train(index) / research(tech_id); building ID |
 | `BuildingActionCommand` | `building_action` | set_rally(pos) / gate_lock / delete (routes through take_damage); building ID |
 | `MarketCommand` | `market` | buy / sell / hire (spawns the Fenicios mercenary at the rally point); building ID + item |
-| `PlaceBuildingCommand` | `place_building` | building type + positions (a wall drag is ONE command with the whole run) + rotation + builder IDs; pays per site, stops when the stockpile runs out |
+| `PlaceBuildingCommand` | `place_building` | building type + positions (a wall drag is ONE command with the whole run) + rotation + builder IDs; pays per site, stops when the stockpile runs out. `instant` completes construction immediately and `costs_override` carries the AI's .tres costs (NOT the player's `WorldPlacement.BUILDING_COSTS` table); `EXTRA_SCENES` maps the AI-only `town_center_ai`; `last_placed` hands the created nodes back to the submission site (runtime only, never serialized) |
 | `AdvanceAgeCommand` | `advance_age` | player only |
+| `SpawnUnitCommand` | `spawn_unit` | unit type + position + cost dict — the AI's instant villager production (it does not queue at a TC); civ derived from the owner |
 
 Ownership is validated at execute time (`GameCommand._own_entities` keeps only
 entities whose `player_id` matches the command's), so a hostile or replayed
@@ -39,12 +40,31 @@ last line of `GameWorld._ready`) rescans the world in tree order and the
 that, so identical simulations hand out identical IDs. `id_of()` lazily
 registers stragglers no signal covers.
 
+**The AI submits through the bus too**, with its own `player_id`: villager
+production (`SpawnUnitCommand`), gather assignments with pinned drop-offs,
+training, research, age advance, batched attack orders (one command per
+target), naval patrol moves, transport loading (`board_instant`) and all
+building placement (`PlaceBuildingCommand` with `instant` + `costs_override`;
+the rebuilt TC uses `EXTRA_SCENES["town_center_ai"]` and reads its node back
+from `last_placed`). AI decision-making, cooldowns and built-count bookkeeping
+stay in the AI modules — only mutations cross the bus.
+
+**MatchRng** (autoload, `scripts/core/match_rng.gd`) is the single seeded
+stream for all simulation randomness — unit spawn jitter, gender roll, animal
+wander, scout waypoints, transport unload angles, hero summon offsets, the
+whole weather state machine and projectile drift, and every AI position
+search. `GameWorld._ready` seeds it with the match seed (same one the save
+stores), so the same seed replays the same draw sequence. Audio noise buffers
+keep using the global RNG on purpose: local-only, never feeds back into state.
+
 What does **not** go through the bus: selection, control groups, camera, HUD
 state, the placement ghost, `show_path` (debug visual) and all click feedback
 (flashes, order sounds) — local-only concerns that must not replay or cross
-the network. Known phase-2 work before lockstep: the AI modules still order
-their units directly, placement legality is only validated at the submission
-site, and the simulation itself (physics, RNG) is not yet deterministic.
+the network. Remaining work before lockstep/replays: placement legality is
+only validated at the submission site, AI decision timers run on wall-clock
+`_process` deltas (not simulation ticks), MatchRng's mid-match state is not
+saved, and unit movement rides Godot physics — none of which is deterministic
+across machines yet.
 
 Migrating cover fire surfaced a real bug, now fixed: `_order_attack_ground_all`
 used to emit `minimap_move_order`, whose handler synchronously issued
@@ -52,10 +72,11 @@ used to emit `minimap_move_order`, whose handler synchronously issued
 cover fire cancelled itself.
 
 Gated by `tests/unit/test_command_bus.gd` (registry determinism, serialization
-round-trips for all nine kinds, ownership filtering, log stamping, formation
-determinism, replayed-entry equivalence) and `tools/check_command_bus.tscn`
-(a real match driven exclusively through the bus: move + train + place, log
-rebuildable and saved).
+round-trips for all ten kinds, ownership filtering, log stamping, formation
+determinism, replayed-entry equivalence), `tests/unit/test_match_rng.gd`
+(seed-replay property) and `tools/check_command_bus.tscn` (a real match driven
+exclusively through the bus: move + train + place, then a wait that asserts
+the rival AI's commands land in the same log, all entries rebuildable).
 
 ## Economy System
 

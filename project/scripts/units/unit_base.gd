@@ -86,7 +86,7 @@ func _ready() -> void:
 	EventBus.unit_upgrade_applied.connect(_on_unit_upgrade_applied)
 	# Decide visual gender (50/50) unless a spawner or save already set it.
 	if not _gender_assigned:
-		is_female = randf() < 0.5
+		is_female = MatchRng.randf() < 0.5
 	call_deferred("_add_player_color_stripe")
 	call_deferred("_add_ground_shadow")
 	call_deferred("_apply_gender_appearance")
@@ -769,7 +769,7 @@ func _unstick() -> void:
 		else nav_agent.target_position
 	var jitter: float = 28.0 * float(mini(_stuck_retries, 2))
 	nav_agent.target_position = _safe_destination(
-		dest + Vector2(randf_range(-jitter, jitter), randf_range(-jitter, jitter)))
+		dest + Vector2(MatchRng.randf_range(-jitter, jitter), MatchRng.randf_range(-jitter, jitter)))
 
 # Give up the current move/chase and return to idle. Clears the combat targets
 # so an abandoned unit is not immediately re-engaged by _handle_attacking.
