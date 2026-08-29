@@ -61,7 +61,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/population_manager.gd` | Per-player population current/cap tracking |
 | `project/scripts/core/save_manager.gd` | Complete game save/load system, JSON-based, 99 save slots |
 | `project/scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
-| `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries, terrain gameplay effects (laurisilva vision mult, risco vantage, shallow water) |
+| `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries, terrain gameplay effects (laurisilva vision mult, risco vantage, shallow water); `distance_to_coast` is analytic + memoized per 24 px cell (the weather/fog hot path — invalidate via `reset`/`add_zone`/`set_land_polys` only) |
 | `project/scripts/core/audio_manager.gd` | Spatial audio playback, distance attenuation |
 | `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
 | **Unit Classes** ||
@@ -99,7 +99,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/buildings/archery_range.gd` | Feudal Age: trains Archer |
 | `project/scripts/buildings/stable.gd` | Trains cavalry (Scout/Heavy Scout/Knight/unique cavalry) |
 | `project/scripts/buildings/siege_workshop.gd` | Castle Age: trains siege (BatteringRam/Mangonel/Trebuchet) |
-| `project/scripts/buildings/dock.gd` | Naval: trains ships (FishingBoat/TransportShip/WarGalley/Trireme); spawns them in open water off its seaward side, spiralling around ships already there |
+| `project/scripts/buildings/dock.gd` | Naval: trains ships (FishingBoat/TransportShip/WarGalley/Trireme); spawns them in open water off its seaward side, spiralling around ships already there; `water_access_point()` is the cached berth every ship must navigate to instead of the dock's on-land origin |
 | `project/scripts/buildings/blacksmith.gd` | Research weapon/armour upgrades (9 techs) |
 | `project/scripts/buildings/university.gd` | Castle Age: research advanced techs (Ballistics/Chemistry/Siege Engineering) |
 | `project/scripts/buildings/temple.gd` | Castle Age: research morale/HP buffs (Fervor/Sanctity/Atonement) |

@@ -114,7 +114,10 @@ func _handle_returning(delta: float) -> void:
 	if not is_instance_valid(drop_off_target):
 		current_state = UnitState.IDLE
 		return
-	var dist: float = global_position.distance_to((drop_off_target as Node2D).global_position)
+	var berth: Vector2 = _drop_off_position()
+	var dist: float = minf(
+		global_position.distance_to((drop_off_target as Node2D).global_position),
+		global_position.distance_to(berth))
 	if dist <= DROP_OFF_RANGE:
 		ResourceManager.add_resource(player_id, "food", carried_amount)
 		carried_amount = 0.0
@@ -124,7 +127,7 @@ func _handle_returning(delta: float) -> void:
 			current_state = UnitState.IDLE
 		return
 	if nav_agent.is_navigation_finished():
-		nav_agent.target_position = _safe_destination((drop_off_target as Node2D).global_position)
+		nav_agent.target_position = _safe_destination(berth)
 	if _advance_stuck(delta):
 		_unstick()
 		return
@@ -135,7 +138,15 @@ func _return_to_dock() -> void:
 		current_state = UnitState.IDLE
 		return
 	current_state = UnitState.RETURNING
-	nav_agent.target_position = _safe_destination((drop_off_target as Node2D).global_position)
+	nav_agent.target_position = _safe_destination(_drop_off_position())
+
+## Where the boat has to sail to unload. A dock's own origin sits on the
+## shoreline — usually on land, always off the ocean navmesh — so aiming at it
+## left the boat navigating to an unreachable point with a full hold forever.
+func _drop_off_position() -> Vector2:
+	if drop_off_target.has_method("water_access_point"):
+		return drop_off_target.call("water_access_point") as Vector2
+	return (drop_off_target as Node2D).global_position
 
 func _handle_boat_building(delta: float) -> void:
 	if not is_instance_valid(build_target):

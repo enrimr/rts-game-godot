@@ -54,6 +54,8 @@ const UNIT_DEFS: Array[Dictionary] = [
 
 var _train_queue: Array[Dictionary] = []
 var _train_timer: float = 0.0
+var _access_point: Vector2 = Vector2.ZERO
+var _access_point_valid: bool = false
 
 @onready var _train_bar: ProgressBar = get_node_or_null("TrainingBar")
 
@@ -168,21 +170,34 @@ func _do_spawn(scene_path: String) -> void:
 		AudioManager.play("unit_ready")
 	EventBus.unit_spawned.emit(unit, player_id)
 
-## Returns the world position where ships should spawn: open water off the dock's
-## seaward side, free of other ships, and water regardless of dock placement.
-func _water_spawn_pos() -> Vector2:
+## Open water off the dock's seaward side: where ships appear, and where a
+## returning fishing boat has to sail to unload. The dock's own origin sits on
+## the shoreline, often on land — a ship can never reach it, so anything that
+## navigates to this dock must aim here instead.
+## Resolved once: neither the dock nor the coastline moves, and returning boats
+## ask for it every physics frame.
+func water_access_point() -> Vector2:
+	if _access_point_valid:
+		return _access_point
+	_access_point_valid = true
+	_access_point = _resolve_water_access()
+	return _access_point
+
+func _resolve_water_access() -> Vector2:
 	var seaward: Vector2 = _seaward_dir()
-	var base: Vector2 = Vector2.ZERO
 	for i: int in range(1, 7):
 		var candidate: Vector2 = global_position + seaward * (WATER_CLEARANCE * 0.5 * float(i))
 		if _is_open_water(candidate):
-			base = candidate
-			break
-	if base == Vector2.ZERO:
-		base = TerrainManager.nearest_ocean(global_position)
-	if base == Vector2.ZERO:
-		return global_position + Vector2(0.0, 60.0)  # absolute last resort
-	return _free_water_near(base)
+			return candidate
+	var fallback: Vector2 = TerrainManager.nearest_ocean(global_position)
+	if fallback != Vector2.ZERO:
+		return fallback
+	return global_position + Vector2(0.0, 60.0)  # absolute last resort
+
+## Returns the world position where a freshly trained ship is put down: the
+## access point, nudged aside when another ship already sits there.
+func _water_spawn_pos() -> Vector2:
+	return _free_water_near(water_access_point())
 
 ## Average direction of the water around the dock, i.e. away from its own shore.
 func _seaward_dir() -> Vector2:

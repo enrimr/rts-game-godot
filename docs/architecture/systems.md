@@ -29,11 +29,28 @@ Uses Godot's built-in `NavigationAgent2D` on each unit. Navigation regions are u
 | `is_impassable_for` | `(world_pos: Vector2, civ_id: String) -> bool` | Returns `true` if the tile at `world_pos` is impassable for the given civilization |
 | `nearest_passable` | `(world_pos: Vector2, civ_id: String) -> Vector2` | Radial search (30 rings × 24 px step) returning the closest passable position |
 | `nearest_ocean` | `(world_pos: Vector2) -> Vector2` | Spiral search returning the closest ocean tile — used to guarantee ship spawns land in water |
+| `distance_to_coast` | `(world_pos: Vector2) -> float` | Distance to the nearest land/ocean boundary, `INF` on a landlocked map |
 | `bake_minimap_texture` | `() -> ImageTexture` | Generates a 256×256 terrain texture used by the minimap renderer |
+
+`distance_to_coast` is analytic — the closest point on every land outline segment
+and on every OCEAN zone circle — and memoized per `COAST_CACHE_CELL` (24 px)
+grid cell, evaluated at the **cell centre** so the answer never depends on which
+query filled the cell first. The cache is dropped by `reset()`, `add_zone()` and
+`set_land_polys()`; those three are therefore the only legal ways to mutate
+terrain. The previous implementation was an outward ring search costing ~1.8 ms
+per call: sea fog asks for the coastal distance once per unit and building
+several times a second, which by itself exceeded the whole frame budget and made
+the game crawl whenever Sea Fog rolled in. `_point_in_any_land` also
+bounding-box rejects (`_land_bounds`) before running the polygon test.
+Gated by `tests/unit/test_coast_distance.gd`.
 
 **Integration points:**
 
 - `UnitBase` carries a `civ_id: String = ""` property. Its `_safe_destination(destination: Vector2) -> Vector2` helper calls `TerrainManager.nearest_passable` before any nav agent assignment.
+- `ShipBase` overrides `_safe_destination` to snap to `nearest_ocean` instead: ships
+  masquerade as the amphibious `atlantes` civ, so `nearest_passable` considers land
+  passable and would leave a nav target on the shore — off the ocean navmesh, where
+  the agent reports "navigation finished" immediately and the ship never moves.
 - All unit `order_move` implementations (`Militia`, `Archer`, `Pikeman`, `Scout`, `HeavyScout`, `Knight`) and `Villager._start_move_to` call `_safe_destination` before setting `nav_agent.target_position`.
 - `Animal` nodes call `TerrainManager.nearest_passable(pos, "")` in `order_move`, `_pick_wander_target`, and `_start_flee` so fauna never path onto water or other impassable terrain.
 
@@ -164,6 +181,20 @@ All naval units extend `ShipBase` (`scripts/units/ship_base.gd`), which itself e
 - HUD hotkey: **D** in the build menu.
 
 Fishing boats automatically return food to the nearest friendly Dock. Right-clicking a Dock while carrying fish triggers the drop-off.
+
+`Dock.water_access_point()` is the dock's berth: the first hull-clear open-water
+position off its seaward side (`WATER_CLEARANCE` = 56 px, direction averaged from
+16 ocean probes), falling back to `TerrainManager.nearest_ocean`. It is resolved
+once and cached — neither the dock nor the coastline moves, and returning boats ask
+for it every physics frame. Everything that navigates *to* a dock must aim at the
+berth rather than at the dock node: the dock's own origin sits on the shoreline,
+normally on land and always off the ocean navmesh, so a boat sent there stalled with
+a full hold forever. `FishingBoat._drop_off_position()` returns the berth (or the
+drop-off node's origin for buildings without the method) and the `DROP_OFF_RANGE`
+check measures against whichever of the two is nearer. New ships spawn at the berth
+too, spiralled aside by `_free_water_near` so a training queue doesn't stack on one
+pixel. Gated by `tests/unit/test_dock_ship_spawn.gd` and
+`tests/unit/test_fishing_boat_drop_off.gd`.
 
 Fishing boats can also construct a **Fish Trap** on ocean tiles. Fish Traps are ocean buildings that regenerate food over time, providing a passive food source that does not require the boat to travel to a resource node.
 

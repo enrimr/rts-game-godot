@@ -61,6 +61,12 @@ const BUILDABLE: Array[bool] = [
 	false,  # CALDERA
 ]
 
+# Coastal distance is memoized per grid cell of this size, evaluated at the cell
+# centre so the answer never depends on which query filled the cell first. The
+# sea-fog weather query asks for it once per unit and building ~8 times a second
+# and the coast does not move during a match.
+const COAST_CACHE_CELL: float = 24.0
+
 # Each zone: { center: Vector2, radius: float, type: TerrainType }
 var _zones: Array[Dictionary] = []
 var _civ_cache: Dictionary = {}  # civ_id -> CivilizationResource
@@ -68,7 +74,10 @@ var _civ_cache: Dictionary = {}  # civ_id -> CivilizationResource
 # Ocean polygon points (Islands map only) — Array of PackedVector2Array outlines
 # A position is "ocean" if it falls outside all land polygons.
 var _land_polys: Array = []    # Array of PackedVector2Array
+var _land_bounds: Array[Rect2] = []   # bounding box per land polygon, same order
 var _is_island_map: bool = false
+
+var _coast_cache: Dictionary = {}   # Vector2i cell -> float distance to coast
 
 # Baked terrain texture — set by MapGenerator after generation completes.
 var minimap_texture: ImageTexture = null
@@ -78,7 +87,9 @@ var minimap_map_half: float = 1800.0
 func reset() -> void:
 	_zones.clear()
 	_land_polys.clear()
+	_land_bounds.clear()
 	_civ_cache.clear()
+	_coast_cache.clear()
 	_is_island_map = false
 	minimap_texture = null
 
@@ -103,10 +114,26 @@ func is_island_map() -> bool:
 
 func add_zone(center: Vector2, radius: float, type: TerrainType) -> void:
 	_zones.append({"center": center, "radius": radius, "type": type})
+	_coast_cache.clear()
 
+## Every mutation of the land-polygon array must come back through here: the
+## bounding boxes and the coastal cache are derived from it.
 func set_land_polys(polys: Array, is_island: bool) -> void:
 	_land_polys = polys
 	_is_island_map = is_island
+	_land_bounds.clear()
+	for poly: Variant in polys:
+		_land_bounds.append(_outline_bounds(poly as PackedVector2Array))
+	_coast_cache.clear()
+
+func _outline_bounds(outline: PackedVector2Array) -> Rect2:
+	if outline.is_empty():
+		return Rect2()
+	var bounds: Rect2 = Rect2(outline[0], Vector2.ZERO)
+	for i: int in range(1, outline.size()):
+		bounds = bounds.expand(outline[i])
+	# Rect2.has_point excludes the right/bottom edge; keep boundary points inside.
+	return bounds.grow(1.0)
 
 # Returns the dominant TerrainType at world_pos.
 # On island maps, positions outside land polygons are OCEAN.
@@ -276,33 +303,46 @@ func nearest_ocean(world_pos: Vector2) -> Vector2:
 
 # Returns true if world_pos is within any of the land polygons.
 func _point_in_any_land(p: Vector2) -> bool:
-	for poly: Variant in _land_polys:
-		if Geometry2D.is_point_in_polygon(p, poly as PackedVector2Array):
+	for i: int in range(_land_polys.size()):
+		# Bounding-box reject first: is_ocean() runs per unit per frame and the
+		# polygon test walks every vertex of every island.
+		if i < _land_bounds.size() and not _land_bounds[i].has_point(p):
+			continue
+		if Geometry2D.is_point_in_polygon(p, _land_polys[i] as PackedVector2Array):
 			return true
 	return false
 
-## Returns the approximate distance in pixels from world_pos to the nearest
-## ocean/land boundary. On non-island maps (no ocean) always returns INF.
+## Returns the distance in pixels from world_pos to the nearest ocean/land
+## boundary, INF on a map without any coast. Memoized per COAST_CACHE_CELL cell.
 func distance_to_coast(world_pos: Vector2) -> float:
-	# Fast path: on non-island maps there is no coast
-	if not _is_island_map and not is_ocean(world_pos):
-		# Check whether there are any ocean zones at all
-		var has_ocean: bool = false
-		for z: Dictionary in _zones:
-			if (z["type"] as int) == TerrainType.OCEAN:
-				has_ocean = true
-				break
-		if not has_ocean:
-			return INF
-	var on_ocean: bool = is_ocean(world_pos)
-	# Search outward until we cross the land/ocean boundary
-	var step: float = 24.0
-	for ring: int in range(1, 32):
-		var r: float = step * ring
-		var checks: int = maxi(8, ring * 6)
-		for i: int in range(checks):
-			var a: float = TAU * i / float(checks)
-			var candidate: Vector2 = world_pos + Vector2(cos(a), sin(a)) * r
-			if is_ocean(candidate) != on_ocean:
-				return r
-	return INF
+	var key: Vector2i = Vector2i(
+		floori(world_pos.x / COAST_CACHE_CELL), floori(world_pos.y / COAST_CACHE_CELL))
+	if _coast_cache.has(key):
+		return _coast_cache[key] as float
+	var cell_center: Vector2 = (Vector2(key) + Vector2(0.5, 0.5)) * COAST_CACHE_CELL
+	var d: float = _compute_distance_to_coast(cell_center)
+	_coast_cache[key] = d
+	return d
+
+# The coastline is the land outlines on island maps and the ocean-zone circles on
+# coastal maps, so the distance is analytic. This used to be an outward ring
+# search probing is_ocean() up to ~3000 times per call (1.8 ms each): with sea
+# fog active the weather query ran it for every unit and building 8 times a
+# second, which alone cost more than a frame budget per frame.
+func _compute_distance_to_coast(world_pos: Vector2) -> float:
+	var best: float = INF
+	for poly: Variant in _land_polys:
+		var outline: PackedVector2Array = poly as PackedVector2Array
+		var n: int = outline.size()
+		if n < 2:
+			continue
+		for i: int in range(n):
+			var closest: Vector2 = Geometry2D.get_closest_point_to_segment(
+				world_pos, outline[i], outline[(i + 1) % n])
+			best = minf(best, world_pos.distance_to(closest))
+	for z: Dictionary in _zones:
+		if (z["type"] as int) != TerrainType.OCEAN:
+			continue
+		best = minf(best, absf(
+			world_pos.distance_to(z["center"] as Vector2) - (z["radius"] as float)))
+	return best

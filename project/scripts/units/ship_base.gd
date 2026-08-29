@@ -13,6 +13,17 @@ func _ready() -> void:
 	civ_id = "atlantes"
 	super._ready()
 
+## Ships can only follow the ocean navmesh, but the base implementation only asks
+## whether the destination is *impassable* — and land is passable for the
+## "atlantes" civ ships pretend to be. A target on land (a dock's own origin, a
+## coastal click) therefore stayed off-mesh, so the agent reported navigation
+## finished immediately and the ship sat still.
+func _safe_destination(destination: Vector2) -> Vector2:
+	if TerrainManager.is_ocean(destination):
+		return destination
+	var water: Vector2 = TerrainManager.nearest_ocean(destination)
+	return water if water != Vector2.ZERO else destination
+
 func _nav_velocity() -> Vector2:
 	if nav_agent.is_navigation_finished():
 		return Vector2.ZERO
