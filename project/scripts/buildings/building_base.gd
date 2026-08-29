@@ -10,7 +10,14 @@ const MAX_BUILD_SPEED_MULTIPLIER: float = 3.0
 
 var player_id: int = 0
 var state: BuildingState = BuildingState.BLUEPRINT
-var health: float = 0.0
+# Property setter: EVERY writer (take_damage, villager repair via
+# set("health"), save restore) refreshes the health bar, so building damage is
+# always visible — most building scenes ship without a HealthBar node and
+# nothing ever showed their HP before.
+var health: float = 0.0:
+	set(value):
+		health = value
+		_refresh_health_bar()
 var max_health: float = 0.0
 var construction_progress: float = 0.0
 var _active_builders: int = 0
@@ -128,6 +135,10 @@ func _ready() -> void:
 		var hp_mult: float = CivBonusManager.get_building_hp_multiplier(player_id, building_data.id)
 		max_health = building_data.max_health * hp_mult
 		health = max_health
+	# Before IsoBuildingMassing.apply so the massing pass positions the bar
+	# above the roof and the billboard pass uprights it ("HealthBar" is in
+	# _iso_upright_children).
+	_ensure_health_bar()
 	IsoBuildingMassing.apply(self)
 	_refresh_visuals()
 	_localize_nameplate()
@@ -209,6 +220,7 @@ func add_construction(base_amount: float) -> void:
 
 func _complete_construction() -> void:
 	state = BuildingState.COMPLETE
+	_refresh_health_bar()
 	if is_instance_valid(_progress_bar):
 		_progress_bar.visible = false
 	if is_instance_valid(_body_node):
@@ -226,11 +238,40 @@ func _complete_construction() -> void:
 func force_complete() -> void:
 	construction_progress = 100.0
 	state = BuildingState.COMPLETE
+	_refresh_health_bar()
 	if is_instance_valid(_progress_bar):
 		_progress_bar.visible = false
 	if is_instance_valid(_body_node):
 		_body_node.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	_update_scaffold()
+
+## The building HP bar, shown only while a COMPLETE building is damaged (the
+## construction phase has its own ConstructionBar). Scenes that already ship a
+## HealthBar node (dock, wonder) keep it; everyone else gets one at runtime.
+var _health_bar: ProgressBar = null
+
+func _ensure_health_bar() -> void:
+	_health_bar = get_node_or_null("HealthBar") as ProgressBar
+	if _health_bar == null:
+		_health_bar = ProgressBar.new()
+		_health_bar.name = "HealthBar"
+		_health_bar.offset_left = -40.0
+		_health_bar.offset_top = -44.0
+		_health_bar.offset_right = 40.0
+		_health_bar.offset_bottom = -38.0
+		_health_bar.max_value = 100.0
+		_health_bar.value = 100.0
+		_health_bar.show_percentage = false
+		_health_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_health_bar)
+	_health_bar.visible = false
+
+func _refresh_health_bar() -> void:
+	if not is_instance_valid(_health_bar) or max_health <= 0.0:
+		return
+	_health_bar.value = clampf(health / max_health * 100.0, 0.0, 100.0)
+	_health_bar.visible = state == BuildingState.COMPLETE \
+		and health < max_health - 0.01 and health > 0.0
 
 func _refresh_visuals() -> void:
 	if is_instance_valid(_progress_bar):

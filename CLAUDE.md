@@ -348,7 +348,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Selection indicators (green circle for player, yellow for allies)
 - Hero energy aura (animated Dragon Ball-style golden flame, `HeroAura`; reviewed via `tools/check_hero_aura.tscn` screenshots) + locate-hero HUD button next to the idle-unit buttons
 - Rally point markers for production buildings
-- Health bars for units/buildings (hidden when full HP)
+- Health bars for units/buildings (hidden when full HP); BuildingBase creates the building bar at runtime — most building scenes ship without a HealthBar node, and before this nothing ever showed building HP (damage LOOKED like it wasn't applied)
 - Progressive damage fire/smoke on buildings (smoke <75% HP, flames <50%, heavy fire <25%; repair clears it)
 - Sound effects: select, attack, build, gather, hit (with spatial attenuation)
 

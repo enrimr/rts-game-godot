@@ -118,6 +118,26 @@ func test_tower_fires_an_arrow_at_an_enemy_in_range() -> void:
 		assert_gt(arrow.damage, 0.0, "the arrow carries the tower's damage")
 		assert_eq(arrow._original_target, enemy)
 
+func test_building_health_bar_tracks_damage_and_repair() -> void:
+	## The perceived "buildings don't lose HP" bug: damage always applied, but
+	## most building scenes have no HealthBar node and nothing ever updated the
+	## few that exist — so the player had zero feedback. BuildingBase now owns
+	## a runtime bar, refreshed by the health property setter.
+	var tower: WatchTower = (load("res://scenes/buildings/watch_tower.tscn") as PackedScene).instantiate() as WatchTower
+	tower.player_id = 0
+	add_child_autofree(tower)
+	tower.force_complete()
+	var bar: ProgressBar = tower.get_node("HealthBar") as ProgressBar
+	assert_not_null(bar, "every building gets a health bar at runtime")
+	assert_false(bar.visible, "hidden at full HP")
+
+	tower.take_damage(tower.max_health * 0.4)
+	assert_true(bar.visible, "damage shows the bar")
+	assert_almost_eq(bar.value, 60.0, 1.0, "bar tracks the HP ratio")
+
+	tower.set("health", tower.max_health)   # the villager repair path
+	assert_false(bar.visible, "full repair hides it again")
+
 func test_tower_ignores_enemies_out_of_range() -> void:
 	var holder: Node2D = Node2D.new()
 	add_child_autofree(holder)
