@@ -84,6 +84,7 @@ func _launch_arrow(target: Node) -> void:
 	arrow._original_target = target
 	get_parent().add_child(arrow)
 	arrow.global_position = global_position
+	arrow.reset_physics_interpolation()
 
 func _launch_arrow_to(world_pos: Vector2) -> void:
 	var arrow: Arrow = ARROW_SCENE.instantiate() as Arrow
@@ -93,3 +94,4 @@ func _launch_arrow_to(world_pos: Vector2) -> void:
 	arrow._original_target = null
 	get_parent().add_child(arrow)
 	arrow.global_position = global_position
+	arrow.reset_physics_interpolation()

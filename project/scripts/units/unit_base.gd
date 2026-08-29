@@ -66,6 +66,10 @@ var _path_failed: bool = false   # freezes the red gave-up route during its fade
 var _path_visible: bool = false
 
 func _ready() -> void:
+	# The "units" group is load-bearing: watch towers, the Menceyes Guard aura
+	# and several hero abilities scan it. No unit scene declares it, so without
+	# this line the group was empty and all of those silently did nothing.
+	add_to_group("units")
 	if unit_data:
 		var hp_mult: float = CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
 		health = unit_data.max_health * hp_mult

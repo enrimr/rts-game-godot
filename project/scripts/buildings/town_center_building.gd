@@ -67,6 +67,7 @@ func _ready() -> void:
 	VisualFx.set_nameplate_visible(self, false)
 	call_deferred("_add_player_color_stripe")
 	call_deferred("_apply_team_accents")
+	call_deferred("_setup_damage_fx")
 	call_deferred("_setup_iso_billboard")
 	EventBus.hero_died.connect(_on_hero_died)
 
@@ -187,6 +188,9 @@ func get_max_queue() -> int:
 	return MAX_QUEUE
 
 var _hit_tween: Tween = null
+
+func _setup_damage_fx() -> void:
+	BuildingDamageFx.attach(self)
 
 func take_damage(amount: float, source: Node = null) -> void:
 	health -= amount

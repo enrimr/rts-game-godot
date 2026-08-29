@@ -136,6 +136,7 @@ func _ready() -> void:
 	call_deferred("_apply_team_accents")
 	call_deferred("_add_ground_shadow")
 	call_deferred("_setup_iso_billboard")
+	call_deferred("_setup_damage_fx")
 	_setup_nav_obstacle()
 
 func _localize_nameplate() -> void:
@@ -308,6 +309,9 @@ func _process(delta: float) -> void:
 	modulate = Color(r, g, b, 1.0)
 	if _under_attack_timer <= 0.0:
 		modulate = Color(1.0, 1.0, 1.0, 1.0)
+
+func _setup_damage_fx() -> void:
+	BuildingDamageFx.attach(self)
 
 func _setup_nav_obstacle() -> void:
 	var obs: NavigationObstacle2D = get_node_or_null("NavigationObstacle2D") as NavigationObstacle2D

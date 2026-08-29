@@ -106,6 +106,23 @@ All damage flows through `unit.take_damage(amount, source)`. Armor reduces incom
 damage = max(1, attacker.attack - target.armor_melee)
 ```
 
+**Watch towers auto-attack with visible arrows.** `WatchTower._physics_process`
+picks the nearest enemy in the `"units"` group within `ATTACK_RANGE` (220 px)
+and launches the Archer's `Arrow` (damage and `unit_attacked` applied on
+impact) from the tower top. That group is load-bearing and joined by
+`UnitBase._ready` — no scene declares it, so before that line it was empty and
+tower targeting, the Menceyes Guard aura and several hero abilities that scan
+it silently did nothing. Arrow spawns call `reset_physics_interpolation()` or
+the spawn teleport ghosts across the screen for a frame.
+
+**Damaged buildings burn progressively** (`BuildingDamageFx`, attached by
+`BuildingBase` and `TownCenterBuilding`): smoke below 75 % HP, flame tongues
+join below 50 %, heavy fire and dark smoke below 25 %; repairs walk the stages
+back down, and construction sites/rubble never burn (only `COMPLETE` state).
+Purely visual — CPUParticles2D in the upright billboard space, render-side
+randomness, never MatchRng. Reviewed via `tools/check_damage_fx.tscn`
+(real-renderer screenshot of the four stages plus a tower firing).
+
 ## Pathfinding
 
 Uses Godot's built-in `NavigationAgent2D` on each unit. Navigation regions are updated when buildings are placed or destroyed.

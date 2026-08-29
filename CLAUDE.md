@@ -98,6 +98,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/trireme.gd` | Fenicios ship: Ram (×2 vs ships, 40 px knockback) |
 | **Building Classes** ||
 | `project/scripts/buildings/building_base.gd` | Base class for all buildings; outward spiral spawn positioning, rally points |
+| `project/scripts/buildings/building_damage_fx.gd` | `BuildingDamageFx` — progressive fire/smoke on damaged buildings (smoke <75% HP, flames <50%, heavy fire <25%; repair walks it back; construction/rubble never burn); attached by BuildingBase and TownCenterBuilding, purely visual (render-side RNG) |
 | `project/scripts/buildings/town_center.gd` | Main TC: trains villagers, hero respawn, drop-off |
 | `project/scripts/buildings/town_center_buildable.gd` | Castle Age player-built TC (275 wood) |
 | `project/scripts/buildings/barracks.gd` | Trains infantry (Militia/Archer/Man-at-Arms/Pikeman/Long Swordsman/unique units) |
@@ -110,7 +111,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/buildings/temple.gd` | Castle Age: research morale/HP buffs (Fervor/Sanctity/Atonement) |
 | `project/scripts/buildings/market.gd` | Resource trading with dynamic rates, mercenary hiring |
 | `project/scripts/buildings/wonder.gd` | Imperial Age: Wonder victory condition |
-| `project/scripts/buildings/watch_tower.gd` | Defensive tower with auto-attack |
+| `project/scripts/buildings/watch_tower.gd` | Defensive tower: auto-attack fires visible arrows (Archer's Arrow flow) at the nearest enemy in the "units" group — the group UnitBase._ready joins (it is load-bearing: tower targeting, Menceyes aura and several hero abilities scan it, and no scene declares it) |
 | `project/scripts/buildings/wall_segment.gd` | Defensive wall |
 | `project/scripts/buildings/gate.gd` | Wall gate (opens for allies) |
 | `project/scripts/buildings/house.gd` | +5 population cap |
@@ -231,6 +232,9 @@ $GODOT --headless --path project res://tools/check_amphibious.tscn
 # Naval civ identity (real renderer, not headless): every hull dressed for every civ
 CALIMA_SHOT_DIR=/tmp/calima-ships $GODOT --path project --resolution 1600x900 \
   res://tools/check_ship_gallery.tscn   # env: CALIMA_CIVS=atlantes,fenicios
+# Damage fire/smoke stages + watch-tower arrows (real renderer): screenshot review
+CALIMA_SHOT_DIR=/tmp/calima-fx $GODOT --path project --resolution 1400x900 \
+  res://tools/check_damage_fx.tscn
 ```
 
 Note: GUT silently *skips* a test script that fails to parse while still
@@ -341,6 +345,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Hero ring (gold circle) visual
 - Rally point markers for production buildings
 - Health bars for units/buildings (hidden when full HP)
+- Progressive damage fire/smoke on buildings (smoke <75% HP, flames <50%, heavy fire <25%; repair clears it)
 - Sound effects: select, attack, build, gather, hit (with spatial attenuation)
 
 ### Recent Bug Fixes (Production-Ready Milestone)
