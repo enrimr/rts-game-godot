@@ -174,18 +174,18 @@ func _draw_content() -> void:
 		_content.draw_rect(Rect2(Vector2.ZERO, ms), COLOR_BG)
 
 	# Fog of war overlay — drawn over terrain, under units/buildings. The fog
-	# grid covers its own fixed world rect (FogOfWar.MAP_ORIGIN + GRID*CELL),
-	# which is larger than the playable map, so cells are mapped through the
-	# same world->widget transform as every dot — previously the grid was
-	# stretched to the widget and the reveal sat offset from the units in it.
+	# grid overshoots the playable rect by FogOfWar.GRID_MARGIN, so cells are
+	# mapped through the same world->widget transform as every dot — previously
+	# the grid was stretched to the widget and the reveal sat offset from the
+	# units in it.
 	if fog != null:
-		var fog_origin: Vector2 = _to_mm(FogOfWar.MAP_ORIGIN, ms)
+		var fog_origin: Vector2 = _to_mm(fog.map_origin, ms)
 		var cell_px: Vector2 = Vector2(FogOfWar.CELL_SIZE, FogOfWar.CELL_SIZE) / _world_size * ms
 		var col_unexplored: Color = COLOR_FOG_UNEXPLORED
 		var col_explored: Color = Color(FogOfWar.SHROUD_RGB, 0.5)
-		for cy: int in range(FogOfWar.GRID_H):
-			for cx: int in range(FogOfWar.GRID_W):
-				var state: int = fog._cells[cy * FogOfWar.GRID_W + cx]
+		for cy: int in range(fog.grid_h):
+			for cx: int in range(fog.grid_w):
+				var state: int = fog._cells[cy * fog.grid_w + cx]
 				if state == FogOfWar.STATE_VISIBLE:
 					continue
 				var fog_col: Color = col_unexplored if state == FogOfWar.STATE_UNEXPLORED else col_explored

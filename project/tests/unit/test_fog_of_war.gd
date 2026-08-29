@@ -28,16 +28,24 @@ extends GutTest
 ##   skips null references.
 
 var _fow: FogOfWar
+var _saved_map_size: int = MatchConfig.MapSize.MEDIUM
 
-## Map geometry constants mirrored here so test assertions are self-documenting.
+## MEDIUM-map geometry mirrored here so test assertions are self-documenting.
+## The grid is sized from MatchConfig.get_map_half() + FogOfWar.GRID_MARGIN in
+## _ready(), so before_each pins the map size the numbers below assume.
 const CELL_SIZE: float = 50.0
 const MAP_ORIGIN: Vector2 = Vector2(-2000.0, -2000.0)
 const GRID_W: int = 80
 const GRID_H: int = 80
 
 func before_each() -> void:
+	_saved_map_size = MatchConfig.map_size
+	MatchConfig.map_size = MatchConfig.MapSize.MEDIUM
 	_fow = FogOfWar.new()
 	add_child_autofree(_fow)
+
+func after_each() -> void:
+	MatchConfig.map_size = _saved_map_size
 
 
 # ---------------------------------------------------------------------------
@@ -296,3 +304,28 @@ func test_multiple_mark_circle_calls_accumulate_without_resetting_explored() -> 
 		FogOfWar.STATE_EXPLORED,
 		"Previously explored cell must remain EXPLORED after marking a different circle"
 	)
+
+
+# ---------------------------------------------------------------------------
+# 9. Grid sizing — the grid must cover the actual playable map
+# ---------------------------------------------------------------------------
+
+func test_medium_map_keeps_the_historical_grid() -> void:
+	## MEDIUM (±1800) + the 200 px margin is exactly the old fixed 80×80 rect.
+	assert_eq(_fow.grid_w, GRID_W)
+	assert_eq(_fow.grid_h, GRID_H)
+	assert_eq(_fow.map_origin, MAP_ORIGIN)
+
+func test_large_map_grid_covers_the_margins() -> void:
+	## The regression: on a LARGE map (±2600) the old fixed ±2000 grid left a
+	## 600 px ring permanently unfogged — the minimap showed islands at the
+	## margins without ever scouting them. A position out there must now be a
+	## real (unexplored, markable) cell instead of falling off the grid.
+	MatchConfig.map_size = MatchConfig.MapSize.LARGE
+	var fow: FogOfWar = FogOfWar.new()
+	add_child_autofree(fow)
+	var margin_pos: Vector2 = Vector2(2500.0, 2500.0)
+	assert_eq(fow.get_cell_state(margin_pos), FogOfWar.STATE_UNEXPLORED)
+	fow._mark_circle(margin_pos, 50.0)
+	assert_eq(fow.get_cell_state(margin_pos), FogOfWar.STATE_VISIBLE,
+		"the fog grid must reach the margins of a LARGE map")

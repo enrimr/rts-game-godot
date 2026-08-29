@@ -32,10 +32,12 @@ func after_each() -> void:
 	TerrainManager.reset()
 	CivBonusManager.init_player(0, "franks")
 
-## World position `steps` grid cells east of `origin`, inside that cell.
+## World position `steps` grid cells east of `origin`, inside that cell. The
+## fog grid origin is always a multiple of CELL_SIZE, so cell boundaries fall
+## on multiples of CELL_SIZE regardless of the map size.
 func _probe(origin: Vector2, steps: int) -> Vector2:
-	var cell_x: int = int((origin.x - FogOfWar.MAP_ORIGIN.x) / FogOfWar.CELL_SIZE) + steps
-	return Vector2(FogOfWar.MAP_ORIGIN.x + (float(cell_x) + 0.5) * FogOfWar.CELL_SIZE, origin.y)
+	var cell_x: int = int(floor(origin.x / FogOfWar.CELL_SIZE)) + steps
+	return Vector2((float(cell_x) + 0.5) * FogOfWar.CELL_SIZE, origin.y)
 
 ## One independent fog instance per measurement: revealed cells never decay back
 ## to unexplored, so two civs cannot share a grid.

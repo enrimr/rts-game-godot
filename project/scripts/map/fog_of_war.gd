@@ -3,9 +3,17 @@ extends Node2D
 class_name FogOfWar
 
 const CELL_SIZE: float = 50.0
-const GRID_W: int = 80   # 4000 / 50
-const GRID_H: int = 80
-const MAP_ORIGIN: Vector2 = Vector2(-2000.0, -2000.0)
+## Grid overshoot past the playable rect, so shoreline reveals never clip at
+## the map edge. The grid itself is sized from MatchConfig.get_map_half() in
+## _ready(): a hard-coded 80×80 rect used to leave a 600 px ring of a LARGE
+## map (±2600) permanently unfogged — islands at the margins showed on the
+## minimap without ever being scouted.
+const GRID_MARGIN: float = 200.0
+
+# Defaults match a MEDIUM map (±1800 + margin); _ready() recomputes them.
+var grid_w: int = 80
+var grid_h: int = 80
+var map_origin: Vector2 = Vector2(-2000.0, -2000.0)
 
 const STATE_UNEXPLORED: int = 0
 const STATE_EXPLORED: int = 1
@@ -40,15 +48,20 @@ var _world_node: Node = null
 var _update_timer: float = 0.0
 
 func _ready() -> void:
+	var half_cells: int = int(ceil((MatchConfig.get_map_half() + GRID_MARGIN) / CELL_SIZE))
+	grid_w = half_cells * 2
+	grid_h = grid_w
+	map_origin = Vector2(-half_cells * CELL_SIZE, -half_cells * CELL_SIZE)
+
 	_cells = PackedByteArray()
-	_cells.resize(GRID_W * GRID_H)
+	_cells.resize(grid_w * grid_h)
 	_cells.fill(STATE_UNEXPLORED)
 
 	_dirty_cells = PackedByteArray()
-	_dirty_cells.resize(GRID_W * GRID_H)
+	_dirty_cells.resize(grid_w * grid_h)
 	_dirty_cells.fill(0)
 
-	_image = Image.create(GRID_W, GRID_H, false, Image.FORMAT_RGBA8)
+	_image = Image.create(grid_w, grid_h, false, Image.FORMAT_RGBA8)
 	_image.fill(COLOR_UNEXPLORED)
 	_texture = ImageTexture.create_from_image(_image)
 
@@ -60,7 +73,7 @@ func _ready() -> void:
 	# only alpha interpolates).
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_sprite.centered = false
-	_sprite.position = MAP_ORIGIN
+	_sprite.position = map_origin
 	add_child(_sprite)
 	z_index = IsoBillboard.Z_FOG
 
@@ -206,15 +219,15 @@ func _mark_circle(world_pos: Vector2, radius_px: float) -> void:
 	var r2: int = r * r
 	for dy: int in range(-r, r + 1):
 		var ny: int = cell.y + dy
-		if ny < 0 or ny >= GRID_H:
+		if ny < 0 or ny >= grid_h:
 			continue
 		for dx: int in range(-r, r + 1):
 			if dx * dx + dy * dy > r2:
 				continue
 			var nx: int = cell.x + dx
-			if nx < 0 or nx >= GRID_W:
+			if nx < 0 or nx >= grid_w:
 				continue
-			var idx: int = ny * GRID_W + nx
+			var idx: int = ny * grid_w + nx
 			_cells[idx] = STATE_VISIBLE
 			_dirty_cells[idx] = 1
 
@@ -225,8 +238,8 @@ func _render() -> void:
 			continue
 		_dirty_cells[i] = 0
 		any_updated = true
-		var x: int = i % GRID_W
-		var y: int = i / GRID_W
+		var x: int = i % grid_w
+		var y: int = i / grid_w
 		match _cells[i]:
 			STATE_UNEXPLORED:
 				_image.set_pixel(x, y, COLOR_UNEXPLORED)
@@ -321,11 +334,11 @@ func _breaks_fog_cloak(unit: Node, own_positions: PackedVector2Array) -> bool:
 	return false
 
 func _world_to_cell(world_pos: Vector2) -> Vector2i:
-	var rel: Vector2 = (world_pos - MAP_ORIGIN) / CELL_SIZE
+	var rel: Vector2 = (world_pos - map_origin) / CELL_SIZE
 	return Vector2i(int(rel.x), int(rel.y))
 
 func get_cell_state(world_pos: Vector2) -> int:
 	var cell: Vector2i = _world_to_cell(world_pos)
-	if cell.x < 0 or cell.x >= GRID_W or cell.y < 0 or cell.y >= GRID_H:
+	if cell.x < 0 or cell.x >= grid_w or cell.y < 0 or cell.y >= grid_h:
 		return STATE_UNEXPLORED
-	return _cells[cell.y * GRID_W + cell.x]
+	return _cells[cell.y * grid_w + cell.x]

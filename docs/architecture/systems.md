@@ -150,8 +150,12 @@ match; fails on pre-nudge code).
 
 ## Fog of War
 
-`FogOfWar` (`scripts/map/fog_of_war.gd`) keeps one 80×80 byte grid for the human
-player (`CELL_SIZE` = 50 px over a 4000 px map from `MAP_ORIGIN`). Three states per
+`FogOfWar` (`scripts/map/fog_of_war.gd`) keeps one byte grid for the human player,
+sized at `_ready()` from `MatchConfig.get_map_half()` plus `GRID_MARGIN` (200 px)
+at `CELL_SIZE` = 50 px per cell — 56×56 on SMALL, 80×80 on MEDIUM, 112×112 on
+LARGE (`grid_w`/`grid_h`/`map_origin`). It used to be a fixed 80×80 rect over
+±2000 px, which left a 600 px ring of a LARGE map permanently unfogged: islands
+at the margins showed on the minimap without ever being scouted. Three states per
 cell: `STATE_UNEXPLORED` / `STATE_EXPLORED` / `STATE_VISIBLE`. Every
 `UPDATE_INTERVAL` (0.12 s) `_tick()` demotes VISIBLE → EXPLORED, re-reveals from the
 player's units and buildings, repaints only the dirty cells into the shroud texture,
