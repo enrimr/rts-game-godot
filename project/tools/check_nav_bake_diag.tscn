@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://calima_nav_bake_diag"]
+
+[ext_resource type="Script" path="res://tools/check_nav_bake_diag.gd" id="1_navdiag"]
+
+[node name="NavBakeDiag" type="Node2D"]
+script = ExtResource("1_navdiag")

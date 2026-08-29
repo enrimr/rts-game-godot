@@ -19,6 +19,66 @@ class_name NavMeshBuilder extends RefCounted
 ## their NavigationAgent2D.navigation_layers to this (see Tidecaller).
 const AMPHIBIOUS_LAYER: int = 4
 
+## Half-pixel widening added to the agent radius of every bake.
+##
+## Player footprints snap to a 16 px grid and carve with a 6 px margin
+## (BuildingBase._nav_bake_half_extents), so the carved gaps between them are
+## fixed grid multiples — and a 20 px gap pinches to EXACTLY zero width once both
+## sides are offset by the 10 px agent radius. Godot's convex partition fails
+## outright on that degenerate contact and returns an EMPTY mesh: fuzzing dense
+## grid-snapped layouts hit it in ~5 % of cases, and a 20 px gap is one wall
+## segment missing from a wall run. Baking half a pixel wider turns the pinch
+## into a clean merge (0 failures in the same 1500-layout fuzz), at the cost of
+## closing a gap that was never reliably walkable anyway.
+const RADIUS_NUDGE: float = 0.5
+
+## Further nudges tried, in order, when a bake still comes back empty — a
+## different sub-pixel offset breaks a different degenerate contact.
+const RADIUS_FALLBACKS: Array[float] = [0.25, 1.0, -0.5]
+
+## Total bake attempts available: the standard nudge plus the fallbacks.
+static func nudge_attempts() -> int:
+	return 1 + RADIUS_FALLBACKS.size()
+
+static func nudge_for_attempt(attempt: int) -> float:
+	if attempt <= 0:
+		return RADIUS_NUDGE
+	return RADIUS_FALLBACKS[mini(attempt, RADIUS_FALLBACKS.size()) - 1]
+
+## Fresh polygon carrying `current`'s agent settings plus the attempt's nudge.
+## Baking into a fresh resource (never the live one) keeps the region's current
+## mesh intact while the bake runs and if it fails.
+static func bake_target(current: NavigationPolygon, attempt: int) -> NavigationPolygon:
+	var poly: NavigationPolygon = NavigationPolygon.new()
+	if current != null:
+		poly.agent_radius = current.agent_radius + nudge_for_attempt(attempt)
+		poly.cell_size = current.cell_size
+	else:
+		poly.agent_radius = 10.0 + nudge_for_attempt(attempt)
+	return poly
+
+static func build_source(traversable: Array[PackedVector2Array],
+		obstructions: Array[PackedVector2Array]) -> NavigationMeshSourceGeometryData2D:
+	var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
+	for outline: PackedVector2Array in traversable:
+		source.add_traversable_outline(outline)
+	for outline: PackedVector2Array in obstructions:
+		source.add_obstruction_outline(outline)
+	return source
+
+## Synchronous bake walking the nudge ladder until the partition succeeds.
+## Returns an empty polygon if every attempt failed.
+static func bake_surface(current: NavigationPolygon, traversable: Array[PackedVector2Array],
+		obstructions: Array[PackedVector2Array]) -> NavigationPolygon:
+	var poly: NavigationPolygon = null
+	for attempt: int in range(nudge_attempts()):
+		poly = bake_target(current, attempt)
+		NavigationServer2D.bake_from_source_geometry_data(
+			poly, build_source(traversable, obstructions))
+		if poly.get_polygon_count() > 0:
+			return poly
+	return poly
+
 func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 	var land_region: NavigationRegion2D = parent.get_node_or_null("NavigationRegion2D") as NavigationRegion2D
 	var ocean_region: NavigationRegion2D = parent.get_node_or_null("OceanNavigationRegion2D") as NavigationRegion2D
@@ -93,17 +153,8 @@ func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 ## — which left the ocean mesh empty and every ship unable to move.
 func _bake(region: NavigationRegion2D, traversable: Array[PackedVector2Array],
 		obstructions: Array[PackedVector2Array]) -> void:
-	var poly: NavigationPolygon = NavigationPolygon.new()
-	var current: NavigationPolygon = region.navigation_polygon
-	if current != null:
-		poly.agent_radius = current.agent_radius
-		poly.cell_size = current.cell_size
-	var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
-	for outline: PackedVector2Array in traversable:
-		source.add_traversable_outline(outline)
-	for outline: PackedVector2Array in obstructions:
-		source.add_obstruction_outline(outline)
-	NavigationServer2D.bake_from_source_geometry_data(poly, source)
+	var poly: NavigationPolygon = bake_surface(
+		region.navigation_polygon, traversable, obstructions)
 	if poly.get_polygon_count() > 0:
 		region.navigation_polygon = poly
 	else:

@@ -120,6 +120,34 @@ Gated by `tests/unit/test_coast_distance.gd`.
 
 This means ships navigate their own layer, amphibious units navigate the continuous layer, and plain land units are physically blocked by the land mesh boundaries.
 
+### The half-pixel bake nudge
+
+Every bake — the generation-time one in `NavMeshBuilder._bake` and the debounced
+runtime rebake in `WorldPlacement._rebake_region` — inflates the region's agent
+radius by `NavMeshBuilder.RADIUS_NUDGE` (0.5 px).
+
+The reason is a hard failure mode of Godot's 2D navmesh baker. Player buildings
+snap to a 16 px grid and carve with a 6 px margin
+(`BuildingBase._nav_bake_half_extents`), so two buildings placed *diagonally* can
+leave a 20 px carved gap on both axes — and once each footprint is inflated by the
+10 px agent radius, the two holes meet at exactly one point. The convex partition
+fails on that pinch and returns an **empty polygon for the whole board**, not just
+that corner: `NavigationPolygon polygon convex partition failed`. The rebake then
+keeps the previous (uncarved) mesh, so the failure shows up as buildings that
+units path straight through plus an error every debounce tick.
+
+Baking half a pixel wider makes the two holes overlap by 1 px, Clipper merges
+them, and the partition succeeds. In fuzzing (1500 dense grid-snapped layouts)
+the nominal radius failed on 5.5 % of them and the nudged radius on none.
+`NavMeshBuilder.RADIUS_FALLBACKS` supplies three further sub-pixel offsets, tried
+in order when a bake still comes back empty; `WorldPlacement._on_nav_bake_done`
+walks that ladder and only then keeps the previous mesh, warning once per region
+instead of re-requesting the bake forever on identical geometry.
+
+Gated by `tests/unit/test_nav_bake_nudge.gd` (the minimised two-footprint case)
+and `tools/check_nav_bake_diag.tscn` (two real houses placed diagonally in a live
+match; fails on pre-nudge code).
+
 ## Fog of War
 
 `FogOfWar` (`scripts/map/fog_of_war.gd`) keeps one 80×80 byte grid for the human

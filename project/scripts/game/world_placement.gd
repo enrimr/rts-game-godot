@@ -79,7 +79,7 @@ var _wall_cost_label: Label = null
 
 var _nav_rebake_timer: float = 0.0
 var _nav_rebake_pending: bool = false
-var _nav_bake_failed: bool = false               # last bake produced an empty mesh
+var _nav_bake_failed: Dictionary = {}            # region name → empty bake already warned
 
 func setup(world) -> void:
 	_world = world
@@ -472,18 +472,19 @@ func _do_nav_rebake() -> void:
 		_world.get_node_or_null("AmphibiousNavigationRegion2D") as NavigationRegion2D,
 		_amphibious_outlines())
 
-func _rebake_region(region: NavigationRegion2D, traversable: Array[PackedVector2Array]) -> void:
+func _rebake_region(region: NavigationRegion2D, traversable: Array[PackedVector2Array],
+		attempt: int = 0) -> void:
 	if not is_instance_valid(region):
 		return
 	var current: NavigationPolygon = region.navigation_polygon
 	if current == null:
 		return
-	# Bake into a FRESH polygon (copying agent settings) rather than the live one.
-	# If the convex partition fails the result is empty; _on_nav_bake_done then
-	# keeps the previous mesh instead of leaving units with no walkable navmesh.
-	var nav_poly: NavigationPolygon = NavigationPolygon.new()
-	nav_poly.agent_radius = current.agent_radius
-	nav_poly.cell_size = current.cell_size
+	# Bake into a FRESH polygon (copying agent settings, widened by the attempt's
+	# NavMeshBuilder nudge) rather than the live one. If the convex partition
+	# still fails the result is empty; _on_nav_bake_done then walks the rest of
+	# the nudge ladder and, failing that, keeps the previous mesh instead of
+	# leaving units with no walkable navmesh.
+	var nav_poly: NavigationPolygon = NavMeshBuilder.bake_target(current, attempt)
 	var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
 	for outline: PackedVector2Array in traversable:
 		source.add_traversable_outline(outline)
@@ -507,22 +508,29 @@ func _rebake_region(region: NavigationRegion2D, traversable: Array[PackedVector2
 		if rpoly.size() >= 3:
 			source.add_obstruction_outline(rpoly)
 	NavigationServer2D.bake_from_source_geometry_data_async(
-		nav_poly, source, Callable(self, "_on_nav_bake_done").bind(region, nav_poly))
+		nav_poly, source, Callable(self, "_on_nav_bake_done").bind(
+			region, nav_poly, traversable, attempt))
 
-func _on_nav_bake_done(region: NavigationRegion2D, baked: NavigationPolygon) -> void:
+func _on_nav_bake_done(region: NavigationRegion2D, baked: NavigationPolygon,
+		traversable: Array[PackedVector2Array], attempt: int) -> void:
 	if not is_instance_valid(_world) or not is_instance_valid(region) or baked == null:
 		return
 	# Only swap in the freshly baked mesh if the partition succeeded (non-empty).
-	# An empty result means the bake failed (Godot's convex partition can choke
-	# on certain overlapping obstruction layouts) — keep the existing navmesh so
-	# units never lose their walkable surface, and schedule a retry so the mesh
-	# catches up once the transient geometry settles (warn only once).
+	# An empty result means Godot's convex partition choked on a degenerate
+	# contact between obstruction outlines; the next nudge of the ladder offsets
+	# them differently and normally clears it (see NavMeshBuilder.RADIUS_NUDGE).
 	if baked.get_polygon_count() > 0:
 		region.navigation_polygon = baked
-		_nav_bake_failed = false
-	else:
-		if not _nav_bake_failed:
-			push_warning("Nav rebake produced an empty mesh for %s; keeping the previous polygon and retrying."
-				% region.name)
-			_nav_bake_failed = true
-		_request_nav_rebake()   # retry after the standard debounce delay
+		_nav_bake_failed.erase(region.name)
+		return
+	if attempt + 1 < NavMeshBuilder.nudge_attempts():
+		_rebake_region(region, traversable, attempt + 1)
+		return
+	# Ladder exhausted: keep the existing navmesh so units never lose their
+	# walkable surface, and warn once per region — re-requesting the bake here
+	# would spin on identical geometry forever. The next building change
+	# rebakes anyway.
+	if not _nav_bake_failed.has(region.name):
+		push_warning("Nav rebake produced an empty mesh for %s after %d attempts; keeping the previous polygon."
+			% [region.name, NavMeshBuilder.nudge_attempts()])
+		_nav_bake_failed[region.name] = true
