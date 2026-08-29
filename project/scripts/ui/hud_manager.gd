@@ -1631,10 +1631,21 @@ func _on_cancel_train_slot(index: int) -> void:
 		CommandBus.submit(ProductionCommand.make(0, "cancel_train",
 			EntityRegistry.id_of(_selected_building), "", index))
 
+## How many entries of each unit_id a training queue holds — pure, tested.
+static func queued_per_unit(queue: Array) -> Dictionary:
+	var counts: Dictionary = {}
+	for entry: Variant in queue:
+		var uid: String = (entry as Dictionary).get("unit_id", "") as String
+		counts[uid] = (counts.get(uid, 0) as int) + 1
+	return counts
+
 func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> void:
 	if building != _selected_building:
 		return
-	# Update train button label with queue count
+	# Per-unit-type queue badge: a building that trains several unit types
+	# (Barracks, Stable, Dock…) must show each button ITS OWN queued count —
+	# the old total-size badge incremented every train button at once.
+	var counts: Dictionary = queued_per_unit(queue)
 	for child: Node in _action_grid.get_children():
 		if not (child is ActionButton):
 			continue
@@ -1642,7 +1653,8 @@ func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> vo
 		var aid: String = btn.action_id
 		if not aid.begins_with("train:"):
 			continue
-		btn.set_train_queue_badge(queue.size(), max_queue)
+		btn.set_train_queue_badge(
+			counts.get(aid.trim_prefix("train:"), 0) as int, max_queue)
 	_refresh_button_states()
 	# Rebuild the visual queue row
 	for slot: Node in _train_queue_row.get_children():
