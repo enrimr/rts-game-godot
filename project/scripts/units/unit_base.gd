@@ -31,6 +31,21 @@ var _attack_move_active: bool = false
 # One canonical move/chase/strike machine for every combat unit. Leaf classes
 # customise through the hook methods below instead of copying the machine.
 var attack_target: Node = null
+
+## AoE2-style combat stances. They govern AUTONOMOUS behaviour only — an
+## explicit attack order always chases. DEFENSIVE units chase up to
+## DEFENSIVE_LEASH px from their anchor (their last ordered position) and then
+## walk home; STAND_GROUND units strike whatever is in reach but never move
+## for it; PASSIVE units never auto-acquire at all.
+enum Stance { AGGRESSIVE, DEFENSIVE, STAND_GROUND, PASSIVE }
+const DEFENSIVE_LEASH: float = 200.0
+
+var stance: int = Stance.AGGRESSIVE
+var _stance_anchor: Vector2 = Vector2.INF   # INF = unset; falls back to current pos
+# True while the CURRENT engagement came from auto-acquire (range Area2D,
+# retaliation, guard response, post-kill rescan) rather than an order.
+var _auto_engaged: bool = false
+var _auto_engage_pending: bool = false
 var _attack_timer: float = 0.0
 var _destination_state: UnitState = UnitState.IDLE
 
@@ -310,7 +325,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 			else:
 				EventBus.player_entity_under_attack.emit(global_position, source)
 			if current_state == UnitState.IDLE:
-				_on_auto_attack_target(source)
+				_auto_engage(source)
 
 func die() -> void:
 	# Re-entry guard: a dying unit can absorb further hits before queue_free
@@ -363,7 +378,7 @@ func _on_player_entity_under_attack(world_pos: Vector2, attacker: Node) -> void:
 		return
 	if attacker.get("is_cloaked") == true:
 		return
-	_on_auto_attack_target(attacker)
+	_auto_engage(attacker)
 
 ## Whether this unit reacts to the "ally under attack" guard signal. Only
 ## military land units do; villagers, ships and animals stay put so the player's
@@ -388,7 +403,7 @@ func _on_enemy_entered_range(body: Node) -> void:
 		return
 	if body.get("is_cloaked") == true:
 		return
-	_on_auto_attack_target(body)
+	_auto_engage(body)
 
 ## Move to destination, auto-attacking any enemy spotted along the way.
 ## Subclasses' order_move clears _attack_move_active; we re-set it right after.
@@ -402,6 +417,38 @@ func order_attack_move(destination: Vector2) -> void:
 # ignores the target so retaliation/guard signals don't send them to war.
 func _on_auto_attack_target(_target: Node) -> void:
 	_attack_move_active = false
+
+## Every autonomous acquisition funnels through here so the stance can veto it
+## and the engagement gets marked as auto (the leash/stand-ground rules apply
+## only to auto engagements — explicit orders always chase).
+func _auto_engage(target: Node) -> void:
+	if not _stance_allows_auto_engage():
+		return
+	_auto_engage_pending = true
+	_on_auto_attack_target(target)
+	_auto_engage_pending = false
+
+func _stance_allows_auto_engage() -> bool:
+	if stance == Stance.PASSIVE:
+		return false
+	# A defensive unit beyond its leash is walking home; re-acquiring here
+	# would ping-pong it further and further from its post.
+	if stance == Stance.DEFENSIVE \
+			and global_position.distance_to(_stance_home()) > DEFENSIVE_LEASH:
+		return false
+	return true
+
+func _stance_home() -> Vector2:
+	return _stance_anchor if _stance_anchor != Vector2.INF else global_position
+
+## Stance orders come through the CommandBus; the anchor re-pins to wherever
+## the unit stands when the stance is set.
+func set_stance(new_stance: int) -> void:
+	stance = new_stance
+	_stance_anchor = global_position
+	if stance == Stance.PASSIVE and _auto_engaged \
+			and current_state == UnitState.ATTACKING:
+		_break_off_combat()
 
 # ── Combat state machine ────────────────────────────────────────────────────
 # Canonical machine: order_* set the intent, _handle_movement travels (and
@@ -420,6 +467,8 @@ func _physics_process(delta: float) -> void:
 func order_move(destination: Vector2) -> void:
 	_attack_move_active = false
 	attack_target = null
+	# A defensive/stand-ground unit holds its latest ordered position.
+	_stance_anchor = destination
 	_destination_state = UnitState.IDLE
 	_on_move_ordered()
 	_navigate_to(destination)
@@ -428,6 +477,7 @@ func order_move(destination: Vector2) -> void:
 func order_attack(target: Node) -> void:
 	if not _accepts_attack_order(target):
 		return
+	_auto_engaged = _auto_engage_pending
 	attack_target = target
 	_destination_state = UnitState.ATTACKING
 	_on_attack_ordered()
@@ -481,6 +531,16 @@ func _handle_attacking(delta: float) -> void:
 	if _combat_reposition(dist, reach):
 		return
 	if dist > reach:
+		# Stance chase rules apply to AUTO engagements only.
+		if _auto_engaged and stance == Stance.STAND_GROUND:
+			_break_off_combat()
+			_scan_area_for_target()   # something else may already be in reach
+			return
+		if _auto_engaged and stance == Stance.DEFENSIVE \
+				and global_position.distance_to(_stance_home()) > DEFENSIVE_LEASH:
+			var home: Vector2 = _stance_home()
+			call("order_move", home)
+			return
 		nav_agent.target_position = _safe_destination(_nav_target_for(attack_target))
 		if _advance_stuck(delta):
 			_unstick()
@@ -535,7 +595,7 @@ func _scan_area_for_target() -> void:
 			continue
 		if body.get("is_cloaked") == true:
 			continue
-		_on_auto_attack_target(body)
+		_auto_engage(body)
 		return
 
 # ── Combat machine hooks (override points for leaf classes) ────────────────
@@ -774,6 +834,16 @@ func _unstick() -> void:
 	var jitter: float = 28.0 * float(mini(_stuck_retries, 2))
 	nav_agent.target_position = _safe_destination(
 		dest + Vector2(MatchRng.randf_range(-jitter, jitter), MatchRng.randf_range(-jitter, jitter)))
+
+## Drop the current engagement cleanly (stance veto): no failure visuals,
+## just stop and go idle so the next acquisition can happen from rest.
+func _break_off_combat() -> void:
+	attack_target = null
+	_auto_engaged = false
+	_destination_state = UnitState.IDLE
+	current_state = UnitState.IDLE
+	if is_instance_valid(nav_agent):
+		nav_agent.set_velocity(Vector2.ZERO)
 
 # Give up the current move/chase and return to idle. Clears the combat targets
 # so an abandoned unit is not immediately re-engaged by _handle_attacking.

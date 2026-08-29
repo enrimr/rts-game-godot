@@ -386,3 +386,22 @@ BUILDING_LUMBER_CAMP,Lumber Camp,Campamento Maderero
 BUILDING_MINING_CAMP,Mining Camp,Campamento Minero
 UI_HERO,Hero,Héroe
 UI_HERO_WIDGET_TOOLTIP,Your hero — if they fall the match is lost. Click to center the camera.,Tu héroe — si cae pierdes la partida. Click para centrar la cámara.
+ACTION_STANCE_AGGRESSIVE,Aggressive,Agresivo
+ACTION_STANCE_DEFENSIVE,Defensive,Defensivo
+ACTION_STANCE_STAND_GROUND,Stand Ground,Mantener posición
+ACTION_STANCE_PASSIVE,No Attack,No atacar
+TOOLTIP_STANCE_AGGRESSIVE,Chase any enemy that comes close,Persigue a cualquier enemigo que se acerque
+TOOLTIP_STANCE_DEFENSIVE,Fight back but return to position,Contraataca pero vuelve a su posición
+TOOLTIP_STANCE_STAND_GROUND,Attack in range without moving,Ataca a su alcance sin moverse
+TOOLTIP_STANCE_PASSIVE,Never attack on its own,Nunca ataca por su cuenta
+ACTION_FORMATION_LINE,Line,Línea
+ACTION_FORMATION_BOX,Box,Cuadro
+ACTION_FORMATION_SPREAD,Spread,Dispersa
+ACTION_FORMATION_RINGS,Rings,Anillos
+TOOLTIP_FORMATION_LINE,Rows facing the target: melee in front and ranged behind,Filas de cara al objetivo: melé delante y a distancia detrás
+TOOLTIP_FORMATION_BOX,Compact square block,Bloque cuadrado compacto
+TOOLTIP_FORMATION_SPREAD,Wide spacing against splash damage,Espaciado amplio contra daño en área
+TOOLTIP_FORMATION_RINGS,Concentric rings around the click,Anillos concéntricos alrededor del click
+UI_UNGARRISON,Ungarrison,Desalojar
+TOOLTIP_UNGARRISON,Eject all garrisoned units,Saca a todas las unidades guarecidas
+TOOLTIP_GARRISON_HINT,Right-click with military units to garrison them,Click derecho con unidades militares para guarecerlas

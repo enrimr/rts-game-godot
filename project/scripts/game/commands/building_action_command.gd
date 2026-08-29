@@ -1,10 +1,11 @@
 class_name BuildingActionCommand extends GameCommand
 
 ## A non-production order to one own building: set the rally point, toggle a
-## gate's lock, or demolish it (delete routes through take_damage so the
-## regular destruction flow — signals, rubble, victory checks — still runs).
+## gate's lock, eject its garrison, or demolish it (delete routes through
+## take_damage so the regular destruction flow — signals, rubble, victory
+## checks — still runs).
 
-var verb: String = "set_rally"   # "set_rally" | "gate_lock" | "delete"
+var verb: String = "set_rally"   # "set_rally" | "gate_lock" | "ungarrison" | "delete"
 var building_id: int = 0
 var pos: Vector2 = Vector2.ZERO
 
@@ -39,6 +40,9 @@ func execute(_world: Node2D) -> void:
 		"gate_lock":
 			if building is Gate:
 				(building as Gate).toggle_lock()
+		"ungarrison":
+			if building.has_method("ungarrison_all"):
+				building.call("ungarrison_all")
 		"delete":
 			if building.has_method("take_damage"):
 				var hp: Variant = building.get("health")

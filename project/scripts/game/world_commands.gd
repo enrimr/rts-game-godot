@@ -16,6 +16,10 @@ var _world  # GameWorld — untyped so dynamic access works
 # Pending action waiting for a map click ("move_to" or "attack_move")
 var _pending_action: String = ""
 
+# Formation the next group move fans out into (local UI state: the CHOICE is
+# not a command, every move command carries the formation it was issued with).
+var _formation: String = "line"
+
 func setup(world) -> void:
 	_world = world
 
@@ -132,6 +136,26 @@ func _handle_right_click(world_pos: Vector2) -> void:
 				EntityRegistry.id_of(ts), -1, world_pos))
 			return
 
+	# 0c. Own garrisonable building (TC/tower) clicked with military selected →
+	# garrison them. Villagers keep the drop-off/repair gestures below.
+	var fort: Node = _find_garrisonable_at(world_pos)
+	if fort != null and (fort.get_garrison() as Array).size() < (fort.garrison_capacity() as int):
+		var troops: Array[int] = []
+		for unit: Node in _world.live_selection():
+			if not is_instance_valid(unit) or unit is ShipBase:
+				continue
+			var upid: Variant = unit.get("player_id")
+			if upid == null or (upid as int) != 0:
+				continue
+			if unit.has_method("is_combat_unit") and unit.call("is_combat_unit") \
+					and not (unit is BatteringRam or unit is Mangonel or unit is Trebuchet):
+				troops.append(EntityRegistry.id_of(unit))
+		if not troops.is_empty():
+			CommandBus.submit(UnitTargetCommand.make(0, "garrison", troops,
+				EntityRegistry.id_of(fort)))
+			_flash_target(fort, Color(0.4, 1.0, 0.4, 1.0))
+			return
+
 	# 1. Enemy unit clicked → attack
 	var enemy_unit: Node = _find_enemy_unit_at(world_pos)
 	if enemy_unit != null:
@@ -234,6 +258,29 @@ func _find_animal_at(world_pos: Vector2) -> Animal:
 			continue
 		if world_pos.distance_to((unit as Node2D).global_position) < UNIT_CLICK_RADIUS:
 			return unit as Animal
+	return null
+
+## Own COMPLETE building with garrison room under the click (the player's TC
+## included — it lives outside the buildings layer).
+func _find_garrisonable_at(world_pos: Vector2) -> Node:
+	var candidates: Array[Node] = []
+	if is_instance_valid(_world.drop_off):
+		candidates.append(_world.drop_off)
+	for building: Node in _world.buildings_layer.get_children():
+		if is_instance_valid(building):
+			candidates.append(building)
+	for building: Node in candidates:
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) != 0:
+			continue
+		if not building.has_method("garrison_capacity") \
+				or (building.garrison_capacity() as int) <= 0:
+			continue
+		var state_val: Variant = building.get("state")
+		if state_val != null and (state_val as int) != BuildingBase.BuildingState.COMPLETE:
+			continue
+		if _building_click_hit(building as Node2D, world_pos):
+			return building
 	return null
 
 func _find_gate_at(world_pos: Vector2) -> Gate:
@@ -439,7 +486,8 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 
 func _order_attack_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")
-	CommandBus.submit(UnitPointCommand.make(0, "attack_move", _selection_ids(), world_pos))
+	CommandBus.submit(UnitPointCommand.make(0, "attack_move", _selection_ids(), world_pos,
+		_formation))
 
 ## Briefly shows a coloured expanding ring at `world_pos` to confirm a click order.
 func _flash_point(world_pos: Vector2, color: Color) -> void:
@@ -464,7 +512,7 @@ func _order_move_all(world_pos: Vector2) -> void:
 	if valid_units.is_empty():
 		return
 	CommandBus.submit(UnitPointCommand.make(0, "move",
-		EntityRegistry.ids_of(valid_units), world_pos))
+		EntityRegistry.ids_of(valid_units), world_pos, _formation))
 	# Ground flash where the player clicked — move was the only order
 	# without click feedback (gather/attack flash their target already).
 	_flash_point(world_pos, Color(0.35, 1.0, 0.45, 1.0))
@@ -480,6 +528,20 @@ func _selected_building_id() -> int:
 func _on_action_requested(action_id: String) -> void:
 	if action_id.begins_with("build:"):
 		_world._placement._start_placement(action_id.trim_prefix("build:"))
+		return
+	if action_id.begins_with("formation:"):
+		var form: String = action_id.trim_prefix("formation:")
+		if form in UnitPointCommand.FORMATIONS:
+			_formation = form
+		return
+	if action_id.begins_with("stance:"):
+		CommandBus.submit(UnitActionCommand.make(0,
+			"stance_" + action_id.trim_prefix("stance:"), _selection_ids()))
+		return
+	if action_id == "ungarrison":
+		if is_instance_valid(_world._selected_building):
+			CommandBus.submit(BuildingActionCommand.make(0, "ungarrison",
+				_selected_building_id()))
 		return
 	if action_id.begins_with("research:"):
 		if is_instance_valid(_world._selected_building):

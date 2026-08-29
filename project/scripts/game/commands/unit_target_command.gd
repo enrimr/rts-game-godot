@@ -59,6 +59,8 @@ func execute(world: Node2D) -> void:
 			_execute_drop_off(units, target)
 		"board":
 			_execute_board(world, units, target)
+		"garrison":
+			_execute_garrison(world, units, target)
 		"board_instant":
 			# The AI garrisons idle troops without the walk: distance is not
 			# checked, matching its pre-command behaviour.
@@ -130,6 +132,43 @@ func _execute_board(world: Node2D, units: Array[Node], target: Node) -> void:
 		elif unit.has_method("order_move"):
 			unit.call("order_move", transport.global_position)
 			_board_poll(world, unit, transport, 0)
+
+## Walk-then-enter for buildings (TC/towers): same poll pattern as boarding.
+## The building's can_garrison_unit is the gatekeeper (capacity, unit class).
+func _execute_garrison(world: Node2D, units: Array[Node], target: Node) -> void:
+	if not target.has_method("garrison_unit"):
+		return
+	var reach: float = _garrison_reach(target)
+	for unit: Node in units:
+		if not target.call("can_garrison_unit", unit):
+			continue
+		var dist: float = (unit as Node2D).global_position.distance_to((target as Node2D).global_position)
+		if dist <= reach:
+			target.call("garrison_unit", unit)
+		elif unit.has_method("order_move"):
+			unit.call("order_move", (target as Node2D).global_position)
+			_garrison_poll(world, unit, target, 0)
+
+func _garrison_poll(world: Node2D, unit: Node, target: Node, attempts: int) -> void:
+	var timer: SceneTreeTimer = world.get_tree().create_timer(0.1, true, true)
+	timer.timeout.connect(func() -> void:
+		if not is_instance_valid(unit) or not is_instance_valid(target):
+			return
+		if not target.call("can_garrison_unit", unit):
+			return
+		var d: float = (unit as Node2D).global_position.distance_to((target as Node2D).global_position)
+		if d <= _garrison_reach(target):
+			target.call("garrison_unit", unit)
+		elif attempts < MAX_BOARD_ATTEMPTS and is_instance_valid(world):
+			_garrison_poll(world, unit, target, attempts + 1)
+	)
+
+## Entry distance: the building footprint half-diagonal plus a step.
+static func _garrison_reach(building: Node) -> float:
+	var cs: CollisionShape2D = building.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if cs != null and cs.shape is RectangleShape2D:
+		return (cs.shape as RectangleShape2D).size.length() * 0.5 + 26.0
+	return 80.0
 
 ## Walk-then-board: re-checks every 0.1 s until the unit reaches boarding range
 ## or the poll times out. Boarding emits EventBus.garrison_changed, which the

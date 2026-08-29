@@ -124,6 +124,20 @@ const ANIMAL_ACTIONS: Array = [
 	{"id": "move_to", "label": "ACTION_MOVE_TO", "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
 ]
 
+## AoE2 stances + formations, appended to every military selection. Stances
+## submit a command per selected unit; the formation buttons only set which
+## layout the NEXT group move fans out into (local UI state).
+const COMBAT_MODE_ACTIONS: Array = [
+	{"id": "stance:aggressive",   "label": "ACTION_STANCE_AGGRESSIVE",   "color": Color(0.55, 0.16, 0.10), "cost": {}, "description": "TOOLTIP_STANCE_AGGRESSIVE"},
+	{"id": "stance:defensive",    "label": "ACTION_STANCE_DEFENSIVE",    "color": Color(0.16, 0.35, 0.55), "cost": {}, "description": "TOOLTIP_STANCE_DEFENSIVE"},
+	{"id": "stance:stand_ground", "label": "ACTION_STANCE_STAND_GROUND", "color": Color(0.35, 0.32, 0.18), "cost": {}, "description": "TOOLTIP_STANCE_STAND_GROUND"},
+	{"id": "stance:passive",      "label": "ACTION_STANCE_PASSIVE",      "color": Color(0.30, 0.30, 0.34), "cost": {}, "description": "TOOLTIP_STANCE_PASSIVE"},
+	{"id": "formation:line",   "label": "ACTION_FORMATION_LINE",   "color": Color(0.22, 0.40, 0.28), "cost": {}, "description": "TOOLTIP_FORMATION_LINE"},
+	{"id": "formation:box",    "label": "ACTION_FORMATION_BOX",    "color": Color(0.22, 0.40, 0.28), "cost": {}, "description": "TOOLTIP_FORMATION_BOX"},
+	{"id": "formation:spread", "label": "ACTION_FORMATION_SPREAD", "color": Color(0.22, 0.40, 0.28), "cost": {}, "description": "TOOLTIP_FORMATION_SPREAD"},
+	{"id": "formation:rings",  "label": "ACTION_FORMATION_RINGS",  "color": Color(0.22, 0.40, 0.28), "cost": {}, "description": "TOOLTIP_FORMATION_RINGS"},
+]
+
 const TRANSPORT_ACTIONS: Array = [
 	{"id": "unload",  "label": "UI_UNLOAD",      "color": Color(0.20, 0.45, 0.65), "cost": {}, "key": KEY_U, "description": "TOOLTIP_UNLOAD"},
 	{"id": "stop",    "label": "ACTION_STOP",    "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
@@ -451,16 +465,16 @@ func update_selection(units: Array) -> void:
 		elif first is Trebuchet:
 			_populate_trebuchet_buttons(first as Trebuchet)
 		elif first is Mangonel:
-			_populate_buttons(SIEGE_ACTIONS)
+			_populate_buttons(SIEGE_ACTIONS + COMBAT_MODE_ACTIONS)
 		elif first is Archer or first is Longbowman:
-			_populate_buttons(RANGED_ACTIONS)
+			_populate_buttons(RANGED_ACTIONS + COMBAT_MODE_ACTIONS)
 		elif first is Scout:
 			_populate_scout_buttons(first as Scout)
 		elif first.has_method("order_gather"):
 			_populate_buttons(VILLAGER_ACTIONS)
 			_apply_tutorial_villager_gates()
 		else:
-			_populate_buttons(UNIT_ACTIONS)
+			_populate_buttons(UNIT_ACTIONS + COMBAT_MODE_ACTIONS)
 
 		if capped.size() == 1 and unit_data != null:
 			_build_stats_row(first)
@@ -866,6 +880,29 @@ func _on_building_selected(building: Node) -> void:
 			gate.gate_toggled.connect(_on_gate_toggled)
 	else:
 		_populate_buttons(BUILDING_ACTIONS)
+	_refresh_garrison_ui(building)
+
+## Garrisonable buildings (TC, towers) get an eject button and an occupancy
+## readout appended to whatever the type dispatch above built.
+func _refresh_garrison_ui(building: Node) -> void:
+	if not building.has_method("garrison_capacity") \
+			or (building.garrison_capacity() as int) <= 0:
+		return
+	var garrison: Array = building.get_garrison() as Array
+	var cap: int = building.garrison_capacity() as int
+	_unit_status_label.text = tr("UI_GARRISON_STATUS") % [garrison.size(), cap]
+	if garrison.is_empty():
+		return
+	_active_actions.append({
+		"id": "ungarrison",
+		"label": tr("UI_UNGARRISON") + " (%d/%d)" % [garrison.size(), cap],
+		"cost": {},
+		"key": KEY_U,
+		"raw_label": true,
+		"badge": str(garrison.size()),
+		"description": "TOOLTIP_UNGARRISON",
+	})
+	_render_action_page()
 
 func _on_gate_toggled(_is_open: bool) -> void:
 	if is_instance_valid(_selected_building) and _selected_building is Gate:
@@ -989,9 +1026,11 @@ func _populate_transport_buttons(ship: TransportShip) -> void:
 	_populate_buttons(actions)
 	_unit_status_label.text = tr("UI_GARRISON_STATUS") % [garrison.size(), cap]
 
-func _on_garrison_changed(ship: Node, _current: int, _capacity: int) -> void:
-	if is_instance_valid(_selected_unit) and _selected_unit == ship:
-		_populate_transport_buttons(ship as TransportShip)
+func _on_garrison_changed(holder: Node, _current: int, _capacity: int) -> void:
+	if is_instance_valid(_selected_unit) and _selected_unit == holder:
+		_populate_transport_buttons(holder as TransportShip)
+	elif is_instance_valid(_selected_building) and _selected_building == holder:
+		_on_building_selected(holder)
 
 func _populate_tc_actions() -> void:
 	var current_age: int = AgeManager.get_age(local_player_id)

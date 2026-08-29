@@ -1,12 +1,19 @@
 class_name UnitActionCommand extends GameCommand
 
 ## A no-target order over a set of units: stop, delete (kill own units),
-## hero ability, trebuchet deploy/undeploy toggle and scout auto-explore.
-## Hero and trebuchet verbs act on the first matching unit only, mirroring
-## the single-hero / single-toggle HUD buttons.
+## hero ability, trebuchet deploy/undeploy toggle, scout auto-explore and the
+## four AoE2 combat stances. Hero and trebuchet verbs act on the first
+## matching unit only, mirroring the single-hero / single-toggle HUD buttons.
+
+const STANCES: Dictionary = {
+	"stance_aggressive":   UnitBase.Stance.AGGRESSIVE,
+	"stance_defensive":    UnitBase.Stance.DEFENSIVE,
+	"stance_stand_ground": UnitBase.Stance.STAND_GROUND,
+	"stance_passive":      UnitBase.Stance.PASSIVE,
+}
 
 var verb: String = "stop"   # "stop" | "delete" | "hero_ability" | "trebuchet_toggle"
-                            # | "scout_explore" | "scout_explore_stop"
+                            # | "scout_explore" | "scout_explore_stop" | "stance_*"
 var unit_ids: Array[int] = []
 
 static func make(p_player: int, p_verb: String, p_units: Array[int]) -> UnitActionCommand:
@@ -28,6 +35,11 @@ func _read_payload(d: Dictionary) -> void:
 
 func execute(_world: Node2D) -> void:
 	var units: Array[Node] = _own_entities(unit_ids)
+	if STANCES.has(verb):
+		for unit: Node in units:
+			if unit.has_method("set_stance"):
+				unit.call("set_stance", STANCES[verb] as int)
+		return
 	match verb:
 		"stop":
 			for unit: Node in units:

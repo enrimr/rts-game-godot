@@ -107,7 +107,7 @@ func test_tower_fires_an_arrow_at_an_enemy_in_range() -> void:
 	enemy.global_position = tower.global_position + Vector2(150.0, 0.0)
 	enemy.add_to_group("units")
 
-	tower._physics_process(WatchTower.ATTACK_INTERVAL + 0.01)
+	tower._physics_process(1.0)   # > 1 / _attack_rate()
 
 	var arrow: Arrow = null
 	for child: Node in holder.get_children():
@@ -127,10 +127,10 @@ func test_tower_ignores_enemies_out_of_range() -> void:
 	tower.force_complete()
 	var enemy: StubEnemy = StubEnemy.new()
 	holder.add_child(enemy)
-	enemy.global_position = tower.global_position + Vector2(WatchTower.ATTACK_RANGE + 100.0, 0.0)
+	enemy.global_position = tower.global_position + Vector2(tower._attack_range() + 100.0, 0.0)
 	enemy.add_to_group("units")
 
-	tower._physics_process(WatchTower.ATTACK_INTERVAL + 0.01)
+	tower._physics_process(1.0)
 
 	for child: Node in holder.get_children():
 		assert_false(child is Arrow, "no arrow beyond ATTACK_RANGE")

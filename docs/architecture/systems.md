@@ -115,6 +115,34 @@ tower targeting, the Menceyes Guard aura and several hero abilities that scan
 it silently did nothing. Arrow spawns call `reset_physics_interpolation()` or
 the spawn teleport ghosts across the screen for a frame.
 
+**Combat stances (AoE2).** Every unit carries `UnitBase.Stance`
+(AGGRESSIVE default / DEFENSIVE / STAND_GROUND / PASSIVE), set through the
+`UnitActionCommand` `stance_*` verbs. Stances govern AUTONOMOUS behaviour
+only — an explicit attack order always chases. All four auto-acquisition
+paths (range Area2D, retaliation, guard response, post-kill rescan) funnel
+through `_auto_engage`, which the stance can veto and which marks the
+engagement as auto: PASSIVE never engages; STAND_GROUND strikes in reach but
+breaks off instead of chasing; DEFENSIVE chases up to `DEFENSIVE_LEASH`
+(200 px) from its anchor — the latest ordered position — then walks home and
+refuses new fights until it is back inside the leash.
+
+**Formations.** `UnitPointCommand` carries the formation each group move was
+issued with (`line` / `box` / `spread` / `rings`; the HUD buttons only set
+WorldCommands' local choice for the NEXT move). Line/box/spread are rank-
+ordered grids facing the approach direction — melee front, ranged (attack
+range > 2 tiles) behind, unarmed next, siege rear — computed deterministically
+by the same static helpers the tests exercise.
+
+**Garrison.** `BuildingBase` owns the garrison API (`garrison_capacity`,
+`can_garrison_unit`, `garrison_unit`, `ungarrison_all`): land units only —
+never ships or siege — and only into COMPLETE buildings; occupants are hidden
+and paused, ejected via the spawn spiral, and DIE if the building is destroyed
+(the AoE2 rule). WatchTower holds 5, the player's TC 10. Right-clicking an own
+TC/tower with military selected submits a `UnitTargetCommand` `garrison`
+(walk-then-enter poll); villagers keep their drop-off/repair gestures. The
+shared building volley (`_ranged_attack_arrows()`) adds one arrow per
+occupant — the TC only shoots while garrisoned.
+
 **Damaged buildings burn progressively** (`BuildingDamageFx`, attached by
 `BuildingBase` and `TownCenterBuilding`): smoke below 75 % HP, flame tongues
 join below 50 %, heavy fire and dark smoke below 25 %; repairs walk the stages

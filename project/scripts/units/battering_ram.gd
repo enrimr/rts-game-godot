@@ -22,7 +22,9 @@ func _on_enemy_entered_range(body: Node) -> void:
 	# Rams only auto-attack buildings
 	if body.get("building_data") == null:
 		return
-	_on_auto_attack_target(body)
+	# Through the stance funnel like every acquisition, or passive/leash
+	# rules would not apply to rams.
+	_auto_engage(body)
 
 func _strike_sound_db() -> float:
 	return -6.0

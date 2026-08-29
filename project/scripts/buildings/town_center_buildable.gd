@@ -29,6 +29,20 @@ func _sync_drop_off_player_id() -> void:
 	if drop_off != null:
 		drop_off.set("player_id", player_id)
 
+# ── Garrison: the TC shelters up to 10 land units and only shoots while
+# garrisoned — each occupant adds one arrow to the volley (AoE2-style).
+
+const GARRISON_CAPACITY: int = 10
+
+func garrison_capacity() -> int:
+	return GARRISON_CAPACITY
+
+func _ranged_attack_arrows() -> int:
+	return _garrison.size()
+
+func _attack_bonus_id() -> String:
+	return "town_center"
+
 func _process(delta: float) -> void:
 	super._process(delta)
 	if state != BuildingState.COMPLETE:

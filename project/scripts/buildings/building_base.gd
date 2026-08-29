@@ -359,7 +359,141 @@ func get_nav_obstacle_polygon() -> PackedVector2Array:
 
 func _destroy() -> void:
 	state = BuildingState.DESTROYED
+	# AoE2 rule: whoever is inside dies with the building.
+	for unit: Node in _garrison:
+		if is_instance_valid(unit) and unit.has_method("die"):
+			unit.call("die")
+	_garrison.clear()
 	AudioManager.play("build_destroy", -2.0)
 	EventBus.building_destroyed.emit(self, player_id)
 	building_destroyed.emit(self)
 	queue_free()
+
+# ── Garrison (AoE2-style: TC and towers shelter land units) ────────────────
+
+var _garrison: Array[Node] = []
+
+## 0 = this building cannot garrison. Overridden by WatchTower (5) and
+## TownCenterBuildable (10).
+func garrison_capacity() -> int:
+	return 0
+
+func get_garrison() -> Array:
+	return _garrison
+
+## Land military and villagers fit; ships and siege never do.
+func can_garrison_unit(unit: Node) -> bool:
+	if garrison_capacity() <= 0 or state != BuildingState.COMPLETE:
+		return false
+	if _garrison.size() >= garrison_capacity():
+		return false
+	if not is_instance_valid(unit) or not (unit is UnitBase) or unit is ShipBase:
+		return false
+	if unit is BatteringRam or unit is Mangonel or unit is Trebuchet:
+		return false
+	return true
+
+func garrison_unit(unit: Node) -> bool:
+	if not can_garrison_unit(unit):
+		return false
+	_garrison.append(unit)
+	unit.set_process(false)
+	unit.set_physics_process(false)
+	(unit as Node2D).visible = false
+	if unit.has_method("set_selected"):
+		unit.call("set_selected", false)
+	EventBus.garrison_changed.emit(self, _garrison.size(), garrison_capacity())
+	return true
+
+func ungarrison_all() -> void:
+	if _garrison.is_empty():
+		return
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	for unit: Node in _garrison:
+		if not is_instance_valid(unit):
+			continue
+		unit.set_process(true)
+		unit.set_physics_process(true)
+		(unit as Node2D).visible = true
+		(unit as Node2D).global_position = find_spawn_pos(
+			global_position + Vector2(0.0, _garrison_exit_offset()), space)
+	_garrison.clear()
+	EventBus.garrison_changed.emit(self, 0, garrison_capacity())
+
+## How far below the origin units re-appear (past the footprint).
+func _garrison_exit_offset() -> float:
+	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if cs != null and cs.shape is RectangleShape2D:
+		return (cs.shape as RectangleShape2D).size.y * 0.5 + 24.0
+	return 56.0
+
+# ── Building ranged attack (towers; the TC when garrisoned) ─────────────────
+# Volley size comes from _ranged_attack_arrows(): 0 disables the whole block,
+# so plain buildings pay one virtual call per physics tick and nothing else.
+
+var _attack_timer: float = 0.0
+var _attack_target: Node = null
+
+func _ranged_attack_arrows() -> int:
+	return 0
+
+func _attack_range() -> float:
+	return 220.0
+
+func _attack_damage() -> float:
+	return 5.0
+
+func _attack_rate() -> float:
+	return 1.2   # volleys per second
+
+## CivBonusManager attack-multiplier key for this building.
+func _attack_bonus_id() -> String:
+	return "watch_tower"
+
+func _physics_process(delta: float) -> void:
+	var arrows: int = _ranged_attack_arrows()
+	if arrows <= 0 or state != BuildingState.COMPLETE:
+		return
+	if not is_instance_valid(_attack_target) or \
+			global_position.distance_to((_attack_target as Node2D).global_position) > _attack_range():
+		_attack_target = _find_nearest_enemy()
+	if not is_instance_valid(_attack_target):
+		return
+	_attack_timer += delta
+	if _attack_timer >= 1.0 / _attack_rate():
+		_attack_timer = 0.0
+		_launch_volley(_attack_target, arrows)
+
+## `count` arrows at the target with a small deterministic spread — garrisoned
+## units multiply the volley, AoE2-style.
+func _launch_volley(target: Node, count: int) -> void:
+	var dmg: float = _attack_damage() * CivBonusManager.get_unit_attack_multiplier(player_id, _attack_bonus_id())
+	var to_target: Vector2 = ((target as Node2D).global_position - global_position).normalized()
+	var side: Vector2 = Vector2(-to_target.y, to_target.x)
+	for i: int in range(count):
+		var arrow: Arrow = (preload("res://scenes/combat/arrow.tscn").instantiate()) as Arrow
+		arrow.damage = dmg
+		arrow.shooter = self
+		arrow.target_pos = (target as Node2D).global_position \
+			+ side * (float(i) - float(count - 1) * 0.5) * 10.0
+		arrow._original_target = target
+		get_parent().add_child(arrow)
+		arrow.global_position = global_position \
+			+ IsoProjection.screen_to_world(Vector2(0.0, -60.0)) \
+			+ side * (float(i) - float(count - 1) * 0.5) * 6.0
+		arrow.reset_physics_interpolation()
+
+func _find_nearest_enemy() -> Node:
+	var best: Node = null
+	var best_dist: float = _attack_range()
+	for unit: Node in get_tree().get_nodes_in_group("units"):
+		if not is_instance_valid(unit):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or (pid as int) == player_id:
+			continue
+		var d: float = global_position.distance_to((unit as Node2D).global_position)
+		if d < best_dist:
+			best_dist = d
+			best = unit
+	return best

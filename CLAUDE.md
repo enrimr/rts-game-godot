@@ -70,7 +70,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/entity_registry.gd` | `EntityRegistry` autoload — stable per-match numeric IDs for units/buildings/resource nodes (tree-order rescan + spawn-signal registration), `id_of`/`resolve` |
 | `project/scripts/core/match_rng.gd` | `MatchRng` autoload — the single seeded RNG stream for all simulation randomness; seeded per match by `GameWorld._ready`, mid-match state persisted by `SaveManager` (as String — 64-bit vs JSON doubles), global `randf()` reserved for local audio/visual noise |
 | **Unit Classes** ||
-| `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation; `is_amphibious()` decides water permission per unit (false here — the ship/Tidecaller overrides open the sea) and feeds every `TerrainManager` query |
+| `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation; AoE2 combat stances (`Stance` enum + `set_stance`; every auto-acquisition funnels through `_auto_engage` so PASSIVE vetoes, STAND_GROUND never chases and DEFENSIVE chases up to `DEFENSIVE_LEASH` from its anchor — explicit orders always chase); `is_amphibious()` decides water permission per unit (false here — the ship/Tidecaller overrides open the sea) and feeds every `TerrainManager` query |
 | `project/scripts/units/villager.gd` | Gathering and building logic, work/walk animation differentiation |
 | `project/scripts/units/hero_unit.gd` | Hero units with 8 unique abilities (extends Militia) |
 | `project/scripts/units/militia.gd` | Dark Age infantry |
@@ -97,7 +97,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/tidecaller.gd` | Atlantes amphibious: Tidal Pulse (2 splash damage); the only land unit with `is_amphibious()` true (gated on the civ's `can_traverse_ocean`), rides navigation layer 4 |
 | `project/scripts/units/trireme.gd` | Fenicios ship: Ram (×2 vs ships, 40 px knockback) |
 | **Building Classes** ||
-| `project/scripts/buildings/building_base.gd` | Base class for all buildings; outward spiral spawn positioning, rally points |
+| `project/scripts/buildings/building_base.gd` | Base class for all buildings; outward spiral spawn positioning, rally points; garrison API (`garrison_capacity`/`garrison_unit`/`ungarrison_all` — land units only, occupants die with the building) and the shared ranged-volley machinery (`_ranged_attack_arrows()` > 0 enables it; towers always fire, the TC only while garrisoned, each occupant adds an arrow) |
 | `project/scripts/buildings/building_damage_fx.gd` | `BuildingDamageFx` — progressive fire/smoke on damaged buildings (smoke <75% HP, flames <50%, heavy fire <25%; repair walks it back; construction/rubble never burn); attached by BuildingBase and TownCenterBuilding, purely visual (render-side RNG) |
 | `project/scripts/buildings/town_center.gd` | Main TC: trains villagers, hero respawn, drop-off |
 | `project/scripts/buildings/town_center_buildable.gd` | Castle Age player-built TC (275 wood) |
@@ -111,7 +111,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/buildings/temple.gd` | Castle Age: research morale/HP buffs (Fervor/Sanctity/Atonement) |
 | `project/scripts/buildings/market.gd` | Resource trading with dynamic rates, mercenary hiring |
 | `project/scripts/buildings/wonder.gd` | Imperial Age: Wonder victory condition |
-| `project/scripts/buildings/watch_tower.gd` | Defensive tower: auto-attack fires visible arrows (Archer's Arrow flow) at the nearest enemy in the "units" group — the group UnitBase._ready joins (it is load-bearing: tower targeting, Menceyes aura and several hero abilities scan it, and no scene declares it) |
+| `project/scripts/buildings/watch_tower.gd` | Defensive tower: fires visible arrows at the nearest enemy in the "units" group (the group UnitBase._ready joins — load-bearing for tower targeting, the Menceyes aura and several hero abilities); garrisons 5, each occupant adds an arrow to the volley (machinery lives in BuildingBase) |
 | `project/scripts/buildings/wall_segment.gd` | Defensive wall |
 | `project/scripts/buildings/gate.gd` | Wall gate (opens for allies) |
 | `project/scripts/buildings/house.gd` | +5 population cap |
@@ -125,7 +125,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/game/world_victory.gd` | `WorldVictory` — victory/defeat/elimination checks, Wonder countdown, game-over flow |
 | `project/scripts/game/world_camera.gd` | `WorldCamera` — pan/zoom/edge-scroll, camera follow, alert ring + SPACE jump |
 | `project/scripts/game/world_selection.gd` | `WorldSelection` — click/drag/double-click selection, control-group hotkeys |
-| `project/scripts/game/world_commands.gd` | `WorldCommands` — the player's intent layer: right-click resolution, target pickers (visible-facade building hit-test), pending actions, HUD action router; every simulation mutation is packaged as a `GameCommand` and submitted through `CommandBus`, UI feedback (flashes, sounds) stays here |
+| `project/scripts/game/world_commands.gd` | `WorldCommands` — the player's intent layer: right-click resolution (incl. garrisoning military into own TC/towers), target pickers (visible-facade building hit-test), pending actions, HUD action router, current formation choice (`_formation`, local UI state — each move command carries it); every simulation mutation is packaged as a `GameCommand` and submitted through `CommandBus`, UI feedback (flashes, sounds) stays here |
 | `project/scripts/game/commands/game_command.gd` | `GameCommand` — command-pattern base: serializable payload (`to_dict`/`read`), execute-time ownership validation (`_own_entities`); 10 leaf commands in the same dir (`UnitPointCommand` move/attack-move/attack-ground + formation, `UnitTargetCommand` attack/gather (`drop_id`)/build/drop-off/board/board_instant/set_drop_off, `UnitActionCommand`, `TransportCommand`, `ProductionCommand`, `BuildingActionCommand`, `MarketCommand` incl. mercenary spawn, `PlaceBuildingCommand` incl. wall runs + AI `instant`/`costs_override`/`last_placed`, `AdvanceAgeCommand`, `SpawnUnitCommand` = the AI's instant villager) |
 | `project/scripts/game/world_placement.gd` | `WorldPlacement` — building placement ghost/grid-snap, wall drag, coastal/ocean checks, navmesh rebake; `building_costs()` is the single .tres-backed cost table player and AI both pay |
 | **Map Generation (pipeline + modules)** ||
@@ -307,6 +307,9 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Area-of-effect splash damage (Mangonel 72 px, Trebuchet 48 px)
 - Attack-ground command for ranged/siege units
 - Cover Fire button (move into range then attack)
+- AoE2 combat stances: Aggressive / Defensive (leash + return) / Stand Ground / No Attack
+- Group formations: Line (melee front, ranged behind), Box, Spread, Rings — selectable per military selection
+- Garrison: land units shelter in the TC (10) and Watch Towers (5); each occupant adds an arrow to the building's volley (the TC only shoots while garrisoned); occupants die if the building falls
 - Minimum range mechanic (siege)
 - Auto-attack range detection via Area2D nodes (no per-frame queries)
 
