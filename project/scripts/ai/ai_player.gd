@@ -92,7 +92,10 @@ func _on_ai_unit_under_attack(attacked_player_id: int) -> void:
 		return
 	_military.notify_under_attack()
 
-func _process(delta: float) -> void:
+# Physics ticks, not render frames: delta is the fixed physics step, so the
+# decision cadence is a deterministic tick count — a replay of the same seed
+# fires the same ticks regardless of render frame rate.
+func _physics_process(delta: float) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 
@@ -149,7 +152,7 @@ func _on_building_destroyed(building: Node, owner_id: int) -> void:
 		if building == town_center or (building is TownCenterBuilding) or (building is TownCenterBuildable):
 			town_center = null
 			_tc_rebuild_pending = false
-			get_tree().create_timer(0.5).timeout.connect(_attempt_tc_rebuild)
+			_rebuild_retry(0.5)
 		return
 	_military.push_units_past_destroyed_building(building as Node2D)
 
@@ -165,10 +168,15 @@ func _attempt_tc_rebuild() -> void:
 		return
 
 	if not ResourceManager.can_afford(player_id, {"wood": 275}):
-		get_tree().create_timer(8.0).timeout.connect(_attempt_tc_rebuild)
+		_rebuild_retry(8.0)
 		return
 
 	_build_new_tc(villager)
+
+## Retry timer counted in physics ticks (process_in_physics), so the rebuild
+## fires on a deterministic simulation tick instead of a render-frame boundary.
+func _rebuild_retry(seconds: float) -> void:
+	get_tree().create_timer(seconds, true, true).timeout.connect(_attempt_tc_rebuild)
 
 func _find_safest_villager() -> Villager:
 	var best: Villager = null
@@ -197,13 +205,12 @@ func _build_new_tc(builder: Villager) -> void:
 	var build_origin: Vector2 = builder.global_position
 	var pos: Vector2 = _find_safe_tc_position(build_origin)
 	if pos == Vector2.INF:
-		get_tree().create_timer(10.0).timeout.connect(_attempt_tc_rebuild)
+		_rebuild_retry(10.0)
 		return
 	# The rebuilt TC goes through the bus like every other placement; it is NOT
 	# instant — the surviving villager raises it (the command orders the build).
 	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.make(player_id, "town_center_ai",
-		[pos] as Array[Vector2], 0.0, [EntityRegistry.id_of(builder)] as Array[int],
-		false, {"wood": 275})
+		[pos] as Array[Vector2], 0.0, [EntityRegistry.id_of(builder)] as Array[int], false)
 	CommandBus.submit(cmd)
 	if cmd.last_placed.is_empty():
 		return

@@ -68,7 +68,7 @@ func start_advance(player_id: int) -> bool:
 	EventBus.age_advance_started.emit(player_id, target)
 	return true
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 	for pid: Variant in _advancing.keys():

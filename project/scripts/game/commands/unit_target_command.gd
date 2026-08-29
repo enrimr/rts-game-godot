@@ -135,7 +135,8 @@ func _execute_board(world: Node2D, units: Array[Node], target: Node) -> void:
 ## or the poll times out. Boarding emits EventBus.garrison_changed, which the
 ## selection layer listens to for its own cleanup.
 func _board_poll(world: Node2D, unit: Node, transport: TransportShip, attempts: int) -> void:
-	var timer: SceneTreeTimer = world.get_tree().create_timer(0.1)
+	# process_in_physics: the poll fires on simulation ticks, not render frames.
+	var timer: SceneTreeTimer = world.get_tree().create_timer(0.1, true, true)
 	timer.timeout.connect(func() -> void:
 		if not is_instance_valid(unit) or not is_instance_valid(transport):
 			return

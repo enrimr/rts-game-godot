@@ -231,12 +231,11 @@ func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType)
 	_ai.debug_log("BUILD %s near resource at (%.0f,%.0f)" % [building_id, pos.x, pos.y])
 	_ai._economy.redirect_villagers_to_drop_off(b as Node2D, rtype)
 
-## Places one AI building through the CommandBus (instant construction, .tres
-## costs) and keeps the local built-count in step. Returns the node, or null.
+## Places one AI building through the CommandBus (instant construction) and
+## keeps the local built-count in step. Returns the node, or null.
 func _place(building_id: String, pos: Vector2) -> Node:
 	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.make(_ai.player_id, building_id,
-		[pos] as Array[Vector2], 0.0, [] as Array[int], true,
-		_building_costs.get(building_id, {}) as Dictionary)
+		[pos] as Array[Vector2], 0.0, [] as Array[int], true)
 	CommandBus.submit(cmd)
 	if cmd.last_placed.is_empty():
 		return null

@@ -68,7 +68,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
 | `project/scripts/core/command_bus.gd` | `CommandBus` autoload — single entry point for player intents: tick-stamped command log (replay/LAN foundation), `submit`/`command_from_dict`/`save_log`; bound per match via `start_match(world)` |
 | `project/scripts/core/entity_registry.gd` | `EntityRegistry` autoload — stable per-match numeric IDs for units/buildings/resource nodes (tree-order rescan + spawn-signal registration), `id_of`/`resolve` |
-| `project/scripts/core/match_rng.gd` | `MatchRng` autoload — the single seeded RNG stream for all simulation randomness; seeded per match by `GameWorld._ready`, global `randf()` reserved for local audio/visual noise |
+| `project/scripts/core/match_rng.gd` | `MatchRng` autoload — the single seeded RNG stream for all simulation randomness; seeded per match by `GameWorld._ready`, mid-match state persisted by `SaveManager` (as String — 64-bit vs JSON doubles), global `randf()` reserved for local audio/visual noise |
 | **Unit Classes** ||
 | `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation; `is_amphibious()` decides water permission per unit (false here — the ship/Tidecaller overrides open the sea) and feeds every `TerrainManager` query |
 | `project/scripts/units/villager.gd` | Gathering and building logic, work/walk animation differentiation |
@@ -126,7 +126,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/game/world_selection.gd` | `WorldSelection` — click/drag/double-click selection, control-group hotkeys |
 | `project/scripts/game/world_commands.gd` | `WorldCommands` — the player's intent layer: right-click resolution, target pickers (visible-facade building hit-test), pending actions, HUD action router; every simulation mutation is packaged as a `GameCommand` and submitted through `CommandBus`, UI feedback (flashes, sounds) stays here |
 | `project/scripts/game/commands/game_command.gd` | `GameCommand` — command-pattern base: serializable payload (`to_dict`/`read`), execute-time ownership validation (`_own_entities`); 10 leaf commands in the same dir (`UnitPointCommand` move/attack-move/attack-ground + formation, `UnitTargetCommand` attack/gather (`drop_id`)/build/drop-off/board/board_instant/set_drop_off, `UnitActionCommand`, `TransportCommand`, `ProductionCommand`, `BuildingActionCommand`, `MarketCommand` incl. mercenary spawn, `PlaceBuildingCommand` incl. wall runs + AI `instant`/`costs_override`/`last_placed`, `AdvanceAgeCommand`, `SpawnUnitCommand` = the AI's instant villager) |
-| `project/scripts/game/world_placement.gd` | `WorldPlacement` — building placement ghost/grid-snap, wall drag, coastal/ocean checks, navmesh rebake |
+| `project/scripts/game/world_placement.gd` | `WorldPlacement` — building placement ghost/grid-snap, wall drag, coastal/ocean checks, navmesh rebake; `building_costs()` is the single .tres-backed cost table player and AI both pay |
 | **Map Generation (pipeline + modules)** ||
 | `project/scripts/map/map_generator.gd` | `MapGenerator` — thin pipeline (~150 lines): reads `MatchConfig`, sequences painter → placer → nav builder per map type, returns `{tc_positions}`. Owns the shared `RandomNumberGenerator`, the land-polygon array and `_island_layout()` (solves island radius + ring distance so islands never overlap at any player count / map size) |
 | `project/scripts/map/map_materials.gd` | `MapMaterials` — lazily cached shader materials (terrain per type, deep/shallow water, lava), terrain colour table, `STAIN_TILE` grid |
@@ -224,6 +224,8 @@ $GODOT --headless --path project res://tools/check_nav_islands.tscn   # env: CAL
 $GODOT --headless --path project res://tools/check_nav_bake_diag.tscn   # env: CALIMA_MAP, CALIMA_SEED
 # Command pattern: a real match driven through CommandBus (move/train/place + rebuildable log)
 $GODOT --headless --path project res://tools/check_command_bus.tscn   # env: CALIMA_SEED
+# Determinism probe: run twice, diff — identical command logs, positions still diverge (physics)
+$GODOT --headless --path project res://tools/check_sim_fingerprint.tscn   # env: CALIMA_SEED, CALIMA_MAP, CALIMA_TICKS
 # Amphibious: the Tidecaller swims off the beach, land units are refused water, passengers disembark dry
 $GODOT --headless --path project res://tools/check_amphibious.tscn
 # Naval civ identity (real renderer, not headless): every hull dressed for every civ

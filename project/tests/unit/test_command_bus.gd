@@ -100,8 +100,7 @@ func test_every_command_kind_round_trips() -> void:
 		BuildingActionCommand.make(0, "set_rally", 4, Vector2(10.0, 20.0)),
 		MarketCommand.make(0, "hire", 8, "trireme"),
 		PlaceBuildingCommand.make(0, "house",
-			[Vector2(1.0, 2.0), Vector2(3.0, 4.0)] as Array[Vector2], PI * 0.5, ids,
-			true, {"wood": 100}),
+			[Vector2(1.0, 2.0), Vector2(3.0, 4.0)] as Array[Vector2], PI * 0.5, ids, true),
 		AdvanceAgeCommand.make(2),
 		SpawnUnitCommand.make(1, "villager", Vector2(9.0, 9.0), {"food": 50}),
 	]

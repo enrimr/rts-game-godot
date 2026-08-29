@@ -13,6 +13,16 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 func reset(match_seed: int) -> void:
 	_rng.seed = match_seed
 
+## Mid-match generator state, for SaveManager: a loaded game continues the
+## exact draw sequence it left off instead of replaying the seed from scratch.
+## Serialized as a String — the state is a full 64-bit value and JSON numbers
+## are doubles (53-bit mantissa), so a raw int would silently lose bits.
+func get_state() -> int:
+	return _rng.state
+
+func set_state(state: int) -> void:
+	_rng.state = state
+
 func randf() -> float:
 	return _rng.randf()
 

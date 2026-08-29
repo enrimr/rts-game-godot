@@ -141,6 +141,35 @@ func test_ai_building_costs_covers_all_building_scenes() -> void:
 
 
 # ---------------------------------------------------------------------------
+# 6b. Player and AI pay the SAME price: WorldPlacement.building_costs is the
+#     single .tres-backed table both placement paths resolve at execute time
+# ---------------------------------------------------------------------------
+
+func test_player_costs_match_ai_costs_for_every_building() -> void:
+	var ai: AIPlayer = AIPlayer.new()
+	add_child_autofree(ai)
+	for building_id: String in ai._building_costs.keys():
+		assert_eq(WorldPlacement.building_costs(building_id),
+			ai._building_costs[building_id] as Dictionary,
+			"player and AI must pay the same for '%s'" % building_id)
+
+func test_no_placeable_building_is_free() -> void:
+	## The regression: university/market/temple were missing from the player's
+	## hand-written cost table, so the player placed them for FREE while the
+	## HUD showed a price and the AI paid it.
+	for building_id: String in WorldPlacement.BUILDING_SCENES.keys():
+		assert_false(WorldPlacement.building_costs(building_id).is_empty(),
+			"'%s' must have a placement cost" % building_id)
+	assert_eq(WorldPlacement.building_costs("university"), {"wood": 200})
+	assert_eq(WorldPlacement.building_costs("market"), {"wood": 175})
+	assert_eq(WorldPlacement.building_costs("temple"), {"wood": 175})
+
+func test_ai_rebuilt_tc_shares_the_town_center_price() -> void:
+	assert_eq(WorldPlacement.building_costs("town_center_ai"),
+		WorldPlacement.building_costs("town_center"))
+
+
+# ---------------------------------------------------------------------------
 # 7. Changing cost_wood on a resource changes get_cost_dict() output
 # ---------------------------------------------------------------------------
 

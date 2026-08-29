@@ -255,8 +255,7 @@ func _build_dock_on_shore() -> void:
 	if pos == Vector2.ZERO:
 		return
 	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.make(_ai.player_id, "dock",
-		[pos] as Array[Vector2], 0.0, [] as Array[int], true,
-		_ai._construction._building_costs["dock"] as Dictionary)
+		[pos] as Array[Vector2], 0.0, [] as Array[int], true)
 	CommandBus.submit(cmd)
 	if not cmd.last_placed.is_empty():
 		_ai._construction._built["dock"] = 1
@@ -266,8 +265,7 @@ func _build_fish_trap(boat: FishingBoat, dock: Node) -> void:
 	if pos == Vector2.ZERO:
 		return
 	CommandBus.submit(PlaceBuildingCommand.make(_ai.player_id, "fish_trap",
-		[pos] as Array[Vector2], 0.0, [EntityRegistry.id_of(boat)] as Array[int], true,
-		_ai._construction._building_costs["fish_trap"] as Dictionary))
+		[pos] as Array[Vector2], 0.0, [EntityRegistry.id_of(boat)] as Array[int], true))
 
 func _count_naval(type_name: String) -> int:
 	var count: int = 0

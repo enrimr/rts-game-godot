@@ -171,6 +171,7 @@ func restore_world(world: Node) -> void:
 	_rewire_ai_town_centers(world)
 	_restore_resource_nodes(world, _save_data)
 	_restore_fog(world, _save_data)
+	_restore_match_rng(_save_data)
 	pending_load = false
 	_save_data = {}
 
@@ -307,6 +308,10 @@ func _collect(world: Node) -> Dictionary:
 	var fog: FogOfWar = _find_fog(world)
 	if fog != null:
 		data["fog_cells"] = Marshalls.raw_to_base64(fog._cells)
+
+	# As a String: the RNG state is a full 64-bit value and JSON numbers are
+	# doubles, so a raw int would silently lose the low bits.
+	data["match_rng_state"] = str(MatchRng.get_state())
 
 	return data
 
@@ -635,6 +640,14 @@ func _restore_resource_nodes(world: Node, data: Dictionary) -> void:
 		var rn: Node = world.get_children().back()
 		if rn is ResourceNode:
 			rn.set("remaining_amount", rnd.get("remaining_amount", initial) as float)
+
+## Restores the simulation RNG mid-match state (game_world already re-seeded
+## MatchRng from the stored seed; this fast-forwards it to where the save left
+## off). Old saves without the key keep the fresh seed — same as before.
+func _restore_match_rng(data: Dictionary) -> void:
+	var state: Variant = data.get("match_rng_state")
+	if state is String and (state as String).is_valid_int():
+		MatchRng.set_state((state as String).to_int())
 
 func _restore_fog(world: Node, data: Dictionary) -> void:
 	var hex: Variant = data.get("fog_cells")

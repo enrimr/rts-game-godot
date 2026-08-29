@@ -94,7 +94,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_start_clear()
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 	if not MatchConfig.weather_enabled:

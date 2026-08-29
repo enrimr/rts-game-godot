@@ -26,24 +26,25 @@ const BUILDING_SCENES: Dictionary = {
 	"watch_tower":     "res://scenes/buildings/watch_tower.tscn",
 }
 
-const BUILDING_COSTS: Dictionary = {
-	"house":         {"wood": 25},
-	"barracks":      {"wood": 175},
-	"archery_range": {"wood": 175},
-	"blacksmith":    {"wood": 150},
-	"stable":        {"wood": 175},
-	"lumber_camp":   {"wood": 100},
-	"mining_camp":   {"wood": 100},
-	"farm":          {"wood": 60},
-	"wall_segment":  {"stone": 5},
-	"gate":          {"wood": 30},
-	"dock":          {"wood": 150},
-	"fish_trap":       {"wood": 75},
-	"siege_workshop":  {"wood": 200},
-	"town_center":     {"wood": 275},
-	"wonder":          {"wood": 2500, "food": 2500, "stone": 2500, "gold": 5000},
-	"watch_tower":     {"stone": 125},
-}
+## Single cost source shared by the player and the AI: loaded lazily from each
+## building's BuildingResource .tres, so placement can never charge a price
+## different from the design data. The old hand-written table silently missed
+## university/market/temple — the player built them for FREE while the HUD
+## showed a cost and the AI paid it.
+static var _costs_cache: Dictionary = {}
+
+static func building_costs(building_id: String) -> Dictionary:
+	if _costs_cache.is_empty():
+		for id: String in BUILDING_SCENES.keys():
+			var res_path: String = "res://resources/buildings/%s.tres" % id
+			if not ResourceLoader.exists(res_path):
+				continue
+			var res: BuildingResource = load(res_path) as BuildingResource
+			if res != null:
+				_costs_cache[id] = res.get_cost_dict()
+		# The AI's rebuilt TC shares the buildable town center's price.
+		_costs_cache["town_center_ai"] = _costs_cache.get("town_center", {})
+	return _costs_cache.get(building_id, {}) as Dictionary
 
 # Buildings that must be placed adjacent to water (at least one edge in ocean terrain).
 const COASTAL_BUILDINGS: Array = ["dock"]
@@ -146,7 +147,7 @@ func handle_placement_mouse(mb: InputEventMouseButton) -> bool:
 func _start_placement(building_id: String) -> void:
 	if not BUILDING_SCENES.has(building_id):
 		return
-	if not ResourceManager.can_afford(0, BUILDING_COSTS.get(building_id, {})):
+	if not ResourceManager.can_afford(0, WorldPlacement.building_costs(building_id)):
 		return
 
 	_cancel_placement()
@@ -297,7 +298,7 @@ func _confirm_placement(raw_world_pos: Vector2) -> void:
 	var world_pos: Vector2 = _snap_placement(raw_world_pos)
 	if _placement_overlaps(world_pos):
 		return
-	if not ResourceManager.can_afford(0, BUILDING_COSTS.get(_placing_id, {})):
+	if not ResourceManager.can_afford(0, WorldPlacement.building_costs(_placing_id)):
 		_cancel_placement()
 		return
 
@@ -371,7 +372,7 @@ func _update_wall_drag_preview(end_pos: Vector2) -> void:
 		_world.buildings_layer.add_child(ghost)
 		_wall_ghosts.append(ghost)
 
-	var cost_per: int = BUILDING_COSTS.get("wall_segment", {}).get("stone", 0) as int
+	var cost_per: int = WorldPlacement.building_costs("wall_segment").get("stone", 0) as int
 	var total_cost: int = positions.size() * cost_per
 
 	if not is_instance_valid(_wall_cost_layer):

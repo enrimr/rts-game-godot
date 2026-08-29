@@ -20,6 +20,20 @@ func test_different_seed_diverges() -> void:
 	var b: float = MatchRng.randf()
 	assert_ne(a, b, "a different match seed draws a different stream")
 
+func test_state_round_trip_continues_the_sequence() -> void:
+	## The SaveManager path: state stored as a String (JSON doubles cannot hold
+	## 64-bit ints), restored after a fresh reseed — the draw sequence must
+	## continue exactly where the save left off.
+	MatchRng.reset(777)
+	MatchRng.randf()
+	MatchRng.randf()
+	var saved: String = str(MatchRng.get_state())
+	var expected: Array = [MatchRng.randf(), MatchRng.randi()]
+	MatchRng.reset(777)             # the load path re-seeds first...
+	MatchRng.set_state(saved.to_int())   # ...then fast-forwards to the saved state
+	assert_eq([MatchRng.randf(), MatchRng.randi()], expected,
+		"a restored state continues the exact sequence")
+
 func test_ranges_are_respected() -> void:
 	MatchRng.reset(42)
 	for _i: int in range(50):

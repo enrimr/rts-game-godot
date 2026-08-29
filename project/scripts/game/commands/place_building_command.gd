@@ -8,9 +8,10 @@ class_name PlaceBuildingCommand extends GameCommand
 ## command re-validates affordability because it spends.
 ##
 ## The AI places through the same command with `instant = true` (its buildings
-## complete immediately via add_construction) and a `costs_override`: the AI
-## pays the BuildingResource .tres costs, which are NOT the same table the
-## player pays (WorldPlacement.BUILDING_COSTS).
+## complete immediately via add_construction). Player and AI pay the same
+## price: WorldPlacement.building_costs, the single table loaded from the
+## BuildingResource .tres files — costs resolve at execute time and are never
+## part of the payload, so a remote command cannot name its own price.
 
 ## AI-only scenes the player build menu never offers.
 const EXTRA_SCENES: Dictionary = {
@@ -22,15 +23,13 @@ var positions: Array[Vector2] = []
 var build_rotation: float = 0.0
 var builder_ids: Array[int] = []
 var instant: bool = false
-var costs_override: Dictionary = {}
 
 ## Nodes created by the last execute(), in placement order — a runtime result
 ## for the submission site (the AI keeps refs to its new TC), never serialized.
 var last_placed: Array[Node] = []
 
 static func make(p_player: int, p_type: String, p_positions: Array[Vector2],
-		p_rotation: float, p_builders: Array[int], p_instant: bool = false,
-		p_costs: Dictionary = {}) -> PlaceBuildingCommand:
+		p_rotation: float, p_builders: Array[int], p_instant: bool = false) -> PlaceBuildingCommand:
 	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.new()
 	cmd.player_id = p_player
 	cmd.building_type = p_type
@@ -38,7 +37,6 @@ static func make(p_player: int, p_type: String, p_positions: Array[Vector2],
 	cmd.build_rotation = p_rotation
 	cmd.builder_ids = p_builders
 	cmd.instant = p_instant
-	cmd.costs_override = p_costs
 	return cmd
 
 func kind() -> String:
@@ -49,7 +47,7 @@ func _payload() -> Dictionary:
 	for p: Vector2 in positions:
 		pts.append(encode_vec(p))
 	return {"type": building_type, "positions": pts, "rot": build_rotation,
-		"builders": encode_ids(builder_ids), "instant": instant, "costs": costs_override}
+		"builders": encode_ids(builder_ids), "instant": instant}
 
 func _read_payload(d: Dictionary) -> void:
 	building_type = d.get("type", "") as String
@@ -60,7 +58,6 @@ func _read_payload(d: Dictionary) -> void:
 	build_rotation = d.get("rot", 0.0) as float
 	builder_ids = decode_ids(d.get("builders"))
 	instant = d.get("instant", false) as bool
-	costs_override = d.get("costs", {}) as Dictionary
 
 func _scene_path() -> String:
 	if WorldPlacement.BUILDING_SCENES.has(building_type):
@@ -68,9 +65,7 @@ func _scene_path() -> String:
 	return EXTRA_SCENES.get(building_type, "") as String
 
 func _costs() -> Dictionary:
-	if not costs_override.is_empty():
-		return costs_override
-	return WorldPlacement.BUILDING_COSTS.get(building_type, {})
+	return WorldPlacement.building_costs(building_type)
 
 func execute(world: Node2D) -> void:
 	last_placed.clear()

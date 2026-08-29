@@ -24,7 +24,7 @@ The ten command classes live in `scripts/game/commands/`:
 | `ProductionCommand` | `production` | train(unit_id — empty = the TC's no-arg signature) / cancel_train(index) / research(tech_id); building ID |
 | `BuildingActionCommand` | `building_action` | set_rally(pos) / gate_lock / delete (routes through take_damage); building ID |
 | `MarketCommand` | `market` | buy / sell / hire (spawns the Fenicios mercenary at the rally point); building ID + item |
-| `PlaceBuildingCommand` | `place_building` | building type + positions (a wall drag is ONE command with the whole run) + rotation + builder IDs; pays per site, stops when the stockpile runs out. `instant` completes construction immediately and `costs_override` carries the AI's .tres costs (NOT the player's `WorldPlacement.BUILDING_COSTS` table); `EXTRA_SCENES` maps the AI-only `town_center_ai`; `last_placed` hands the created nodes back to the submission site (runtime only, never serialized) |
+| `PlaceBuildingCommand` | `place_building` | building type + positions (a wall drag is ONE command with the whole run) + rotation + builder IDs; pays per site, stops when the stockpile runs out. `instant` completes construction immediately (the AI); `EXTRA_SCENES` maps the AI-only `town_center_ai`; `last_placed` hands the created nodes back to the submission site (runtime only, never serialized). Costs resolve at execute time from `WorldPlacement.building_costs` — the single .tres-backed table player and AI both pay (the old hand-written player table missed university/market/temple, so the player built them for free) — and are never part of the payload, so a remote command cannot name its own price |
 | `AdvanceAgeCommand` | `advance_age` | player only |
 | `SpawnUnitCommand` | `spawn_unit` | unit type + position + cost dict — the AI's instant villager production (it does not queue at a TC); civ derived from the owner |
 
@@ -54,17 +54,31 @@ stream for all simulation randomness — unit spawn jitter, gender roll, animal
 wander, scout waypoints, transport unload angles, hero summon offsets, the
 whole weather state machine and projectile drift, and every AI position
 search. `GameWorld._ready` seeds it with the match seed (same one the save
-stores), so the same seed replays the same draw sequence. Audio noise buffers
-keep using the global RNG on purpose: local-only, never feeds back into state.
+stores), and `SaveManager` persists the mid-match generator state (as a String
+— the state is 64-bit and JSON numbers are doubles), so a loaded game
+continues the exact draw sequence. Audio noise buffers keep using the global
+RNG on purpose: local-only, never feeds back into state.
+
+**Decision timers tick on physics frames.** `AIPlayer`, `WeatherManager`,
+`AgeManager` and `TechManager` accumulate `_physics_process` deltas (a fixed
+step = a deterministic tick count), and the simulation `SceneTreeTimer`s (AI
+TC-rebuild retries, the board poll) use `process_in_physics`. Measured with
+`tools/check_sim_fingerprint.tscn` (fixed seed, exact physics-tick window,
+canonical census + full command log): over a 60 sim-second window two runs
+produce **identical command logs** — the whole decision layer replays — while
+entity positions diverge, because movement rides Godot physics + RVO
+avoidance. That position drift is the remaining non-determinism: it leaks
+into draw counts (wander/jitter draw at arrival times) and eventually into
+position-dependent decisions.
 
 What does **not** go through the bus: selection, control groups, camera, HUD
 state, the placement ghost, `show_path` (debug visual) and all click feedback
 (flashes, order sounds) — local-only concerns that must not replay or cross
-the network. Remaining work before lockstep/replays: placement legality is
-only validated at the submission site, AI decision timers run on wall-clock
-`_process` deltas (not simulation ticks), MatchRng's mid-match state is not
-saved, and unit movement rides Godot physics — none of which is deterministic
-across machines yet.
+the network. Remaining work before lockstep/replays, in dependency order:
+deterministic movement (fixed-step, physics-free unit motion — the big one),
+production-building/arrow/`unit_base` `_process` logic onto physics ticks,
+the async navmesh rebake's completion frame, fog visibility timing, and
+execute-side placement validation.
 
 Migrating cover fire surfaced a real bug, now fixed: `_order_attack_ground_all`
 used to emit `minimap_move_order`, whose handler synchronously issued

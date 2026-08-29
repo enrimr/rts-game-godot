@@ -76,7 +76,7 @@ func start_research(player_id: int, tech_id: String, building: Node) -> bool:
 	}
 	return true
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 	var finished_keys: Array = []
