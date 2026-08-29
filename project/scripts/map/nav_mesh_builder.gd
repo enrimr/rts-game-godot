@@ -17,32 +17,22 @@ func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 		return
 
 	if MatchConfig.map_type == MatchConfig.MapType.ISLANDS and land_polys.size() > 0:
-		# Land mesh: one polygon per island (CCW outline = walkable interior)
-		var land_poly: NavigationPolygon = NavigationPolygon.new()
+		var islands: Array[PackedVector2Array] = []
 		for lp: Variant in land_polys:
-			land_poly.add_outline(lp as PackedVector2Array)
-		land_poly.make_polygons_from_outlines()
-		land_region.navigation_polygon = land_poly
+			islands.append(lp as PackedVector2Array)
 
-		# Ocean mesh: full-map rect with each land island as a CW hole,
-		# so ships can navigate everywhere except the land blobs.
+		# Land mesh: the islands are the walkable surface.
+		_bake(land_region, islands, [])
+
+		# Ocean mesh: the whole board minus the islands, so ships sail
+		# everywhere except over land.
 		if ocean_region != null:
 			var half: float = map_half  # exact boundary — no overshoot
-			# Outer boundary CCW
-			var ocean_poly: NavigationPolygon = NavigationPolygon.new()
-			ocean_poly.add_outline(PackedVector2Array([
+			var board: Array[PackedVector2Array] = [PackedVector2Array([
 				Vector2(-half, -half), Vector2(half, -half),
 				Vector2(half,  half),  Vector2(-half,  half),
-			]))
-			# Each land polygon as a CW hole (reverse winding)
-			for lp: Variant in land_polys:
-				var fwd: PackedVector2Array = lp as PackedVector2Array
-				var rev: PackedVector2Array = PackedVector2Array()
-				for j: int in range(fwd.size() - 1, -1, -1):
-					rev.append(fwd[j])
-				ocean_poly.add_outline(rev)
-			ocean_poly.make_polygons_from_outlines()
-			ocean_region.navigation_polygon = ocean_poly
+			])]
+			_bake(ocean_region, board, islands)
 			# Physical walls so ships cannot sail past the map edge
 			_add_ocean_boundary_walls(parent, half)
 
@@ -78,6 +68,30 @@ func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 		obstacle.vertices = pts
 		obstacle.position = center
 		land_region.add_child(obstacle)
+
+## Bakes `region`'s mesh from outline geometry, keeping the agent settings the
+## scene's polygon carries. Uses the source-geometry baker (the same one the
+## runtime rebake in WorldPlacement uses) rather than
+## NavigationPolygon.make_polygons_from_outlines(): that one is deprecated and,
+## worse, its convex partition fails outright on outlines that touch or overlap
+## — which left the ocean mesh empty and every ship unable to move.
+func _bake(region: NavigationRegion2D, traversable: Array[PackedVector2Array],
+		obstructions: Array[PackedVector2Array]) -> void:
+	var poly: NavigationPolygon = NavigationPolygon.new()
+	var current: NavigationPolygon = region.navigation_polygon
+	if current != null:
+		poly.agent_radius = current.agent_radius
+		poly.cell_size = current.cell_size
+	var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
+	for outline: PackedVector2Array in traversable:
+		source.add_traversable_outline(outline)
+	for outline: PackedVector2Array in obstructions:
+		source.add_obstruction_outline(outline)
+	NavigationServer2D.bake_from_source_geometry_data(poly, source)
+	if poly.get_polygon_count() > 0:
+		region.navigation_polygon = poly
+	else:
+		push_warning("NavMeshBuilder: empty bake for %s; keeping the scene default." % region.name)
 
 # Places four thin StaticBody2D walls along the map edges so ships
 # (CharacterBody2D on the ocean layer) cannot navigate outside the playable area.

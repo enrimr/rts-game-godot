@@ -26,6 +26,10 @@ const FOREST_NODE_RADIUS: float = 13.0
 const LAURISILVA_TREES_PER_100PX: float = 6.0
 const LAURISILVA_WOOD_AMOUNT: float = 260.0
 
+# Open water kept between a resource islet and any other land (ships must be
+# able to sail around it, and its outline must not touch another one).
+const ISLET_CHANNEL: float = 160.0
+
 const ANIMAL_SCENE: String   = "res://scenes/units/animal.tscn"
 const SHEEP_SCENE:  String   = "res://scenes/units/sheep.tscn"
 
@@ -476,6 +480,8 @@ func spawn_resource_islets(parent: Node2D, center0: Vector2, center1: Vector2,
 	var islet_count: int = _rng.randi_range(3, 4)
 	var min_dist_from_main: float = island_radius * 1.25
 	var islet_radius: float = _map_half * 0.09
+	# Bumpy outline: the islet reaches further than its nominal radius.
+	var islet_extent: float = islet_radius * MapGenerator.ISLAND_BLOB_MAX
 
 	for _i: int in range(islet_count):
 		# Find a position in the ocean not too close to any existing land
@@ -486,7 +492,12 @@ func spawn_resource_islets(parent: Node2D, center0: Vector2, center1: Vector2,
 			var d: float = _rng.randf_range(island_radius * 1.3, _map_half * 0.75)
 			var mid: Vector2 = (center0 + center1) * 0.5
 			var candidate: Vector2 = mid + Vector2(cos(a), sin(a)) * d
-			candidate = _clamp_map(candidate)
+			# Rejected, not clamped: clamping parked islets on the map edge, and
+			# an islet crossing the boundary the ocean mesh is cut to made the
+			# ocean outlines intersect (convex partition failure → no ship mesh).
+			var edge_limit: float = _map_half - islet_extent - ISLET_CHANNEL
+			if absf(candidate.x) > edge_limit or absf(candidate.y) > edge_limit:
+				continue
 			if not TerrainManager.is_ocean(candidate):
 				continue
 			if candidate.distance_to(center0) < min_dist_from_main:
@@ -497,7 +508,7 @@ func spawn_resource_islets(parent: Node2D, center0: Vector2, center1: Vector2,
 			var too_close: bool = false
 			for poly: Variant in _land_polys:
 				for pt: Vector2 in (poly as PackedVector2Array):
-					if candidate.distance_to(pt) < island_radius * 0.8:
+					if candidate.distance_to(pt) < islet_extent + ISLET_CHANNEL:
 						too_close = true
 						break
 				if too_close:

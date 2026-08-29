@@ -7,9 +7,12 @@ extends GutTest
 ##       region; passable ground (dune, grass) does not.
 ##   2.  A civ that traverses malpaís gets no obstacle there (nav mesh must not
 ##       undo the civ bonus) while cliffs still block everyone.
-##   3.  Islands maps carve both meshes: land = one outline per island, ocean =
-##       map rect plus one hole per island, walled off at the map edge.
-##   4.  Non-island maps leave the ocean region alone.
+##   3.  Islands maps bake both meshes: land covers the islands only, ocean
+##       covers the water only, and the map edge is walled off.
+##   4.  Overlapping islands still produce usable meshes (the old
+##       make_polygons_from_outlines() path failed its convex partition there and
+##       left ships with an empty ocean mesh).
+##   5.  Non-island maps leave the ocean region alone.
 
 const MAP_HALF: float = 1800.0
 
@@ -37,14 +40,19 @@ func _make_root() -> Node2D:
 	add_child_autofree(root)
 	return root
 
-# NavigationPolygon.make_polygons_from_outlines() is deprecated in Godot 4.6 but
-# is still the only synchronous way to carve a polygon; the async
-# NavigationServer2D baking path would not be ready when generation returns.
-# GUT fails a test on any engine error, so absorb that one notice here.
-func _absorb_navpoly_deprecation() -> void:
-	for err: GutTrackedError in get_errors():
-		if err.contains_text("make_polygons_from_outlines"):
-			err.handled = true
+## True when `p` lies on the baked walkable surface. The baker keeps no source
+## outlines, so coverage has to be probed through the triangles themselves.
+func _mesh_covers(poly: NavigationPolygon, p: Vector2) -> bool:
+	if poly == null:
+		return false
+	var verts: PackedVector2Array = poly.get_vertices()
+	for i: int in range(poly.get_polygon_count()):
+		var face: PackedVector2Array = PackedVector2Array()
+		for idx: int in poly.get_polygon(i):
+			face.append(verts[idx])
+		if Geometry2D.is_point_in_polygon(p, face):
+			return true
+	return false
 
 func _obstacles(root: Node2D) -> int:
 	var n: int = 0
@@ -96,30 +104,45 @@ func test_obstacle_matches_its_zone() -> void:
 	for v: Vector2 in obstacle.vertices:
 		assert_almost_eq(v.length(), 250.0, 1.0, "outline traces the zone radius")
 
-# 3 — islands carve both meshes
+# 3 — islands bake both meshes
 func test_islands_carve_land_and_ocean_meshes() -> void:
+	var root: Node2D = _build_islands([Vector2(-700.0, 0.0), Vector2(700.0, 0.0)], 500.0)
+	var land: NavigationPolygon = (root.get_node("NavigationRegion2D") as NavigationRegion2D).navigation_polygon
+	var ocean: NavigationPolygon = (root.get_node("OceanNavigationRegion2D") as NavigationRegion2D).navigation_polygon
+	assert_not_null(land)
+	assert_not_null(ocean)
+	assert_gt(land.get_polygon_count(), 0, "land mesh has walkable polygons")
+	assert_gt(ocean.get_polygon_count(), 0, "ocean mesh has sailable polygons")
+
+	for center: Vector2 in [Vector2(-700.0, 0.0), Vector2(700.0, 0.0)]:
+		assert_true(_mesh_covers(land, center), "units walk the island at %s" % center)
+		assert_false(_mesh_covers(ocean, center), "ships cannot sail onto the island at %s" % center)
+	assert_true(_mesh_covers(ocean, Vector2.ZERO), "ships sail the channel between the islands")
+	assert_false(_mesh_covers(land, Vector2.ZERO), "the channel is not walkable")
+
+# 4 — overlapping islands still bake (the old convex-partition path did not)
+func test_overlapping_islands_still_bake_a_sailable_ocean() -> void:
+	var root: Node2D = _build_islands([Vector2(-200.0, 0.0), Vector2(200.0, 0.0)], 500.0)
+	var land: NavigationPolygon = (root.get_node("NavigationRegion2D") as NavigationRegion2D).navigation_polygon
+	var ocean: NavigationPolygon = (root.get_node("OceanNavigationRegion2D") as NavigationRegion2D).navigation_polygon
+	assert_gt(land.get_polygon_count(), 0, "merged land mass is still walkable")
+	assert_gt(ocean.get_polygon_count(), 0,
+		"overlapping holes must not wipe the ocean mesh — that freezes every ship")
+	assert_true(_mesh_covers(ocean, Vector2(0.0, MAP_HALF - 200.0)), "open water still sailable")
+
+func _build_islands(centers: Array, radius: float) -> Node2D:
 	MatchConfig.map_type = MatchConfig.MapType.ISLANDS
 	MatchConfig.player_civ_id = "franks"
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = 4242
 	var painter: TerrainPainter = TerrainPainter.new()
 	painter.setup(rng, MAP_HALF)
-	var land_polys: Array = [
-		painter.make_island_poly(Vector2(-700.0, 0.0), 500.0),
-		painter.make_island_poly(Vector2(700.0, 0.0), 500.0),
-	]
-
+	var land_polys: Array = []
+	for c: Vector2 in centers:
+		land_polys.append(painter.make_island_poly(c, radius))
 	var root: Node2D = _make_root()
 	NavMeshBuilder.new().build(root, MAP_HALF, land_polys)
-
-	var land: NavigationRegion2D = root.get_node("NavigationRegion2D") as NavigationRegion2D
-	var ocean: NavigationRegion2D = root.get_node("OceanNavigationRegion2D") as NavigationRegion2D
-	assert_not_null(land.navigation_polygon)
-	assert_eq(land.navigation_polygon.get_outline_count(), 2, "one walkable outline per island")
-	assert_not_null(ocean.navigation_polygon)
-	assert_eq(ocean.navigation_polygon.get_outline_count(), 3,
-		"ocean = map rect + one hole per island")
-	_absorb_navpoly_deprecation()
+	return root
 
 func test_islands_wall_off_the_map_edge() -> void:
 	MatchConfig.map_type = MatchConfig.MapType.ISLANDS
@@ -140,9 +163,8 @@ func test_islands_wall_off_the_map_edge() -> void:
 			assert_eq((child as StaticBody2D).collision_layer, 1,
 				"boundary walls live on the world layer")
 	assert_eq(walls, 4, "ships are fenced in on all four sides")
-	_absorb_navpoly_deprecation()
 
-# 4 — other map types keep the default ocean region
+# 5 — other map types keep the default ocean region
 func test_land_map_leaves_the_ocean_region_untouched() -> void:
 	MatchConfig.map_type = MatchConfig.MapType.PLAINS
 	MatchConfig.player_civ_id = "franks"

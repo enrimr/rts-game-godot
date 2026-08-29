@@ -10,8 +10,13 @@ extends Node2D
 ## what every land unit uses) between the two town centers, before and after the
 ## rebake, and reports how many waypoints sit on open water.
 ##
-## Expected: 0 sea waypoints on Islands at both samples; on land maps the same
-## query reaches the enemy town center normally.
+## The same sampling covers the mirror failure: the rebake must not wipe the
+## *ocean* region either, or every ship in the water freezes mid-match (a ship
+## whose start position is off-mesh never gets a path).
+##
+## Expected: 0 sea waypoints on Islands at both samples, a non-empty ocean mesh
+## with a route between the islands; on land maps the land query reaches the
+## enemy town center normally.
 ## Run: CALIMA_MAP=4 $GODOT --headless --path project res://tools/check_nav_islands.tscn
 ## Env: CALIMA_MAP (default 4 = ISLANDS), CALIMA_SEED (default 4242)
 
@@ -76,6 +81,36 @@ func _report(label: String) -> void:
 		if sea_points > 0:
 			print("    FAIL: land units can walk to the enemy island")
 			_failures += 1
+		_report_ocean(from, to)
 	elif gap > 200:
 		print("    FAIL: no land route on a land map")
+		_failures += 1
+
+func _report_ocean(own_tc: Vector2, enemy_tc: Vector2) -> void:
+	var region: NavigationRegion2D = _world.get_node_or_null(
+		"OceanNavigationRegion2D") as NavigationRegion2D
+	if region == null:
+		return
+	var poly: NavigationPolygon = region.navigation_polygon
+	var polygons: int = poly.get_polygon_count() if poly != null else -1
+	print("    ocean navmesh: polygons=%d" % polygons)
+	if polygons <= 0:
+		print("    FAIL: ocean mesh is empty — every ship is frozen")
+		_failures += 1
+		return
+
+	var from: Vector2 = TerrainManager.nearest_ocean(own_tc)
+	var to: Vector2 = TerrainManager.nearest_ocean(enemy_tc)
+	var params: NavigationPathQueryParameters2D = NavigationPathQueryParameters2D.new()
+	params.map = region.get_navigation_map()
+	params.navigation_layers = 2
+	params.start_position = from
+	params.target_position = to
+	var result: NavigationPathQueryResult2D = NavigationPathQueryResult2D.new()
+	NavigationServer2D.query_path(params, result)
+	var path: PackedVector2Array = result.path
+	var gap: int = roundi(path[path.size() - 1].distance_to(to)) if path.size() > 0 else -1
+	print("    ship route own shore → rival shore: points=%d ends %d px short" % [path.size(), gap])
+	if path.size() < 2 or gap > 200:
+		print("    FAIL: ships cannot sail to the rival island")
 		_failures += 1

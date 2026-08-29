@@ -99,7 +99,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/buildings/archery_range.gd` | Feudal Age: trains Archer |
 | `project/scripts/buildings/stable.gd` | Trains cavalry (Scout/Heavy Scout/Knight/unique cavalry) |
 | `project/scripts/buildings/siege_workshop.gd` | Castle Age: trains siege (BatteringRam/Mangonel/Trebuchet) |
-| `project/scripts/buildings/dock.gd` | Naval: trains ships (FishingBoat/TransportShip/WarGalley/Trireme) |
+| `project/scripts/buildings/dock.gd` | Naval: trains ships (FishingBoat/TransportShip/WarGalley/Trireme); spawns them in open water off its seaward side, spiralling around ships already there |
 | `project/scripts/buildings/blacksmith.gd` | Research weapon/armour upgrades (9 techs) |
 | `project/scripts/buildings/university.gd` | Castle Age: research advanced techs (Ballistics/Chemistry/Siege Engineering) |
 | `project/scripts/buildings/temple.gd` | Castle Age: research morale/HP buffs (Fervor/Sanctity/Atonement) |
@@ -122,13 +122,13 @@ docs/             ← Architecture and design documentation
 | `project/scripts/game/world_commands.gd` | `WorldCommands` — right-click dispatch, target pickers (visible-facade building hit-test), order fan-outs, formations, pending actions, HUD action router, mercenaries |
 | `project/scripts/game/world_placement.gd` | `WorldPlacement` — building placement ghost/grid-snap, wall drag, coastal/ocean checks, navmesh rebake |
 | **Map Generation (pipeline + modules)** ||
-| `project/scripts/map/map_generator.gd` | `MapGenerator` — thin pipeline (~150 lines): reads `MatchConfig`, sequences painter → placer → nav builder per map type, returns `{tc_positions}`. Owns the shared `RandomNumberGenerator` and the land-polygon array |
+| `project/scripts/map/map_generator.gd` | `MapGenerator` — thin pipeline (~150 lines): reads `MatchConfig`, sequences painter → placer → nav builder per map type, returns `{tc_positions}`. Owns the shared `RandomNumberGenerator`, the land-polygon array and `_island_layout()` (solves island radius + ring distance so islands never overlap at any player count / map size) |
 | `project/scripts/map/map_materials.gd` | `MapMaterials` — lazily cached shader materials (terrain per type, deep/shallow water, lava), terrain colour table, `STAIN_TILE` grid |
 | `project/scripts/map/terrain_detail.gd` | `TerrainDetail` — tile-dithered ground decals and per-biome detail variants (grass/dune/malpaís/risco/laurisilva/caldera) |
 | `project/scripts/map/terrain_painter.gd` | `TerrainPainter` — backgrounds, per-map-type zone layouts, zone visuals, shorelines, island polygons; owns `MapMaterials` + `TerrainDetail` |
 | `project/scripts/map/entity_placer.gd` | `EntityPlacer` — spatial-hash occupancy grid (`SPATIAL_CELL = 140`) plus every spawn: TC ring, starting units, animals, player/neutral/scattered resources, laurisilva forests, fish, resource islets |
 | `project/scripts/map/resource_visuals.gd` | `ResourceVisuals` — static resource-node art library; also used by `SaveManager` on load and by `ResourceNode` for tree stumps |
-| `project/scripts/map/nav_mesh_builder.gd` | `NavMeshBuilder` — land/ocean `NavigationPolygon` carving, terrain-zone obstacles (skipped for civs that traverse them), ocean boundary walls |
+| `project/scripts/map/nav_mesh_builder.gd` | `NavMeshBuilder` — land/ocean `NavigationPolygon` baking via `NavigationServer2D.bake_from_source_geometry_data` (islands = traversable outlines on land, obstruction outlines on the ocean), terrain-zone obstacles (skipped for civs that traverse them), ocean boundary walls |
 | **AI Systems** ||
 | `project/scripts/ai/world_query.gd` | `WorldQuery` — read-only query service over the unit/building layers (own/enemy/all, of_type/in_state/nearest_to); the AI queries it instead of walking the scene tree. Exposed lazily as `AIPlayer.world` |
 | `project/scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic; owns the `world: WorldQuery` getter |
@@ -202,13 +202,17 @@ PlacementGrid).
 
 `project/tools/check_map_gen.tscn` is the map-generation regression gate: it
 prints a deterministic census (TC positions, zone checksum, per-type resource
-counts/amounts/position checksum, animals, nav outlines/obstacles, RNG state,
+counts/amounts/position checksum, animals, nav polygons/obstacles, RNG state,
 scene node counts) for every map type at a fixed seed. Capture it before
 touching map generation and diff it after — the numbers must not move unless
 the change is meant to alter the map.
 
 ```sh
 $GODOT --headless --path project res://tools/check_map_gen.tscn   # env: CALIMA_SEED, CALIMA_MAPS, CALIMA_RIVALS
+# Islands: no overlapping islands, both nav meshes usable, ships can sail out of their dock
+CALIMA_RIVALS=3 CALIMA_MAP_SIZE=0 $GODOT --headless --path project res://tools/check_islands_layout.tscn
+# Islands: the runtime navmesh rebake keeps land carved and the ocean sailable
+$GODOT --headless --path project res://tools/check_nav_islands.tscn   # env: CALIMA_MAP
 ```
 
 Note: GUT silently *skips* a test script that fails to parse while still

@@ -8,6 +8,14 @@ class_name Dock
 
 const MAX_QUEUE: int = 5
 
+## How far offshore a new ship is placed. TerrainManager.nearest_ocean() returns
+## the first ocean pixel around the dock, which is the shoreline itself: ships
+## spawned there sit half on the pier, and the whole training queue lands on the
+## exact same point.
+const WATER_CLEARANCE: float = 56.0
+## Half-width of a ship hull, for the open-water and free-spot probes.
+const SHIP_RADIUS: float = 16.0
+
 const UNIT_DEFS: Array[Dictionary] = [
 	{
 		"id": "fishing_boat",
@@ -160,10 +168,61 @@ func _do_spawn(scene_path: String) -> void:
 		AudioManager.play("unit_ready")
 	EventBus.unit_spawned.emit(unit, player_id)
 
-# Returns the world position where ships should spawn — the nearest ocean tile
-# to the dock, guaranteed to be water regardless of dock placement.
+## Returns the world position where ships should spawn: open water off the dock's
+## seaward side, free of other ships, and water regardless of dock placement.
 func _water_spawn_pos() -> Vector2:
-	var ocean_pos: Vector2 = TerrainManager.nearest_ocean(global_position)
-	if ocean_pos != Vector2.ZERO:
-		return ocean_pos
-	return global_position + Vector2(0.0, 60.0)  # absolute last resort
+	var seaward: Vector2 = _seaward_dir()
+	var base: Vector2 = Vector2.ZERO
+	for i: int in range(1, 7):
+		var candidate: Vector2 = global_position + seaward * (WATER_CLEARANCE * 0.5 * float(i))
+		if _is_open_water(candidate):
+			base = candidate
+			break
+	if base == Vector2.ZERO:
+		base = TerrainManager.nearest_ocean(global_position)
+	if base == Vector2.ZERO:
+		return global_position + Vector2(0.0, 60.0)  # absolute last resort
+	return _free_water_near(base)
+
+## Average direction of the water around the dock, i.e. away from its own shore.
+func _seaward_dir() -> Vector2:
+	var sum: Vector2 = Vector2.ZERO
+	for i: int in range(16):
+		var dir: Vector2 = Vector2.from_angle(TAU * float(i) / 16.0)
+		if TerrainManager.is_ocean(global_position + dir * WATER_CLEARANCE):
+			sum += dir
+	return sum.normalized() if sum.length() > 0.01 else Vector2.DOWN
+
+## True when a whole hull fits in the water at `p`, not just its centre point.
+func _is_open_water(p: Vector2) -> bool:
+	if not TerrainManager.is_ocean(p):
+		return false
+	for i: int in range(4):
+		if not TerrainManager.is_ocean(p + Vector2.from_angle(TAU * float(i) / 4.0) * SHIP_RADIUS):
+			return false
+	return true
+
+## Outward spiral like BuildingBase.find_spawn_pos, restricted to water, so a
+## training queue does not pile every ship on one pixel.
+func _free_water_near(base: Vector2) -> Vector2:
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	var shape: CircleShape2D = CircleShape2D.new()
+	shape.radius = SHIP_RADIUS
+	query.shape = shape
+	query.collision_mask = 2  # units only — the dock itself is world geometry
+	query.transform = Transform2D(0.0, base)
+	if space.intersect_shape(query, 1).is_empty():
+		return base
+	for ring: int in range(1, 6):
+		var radius: float = SHIP_RADIUS * 2.0 * float(ring)
+		var steps: int = maxi(6, ring * 6)
+		for s: int in range(steps):
+			var candidate: Vector2 = base \
+				+ Vector2.from_angle(TAU * float(s) / float(steps)) * radius
+			if not _is_open_water(candidate):
+				continue
+			query.transform = Transform2D(0.0, candidate)
+			if space.intersect_shape(query, 1).is_empty():
+				return candidate
+	return base

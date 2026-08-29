@@ -143,11 +143,13 @@ func _print_animals(units_layer: Node2D) -> void:
 func _print_nav(root: Node2D) -> void:
 	var land: NavigationRegion2D = root.get_node("NavigationRegion2D") as NavigationRegion2D
 	var ocean: NavigationRegion2D = root.get_node("OceanNavigationRegion2D") as NavigationRegion2D
-	var land_outlines: int = land.navigation_polygon.get_outline_count() if land.navigation_polygon != null else 0
-	var ocean_outlines: int = ocean.navigation_polygon.get_outline_count() if ocean.navigation_polygon != null else 0
+	# Polygon counts, not outline counts: the source-geometry baker NavMeshBuilder
+	# uses produces polygons without keeping the source outlines around.
+	var land_polys: int = land.navigation_polygon.get_polygon_count() if land.navigation_polygon != null else 0
+	var ocean_polys: int = ocean.navigation_polygon.get_polygon_count() if ocean.navigation_polygon != null else 0
 	var obstacles: int = 0
 	for child: Node in land.get_children():
 		if child is NavigationObstacle2D:
 			obstacles += 1
-	print("  nav: land_outlines=%d ocean_outlines=%d obstacles=%d" % [
-		land_outlines, ocean_outlines, obstacles])
+	print("  nav: land_polygons=%d ocean_polygons=%d obstacles=%d" % [
+		land_polys, ocean_polys, obstacles])

@@ -27,9 +27,16 @@ there is no back-reference to the generator:
 All modules receive the **same** `RandomNumberGenerator` instance, so a given
 seed always produces the same map regardless of how the code is split.
 `project/tools/check_map_gen.tscn` prints a deterministic census (TC positions,
-zone checksum, per-type resource counts/amounts, animals, nav outlines, RNG
+zone checksum, per-type resource counts/amounts, animals, nav polygon counts, RNG
 state) and is the regression gate for changes here — capture it before a change,
 diff it after.
+
+Two more headless harnesses cover the Islands map specifically:
+
+| Harness | Checks |
+|---|---|
+| `project/tools/check_islands_layout.tscn` | Island polygons don't overlap, keep a channel ≥ 120 px and stay inside the boundary; both nav meshes are non-empty; a ship spawning at the dock sits on the ocean mesh and can sail to a rival island. Env: `CALIMA_RIVALS`, `CALIMA_MAP_SIZE`, `CALIMA_SEED` |
+| `project/tools/check_nav_islands.tscn` | The runtime navmesh rebake (`WorldPlacement`) neither opens a land route across open sea nor wipes the ocean mesh. Env: `CALIMA_MAP`, `CALIMA_SEED` |
 
 ---
 
@@ -102,6 +109,38 @@ For every map type except Islands, town centers are placed with `EntityPlacer.pl
 - For 2 players this reproduces the classic face-to-face layout; for 3 a triangle; for 4 a square.
 
 On Islands maps each TC is placed near the centre of its own island (±60 px random offset).
+
+### Island ring layout
+
+`MapGenerator._island_layout(player_count)` solves the island radius and the ring
+distance instead of taking a fixed share of the map. Islands used to be sized at
+`_map_half * 0.30` for 3+ players, which on a small 4-player map made neighbours
+overlap: they merged into a single land mass *and* broke the ocean nav mesh.
+
+The solver pushes the ring as far out as the boundary allows (that buys the
+largest radius) and then sizes the radius so the worst case still fits:
+
+```
+ring   = map_half - ISLAND_SHORE_MARGIN - ISLAND_CENTER_JITTER - radius * ISLAND_BLOB_MAX
+2 * ring * sin(PI / n) >= 2 * radius * ISLAND_BLOB_MAX + 2 * ISLAND_CENTER_JITTER + ISLAND_CHANNEL
+```
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `ISLAND_BLOB_MAX` | 1.22 | Worst-case radial factor of `TerrainPainter.make_island_poly()` — a "radius r" island actually bulges to `r * 1.22` |
+| `ISLAND_CHANNEL` | 200 px | Open water kept between neighbouring islands (the transport lane) |
+| `ISLAND_SHORE_MARGIN` | 80 px | Open water kept between an island and the map boundary the ocean mesh is cut to |
+| `ISLAND_CENTER_JITTER` | 20 px | Random offset applied to each island centre |
+
+The radius is clamped to `[map_half * 0.16, map_half * 0.38]` (0.30 for 3+
+players) so a duel map keeps its generous island and a crowded map still gets
+real land rather than token islets. Above the lobby's 4-player cap the floor
+takes over from the channel constraint; islands shrink but never touch.
+
+Resource islets (`EntityPlacer.spawn_resource_islets()`) obey the same rule with
+`ISLET_CHANNEL` (160 px): a candidate outside `map_half - islet_extent -
+ISLET_CHANNEL`, or too close to an existing land polygon, is **rejected** instead
+of clamped back inside — clamping is what used to push islets into the islands.
 
 ---
 
@@ -279,10 +318,21 @@ Carved by `NavMeshBuilder.build(parent, map_half, land_polys)`. Two
 | `NavigationRegion2D` | Layer 1 | Land units |
 | `OceanNavigationRegion2D` | Layer 2 | Ships |
 
-On Islands maps both meshes are rebuilt from the procedural land polygons:
+On Islands maps both meshes are rebuilt from the procedural land polygons by
+`NavMeshBuilder._bake()`, which feeds a `NavigationMeshSourceGeometryData2D` to
+`NavigationServer2D.bake_from_source_geometry_data()`:
 
-- **Land mesh** — one CCW outline per island polygon; `make_polygons_from_outlines()` carves the walkable area.
-- **Ocean mesh** — one CCW full-map square outline with each island polygon reversed (CW) as a hole, so ships navigate everywhere except land.
+- **Land mesh** — the island polygons as *traversable* outlines, no obstructions.
+- **Ocean mesh** — the full-map square as the traversable outline and every island polygon as an *obstruction*, so ships navigate everywhere except land.
+
+The baker replaces the earlier `NavigationPolygon.make_polygons_from_outlines()`
+call, which is deprecated **and** fails its convex partition whenever two source
+outlines touch or overlap: two islands close together produced an ocean mesh with
+zero polygons, which froze every ship on the map (a unit whose start position is
+off-mesh never receives a path). The baked meshes keep no source outlines, so the
+census and the harnesses report *polygon* counts instead. `_bake()` keeps the
+scene's `agent_radius`/`cell_size` and, if a bake ever comes back empty, leaves
+the existing mesh in place and pushes a warning rather than blanking the region.
 
 On other map types only the land mesh is used (ships are not trained on non-ocean maps).
 

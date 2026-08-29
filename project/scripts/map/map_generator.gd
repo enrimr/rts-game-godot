@@ -7,6 +7,19 @@ class_name MapGenerator
 ## modules below (TerrainPainter for ground visuals, EntityPlacer for anything
 ## occupying space, NavMeshBuilder for pathfinding geometry).
 
+## Worst-case radial factor of TerrainPainter.make_island_poly: its outline is a
+## bumpy circle, so a "radius r" island actually reaches r * ISLAND_BLOB_MAX.
+## Sizing islands by their nominal radius let neighbours overlap on 4-player
+## maps, which merged the islands AND broke the ocean navmesh (overlapping hole
+## outlines fail Godot's convex partition, leaving ships with no walkable mesh).
+const ISLAND_BLOB_MAX: float = 1.22
+## Open water kept between two neighbouring islands (the transport lane).
+const ISLAND_CHANNEL: float = 200.0
+## Open water kept between an island and the map boundary the ocean is cut to.
+const ISLAND_SHORE_MARGIN: float = 80.0
+## Random offset applied to each island center.
+const ISLAND_CENTER_JITTER: float = 20.0
+
 var _rng: RandomNumberGenerator = null
 var _map_half: float = 1800.0
 var _res_mult: float = 1.0
@@ -99,13 +112,32 @@ func _run(parent: Node2D, units_layer: Node2D,
 
 # ── Islands map ─────────────────────────────────────────────────────────────
 
+## Island radius and ring distance for `player_count` islands, sized so that
+## neighbours always keep ISLAND_CHANNEL px of water between them even at their
+## bumpiest and that no island crosses the map boundary. Islands sit on a ring
+## pushed as far out as the boundary allows, which buys the largest radius:
+##   ring     = map_half - shore_margin - jitter - radius * BLOB_MAX
+##   2 * ring * sin(PI / n) >= 2 * radius * BLOB_MAX + 2 * jitter + channel
+func _island_layout(player_count: int) -> Dictionary:
+	var n: int = maxi(player_count, 2)
+	var s: float = sin(PI / float(n))
+	var usable: float = _map_half - ISLAND_SHORE_MARGIN - ISLAND_CENTER_JITTER
+	var radius: float = (2.0 * usable * s - 2.0 * ISLAND_CENTER_JITTER - ISLAND_CHANNEL) \
+			/ (2.0 * ISLAND_BLOB_MAX * (1.0 + s))
+	# Never larger than the hand-tuned share of the map, never a token islet.
+	radius = clampf(radius, _map_half * 0.16, _map_half * (0.38 if player_count <= 2 else 0.30))
+	return {
+		"radius": radius,
+		"ring": usable - radius * ISLAND_BLOB_MAX,
+	}
+
 func _run_islands(parent: Node2D, units_layer: Node2D,
 		player_count: int) -> Array[Vector2]:
 	_painter.paint_ocean_bg(parent, _map_half * 1.05)
 
-	# Scale island size down slightly when more players fit more islands
-	var island_radius: float = _map_half * (0.38 if player_count <= 2 else 0.30)
-	var ring_dist: float = _map_half * (0.50 if player_count <= 2 else 0.46)
+	var layout: Dictionary = _island_layout(player_count)
+	var island_radius: float = layout["radius"] as float
+	var ring_dist: float = layout["ring"] as float
 	var base_angle: float = _rng.randf() * TAU
 
 	var island_centers: Array[Vector2] = []
@@ -114,7 +146,9 @@ func _run_islands(parent: Node2D, units_layer: Node2D,
 	for i: int in range(player_count):
 		var angle: float = base_angle + TAU * float(i) / float(player_count)
 		var center: Vector2 = Vector2(cos(angle), sin(angle)) * ring_dist
-		center += Vector2(_rng.randf_range(-20, 20), _rng.randf_range(-20, 20))
+		center += Vector2(
+			_rng.randf_range(-ISLAND_CENTER_JITTER, ISLAND_CENTER_JITTER),
+			_rng.randf_range(-ISLAND_CENTER_JITTER, ISLAND_CENTER_JITTER))
 		island_centers.append(center)
 		var poly: PackedVector2Array = _painter.make_island_poly(center, island_radius)
 		_land_polys.append(poly)
