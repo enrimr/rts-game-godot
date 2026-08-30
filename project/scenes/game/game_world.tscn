@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://placeholder_game_world"]
+[gd_scene load_steps=8 format=3 uid="uid://placeholder_game_world"]
 
 [ext_resource type="Script" path="res://scripts/game/game_world.gd" id="1_gwscript"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/hud.tscn" id="2_hud"]
@@ -18,6 +18,13 @@ polygons = [PackedInt32Array(0, 3, 2, 1)]
 outlines = [PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_3"]
+agent_radius = 10.0
+cell_size = 4.0
+vertices = PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)
+polygons = [PackedInt32Array(0, 3, 2, 1)]
+outlines = [PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)]
+
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_4"]
 agent_radius = 10.0
 cell_size = 4.0
 vertices = PackedVector2Array(-3000, -3000, 3000, -3000, 3000, 3000, -3000, 3000)
@@ -44,6 +51,10 @@ navigation_polygon = SubResource("NavigationPolygon_2")
 [node name="AmphibiousNavigationRegion2D" type="NavigationRegion2D" parent="."]
 navigation_layers = 4
 navigation_polygon = SubResource("NavigationPolygon_3")
+
+[node name="MalpaisNavigationRegion2D" type="NavigationRegion2D" parent="."]
+navigation_layers = 8
+navigation_polygon = SubResource("NavigationPolygon_4")
 
 [node name="UnitsLayer" type="Node2D" parent="."]
 

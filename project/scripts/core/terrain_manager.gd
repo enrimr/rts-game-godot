@@ -221,6 +221,12 @@ func is_ocean(world_pos: Vector2) -> bool:
 # Water is only open to units that declare themselves amphibious (see
 # UnitBase.is_amphibious); ordering a regular land unit into the sea has to fail
 # here, or its nav target lands off the mesh and the unit freezes on the spot.
+## Whether the civ walks malpaís at full speed (Guanches). Drives both the
+## speed multiplier and which navigation layer the civ's land units ride.
+func civ_traverses_malpais(civ_id: String) -> bool:
+	var civ: CivilizationResource = _get_civ(civ_id)
+	return civ != null and civ.can_traverse_malpais
+
 func is_impassable_for(world_pos: Vector2, civ_id: String, amphibious: bool = false) -> bool:
 	var t: TerrainType = get_terrain(world_pos)
 	var civ: CivilizationResource = _get_civ(civ_id)

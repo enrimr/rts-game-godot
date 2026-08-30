@@ -135,7 +135,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/map/terrain_painter.gd` | `TerrainPainter` — backgrounds, per-map-type zone layouts, zone visuals, shorelines, island polygons; owns `MapMaterials` + `TerrainDetail` |
 | `project/scripts/map/entity_placer.gd` | `EntityPlacer` — spatial-hash occupancy grid (`SPATIAL_CELL = 140`) plus every spawn: TC ring, starting units, animals, player/neutral/scattered resources, laurisilva forests, fish, resource islets |
 | `project/scripts/map/resource_visuals.gd` | `ResourceVisuals` — static resource-node art library; also used by `SaveManager` on load and by `ResourceNode` for tree stumps |
-| `project/scripts/map/nav_mesh_builder.gd` | `NavMeshBuilder` — bakes the three `NavigationPolygon` meshes via `NavigationServer2D.bake_from_source_geometry_data` (layer 1 land, layer 2 ocean, layer 4 `AMPHIBIOUS_LAYER` = the whole board, never carved because land and ocean are both inset by their agent radius and never touch), terrain-zone obstacles (skipped for civs that traverse them), ocean boundary walls; also owns the shared bake helpers every bake goes through — `RADIUS_NUDGE` (+0.5 px, or Godot's convex partition returns an empty mesh when two grid-snapped footprints pinch at a point) and the `RADIUS_FALLBACKS` ladder |
+| `project/scripts/map/nav_mesh_builder.gd` | `NavMeshBuilder` — bakes the four `NavigationPolygon` meshes via `NavigationServer2D.bake_from_source_geometry_data`: layer 1 land, layer 2 ocean, layer 4 `AMPHIBIOUS_LAYER` (spans land+water), layer 8 `MALPAIS_LAYER` (malpaís left walkable — traversal civs' land units switch to it in `UnitBase._ready`). Impassable zones (risco/caldera always, malpaís except layer 8) are CARVED via `zone_obstructions` so paths route around them (the old RVO-only `NavigationObstacle2D`s let paths cross the lava and units froze on the rim); the runtime rebake re-injects them. Also ocean boundary walls and the shared bake helpers — `RADIUS_NUDGE` (+0.5 px) and the `RADIUS_FALLBACKS` ladder |
 | **AI Systems** ||
 | `project/scripts/ai/world_query.gd` | `WorldQuery` — read-only query service over the unit/building layers (own/enemy/all, of_type/in_state/nearest_to); the AI queries it instead of walking the scene tree. Exposed lazily as `AIPlayer.world` |
 | `project/scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic; owns the `world: WorldQuery` getter |
@@ -228,6 +228,8 @@ $GODOT --headless --path project res://tools/check_nav_bake_diag.tscn   # env: C
 $GODOT --headless --path project res://tools/check_command_bus.tscn   # env: CALIMA_SEED
 # Determinism probe: run twice, diff — identical command logs, positions still diverge (physics)
 $GODOT --headless --path project res://tools/check_sim_fingerprint.tscn   # env: CALIMA_SEED, CALIMA_MAP, CALIMA_TICKS
+# Volcanic Coast: a unit ordered across a caldera must route AROUND it and arrive
+$GODOT --headless --path project res://tools/check_volcanic_nav.tscn   # env: CALIMA_SEED
 # Amphibious: the Tidecaller swims off the beach, land units are refused water, passengers disembark dry
 $GODOT --headless --path project res://tools/check_amphibious.tscn
 # Naval civ identity (real renderer, not headless): every hull dressed for every civ

@@ -271,11 +271,32 @@ Gated by `tests/unit/test_coast_distance.gd`.
 `NavMeshBuilder.build(parent, map_half, land_polys)` runs at map generation time
 (called from `MapGenerator._run`):
 
-- Creates `NavigationObstacle2D` nodes for every malpaís, risco, and caldera zone, parented inside the scene's `NavigationRegion2D`.
-- Bakes the amphibious mesh (layer 4) as the full playable square on **every** map type — it is never carved, which is the whole point of having it.
-- On **Islands** maps, the default nav polygon (which would span the full map area including ocean) is replaced with per-island land polygons so the baked mesh never covers ocean tiles, and the ocean mesh is baked as the board minus those islands.
+- **Carves impassable terrain zones into the meshes** (`zone_obstructions`):
+  risco and caldera always, malpaís on every mesh except the layer-8 one.
+  This is what makes paths route AROUND lava: the old approach parented
+  `NavigationObstacle2D` nodes (RVO-only — they never touched the baked
+  mesh), so paths crossed the zones and units ground to a halt against the
+  rim where the speed multiplier hits 0. The runtime rebake in WorldPlacement
+  re-injects the same zone obstructions, or the first building placed would
+  erase the carve.
+- Bakes the land mesh (layer 1) on every map type: the board (or the islands)
+  minus all impassable zones.
+- Bakes the malpaís-traversal mesh (layer 8, `MALPAIS_LAYER`): identical to
+  land but with malpaís left walkable. Land units of a civ with
+  `can_traverse_malpais` switch to this layer in `UnitBase._ready`, so the
+  Guanches bonus survives the carving.
+- Bakes the amphibious mesh (layer 4) as the full playable square minus the
+  impassable zones — its point is spanning land AND water, never split by the
+  shoreline agent-radius insets.
+- On **Islands** maps the land/malpaís meshes use the per-island land polygons
+  as the walkable surface, and the ocean mesh is baked as the board minus
+  those islands.
 
-This means ships navigate their own layer, amphibious units navigate the continuous layer, and plain land units are physically blocked by the land mesh boundaries.
+This means ships navigate their own layer, amphibious units navigate the
+continuous layer, traversal civs cross malpaís on layer 8, and plain land
+units are blocked by the land mesh boundaries. Gated by
+`tools/check_volcanic_nav.tscn`: a militia ordered to the far side of a
+caldera on a Volcanic Coast map must arrive AND never enter the zone.
 
 ### The half-pixel bake nudge
 

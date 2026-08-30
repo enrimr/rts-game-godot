@@ -435,15 +435,21 @@ func _amphibious_outlines() -> Array[PackedVector2Array]:
 	])]
 
 func _do_nav_rebake() -> void:
-	_rebake_region(_world._nav_region, _traversable_outlines())
+	# Impassable terrain zones must survive every rebake or the carve from map
+	# generation would vanish with the first building placed.
+	_rebake_region(_world._nav_region, _traversable_outlines(),
+		NavMeshBuilder.zone_obstructions(true))
+	_rebake_region(
+		_world.get_node_or_null("MalpaisNavigationRegion2D") as NavigationRegion2D,
+		_traversable_outlines(), NavMeshBuilder.zone_obstructions(false))
 	# Keep the amphibious surface in step: without this a Tidecaller would path
 	# straight through buildings that the land mesh already routes around.
 	_rebake_region(
 		_world.get_node_or_null("AmphibiousNavigationRegion2D") as NavigationRegion2D,
-		_amphibious_outlines())
+		_amphibious_outlines(), NavMeshBuilder.zone_obstructions(true))
 
 func _rebake_region(region: NavigationRegion2D, traversable: Array[PackedVector2Array],
-		attempt: int = 0) -> void:
+		extra_obstructions: Array[PackedVector2Array] = [], attempt: int = 0) -> void:
 	if not is_instance_valid(region):
 		return
 	var current: NavigationPolygon = region.navigation_polygon
@@ -458,6 +464,8 @@ func _rebake_region(region: NavigationRegion2D, traversable: Array[PackedVector2
 	var source: NavigationMeshSourceGeometryData2D = NavigationMeshSourceGeometryData2D.new()
 	for outline: PackedVector2Array in traversable:
 		source.add_traversable_outline(outline)
+	for zone: PackedVector2Array in extra_obstructions:
+		source.add_obstruction_outline(zone)
 	for b: Node in _world.buildings_layer.get_children():
 		if not is_instance_valid(b) or not b.has_method("get_nav_obstacle_polygon"):
 			continue
@@ -479,10 +487,11 @@ func _rebake_region(region: NavigationRegion2D, traversable: Array[PackedVector2
 			source.add_obstruction_outline(rpoly)
 	NavigationServer2D.bake_from_source_geometry_data_async(
 		nav_poly, source, Callable(self, "_on_nav_bake_done").bind(
-			region, nav_poly, traversable, attempt))
+			region, nav_poly, traversable, extra_obstructions, attempt))
 
 func _on_nav_bake_done(region: NavigationRegion2D, baked: NavigationPolygon,
-		traversable: Array[PackedVector2Array], attempt: int) -> void:
+		traversable: Array[PackedVector2Array],
+		extra_obstructions: Array[PackedVector2Array], attempt: int) -> void:
 	if not is_instance_valid(_world) or not is_instance_valid(region) or baked == null:
 		return
 	# Only swap in the freshly baked mesh if the partition succeeded (non-empty).
@@ -494,7 +503,7 @@ func _on_nav_bake_done(region: NavigationRegion2D, baked: NavigationPolygon,
 		_nav_bake_failed.erase(region.name)
 		return
 	if attempt + 1 < NavMeshBuilder.nudge_attempts():
-		_rebake_region(region, traversable, attempt + 1)
+		_rebake_region(region, traversable, extra_obstructions, attempt + 1)
 		return
 	# Ladder exhausted: keep the existing navmesh so units never lose their
 	# walkable surface, and warn once per region — re-requesting the bake here

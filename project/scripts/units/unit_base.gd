@@ -93,6 +93,13 @@ func _ready() -> void:
 	# and several hero abilities scan it. No unit scene declares it, so without
 	# this line the group was empty and all of those silently did nothing.
 	add_to_group("units")
+	# Malpaís-traversal civs ride the layer-8 mesh, where malpaís stays
+	# walkable (the land mesh carves it out so everyone else routes around).
+	# Only plain land units switch: ships (2) and the Tidecaller (4) keep the
+	# layer their scene declares.
+	if is_instance_valid(nav_agent) and nav_agent.navigation_layers == 1 \
+			and TerrainManager.civ_traverses_malpais(civ_id):
+		nav_agent.navigation_layers = NavMeshBuilder.MALPAIS_LAYER
 	if unit_data:
 		var hp_mult: float = CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
 		health = unit_data.max_health * hp_mult

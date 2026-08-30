@@ -1,10 +1,11 @@
 class_name NavMeshBuilder extends RefCounted
 
-## Carves the three navigation meshes of a generated map and walls off the ocean.
+## Carves the four navigation meshes of a generated map and walls off the ocean.
 ##
-## Layer 1 (NavigationRegion2D)            → land units: covers land, excludes ocean
+## Layer 1 (NavigationRegion2D)            → land units: land minus impassable zones
 ## Layer 2 (OceanNavigationRegion2D)       → ships:      covers ocean, excludes land
-## Layer 4 (AmphibiousNavigationRegion2D)  → amphibious units: the whole board
+## Layer 4 (AmphibiousNavigationRegion2D)  → amphibious units: the whole board (zones carved)
+## Layer 8 (MalpaisNavigationRegion2D)     → malpaís-traversal civs: land minus risco/caldera only
 ##
 ## On Islands maps the first two meshes are carved from the land polygons. The
 ## amphibious mesh is never carved — that is the point: land and ocean are baked
@@ -18,6 +19,37 @@ class_name NavMeshBuilder extends RefCounted
 ## Navigation layer bit of the amphibious mesh. Units that walk into water set
 ## their NavigationAgent2D.navigation_layers to this (see Tidecaller).
 const AMPHIBIOUS_LAYER: int = 4
+
+## Navigation layer bit of the malpaís-traversal mesh: identical to the land
+## mesh except malpaís zones stay walkable. Land units of a civ with
+## can_traverse_malpais ride this layer (UnitBase._ready).
+const MALPAIS_LAYER: int = 8
+
+## Impassable terrain zones as bake obstructions. Risco and caldera are
+## impassable for EVERYONE (is_impassable_for); malpaís only for civs without
+## the traversal flag — the layer-8 mesh passes include_malpais = false.
+## Carving these into the meshes is what makes paths route AROUND the zones:
+## the old NavigationObstacle2D approach was RVO-only, so paths crossed the
+## lava and units ground to a halt against the rim (speed multiplier 0).
+static func zone_obstructions(include_malpais: bool) -> Array[PackedVector2Array]:
+	var out: Array[PackedVector2Array] = []
+	for z: Dictionary in TerrainManager.get_zones():
+		match z["type"] as TerrainManager.TerrainType:
+			TerrainManager.TerrainType.RISCO, TerrainManager.TerrainType.CALDERA:
+				pass
+			TerrainManager.TerrainType.MALPAIS:
+				if not include_malpais:
+					continue
+			_:
+				continue
+		var center: Vector2 = z["center"] as Vector2
+		var radius: float = z["radius"] as float
+		var pts: PackedVector2Array = PackedVector2Array()
+		for i: int in range(16):
+			var a: float = TAU * i / 16
+			pts.append(center + Vector2(cos(a), sin(a)) * radius)
+		out.append(pts)
+	return out
 
 ## Half-pixel widening added to the agent radius of every bake.
 ##
@@ -83,6 +115,7 @@ func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 	var land_region: NavigationRegion2D = parent.get_node_or_null("NavigationRegion2D") as NavigationRegion2D
 	var ocean_region: NavigationRegion2D = parent.get_node_or_null("OceanNavigationRegion2D") as NavigationRegion2D
 	var amphibious_region: NavigationRegion2D = parent.get_node_or_null("AmphibiousNavigationRegion2D") as NavigationRegion2D
+	var malpais_region: NavigationRegion2D = parent.get_node_or_null("MalpaisNavigationRegion2D") as NavigationRegion2D
 
 	if land_region == null:
 		return
@@ -93,9 +126,16 @@ func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 		Vector2(half,  half),  Vector2(-half,  half),
 	])]
 
+	# Impassable terrain carved INTO the meshes so paths route around it —
+	# see zone_obstructions. The layer-8 mesh keeps malpaís walkable for
+	# traversal civs; the only amphibious unit is Atlantes, so its mesh
+	# carves malpaís too.
+	var zones_all: Array[PackedVector2Array] = zone_obstructions(true)
+	var zones_traversal: Array[PackedVector2Array] = zone_obstructions(false)
+
 	# Amphibious mesh: everything inside the playable area, land and water alike.
 	if amphibious_region != null:
-		_bake(amphibious_region, board, [])
+		_bake(amphibious_region, board, zones_all)
 
 	if MatchConfig.map_type == MatchConfig.MapType.ISLANDS and land_polys.size() > 0:
 		var islands: Array[PackedVector2Array] = []
@@ -103,7 +143,9 @@ func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 			islands.append(lp as PackedVector2Array)
 
 		# Land mesh: the islands are the walkable surface.
-		_bake(land_region, islands, [])
+		_bake(land_region, islands, zones_all)
+		if malpais_region != null:
+			_bake(malpais_region, islands, zones_traversal)
 
 		# Ocean mesh: the whole board minus the islands, so ships sail
 		# everywhere except over land.
@@ -111,39 +153,10 @@ func build(parent: Node2D, map_half: float, land_polys: Array) -> void:
 			_bake(ocean_region, board, islands)
 			# Physical walls so ships cannot sail past the map edge
 			_add_ocean_boundary_walls(parent, half)
-
-	# Solid impassable zones → NavigationObstacle2D on the land region.
-	# Skip obstacle types that the player's civ can traverse freely.
-	var player_civ_id: String = MatchConfig.player_civ_id
-	var player_civ: CivilizationResource = load(
-		"res://resources/civilizations/%s.tres" % player_civ_id) as CivilizationResource
-	var skip_malpais: bool = player_civ != null and player_civ.can_traverse_malpais
-	var skip_caldera: bool = skip_malpais  # Guanches treat caldera like malpais
-
-	for z: Dictionary in TerrainManager.get_zones():
-		var t: TerrainManager.TerrainType = z["type"] as TerrainManager.TerrainType
-		match t:
-			TerrainManager.TerrainType.RISCO:
-				pass  # always an obstacle
-			TerrainManager.TerrainType.MALPAIS:
-				if skip_malpais:
-					continue
-			TerrainManager.TerrainType.CALDERA:
-				if skip_caldera:
-					continue
-			_:
-				continue
-		var center: Vector2 = z["center"] as Vector2
-		var radius: float   = z["radius"] as float
-		var obstacle: NavigationObstacle2D = NavigationObstacle2D.new()
-		obstacle.avoidance_enabled = true
-		var pts: PackedVector2Array = PackedVector2Array()
-		for i: int in range(16):
-			var a: float = TAU * i / 16
-			pts.append(Vector2(cos(a), sin(a)) * radius)
-		obstacle.vertices = pts
-		obstacle.position = center
-		land_region.add_child(obstacle)
+	else:
+		_bake(land_region, board, zones_all)
+		if malpais_region != null:
+			_bake(malpais_region, board, zones_traversal)
 
 ## Bakes `region`'s mesh from outline geometry, keeping the agent settings the
 ## scene's polygon carries. Uses the source-geometry baker (the same one the

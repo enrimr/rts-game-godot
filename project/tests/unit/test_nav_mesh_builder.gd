@@ -3,16 +3,18 @@ extends GutTest
 ## NavMeshBuilder — navigation geometry of a generated map.
 ##
 ## What is covered:
-##   1.  Impassable terrain zones become NavigationObstacle2D nodes on the land
-##       region; passable ground (dune, grass) does not.
-##   2.  A civ that traverses malpaís gets no obstacle there (nav mesh must not
-##       undo the civ bonus) while cliffs still block everyone.
+##   1.  Impassable terrain zones are CARVED out of the land mesh, so paths
+##       route around them; passable ground (dune, grass) stays walkable.
+##       (The old NavigationObstacle2D approach was RVO-only: paths crossed
+##       the lava and units froze against the rim.)
+##   2.  The layer-8 malpaís mesh keeps malpaís walkable for traversal civs
+##       while cliffs and calderas still block everyone.
 ##   3.  Islands maps bake both meshes: land covers the islands only, ocean
 ##       covers the water only, and the map edge is walled off.
 ##   4.  Overlapping islands still produce usable meshes (the old
 ##       make_polygons_from_outlines() path failed its convex partition there and
 ##       left ships with an empty ocean mesh).
-##   5.  Non-island maps leave the ocean region alone.
+##   5.  Non-island maps leave the ocean region alone (land is baked with zones).
 
 const MAP_HALF: float = 1800.0
 
@@ -37,8 +39,14 @@ func _make_root() -> Node2D:
 	var ocean: NavigationRegion2D = NavigationRegion2D.new()
 	ocean.name = "OceanNavigationRegion2D"
 	root.add_child(ocean)
+	var malpais: NavigationRegion2D = NavigationRegion2D.new()
+	malpais.name = "MalpaisNavigationRegion2D"
+	root.add_child(malpais)
 	add_child_autofree(root)
 	return root
+
+func _region_poly(root: Node2D, region_name: String) -> NavigationPolygon:
+	return (root.get_node(region_name) as NavigationRegion2D).navigation_polygon
 
 ## True when `p` lies on the baked walkable surface. The baker keeps no source
 ## outlines, so coverage has to be probed through the triangles themselves.
@@ -54,15 +62,8 @@ func _mesh_covers(poly: NavigationPolygon, p: Vector2) -> bool:
 			return true
 	return false
 
-func _obstacles(root: Node2D) -> int:
-	var n: int = 0
-	for child: Node in root.get_node("NavigationRegion2D").get_children():
-		if child is NavigationObstacle2D:
-			n += 1
-	return n
-
-# 1 — impassable zones become obstacles
-func test_impassable_zones_become_obstacles() -> void:
+# 1 — impassable zones are carved out of the land mesh
+func test_impassable_zones_are_carved_from_the_land_mesh() -> void:
 	MatchConfig.map_type = MatchConfig.MapType.STANDARD
 	MatchConfig.player_civ_id = "franks"
 	TerrainManager.add_zone(Vector2(400.0, 0.0), 200.0, TerrainManager.TerrainType.RISCO)
@@ -72,10 +73,16 @@ func test_impassable_zones_become_obstacles() -> void:
 
 	var root: Node2D = _make_root()
 	NavMeshBuilder.new().build(root, MAP_HALF, [])
-	assert_eq(_obstacles(root), 3, "cliff, malpaís and caldera block, dune does not")
+	var land: NavigationPolygon = _region_poly(root, "NavigationRegion2D")
+	assert_not_null(land)
+	assert_false(_mesh_covers(land, Vector2(400.0, 0.0)), "the cliff is off the mesh")
+	assert_false(_mesh_covers(land, Vector2(-400.0, 0.0)), "malpaís is off the mesh")
+	assert_false(_mesh_covers(land, Vector2(0.0, 600.0)), "the caldera is off the mesh")
+	assert_true(_mesh_covers(land, Vector2(0.0, -600.0)), "dune is slow but walkable")
+	assert_true(_mesh_covers(land, Vector2(1000.0, 1000.0)), "open grass stays walkable")
 
-# 2 — civ traversal bonuses survive the nav mesh
-func test_traversing_civ_skips_lava_obstacles() -> void:
+# 2 — the layer-8 mesh keeps malpaís walkable for traversal civs
+func test_malpais_mesh_keeps_malpais_walkable() -> void:
 	MatchConfig.map_type = MatchConfig.MapType.STANDARD
 	MatchConfig.player_civ_id = "guanches"
 	TerrainManager.add_zone(Vector2(400.0, 0.0), 200.0, TerrainManager.TerrainType.RISCO)
@@ -84,25 +91,24 @@ func test_traversing_civ_skips_lava_obstacles() -> void:
 
 	var root: Node2D = _make_root()
 	NavMeshBuilder.new().build(root, MAP_HALF, [])
-	assert_eq(_obstacles(root), 1,
-		"Guanches walk malpaís and caldera; only the cliff stays impassable")
+	var malpais: NavigationPolygon = _region_poly(root, "MalpaisNavigationRegion2D")
+	assert_not_null(malpais)
+	assert_true(_mesh_covers(malpais, Vector2(-400.0, 0.0)),
+		"Guanches cross malpaís on their own layer")
+	assert_false(_mesh_covers(malpais, Vector2(400.0, 0.0)), "cliffs block everyone")
+	assert_false(_mesh_covers(malpais, Vector2(0.0, 600.0)), "calderas block everyone")
 
-func test_obstacle_matches_its_zone() -> void:
-	MatchConfig.map_type = MatchConfig.MapType.STANDARD
-	MatchConfig.player_civ_id = "franks"
+func test_zone_obstructions_split_by_traversal() -> void:
 	TerrainManager.add_zone(Vector2(320.0, -180.0), 250.0, TerrainManager.TerrainType.RISCO)
-
-	var root: Node2D = _make_root()
-	NavMeshBuilder.new().build(root, MAP_HALF, [])
-	var obstacle: NavigationObstacle2D = null
-	for child: Node in root.get_node("NavigationRegion2D").get_children():
-		if child is NavigationObstacle2D:
-			obstacle = child as NavigationObstacle2D
-	assert_not_null(obstacle)
-	assert_eq(obstacle.position, Vector2(320.0, -180.0), "obstacle sits on its zone")
-	assert_true(obstacle.avoidance_enabled)
-	for v: Vector2 in obstacle.vertices:
-		assert_almost_eq(v.length(), 250.0, 1.0, "outline traces the zone radius")
+	TerrainManager.add_zone(Vector2(-320.0, 180.0), 150.0, TerrainManager.TerrainType.MALPAIS)
+	TerrainManager.add_zone(Vector2(0.0, -600.0), 200.0, TerrainManager.TerrainType.DUNE)
+	var all_zones: Array[PackedVector2Array] = NavMeshBuilder.zone_obstructions(true)
+	var traversal: Array[PackedVector2Array] = NavMeshBuilder.zone_obstructions(false)
+	assert_eq(all_zones.size(), 2, "risco + malpaís carve; dune never does")
+	assert_eq(traversal.size(), 1, "the traversal mesh carves only the cliff")
+	for v: Vector2 in all_zones[0]:
+		assert_almost_eq(v.distance_to(Vector2(320.0, -180.0)), 250.0, 1.0,
+			"outline traces the zone radius")
 
 # 3 — islands bake both meshes
 func test_islands_carve_land_and_ocean_meshes() -> void:
@@ -164,14 +170,18 @@ func test_islands_wall_off_the_map_edge() -> void:
 				"boundary walls live on the world layer")
 	assert_eq(walls, 4, "ships are fenced in on all four sides")
 
-# 5 — other map types keep the default ocean region
+# 5 — other map types keep the default ocean region; land is baked with zones
 func test_land_map_leaves_the_ocean_region_untouched() -> void:
 	MatchConfig.map_type = MatchConfig.MapType.PLAINS
 	MatchConfig.player_civ_id = "franks"
 	var root: Node2D = _make_root()
 	NavMeshBuilder.new().build(root, MAP_HALF, [])
-	assert_null((root.get_node("OceanNavigationRegion2D") as NavigationRegion2D).navigation_polygon)
-	assert_null((root.get_node("NavigationRegion2D") as NavigationRegion2D).navigation_polygon)
+	assert_null(_region_poly(root, "OceanNavigationRegion2D"),
+		"no ocean on a land map — ships are not trained there anyway")
+	var land: NavigationPolygon = _region_poly(root, "NavigationRegion2D")
+	assert_not_null(land, "the land mesh is baked on every map type now")
+	assert_gt(land.get_polygon_count(), 0)
+	assert_true(_mesh_covers(land, Vector2.ZERO))
 
 func test_missing_land_region_is_tolerated() -> void:
 	MatchConfig.map_type = MatchConfig.MapType.PLAINS
