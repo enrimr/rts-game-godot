@@ -302,7 +302,7 @@ func _confirm_placement(raw_world_pos: Vector2) -> void:
 		_cancel_placement()
 		return
 
-	CommandBus.submit(PlaceBuildingCommand.make(0, _placing_id,
+	CommandBus.submit(PlaceBuildingCommand.make(NetworkSession.local_player_id, _placing_id,
 		[world_pos] as Array[Vector2], _ghost_rotation,
 		EntityRegistry.ids_of(_world.live_selection())))
 
@@ -400,7 +400,7 @@ func _confirm_wall_drag(raw_end_pos: Vector2) -> void:
 
 	# One command for the whole run; it pays per segment and stops when the
 	# stockpile runs out, exactly like the old inline loop.
-	CommandBus.submit(PlaceBuildingCommand.make(0, "wall_segment",
+	CommandBus.submit(PlaceBuildingCommand.make(NetworkSession.local_player_id, "wall_segment",
 		positions, 0.0, EntityRegistry.ids_of(_world.live_selection())))
 
 	var keep_id: String = _placing_id

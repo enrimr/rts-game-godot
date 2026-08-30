@@ -124,7 +124,7 @@ func _cache_own_unit_sights() -> void:
 		if not is_instance_valid(u):
 			continue
 		var upid: Variant = u.get("player_id")
-		if upid == null or (upid as int) != 0:
+		if upid == null or (upid as int) != NetworkSession.local_player_id:
 			continue
 		var udata: Variant = u.get("unit_data")
 		var los_px: float = 5.0 * 64.0
@@ -139,7 +139,7 @@ func _on_player_entity_under_attack(world_pos: Vector2, _attacker: Node) -> void
 	add_flash(world_pos, Color(1.0, 0.15, 0.15))
 
 func _on_building_destroyed(building: Node, owner_id: int) -> void:
-	if owner_id != 0:
+	if owner_id != NetworkSession.local_player_id:
 		return
 	add_flash((building as Node2D).global_position, Color(1.0, 0.50, 0.10))
 
@@ -147,13 +147,13 @@ func _on_minimap_move_order(world_pos: Vector2) -> void:
 	add_flash(world_pos, Color(0.25, 1.0, 0.35))
 
 func _on_hero_low_hp(player_id: int) -> void:
-	if player_id != 0 or world_node == null:
+	if player_id != NetworkSession.local_player_id or world_node == null:
 		return
 	var units_layer: Node = world_node.get_node_or_null("UnitsLayer")
 	if units_layer == null:
 		return
 	for unit: Node in units_layer.get_children():
-		if unit is HeroUnit and (unit as HeroUnit).player_id == 0:
+		if unit is HeroUnit and (unit as HeroUnit).player_id == NetworkSession.local_player_id:
 			add_flash((unit as Node2D).global_position, Color(1.0, 0.90, 0.10))
 			return
 
@@ -227,7 +227,7 @@ func _draw_content() -> void:
 			if not is_instance_valid(building):
 				continue
 			var pid: Variant = building.get("player_id")
-			var is_own: bool = pid != null and (pid as int) == 0
+			var is_own: bool = pid != null and (pid as int) == NetworkSession.local_player_id
 			if not _fog_allows_see((building as Node2D).global_position, is_own):
 				continue
 			var mp: Vector2 = _to_mm((building as Node2D).global_position, ms)
@@ -261,7 +261,7 @@ func _draw_content() -> void:
 			if not is_instance_valid(unit):
 				continue
 			var pid: Variant = unit.get("player_id")
-			var is_own: bool = pid != null and (pid as int) == 0
+			var is_own: bool = pid != null and (pid as int) == NetworkSession.local_player_id
 			if not _fog_allows_see((unit as Node2D).global_position, is_own):
 				continue
 			var mp: Vector2 = _to_mm((unit as Node2D).global_position, ms)
@@ -283,7 +283,7 @@ func _update_enemy_building_memory() -> void:
 			if not is_instance_valid(building):
 				continue
 			var pid: Variant = building.get("player_id")
-			if pid == null or (pid as int) == 0:
+			if pid == null or (pid as int) == NetworkSession.local_player_id:
 				continue
 			var bpos: Vector2 = (building as Node2D).global_position
 			if fog.get_cell_state(bpos) == FogOfWar.STATE_VISIBLE:

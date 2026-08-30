@@ -47,7 +47,7 @@ func _resolve_cursor_context() -> String:
 		if not is_instance_valid(unit) or unit is Animal:
 			continue
 		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != 0:
+		if pid == null or (pid as int) != NetworkSession.local_player_id:
 			continue
 		if unit is Villager:
 			has_villagers = true
@@ -110,7 +110,7 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		# building of the type), so one click points all barracks at one spot.
 		for building: Node in _world.live_selected_buildings():
 			if building.has_method("set_rally_point"):
-				CommandBus.submit(BuildingActionCommand.make(0, "set_rally",
+				CommandBus.submit(BuildingActionCommand.make(NetworkSession.local_player_id, "set_rally",
 					EntityRegistry.id_of(building), world_pos))
 				_flash_target(building, Color(1.0, 0.92, 0.2, 1.0))
 		return
@@ -123,11 +123,11 @@ func _handle_right_click(world_pos: Vector2) -> void:
 			if not is_instance_valid(unit) or unit is ShipBase:
 				continue
 			var pid: Variant = unit.get("player_id")
-			if pid == null or (pid as int) != 0:
+			if pid == null or (pid as int) != NetworkSession.local_player_id:
 				continue
 			boardable.append(EntityRegistry.id_of(unit))
 		if not boardable.is_empty():
-			CommandBus.submit(UnitTargetCommand.make(0, "board", boardable,
+			CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "board", boardable,
 				EntityRegistry.id_of(transport)))
 			_flash_target(transport, Color(0.4, 1.0, 0.4, 1.0))
 			return
@@ -137,7 +137,7 @@ func _handle_right_click(world_pos: Vector2) -> void:
 			and _world._selected_units[0] is TransportShip:
 		var ts: TransportShip = _world._selected_units[0] as TransportShip
 		if not ts._garrison.is_empty() and not TerrainManager.is_ocean(world_pos):
-			CommandBus.submit(TransportCommand.make(0, "move_unload",
+			CommandBus.submit(TransportCommand.make(NetworkSession.local_player_id, "move_unload",
 				EntityRegistry.id_of(ts), -1, world_pos))
 			return
 
@@ -152,7 +152,7 @@ func _handle_right_click(world_pos: Vector2) -> void:
 			if garrisons_by_right_click(unit):
 				troops.append(EntityRegistry.id_of(unit))
 		if not troops.is_empty():
-			CommandBus.submit(UnitTargetCommand.make(0, "garrison", troops,
+			CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "garrison", troops,
 				EntityRegistry.id_of(fort)))
 			_flash_target(fort, Color(0.4, 1.0, 0.4, 1.0))
 			return
@@ -167,7 +167,7 @@ func _handle_right_click(world_pos: Vector2) -> void:
 	# herded sheep included — that's how a sheep yields meat); soldiers attack it.
 	var animal: Animal = _find_animal_at(world_pos)
 	if animal != null:
-		CommandBus.submit(UnitTargetCommand.make(0, "attack", _selection_ids(),
+		CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "attack", _selection_ids(),
 			EntityRegistry.id_of(animal)))
 		return
 
@@ -193,7 +193,7 @@ func _handle_right_click(world_pos: Vector2) -> void:
 			_order_build_all(drop_off_node)
 		else:
 			_flash_target(drop_off_node, Color(1.8, 1.8, 0.4, 1.0))
-			CommandBus.submit(UnitTargetCommand.make(0, "drop_off", _selection_ids(),
+			CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "drop_off", _selection_ids(),
 				EntityRegistry.id_of(drop_off_node)))
 		return
 
@@ -239,7 +239,7 @@ func _order_attack_ground_all(world_pos: Vector2) -> void:
 	# Deliberately does NOT emit minimap_move_order: that signal is wired to
 	# _order_move_all, so emitting it here synchronously overrode the freshly
 	# issued attack-ground with a plain move (cover fire cancelled itself).
-	CommandBus.submit(UnitPointCommand.make(0, "attack_ground", _selection_ids(), world_pos))
+	CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "attack_ground", _selection_ids(), world_pos))
 	_flash_point(world_pos, Color(1.0, 0.6, 0.1, 1.0))
 
 func _find_own_transport_at(world_pos: Vector2) -> TransportShip:
@@ -247,7 +247,7 @@ func _find_own_transport_at(world_pos: Vector2) -> TransportShip:
 		if not (unit is TransportShip):
 			continue
 		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != 0:
+		if pid == null or (pid as int) != NetworkSession.local_player_id:
 			continue
 		if world_pos.distance_to((unit as Node2D).global_position) < UNIT_CLICK_RADIUS:
 			return unit as TransportShip
@@ -269,7 +269,7 @@ static func garrison_eligible(unit: Node) -> bool:
 	if unit is BatteringRam or unit is Mangonel or unit is Trebuchet:
 		return false
 	var pid: Variant = unit.get("player_id")
-	return pid != null and (pid as int) == 0
+	return pid != null and (pid as int) == NetworkSession.local_player_id
 
 ## Right-click garrisons MILITARY only: a villager's right-click on an own
 ## building must stay build/repair.
@@ -320,7 +320,7 @@ func _ring_town_bell() -> void:
 	if any_sheltered:
 		for fort: Node in forts:
 			if not (fort.get_garrison() as Array).is_empty():
-				CommandBus.submit(BuildingActionCommand.make(0, "ungarrison",
+				CommandBus.submit(BuildingActionCommand.make(NetworkSession.local_player_id, "ungarrison",
 					EntityRegistry.id_of(fort)))
 		return
 	var villagers: Array[Node] = []
@@ -329,7 +329,7 @@ func _ring_town_bell() -> void:
 				and (unit as Node2D).visible:
 			villagers.append(unit)
 	for entry: Array in bell_assignments(villagers, forts):
-		CommandBus.submit(UnitTargetCommand.make(0, "garrison",
+		CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "garrison",
 			EntityRegistry.ids_of(entry[1] as Array), EntityRegistry.id_of(entry[0] as Node)))
 		_flash_target(entry[0] as Node, Color(1.0, 0.85, 0.3, 1.0))
 
@@ -343,7 +343,7 @@ func _own_garrisonable_buildings() -> Array[Node]:
 			candidates.append(building)
 	for building: Node in candidates:
 		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) != 0:
+		if pid == null or (pid as int) != NetworkSession.local_player_id:
 			continue
 		if not building.has_method("garrison_capacity") \
 				or (building.garrison_capacity() as int) <= 0:
@@ -365,7 +365,7 @@ func _find_garrisonable_at(world_pos: Vector2) -> Node:
 			candidates.append(building)
 	for building: Node in candidates:
 		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) != 0:
+		if pid == null or (pid as int) != NetworkSession.local_player_id:
 			continue
 		if not building.has_method("garrison_capacity") \
 				or (building.garrison_capacity() as int) <= 0:
@@ -431,7 +431,7 @@ func _find_enemy_unit_at(world_pos: Vector2) -> Node:
 		if not is_instance_valid(unit) or unit is Animal:
 			continue
 		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) == 0:
+		if pid == null or (pid as int) == NetworkSession.local_player_id:
 			continue
 		if world_pos.distance_to((unit as Node2D).global_position) < UNIT_CLICK_RADIUS:
 			return unit
@@ -471,7 +471,7 @@ func _find_enemy_building_at(world_pos: Vector2) -> Node:
 		if not is_instance_valid(building):
 			continue
 		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) == 0:
+		if pid == null or (pid as int) == NetworkSession.local_player_id:
 			continue
 		if not _building_click_hit(building as Node2D, world_pos):
 			continue
@@ -486,7 +486,7 @@ func _find_own_construction_at(world_pos: Vector2) -> Node:
 		if not is_instance_valid(building):
 			continue
 		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) != 0:
+		if pid == null or (pid as int) != NetworkSession.local_player_id:
 			continue
 		if _building_click_hit(building as Node2D, world_pos):
 			var state_val: Variant = building.get("state")
@@ -516,7 +516,7 @@ func _find_own_damaged_building_at(world_pos: Vector2) -> Node:
 		if not is_instance_valid(building):
 			continue
 		var pid: Variant = building.get("player_id")
-		if pid == null or (pid as int) != 0:
+		if pid == null or (pid as int) != NetworkSession.local_player_id:
 			continue
 		if _building_click_hit(building as Node2D, world_pos) and check.call(building):
 			return building
@@ -534,12 +534,12 @@ func _flash_target(node: Node, flash_color: Color = Color(2.0, 2.0, 2.0, 1.0)) -
 func _order_attack_all(target: Node) -> void:
 	AudioManager.play("cmd_attack")
 	_flash_target(target, Color(2.2, 0.4, 0.4, 1.0))
-	CommandBus.submit(UnitTargetCommand.make(0, "attack", _selection_ids(),
+	CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "attack", _selection_ids(),
 		EntityRegistry.id_of(target)))
 
 func _order_build_all(building: Node) -> void:
 	_flash_target(building, Color(0.6, 1.8, 0.6, 1.0))
-	CommandBus.submit(UnitTargetCommand.make(0, "build", _selection_ids(),
+	CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "build", _selection_ids(),
 		EntityRegistry.id_of(building)))
 
 func _find_resource_at(world_pos: Vector2) -> ResourceNode:
@@ -554,7 +554,7 @@ func _find_resource_at(world_pos: Vector2) -> ResourceNode:
 ## GatherCommand sorts out fishing boats, drop-offs and depleted restores.
 func _order_gather_all(target: Node) -> void:
 	_flash_target(target, Color(1.8, 1.8, 0.4, 1.0))
-	CommandBus.submit(UnitTargetCommand.make(0, "gather", _selection_ids(),
+	CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "gather", _selection_ids(),
 		EntityRegistry.id_of(target)))
 
 func _execute_pending_action(world_pos: Vector2) -> void:
@@ -587,13 +587,13 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 					if garrison_eligible(unit):
 						ids.append(EntityRegistry.id_of(unit))
 				if not ids.is_empty():
-					CommandBus.submit(UnitTargetCommand.make(0, "garrison", ids,
+					CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "garrison", ids,
 						EntityRegistry.id_of(fort)))
 					_flash_target(fort, Color(0.4, 1.0, 0.4, 1.0))
 
 func _order_attack_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")
-	CommandBus.submit(UnitPointCommand.make(0, "attack_move", _selection_ids(), world_pos,
+	CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "attack_move", _selection_ids(), world_pos,
 		_formation))
 
 ## Briefly shows a coloured expanding ring at `world_pos` to confirm a click order.
@@ -618,7 +618,7 @@ func _order_move_all(world_pos: Vector2) -> void:
 			valid_units.append(u)
 	if valid_units.is_empty():
 		return
-	CommandBus.submit(UnitPointCommand.make(0, "move",
+	CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "move",
 		EntityRegistry.ids_of(valid_units), world_pos, _formation))
 	# Ground flash where the player clicked — move was the only order
 	# without click feedback (gather/attack flash their target already).
@@ -644,7 +644,7 @@ func _execute_group_destroy(targets: Array[Node]) -> void:
 			continue
 		if target.has_method("set_selected"):
 			target.set_selected(false)
-		CommandBus.submit(BuildingActionCommand.make(0, "delete",
+		CommandBus.submit(BuildingActionCommand.make(NetworkSession.local_player_id, "delete",
 			EntityRegistry.id_of(target)))
 
 ## Modal "Demolish N buildings?" — the selection survives a cancel.
@@ -663,7 +663,7 @@ func _confirm_group_destroy(targets: Array[Node]) -> void:
 func _train_at_least_loaded(matches: Callable, action_id: String) -> void:
 	var target: Node = _least_loaded_selected(matches)
 	if target != null:
-		CommandBus.submit(ProductionCommand.make(0, "train",
+		CommandBus.submit(ProductionCommand.make(NetworkSession.local_player_id, "train",
 			EntityRegistry.id_of(target), action_id.trim_prefix("train:")))
 
 func _least_loaded_selected(matches: Callable) -> Node:
@@ -695,12 +695,12 @@ func _on_action_requested(action_id: String) -> void:
 			_formation = form
 		return
 	if action_id.begins_with("stance:"):
-		CommandBus.submit(UnitActionCommand.make(0,
+		CommandBus.submit(UnitActionCommand.make(NetworkSession.local_player_id,
 			"stance_" + action_id.trim_prefix("stance:"), _selection_ids()))
 		return
 	if action_id == "ungarrison":
 		if is_instance_valid(_world._selected_building):
-			CommandBus.submit(BuildingActionCommand.make(0, "ungarrison",
+			CommandBus.submit(BuildingActionCommand.make(NetworkSession.local_player_id, "ungarrison",
 				_selected_building_id()))
 		return
 	if action_id == "town_bell":
@@ -708,14 +708,14 @@ func _on_action_requested(action_id: String) -> void:
 		return
 	if action_id.begins_with("research:"):
 		if is_instance_valid(_world._selected_building):
-			CommandBus.submit(ProductionCommand.make(0, "research",
+			CommandBus.submit(ProductionCommand.make(NetworkSession.local_player_id, "research",
 				_selected_building_id(), action_id.substr("research:".length())))
 		return
 	if action_id.begins_with("market:"):
 		if is_instance_valid(_world._selected_building) and _world._selected_building is Market:
 			var parts: PackedStringArray = action_id.split(":")
 			if parts.size() == 3:
-				CommandBus.submit(MarketCommand.make(0, parts[1],
+				CommandBus.submit(MarketCommand.make(NetworkSession.local_player_id, parts[1],
 					_selected_building_id(), parts[2]))
 		return
 	match action_id:
@@ -734,7 +734,7 @@ func _on_action_requested(action_id: String) -> void:
 				return b.has_method("order_train") and (b is TownCenter
 					or b is TownCenterBuilding or b is TownCenterBuildable))
 			if tc != null:
-				CommandBus.submit(ProductionCommand.make(0, "train", EntityRegistry.id_of(tc)))
+				CommandBus.submit(ProductionCommand.make(NetworkSession.local_player_id, "train", EntityRegistry.id_of(tc)))
 		"train:militia", "train:pikeman", \
 		"train:menceyes_guard", \
 		"train:conquistador", "train:tidecaller", "train:sand_raider":
@@ -746,7 +746,7 @@ func _on_action_requested(action_id: String) -> void:
 		"train:battering_ram", "train:mangonel", "train:trebuchet":
 			_train_at_least_loaded(func(b: Node) -> bool: return b is SiegeWorkshop, action_id)
 		"trebuchet_deploy":
-			CommandBus.submit(UnitActionCommand.make(0, "trebuchet_toggle", _selection_ids()))
+			CommandBus.submit(UnitActionCommand.make(NetworkSession.local_player_id, "trebuchet_toggle", _selection_ids()))
 			for unit: Node in _world.live_selection():
 				if unit is Trebuchet:
 					_world.hud.call_deferred("_populate_trebuchet_buttons", unit)
@@ -754,29 +754,29 @@ func _on_action_requested(action_id: String) -> void:
 		"train:fishing_boat", "train:transport_ship", "train:war_galley":
 			_train_at_least_loaded(func(b: Node) -> bool: return b is Dock, action_id)
 		"advance_age":
-			CommandBus.submit(AdvanceAgeCommand.make(0))
+			CommandBus.submit(AdvanceAgeCommand.make(NetworkSession.local_player_id))
 		"gate_lock":
 			if is_instance_valid(_world._selected_building) and _world._selected_building is Gate:
-				CommandBus.submit(BuildingActionCommand.make(0, "gate_lock", _selected_building_id()))
+				CommandBus.submit(BuildingActionCommand.make(NetworkSession.local_player_id, "gate_lock", _selected_building_id()))
 		"unload":
 			for unit: Node in _world.live_selection():
 				if unit is TransportShip:
-					CommandBus.submit(TransportCommand.make(0, "unload_all",
+					CommandBus.submit(TransportCommand.make(NetworkSession.local_player_id, "unload_all",
 						EntityRegistry.id_of(unit)))
 					break
 		"scout_explore":
-			CommandBus.submit(UnitActionCommand.make(0, "scout_explore", _selection_ids()))
+			CommandBus.submit(UnitActionCommand.make(NetworkSession.local_player_id, "scout_explore", _selection_ids()))
 		"scout_explore_stop":
-			CommandBus.submit(UnitActionCommand.make(0, "scout_explore_stop", _selection_ids()))
+			CommandBus.submit(UnitActionCommand.make(NetworkSession.local_player_id, "scout_explore_stop", _selection_ids()))
 		"show_path":
 			# Debug visual, local-only: not a simulation mutation.
 			for unit: Node in _world.live_selection():
 				if is_instance_valid(unit) and unit.has_method("toggle_path_display"):
 					unit.toggle_path_display()
 		"stop":
-			CommandBus.submit(UnitActionCommand.make(0, "stop", _selection_ids()))
+			CommandBus.submit(UnitActionCommand.make(NetworkSession.local_player_id, "stop", _selection_ids()))
 		"hero_ability":
-			CommandBus.submit(UnitActionCommand.make(0, "hero_ability", _selection_ids()))
+			CommandBus.submit(UnitActionCommand.make(NetworkSession.local_player_id, "hero_ability", _selection_ids()))
 		"destroy":
 			if is_instance_valid(_world._selected_building):
 				# Demolish the WHOLE selected group — a double click selects
@@ -791,7 +791,7 @@ func _on_action_requested(action_id: String) -> void:
 				else:
 					_execute_group_destroy(targets)
 			elif not _world._selected_units.is_empty():
-				CommandBus.submit(UnitActionCommand.make(0, "delete", _selection_ids()))
+				CommandBus.submit(UnitActionCommand.make(NetworkSession.local_player_id, "delete", _selection_ids()))
 				_world._selected_units.clear()
 				SelectionManager.select([])
 		_:
@@ -799,7 +799,7 @@ func _on_action_requested(action_id: String) -> void:
 				var idx: int = int(action_id.substr(12))
 				for unit: Node in _world.live_selection():
 					if unit is TransportShip:
-						CommandBus.submit(TransportCommand.make(0, "unload_one",
+						CommandBus.submit(TransportCommand.make(NetworkSession.local_player_id, "unload_one",
 							EntityRegistry.id_of(unit), idx))
 						break
 

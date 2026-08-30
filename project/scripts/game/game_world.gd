@@ -129,6 +129,11 @@ func _ready() -> void:
 		if _ai_town_centers.size() > 0:
 			_ai_town_center = _ai_town_centers[1]
 
+	# A LAN client controls a rival seat — open the match looking at ITS base.
+	var local_id: int = NetworkSession.local_player_id
+	if local_id != 0 and _ai_town_centers.has(local_id):
+		camera.position = (_ai_town_centers[local_id] as Node2D).global_position
+
 	_setup._setup_ai_debug_overlay()
 
 	hud.action_requested.connect(_on_action_requested)

@@ -142,5 +142,5 @@ func _on_unit_selected_follow(_units: Array) -> void:
 	_following = false
 
 func _on_building_destroyed_alert(building: Node, owner_id: int) -> void:
-	if owner_id == 0 and building is Node2D and is_instance_valid(building):
+	if owner_id == NetworkSession.local_player_id and building is Node2D and is_instance_valid(building):
 		_alert_ring.record((building as Node2D).global_position)

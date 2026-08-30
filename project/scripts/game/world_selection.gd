@@ -41,7 +41,7 @@ func _select_building(building: Node) -> void:
 	_world._selected_building = building
 	_world._selected_buildings = [building] as Array[Node]
 	var bpid: Variant = building.get("player_id")
-	if is_double and bpid != null and (bpid as int) == 0:
+	if is_double and bpid != null and (bpid as int) == NetworkSession.local_player_id:
 		var candidates: Array[Node] = []
 		if is_instance_valid(_world.drop_off):
 			candidates.append(_world.drop_off)
@@ -52,7 +52,7 @@ func _select_building(building: Node) -> void:
 			if other == building or other.get_script() != bscript:
 				continue
 			var opid: Variant = other.get("player_id")
-			if opid == null or (opid as int) != 0:
+			if opid == null or (opid as int) != NetworkSession.local_player_id:
 				continue
 			var state_val: Variant = other.get("state")
 			if state_val != null and (state_val as int) != BuildingBase.BuildingState.COMPLETE:
@@ -151,12 +151,12 @@ func _finish_selection() -> void:
 				continue
 			if unit is Animal:
 				var animal: Animal = unit as Animal
-				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
+				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == NetworkSession.local_player_id:
 					best_dist = d
 					best_unit = unit
 				continue
 			var pid: Variant = unit.get("player_id")
-			if pid == null or (pid as int) != 0:
+			if pid == null or (pid as int) != NetworkSession.local_player_id:
 				continue
 			best_dist = d
 			best_unit = unit
@@ -174,7 +174,7 @@ func _finish_selection() -> void:
 					if not is_instance_valid(unit):
 						continue
 					var pid: Variant = unit.get("player_id")
-					if pid == null or (pid as int) != 0:
+					if pid == null or (pid as int) != NetworkSession.local_player_id:
 						continue
 					if unit.get_script() != unit_script:
 						continue
@@ -218,7 +218,7 @@ func _finish_selection() -> void:
 			_selected_node = enemy_unit
 			return
 		var wild_animal: Animal = _world._commands._find_animal_at(_drag_start)
-		if wild_animal != null and (wild_animal.current_state != Animal.AnimalState.OWNED or wild_animal.player_id != 0):
+		if wild_animal != null and (wild_animal.current_state != Animal.AnimalState.OWNED or wild_animal.player_id != NetworkSession.local_player_id):
 			wild_animal.set_selected(true)
 			_selected_node = wild_animal
 			return
@@ -236,13 +236,13 @@ func _finish_selection() -> void:
 				continue
 			if unit is Animal:
 				var animal: Animal = unit as Animal
-				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == 0:
+				if animal.current_state == Animal.AnimalState.OWNED and animal.player_id == NetworkSession.local_player_id:
 					if screen_rect.has_point(to_screen * (unit as Node2D).global_position):
 						animal.set_selected(true)
 						_world._selected_units.append(animal)
 				continue
 			var pid: Variant = unit.get("player_id")
-			if pid == null or (pid as int) != 0:
+			if pid == null or (pid as int) != NetworkSession.local_player_id:
 				continue
 			if screen_rect.has_point(to_screen * (unit as Node2D).global_position):
 				unit.set_selected(true)

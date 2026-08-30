@@ -17,6 +17,10 @@ func setup(world) -> void:
 func tick(delta: float) -> void:
 	if _wonder_timers.is_empty():
 		return
+	# Victory is decided by the simulation authority only; a client's mirror
+	# world receives the outcome over the wire (StateReplicator game-over).
+	if NetworkSession.is_client():
+		return
 	var hud_mgr: Node = _world.hud.get_node_or_null("HudManager")
 	for wonder_pid: int in _wonder_timers.keys():
 		_wonder_timers[wonder_pid] = (_wonder_timers[wonder_pid] as float) - delta
@@ -57,6 +61,8 @@ func _on_unit_died_check_victory(_unit: Node, owner_id: int) -> void:
 ## Conquest defeat check for any player. Deferred so queue_free() has
 ## processed before we scan. If the player is out, declare the other side winner.
 func _check_defeat_for(pid: int) -> void:
+	if NetworkSession.is_client():
+		return
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 	if _has_any_units(pid) or _has_any_buildings(pid):

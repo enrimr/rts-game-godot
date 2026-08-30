@@ -219,6 +219,7 @@ var _page_prev_btn: ActionButton = null
 var _page_next_btn: ActionButton = null
 
 func _ready() -> void:
+	local_player_id = NetworkSession.local_player_id
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	EventBus.resource_changed.connect(_on_resource_changed)
 	EventBus.technology_researched.connect(_on_technology_researched)
@@ -1709,7 +1710,7 @@ func _refresh_stats_row() -> void:
 			_carry_chip.visible = true
 
 func _on_hero_low_hp(player_id: int) -> void:
-	if player_id != 0:
+	if player_id != local_player_id:
 		return
 	_flash_hero_alert()
 
