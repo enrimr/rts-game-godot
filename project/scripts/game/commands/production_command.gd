@@ -4,7 +4,7 @@ class_name ProductionCommand extends GameCommand
 ## or start a technology. The building's own order_train validates the roster
 ## and cost, so the command stays generic across every production building.
 
-var verb: String = "train"   # "train" | "cancel_train" | "research"
+var verb: String = "train"   # "train" | "cancel_train" | "research" | "cancel_research"
 var building_id: int = 0
 var item: String = ""        # unit_id for "train", tech_id for "research"
 var index: int = -1          # queue slot for "cancel_train"
@@ -49,3 +49,5 @@ func execute(_world: Node2D) -> void:
 				building.call("order_cancel_train", index)
 		"research":
 			TechManager.start_research(player_id, item, building)
+		"cancel_research":
+			TechManager.cancel_research(building)

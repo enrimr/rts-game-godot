@@ -38,6 +38,9 @@ signal wonder_destroyed(player_id: int)
 
 # Research
 signal technology_researched(player_id: int, tech_id: String)
+## A building's active research started, finished or was cancelled — the HUD
+## refreshes that building's queue row and action buttons.
+signal research_state_changed(building: Node)
 signal unit_upgrade_applied(player_id: int, from_unit_id: String, to_unit_resource: UnitResource)
 signal age_advance_started(player_id: int, target_age: int)
 signal age_advance_complete(player_id: int, new_age: int)

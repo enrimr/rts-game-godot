@@ -13,7 +13,7 @@ foundation replays build on and the exact payload a LAN lockstep session will
 exchange (`save_log()` writes it as JSON lines, `command_from_dict()` rebuilds
 any entry).
 
-The ten command classes live in `scripts/game/commands/`:
+The nine command classes live in `scripts/game/commands/`:
 
 | Class | kind | Verbs / payload |
 |---|---|---|
@@ -21,12 +21,11 @@ The ten command classes live in `scripts/game/commands/`:
 | `UnitTargetCommand` | `unit_target` | attack / gather (restores depleted farms & fish traps, routes fishing boats to their dock; optional `drop_id` pins the drop-off, used by the AI) / build / drop_off / board (walk-then-board poll) / board_instant (the AI's distance-free garrison) / set_drop_off; unit IDs + target ID |
 | `UnitActionCommand` | `unit_action` | stop / delete / hero_ability / trebuchet_toggle / scout_explore(_stop); unit IDs |
 | `TransportCommand` | `transport` | unload_all / unload_one(index) / move_unload(pos); transport ID |
-| `ProductionCommand` | `production` | train(unit_id — empty = the TC's no-arg signature) / cancel_train(index) / research(tech_id); building ID |
+| `ProductionCommand` | `production` | train(unit_id — empty = the TC's no-arg signature) / cancel_train(index) / research(tech_id) / cancel_research (full refund); building ID |
 | `BuildingActionCommand` | `building_action` | set_rally(pos) / gate_lock / delete (routes through take_damage); building ID |
 | `MarketCommand` | `market` | buy / sell / hire (spawns the Fenicios mercenary at the rally point); building ID + item |
 | `PlaceBuildingCommand` | `place_building` | building type + positions (a wall drag is ONE command with the whole run) + rotation + builder IDs; pays per site, stops when the stockpile runs out. `instant` completes construction immediately (the AI); `EXTRA_SCENES` maps the AI-only `town_center_ai`; `last_placed` hands the created nodes back to the submission site (runtime only, never serialized). Costs resolve at execute time from `WorldPlacement.building_costs` — the single .tres-backed table player and AI both pay (the old hand-written player table missed university/market/temple, so the player built them for free) — and are never part of the payload, so a remote command cannot name its own price |
 | `AdvanceAgeCommand` | `advance_age` | player only |
-| `SpawnUnitCommand` | `spawn_unit` | unit type + position + cost dict — the AI's instant villager production (it does not queue at a TC); civ derived from the owner |
 
 Ownership is validated at execute time (`GameCommand._own_entities` keeps only
 entities whose `player_id` matches the command's), so a hostile or replayed
@@ -41,7 +40,10 @@ that, so identical simulations hand out identical IDs. `id_of()` lazily
 registers stragglers no signal covers.
 
 **The AI submits through the bus too**, with its own `player_id`: villager
-production (`SpawnUnitCommand`), gather assignments with pinned drop-offs,
+production queued at its Town Center (`ProductionCommand` — the SAME queue,
+cost and train time the player pays; the AI used to spawn villagers
+instantly, which unbalanced the early game), gather assignments with pinned
+drop-offs,
 training, research, age advance, batched attack orders (one command per
 target), naval patrol moves, transport loading (`board_instant`) and all
 building placement (`PlaceBuildingCommand` with `instant` + `costs_override`;

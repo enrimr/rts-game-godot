@@ -102,7 +102,6 @@ func test_every_command_kind_round_trips() -> void:
 		PlaceBuildingCommand.make(0, "house",
 			[Vector2(1.0, 2.0), Vector2(3.0, 4.0)] as Array[Vector2], PI * 0.5, ids, true),
 		AdvanceAgeCommand.make(2),
-		SpawnUnitCommand.make(1, "villager", Vector2(9.0, 9.0), {"food": 50}),
 	]
 	for cmd: GameCommand in commands:
 		var d: Dictionary = cmd.to_dict()
@@ -211,13 +210,11 @@ func test_set_drop_off_reassigns_own_units_only() -> void:
 	assert_eq(own.drop_off_target, camp, "own unit re-targets the new drop-off")
 	assert_null(foreign.drop_off_target, "foreign units are untouched")
 
-func test_spawn_unit_command_round_trips_costs() -> void:
-	var cmd: SpawnUnitCommand = SpawnUnitCommand.make(1, "villager",
-		Vector2(120.0, -40.0), {"food": 50})
-	var back: SpawnUnitCommand = CommandBus.command_from_dict(cmd.to_dict()) as SpawnUnitCommand
-	assert_eq(back.unit_type, "villager")
-	assert_eq(back.costs, {"food": 50})
-	assert_eq(back.pos, Vector2(120.0, -40.0))
+func test_cancel_research_round_trips() -> void:
+	var cmd: ProductionCommand = ProductionCommand.make(0, "cancel_research", 7)
+	var back: ProductionCommand = CommandBus.command_from_dict(cmd.to_dict()) as ProductionCommand
+	assert_eq(back.verb, "cancel_research")
+	assert_eq(back.building_id, 7)
 
 func test_move_formation_is_deterministic() -> void:
 	var units: Array[Node] = []

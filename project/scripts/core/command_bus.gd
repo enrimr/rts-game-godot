@@ -25,7 +25,6 @@ const KINDS: Dictionary = {
 	"market":          preload("res://scripts/game/commands/market_command.gd"),
 	"place_building":  preload("res://scripts/game/commands/place_building_command.gd"),
 	"advance_age":     preload("res://scripts/game/commands/advance_age_command.gd"),
-	"spawn_unit":      preload("res://scripts/game/commands/spawn_unit_command.gd"),
 }
 
 var _world: Node2D = null

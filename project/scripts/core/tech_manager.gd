@@ -74,6 +74,25 @@ func start_research(player_id: int, tech_id: String, building: Node) -> bool:
 		"timer": 0.0,
 		"total_time": tech.research_time,
 	}
+	EventBus.research_state_changed.emit(building)
+	return true
+
+## Aborts a building's active research with a full refund (AoE2 rule).
+func cancel_research(building: Node) -> bool:
+	if not is_instance_valid(building):
+		return false
+	var iid: int = building.get_instance_id()
+	if not _active_research.has(iid):
+		return false
+	var entry: Dictionary = _active_research[iid] as Dictionary
+	var tech: TechnologyResource = _all_techs.get(entry["tech_id"]) as TechnologyResource
+	var pid: int = entry["player_id"] as int
+	if tech != null:
+		if tech.cost_food > 0: ResourceManager.add_resource(pid, "food", float(tech.cost_food))
+		if tech.cost_wood > 0: ResourceManager.add_resource(pid, "wood", float(tech.cost_wood))
+		if tech.cost_gold > 0: ResourceManager.add_resource(pid, "gold", float(tech.cost_gold))
+	_active_research.erase(iid)
+	EventBus.research_state_changed.emit(building)
 	return true
 
 func _physics_process(delta: float) -> void:
@@ -92,6 +111,7 @@ func _physics_process(delta: float) -> void:
 			finished_keys.append(iid)
 			_apply_tech(entry["player_id"] as int, entry["tech_id"] as String)
 			EventBus.technology_researched.emit(entry["player_id"] as int, entry["tech_id"] as String)
+			EventBus.research_state_changed.emit(obj as Node)
 	for key: Variant in finished_keys:
 		_active_research.erase(key)
 

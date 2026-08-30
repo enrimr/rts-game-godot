@@ -224,6 +224,7 @@ func _ready() -> void:
 	EventBus.hero_respawned.connect(_on_hero_respawned)
 	EventBus.hero_low_hp.connect(_on_hero_low_hp)
 	EventBus.garrison_changed.connect(_on_garrison_changed)
+	EventBus.research_state_changed.connect(_on_research_state_changed)
 	EventBus.market_rate_changed.connect(_on_market_rate_changed)
 	EventBus.mercenary_hired.connect(_on_mercenary_hired)
 	EventBus.building_construction_complete.connect(_on_building_construction_complete)
@@ -882,6 +883,7 @@ func _on_building_selected(building: Node) -> void:
 	else:
 		_populate_buttons(BUILDING_ACTIONS)
 	_refresh_garrison_ui(building)
+	_refresh_research_slot()
 
 ## Garrisonable buildings (TC, towers) get an eject button and an occupancy
 ## readout appended to whatever the type dispatch above built.
@@ -1453,6 +1455,43 @@ func _build_hero_respawn_bar() -> void:
 	_hero_respawn_bar.add_theme_stylebox_override("fill", fill)
 	detail_panel.add_child(_hero_respawn_bar)
 
+## Live refresh: starting/finishing/cancelling research rebuilds the selected
+## building's panel — before this, the "Researching…" bar and the queue slot
+## only appeared when the building was re-selected.
+func _on_research_state_changed(building: Node) -> void:
+	if is_instance_valid(_selected_building) and _selected_building == building:
+		_on_building_selected(building)
+
+## Research shows in the SAME queue row as unit training, as a slot with a
+## progress veil and a cancel button (full refund), so the building's "what is
+## it making" reads identically for units and technologies.
+func _refresh_research_slot() -> void:
+	if not is_instance_valid(_train_queue_row):
+		return
+	var old: Node = _train_queue_row.get_node_or_null("ResearchSlot")
+	if old != null:
+		old.name = "ResearchSlotFreeing"   # frees end-of-frame; keep the name free
+		old.queue_free()
+	if not is_instance_valid(_selected_building):
+		return
+	var tech: TechnologyResource = TechManager.get_researching_tech(_selected_building)
+	if tech == null:
+		return
+	var initials: String = ""
+	for part: String in tech.display_name.split(" "):
+		if not part.is_empty():
+			initials += part[0]
+	var slot: TrainQueueSlot = TrainQueueSlot.new()
+	slot.name = "ResearchSlot"
+	_train_queue_row.add_child(slot)
+	slot.setup(0, initials.left(2).to_upper(), Color(0.25, 0.55, 0.75), true, false, null)
+	slot.tooltip_text = tech.display_name
+	slot.set_progress(TechManager.get_research_progress(_selected_building))
+	slot.cancel_requested.connect(func(_idx: int) -> void:
+		if is_instance_valid(_selected_building):
+			CommandBus.submit(ProductionCommand.make(0, "cancel_research",
+				EntityRegistry.id_of(_selected_building))))
+
 func _build_research_bar(building: Node) -> void:
 	if not is_instance_valid(building):
 		return
@@ -1728,15 +1767,20 @@ func _on_train_queue_changed(building: Node, queue: Array, max_queue: int) -> vo
 		slot.setup(i, entry["label"] as String, entry["color"] as Color,
 			i == 0, i == 0 and pop_blocked, icon)
 		slot.cancel_requested.connect(_on_cancel_train_slot)
+	_refresh_research_slot()
 
 func _update_train_queue_progress() -> void:
 	if not is_instance_valid(_selected_building):
 		return
+	var research_slot: Node = _train_queue_row.get_node_or_null("ResearchSlot")
+	if research_slot is TrainQueueSlot:
+		(research_slot as TrainQueueSlot).set_progress(
+			TechManager.get_research_progress(_selected_building))
 	if not _selected_building.has_method("get_train_progress"):
 		return
 	var p: float = _selected_building.get_train_progress() as float
 	var first_slot: Node = _train_queue_row.get_child(0) if _train_queue_row.get_child_count() > 0 else null
-	if first_slot is TrainQueueSlot:
+	if first_slot is TrainQueueSlot and first_slot.name != &"ResearchSlot":
 		(first_slot as TrainQueueSlot).set_progress(p)
 
 func _on_building_destroyed(building: Node, _player_id: int) -> void:

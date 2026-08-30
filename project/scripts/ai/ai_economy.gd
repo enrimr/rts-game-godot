@@ -119,15 +119,22 @@ func redirect_villagers_to_drop_off(new_drop: Node2D, _rtype: ResourceNode.Resou
 		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "set_drop_off", ids,
 			EntityRegistry.id_of(new_drop)))
 
+## Queues a villager at the AI's Town Center — the SAME queue, cost and train
+## time the player pays. The old instant spawn skipped the wait entirely and
+## unbalanced the early game. At most 2 queued at a time, so the food bank
+## stays honest for the age-up logic.
+const MAX_AI_TC_QUEUE: int = 2
+
 func spawn_villager() -> void:
-	if not is_instance_valid(_ai.town_center):
+	if not is_instance_valid(_ai.town_center) or not _ai.town_center.has_method("order_train"):
+		return
+	if (_ai.town_center.get_queue() as Array).size() >= MAX_AI_TC_QUEUE:
 		return
 	if not ResourceManager.can_afford(_ai.player_id, {"food": 50}):
 		return
-	_ai.debug_log("SPAWN villager")
-	var pos: Vector2 = _ai.town_center.global_position \
-		+ Vector2(MatchRng.randf_range(-50.0, 50.0), 60.0)
-	CommandBus.submit(SpawnUnitCommand.make(_ai.player_id, "villager", pos, {"food": 50}))
+	_ai.debug_log("QUEUE villager")
+	CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
+		EntityRegistry.id_of(_ai.town_center)))
 
 func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> void:
 	var age: int = AgeManager.get_age(_ai.player_id)
