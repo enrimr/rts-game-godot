@@ -396,7 +396,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	for entry: Variant in _active_actions:
 		var data: Dictionary = entry as Dictionary
 		var mapped: int = data.get("key", -1) as int
-		if mapped == key.keycode or mapped == key.physical_keycode:
+		# macOS keyboards: the big "delete" key is BACKSPACE (KEY_DELETE is
+		# fn+delete) — without the alias the destroy hotkey was dead on Mac.
+		var is_match: bool = mapped == key.keycode or mapped == key.physical_keycode \
+			or (mapped == KEY_DELETE and (key.keycode == KEY_BACKSPACE
+				or key.physical_keycode == KEY_BACKSPACE))
+		if is_match:
 			_on_action_button_pressed(data["id"] as String)
 			get_viewport().set_input_as_handled()
 			return
