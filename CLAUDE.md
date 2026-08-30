@@ -310,7 +310,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Cover Fire button (move into range then attack)
 - AoE2 combat stances: Aggressive / Defensive (leash + return) / Stand Ground / No Attack
 - Group formations: Line (melee front, ranged behind), Box, Spread, Rings — selectable per military selection
-- Garrison: land units shelter in the TC (10) and Watch Towers (5); each occupant adds an arrow to the building's volley (the TC only shoots while garrisoned); occupants die if the building falls
+- Garrison: land units shelter in the TC (10) and Watch Towers (5); each occupant adds an arrow to the building's volley (the TC only shoots while garrisoned); occupants die if the building falls. Right-click garrisons military ONLY (a villager's right-click on an own building is always build/repair); villagers use their Garrison button (map-click pending action) or the TC's Town Bell (nearest-with-room assignment, second ring ejects everyone)
 - Minimum range mechanic (siege)
 - Auto-attack range detection via Area2D nodes (no per-frame queries)
 

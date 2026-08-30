@@ -152,10 +152,16 @@ by the same static helpers the tests exercise.
 never ships or siege — and only into COMPLETE buildings; occupants are hidden
 and paused, ejected via the spawn spiral, and DIE if the building is destroyed
 (the AoE2 rule). WatchTower holds 5, the player's TC 10. Right-clicking an own
-TC/tower with military selected submits a `UnitTargetCommand` `garrison`
-(walk-then-enter poll); villagers keep their drop-off/repair gestures. The
-shared building volley (`_ranged_attack_arrows()`) adds one arrow per
-occupant — the TC only shoots while garrisoned.
+TC/tower garrisons MILITARY only (`WorldCommands.garrisons_by_right_click` —
+Villager inherits `is_combat_unit() == true`, so without the explicit
+exclusion villagers entered buildings they were sent to repair). Villagers
+shelter through two explicit controls: the Garrison button on their panel
+(a pending map-click action — click one of your buildings) and the Town Bell
+on the TC (one ring shelters every villager in its nearest TC/tower with
+room via the pure `bell_assignments` — overflow spills to the next building;
+ringing while anyone is sheltered ejects every garrison). The shared building
+volley (`_ranged_attack_arrows()`) adds one arrow per occupant — the TC only
+shoots while garrisoned.
 
 **Damaged buildings burn progressively** (`BuildingDamageFx`, attached by
 `BuildingBase` and `TownCenterBuilding`): smoke from the FIRST point of damage, flame tongues
