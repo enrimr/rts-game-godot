@@ -379,7 +379,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 
 ### Known Limitations (Planned for Future Milestones)
 
-- Multiplayer: phases 1–2 shipped (LAN host-authoritative session + unified lobby + client→host command pipe + host→client state replication at 15 Hz with puppet mirror worlds and interpolation via `StateReplicator`); pending polish: queue/market/FX/weather mirroring, reconnection, Internet (UPnP)
+- Multiplayer: phases 1–2 shipped (LAN host-authoritative session + unified lobby + client→host command pipe + host→client state replication at 15 Hz with puppet mirror worlds and interpolation via `StateReplicator`); queue/research/market/weather/arrow mirroring shipped; pending: pause sync, reconnection, Internet (UPnP)
 - Tutorial mode exists but incomplete
 - Some unique unit abilities partially implemented
 - Mercenary system exists but UI incomplete

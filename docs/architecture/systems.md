@@ -154,9 +154,18 @@ phase-2 interpolation buffer absorbs latency).
   selection filters, fog perspective, minimap, alerts and the game-over
   title all follow `NetworkSession.local_player_id` (0 offline), and
   victory is decided only by the authority.
-- **Phase 2 pending polish**: research/training queue mirroring, market
-  rates, projectile/FX echo, weather sync, resource-node amounts, save/
-  reconnect. Migration to lockstep stays open: the command wire format is
+- **Phase 2 polish (shipped)**: building rows carry extras — production
+  queue + train timer (puppets mirror them and never advance training
+  locally; `train_queue_changed` re-emits on composition change), active
+  research (`TechManager.apply_remote_research`/`clear_remote_research`)
+  and market offsets; researched-tech lists and resource-node amounts ride
+  a slow ~1 Hz channel; weather replicates verbatim
+  (`WeatherManager.apply_remote`, client state machine gated off — the
+  MatchRng streams diverge once the host consumes AI draws); arrows echo
+  as visual-only projectiles (`EventBus.projectile_spawned` → client
+  spawns `Arrow` with `echo = true`); `take_damage` is a no-op on puppets;
+  game-speed buttons hidden on clients.
+- **Phase 2 still pending**: pause sync, reconnection, siege-stone echo. Migration to lockstep stays open: the command wire format is
   shared, only the return channel changes — it requires the
   simulation-determinism milestone (movement off Godot physics).
 
