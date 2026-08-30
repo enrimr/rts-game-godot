@@ -90,6 +90,26 @@ func host_game(port: int = DEFAULT_PORT) -> Error:
 	roster_changed.emit()
 	return OK
 
+## The LAN address other players must type to join (best-effort pick of the
+## private-range interface; shown in the host's lobby).
+static func local_ipv4() -> String:
+	var fallback: String = "127.0.0.1"
+	for addr: String in IP.get_local_addresses():
+		if addr.contains(":") or addr.begins_with("127.") or addr.begins_with("169.254."):
+			continue
+		if addr.begins_with("192.168.") or addr.begins_with("10.") or _is_172_private(addr):
+			return addr
+		if fallback == "127.0.0.1":
+			fallback = addr
+	return fallback
+
+## 172.16.0.0/12 spans 172.16. through 172.31. (hotspots often hand out 172.20.x).
+static func _is_172_private(addr: String) -> bool:
+	if not addr.begins_with("172."):
+		return false
+	var second: int = int(addr.get_slice(".", 1))
+	return second >= 16 and second <= 31
+
 ## Human seats still free: "open" slots not yet taken by a connected client.
 func open_seats_left() -> int:
 	var open_count: int = 0

@@ -165,10 +165,22 @@ func _build() -> void:
 
 	if lan_mode:
 		left.add_child(_make_sep())
+		var players_row: HBoxContainer = HBoxContainer.new()
+		players_row.add_theme_constant_override("separation", 12)
+		left.add_child(players_row)
 		var players_header: Label = _make_label(tr("LAN_PLAYERS"))
 		players_header.add_theme_color_override("font_color", Color(0.55, 0.85, 0.55))
 		players_header.add_theme_font_size_override("font_size", 21)
-		left.add_child(players_header)
+		players_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		players_row.add_child(players_header)
+		if NetworkSession.is_host():
+			# The address the other players must type to join.
+			var ip_label: Label = Label.new()
+			ip_label.text = tr("LAN_HOST_IP") % [NetworkSession.local_ipv4(), NetworkSession.DEFAULT_PORT]
+			ip_label.add_theme_font_size_override("font_size", 17)
+			ip_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.45))
+			ip_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			players_row.add_child(ip_label)
 		_players_panel = VBoxContainer.new()
 		_players_panel.add_theme_constant_override("separation", 6)
 		left.add_child(_players_panel)

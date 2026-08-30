@@ -118,7 +118,7 @@ func _on_host_pressed() -> void:
 	if NetworkSession.host_game() != OK:
 		_status.text = tr("LAN_PORT_ERROR")
 		return
-	_status.text = tr("LAN_WAITING") % [_local_ipv4(), NetworkSession.DEFAULT_PORT]
+	_status.text = tr("LAN_WAITING") % [NetworkSession.local_ipv4(), NetworkSession.DEFAULT_PORT]
 	_open_match_lobby()
 
 func _on_join_pressed() -> void:
@@ -157,10 +157,3 @@ func _close_match_lobby() -> void:
 	if is_instance_valid(_match_lobby):
 		_match_lobby.queue_free()
 	_match_lobby = null
-
-func _local_ipv4() -> String:
-	for addr: String in IP.get_local_addresses():
-		if addr.begins_with("192.168.") or addr.begins_with("10.") \
-				or addr.begins_with("172.16.") or addr.begins_with("172.17."):
-			return addr
-	return "127.0.0.1"
