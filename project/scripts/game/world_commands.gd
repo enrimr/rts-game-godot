@@ -753,12 +753,20 @@ func _on_action_requested(action_id: String) -> void:
 			CommandBus.submit(UnitActionCommand.make(0, "hero_ability", _selection_ids()))
 		"destroy":
 			if is_instance_valid(_world._selected_building):
-				var target: Node = _world._selected_building
-				if target.has_method("set_selected"):
-					target.set_selected(false)
+				# Demolish the WHOLE selected group — a double click selects
+				# every building of the type, and Delete must honour that.
+				var targets: Array[Node] = _world.live_selected_buildings().duplicate()
+				if targets.is_empty():
+					targets = [_world._selected_building] as Array[Node]
 				_world._selected_building = null
-				CommandBus.submit(BuildingActionCommand.make(0, "delete",
-					EntityRegistry.id_of(target)))
+				_world._selected_buildings.clear()
+				for target: Node in targets:
+					if not is_instance_valid(target):
+						continue
+					if target.has_method("set_selected"):
+						target.set_selected(false)
+					CommandBus.submit(BuildingActionCommand.make(0, "delete",
+						EntityRegistry.id_of(target)))
 			elif not _world._selected_units.is_empty():
 				CommandBus.submit(UnitActionCommand.make(0, "delete", _selection_ids()))
 				_world._selected_units.clear()
