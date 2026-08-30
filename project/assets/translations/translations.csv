@@ -412,3 +412,15 @@ TOOLTIP_GARRISON,Click one of your buildings to shelter inside,Haz clic en un ed
 ACTION_TOWN_BELL,Town Bell,Campana
 TOOLTIP_TOWN_BELL,Ring: villagers shelter in the nearest building. Ring again to release everyone,Tocar: los aldeanos se guarecen en el edificio más cercano. Vuelve a tocar para desalojar a todos
 UI_CONFIRM_DESTROY_GROUP,Demolish %d buildings?,¿Demoler %d edificios?
+MENU_LAN,LAN Multiplayer,Multijugador LAN
+LAN_TITLE,LAN Multiplayer,Multijugador LAN
+LAN_HINT,Host a match or join one on your local network. The match uses the host's last lobby settings.,Crea una partida o únete a una en tu red local. La partida usa la última configuración de lobby del host.
+LAN_HOST,Host match,Crear partida
+LAN_START,Start match,Empezar partida
+LAN_JOIN,Join,Unirse
+LAN_WAITING,Waiting for players… your IP: %s (port %d),Esperando jugadores… tu IP: %s (puerto %d)
+LAN_PLAYER_JOINED,Player %d joined! You can start.,¡Se ha unido el jugador %d! Ya puedes empezar.
+LAN_CONNECTING,Connecting…,Conectando…
+LAN_CONNECTED_WAIT,"Connected! Waiting for the host to start…","¡Conectado! Esperando a que el host empiece…"
+LAN_JOIN_FAILED,Could not connect. Check the IP and that the host created the match.,No se pudo conectar. Revisa la IP y que el host haya creado la partida.
+LAN_PORT_ERROR,Could not open the port (already in use?).,No se pudo abrir el puerto (¿ya está en uso?).

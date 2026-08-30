@@ -94,6 +94,46 @@ determinism, replayed-entry equivalence), `tests/unit/test_match_rng.gd`
 exclusively through the bus: move + train + place, then a wait that asserts
 the rival AI's commands land in the same log, all entries rebuildable).
 
+## Multiplayer (host-authoritative)
+
+`NetworkSession` (autoload, `scripts/multiplayer/network_session.gd`) runs a
+host-authoritative session over ENet, designed LAN-first but Internet-capable
+(the transport is identical; Internet later adds UPnP connectivity and the
+phase-2 interpolation buffer absorbs latency).
+
+- **The host is the single simulation authority.** On a client,
+  `CommandBus.submit` redirects every command over the wire instead of
+  executing; the host receives it, REPLACES its `player_id` with the sender's
+  assigned player (identity comes from the connection, never the payload — a
+  hostile client cannot order another player's units), and runs it through
+  `CommandBus.submit_remote`.
+- **Match start**: the host freezes a `snapshot_config()` of MatchConfig plus
+  a shared seed (`MatchConfig.forced_seed`, read by `GameWorld._ready` ahead
+  of the CALIMA_SEED env) and broadcasts it; every machine loads game_world
+  with identical settings, so map generation and `EntityRegistry` hand out
+  IDENTICAL entity IDs on all sides — command payloads reference entities by
+  those IDs across the wire.
+- **MP rivals are humans**: `WorldSetup` spawns their starting assets (TC,
+  villagers, scout, hero) but skips the `AIPlayer` brain when
+  `NetworkSession.is_online()`.
+- **Lobby**: the main menu's "LAN Multiplayer" panel — Host match (shows the
+  local IP, Start enables when a player joins) / IP + Join (auto-starts when
+  the host does). Leaving/back closes the peer.
+- **Phase 2 (pending)**: host→client state replication (delta-compressed
+  snapshots ~15 Hz + client interpolation) so the client SEES the
+  authoritative simulation, plus the local_player_id sweep (HUD/selection/
+  fog currently hardcode player 0). Until then a client's mirror world does
+  not track the host. Migration to lockstep stays open: the command wire
+  format is shared, only the return channel changes — it requires the
+  simulation-determinism milestone (movement off Godot physics).
+
+Gated by `tests/unit/test_network_session.gd` (config snapshot round-trip,
+JSON-serializable, offline defaults) and the two-process
+`tools/check_net_smoke.tscn`: a real client joins a real host, receives the
+config (seed + assigned player 1), boots the mirror world, sends a move
+command for its scout by entity ID, and the host asserts the command arrived
+stamped as player 1 AND that the scout physically moved in its simulation.
+
 ## Economy System
 
 Resources: Food, Wood, Gold, Stone (matching AoE2 exactly).

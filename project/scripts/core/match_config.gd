@@ -29,6 +29,10 @@ var weather_frequency: int  = 1   # 0=Off, 1=Normal, 2=Frequent, 3=Extreme
 # Hero gender selection
 var hero_gender: int = HeroGender.RANDOM
 
+# Non-zero forces the world seed — set by NetworkSession so every machine in a
+# multiplayer match generates the identical map (and identical entity IDs).
+var forced_seed: int = 0
+
 # Compatibility accessor — first rival's civ id
 var rival_civ_id: String:
 	get:

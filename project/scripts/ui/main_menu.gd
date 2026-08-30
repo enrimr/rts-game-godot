@@ -18,6 +18,10 @@ func _ready() -> void:
 	_build_settings_button()
 	_build_how_to_play_button()
 	_build_continue_button()
+	_build_lan_button()
+	# Coming back from an aborted session must not leave a half-open peer.
+	if NetworkSession.is_online():
+		NetworkSession.leave()
 	_adapt_to_viewport()
 	get_viewport().size_changed.connect(_adapt_to_viewport)
 	if not GameSettings.tutorial_seen:
@@ -70,6 +74,140 @@ func _build_continue_button() -> void:
 	container.move_child(btn, _play_button.get_index() + 1)
 	_continue_button = btn
 	btn.pressed.connect(_open_load_picker)
+
+# --- LAN multiplayer (host-authoritative; see NetworkSession) ---
+
+var _lan_button: Button = null
+
+func _build_lan_button() -> void:
+	var btn: Button = Button.new()
+	btn.text = tr("MENU_LAN")
+	btn.custom_minimum_size = Vector2(160, 40)
+	btn.add_theme_font_size_override("font_size", 22)
+	btn.focus_mode = Control.FOCUS_NONE
+	var container: Node = _play_button.get_parent()
+	container.add_child(btn)
+	container.move_child(btn, _play_button.get_index() + 2)
+	_lan_button = btn
+	btn.pressed.connect(_open_lan_panel)
+
+func _local_ipv4() -> String:
+	for addr: String in IP.get_local_addresses():
+		if addr.begins_with("192.168.") or addr.begins_with("10.") \
+				or addr.begins_with("172.16.") or addr.begins_with("172.17."):
+			return addr
+	return "127.0.0.1"
+
+func _open_lan_panel() -> void:
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
+	overlay.add_child(center)
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(480, 0)
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.08, 0.12, 0.97)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	card.add_theme_stylebox_override("panel", style)
+	center.add_child(card)
+
+	var margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 28)
+	card.add_child(margin)
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 12)
+	margin.add_child(vbox)
+
+	var title: Label = Label.new()
+	title.text = tr("LAN_TITLE")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", Color(0.90, 0.82, 0.52))
+	vbox.add_child(title)
+
+	var status: Label = Label.new()
+	status.text = tr("LAN_HINT")
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status.add_theme_font_size_override("font_size", 15)
+	status.add_theme_color_override("font_color", Color(0.75, 0.78, 0.85))
+	vbox.add_child(status)
+
+	var host_btn: Button = Button.new()
+	host_btn.text = tr("LAN_HOST")
+	host_btn.add_theme_font_size_override("font_size", 20)
+	vbox.add_child(host_btn)
+
+	var start_btn: Button = Button.new()
+	start_btn.text = tr("LAN_START")
+	start_btn.add_theme_font_size_override("font_size", 20)
+	start_btn.disabled = true
+	start_btn.visible = false
+	vbox.add_child(start_btn)
+
+	var join_row: HBoxContainer = HBoxContainer.new()
+	join_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(join_row)
+	var ip_edit: LineEdit = LineEdit.new()
+	ip_edit.text = "192.168.1."
+	ip_edit.placeholder_text = "IP"
+	ip_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	join_row.add_child(ip_edit)
+	var join_btn: Button = Button.new()
+	join_btn.text = tr("LAN_JOIN")
+	join_btn.add_theme_font_size_override("font_size", 20)
+	join_row.add_child(join_btn)
+
+	var back_btn: Button = Button.new()
+	back_btn.text = tr("SAVE_PICKER_CLOSE") if tr("SAVE_PICKER_CLOSE") != "SAVE_PICKER_CLOSE" else "Volver"
+	vbox.add_child(back_btn)
+
+	host_btn.pressed.connect(func() -> void:
+		if NetworkSession.host_game() != OK:
+			status.text = tr("LAN_PORT_ERROR")
+			return
+		host_btn.disabled = true
+		join_row.visible = false
+		start_btn.visible = true
+		status.text = tr("LAN_WAITING") % [_local_ipv4(), NetworkSession.DEFAULT_PORT])
+	NetworkSession.peer_joined.connect(func(_peer: int, player_id: int) -> void:
+		if is_instance_valid(status):
+			status.text = tr("LAN_PLAYER_JOINED") % player_id
+		if is_instance_valid(start_btn):
+			start_btn.disabled = false)
+	start_btn.pressed.connect(func() -> void:
+		start_btn.disabled = true
+		NetworkSession.start_match())
+	join_btn.pressed.connect(func() -> void:
+		if NetworkSession.join_game(ip_edit.text.strip_edges()) != OK:
+			status.text = tr("LAN_JOIN_FAILED")
+			return
+		join_btn.disabled = true
+		host_btn.visible = false
+		status.text = tr("LAN_CONNECTING"))
+	NetworkSession.joined_host.connect(func() -> void:
+		if is_instance_valid(status):
+			status.text = tr("LAN_CONNECTED_WAIT"))
+	NetworkSession.join_failed.connect(func() -> void:
+		if is_instance_valid(status):
+			status.text = tr("LAN_JOIN_FAILED")
+		if is_instance_valid(join_btn):
+			join_btn.disabled = false
+		if is_instance_valid(host_btn):
+			host_btn.visible = true)
+	back_btn.pressed.connect(func() -> void:
+		NetworkSession.leave()
+		overlay.queue_free())
 
 func _open_load_picker() -> void:
 	var overlay: ColorRect = ColorRect.new()

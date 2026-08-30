@@ -291,16 +291,20 @@ func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	PopulationManager.add_unit(rival_id)
 	EventBus.unit_spawned.emit(scout, rival_id)
 
-	var ai: Node = Node.new()
-	ai.set_script(load("res://scripts/ai/ai_player.gd"))
-	ai.set("player_id", rival_id)
-	_world.add_child(ai)
-	ai.set("town_center", tc)
-	ai.set("units_layer", _world.units_layer)
-	ai.set("buildings_layer", _world.buildings_layer)
-	ai.set("drop_off", ai_drop_off if ai_drop_off != null else tc)
-	# AI targets player TC initially; will switch dynamically in Fase 4
-	ai.set("enemy_town_center", _world.drop_off)
+	# Multiplayer rivals are HUMANS: they get the same starting assets (TC,
+	# villagers, scout, hero) but no AI brain — their orders arrive over the
+	# network as commands.
+	if not NetworkSession.is_online():
+		var ai: Node = Node.new()
+		ai.set_script(load("res://scripts/ai/ai_player.gd"))
+		ai.set("player_id", rival_id)
+		_world.add_child(ai)
+		ai.set("town_center", tc)
+		ai.set("units_layer", _world.units_layer)
+		ai.set("buildings_layer", _world.buildings_layer)
+		ai.set("drop_off", ai_drop_off if ai_drop_off != null else tc)
+		# AI targets player TC initially; will switch dynamically in Fase 4
+		ai.set("enemy_town_center", _world.drop_off)
 
 	_spawn_hero(rival_id, tc_pos)
 

@@ -38,7 +38,7 @@ docs/             ← Architecture and design documentation
 
 1. **EventBus pattern** — cross-system communication happens exclusively through signals on `EventBus` (autoload). Never call methods across system boundaries directly.
 2. **Data-driven resources** — all tuneable values live in `Resource` subclasses under `resources/`. Scripts read from resources; they do not hardcode stats.
-3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `EntityRegistry`, `CommandBus`, `MatchRng`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager`, `WeatherManager`, `AgeManager`, `AudioManager`, `TerrainManager`, `PopulationManager`, `SaveManager`, `GameSettings` — access these by name anywhere.
+3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `EntityRegistry`, `CommandBus`, `MatchRng`, `NetworkSession`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager`, `WeatherManager`, `AgeManager`, `AudioManager`, `TerrainManager`, `PopulationManager`, `SaveManager`, `GameSettings` — access these by name anywhere.
 4. **Type hints everywhere** — every GDScript function must declare parameter types and return type.
 5. **Area2D for range detection** — attack ranges use Area2D nodes that monitor for enemies entering/leaving range, avoiding per-frame physics queries.
 6. **Outward spiral spawn positioning** — units spawn at free positions found via outward spiral physics query, preventing overlap.
@@ -69,6 +69,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/command_bus.gd` | `CommandBus` autoload — single entry point for player intents: tick-stamped command log (replay/LAN foundation), `submit`/`command_from_dict`/`save_log`; bound per match via `start_match(world)` |
 | `project/scripts/core/entity_registry.gd` | `EntityRegistry` autoload — stable per-match numeric IDs for units/buildings/resource nodes (tree-order rescan + spawn-signal registration), `id_of`/`resolve` |
 | `project/scripts/core/match_rng.gd` | `MatchRng` autoload — the single seeded RNG stream for all simulation randomness; seeded per match by `GameWorld._ready`, mid-match state persisted by `SaveManager` (as String — 64-bit vs JSON doubles), global `randf()` reserved for local audio/visual noise |
+| `project/scripts/multiplayer/network_session.gd` | `NetworkSession` autoload — host-authoritative LAN/Internet session over ENet: host/join/leave, peer→player map, lobby handshake (`snapshot_config`/`apply_config` + shared `MatchConfig.forced_seed` → identical worlds and entity IDs on every machine), client→host command pipe (`CommandBus.submit` redirects on clients; the host stamps the SENDER's player_id — the wire never decides identity). MP rivals get starting assets but no AI brain (`WorldSetup` gate). Phase 2 pending: host→client state replication |
 | **Unit Classes** ||
 | `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation; RVO tuned in _tune_avoidance (max_speed from move_speed ×1.6 — the engine default 100 capped fast units; neighbor_distance 80, dynamic avoidance_priority: movers 0.7, idle 0.4 so crowds part); AoE2 combat stances (`Stance` enum + `set_stance`; every auto-acquisition funnels through `_auto_engage` so PASSIVE vetoes, STAND_GROUND never chases and DEFENSIVE chases up to `DEFENSIVE_LEASH` from its anchor — explicit orders always chase); `is_amphibious()` decides water permission per unit (false here — the ship/Tidecaller overrides open the sea) and feeds every `TerrainManager` query |
 | `project/scripts/units/villager.gd` | Gathering and building logic, work/walk animation differentiation |
@@ -230,6 +231,9 @@ $GODOT --headless --path project res://tools/check_command_bus.tscn   # env: CAL
 $GODOT --headless --path project res://tools/check_sim_fingerprint.tscn   # env: CALIMA_SEED, CALIMA_MAP, CALIMA_TICKS
 # Volcanic Coast: a unit ordered across a caldera must route AROUND it and arrive
 $GODOT --headless --path project res://tools/check_volcanic_nav.tscn   # env: CALIMA_SEED
+# Multiplayer smoke: run BOTH (host first, backgrounded) — client joins, sends a command, host executes it
+CALIMA_NET_ROLE=host   $GODOT --headless --path project res://tools/check_net_smoke.tscn &
+CALIMA_NET_ROLE=client $GODOT --headless --path project res://tools/check_net_smoke.tscn   # env: CALIMA_NET_PORT
 # Amphibious: the Tidecaller swims off the beach, land units are refused water, passengers disembark dry
 $GODOT --headless --path project res://tools/check_amphibious.tscn
 # Naval civ identity (real renderer, not headless): every hull dressed for every civ
@@ -373,7 +377,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 
 ### Known Limitations (Planned for Future Milestones)
 
-- No multiplayer (LAN planned for M7)
+- Multiplayer: phase 1 shipped (LAN host-authoritative session + lobby + client→host command pipe); phase 2 pending: host→client state replication with interpolation — until then a client cannot SEE the authoritative simulation
 - Tutorial mode exists but incomplete
 - Some unique unit abilities partially implemented
 - Mercenary system exists but UI incomplete

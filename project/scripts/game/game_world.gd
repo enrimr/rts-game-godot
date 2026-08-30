@@ -81,7 +81,10 @@ func _ready() -> void:
 		# Tooling hook: a fixed seed makes visual-review runs reproducible
 		# (see tools/screenshot_runner.gd).
 		var env_seed: String = OS.get_environment("CALIMA_SEED")
-		if not env_seed.is_empty():
+		if MatchConfig.forced_seed != 0:
+			# Multiplayer: every machine generates the identical world.
+			_rng.seed = MatchConfig.forced_seed
+		elif not env_seed.is_empty():
 			_rng.seed = int(env_seed)
 		else:
 			_rng.randomize()

@@ -44,7 +44,24 @@ func current_tick() -> int:
 	return Engine.get_physics_frames() - _tick0
 
 func submit(command: GameCommand) -> void:
-	if command == null or not is_instance_valid(_world):
+	if command == null:
+		return
+	# Multiplayer client: the host is the single simulation authority — ship
+	# the command over the wire instead of executing locally.
+	if NetworkSession.is_client():
+		NetworkSession.send_command(command)
+		return
+	_log_and_execute(command)
+
+## Host-side entry for commands that arrived over the network (identity
+## already stamped by NetworkSession from the sender's connection).
+func submit_remote(command: GameCommand) -> void:
+	if command == null:
+		return
+	_log_and_execute(command)
+
+func _log_and_execute(command: GameCommand) -> void:
+	if not is_instance_valid(_world):
 		return
 	var entry: Dictionary = command.to_dict()
 	entry["t"] = current_tick()
