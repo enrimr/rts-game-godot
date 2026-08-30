@@ -165,7 +165,19 @@ phase-2 interpolation buffer absorbs latency).
   as visual-only projectiles (`EventBus.projectile_spawned` → client
   spawns `Arrow` with `echo = true`); `take_damage` is a no-op on puppets;
   game-speed buttons hidden on clients.
-- **Phase 2 still pending**: pause sync, reconnection, siege-stone echo. Migration to lockstep stays open: the command wire format is
+- **Robustness (shipped)**: a client dropping or surrendering mid-match
+  becomes a resignation (`NetworkSession.player_resigned` →
+  `WorldVictory.handle_resignation`, any victory mode — the match ends when
+  nobody is left to fight); a vanished host raises `connection_lost` on
+  clients (dialog → menu); the host's pause replicates
+  (`NetworkSession.notify_pause` → client freezes with a banner) while a
+  client's ESC menu never pauses the authoritative sim. The stream is
+  delta-based: unreliable deltas carry only changed rows, a reliable
+  keyframe every 15th snapshot heals losses, meta ships on change, and
+  oversized deltas (>1300 B) route reliably — nothing exceeds the ENet MTU.
+  Gate: `tools/check_net_robustness.tscn` (CALIMA_ROB_CASE =
+  drop | resign | hostleft, two processes).
+- **Phase 2 still pending**: reconnection, siege-stone echo. Migration to lockstep stays open: the command wire format is
   shared, only the return channel changes — it requires the
   simulation-determinism milestone (movement off Godot physics).
 
