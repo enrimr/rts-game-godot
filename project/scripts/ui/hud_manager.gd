@@ -890,6 +890,17 @@ func _on_building_selected(building: Node) -> void:
 		_populate_buttons(BUILDING_ACTIONS)
 	_refresh_garrison_ui(building)
 	_refresh_research_slot()
+	_append_group_count()
+
+## "Cuartel  ×4" when a double click selected the whole building type: the
+## panel shows the primary, the suffix says how many share the orders.
+func _append_group_count() -> void:
+	var world: Node = get_tree().get_first_node_in_group("world")
+	if world == null:
+		return
+	var group: Variant = world.get("_selected_buildings")
+	if group is Array and (group as Array).size() > 1:
+		_unit_name_label.text += "  ×%d" % (group as Array).size()
 
 ## Garrisonable buildings (TC, towers) get an eject button and an occupancy
 ## readout appended to whatever the type dispatch above built.

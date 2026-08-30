@@ -25,6 +25,10 @@ var _fog: FogOfWar = null
 
 var _selected_units: Array[Node] = []
 var _selected_building: Node = null
+# Double-clicking a building selects every own building of the same type;
+# _selected_building stays the primary (drives the HUD panel), this holds the
+# whole group (rally fan-out, least-loaded train distribution).
+var _selected_buildings: Array[Node] = []
 
 # Contextual mouse cursor: hover resolution is throttled, not per mouse event.
 var _cursor_timer: float = 0.0
@@ -260,6 +264,15 @@ func live_selection() -> Array[Node]:
 			_selected_units.remove_at(i)
 		i -= 1
 	return _selected_units
+
+## Same prune-on-read barrier for the multi-building selection.
+func live_selected_buildings() -> Array[Node]:
+	var i: int = _selected_buildings.size() - 1
+	while i >= 0:
+		if not is_instance_valid(_selected_buildings[i]):
+			_selected_buildings.remove_at(i)
+		i -= 1
+	return _selected_buildings
 
 func _on_garrison_changed_prune_selection(ship: Node, _count: int, _capacity: int) -> void:
 	if not is_instance_valid(ship):

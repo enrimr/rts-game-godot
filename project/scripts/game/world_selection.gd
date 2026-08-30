@@ -24,6 +24,43 @@ var _drag_start_screen: Vector2 = Vector2.ZERO
 var _dragging: bool = false
 var _last_click_time: float = -1.0
 var _last_click_unit_script: Script = null
+var _last_building_click_time: float = -1.0
+var _last_building_click_script: Script = null
+
+## Single click selects one building; a double click on the same type selects
+## every OWN building of that type map-wide (rally them all at once, and the
+## HUD's train buttons queue into the least-loaded of the group).
+func _select_building(building: Node) -> void:
+	var now: float = Time.get_ticks_msec() / 1000.0
+	var bscript: Script = building.get_script() as Script
+	var is_double: bool = (now - _last_building_click_time) <= DOUBLE_CLICK_SEC \
+		and bscript == _last_building_click_script
+	_last_building_click_time = now
+	_last_building_click_script = bscript
+
+	_world._selected_building = building
+	_world._selected_buildings = [building] as Array[Node]
+	var bpid: Variant = building.get("player_id")
+	if is_double and bpid != null and (bpid as int) == 0:
+		var candidates: Array[Node] = []
+		if is_instance_valid(_world.drop_off):
+			candidates.append(_world.drop_off)
+		for other: Node in _world.buildings_layer.get_children():
+			if is_instance_valid(other):
+				candidates.append(other)
+		for other: Node in candidates:
+			if other == building or other.get_script() != bscript:
+				continue
+			var opid: Variant = other.get("player_id")
+			if opid == null or (opid as int) != 0:
+				continue
+			var state_val: Variant = other.get("state")
+			if state_val != null and (state_val as int) != BuildingBase.BuildingState.COMPLETE:
+				continue
+			_world._selected_buildings.append(other)
+			if other.has_method("set_selected"):
+				other.set_selected(true)
+	EventBus.building_selected.emit(building)
 
 # Inspect-only selection (resource node, enemy unit/building, wild animal).
 var _selected_node: Node = null
@@ -93,6 +130,10 @@ func _finish_selection() -> void:
 	if is_instance_valid(_world._selected_building) and _world._selected_building.has_method("set_selected"):
 		_world._selected_building.set_selected(false)
 	_world._selected_building = null
+	for b: Node in _world.live_selected_buildings():
+		if b.has_method("set_selected"):
+			b.set_selected(false)
+	_world._selected_buildings.clear()
 	if is_instance_valid(_selected_node) and _selected_node.has_method("set_selected"):
 		_selected_node.set_selected(false)
 	_selected_node = null
@@ -152,16 +193,14 @@ func _finish_selection() -> void:
 			return
 		# Check Town Center first
 		if is_instance_valid(_world.drop_off) and _world._commands._building_click_hit(_world.drop_off as Node2D, _drag_start):
-			_world._selected_building = _world.drop_off
-			EventBus.building_selected.emit(_world.drop_off)
+			_select_building(_world.drop_off)
 			return
 		for building: Node in _world.buildings_layer.get_children():
 			if not is_instance_valid(building):
 				continue
 			var b2d: Node2D = building as Node2D
 			if _world._commands._building_click_hit(b2d, _drag_start):
-				_world._selected_building = building
-				EventBus.building_selected.emit(building)
+				_select_building(building)
 				return
 		for child: Node in _world.get_children():
 			if not (child is ResourceNode):

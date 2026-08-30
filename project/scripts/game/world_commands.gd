@@ -104,10 +104,13 @@ class _FlashMarker extends Node2D:
 
 func _handle_right_click(world_pos: Vector2) -> void:
 	if _world._selected_units.is_empty():
-		if is_instance_valid(_world._selected_building) and _world._selected_building.has_method("set_rally_point"):
-			CommandBus.submit(BuildingActionCommand.make(0, "set_rally",
-				EntityRegistry.id_of(_world._selected_building), world_pos))
-			_flash_target(_world._selected_building, Color(1.0, 0.92, 0.2, 1.0))
+		# Rally applies to the WHOLE selected group (double-click selects every
+		# building of the type), so one click points all barracks at one spot.
+		for building: Node in _world.live_selected_buildings():
+			if building.has_method("set_rally_point"):
+				CommandBus.submit(BuildingActionCommand.make(0, "set_rally",
+					EntityRegistry.id_of(building), world_pos))
+				_flash_target(building, Color(1.0, 0.92, 0.2, 1.0))
 		return
 
 	# 0a. Own transport ship clicked with boardable land units → board
@@ -627,6 +630,35 @@ func _selected_building_id() -> int:
 		return 0
 	return EntityRegistry.id_of(_world._selected_building)
 
+## Least-loaded production building of the selected group that passes
+## `matches` — with several barracks selected, each train click lands on the
+## emptiest queue (AoE2 distribution). Falls back to the primary so a
+## full-queue group still gets order_train's own refusal.
+func _train_at_least_loaded(matches: Callable, action_id: String) -> void:
+	var target: Node = _least_loaded_selected(matches)
+	if target != null:
+		CommandBus.submit(ProductionCommand.make(0, "train",
+			EntityRegistry.id_of(target), action_id.trim_prefix("train:")))
+
+func _least_loaded_selected(matches: Callable) -> Node:
+	var best: Node = null
+	var best_queue: int = 1 << 30
+	for building: Node in _world.live_selected_buildings():
+		if not matches.call(building):
+			continue
+		if not building.has_method("get_queue") or not building.has_method("get_max_queue"):
+			continue
+		var q: int = (building.get_queue() as Array).size()
+		if q >= (building.get_max_queue() as int):
+			continue
+		if q < best_queue:
+			best_queue = q
+			best = building
+	if best == null and is_instance_valid(_world._selected_building) \
+			and matches.call(_world._selected_building):
+		return _world._selected_building
+	return best
+
 func _on_action_requested(action_id: String) -> void:
 	if action_id.begins_with("build:"):
 		_world._placement._start_placement(action_id.trim_prefix("build:"))
@@ -670,30 +702,23 @@ func _on_action_requested(action_id: String) -> void:
 		"gather_food":
 			_order_gather_nearest_resource(ResourceNode.ResourceType.FOOD_HUNT)
 		"train:villager":
-			if is_instance_valid(_world._selected_building) and _world._selected_building.has_method("order_train"):
-				# TownCenterBuildable is now also the player's STARTING TC, so it
-				# must be accepted here too or the villager button does nothing.
-				if _world._selected_building is TownCenter or _world._selected_building is TownCenterBuilding \
-						or _world._selected_building is TownCenterBuildable:
-					CommandBus.submit(ProductionCommand.make(0, "train", _selected_building_id()))
+			# TownCenterBuildable is now also the player's STARTING TC, so it
+			# must be accepted here too or the villager button does nothing.
+			var tc: Node = _least_loaded_selected(func(b: Node) -> bool:
+				return b.has_method("order_train") and (b is TownCenter
+					or b is TownCenterBuilding or b is TownCenterBuildable))
+			if tc != null:
+				CommandBus.submit(ProductionCommand.make(0, "train", EntityRegistry.id_of(tc)))
 		"train:militia", "train:pikeman", \
 		"train:menceyes_guard", \
 		"train:conquistador", "train:tidecaller", "train:sand_raider":
-			if is_instance_valid(_world._selected_building) and _world._selected_building is Barracks:
-				CommandBus.submit(ProductionCommand.make(0, "train",
-					_selected_building_id(), action_id.trim_prefix("train:")))
+			_train_at_least_loaded(func(b: Node) -> bool: return b is Barracks, action_id)
 		"train:archer", "train:ravine_archer", "train:longbowman":
-			if is_instance_valid(_world._selected_building) and _world._selected_building is ArcheryRange:
-				CommandBus.submit(ProductionCommand.make(0, "train",
-					_selected_building_id(), action_id.trim_prefix("train:")))
+			_train_at_least_loaded(func(b: Node) -> bool: return b is ArcheryRange, action_id)
 		"train:scout", "train:heavy_scout", "train:knight":
-			if is_instance_valid(_world._selected_building) and _world._selected_building is Stable:
-				CommandBus.submit(ProductionCommand.make(0, "train",
-					_selected_building_id(), action_id.trim_prefix("train:")))
+			_train_at_least_loaded(func(b: Node) -> bool: return b is Stable, action_id)
 		"train:battering_ram", "train:mangonel", "train:trebuchet":
-			if is_instance_valid(_world._selected_building) and _world._selected_building is SiegeWorkshop:
-				CommandBus.submit(ProductionCommand.make(0, "train",
-					_selected_building_id(), action_id.trim_prefix("train:")))
+			_train_at_least_loaded(func(b: Node) -> bool: return b is SiegeWorkshop, action_id)
 		"trebuchet_deploy":
 			CommandBus.submit(UnitActionCommand.make(0, "trebuchet_toggle", _selection_ids()))
 			for unit: Node in _world.live_selection():
@@ -701,9 +726,7 @@ func _on_action_requested(action_id: String) -> void:
 					_world.hud.call_deferred("_populate_trebuchet_buttons", unit)
 					break
 		"train:fishing_boat", "train:transport_ship", "train:war_galley":
-			if is_instance_valid(_world._selected_building) and _world._selected_building is Dock:
-				CommandBus.submit(ProductionCommand.make(0, "train",
-					_selected_building_id(), action_id.trim_prefix("train:")))
+			_train_at_least_loaded(func(b: Node) -> bool: return b is Dock, action_id)
 		"advance_age":
 			CommandBus.submit(AdvanceAgeCommand.make(0))
 		"gate_lock":
