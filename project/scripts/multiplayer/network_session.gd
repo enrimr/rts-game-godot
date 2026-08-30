@@ -67,6 +67,10 @@ func player_count() -> int:
 	return 1 + _peer_players.size()
 
 func host_game(port: int = DEFAULT_PORT) -> Error:
+	# A stale session (e.g. a previous Host click whose lobby never opened)
+	# still holds the port — close it before rebinding.
+	if multiplayer.multiplayer_peer != null:
+		leave()
 	var peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
 	var err: Error = peer.create_server(port, MAX_CLIENTS)
 	if err != OK:
@@ -99,6 +103,8 @@ func _display_name(player_id: int) -> String:
 	return trimmed if not trimmed.is_empty() else tr("LAN_DEFAULT_NAME") % (player_id + 1)
 
 func join_game(ip: String, port: int = DEFAULT_PORT) -> Error:
+	if multiplayer.multiplayer_peer != null:
+		leave()
 	var peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
 	var err: Error = peer.create_client(ip, port)
 	if err != OK:

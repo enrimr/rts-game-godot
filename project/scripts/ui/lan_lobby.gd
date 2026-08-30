@@ -20,7 +20,10 @@ var _match_lobby: Control = null
 
 func _ready() -> void:
 	color = Color(0.0, 0.0, 0.0, 0.65)
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# NOT set_anchors_preset: called while already in the tree it keeps the
+	# current (0,0) size by writing compensating offsets — the panel stays
+	# zero-sized and the LobbyScreen's ScrollContainer clips itself invisible.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_card()
 	NetworkSession.joined_host.connect(_open_match_lobby)
@@ -144,9 +147,9 @@ func _open_match_lobby() -> void:
 	_card_center.visible = false
 	var lobby: LobbyScreen = LobbyScreen.new()
 	lobby.lan_mode = true
-	lobby.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_match_lobby = lobby
 	add_child(lobby)
+	lobby.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	lobby.back_requested.connect(func() -> void:
 		NetworkSession.leave())
 
