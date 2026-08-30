@@ -48,6 +48,9 @@ const ACTION_GLYPHS: Dictionary = {
 	"advance_age": "age_up",
 	"hero_ability": "ability",
 	"unload": "unload",
+	"ungarrison": "unload",
+	"garrison_into": "garrison_into",
+	"town_bell": "town_bell",
 	"back": "page_prev",
 	"gate_lock": "gate_lock",
 }
@@ -61,6 +64,7 @@ const VILLAGER_ACTIONS: Array = [
 	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
 	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
 	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
+	{"id": "garrison_into", "label": "ACTION_GARRISON",    "color": Color(0.45, 0.38, 0.20), "cost": {}, "key": KEY_E, "description": "TOOLTIP_GARRISON"},
 	{"id": "show_path",    "label": "ACTION_SHOW_PATH",    "color": Color(0.15, 0.45, 0.55), "cost": {}, "key": KEY_P, "description": "TOOLTIP_SHOW_PATH"},
 	DESTROY_ACTION,
 ]
@@ -95,6 +99,7 @@ const STABLE_UNIT_DEFS: Array[Dictionary] = [
 
 const TOWN_CENTER_ACTIONS: Array = [
 	{"id": "train:villager", "label": "ACTION_VILLAGER", "color": Color(0.20, 0.45, 0.20), "cost": {"food": 50}, "key": KEY_V, "description": "TOOLTIP_TRAIN_VILLAGER"},
+	{"id": "town_bell", "label": "ACTION_TOWN_BELL", "color": Color(0.70, 0.55, 0.15), "cost": {}, "key": KEY_G, "description": "TOOLTIP_TOWN_BELL"},
 ]
 
 const UNIT_ACTIONS: Array = [
@@ -680,7 +685,8 @@ func _on_action_button_pressed(action_id: String) -> void:
 		_apply_tutorial_villager_gates()
 		return
 	# Actions that wait for a map click before executing
-	if action_id == "move_to" or action_id == "attack_move" or action_id == "cover_fire":
+	if action_id == "move_to" or action_id == "attack_move" or action_id == "cover_fire" \
+			or action_id == "garrison_into":
 		AudioManager.play("ui_click")
 		_set_pending_action(action_id)
 		return

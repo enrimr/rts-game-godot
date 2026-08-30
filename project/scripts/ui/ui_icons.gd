@@ -23,7 +23,8 @@ const GLYPHS: Array[String] = [
 	"move", "stop", "attack", "attack_ground", "cover_fire", "patrol_route",
 	"follow", "age_up", "gate_lock", "gate_unlock", "ability", "unload",
 	"close", "menu", "speed1", "speed2", "speed3",
-	"idle_villager", "idle_military", "locate_hero", "page_prev", "page_next",
+	"idle_villager", "idle_military", "locate_hero", "garrison_into", "town_bell",
+	"page_prev", "page_next",
 	"res_food", "res_wood", "res_gold", "res_stone",
 	"stat_attack", "stat_armor", "stat_range", "stat_speed",
 ]
@@ -466,6 +467,28 @@ static func _build(id: String, root: Node2D) -> void:
 				Vector2(12, 32)]), C_RED)
 			_circle(root, Vector2(28, 28), 5.0, C_GOLD)
 			_z_mark(root, Vector2(46, 8))
+		"garrison_into":
+			# Sheltering: a stout keep with a figure slipping in through the door.
+			var keep: Color = Color(0.55, 0.52, 0.48)
+			_poly(root, PackedVector2Array([Vector2(14, 22), Vector2(50, 22),
+				Vector2(50, 54), Vector2(14, 54)]), keep)
+			_poly(root, PackedVector2Array([Vector2(10, 22), Vector2(54, 22),
+				Vector2(54, 14), Vector2(10, 14)]), keep.darkened(0.2))
+			_poly(root, PackedVector2Array([Vector2(26, 54), Vector2(38, 54),
+				Vector2(38, 34), Vector2(32, 28), Vector2(26, 34)]), Color(0.12, 0.10, 0.08))
+			_circle(root, Vector2(32, 40), 4.0, Color(0.85, 0.72, 0.55))
+			_stroke(root, PackedVector2Array([Vector2(32, 44), Vector2(32, 50)]),
+				Color(0.55, 0.48, 0.36), 4.0)
+		"town_bell":
+			# Alarm bell with sound arcs.
+			_poly(root, PackedVector2Array([Vector2(26, 12), Vector2(38, 12),
+				Vector2(40, 18), Vector2(44, 36), Vector2(20, 36), Vector2(24, 18)]), C_GOLD)
+			_bar(root, Vector2(18, 38), Vector2(46, 38), 5.0, C_GOLD.darkened(0.25))
+			_circle(root, Vector2(32, 44), 4.5, C_GOLD.darkened(0.35))
+			_stroke(root, PackedVector2Array([Vector2(14, 20), Vector2(10, 28)]),
+				Color(1.0, 0.9, 0.5, 0.9), 2.5)
+			_stroke(root, PackedVector2Array([Vector2(50, 20), Vector2(54, 28)]),
+				Color(1.0, 0.9, 0.5, 0.9), 2.5)
 		"locate_hero":
 			# Golden crown over a head — the hero locator.
 			var hero_skin: Color = Color(0.85, 0.72, 0.55)

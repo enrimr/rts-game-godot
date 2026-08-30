@@ -192,6 +192,61 @@ func test_garrison_command_enters_when_close() -> void:
 		[EntityRegistry.id_of(unit)] as Array[int], EntityRegistry.id_of(tower)))
 	assert_eq(tower.get_garrison().size(), 1, "adjacent units enter immediately")
 
+class FortStub extends Node2D:
+	var capacity: int = 2
+	var occupants: Array = []
+	func garrison_capacity() -> int:
+		return capacity
+	func get_garrison() -> Array:
+		return occupants
+
+func _fort(pos: Vector2, capacity: int, occupied: int = 0) -> FortStub:
+	var fort: FortStub = FortStub.new()
+	fort.capacity = capacity
+	for _i: int in range(occupied):
+		fort.occupants.append(Node.new())
+	_holder.add_child(fort)
+	fort.global_position = pos
+	return fort
+
+func test_villagers_never_garrison_by_right_click() -> void:
+	## The playtest bug: a villager's right-click on a damaged/under-construction
+	## building must stay build/repair — sheltering is its Garrison button or
+	## the town bell.
+	var villager: Node2D = (load("res://scenes/units/villager.tscn") as PackedScene).instantiate() as Node2D
+	villager.set("player_id", 0)
+	_holder.add_child(villager)
+	assert_false(WorldCommands.garrisons_by_right_click(villager),
+		"villager right-click must never garrison")
+	assert_true(WorldCommands.garrison_eligible(villager),
+		"…but the explicit Garrison button/town bell may shelter it")
+	var soldier: Node2D = _militia(0)
+	assert_true(WorldCommands.garrisons_by_right_click(soldier),
+		"military right-click garrisons as before")
+
+func test_bell_assignments_pick_nearest_with_room() -> void:
+	var near: FortStub = _fort(Vector2(0.0, 0.0), 1)
+	var far: FortStub = _fort(Vector2(500.0, 0.0), 5)
+	var a: Node2D = _stub_units(1)[0]
+	a.global_position = Vector2(20.0, 0.0)
+	var b: Node2D = Node2D.new()
+	_holder.add_child(b)
+	b.global_position = Vector2(40.0, 0.0)
+	var plan: Array[Array] = WorldCommands.bell_assignments(
+		[a, b] as Array[Node], [near, far] as Array[Node])
+	assert_eq(plan.size(), 2)
+	assert_eq(plan[0][0], near)
+	assert_eq((plan[0][1] as Array), [a], "first villager takes the near fort's only slot")
+	assert_eq(plan[1][0], far)
+	assert_eq((plan[1][1] as Array), [b], "overflow spills to the next building with room")
+
+func test_bell_assignments_skip_full_shelters() -> void:
+	var full: FortStub = _fort(Vector2.ZERO, 2, 2)
+	var unit: Node2D = _stub_units(1)[0]
+	var plan: Array[Array] = WorldCommands.bell_assignments(
+		[unit] as Array[Node], [full] as Array[Node])
+	assert_eq(plan, [] as Array[Array], "a full shelter takes nobody")
+
 func test_ungarrison_command_ejects() -> void:
 	CommandBus.start_match(_holder)
 	var tower: WatchTower = _tower()

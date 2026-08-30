@@ -137,18 +137,14 @@ func _handle_right_click(world_pos: Vector2) -> void:
 			return
 
 	# 0c. Own garrisonable building (TC/tower) clicked with military selected →
-	# garrison them. Villagers keep the drop-off/repair gestures below.
+	# garrison them. NEVER villagers: their right-click on a building must stay
+	# build/repair — they shelter only via their Garrison button or the town
+	# bell.
 	var fort: Node = _find_garrisonable_at(world_pos)
 	if fort != null and (fort.get_garrison() as Array).size() < (fort.garrison_capacity() as int):
 		var troops: Array[int] = []
 		for unit: Node in _world.live_selection():
-			if not is_instance_valid(unit) or unit is ShipBase:
-				continue
-			var upid: Variant = unit.get("player_id")
-			if upid == null or (upid as int) != 0:
-				continue
-			if unit.has_method("is_combat_unit") and unit.call("is_combat_unit") \
-					and not (unit is BatteringRam or unit is Mangonel or unit is Trebuchet):
+			if garrisons_by_right_click(unit):
 				troops.append(EntityRegistry.id_of(unit))
 		if not troops.is_empty():
 			CommandBus.submit(UnitTargetCommand.make(0, "garrison", troops,
@@ -259,6 +255,99 @@ func _find_animal_at(world_pos: Vector2) -> Animal:
 		if world_pos.distance_to((unit as Node2D).global_position) < UNIT_CLICK_RADIUS:
 			return unit as Animal
 	return null
+
+## A player-0 land unit that may shelter in a building at all (villagers
+## included — they use the Garrison button / town bell, not right-click).
+static func garrison_eligible(unit: Node) -> bool:
+	if not is_instance_valid(unit) or not (unit is UnitBase) or unit is ShipBase:
+		return false
+	if unit is BatteringRam or unit is Mangonel or unit is Trebuchet:
+		return false
+	var pid: Variant = unit.get("player_id")
+	return pid != null and (pid as int) == 0
+
+## Right-click garrisons MILITARY only: a villager's right-click on an own
+## building must stay build/repair.
+static func garrisons_by_right_click(unit: Node) -> bool:
+	return garrison_eligible(unit) and not unit.has_method("order_gather")
+
+## Nearest-building-with-room assignment for the town bell: walks the units in
+## order, sending each to its closest fort that still has capacity left.
+## Pure and static — tested with stubs. Returns [[fort, Array[Node] units]…].
+static func bell_assignments(units: Array[Node], forts: Array[Node]) -> Array[Array]:
+	var remaining: Array[int] = []
+	var assigned: Array = []
+	for fort: Node in forts:
+		remaining.append((fort.garrison_capacity() as int) - (fort.get_garrison() as Array).size())
+		assigned.append([] as Array[Node])
+	for unit: Node in units:
+		var best: int = -1
+		var best_dist: float = INF
+		for i: int in range(forts.size()):
+			if remaining[i] <= 0:
+				continue
+			var d: float = (unit as Node2D).global_position.distance_to(
+				(forts[i] as Node2D).global_position)
+			if d < best_dist:
+				best_dist = d
+				best = i
+		if best < 0:
+			continue   # every shelter is full
+		remaining[best] -= 1
+		(assigned[best] as Array).append(unit)
+	var out: Array[Array] = []
+	for i: int in range(forts.size()):
+		if not (assigned[i] as Array).is_empty():
+			out.append([forts[i], assigned[i]])
+	return out
+
+## Town bell: first ring shelters every villager in its nearest TC/tower with
+## room; ringing while anyone is sheltered ejects every garrison instead.
+func _ring_town_bell() -> void:
+	var forts: Array[Node] = _own_garrisonable_buildings()
+	if forts.is_empty():
+		return
+	var any_sheltered: bool = false
+	for fort: Node in forts:
+		if not (fort.get_garrison() as Array).is_empty():
+			any_sheltered = true
+			break
+	if any_sheltered:
+		for fort: Node in forts:
+			if not (fort.get_garrison() as Array).is_empty():
+				CommandBus.submit(BuildingActionCommand.make(0, "ungarrison",
+					EntityRegistry.id_of(fort)))
+		return
+	var villagers: Array[Node] = []
+	for unit: Node in _world.units_layer.get_children():
+		if garrison_eligible(unit) and unit.has_method("order_gather") \
+				and (unit as Node2D).visible:
+			villagers.append(unit)
+	for entry: Array in bell_assignments(villagers, forts):
+		CommandBus.submit(UnitTargetCommand.make(0, "garrison",
+			EntityRegistry.ids_of(entry[1] as Array), EntityRegistry.id_of(entry[0] as Node)))
+		_flash_target(entry[0] as Node, Color(1.0, 0.85, 0.3, 1.0))
+
+func _own_garrisonable_buildings() -> Array[Node]:
+	var out: Array[Node] = []
+	var candidates: Array[Node] = []
+	if is_instance_valid(_world.drop_off):
+		candidates.append(_world.drop_off)
+	for building: Node in _world.buildings_layer.get_children():
+		if is_instance_valid(building):
+			candidates.append(building)
+	for building: Node in candidates:
+		var pid: Variant = building.get("player_id")
+		if pid == null or (pid as int) != 0:
+			continue
+		if not building.has_method("garrison_capacity") \
+				or (building.garrison_capacity() as int) <= 0:
+			continue
+		var state_val: Variant = building.get("state")
+		if state_val != null and (state_val as int) != BuildingBase.BuildingState.COMPLETE:
+			continue
+		out.append(building)
+	return out
 
 ## Own COMPLETE building with garrison room under the click (the player's TC
 ## included — it lives outside the buildings layer).
@@ -483,6 +572,19 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 			_flash_point(world_pos, Color(1.0, 0.35, 0.15, 1.0))
 		"cover_fire":
 			_order_attack_ground_all(world_pos)
+		"garrison_into":
+			# The villagers' explicit shelter gesture (their right-click on a
+			# building stays build/repair).
+			var fort: Node = _find_garrisonable_at(world_pos)
+			if fort != null:
+				var ids: Array[int] = []
+				for unit: Node in _world.live_selection():
+					if garrison_eligible(unit):
+						ids.append(EntityRegistry.id_of(unit))
+				if not ids.is_empty():
+					CommandBus.submit(UnitTargetCommand.make(0, "garrison", ids,
+						EntityRegistry.id_of(fort)))
+					_flash_target(fort, Color(0.4, 1.0, 0.4, 1.0))
 
 func _order_attack_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")
@@ -542,6 +644,9 @@ func _on_action_requested(action_id: String) -> void:
 		if is_instance_valid(_world._selected_building):
 			CommandBus.submit(BuildingActionCommand.make(0, "ungarrison",
 				_selected_building_id()))
+		return
+	if action_id == "town_bell":
+		_ring_town_bell()
 		return
 	if action_id.begins_with("research:"):
 		if is_instance_valid(_world._selected_building):

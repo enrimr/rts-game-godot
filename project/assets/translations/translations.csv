@@ -407,3 +407,7 @@ TOOLTIP_UNGARRISON,Eject all garrisoned units,Saca a todas las unidades guarecid
 TOOLTIP_GARRISON_HINT,Right-click with military units to garrison them,Click derecho con unidades militares para guarecerlas
 UI_LOCATE_HERO,Locate hero,Localizar héroe
 UI_GARRISONED,Garrisoned: %d / %d,Guarecidos: %d / %d
+ACTION_GARRISON,Garrison,Guarecerse
+TOOLTIP_GARRISON,Click one of your buildings to shelter inside,Haz clic en un edificio tuyo para guarecerte dentro
+ACTION_TOWN_BELL,Town Bell,Campana
+TOOLTIP_TOWN_BELL,Ring: villagers shelter in the nearest building. Ring again to release everyone,Tocar: los aldeanos se guarecen en el edificio más cercano. Vuelve a tocar para desalojar a todos
