@@ -186,6 +186,16 @@ circle/rect aware). `avoidance_priority` is dynamic: 0.7 while moving, 0.4
 idle — parked units yield to marching ones instead of both bowing to each
 other. Gated by `tests/unit/test_avoidance_tuning.gd`.
 
+**Buildings have NO RVO avoidance obstacle.** They used to carry one at
+collision + 16 px per side — larger than the navmesh carve margin (6 px +
+agent radius) — so two grid-adjacent buildings sealed the very corridor the
+mesh had opened between them: the path threaded the gap, the physics gap fit
+the unit, and the RVO solver returned a safe velocity of exactly ZERO forever
+(the frozen-villager playtest bug). The navmesh is the single static
+authority; physics collision is the hard backstop. Resource nodes keep their
+small RVO obstacle: its margin (±20) sits INSIDE their mesh carve (±24.5), so
+it smooths steering without ever contradicting the path.
+
 Three `NavigationRegion2D` nodes live in `game_world.tscn`, distinguished by their
 `navigation_layers` bit; every agent picks exactly one of them:
 

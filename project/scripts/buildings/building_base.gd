@@ -148,7 +148,6 @@ func _ready() -> void:
 	call_deferred("_add_ground_shadow")
 	call_deferred("_setup_iso_billboard")
 	call_deferred("_setup_damage_fx")
-	_setup_nav_obstacle()
 
 func _localize_nameplate() -> void:
 	var nameplate: Label = get_node_or_null("NameLabel") as Label
@@ -354,28 +353,15 @@ func _process(delta: float) -> void:
 func _setup_damage_fx() -> void:
 	BuildingDamageFx.attach(self)
 
-func _setup_nav_obstacle() -> void:
-	var obs: NavigationObstacle2D = get_node_or_null("NavigationObstacle2D") as NavigationObstacle2D
-	if obs == null:
-		obs = NavigationObstacle2D.new()
-		obs.name = "NavigationObstacle2D"
-		add_child(obs)
-	var half: Vector2 = _nav_half_extents()
-	obs.vertices = PackedVector2Array([
-		Vector2(-half.x, -half.y),
-		Vector2( half.x, -half.y),
-		Vector2( half.x,  half.y),
-		Vector2(-half.x,  half.y),
-	])
-	obs.avoidance_enabled = true
-	obs.affect_navigation_mesh = false
-
-func _nav_half_extents() -> Vector2:
-	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
-	if cs != null and cs.shape is RectangleShape2D:
-		# 16 px extra so RVO steering starts before the unit touches the building
-		return (cs.shape as RectangleShape2D).size * 0.5 + Vector2(16.0, 16.0)
-	return Vector2(46.0, 46.0)
+# NOTE: buildings deliberately have NO RVO avoidance obstacle. They used to
+# carry one at collision + 16 px per side — LARGER than the navmesh carve
+# margin (6 px + agent radius), so two grid-adjacent buildings sealed the very
+# corridor the mesh had opened between them: the path said "through here", the
+# physics gap fit the unit, and the RVO solver returned a safe velocity of
+# exactly zero forever (the frozen-villager-in-a-gap playtest bug). The mesh is
+# the single static authority; physics collision is the hard backstop. The
+# vertex-less NavigationObstacle2D nodes still in some scenes are inert (the
+# Gate toggles its own for the open/close flow).
 
 func _nav_bake_half_extents() -> Vector2:
 	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
