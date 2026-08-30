@@ -175,6 +175,17 @@ randomness, never MatchRng. Reviewed via `tools/check_damage_fx.tscn`
 
 Uses Godot's built-in `NavigationAgent2D` on each unit. Navigation regions are updated when buildings are placed or destroyed.
 
+**RVO avoidance is tuned programmatically** (`UnitBase._tune_avoidance`, one
+source — the scenes stay at engine defaults, which are wrong for an RTS):
+`max_speed` = the unit's `move_speed` × 1.6 (the default 100 CLAMPS the
+avoidance-safe velocity — the 180 px/s Scout moved at 55 % of design speed),
+`neighbor_distance` 80 px (default 500 made armies brake for units half a map
+away — the molasses jams), `max_neighbors` 7, `time_horizon_agents` 0.7, and
+the agent radius mirrors the physics footprint (`_collision_radius`, capsule/
+circle/rect aware). `avoidance_priority` is dynamic: 0.7 while moving, 0.4
+idle — parked units yield to marching ones instead of both bowing to each
+other. Gated by `tests/unit/test_avoidance_tuning.gd`.
+
 Three `NavigationRegion2D` nodes live in `game_world.tscn`, distinguished by their
 `navigation_layers` bit; every agent picks exactly one of them:
 

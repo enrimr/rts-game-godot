@@ -79,6 +79,21 @@ const STUCK_THRESHOLD: float = 6.0
 const MAX_STUCK_RETRIES: int = 6
 const GUARD_RADIUS: float = 250.0
 
+# ── RVO avoidance tuning (applied programmatically in _tune_avoidance) ──────
+# The scenes leave the agent at Godot defaults, and two of those defaults hurt:
+# max_speed 100 CLAMPS the avoidance-safe velocity, silently capping every
+# faster unit (the 180 px/s Scout moved at 55 % of design speed); and
+# neighbor_distance 500 makes every agent brake for units half a map away —
+# the "molasses" jams in big groups.
+const AVOID_MAX_SPEED_HEADROOM: float = 1.6   # over move_speed, room for civ/tech/weather boosts
+const AVOID_NEIGHBOR_DISTANCE: float = 80.0
+const AVOID_MAX_NEIGHBORS: int = 7
+const AVOID_TIME_HORIZON: float = 0.7
+## Moving units carry the higher priority so parked ones yield the way instead
+## of both bowing to each other (the old uniform 0.5 gridlocked crowds).
+const AVOID_PRIORITY_MOVING: float = 0.7
+const AVOID_PRIORITY_IDLE: float = 0.4
+
 @onready var nav_agent: NavigationAgent2D = $NavigationAgent2D
 @onready var health_bar: ProgressBar = $HealthBar
 @onready var selection_indicator: Node2D = $SelectionIndicator
@@ -115,6 +130,7 @@ func _ready() -> void:
 	if is_instance_valid(nav_agent) \
 			and not nav_agent.velocity_computed.is_connected(_on_velocity_computed):
 		nav_agent.velocity_computed.connect(_on_velocity_computed)
+	_tune_avoidance()
 	if player_id == 0:
 		EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
 	EventBus.unit_upgrade_applied.connect(_on_unit_upgrade_applied)
@@ -125,6 +141,46 @@ func _ready() -> void:
 	call_deferred("_add_ground_shadow")
 	call_deferred("_apply_gender_appearance")
 	call_deferred("_setup_iso_billboard")
+
+## One tuning source for every unit's avoidance agent — the scenes stay at
+## engine defaults, which are wrong for an RTS (see the AVOID_* constants).
+func _tune_avoidance() -> void:
+	if not is_instance_valid(nav_agent):
+		return
+	if unit_data != null:
+		nav_agent.max_speed = unit_data.move_speed * AVOID_MAX_SPEED_HEADROOM
+	var body_radius: float = _collision_radius()
+	if body_radius > 0.0:
+		nav_agent.radius = body_radius + 1.0
+	nav_agent.neighbor_distance = AVOID_NEIGHBOR_DISTANCE
+	nav_agent.max_neighbors = AVOID_MAX_NEIGHBORS
+	nav_agent.time_horizon_agents = AVOID_TIME_HORIZON
+	nav_agent.avoidance_priority = AVOID_PRIORITY_IDLE
+
+## Radius of the physics body, whatever shape the scene uses (infantry are
+## capsules, some ships rectangles). 0 = unknown, keep the agent default.
+func _collision_radius() -> float:
+	var cs: CollisionShape2D = get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if cs == null or cs.shape == null:
+		return 0.0
+	if cs.shape is CircleShape2D:
+		return (cs.shape as CircleShape2D).radius
+	if cs.shape is CapsuleShape2D:
+		return (cs.shape as CapsuleShape2D).radius
+	if cs.shape is RectangleShape2D:
+		return maxf((cs.shape as RectangleShape2D).size.x,
+			(cs.shape as RectangleShape2D).size.y) * 0.5
+	return 0.0
+
+## Parked units yield to marching ones. Assigned only on change — the setter
+## is a NavigationServer call.
+func _update_avoidance_priority() -> void:
+	if not is_instance_valid(nav_agent):
+		return
+	var want: float = AVOID_PRIORITY_IDLE if current_state == UnitState.IDLE \
+		else AVOID_PRIORITY_MOVING
+	if nav_agent.avoidance_priority != want:
+		nav_agent.avoidance_priority = want
 
 # Stand the unit's art upright on the projected ground (see IsoBillboard).
 # HealthBar/GatherIndicator are uprighted so they stay horizontal in screen
@@ -161,6 +217,7 @@ func _add_ground_shadow() -> void:
 func _process(delta: float) -> void:
 	_anim_time += delta
 	IsoBillboard.update_depth(self)
+	_update_avoidance_priority()
 	_animate_body(delta)
 	if _path_visible and is_instance_valid(_path_line) and not _path_failed:
 		var pts: PackedVector2Array = nav_agent.get_current_navigation_path()
