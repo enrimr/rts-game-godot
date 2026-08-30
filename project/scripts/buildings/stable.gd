@@ -72,6 +72,11 @@ func _process(delta: float) -> void:
 		return
 	var entry: Dictionary = _train_queue[0] as Dictionary
 	var train_time: float = entry.get("train_time", 30.0) as float
+	if get_meta(&"rep_puppet", false):
+		# Mirror building: the queue/timer are replicated; never spawn locally.
+		if is_instance_valid(_train_bar):
+			_train_bar.value = (_train_timer / train_time) * 100.0
+		return
 	if not PopulationManager.at_cap(player_id):
 		_train_timer += delta
 	if is_instance_valid(_train_bar):

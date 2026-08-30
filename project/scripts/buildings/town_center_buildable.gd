@@ -66,6 +66,11 @@ func _process_training(delta: float) -> void:
 	if _train_queue.is_empty():
 		return
 	var train_time: float = VILLAGER_DATA.train_time
+	if get_meta(&"rep_puppet", false):
+		# Mirror building: the queue/timer are replicated; never spawn locally.
+		if is_instance_valid(_train_bar):
+			_train_bar.value = (_train_timer / train_time) * 100.0
+		return
 	if not PopulationManager.at_cap(player_id):
 		_train_timer += delta
 	if is_instance_valid(_train_bar):

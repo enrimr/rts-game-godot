@@ -378,6 +378,10 @@ func _refresh_health_bar() -> void:
 		health_bar.visible = health < health_bar.max_value - 0.01
 
 func take_damage(amount: float, source: Node = null) -> void:
+	# Replication puppet (LAN client mirror): the host owns all damage; local
+	# hits would kill entities the authority still considers alive.
+	if get_meta(&"rep_puppet", false):
+		return
 	health -= amount
 	EventBus.damage_dealt.emit(self, amount, source)
 	health_bar.value = health

@@ -96,6 +96,10 @@ func cancel_research(building: Node) -> bool:
 	return true
 
 func _physics_process(delta: float) -> void:
+	# A LAN client mirrors research from replication; ticking locally would
+	# apply techs twice and desync the HUD.
+	if NetworkSession.is_client():
+		return
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 	var finished_keys: Array = []
@@ -114,6 +118,43 @@ func _physics_process(delta: float) -> void:
 			EventBus.research_state_changed.emit(obj as Node)
 	for key: Variant in finished_keys:
 		_active_research.erase(key)
+
+## Replication: mirror a building's active research (client HUD slot).
+func apply_remote_research(building: Node, tech_id: String, timer: float, total: float) -> void:
+	if not is_instance_valid(building):
+		return
+	var iid: int = building.get_instance_id()
+	var had: bool = _active_research.has(iid)
+	var changed: bool = not had \
+		or ((_active_research[iid] as Dictionary).get("tech_id", "") as String) != tech_id
+	_active_research[iid] = {
+		"tech_id": tech_id,
+		"player_id": building.get("player_id") as int,
+		"timer": timer,
+		"total_time": total,
+	}
+	if changed:
+		EventBus.research_state_changed.emit(building)
+
+## Replication: the host reports no active research for this building.
+func clear_remote_research(building: Node) -> void:
+	if not is_instance_valid(building):
+		return
+	var iid: int = building.get_instance_id()
+	if _active_research.has(iid):
+		_active_research.erase(iid)
+		EventBus.research_state_changed.emit(building)
+
+## Replication: adopt the host's researched-tech list for a player. New techs
+## get their effects applied locally too, so displayed stats stay consistent.
+func apply_remote_researched(player_id: int, tech_ids: Array) -> void:
+	for tid: Variant in tech_ids:
+		if not is_researched(player_id, tid as String):
+			_apply_tech(player_id, tid as String)
+			EventBus.technology_researched.emit(player_id, tid as String)
+
+func get_researched(player_id: int) -> Array:
+	return (_researched.get(player_id, []) as Array).duplicate()
 
 func _apply_tech(player_id: int, tech_id: String) -> void:
 	if not _all_techs.has(tech_id):

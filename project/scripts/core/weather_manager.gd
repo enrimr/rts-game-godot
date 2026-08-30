@@ -94,7 +94,30 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_start_clear()
 
+## Replication: a client adopts the host's weather verbatim and emits the
+## same signals the local state machine would, so the overlay/HUD react.
+func apply_remote(weather: int, new_intensity: float, phase: String,
+		pending: int, wind: Vector2) -> void:
+	current_weather = weather as WeatherType
+	intensity = new_intensity
+	_pending_weather = pending as WeatherType
+	_wind_dir = wind
+	if _phase == phase:
+		return
+	var old_phase: String = _phase
+	_phase = phase
+	match phase:
+		"forecast":
+			weather_incoming.emit(_weather_id_of(_pending_weather), FORECAST_TIME)
+		"ramp_in":
+			weather_changed.emit(get_weather_id(), intensity)
+		"clear":
+			if old_phase != "forecast":
+				weather_cleared.emit()
+
 func _physics_process(delta: float) -> void:
+	if NetworkSession.is_client():
+		return
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
 	if not MatchConfig.weather_enabled:

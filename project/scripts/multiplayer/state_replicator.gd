@@ -20,8 +20,16 @@ var _interval: float = float(SNAPSHOT_TICKS) / float(Engine.physics_ticks_per_se
 
 # Host: ids already introduced to the clients (removal detection).
 var _announced: Dictionary = {}
+# Host: arrows fired since the last snapshot (visual echo for clients).
+var _fx_buffer: Array = []
+# Every SLOW_EVERY-th snapshot carries the slow extras (resources left,
+# researched techs) — they change on the seconds scale, not at 15 Hz.
+const SLOW_EVERY: int = 15
+var _snapshot_count: int = 0
 # Client: id -> {"a": Vector2, "b": Vector2, "t": float} interpolation spans.
 var _spans: Dictionary = {}
+
+const ARROW_SCENE: PackedScene = preload("res://scenes/combat/arrow.tscn")
 
 func setup(world) -> void:
 	_world = world
@@ -34,6 +42,25 @@ func setup(world) -> void:
 	else:
 		GameManager.game_over.connect(func(winner_id: int) -> void:
 			NetworkSession.send_events({"over": winner_id}))
+		EventBus.projectile_spawned.connect(func(start: Vector2, target_pos: Vector2) -> void:
+			_fx_buffer.append([start.x, start.y, target_pos.x, target_pos.y]))
+		_seed_announced()
+
+## Both machines boot the identical initial world (same seed → same ids), so
+## everything alive at match start needs no spawn record — only removals.
+func _seed_announced() -> void:
+	for node: Node in _units_layer.get_children():
+		if is_instance_valid(node):
+			_announced[EntityRegistry.id_of(node)] = true
+	for node: Node in _buildings_layer.get_children():
+		if is_instance_valid(node):
+			_announced[EntityRegistry.id_of(node)] = true
+	var drop_off: Variant = _world.get("drop_off")
+	if drop_off is Node and is_instance_valid(drop_off as Node):
+		_announced[EntityRegistry.id_of(drop_off as Node)] = true
+	for node: Node in (_world as Node).get_children():
+		if node is ResourceNode:
+			_announced[EntityRegistry.id_of(node)] = true
 
 func _exit_tree() -> void:
 	if NetworkSession.is_client():
@@ -77,8 +104,12 @@ func _host_snapshot() -> void:
 		if not _announced.has(id):
 			_announced[id] = true
 			spawns.append(_spawn_record(node as Node, id, "b"))
-		buildings.append([id, (node as Node).get("health") as float,
-			(node as Node).get("state") as int if (node as Node).get("state") != null else 0])
+		var row: Array = [id, (node as Node).get("health") as float,
+			(node as Node).get("state") as int if (node as Node).get("state") != null else 0]
+		var extras: Dictionary = _building_extras(node as Node)
+		if not extras.is_empty():
+			row.append(extras)
+		buildings.append(row)
 	var removes: Array = []
 	for id: Variant in _announced.keys():
 		if EntityRegistry.resolve(id as int) == null:
@@ -86,13 +117,56 @@ func _host_snapshot() -> void:
 			_announced.erase(id)
 	if not spawns.is_empty() or not removes.is_empty():
 		NetworkSession.send_events({"spawn": spawns, "remove": removes})
-	NetworkSession.send_state({
+	_snapshot_count += 1
+	var snapshot: Dictionary = {
 		"u": units,
 		"b": buildings,
 		"res": _stockpiles(),
 		"pop": _populations(),
 		"age": _ages(),
-	})
+		"w": [WeatherManager.current_weather as int, WeatherManager.intensity,
+			WeatherManager._phase, WeatherManager._pending_weather as int,
+			WeatherManager._wind_dir],
+	}
+	if not _fx_buffer.is_empty():
+		snapshot["fx"] = _fx_buffer
+		_fx_buffer = []
+	if _snapshot_count % SLOW_EVERY == 1:
+		snapshot["rn"] = _resource_nodes()
+		snapshot["tech"] = _researched_lists()
+	NetworkSession.send_state(snapshot)
+
+## Production queue + active research + market rates ride the building row so
+## the client HUD shows the truth when this building is selected.
+func _building_extras(node: Node) -> Dictionary:
+	var extras: Dictionary = {}
+	if node.has_method("get_queue"):
+		var q: Array = node.call("get_queue") as Array
+		if not q.is_empty() or node.get("_train_timer") != null:
+			extras["q"] = q
+			extras["t"] = node.get("_train_timer") as float
+	var research: Variant = TechManager._active_research.get(node.get_instance_id())
+	if research is Dictionary:
+		extras["r"] = [(research as Dictionary)["tech_id"],
+			(research as Dictionary)["timer"], (research as Dictionary)["total_time"]]
+	if node.get("_sell_offsets") != null:
+		extras["so"] = node.get("_sell_offsets")
+		extras["bo"] = node.get("_buy_offsets")
+	return extras
+
+func _resource_nodes() -> Array:
+	var out: Array = []
+	for node: Node in (_world as Node).get_children():
+		if node is ResourceNode and is_instance_valid(node):
+			out.append([EntityRegistry.id_of(node), node.get("remaining_amount") as float])
+	return out
+
+func _researched_lists() -> Dictionary:
+	var out: Dictionary = {}
+	out[0] = TechManager.get_researched(0)
+	for pid: int in MatchConfig.get_rival_player_ids():
+		out[pid] = TechManager.get_researched(pid)
+	return out
 
 func _spawn_record(node: Node, id: int, kind: String) -> Dictionary:
 	var rec: Dictionary = {
@@ -225,6 +299,29 @@ func _on_state(d: Dictionary) -> void:
 				node.call("force_complete")
 			else:
 				node.set("state", st)
+		if row.size() > 3:
+			_apply_building_extras(node, row[3] as Dictionary)
+		else:
+			# No extras any more: whatever research this mirror still shows ended.
+			TechManager.clear_remote_research(node)
+	for e: Variant in d.get("fx", []) as Array:
+		var fx: Array = e as Array
+		_spawn_echo_arrow(Vector2(fx[0] as float, fx[1] as float),
+			Vector2(fx[2] as float, fx[3] as float))
+	var weather: Variant = d.get("w")
+	if weather is Array and (weather as Array).size() >= 5:
+		var w: Array = weather as Array
+		WeatherManager.apply_remote(w[0] as int, w[1] as float, w[2] as String,
+			w[3] as int, w[4] as Vector2)
+	for e: Variant in d.get("rn", []) as Array:
+		var rn: Array = e as Array
+		var node: Node = EntityRegistry.resolve(rn[0] as int)
+		if node != null and node.get("remaining_amount") != null:
+			node.set("remaining_amount", rn[1] as float)
+	var techs: Variant = d.get("tech")
+	if techs is Dictionary:
+		for pid: Variant in techs as Dictionary:
+			TechManager.apply_remote_researched(pid as int, (techs as Dictionary)[pid] as Array)
 	var res: Variant = d.get("res")
 	if res is Dictionary:
 		for pid: Variant in res as Dictionary:
@@ -238,6 +335,47 @@ func _on_state(d: Dictionary) -> void:
 	if ages is Dictionary:
 		for pid: Variant in ages as Dictionary:
 			AgeManager.apply_remote(pid as int, (ages as Dictionary)[pid] as int)
+
+## Mirror the production queue, active research and market rates into the
+## puppet building so the HUD answers truthfully when it is selected.
+func _apply_building_extras(node: Node, extras: Dictionary) -> void:
+	if extras.has("q"):
+		var q: Array[Dictionary] = []
+		for entry: Variant in extras["q"] as Array:
+			q.append(entry as Dictionary)
+		var changed: bool = _queue_signature(node.get("_train_queue") as Array) \
+			!= _queue_signature(q)
+		node.set("_train_queue", q)
+		node.set("_train_timer", extras.get("t", 0.0) as float)
+		if changed:
+			var max_q: int = node.call("get_max_queue") as int \
+				if node.has_method("get_max_queue") else q.size()
+			EventBus.train_queue_changed.emit(node, q.duplicate(), max_q)
+	if extras.has("r"):
+		var r: Array = extras["r"] as Array
+		TechManager.apply_remote_research(node, r[0] as String, r[1] as float, r[2] as float)
+	else:
+		TechManager.clear_remote_research(node)
+	if extras.has("so"):
+		node.set("_sell_offsets", extras["so"])
+		node.set("_buy_offsets", extras["bo"])
+
+func _queue_signature(q: Variant) -> String:
+	if not (q is Array):
+		return ""
+	var ids: Array = []
+	for entry: Variant in q as Array:
+		ids.append((entry as Dictionary).get("unit_id", "?"))
+	return ",".join(PackedStringArray(ids))
+
+## Visual-only copy of a host-side arrow: no damage, no target, no report.
+func _spawn_echo_arrow(start: Vector2, target_pos: Vector2) -> void:
+	var arrow: Node2D = ARROW_SCENE.instantiate() as Node2D
+	arrow.set("echo", true)
+	arrow.set("target_pos", target_pos)
+	_units_layer.add_child(arrow)
+	arrow.global_position = start
+	arrow.reset_physics_interpolation()
 
 ## Units keep a plain `health` var (the bar refresh lives in take_damage), so
 ## the puppet pokes the bar helper after writing the field.

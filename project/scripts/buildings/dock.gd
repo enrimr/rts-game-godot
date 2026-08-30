@@ -67,9 +67,14 @@ func _process(delta: float) -> void:
 		_train_bar.visible = not _train_queue.is_empty()
 	if state != BuildingState.COMPLETE or _train_queue.is_empty():
 		return
-	_train_timer += delta
 	var entry: Dictionary = _train_queue[0] as Dictionary
 	var train_time: float = entry.get("train_time", 30.0) as float
+	if get_meta(&"rep_puppet", false):
+		# Mirror building: the queue/timer are replicated; never spawn locally.
+		if is_instance_valid(_train_bar):
+			_train_bar.value = (_train_timer / train_time) * 100.0
+		return
+	_train_timer += delta
 	if is_instance_valid(_train_bar):
 		_train_bar.value = (_train_timer / train_time) * 100.0
 	if _train_timer >= train_time:

@@ -99,6 +99,13 @@ func _build_speed_buttons() -> void:
 	_speed_buttons.reverse()
 
 func set_game_speed(speed: int) -> void:
+	# Game speed is simulation authority: a LAN client cannot change it (its
+	# local time_scale would only desync the interpolation pacing).
+	if NetworkSession.is_client():
+		for btn: Button in _speed_buttons:
+			if is_instance_valid(btn):
+				btn.visible = false
+		return
 	GameManager.set_game_speed(float(speed))
 	var speeds: Array = [1, 2, 4]
 	for i: int in range(_speed_buttons.size()):

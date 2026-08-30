@@ -123,6 +123,8 @@ func _run_host(port: int) -> void:
 				and rival_scout.global_position.distance_to(start_pos) > 40.0:
 			print("NET_SMOKE HOST: player-1 command executed, scout moved %.0f px"
 				% rival_scout.global_position.distance_to(start_pos))
+			# Stay up while the client runs its replication checks (train queue).
+			await get_tree().create_timer(12.0).timeout
 			print("NET_SMOKE HOST: done")
 			get_tree().quit(0)
 			return
@@ -187,9 +189,36 @@ func _run_client(port: int) -> void:
 		if is_instance_valid(scout) and scout.global_position.distance_to(start_pos) > 40.0:
 			print("NET_SMOKE CLIENT: replication works — own scout moved %.0f px in the MIRROR world"
 				% scout.global_position.distance_to(start_pos))
-			print("NET_SMOKE CLIENT: done")
-			get_tree().quit(0)
+			await _check_queue_mirror(world)
 			return
 	print("NET_SMOKE CLIENT: FAIL — scout never moved in the mirror world (%.0f px)"
 		% (scout.global_position.distance_to(start_pos) if is_instance_valid(scout) else -1.0))
+	get_tree().quit(1)
+
+## Train a villager at the own TC: the queue and the food spend must show up
+## in the mirror through the replicated building extras and stockpiles.
+func _check_queue_mirror(world: Node2D) -> void:
+	var own_tc: Node = null
+	for b: Node in (world.buildings_layer as Node).get_children():
+		if is_instance_valid(b) and (b.get("player_id") as int) == NetworkSession.local_player_id \
+				and b.has_method("get_queue"):
+			own_tc = b
+			break
+	if own_tc == null:
+		print("NET_SMOKE CLIENT: FAIL — no own TC in the mirror world")
+		get_tree().quit(1)
+		return
+	CommandBus.submit(ProductionCommand.make(NetworkSession.local_player_id, "train",
+		EntityRegistry.id_of(own_tc)))
+	var deadline: float = Time.get_ticks_msec() / 1000.0 + 10.0
+	while Time.get_ticks_msec() / 1000.0 < deadline:
+		await get_tree().create_timer(0.5).timeout
+		var q: Array = own_tc.call("get_queue") as Array
+		var food: float = ResourceManager.get_resources(NetworkSession.local_player_id).get("food", 999.0) as float
+		if not q.is_empty() and food < 200.0:
+			print("NET_SMOKE CLIENT: queue mirror works — %d queued, food %.0f" % [q.size(), food])
+			print("NET_SMOKE CLIENT: done")
+			get_tree().quit(0)
+			return
+	print("NET_SMOKE CLIENT: FAIL — train queue never mirrored")
 	get_tree().quit(1)

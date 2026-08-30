@@ -47,6 +47,8 @@ signal age_advance_complete(player_id: int, new_age: int)
 
 # Combat
 signal unit_attacked(attacker: Node, target: Node)
+## A projectile left the bow/tower — replication echoes it on clients (visual only).
+signal projectile_spawned(start: Vector2, target_pos: Vector2)
 signal hero_ability_used(player_id: int)
 signal damage_dealt(target: Node, amount: float, attacker: Node)
 signal ai_unit_under_attack(player_id: int)

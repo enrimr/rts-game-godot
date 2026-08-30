@@ -9,6 +9,9 @@ var _original_target: Node = null        # only used to check if it's still ther
 var _speed: float = 520.0
 var _hit_radius: float = 28.0
 var _lifetime: float = 0.0
+## True on a client-side replication echo: purely visual, never reported back.
+var echo: bool = false
+var _reported: bool = false
 const MAX_LIFETIME: float = 3.0
 
 func _ready() -> void:
@@ -27,6 +30,11 @@ func _ready() -> void:
 	add_child(fletching)
 
 func _process(delta: float) -> void:
+	# Deferred to the first frame: global_position is set AFTER add_child.
+	if not _reported and not echo:
+		_reported = true
+		if NetworkSession.is_host():
+			EventBus.projectile_spawned.emit(global_position, target_pos)
 	_lifetime += delta
 	if _lifetime >= MAX_LIFETIME:
 		queue_free()

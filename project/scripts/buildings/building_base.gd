@@ -307,6 +307,10 @@ func _apply_player_color_stripe() -> void:
 	PlayerColors.apply_color_stripe(self, player_id, w, b)
 
 func take_damage(amount: float, source: Node = null) -> void:
+	# Replication puppet (LAN client mirror): the host owns all damage; local
+	# hits would kill entities the authority still considers alive.
+	if get_meta(&"rep_puppet", false):
+		return
 	health -= amount
 	EventBus.damage_dealt.emit(self, amount, source)
 	_flash_hit()

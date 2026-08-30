@@ -68,8 +68,9 @@ func player_count() -> int:
 
 func host_game(port: int = DEFAULT_PORT) -> Error:
 	# A stale session (e.g. a previous Host click whose lobby never opened)
-	# still holds the port — close it before rebinding.
-	if multiplayer.multiplayer_peer != null:
+	# still holds the port — close it before rebinding. Only a REAL session:
+	# the engine's default OfflineMultiplayerPeer must not be touched.
+	if is_online():
 		leave()
 	var peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
 	var err: Error = peer.create_server(port, MAX_CLIENTS)
@@ -123,7 +124,7 @@ func _display_name(player_id: int) -> String:
 	return trimmed if not trimmed.is_empty() else tr("LAN_DEFAULT_NAME") % (player_id + 1)
 
 func join_game(ip: String, port: int = DEFAULT_PORT) -> Error:
-	if multiplayer.multiplayer_peer != null:
+	if is_online():
 		leave()
 	var peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
 	var err: Error = peer.create_client(ip, port)
