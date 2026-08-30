@@ -24,6 +24,8 @@ const GLYPHS: Array[String] = [
 	"follow", "age_up", "gate_lock", "gate_unlock", "ability", "unload",
 	"close", "menu", "speed1", "speed2", "speed3",
 	"idle_villager", "idle_military", "locate_hero", "garrison_into", "town_bell",
+	"stance_aggressive", "stance_defensive", "stance_stand_ground", "stance_passive",
+	"formation_line", "formation_box", "formation_spread", "formation_rings",
 	"page_prev", "page_next",
 	"res_food", "res_wood", "res_gold", "res_stone",
 	"stat_attack", "stat_armor", "stat_range", "stat_speed",
@@ -467,6 +469,56 @@ static func _build(id: String, root: Node2D) -> void:
 				Vector2(12, 32)]), C_RED)
 			_circle(root, Vector2(28, 28), 5.0, C_GOLD)
 			_z_mark(root, Vector2(46, 8))
+		"stance_aggressive":
+			# Two crossed blades: chase anything that comes close.
+			var blade: Color = Color(0.82, 0.84, 0.88)
+			_bar(root, Vector2(18, 46), Vector2(46, 14), 5.0, blade)
+			_bar(root, Vector2(18, 14), Vector2(46, 46), 5.0, blade)
+			_bar(root, Vector2(14, 50), Vector2(22, 42), 6.0, C_RED)
+			_bar(root, Vector2(50, 50), Vector2(42, 42), 6.0, C_RED)
+		"stance_defensive":
+			# A shield: fight back, return to post.
+			_poly(root, PackedVector2Array([Vector2(16, 14), Vector2(48, 14),
+				Vector2(48, 32), Vector2(44, 42), Vector2(32, 52), Vector2(20, 42),
+				Vector2(16, 32)]), Color(0.20, 0.42, 0.66))
+			_circle(root, Vector2(32, 28), 5.0, Color(0.75, 0.85, 0.95))
+		"stance_stand_ground":
+			# Shield planted on the ground: strike in reach, never move.
+			_poly(root, PackedVector2Array([Vector2(20, 10), Vector2(44, 10),
+				Vector2(44, 26), Vector2(41, 34), Vector2(32, 42), Vector2(23, 34),
+				Vector2(20, 26)]), Color(0.45, 0.42, 0.30))
+			_circle(root, Vector2(32, 22), 4.0, C_GOLD)
+			_bar(root, Vector2(12, 50), Vector2(52, 50), 6.0, Color(0.35, 0.28, 0.18))
+			_bar(root, Vector2(32, 42), Vector2(32, 50), 4.0, Color(0.45, 0.42, 0.30))
+		"stance_passive":
+			# Sword under a prohibition stroke: never attack on its own.
+			var pale: Color = Color(0.62, 0.64, 0.68)
+			_bar(root, Vector2(20, 44), Vector2(44, 20), 5.0, pale)
+			_bar(root, Vector2(18, 46), Vector2(24, 40), 6.0, Color(0.45, 0.35, 0.25))
+			_stroke(root, PackedVector2Array([Vector2(14, 14), Vector2(50, 50)]),
+				Color(0.85, 0.20, 0.15), 5.5)
+		"formation_line":
+			# Two ranks facing up: melee front (red), ranged behind (gold).
+			for i: int in range(4):
+				_circle(root, Vector2(14.0 + i * 12.0, 24.0), 5.0, C_RED)
+				_circle(root, Vector2(14.0 + i * 12.0, 42.0), 5.0, C_GOLD)
+		"formation_box":
+			# A solid square block.
+			for gx: int in range(3):
+				for gy: int in range(3):
+					_circle(root, Vector2(18.0 + gx * 14.0, 18.0 + gy * 14.0), 5.0,
+						C_RED if gx == 0 or gx == 2 or gy == 0 or gy == 2 else C_GOLD)
+		"formation_spread":
+			# Wide spacing against splash damage.
+			for p: Vector2 in [Vector2(12, 14), Vector2(50, 12), Vector2(30, 28),
+					Vector2(14, 46), Vector2(48, 44), Vector2(34, 54)]:
+				_circle(root, p, 5.0, C_RED)
+		"formation_rings":
+			# The classic concentric blob around the click.
+			_circle(root, Vector2(32, 32), 5.5, C_GOLD)
+			for i: int in range(6):
+				var a: float = TAU * float(i) / 6.0
+				_circle(root, Vector2(32, 32) + Vector2(cos(a), sin(a)) * 17.0, 4.5, C_RED)
 		"garrison_into":
 			# Sheltering: a stout keep with a figure slipping in through the door.
 			var keep: Color = Color(0.55, 0.52, 0.48)

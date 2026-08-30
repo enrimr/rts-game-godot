@@ -51,6 +51,14 @@ const ACTION_GLYPHS: Dictionary = {
 	"ungarrison": "unload",
 	"garrison_into": "garrison_into",
 	"town_bell": "town_bell",
+	"stance:aggressive": "stance_aggressive",
+	"stance:defensive": "stance_defensive",
+	"stance:stand_ground": "stance_stand_ground",
+	"stance:passive": "stance_passive",
+	"formation:line": "formation_line",
+	"formation:box": "formation_box",
+	"formation:spread": "formation_spread",
+	"formation:rings": "formation_rings",
 	"back": "page_prev",
 	"gate_lock": "gate_lock",
 }
@@ -627,6 +635,7 @@ func _render_action_page() -> void:
 			_render_action_page()
 			_refresh_button_states())
 		_action_grid.add_child(_page_next_btn)
+	_refresh_mode_highlights()
 
 func _make_page_btn(glyph: String) -> ActionButton:
 	var btn: ActionButton = ActionButton.new()
@@ -702,6 +711,10 @@ func _on_action_button_pressed(action_id: String) -> void:
 	else:
 		AudioManager.play("ui_click")
 	action_requested.emit(action_id)
+	# The stance/formation state just changed synchronously during the emit;
+	# re-light the toggle frames so the choice is visible immediately.
+	if action_id.begins_with("stance:") or action_id.begins_with("formation:"):
+		call_deferred("_refresh_mode_highlights")
 
 func _set_pending_action(action_id: String) -> void:
 	_pending_action = action_id
@@ -724,6 +737,39 @@ func _disable_action_button(target_id: String) -> void:
 			btn.set_meta("locked", true)
 			btn.set_enabled(false)
 			break
+
+## Persistent feedback for the mode toggles: the current formation choice and
+## the first selected unit's stance keep a lit frame on their button — before
+## this, pressing Defensive or Box changed the simulation with zero visual echo.
+func _refresh_mode_highlights() -> void:
+	var world: Node = get_tree().get_first_node_in_group("world")
+	if world == null:
+		return
+	var commands: Variant = world.get("_commands")
+	var formation: String = ""
+	if commands != null:
+		formation = commands.get("_formation") as String
+	var stance_id: String = _first_selected_stance(world)
+	for child: Node in _action_grid.get_children():
+		if not (child is ActionButton):
+			continue
+		var btn: ActionButton = child as ActionButton
+		if btn.action_id.begins_with("formation:"):
+			btn.set_active(btn.action_id.trim_prefix("formation:") == formation)
+		elif btn.action_id.begins_with("stance:"):
+			btn.set_active(btn.action_id.trim_prefix("stance:") == stance_id)
+
+const STANCE_NAMES: Array[String] = ["aggressive", "defensive", "stand_ground", "passive"]
+
+func _first_selected_stance(world: Node) -> String:
+	var units: Variant = world.get("_selected_units")
+	if units is Array and not (units as Array).is_empty():
+		var unit: Variant = (units as Array)[0]
+		if is_instance_valid(unit):
+			var s: Variant = (unit as Node).get("stance")
+			if s != null and (s as int) >= 0 and (s as int) < STANCE_NAMES.size():
+				return STANCE_NAMES[s as int]
+	return ""
 
 func _highlight_pending_button(active_id: String) -> void:
 	for child: Node in _action_grid.get_children():
