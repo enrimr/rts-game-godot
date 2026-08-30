@@ -16,6 +16,10 @@ class StubProd extends Node2D:
 class StubWorld extends Node2D:
 	var _selected_building: Node = null
 	var _selected_buildings: Array[Node] = []
+	var hud: Node = null
+	func _init() -> void:
+		hud = Node.new()
+		add_child(hud)
 	func live_selected_buildings() -> Array[Node]:
 		return _selected_buildings
 
@@ -77,6 +81,28 @@ func test_destroy_applies_to_the_whole_group() -> void:
 	assert_true(b.is_queued_for_deletion(), "…and so does the rest of the group")
 	assert_null(_world._selected_building, "selection is cleared")
 	assert_eq(_world._selected_buildings, [] as Array[Node])
+
+func test_big_group_destroy_asks_first() -> void:
+	## More than DESTROY_CONFIRM_THRESHOLD buildings: nothing falls until the
+	## dialog is confirmed, and a cancel keeps the selection alive.
+	var group: Array[Node] = []
+	for _i: int in range(WorldCommands.DESTROY_CONFIRM_THRESHOLD + 1):
+		group.append(_prod(0))
+	_world._selected_building = group[0]
+	CommandBus.start_match(_world)
+	_commands._on_action_requested("destroy")
+	for b: Node in group:
+		assert_false(b.is_queued_for_deletion(), "nothing falls before confirming")
+	assert_not_null(_world._selected_building, "the selection survives the prompt")
+	var dialog: ConfirmationDialog = null
+	for child: Node in _world.hud.get_children():
+		if child is ConfirmationDialog:
+			dialog = child as ConfirmationDialog
+	assert_not_null(dialog, "the confirmation dialog is up")
+	dialog.confirmed.emit()
+	for b: Node in group:
+		assert_true(b.is_queued_for_deletion(), "confirming demolishes the group")
+	assert_null(_world._selected_building)
 
 func test_type_filter_excludes_other_buildings() -> void:
 	_prod(0)

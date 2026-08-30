@@ -411,3 +411,4 @@ ACTION_GARRISON,Garrison,Guarecerse
 TOOLTIP_GARRISON,Click one of your buildings to shelter inside,Haz clic en un edificio tuyo para guarecerte dentro
 ACTION_TOWN_BELL,Town Bell,Campana
 TOOLTIP_TOWN_BELL,Ring: villagers shelter in the nearest building. Ring again to release everyone,Tocar: los aldeanos se guarecen en el edificio más cercano. Vuelve a tocar para desalojar a todos
+UI_CONFIRM_DESTROY_GROUP,Demolish %d buildings?,¿Demoler %d edificios?

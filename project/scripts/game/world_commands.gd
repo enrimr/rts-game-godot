@@ -10,6 +10,8 @@ class_name WorldCommands extends RefCounted
 
 const UNIT_CLICK_RADIUS: float = 32.0
 const BUILDING_CLICK_RADIUS: float = 40.0
+## Demolishing MORE than this many buildings at once asks for confirmation.
+const DESTROY_CONFIRM_THRESHOLD: int = 5
 
 var _world  # GameWorld — untyped so dynamic access works
 
@@ -634,6 +636,30 @@ func _selected_building_id() -> int:
 ## `matches` — with several barracks selected, each train click lands on the
 ## emptiest queue (AoE2 distribution). Falls back to the primary so a
 ## full-queue group still gets order_train's own refusal.
+func _execute_group_destroy(targets: Array[Node]) -> void:
+	_world._selected_building = null
+	_world._selected_buildings.clear()
+	for target: Node in targets:
+		if not is_instance_valid(target):
+			continue
+		if target.has_method("set_selected"):
+			target.set_selected(false)
+		CommandBus.submit(BuildingActionCommand.make(0, "delete",
+			EntityRegistry.id_of(target)))
+
+## Modal "Demolish N buildings?" — the selection survives a cancel.
+func _confirm_group_destroy(targets: Array[Node]) -> void:
+	var dialog: ConfirmationDialog = ConfirmationDialog.new()
+	dialog.title = tr("ACTION_DESTROY")
+	dialog.dialog_text = tr("UI_CONFIRM_DESTROY_GROUP") % targets.size()
+	_world.hud.add_child(dialog)
+	dialog.confirmed.connect(func() -> void:
+		_execute_group_destroy(targets))
+	dialog.visibility_changed.connect(func() -> void:
+		if not dialog.visible:
+			dialog.queue_free())
+	dialog.popup_centered()
+
 func _train_at_least_loaded(matches: Callable, action_id: String) -> void:
 	var target: Node = _least_loaded_selected(matches)
 	if target != null:
@@ -758,15 +784,12 @@ func _on_action_requested(action_id: String) -> void:
 				var targets: Array[Node] = _world.live_selected_buildings().duplicate()
 				if targets.is_empty():
 					targets = [_world._selected_building] as Array[Node]
-				_world._selected_building = null
-				_world._selected_buildings.clear()
-				for target: Node in targets:
-					if not is_instance_valid(target):
-						continue
-					if target.has_method("set_selected"):
-						target.set_selected(false)
-					CommandBus.submit(BuildingActionCommand.make(0, "delete",
-						EntityRegistry.id_of(target)))
+				if targets.size() > DESTROY_CONFIRM_THRESHOLD:
+					# One stray double click + Delete could level every barracks
+					# in the empire; big demolitions ask first.
+					_confirm_group_destroy(targets)
+				else:
+					_execute_group_destroy(targets)
 			elif not _world._selected_units.is_empty():
 				CommandBus.submit(UnitActionCommand.make(0, "delete", _selection_ids()))
 				_world._selected_units.clear()
