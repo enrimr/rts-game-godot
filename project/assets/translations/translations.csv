@@ -434,3 +434,9 @@ LAN_HOST_TAG,host,host
 LAN_KICK,Kick,Expulsar
 LAN_KICKED,You were kicked from the match.,Te han expulsado de la partida.
 LAN_LEAVE,Leave,Salir
+LAN_PLAYERS,Players,Jugadores
+LAN_SETTINGS_SUMMARY,Match settings (host),Configuración de la partida (host)
+LAN_SLOT,Seat %d:,Puesto %d:
+LAN_SLOT_OPEN,Open,Abierto
+LAN_SLOT_AI,AI,IA
+LAN_SLOT_CLOSED,Closed,Cerrado

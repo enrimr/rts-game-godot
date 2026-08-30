@@ -43,10 +43,43 @@ var _player_civ_desc_label: Label = null  # kept for legacy reference, detail us
 var _rival_civ_indices: Array[int] = [0, 0, 0]
 var _rivals_section: HBoxContainer = null
 
+## LAN mode: the SAME screen hosts the multiplayer lobby. The rivals row is
+## replaced by a players panel (live roster + Open/AI/Closed slots), the civ
+## column picks YOUR civ (sent to the host), and on clients the settings
+## column becomes a read-only summary that tracks the host's picks live.
+var lan_mode: bool = false
+var _players_panel: VBoxContainer = null
+var _summary_label: Label = null
+var _civ_detail_vbox: VBoxContainer = null
+var _lobby_sync_timer: Timer = null
+var _last_lobby_snapshot: Dictionary = {}
+
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
 	_init_rival_state()
 	_build()
+	if lan_mode:
+		NetworkSession.roster_changed.connect(_refresh_lan_panels)
+		NetworkSession.config_changed.connect(_refresh_lan_panels)
+		if NetworkSession.is_host():
+			# Push settings changes to the clients' summaries ~2×/s.
+			_lobby_sync_timer = Timer.new()
+			_lobby_sync_timer.wait_time = 0.5
+			_lobby_sync_timer.timeout.connect(_maybe_broadcast_lobby)
+			add_child(_lobby_sync_timer)
+			_lobby_sync_timer.start()
+		_refresh_lan_panels()
+
+func _exit_tree() -> void:
+	if lan_mode:
+		NetworkSession.roster_changed.disconnect(_refresh_lan_panels)
+		NetworkSession.config_changed.disconnect(_refresh_lan_panels)
+
+func _maybe_broadcast_lobby() -> void:
+	var snap: Dictionary = NetworkSession.snapshot_config()
+	if snap != _last_lobby_snapshot:
+		_last_lobby_snapshot = snap
+		NetworkSession.broadcast_lobby()
 
 func _init_rival_state() -> void:
 	for i: int in range(3):
@@ -123,6 +156,124 @@ func _build() -> void:
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(left)
 
+	# Only the LAN host edits the match settings; clients get a live read-only
+	# summary that tracks the host's picks (broadcast_lobby → config_changed).
+	if lan_mode and not NetworkSession.is_host():
+		_build_settings_summary(left)
+	else:
+		_build_setting_rows(left)
+
+	if lan_mode:
+		left.add_child(_make_sep())
+		var players_header: Label = _make_label(tr("LAN_PLAYERS"))
+		players_header.add_theme_color_override("font_color", Color(0.55, 0.85, 0.55))
+		players_header.add_theme_font_size_override("font_size", 21)
+		left.add_child(players_header)
+		_players_panel = VBoxContainer.new()
+		_players_panel.add_theme_constant_override("separation", 6)
+		left.add_child(_players_panel)
+		_rebuild_players_panel()
+
+	# ── Right column: player civ ─────────────────────────────────────────────
+	var right: VBoxContainer = VBoxContainer.new()
+	right.add_theme_constant_override("separation", 10)
+	right.custom_minimum_size = Vector2(340, 0)
+	right.size_flags_horizontal = Control.SIZE_SHRINK_END
+	right.size_flags_vertical = Control.SIZE_SHRINK_BEGIN  # align to top
+	columns.add_child(right)
+
+	var civ_header: Label = _make_label(tr("LOBBY_CIVILIZATION"))
+	civ_header.add_theme_color_override("font_color", Color(0.55, 0.85, 0.55))
+	civ_header.add_theme_font_size_override("font_size", 21)
+	right.add_child(civ_header)
+
+	var grid: GridContainer = GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	right.add_child(grid)
+	_player_civ_btns.clear()
+
+	# Detail panel — built first so we can reference it in btn callbacks
+	var detail_panel: PanelContainer = PanelContainer.new()
+	var detail_sty: StyleBoxFlat = StyleBoxFlat.new()
+	detail_sty.bg_color = Color(0.10, 0.10, 0.16, 0.90)
+	detail_sty.corner_radius_top_left    = 5
+	detail_sty.corner_radius_top_right   = 5
+	detail_sty.corner_radius_bottom_left = 5
+	detail_sty.corner_radius_bottom_right = 5
+	detail_panel.add_theme_stylebox_override("panel", detail_sty)
+	detail_panel.custom_minimum_size = Vector2(0, 240)
+
+	var detail_margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		detail_margin.add_theme_constant_override("margin_" + side, 12)
+	detail_panel.add_child(detail_margin)
+
+	var detail_vbox: VBoxContainer = VBoxContainer.new()
+	detail_vbox.add_theme_constant_override("separation", 8)
+	detail_margin.add_child(detail_vbox)
+
+	_player_civ_desc_label = Label.new()  # reused as the full detail block
+	_civ_detail_vbox = detail_vbox
+
+	for i: int in range(CIVS.size()):
+		var civ: Dictionary = CIVS[i] as Dictionary
+		var btn: Button = Button.new()
+		btn.text = tr(civ["name_key"] as String)
+		btn.custom_minimum_size = Vector2(120, 34)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.add_theme_font_size_override("font_size", 16)
+		grid.add_child(btn)
+		_player_civ_btns.append(btn)
+		var captured_i: int = i
+		btn.pressed.connect(func() -> void:
+			_player_civ_index = captured_i
+			var civ_id: String = (CIVS[captured_i] as Dictionary)["id"] as String
+			if lan_mode:
+				# YOUR civ pick goes through the host (it lands in the roster
+				# and comes back via roster_changed on every machine).
+				NetworkSession.request_civ(civ_id)
+			else:
+				MatchConfig.player_civ_id = civ_id
+			_refresh_civ_highlight(_player_civ_btns, captured_i)
+			_rebuild_civ_detail(detail_vbox, captured_i))
+
+	_refresh_civ_highlight(_player_civ_btns, _player_civ_index)
+
+	right.add_child(detail_panel)
+	_rebuild_civ_detail(detail_vbox, _player_civ_index)
+
+	# Bottom buttons
+	vbox.add_child(_make_sep())
+
+	var btn_row: HBoxContainer = HBoxContainer.new()
+	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_row.add_theme_constant_override("separation", 16)
+	vbox.add_child(btn_row)
+
+	var back_btn: Button = _make_btn(tr("LOBBY_BACK"), Color(0.20, 0.20, 0.25, 0.95), Color(0.35, 0.35, 0.40, 0.95))
+	back_btn.custom_minimum_size = Vector2(140, 44)
+	back_btn.pressed.connect(func() -> void: back_requested.emit())
+	btn_row.add_child(back_btn)
+
+	var start_btn: Button = _make_btn(tr("LOBBY_START"), Color(0.18, 0.38, 0.18, 0.95), Color(0.28, 0.55, 0.28, 0.95))
+	start_btn.custom_minimum_size = Vector2(200, 44)
+	start_btn.add_theme_font_size_override("font_size", 22)
+	if lan_mode:
+		# Only the host launches; every machine then loads the same world.
+		start_btn.visible = NetworkSession.is_host()
+		start_btn.pressed.connect(func() -> void:
+			start_btn.disabled = true
+			NetworkSession.start_match())
+	else:
+		start_btn.pressed.connect(func() -> void: start_requested.emit())
+	btn_row.add_child(start_btn)
+
+# --- Settings rows (offline lobby + LAN host) ---
+
+func _build_setting_rows(left: VBoxContainer) -> void:
 	# Map type
 	var type_opts: Array[String] = [
 		tr("LOBBY_MAPTYPE_PLAINS"), tr("LOBBY_MAPTYPE_STANDARD"),
@@ -169,28 +320,31 @@ func _build() -> void:
 			MatchConfig.weather_enabled = i > 0
 			MatchConfig.weather_frequency = i))
 
-	left.add_child(_make_sep())
+	# In LAN mode the players panel (roster + Open/AI/Closed slots) replaces
+	# the rival count/civ rows — rivals are derived from it at match start.
+	if not lan_mode:
+		left.add_child(_make_sep())
 
-	# Rival count
-	var rival_opts: Array[String] = ["1", "2", "3"]
-	left.add_child(_make_setting_row(tr("LOBBY_RIVAL_COUNT"), rival_opts, MatchConfig.rival_count - 1,
-		func(i: int) -> void:
-			MatchConfig.rival_count = i + 1
-			_sync_rival_config_to_match()
-			_rebuild_rivals_section()))
+		# Rival count
+		var rival_opts: Array[String] = ["1", "2", "3"]
+		left.add_child(_make_setting_row(tr("LOBBY_RIVAL_COUNT"), rival_opts, MatchConfig.rival_count - 1,
+			func(i: int) -> void:
+				MatchConfig.rival_count = i + 1
+				_sync_rival_config_to_match()
+				_rebuild_rivals_section()))
 
-	# Rivals section — fixed height so the card doesn't resize
-	var rivals_clip: Control = Control.new()
-	rivals_clip.custom_minimum_size = Vector2(0, RIVALS_FIXED_H)
-	rivals_clip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rivals_clip.clip_contents = true
-	left.add_child(rivals_clip)
+		# Rivals section — fixed height so the card doesn't resize
+		var rivals_clip: Control = Control.new()
+		rivals_clip.custom_minimum_size = Vector2(0, RIVALS_FIXED_H)
+		rivals_clip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rivals_clip.clip_contents = true
+		left.add_child(rivals_clip)
 
-	_rivals_section = HBoxContainer.new()
-	_rivals_section.add_theme_constant_override("separation", 10)
-	_rivals_section.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	rivals_clip.add_child(_rivals_section)
-	_rebuild_rivals_section()
+		_rivals_section = HBoxContainer.new()
+		_rivals_section.add_theme_constant_override("separation", 10)
+		_rivals_section.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+		rivals_clip.add_child(_rivals_section)
+		_rebuild_rivals_section()
 
 	# AI difficulty
 	var diff_opts: Array[String] = [
@@ -200,92 +354,211 @@ func _build() -> void:
 	left.add_child(_make_setting_row(tr("LOBBY_AI_DIFFICULTY"), diff_opts, diff_initial,
 		func(i: int) -> void: GameSettings.difficulty = i))
 
-	# ── Right column: player civ ─────────────────────────────────────────────
-	var right: VBoxContainer = VBoxContainer.new()
-	right.add_theme_constant_override("separation", 10)
-	right.custom_minimum_size = Vector2(340, 0)
-	right.size_flags_horizontal = Control.SIZE_SHRINK_END
-	right.size_flags_vertical = Control.SIZE_SHRINK_BEGIN  # align to top
-	columns.add_child(right)
+# --- LAN: read-only settings summary (clients) ---
 
-	var civ_header: Label = _make_label(tr("LOBBY_CIVILIZATION"))
-	civ_header.add_theme_color_override("font_color", Color(0.55, 0.85, 0.55))
-	civ_header.add_theme_font_size_override("font_size", 21)
-	right.add_child(civ_header)
+func _build_settings_summary(left: VBoxContainer) -> void:
+	var header: Label = _make_label(tr("LAN_SETTINGS_SUMMARY"))
+	left.add_child(header)
+	_summary_label = Label.new()
+	_summary_label.add_theme_font_size_override("font_size", 16)
+	_summary_label.add_theme_color_override("font_color", Color(0.78, 0.78, 0.82))
+	_summary_label.text = _settings_summary_text()
+	left.add_child(_summary_label)
 
-	var grid: GridContainer = GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 6)
-	grid.add_theme_constant_override("v_separation", 6)
-	right.add_child(grid)
-	_player_civ_btns.clear()
+func _settings_summary_text() -> String:
+	var type_opts: Array[String] = [
+		tr("LOBBY_MAPTYPE_PLAINS"), tr("LOBBY_MAPTYPE_STANDARD"),
+		tr("LOBBY_MAPTYPE_VOLCANIC"), tr("LOBBY_MAPTYPE_DESERT"), tr("LOBBY_MAPTYPE_ISLANDS"),
+	]
+	var size_opts: Array[String] = [tr("LOBBY_MAP_SMALL"), tr("LOBBY_MAP_MEDIUM"), tr("LOBBY_MAP_LARGE")]
+	var res_opts: Array[String] = [tr("LOBBY_RES_SCARCE"), tr("LOBBY_RES_NORMAL"), tr("LOBBY_RES_ABUNDANT"), tr("LOBBY_RES_FULL_COMBAT")]
+	var victory_opts: Array[String] = [tr("LOBBY_VICTORY_CONQUEST"), tr("LOBBY_VICTORY_REGICIDE"), tr("LOBBY_VICTORY_WONDER")]
+	var hero_opts: Array[String] = [tr("LOBBY_HERO_RANDOM"), tr("LOBBY_HERO_MALE"), tr("LOBBY_HERO_FEMALE")]
+	var weather_opts: Array[String] = [
+		tr("LOBBY_WEATHER_OFF"), tr("LOBBY_WEATHER_NORMAL"),
+		tr("LOBBY_WEATHER_FREQUENT"), tr("LOBBY_WEATHER_EXTREME"),
+	]
+	var weather_idx: int = MatchConfig.weather_frequency if MatchConfig.weather_enabled else 0
+	var lines: Array[String] = [
+		"%s  %s" % [tr("LOBBY_MAP_TYPE"), type_opts[clampi(MatchConfig.map_type, 0, type_opts.size() - 1)]],
+		"%s  %s" % [tr("LOBBY_MAP_SIZE"), size_opts[clampi(MatchConfig.map_size, 0, size_opts.size() - 1)]],
+		"%s  %s" % [tr("LOBBY_RESOURCES"), res_opts[clampi(MatchConfig.resources, 0, res_opts.size() - 1)]],
+		"%s  %s" % [tr("LOBBY_STARTING_AGE"), tr(AGE_KEYS[clampi(MatchConfig.starting_age, 0, AGE_KEYS.size() - 1)])],
+		"%s  %s" % [tr("LOBBY_VICTORY_MODE"), victory_opts[clampi(MatchConfig.victory_mode, 0, victory_opts.size() - 1)]],
+		"%s  %s" % [tr("LOBBY_HERO_GENDER"), hero_opts[clampi(MatchConfig.hero_gender, 0, hero_opts.size() - 1)]],
+		"%s  %s" % [tr("LOBBY_WEATHER_FREQUENCY"), weather_opts[clampi(weather_idx, 0, weather_opts.size() - 1)]],
+	]
+	return "\n".join(lines)
 
-	# Detail panel — built first so we can reference it in btn callbacks
-	var detail_panel: PanelContainer = PanelContainer.new()
-	var detail_sty: StyleBoxFlat = StyleBoxFlat.new()
-	detail_sty.bg_color = Color(0.10, 0.10, 0.16, 0.90)
-	detail_sty.corner_radius_top_left    = 5
-	detail_sty.corner_radius_top_right   = 5
-	detail_sty.corner_radius_bottom_left = 5
-	detail_sty.corner_radius_bottom_right = 5
-	detail_panel.add_theme_stylebox_override("panel", detail_sty)
-	detail_panel.custom_minimum_size = Vector2(0, 240)
+# --- LAN: players panel (live roster + Open/AI/Closed slots) ---
 
-	var detail_margin: MarginContainer = MarginContainer.new()
-	for side: String in ["left", "right", "top", "bottom"]:
-		detail_margin.add_theme_constant_override("margin_" + side, 12)
-	detail_panel.add_child(detail_margin)
+func _refresh_lan_panels() -> void:
+	if not lan_mode:
+		return
+	_rebuild_players_panel()
+	if _summary_label != null:
+		_summary_label.text = _settings_summary_text()
+	# Your civ highlight follows the host-confirmed roster, not the raw click.
+	var roster: Dictionary = NetworkSession.get_roster()
+	var entry: Variant = roster.get(NetworkSession.local_player_id)
+	if entry is Dictionary:
+		var idx: int = _civ_index_for_id((entry as Dictionary).get("civ", "castellanos") as String)
+		if idx != _player_civ_index:
+			_player_civ_index = idx
+			_refresh_civ_highlight(_player_civ_btns, idx)
+			if _civ_detail_vbox != null:
+				_rebuild_civ_detail(_civ_detail_vbox, idx)
 
-	var detail_vbox: VBoxContainer = VBoxContainer.new()
-	detail_vbox.add_theme_constant_override("separation", 8)
-	detail_margin.add_child(detail_vbox)
+func _rebuild_players_panel() -> void:
+	if _players_panel == null:
+		return
+	for child: Node in _players_panel.get_children():
+		child.queue_free()
+	var roster: Dictionary = NetworkSession.get_roster()
+	_add_human_row(0, roster)
+	var client_ids: Array = []
+	for pid: Variant in roster:
+		if (pid as int) != 0:
+			client_ids.append(pid)
+	client_ids.sort()
+	# Each connected client occupies the earliest still-open slot; the other
+	# slots stay configurable (Open waits, AI shows its civ, Closed is off).
+	var next_client: int = 0
+	for si: int in range(NetworkSession.lobby_slots.size()):
+		var slot: Dictionary = NetworkSession.lobby_slots[si] as Dictionary
+		if (slot.get("type", "") as String) == "open" and next_client < client_ids.size():
+			_add_human_row(client_ids[next_client] as int, roster)
+			next_client += 1
+		else:
+			_add_slot_row(si, slot)
+	while next_client < client_ids.size():
+		_add_human_row(client_ids[next_client] as int, roster)
+		next_client += 1
 
-	_player_civ_desc_label = Label.new()  # reused as the full detail block
+func _add_human_row(pid: int, roster: Dictionary) -> void:
+	if not roster.has(pid):
+		return
+	var entry: Dictionary = roster[pid] as Dictionary
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	_players_panel.add_child(row)
 
-	for i: int in range(CIVS.size()):
-		var civ: Dictionary = CIVS[i] as Dictionary
-		var btn: Button = Button.new()
-		btn.text = tr(civ["name_key"] as String)
-		btn.custom_minimum_size = Vector2(120, 34)
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.focus_mode = Control.FOCUS_NONE
-		btn.add_theme_font_size_override("font_size", 16)
-		grid.add_child(btn)
-		_player_civ_btns.append(btn)
-		var captured_i: int = i
-		btn.pressed.connect(func() -> void:
-			_player_civ_index = captured_i
-			MatchConfig.player_civ_id = (CIVS[captured_i] as Dictionary)["id"] as String
-			_refresh_civ_highlight(_player_civ_btns, captured_i)
-			_rebuild_civ_detail(detail_vbox, captured_i))
+	var is_local: bool = pid == NetworkSession.local_player_id
+	if is_local:
+		# Your row carries the palette: pick your colour right here.
+		var own_color: int = entry.get("color", 0) as int
+		for idx: int in range(PlayerColors.COLORS.size()):
+			row.add_child(_make_color_swatch(idx, own_color, roster))
+	else:
+		var swatch: ColorRect = ColorRect.new()
+		swatch.custom_minimum_size = Vector2(22, 22)
+		swatch.color = PlayerColors.COLORS[entry.get("color", 0) as int]
+		row.add_child(swatch)
 
-	_refresh_civ_highlight(_player_civ_btns, _player_civ_index)
+	var name_label: Label = Label.new()
+	var suffix: String = ""
+	if pid == 0:
+		suffix = "  (%s)" % tr("LAN_HOST_TAG")
+	if is_local:
+		suffix += "  ◄"
+	name_label.text = str(entry.get("name", "?")) + suffix
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override("font_size", 16)
+	row.add_child(name_label)
 
-	right.add_child(detail_panel)
-	_rebuild_civ_detail(detail_vbox, _player_civ_index)
+	var civ_label: Label = Label.new()
+	civ_label.text = _civ_name(entry.get("civ", "") as String)
+	civ_label.add_theme_font_size_override("font_size", 15)
+	civ_label.add_theme_color_override("font_color", Color(0.75, 0.95, 0.60))
+	row.add_child(civ_label)
 
-	# Bottom buttons
-	vbox.add_child(_make_sep())
+	if NetworkSession.is_host() and pid != 0:
+		var kick_btn: Button = Button.new()
+		kick_btn.text = tr("LAN_KICK")
+		kick_btn.focus_mode = Control.FOCUS_NONE
+		kick_btn.add_theme_font_size_override("font_size", 13)
+		kick_btn.pressed.connect(func() -> void: NetworkSession.kick(pid))
+		row.add_child(kick_btn)
 
-	var btn_row: HBoxContainer = HBoxContainer.new()
-	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_row.add_theme_constant_override("separation", 16)
-	vbox.add_child(btn_row)
+func _make_color_swatch(idx: int, own_color: int, roster: Dictionary) -> Button:
+	var taken: bool = false
+	for e: Variant in roster.values():
+		if ((e as Dictionary).get("color", -1) as int) == idx:
+			taken = true
+			break
+	var btn: Button = Button.new()
+	btn.custom_minimum_size = Vector2(24, 24)
+	btn.focus_mode = Control.FOCUS_NONE
+	var sb: StyleBoxFlat = StyleBoxFlat.new()
+	sb.bg_color = PlayerColors.COLORS[idx]
+	if idx == own_color:
+		sb.border_color = Color.WHITE
+		for side: String in ["left", "right", "top", "bottom"]:
+			sb.set("border_width_" + side, 3)
+	for state: String in ["normal", "hover", "pressed", "disabled"]:
+		btn.add_theme_stylebox_override(state, sb)
+	btn.disabled = taken and idx != own_color
+	if btn.disabled:
+		btn.modulate = Color(1.0, 1.0, 1.0, 0.35)
+	btn.pressed.connect(func() -> void: NetworkSession.request_color(idx))
+	return btn
 
-	var back_btn: Button = _make_btn(tr("LOBBY_BACK"), Color(0.20, 0.20, 0.25, 0.95), Color(0.35, 0.35, 0.40, 0.95))
-	back_btn.custom_minimum_size = Vector2(140, 44)
-	back_btn.pressed.connect(func() -> void: back_requested.emit())
-	btn_row.add_child(back_btn)
+func _add_slot_row(si: int, slot: Dictionary) -> void:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	_players_panel.add_child(row)
+	var slot_type: String = slot.get("type", "closed") as String
 
-	var start_btn: Button = _make_btn(tr("LOBBY_START"), Color(0.18, 0.38, 0.18, 0.95), Color(0.28, 0.55, 0.28, 0.95))
-	start_btn.custom_minimum_size = Vector2(200, 44)
-	start_btn.add_theme_font_size_override("font_size", 22)
-	start_btn.pressed.connect(func() -> void: start_requested.emit())
-	btn_row.add_child(start_btn)
+	var lbl: Label = Label.new()
+	lbl.text = tr("LAN_SLOT") % (si + 2)
+	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
+	row.add_child(lbl)
+
+	if not NetworkSession.is_host():
+		var state_label: Label = Label.new()
+		var text: String = tr("LAN_SLOT_" + slot_type.to_upper())
+		if slot_type == "ai":
+			text += " — " + _civ_name(slot.get("civ", "") as String)
+		state_label.text = text
+		state_label.add_theme_font_size_override("font_size", 15)
+		row.add_child(state_label)
+		return
+
+	var type_opt: OptionButton = OptionButton.new()
+	type_opt.focus_mode = Control.FOCUS_NONE
+	type_opt.add_theme_font_size_override("font_size", 15)
+	type_opt.add_item(tr("LAN_SLOT_OPEN"), 0)
+	type_opt.add_item(tr("LAN_SLOT_AI"), 1)
+	type_opt.add_item(tr("LAN_SLOT_CLOSED"), 2)
+	var type_ids: Array[String] = ["open", "ai", "closed"]
+	type_opt.select(type_ids.find(slot_type))
+	type_opt.item_selected.connect(func(i: int) -> void:
+		(NetworkSession.lobby_slots[si] as Dictionary)["type"] = type_ids[i]
+		NetworkSession.broadcast_lobby()
+		_rebuild_players_panel())
+	row.add_child(type_opt)
+
+	if slot_type == "ai":
+		var civ_opt: OptionButton = _make_civ_dropdown(
+			_civ_index_for_id(slot.get("civ", "castellanos") as String),
+			func(i: int) -> void:
+				(NetworkSession.lobby_slots[si] as Dictionary)["civ"] = (CIVS[i] as Dictionary)["id"] as String
+				NetworkSession.broadcast_lobby())
+		civ_opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(civ_opt)
+
+func _civ_name(civ_id: String) -> String:
+	for civ: Dictionary in CIVS:
+		if (civ["id"] as String) == civ_id:
+			return tr(civ["name_key"] as String)
+	return civ_id
 
 # --- Rivals section ---
 
 func _rebuild_rivals_section() -> void:
+	if _rivals_section == null:
+		return
 	for child: Node in _rivals_section.get_children():
 		child.queue_free()
 	# One compact cell per rival, all on a single row: "1: [civ v]" ...

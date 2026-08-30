@@ -113,19 +113,30 @@ phase-2 interpolation buffer absorbs latency).
   with identical settings, so map generation and `EntityRegistry` hand out
   IDENTICAL entity IDs on all sides — command payloads reference entities by
   those IDs across the wire.
-- **MP rivals are humans**: `WorldSetup` spawns their starting assets (TC,
-  villagers, scout, hero) but skips the `AIPlayer` brain when
-  `NetworkSession.is_online()`.
-- **Lobby** (`LanLobby`, `scripts/ui/lan_lobby.gd`): pick a name before
-  hosting/joining, live roster (colour swatch + name + host tag, updated on
-  every join/leave via `roster_changed`), per-player colour palette (host
-  validates picks — taken colours are rejected and greyed out; the final picks
-  ride the start config and install `PlayerColors` overrides on every
-  machine), host-only Kick buttons (`NetworkSession.kick` notifies then
-  disconnects the peer) and a host-only "Match settings…" button that opens
-  the SAME `LobbyScreen` the skirmish uses (it writes MatchConfig live).
-  The player limit (4 = host + `MAX_CLIENTS`) is enforced by the ENet
-  transport itself. Leaving/back closes the peer.
+- **Mixed rivals**: the start config carries a `humans` list
+  (`NetworkSession.match_human_ids`, default `[0]` offline). `WorldSetup`
+  spawns every rival's starting assets (TC, villagers, scout, hero) but
+  creates the `AIPlayer` brain only on the simulation authority
+  (`not is_client()`) and only for non-human rivals
+  (`not is_human_player(rival_id)`) — a client-side brain would submit
+  through the redirected CommandBus stamped with the client's identity.
+- **Lobby** (`LanLobby`, `scripts/ui/lan_lobby.gd` → `LobbyScreen` with
+  `lan_mode = true`): the entry card only picks a name and hosts/joins; once
+  the session is up it swaps to the SAME `LobbyScreen` the skirmish uses.
+  In `lan_mode` the rival count/civ rows are replaced by a players panel:
+  the host row, then one row per lobby seat — a connected human (colour
+  swatch, name, civ, host-only Kick) or a host-configurable slot
+  (Open / AI with civ dropdown / Closed, `NetworkSession.lobby_slots`).
+  `open_seats_left()` refuses connections when no open slot remains. Every
+  human picks their own colour (host validates — taken colours rejected and
+  greyed) and civilization (`request_civ`, validated against the civ .tres)
+  via the right-hand civ grid; both live in the host-authoritative roster and
+  replicate via `roster_changed`. The host edits the match settings in place
+  and `broadcast_lobby()` pushes them (config snapshot + slots) so clients
+  render a live read-only summary. On start the host derives
+  `rival_civ_ids` = human civs (roster order) + AI-slot civs, sets
+  `rival_count`, and the colour picks install `PlayerColors` overrides on
+  every machine.
 - **Phase 2 (pending)**: host→client state replication (delta-compressed
   snapshots ~15 Hz + client interpolation) so the client SEES the
   authoritative simulation, plus the local_player_id sweep (HUD/selection/
@@ -135,11 +146,14 @@ phase-2 interpolation buffer absorbs latency).
   simulation-determinism milestone (movement off Godot physics).
 
 Gated by `tests/unit/test_network_session.gd` (config snapshot round-trip,
-JSON-serializable, offline defaults) and the two-process
-`tools/check_net_smoke.tscn`: a real client joins a real host, receives the
-config (seed + assigned player 1), boots the mirror world, sends a move
-command for its scout by entity ID, and the host asserts the command arrived
-stamped as player 1 AND that the scout physically moved in its simulation.
+JSON-serializable, offline defaults, open-seat accounting, civ-pick
+validation, humans-list install/reset) and the two-process
+`tools/check_net_smoke.tscn`: a real client joins a real host, picks a civ,
+receives the config (seed + assigned player 1 + civs + humans), boots the
+mirror world (asserting it runs ZERO AI brains), sends a move command for its
+scout by entity ID, and the host — running a mixed human + AI-slot match —
+asserts the AI brain exists only for the AI rival, the command arrived
+stamped as player 1, and the scout physically moved in its simulation.
 
 ## Economy System
 

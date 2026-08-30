@@ -26,8 +26,10 @@ signal peer_left(peer_id: int)
 signal joined_host()
 signal join_failed()
 signal session_closed()
-## The lobby roster (names/colours/joins/leaves) changed on any machine.
+## The lobby roster (names/colours/civs/joins/leaves) changed on any machine.
 signal roster_changed()
+## The host's lobby settings (MatchConfig snapshot + AI/open slots) changed.
+signal config_changed()
 ## This machine was kicked by the host.
 signal kicked()
 ## Fired on every machine when the host starts the match (config applied).
@@ -42,9 +44,15 @@ var auto_change_scene: bool = true
 
 var _peer_players: Dictionary = {}   # peer_id -> player_id (host side)
 var _next_player_id: int = 1
-## player_id -> {"name": String, "color": int, "peer": int}. Host-authoritative,
-## rebroadcast in full on every change (tiny — a lobby has ≤ 4 rows).
+## player_id -> {"name": String, "color": int, "civ": String, "peer": int}.
+## Host-authoritative, rebroadcast in full on every change (≤ 4 rows).
 var _roster: Dictionary = {}
+## Host-authored rival slots BEYOND the humans: [{"type": "open"|"ai"|"closed",
+## "civ": String}] × 3, broadcast with the lobby config so clients render them.
+var lobby_slots: Array = []
+## Which player ids are humans in the RUNNING match (set at start; [0] offline
+## so skirmish rivals always get their AI brains).
+var match_human_ids: Array = [0]
 
 func is_online() -> bool:
 	return role != Role.OFFLINE
@@ -68,10 +76,23 @@ func host_game(port: int = DEFAULT_PORT) -> Error:
 	local_player_id = 0
 	_peer_players.clear()
 	_next_player_id = 1
-	_roster = {0: {"name": _display_name(0), "color": 0, "peer": 1}}
+	_roster = {0: {"name": _display_name(0), "color": 0, "civ": MatchConfig.player_civ_id, "peer": 1}}
+	lobby_slots = [
+		{"type": "open", "civ": "castellanos"},
+		{"type": "closed", "civ": "franks"},
+		{"type": "closed", "civ": "atlantes"},
+	]
 	_connect_signals()
 	roster_changed.emit()
 	return OK
+
+## Human seats still free: "open" slots not yet taken by a connected client.
+func open_seats_left() -> int:
+	var open_count: int = 0
+	for slot: Variant in lobby_slots:
+		if ((slot as Dictionary).get("type", "") as String) == "open":
+			open_count += 1
+	return open_count - _peer_players.size()
 
 func _display_name(player_id: int) -> String:
 	var trimmed: String = player_name.strip_edges()
@@ -95,6 +116,8 @@ func leave() -> void:
 	local_player_id = 0
 	_peer_players.clear()
 	_roster.clear()
+	lobby_slots = []
+	match_human_ids = [0]
 	PlayerColors.clear_overrides()
 	session_closed.emit()
 
@@ -113,13 +136,18 @@ func _connect_signals() -> void:
 func _on_peer_connected(peer_id: int) -> void:
 	if role != Role.HOST:
 		return
+	# No open human seat left → refuse the connection outright.
+	if open_seats_left() <= 0:
+		(multiplayer.multiplayer_peer as ENetMultiplayerPeer).disconnect_peer(peer_id)
+		return
 	var pid: int = _next_player_id
 	_next_player_id += 1
 	_peer_players[peer_id] = pid
 	_roster[pid] = {"name": tr("LAN_DEFAULT_NAME") % (pid + 1),
-		"color": _first_free_color(), "peer": peer_id}
+		"color": _first_free_color(), "civ": "castellanos", "peer": peer_id}
 	_rx_assign_player.rpc_id(peer_id, pid)
 	_broadcast_roster()
+	broadcast_lobby()
 	peer_joined.emit(peer_id, pid)
 
 func _on_peer_disconnected(peer_id: int) -> void:
@@ -192,6 +220,43 @@ func request_color(idx: int) -> void:
 	elif role == Role.CLIENT:
 		_tx_pick_color.rpc_id(1, idx)
 
+## Pick YOUR civilization (duplicates allowed — mirror matches are fine).
+func request_civ(civ_id: String) -> void:
+	if role == Role.HOST:
+		_apply_civ_pick(0, civ_id)
+	elif role == Role.CLIENT:
+		_tx_pick_civ.rpc_id(1, civ_id)
+
+@rpc("any_peer", "reliable")
+func _tx_pick_civ(civ_id: String) -> void:
+	if role != Role.HOST:
+		return
+	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	if pid >= 0:
+		_apply_civ_pick(pid, civ_id)
+
+func _apply_civ_pick(pid: int, civ_id: String) -> void:
+	if not _roster.has(pid):
+		return
+	if not ResourceLoader.exists("res://resources/civilizations/%s.tres" % civ_id):
+		return
+	(_roster[pid] as Dictionary)["civ"] = civ_id
+	_broadcast_roster()
+
+## Host: push the lobby settings (MatchConfig snapshot + rival slots) to every
+## client, so their read-only summary tracks the host's picks live.
+func broadcast_lobby() -> void:
+	if role != Role.HOST:
+		return
+	_rx_lobby.rpc({"cfg": snapshot_config(), "slots": lobby_slots})
+	config_changed.emit()
+
+@rpc("authority", "reliable")
+func _rx_lobby(d: Dictionary) -> void:
+	apply_config(d.get("cfg", {}) as Dictionary)
+	lobby_slots = d.get("slots", []) as Array
+	config_changed.emit()
+
 @rpc("any_peer", "reliable")
 func _tx_pick_color(idx: int) -> void:
 	if role != Role.HOST:
@@ -231,10 +296,24 @@ func start_match() -> void:
 	if role != Role.HOST:
 		return
 	var cfg: Dictionary = snapshot_config()
-	# The number of rivals in the SIMULATION is the number of connected humans.
-	cfg["rival_count"] = _peer_players.size()
 	if (cfg["seed"] as int) == 0:
 		cfg["seed"] = int(Time.get_unix_time_from_system() * 1000.0) & 0x7FFFFFFF
+	# Rivals = the connected humans (ids 1.., their lobby civs) followed by the
+	# host's AI slots. The humans list rides along so WorldSetup knows which
+	# rivals get an AI brain and which are played from another machine.
+	var human_ids: Array = _roster.keys()
+	human_ids.sort()
+	var rival_civs: Array = []
+	for pid: Variant in human_ids:
+		if (pid as int) != 0:
+			rival_civs.append((_roster[pid] as Dictionary).get("civ", "castellanos"))
+	for slot: Variant in lobby_slots:
+		if ((slot as Dictionary).get("type", "") as String) == "ai":
+			rival_civs.append((slot as Dictionary).get("civ", "castellanos"))
+	cfg["player_civ_id"] = (_roster[0] as Dictionary).get("civ", MatchConfig.player_civ_id)
+	cfg["rival_civ_ids"] = rival_civs
+	cfg["rival_count"] = rival_civs.size()
+	cfg["humans"] = human_ids
 	# The lobby colour picks ride along so every machine paints players alike.
 	var colors: Dictionary = {}
 	for pid: Variant in _roster:
@@ -242,6 +321,11 @@ func start_match() -> void:
 	cfg["colors"] = colors
 	_rx_match_config.rpc(cfg)
 	_apply_and_start(cfg)
+
+## True when `player_id` is a human seat of the current match. Offline only
+## player 0 is human, so skirmish rivals keep their AI brains.
+func is_human_player(player_id: int) -> bool:
+	return match_human_ids.has(player_id)
 
 ## The lobby-relevant MatchConfig fields, as one serializable dictionary.
 static func snapshot_config() -> Dictionary:
@@ -287,6 +371,8 @@ static func apply_config(cfg: Dictionary) -> void:
 	if colors is Dictionary:
 		for pid: Variant in colors as Dictionary:
 			PlayerColors.set_override(pid as int, (colors as Dictionary)[pid] as int)
+	var humans: Variant = cfg.get("humans")
+	NetworkSession.match_human_ids = (humans as Array).duplicate() if humans is Array else [0]
 
 @rpc("authority", "reliable")
 func _rx_match_config(cfg: Dictionary) -> void:

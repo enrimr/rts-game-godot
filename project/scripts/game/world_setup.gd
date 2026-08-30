@@ -291,10 +291,13 @@ func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 	PopulationManager.add_unit(rival_id)
 	EventBus.unit_spawned.emit(scout, rival_id)
 
-	# Multiplayer rivals are HUMANS: they get the same starting assets (TC,
-	# villagers, scout, hero) but no AI brain — their orders arrive over the
-	# network as commands.
-	if not NetworkSession.is_online():
+	# Multiplayer HUMAN rivals get the same starting assets (TC, villagers,
+	# scout, hero) but no AI brain — their orders arrive over the network.
+	# AI slots configured in the LAN lobby (and every skirmish rival) DO get
+	# their brain, but only on the simulation authority: a client-side brain
+	# would submit through the redirected CommandBus and reach the host
+	# stamped with the CLIENT's player id.
+	if not NetworkSession.is_client() and not NetworkSession.is_human_player(rival_id):
 		var ai: Node = Node.new()
 		ai.set_script(load("res://scripts/ai/ai_player.gd"))
 		ai.set("player_id", rival_id)
