@@ -410,6 +410,29 @@ func _apply_and_start(cfg: Dictionary) -> void:
 	if auto_change_scene:
 		get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
 
+# ── State replication (host → clients, driven by StateReplicator) ───────────
+
+## Dense per-snapshot stream (positions/HP/stockpiles) on this machine.
+signal state_received(d: Dictionary)
+## Reliable events (spawns/removals/match outcome) on this machine.
+signal events_received(d: Dictionary)
+
+func send_state(d: Dictionary) -> void:
+	if role == Role.HOST:
+		_rx_state.rpc(d)
+
+func send_events(d: Dictionary) -> void:
+	if role == Role.HOST:
+		_rx_events.rpc(d)
+
+@rpc("authority", "unreliable_ordered")
+func _rx_state(d: Dictionary) -> void:
+	state_received.emit(d)
+
+@rpc("authority", "reliable")
+func _rx_events(d: Dictionary) -> void:
+	events_received.emit(d)
+
 # ── Command pipe (client → host) ─────────────────────────────────────────────
 
 ## CLIENT: CommandBus routes every submit here instead of executing locally.

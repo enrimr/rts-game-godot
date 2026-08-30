@@ -63,6 +63,21 @@ func add_resource(player_id: int, resource: String, amount: float) -> void:
 	EventBus.resource_changed.emit(player_id, resource, _player_resources[player_id][resource])
 	resources_updated.emit(player_id, _player_resources[player_id])
 
+## Replication: overwrite a player's stockpile with the host's numbers,
+## emitting only for the resources that actually changed.
+func apply_remote(player_id: int, stock: Dictionary) -> void:
+	if not _player_resources.has(player_id):
+		_player_resources[player_id] = {}
+	var mine: Dictionary = _player_resources[player_id]
+	var changed: bool = false
+	for key: Variant in stock:
+		if not is_equal_approx(mine.get(key, 0.0) as float, stock[key] as float):
+			mine[key] = stock[key]
+			changed = true
+			EventBus.resource_changed.emit(player_id, key as String, mine[key])
+	if changed:
+		resources_updated.emit(player_id, mine)
+
 func spend_resource(player_id: int, costs: Dictionary) -> bool:
 	if not can_afford(player_id, costs):
 		return false

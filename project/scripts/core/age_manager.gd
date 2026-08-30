@@ -39,6 +39,14 @@ func get_advance_progress(player_id: int) -> float:
 		return 1.0
 	return clampf((_advance_timer.get(player_id, 0.0) as float) / total, 0.0, 1.0)
 
+## Replication: adopt the host's age for a player (client HUD/tech gates).
+func apply_remote(player_id: int, age: int) -> void:
+	if get_age(player_id) == age:
+		return
+	_player_age[player_id] = age
+	_advancing[player_id] = false
+	EventBus.age_advance_complete.emit(player_id, age)
+
 func can_advance(player_id: int) -> bool:
 	var current: int = get_age(player_id)
 	if current >= GameManager.Age.IMPERIAL:

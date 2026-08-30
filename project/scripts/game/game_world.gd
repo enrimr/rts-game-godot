@@ -209,6 +209,15 @@ func _ready() -> void:
 	# gets its deterministic EntityRegistry ID, and the command log starts.
 	CommandBus.start_match(self)
 
+	# Multiplayer: the host streams the authoritative state, a client puppets
+	# its mirror world from it. Must come after start_match so both machines
+	# reference entities by the same deterministic IDs.
+	if NetworkSession.is_online():
+		var replicator: StateReplicator = StateReplicator.new()
+		replicator.name = "StateReplicator"
+		add_child(replicator)
+		replicator.setup(self)
+
 # --- Match bootstrap (implementation in WorldSetup) ---
 
 func _on_tutorial_spawn_enemy_scout(near_pos: Vector2) -> void:

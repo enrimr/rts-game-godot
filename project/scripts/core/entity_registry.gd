@@ -57,6 +57,15 @@ func register(node: Node) -> int:
 	_by_id[id] = node
 	return id
 
+## Replication: a client creates puppets for host-spawned entities and must
+## adopt the HOST's id verbatim so later commands/snapshots resolve.
+func register_as(node: Node, id: int) -> void:
+	if not is_instance_valid(node) or id <= 0:
+		return
+	node.set_meta(META_KEY, id)
+	_by_id[id] = node
+	_next_id = maxi(_next_id, id + 1)
+
 func unregister(node: Node) -> void:
 	if not is_instance_valid(node) or not node.has_meta(META_KEY):
 		return

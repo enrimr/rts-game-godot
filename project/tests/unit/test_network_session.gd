@@ -98,6 +98,40 @@ func test_apply_config_installs_the_humans_list() -> void:
 	assert_false(NetworkSession.is_human_player(1),
 		"a config without a humans list resets to offline default [0]")
 
+func test_register_as_adopts_the_host_id() -> void:
+	var node: Node2D = autofree(Node2D.new())
+	add_child(node)
+	EntityRegistry.register_as(node, 4321)
+	assert_eq(EntityRegistry.resolve(4321), node, "puppet resolves by the host's id")
+	assert_eq(EntityRegistry.id_of(node), 4321, "id_of returns the adopted id, not a new one")
+	var other: Node2D = autofree(Node2D.new())
+	add_child(other)
+	assert_gt(EntityRegistry.id_of(other), 4321,
+		"the local counter jumps past adopted ids — no collisions")
+	EntityRegistry.unregister(node)
+	EntityRegistry.unregister(other)
+
+func test_resource_apply_remote_overwrites_and_emits_once() -> void:
+	ResourceManager.init_player(97, {})
+	var hits: Array = []
+	var on_change: Callable = func(pid: int, res: String, amount: float) -> void:
+		if pid == 97:
+			hits.append([res, amount])
+	EventBus.resource_changed.connect(on_change)
+	ResourceManager.apply_remote(97, {"food": 500.0, "wood": 75.0})
+	ResourceManager.apply_remote(97, {"food": 500.0, "wood": 75.0})
+	EventBus.resource_changed.disconnect(on_change)
+	assert_eq(ResourceManager.get_resources(97).get("food"), 500.0)
+	assert_eq(hits.size(), 1, "unchanged snapshots emit nothing (wood 75 was already 75)")
+
+func test_population_and_age_apply_remote() -> void:
+	PopulationManager.apply_remote(97, 12, 20)
+	assert_eq(PopulationManager.get_population(97).get("current"), 12)
+	assert_eq(PopulationManager.get_cap(97), 20)
+	AgeManager.apply_remote(97, GameManager.Age.CASTLE)
+	assert_eq(AgeManager.get_age(97), GameManager.Age.CASTLE as int)
+	assert_false(AgeManager.is_advancing(97))
+
 func test_config_serializes_through_json() -> void:
 	## The snapshot travels as an RPC Dictionary; a JSON round-trip is the
 	## stricter check that nothing non-serializable snuck in.

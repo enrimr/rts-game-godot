@@ -23,6 +23,14 @@ func get_cap(player_id: int) -> int:
 	var p: Dictionary = get_population(player_id)
 	return p["cap"] as int
 
+## Replication: overwrite with the host's numbers (client HUD only).
+func apply_remote(player_id: int, current: int, cap: int) -> void:
+	var p: Dictionary = get_population(player_id)
+	if (p.get("current", 0) as int) == current and (p.get("cap", 0) as int) == cap:
+		return
+	_population[player_id] = {"current": current, "cap": cap}
+	EventBus.population_changed.emit(player_id, current, cap)
+
 func add_unit(player_id: int, cost: int = 1) -> void:
 	if not _population.has(player_id):
 		init_player(player_id)

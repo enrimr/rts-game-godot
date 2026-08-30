@@ -169,12 +169,27 @@ func _run_client(port: int) -> void:
 			% str(_ai_player_ids(world)))
 		get_tree().quit(1)
 		return
-	# The redirected CommandBus ships this to the host instead of executing.
+	if scout.is_physics_processing():
+		print("NET_SMOKE CLIENT: FAIL — mirror entities must be puppets (physics off)")
+		get_tree().quit(1)
+		return
+	var start_pos: Vector2 = scout.global_position
+	# The redirected CommandBus ships this to the host instead of executing;
+	# the movement must come BACK through the state replication stream.
 	CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "move",
 		[EntityRegistry.id_of(scout)] as Array[int],
 		scout.global_position + Vector2(300.0, 120.0)))
 	print("NET_SMOKE CLIENT: move command sent for scout id %d" % EntityRegistry.id_of(scout))
 	assert(CommandBus.log_entries().is_empty(), "a client must never execute locally")
-	await get_tree().create_timer(4.0).timeout
-	print("NET_SMOKE CLIENT: done")
-	get_tree().quit(0)
+	var deadline: float = Time.get_ticks_msec() / 1000.0 + 15.0
+	while Time.get_ticks_msec() / 1000.0 < deadline:
+		await get_tree().create_timer(0.5).timeout
+		if is_instance_valid(scout) and scout.global_position.distance_to(start_pos) > 40.0:
+			print("NET_SMOKE CLIENT: replication works — own scout moved %.0f px in the MIRROR world"
+				% scout.global_position.distance_to(start_pos))
+			print("NET_SMOKE CLIENT: done")
+			get_tree().quit(0)
+			return
+	print("NET_SMOKE CLIENT: FAIL — scout never moved in the mirror world (%.0f px)"
+		% (scout.global_position.distance_to(start_pos) if is_instance_valid(scout) else -1.0))
+	get_tree().quit(1)
