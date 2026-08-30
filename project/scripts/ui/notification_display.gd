@@ -99,7 +99,7 @@ func _on_unit_attacked(_attacker: Node, target: Node) -> void:
 	if not is_instance_valid(target):
 		return
 	var pid: Variant = target.get("player_id")
-	if pid == null or (pid as int) != 0:
+	if pid == null or (pid as int) != NetworkSession.local_player_id:
 		return
 	if _cd_unit > 0.0:
 		return
@@ -112,13 +112,13 @@ func _on_damage_dealt(target: Node, _amount: float, source: Node) -> void:
 	if not is_instance_valid(target) or not is_instance_valid(source):
 		return
 	var t_pid: Variant = target.get("player_id")
-	if t_pid == null or (t_pid as int) != 0:
+	if t_pid == null or (t_pid as int) != NetworkSession.local_player_id:
 		return
 	# Must be a building (has no unit_data)
 	if target.get("unit_data") != null:
 		return
 	var s_pid: Variant = source.get("player_id")
-	if s_pid == null or (s_pid as int) == 0:
+	if s_pid == null or (s_pid as int) == NetworkSession.local_player_id:
 		return
 	if _cd_building > 0.0:
 		return
@@ -130,13 +130,13 @@ func _age_name(age: int) -> String:
 	return tr(["UI_AGE_DARK", "UI_AGE_FEUDAL", "UI_AGE_CASTLE", "UI_AGE_IMPERIAL"][clampi(age, 0, 3)])
 
 func _on_age_advance_started(player_id: int, target_age: int) -> void:
-	if player_id != 0:
+	if player_id != NetworkSession.local_player_id:
 		return
 	var name: String = _age_name(target_age)
 	push(tr("NOTIF_AGE_ADVANCING") % name, Color(0.95, 0.85, 0.40), 5.0)
 
 func _on_age_advance_complete(player_id: int, new_age: int) -> void:
-	if player_id != 0:
+	if player_id != NetworkSession.local_player_id:
 		return
 	AudioManager.play("age_complete")
 	var name: String = _age_name(new_age)
@@ -144,14 +144,14 @@ func _on_age_advance_complete(player_id: int, new_age: int) -> void:
 
 func _on_construction_complete(building: Node) -> void:
 	var pid: Variant = building.get("player_id")
-	if pid == null or (pid as int) != 0:
+	if pid == null or (pid as int) != NetworkSession.local_player_id:
 		return
 	var bname: String = _building_name(building)
 	push(tr("NOTIF_BUILDING_BUILT") % bname, Color(0.60, 0.95, 0.60))
 
 func _on_building_destroyed(building: Node, owner_id: int) -> void:
 	var bname: String = _building_name(building)
-	if owner_id == 0:
+	if owner_id == NetworkSession.local_player_id:
 		var pos: Variant = (building as Node2D).global_position \
 			if building is Node2D and is_instance_valid(building) else null
 		push(tr("NOTIF_BUILDING_DESTROYED_PLAYER") % bname, Color(1.0, 0.25, 0.25), 5.0, pos)
@@ -159,7 +159,7 @@ func _on_building_destroyed(building: Node, owner_id: int) -> void:
 		push(tr("NOTIF_BUILDING_DESTROYED_ENEMY"), Color(0.60, 0.95, 0.60))
 
 func _on_population_changed(player_id: int, current: int, cap: int) -> void:
-	if player_id != 0:
+	if player_id != NetworkSession.local_player_id:
 		return
 	if current < cap:
 		return
@@ -170,7 +170,7 @@ func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 	push(tr("NOTIF_POP_CAP"), Color(1.0, 0.70, 0.25))
 
 func _on_hero_low_hp(player_id: int) -> void:
-	if player_id != 0:
+	if player_id != NetworkSession.local_player_id:
 		return
 	AudioManager.play("hero_low_hp")
 	push(tr("NOTIF_HERO_LOW_HP"), Color(1.0, 0.20, 0.20), 6.0)

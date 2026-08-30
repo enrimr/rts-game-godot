@@ -884,7 +884,7 @@ func _on_building_selected(building: Node) -> void:
 		_hp_bar_max = max_hp
 
 	var bpid: Variant = building.get("player_id")
-	if bpid != null and (bpid as int) != 0:
+	if bpid != null and (bpid as int) != local_player_id:
 		return
 
 	var bstate: Variant = building.get("state")
@@ -2194,7 +2194,7 @@ func show_wonder_timer(owner_pid: int) -> void:
 		_wonder_label.offset_top = 8.0
 		_wonder_label.offset_bottom = 40.0
 		add_child(_wonder_label)
-	var who: String = tr("WONDER_TIMER_YOU") if owner_pid == 0 else tr("WONDER_TIMER_ENEMY")
+	var who: String = tr("WONDER_TIMER_YOU") if owner_pid == local_player_id else tr("WONDER_TIMER_ENEMY")
 	_wonder_label.text = who + " — 4:00"
 
 func hide_wonder_timer() -> void:
