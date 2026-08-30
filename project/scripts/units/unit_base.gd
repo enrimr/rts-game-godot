@@ -42,6 +42,14 @@ const DEFENSIVE_LEASH: float = 200.0
 
 var stance: int = Stance.AGGRESSIVE
 var _stance_anchor: Vector2 = Vector2.INF   # INF = unset; falls back to current pos
+
+## Alternate approach angles a blocked building-attacker walks through
+## (relative to its current bearing) before giving up — alternating sides,
+## widening to the far face.
+const APPROACH_STEPS: Array[float] = [
+	PI * 0.25, -PI * 0.25, PI * 0.5, -PI * 0.5, PI * 0.75, -PI * 0.75, PI,
+]
+var _approach_step: int = 0
 # True while the CURRENT engagement came from auto-acquire (range Area2D,
 # retaliation, guard response, post-kill rescan) rather than an order.
 var _auto_engaged: bool = false
@@ -478,6 +486,7 @@ func order_attack(target: Node) -> void:
 	if not _accepts_attack_order(target):
 		return
 	_auto_engaged = _auto_engage_pending
+	_approach_step = 0
 	attack_target = target
 	_destination_state = UnitState.ATTACKING
 	_on_attack_ordered()
@@ -541,11 +550,27 @@ func _handle_attacking(delta: float) -> void:
 			var home: Vector2 = _stance_home()
 			call("order_move", home)
 			return
-		nav_agent.target_position = _safe_destination(_nav_target_for(attack_target))
+		# While an alternate approach is held (_approach_step > 0, buildings
+		# only) the rotated destination must survive — re-deriving it here
+		# every tick silently undid the manoeuvre.
+		if _approach_step == 0:
+			nav_agent.target_position = _safe_destination(_nav_target_for(attack_target))
 		if _advance_stuck(delta):
 			_unstick()
 			return
-		nav_agent.set_velocity(_nav_velocity())
+		var vel: Vector2 = _nav_velocity()
+		if vel == Vector2.ZERO and nav_agent.is_navigation_finished():
+			# The agent declares arrival target_desired_distance (24 px) short
+			# of the approach point; short-reach units parked 3 px out of
+			# strike range and froze there forever. Close the last gap on a
+			# straight line WITHOUT avoidance — RVO crushes a push toward a
+			# wall flanked by parked allies, and the building's collision is
+			# what stops us anyway.
+			velocity = global_position.direction_to((attack_target as Node2D).global_position) \
+				* _nav_speed()
+			move_and_slide()
+			return
+		nav_agent.set_velocity(vel)
 		return
 	nav_agent.set_velocity(Vector2.ZERO)
 	_attack_timer += delta
@@ -562,6 +587,7 @@ func _attack_interval() -> float:
 # Direct-hit strike. Melee floor is 1 damage (genre convention; ships already
 # did this) so over-armoured targets chip instead of healing from negatives.
 func _execute_strike(target: Node) -> void:
+	_approach_step = 0   # reached the target: the approach search starts fresh
 	if target.has_method("take_damage"):
 		target.take_damage(maxf(_strike_damage(target), 1.0), self)
 		var snd: String = _strike_sound()
@@ -737,15 +763,16 @@ func _attack_reach_to(target: Node) -> float:
 # Returns the best navigation target position toward a node.
 # For buildings (StaticBody2D), approaches to the edge of their footprint
 # instead of the center, which is inside their collision shape.
-func _nav_target_for(target: Node) -> Vector2:
+func _nav_target_for(target: Node, from_pos: Vector2 = Vector2.INF) -> Vector2:
 	var target_pos: Vector2 = (target as Node2D).global_position
 	if not (target is StaticBody2D):
 		return target_pos
+	var origin: Vector2 = from_pos if from_pos != Vector2.INF else global_position
 	# Find footprint half-extents from CollisionShape2D
 	var cs: CollisionShape2D = target.get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if cs != null and cs.shape is RectangleShape2D:
 		var half: Vector2 = (cs.shape as RectangleShape2D).size * 0.5
-		var to_self: Vector2 = global_position - target_pos
+		var to_self: Vector2 = origin - target_pos
 		# Clamp the approach point to just outside the bounding box, past the
 		# navmesh carve margin (12 px) so the destination is on walkable mesh.
 		var clamped: Vector2 = Vector2(
@@ -793,12 +820,15 @@ func _nav_velocity() -> Vector2:
 	var dir: Vector2 = next - global_position
 	if dir.length_squared() < 1.0:
 		return Vector2.ZERO
-	var spd: float = unit_data.move_speed \
+	return dir.normalized() * _nav_speed()
+
+## Current effective movement speed (all multipliers applied).
+func _nav_speed() -> float:
+	return unit_data.move_speed \
 		* CivBonusManager.get_unit_speed_multiplier(player_id, unit_data.id) \
 		* CivBonusManager.get_unit_move_speed_multiplier(player_id) \
 		* WeatherManager.get_move_speed_multiplier(global_position, player_id) \
 		* TerrainManager.get_speed_mult(global_position, civ_id, is_amphibious())
-	return dir.normalized() * spd
 
 # Tracks movement over time. Returns true once per stuck period so the
 # caller can take corrective action. On each trigger _stuck_retries increments
@@ -827,6 +857,21 @@ func _advance_stuck(delta: float) -> bool:
 func _unstick() -> void:
 	if _stuck_retries > MAX_STUCK_RETRIES:
 		_stuck_retries = 0
+		# A blocked BUILDING attacker rotates its approach around the footprint
+		# instead of giving up: in a crowd, most of a melee group used to jam
+		# on the same face, exhaust the retries and go permanently idle — the
+		# army "couldn't damage buildings". Bounded to a full circle so a truly
+		# unreachable building (another island) still abandons eventually.
+		if current_state == UnitState.ATTACKING and is_instance_valid(attack_target) \
+				and attack_target is StaticBody2D and _approach_step < APPROACH_STEPS.size():
+			var tp: Vector2 = (attack_target as Node2D).global_position
+			var dist: float = maxf(global_position.distance_to(tp), 60.0)
+			var a: float = (global_position - tp).angle() + APPROACH_STEPS[_approach_step]
+			_approach_step += 1
+			var from: Vector2 = tp + Vector2(cos(a), sin(a)) * dist
+			nav_agent.target_position = _safe_destination(_nav_target_for(attack_target, from))
+			return
+		_approach_step = 0
 		_abandon_movement()
 		return
 	var dest: Vector2 = _move_destination if _move_destination != Vector2.ZERO \

@@ -406,3 +406,4 @@ UI_UNGARRISON,Ungarrison,Desalojar
 TOOLTIP_UNGARRISON,Eject all garrisoned units,Saca a todas las unidades guarecidas
 TOOLTIP_GARRISON_HINT,Right-click with military units to garrison them,Click derecho con unidades militares para guarecerlas
 UI_LOCATE_HERO,Locate hero,Localizar héroe
+UI_GARRISONED,Garrisoned: %d / %d,Guarecidos: %d / %d

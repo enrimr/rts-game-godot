@@ -98,7 +98,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/trireme.gd` | Fenicios ship: Ram (×2 vs ships, 40 px knockback) |
 | **Building Classes** ||
 | `project/scripts/buildings/building_base.gd` | Base class for all buildings; outward spiral spawn positioning, rally points; garrison API (`garrison_capacity`/`garrison_unit`/`ungarrison_all` — land units only, occupants die with the building) and the shared ranged-volley machinery (`_ranged_attack_arrows()` > 0 enables it; towers always fire, the TC only while garrisoned, each occupant adds an arrow) |
-| `project/scripts/buildings/building_damage_fx.gd` | `BuildingDamageFx` — progressive fire/smoke on damaged buildings (smoke <75% HP, flames <50%, heavy fire <25%; repair walks it back; construction/rubble never burn); attached by BuildingBase and TownCenterBuilding, purely visual (render-side RNG) |
+| `project/scripts/buildings/building_damage_fx.gd` | `BuildingDamageFx` — progressive fire/smoke on damaged buildings (smoke from the FIRST point of damage, flames <50%, heavy fire <25%; repair walks it back; construction/rubble never burn); attached by BuildingBase and TownCenterBuilding, purely visual (render-side RNG) |
 | `project/scripts/buildings/town_center.gd` | Main TC: trains villagers, hero respawn, drop-off |
 | `project/scripts/buildings/town_center_buildable.gd` | Castle Age player-built TC (275 wood) |
 | `project/scripts/buildings/barracks.gd` | Trains infantry (Militia/Archer/Man-at-Arms/Pikeman/Long Swordsman/unique units) |
@@ -349,7 +349,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Hero energy aura (animated Dragon Ball-style golden flame, `HeroAura`; reviewed via `tools/check_hero_aura.tscn` screenshots) + locate-hero HUD button next to the idle-unit buttons
 - Rally point markers for production buildings
 - Health bars for units/buildings (hidden when full HP); BuildingBase creates the building bar at runtime — most building scenes ship without a HealthBar node, and before this nothing ever showed building HP (damage LOOKED like it wasn't applied)
-- Progressive damage fire/smoke on buildings (smoke <75% HP, flames <50%, heavy fire <25%; repair clears it)
+- Progressive damage fire/smoke on buildings (smoke from the FIRST point of damage, flames <50%, heavy fire <25%; repair clears it)
 - Sound effects: select, attack, build, gather, hit (with spatial attenuation)
 
 ### Recent Bug Fixes (Production-Ready Milestone)

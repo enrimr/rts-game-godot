@@ -1,15 +1,17 @@
 class_name BuildingDamageFx extends Node2D
 
-## Progressive fire & smoke on a damaged building, AoE2-style: light smoke
-## under 75 % HP, flames join under 50 %, heavy fire and dark smoke under
-## 25 %. Repairing walks the stages back down; construction sites and rubble
-## never burn. Attach() parents it to the building root and uprights it, so
-## the plumes rise up-screen under the iso camera. Purely visual — particles
-## draw their randomness from the render-side RNG, never from MatchRng.
+## Progressive fire & smoke on a damaged building: light smoke from the FIRST
+## point of damage (so an attack is visible immediately), flames join under
+## 50 % HP, heavy fire and dark smoke under 25 %. Repairing walks the stages
+## back down; construction sites and rubble never burn. Attach() parents it to
+## the building root and uprights it, so the plumes rise up-screen under the
+## iso camera. Purely visual — particles draw their randomness from the
+## render-side RNG, never from MatchRng.
 
 const CHECK_INTERVAL: float = 0.3
-## HP ratios BELOW which each stage starts (stage 1, 2, 3).
-const STAGE_RATIOS: Array[float] = [0.75, 0.5, 0.25]
+## HP ratios BELOW which each stage starts (stage 1, 2, 3). The first sits a
+## hair under 1.0: any damage at all starts the smoke.
+const STAGE_RATIOS: Array[float] = [0.9999, 0.5, 0.25]
 
 const SMOKE_LIGHT: Color = Color(0.55, 0.55, 0.58, 0.55)
 const SMOKE_DARK: Color = Color(0.16, 0.15, 0.16, 0.7)

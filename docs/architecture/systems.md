@@ -106,6 +106,18 @@ All damage flows through `unit.take_damage(amount, source)`. Armor reduces incom
 damage = max(1, attacker.attack - target.armor_melee)
 ```
 
+**Melee attackers never park out of reach.** Two systemic bugs made whole
+armies look unable to damage buildings: (1) `NavigationAgent2D` declares
+arrival `target_desired_distance` (24 px) short of the approach point, so a
+short-reach unit could freeze 3 px outside its strike range forever — the
+chase branch now closes that last gap on a straight line WITHOUT avoidance
+(RVO crushes a push toward a wall flanked by parked allies; the building's
+collision is the real stop); (2) a blocked building-attacker used to exhaust
+`MAX_STUCK_RETRIES` and go permanently idle — it now walks `APPROACH_STEPS`
+(alternating ±45°…180° around the footprint, held until a strike lands or the
+steps run out) before giving up, so crowds spread around the building instead
+of quitting on the jammed face.
+
 **Watch towers auto-attack with visible arrows.** `WatchTower._physics_process`
 picks the nearest enemy in the `"units"` group within `ATTACK_RANGE` (220 px)
 and launches the Archer's `Arrow` (damage and `unit_attacked` applied on
@@ -144,7 +156,7 @@ shared building volley (`_ranged_attack_arrows()`) adds one arrow per
 occupant — the TC only shoots while garrisoned.
 
 **Damaged buildings burn progressively** (`BuildingDamageFx`, attached by
-`BuildingBase` and `TownCenterBuilding`): smoke below 75 % HP, flame tongues
+`BuildingBase` and `TownCenterBuilding`): smoke from the FIRST point of damage, flame tongues
 join below 50 %, heavy fire and dark smoke below 25 %; repairs walk the stages
 back down, and construction sites/rubble never burn (only `COMPLETE` state).
 Purely visual — CPUParticles2D in the upright billboard space, render-side

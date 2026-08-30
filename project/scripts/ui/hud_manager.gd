@@ -165,6 +165,7 @@ var _selected_building: Node = null
 var _selected_unit: Node = null   # tracked for transport garrison refresh
 var _hp_bar_unit: Node = null     # unit/building whose HP drives the main HP bar
 var _hp_bar_max: float = 100.0    # cached max HP for the current hp_bar_unit
+var _hp_text: Label = null        # numeric "450 / 550" overlay on the HP bar
 var _status_unit: Node = null
 var _active_actions: Array = []
 var _follow_btn: Button = null
@@ -890,7 +891,8 @@ func _refresh_garrison_ui(building: Node) -> void:
 		return
 	var garrison: Array = building.get_garrison() as Array
 	var cap: int = building.garrison_capacity() as int
-	_unit_status_label.text = tr("UI_GARRISON_STATUS") % [garrison.size(), cap]
+	# "Garrisoned", not the ships' "crew" wording — a Town Center has no crew.
+	_unit_status_label.text = tr("UI_GARRISONED") % [garrison.size(), cap]
 	if garrison.is_empty():
 		return
 	_active_actions.append({
@@ -1479,12 +1481,27 @@ func _build_research_bar(building: Node) -> void:
 		detail_panel.add_child(_research_bar)
 
 func _poll_hp_bars() -> void:
+	if _hp_text == null:
+		_hp_text = Label.new()
+		_hp_text.add_theme_font_size_override("font_size", 10)
+		_hp_text.add_theme_color_override("font_color", Color(1.0, 0.97, 0.88))
+		HudStyle.add_text_outline(_hp_text, 3)
+		_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_hp_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_unit_hp_bar.add_child(_hp_text)
+		_hp_text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if is_instance_valid(_hp_bar_unit) and _hp_bar_max > 0.0:
 		var hp_v: Variant = _hp_bar_unit.get("health")
 		if hp_v != null:
 			_unit_hp_bar.value = (hp_v as float) / _hp_bar_max * 100.0
+			# Numbers, not just a bar: on a 1200 HP building a few sword hits
+			# move the bar less than a pixel and damage LOOKED like it never
+			# landed.
+			_hp_text.text = "%d / %d" % [ceili(hp_v as float), roundi(_hp_bar_max)]
 	# An empty detail panel otherwise renders a bare "0%" bar.
 	_unit_hp_bar.visible = _unit_hp_bar.value > 0.0
+	_hp_text.visible = _unit_hp_bar.visible and is_instance_valid(_hp_bar_unit)
 	for child: Node in _unit_portraits_grid.get_children():
 		if child is UnitPortrait:
 			(child as UnitPortrait).refresh()

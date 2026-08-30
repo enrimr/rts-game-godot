@@ -26,8 +26,8 @@ func _fx_of(b: Node2D) -> BuildingDamageFx:
 
 func test_stage_thresholds() -> void:
 	assert_eq(BuildingDamageFx.stage_for(1.0), 0, "full HP: nothing")
-	assert_eq(BuildingDamageFx.stage_for(0.8), 0)
-	assert_eq(BuildingDamageFx.stage_for(0.74), 1, "under 75%: smoke")
+	assert_eq(BuildingDamageFx.stage_for(0.998), 1, "ANY damage starts the smoke")
+	assert_eq(BuildingDamageFx.stage_for(0.74), 1)
 	assert_eq(BuildingDamageFx.stage_for(0.49), 2, "under 50%: fire joins")
 	assert_eq(BuildingDamageFx.stage_for(0.10), 3, "under 25%: heavy fire")
 
@@ -53,7 +53,7 @@ func test_fx_stages_up_with_damage_and_down_with_repair() -> void:
 	assert_true(fx._fires[0].emitting, "first flame lit at stage 2")
 	assert_false(fx._fires[2].emitting, "third flame waits for stage 3")
 
-	b.health = 90.0   # repaired
+	b.health = 100.0   # fully repaired
 	fx._process(1.0)
 	assert_eq(fx._stage, 0, "repair walks the stage back down")
 	assert_false(fx._smoke.emitting, "smoke stops once repaired")
