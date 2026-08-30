@@ -116,9 +116,16 @@ phase-2 interpolation buffer absorbs latency).
 - **MP rivals are humans**: `WorldSetup` spawns their starting assets (TC,
   villagers, scout, hero) but skips the `AIPlayer` brain when
   `NetworkSession.is_online()`.
-- **Lobby**: the main menu's "LAN Multiplayer" panel — Host match (shows the
-  local IP, Start enables when a player joins) / IP + Join (auto-starts when
-  the host does). Leaving/back closes the peer.
+- **Lobby** (`LanLobby`, `scripts/ui/lan_lobby.gd`): pick a name before
+  hosting/joining, live roster (colour swatch + name + host tag, updated on
+  every join/leave via `roster_changed`), per-player colour palette (host
+  validates picks — taken colours are rejected and greyed out; the final picks
+  ride the start config and install `PlayerColors` overrides on every
+  machine), host-only Kick buttons (`NetworkSession.kick` notifies then
+  disconnects the peer) and a host-only "Match settings…" button that opens
+  the SAME `LobbyScreen` the skirmish uses (it writes MatchConfig live).
+  The player limit (4 = host + `MAX_CLIENTS`) is enforced by the ENet
+  transport itself. Leaving/back closes the peer.
 - **Phase 2 (pending)**: host→client state replication (delta-compressed
   snapshots ~15 Hz + client interpolation) so the client SEES the
   authoritative simulation, plus the local_player_id sweep (HUD/selection/

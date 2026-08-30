@@ -26,16 +26,25 @@ signal peer_left(peer_id: int)
 signal joined_host()
 signal join_failed()
 signal session_closed()
+## The lobby roster (names/colours/joins/leaves) changed on any machine.
+signal roster_changed()
+## This machine was kicked by the host.
+signal kicked()
 ## Fired on every machine when the host starts the match (config applied).
 signal match_started()
 
 var role: Role = Role.OFFLINE
 var local_player_id: int = 0
+## Local profile, set by the lobby UI BEFORE hosting/joining.
+var player_name: String = ""
 ## Harnesses instantiate the world themselves instead of a scene change.
 var auto_change_scene: bool = true
 
 var _peer_players: Dictionary = {}   # peer_id -> player_id (host side)
 var _next_player_id: int = 1
+## player_id -> {"name": String, "color": int, "peer": int}. Host-authoritative,
+## rebroadcast in full on every change (tiny — a lobby has ≤ 4 rows).
+var _roster: Dictionary = {}
 
 func is_online() -> bool:
 	return role != Role.OFFLINE
@@ -59,8 +68,14 @@ func host_game(port: int = DEFAULT_PORT) -> Error:
 	local_player_id = 0
 	_peer_players.clear()
 	_next_player_id = 1
+	_roster = {0: {"name": _display_name(0), "color": 0, "peer": 1}}
 	_connect_signals()
+	roster_changed.emit()
 	return OK
+
+func _display_name(player_id: int) -> String:
+	var trimmed: String = player_name.strip_edges()
+	return trimmed if not trimmed.is_empty() else tr("LAN_DEFAULT_NAME") % (player_id + 1)
 
 func join_game(ip: String, port: int = DEFAULT_PORT) -> Error:
 	var peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
@@ -79,6 +94,8 @@ func leave() -> void:
 	role = Role.OFFLINE
 	local_player_id = 0
 	_peer_players.clear()
+	_roster.clear()
+	PlayerColors.clear_overrides()
 	session_closed.emit()
 
 func _connect_signals() -> void:
@@ -99,14 +116,23 @@ func _on_peer_connected(peer_id: int) -> void:
 	var pid: int = _next_player_id
 	_next_player_id += 1
 	_peer_players[peer_id] = pid
+	_roster[pid] = {"name": tr("LAN_DEFAULT_NAME") % (pid + 1),
+		"color": _first_free_color(), "peer": peer_id}
 	_rx_assign_player.rpc_id(peer_id, pid)
+	_broadcast_roster()
 	peer_joined.emit(peer_id, pid)
 
 func _on_peer_disconnected(peer_id: int) -> void:
+	var pid: int = _peer_players.get(peer_id, -1) as int
 	_peer_players.erase(peer_id)
+	if pid >= 0:
+		_roster.erase(pid)
+		_broadcast_roster()
 	peer_left.emit(peer_id)
 
 func _on_connected_to_server() -> void:
+	# Introduce ourselves; the host validates and rebroadcasts the roster.
+	_tx_profile.rpc_id(1, player_name)
 	joined_host.emit()
 
 func _on_connection_failed() -> void:
@@ -120,6 +146,84 @@ func _on_server_disconnected() -> void:
 func _rx_assign_player(player_id: int) -> void:
 	local_player_id = player_id
 
+# ── Lobby roster: names, colours, kicks (host-authoritative) ────────────────
+
+func get_roster() -> Dictionary:
+	return _roster
+
+func _first_free_color() -> int:
+	for idx: int in range(PlayerColors.COLORS.size()):
+		if not _color_taken(idx):
+			return idx
+	return 0
+
+func _color_taken(idx: int) -> bool:
+	for entry: Variant in _roster.values():
+		if ((entry as Dictionary).get("color", -1) as int) == idx:
+			return true
+	return false
+
+func _broadcast_roster() -> void:
+	if role == Role.HOST:
+		_rx_roster.rpc(_roster)
+	roster_changed.emit()
+
+@rpc("authority", "reliable")
+func _rx_roster(roster: Dictionary) -> void:
+	_roster = roster
+	roster_changed.emit()
+
+@rpc("any_peer", "reliable")
+func _tx_profile(display_name: String) -> void:
+	if role != Role.HOST:
+		return
+	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	if pid < 0 or not _roster.has(pid):
+		return
+	var trimmed: String = display_name.strip_edges().left(24)
+	if not trimmed.is_empty():
+		(_roster[pid] as Dictionary)["name"] = trimmed
+	_broadcast_roster()
+
+## Pick a colour for YOURSELF; the host validates it is free.
+func request_color(idx: int) -> void:
+	if role == Role.HOST:
+		_apply_color_pick(0, idx)
+	elif role == Role.CLIENT:
+		_tx_pick_color.rpc_id(1, idx)
+
+@rpc("any_peer", "reliable")
+func _tx_pick_color(idx: int) -> void:
+	if role != Role.HOST:
+		return
+	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	if pid >= 0:
+		_apply_color_pick(pid, idx)
+
+func _apply_color_pick(pid: int, idx: int) -> void:
+	if not _roster.has(pid) or idx < 0 or idx >= PlayerColors.COLORS.size():
+		return
+	if _color_taken(idx):
+		return
+	(_roster[pid] as Dictionary)["color"] = idx
+	_broadcast_roster()
+
+## Host only: throw a player out of the lobby.
+func kick(player_id: int) -> void:
+	if role != Role.HOST or player_id == 0 or not _roster.has(player_id):
+		return
+	var peer_id: int = (_roster[player_id] as Dictionary).get("peer", 0) as int
+	if peer_id > 1:
+		_rx_kicked.rpc_id(peer_id)
+		# The disconnect lands right after the kick notice; the roster prunes
+		# itself in _on_peer_disconnected.
+		(multiplayer.multiplayer_peer as ENetMultiplayerPeer).disconnect_peer(peer_id)
+
+@rpc("authority", "reliable")
+func _rx_kicked() -> void:
+	kicked.emit()
+	leave()
+
 # ── Match start (host freezes the settings, everyone loads the same world) ──
 
 ## Host only: snapshot MatchConfig + a shared seed and start on every machine.
@@ -131,6 +235,11 @@ func start_match() -> void:
 	cfg["rival_count"] = _peer_players.size()
 	if (cfg["seed"] as int) == 0:
 		cfg["seed"] = int(Time.get_unix_time_from_system() * 1000.0) & 0x7FFFFFFF
+	# The lobby colour picks ride along so every machine paints players alike.
+	var colors: Dictionary = {}
+	for pid: Variant in _roster:
+		colors[pid] = (_roster[pid] as Dictionary).get("color", pid) as int
+	cfg["colors"] = colors
 	_rx_match_config.rpc(cfg)
 	_apply_and_start(cfg)
 
@@ -173,6 +282,11 @@ static func apply_config(cfg: Dictionary) -> void:
 	MatchConfig.weather_frequency = cfg.get("weather_frequency", 1) as int
 	MatchConfig.hero_gender = cfg.get("hero_gender", 0) as int
 	MatchConfig.launch_tutorial = false
+	PlayerColors.clear_overrides()
+	var colors: Variant = cfg.get("colors")
+	if colors is Dictionary:
+		for pid: Variant in colors as Dictionary:
+			PlayerColors.set_override(pid as int, (colors as Dictionary)[pid] as int)
 
 @rpc("authority", "reliable")
 func _rx_match_config(cfg: Dictionary) -> void:

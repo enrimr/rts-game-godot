@@ -6,6 +6,8 @@ extends GutTest
 
 func after_each() -> void:
 	MatchConfig.forced_seed = 0
+	PlayerColors.clear_overrides()
+	NetworkSession._roster.clear()
 
 func test_config_snapshot_round_trips() -> void:
 	MatchConfig.forced_seed = 987654
@@ -36,6 +38,33 @@ func test_offline_session_defaults() -> void:
 	assert_false(NetworkSession.is_client(),
 		"offline CommandBus.submit must execute locally — every suite relies on it")
 	assert_eq(NetworkSession.local_player_id, 0)
+
+func test_color_overrides_replace_the_id_mapping() -> void:
+	assert_eq(PlayerColors.get_color(1), PlayerColors.COLORS[1], "default: id = colour")
+	PlayerColors.set_override(1, 6)
+	assert_eq(PlayerColors.get_color(1), PlayerColors.COLORS[6], "lobby pick wins")
+	PlayerColors.clear_overrides()
+	assert_eq(PlayerColors.get_color(1), PlayerColors.COLORS[1], "cleared on leave")
+
+func test_apply_config_installs_lobby_colors() -> void:
+	var cfg: Dictionary = NetworkSession.snapshot_config()
+	cfg["colors"] = {0: 5, 1: 2}
+	NetworkSession.apply_config(cfg)
+	assert_eq(PlayerColors.get_color(0), PlayerColors.COLORS[5])
+	assert_eq(PlayerColors.get_color(1), PlayerColors.COLORS[2])
+
+func test_roster_color_picks_reject_taken_colors() -> void:
+	NetworkSession._roster = {
+		0: {"name": "Host", "color": 0, "peer": 1},
+		1: {"name": "Guest", "color": 1, "peer": 7},
+	}
+	NetworkSession._apply_color_pick(1, 0)   # host already wears 0
+	assert_eq((NetworkSession._roster[1] as Dictionary)["color"] as int, 1,
+		"a taken colour is rejected")
+	NetworkSession._apply_color_pick(1, 4)
+	assert_eq((NetworkSession._roster[1] as Dictionary)["color"] as int, 4,
+		"a free colour is applied")
+	assert_eq(NetworkSession._first_free_color(), 1, "1 is free again")
 
 func test_config_serializes_through_json() -> void:
 	## The snapshot travels as an RPC Dictionary; a JSON round-trip is the

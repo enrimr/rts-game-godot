@@ -53,7 +53,21 @@ func _run_host(port: int) -> void:
 	print("NET_SMOKE HOST: listening on %d" % port)
 	while NetworkSession.player_count() < 2:
 		await get_tree().create_timer(0.2).timeout
-	print("NET_SMOKE HOST: client joined, starting match")
+	# Lobby roster checks: the client's profile lands, colours stay unique.
+	await get_tree().create_timer(0.8).timeout
+	var roster: Dictionary = NetworkSession.get_roster()
+	if roster.size() != 2 or str((roster.get(1, {}) as Dictionary).get("name")) != "SmokeBot":
+		print("NET_SMOKE HOST: FAIL — roster %s" % str(roster))
+		get_tree().quit(1)
+		return
+	NetworkSession.request_color(3)
+	NetworkSession.request_color(3)   # idempotent for self
+	if ((NetworkSession.get_roster()[0] as Dictionary)["color"] as int) != 3:
+		print("NET_SMOKE HOST: FAIL — colour pick rejected")
+		get_tree().quit(1)
+		return
+	print("NET_SMOKE HOST: roster ok (%s, colour 3), starting match"
+		% str((roster[1] as Dictionary)["name"]))
 	NetworkSession.start_match()
 	var world: Node2D = _boot_world()
 	await get_tree().create_timer(2.0).timeout
@@ -83,6 +97,7 @@ func _run_host(port: int) -> void:
 	get_tree().quit(1)
 
 func _run_client(port: int) -> void:
+	NetworkSession.player_name = "SmokeBot"
 	if NetworkSession.join_game("127.0.0.1", port) != OK:
 		print("NET_SMOKE CLIENT: FAIL — join error")
 		get_tree().quit(1)
@@ -92,6 +107,10 @@ func _run_client(port: int) -> void:
 	if MatchConfig.forced_seed != 4242 or NetworkSession.local_player_id != 1:
 		print("NET_SMOKE CLIENT: FAIL — seed=%d pid=%d" % [
 			MatchConfig.forced_seed, NetworkSession.local_player_id])
+		get_tree().quit(1)
+		return
+	if PlayerColors.get_color(0) != PlayerColors.COLORS[3]:
+		print("NET_SMOKE CLIENT: FAIL — host colour pick did not replicate")
 		get_tree().quit(1)
 		return
 	print("NET_SMOKE CLIENT: config received, booting mirror world")

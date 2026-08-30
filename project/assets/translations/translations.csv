@@ -424,3 +424,13 @@ LAN_CONNECTING,Connecting…,Conectando…
 LAN_CONNECTED_WAIT,"Connected! Waiting for the host to start…","¡Conectado! Esperando a que el host empiece…"
 LAN_JOIN_FAILED,Could not connect. Check the IP and that the host created the match.,No se pudo conectar. Revisa la IP y que el host haya creado la partida.
 LAN_PORT_ERROR,Could not open the port (already in use?).,No se pudo abrir el puerto (¿ya está en uso?).
+LAN_NAME,Name:,Nombre:
+LAN_NAME_PLACEHOLDER,Your name,Tu nombre
+LAN_DEFAULT_NAME,Player %d,Jugador %d
+LAN_PLAYER_COUNT,Players: %d / %d,Jugadores: %d / %d
+LAN_PICK_COLOR,Your colour:,Tu color:
+LAN_CONFIGURE,Match settings…,Configurar partida…
+LAN_HOST_TAG,host,host
+LAN_KICK,Kick,Expulsar
+LAN_KICKED,You were kicked from the match.,Te han expulsado de la partida.
+LAN_LEAVE,Leave,Salir

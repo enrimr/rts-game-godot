@@ -16,7 +16,21 @@ const FALLBACK: Color = Color(0.7, 0.7, 0.7, 1.0)
 # Outward offset of the iso ownership trim from the footprint edges (world px).
 const TRIM_OFF: float = 4.5
 
+## Multiplayer colour picks: player_id → COLORS index, set from the lobby
+## roster by NetworkSession at match start (and cleared when the session
+## ends). Offline matches keep the classic id → colour mapping.
+static var _overrides: Dictionary = {}
+
+static func set_override(player_id: int, color_idx: int) -> void:
+	if color_idx >= 0 and color_idx < COLORS.size():
+		_overrides[player_id] = color_idx
+
+static func clear_overrides() -> void:
+	_overrides.clear()
+
 static func get_color(player_id: int) -> Color:
+	if _overrides.has(player_id):
+		return COLORS[_overrides[player_id] as int]
 	if player_id >= 0 and player_id < COLORS.size():
 		return COLORS[player_id]
 	return FALLBACK
