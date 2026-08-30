@@ -137,12 +137,27 @@ phase-2 interpolation buffer absorbs latency).
   `rival_civ_ids` = human civs (roster order) + AI-slot civs, sets
   `rival_count`, and the colour picks install `PlayerColors` overrides on
   every machine.
-- **Phase 2 (pending)**: host→client state replication (delta-compressed
-  snapshots ~15 Hz + client interpolation) so the client SEES the
-  authoritative simulation, plus the local_player_id sweep (HUD/selection/
-  fog currently hardcode player 0). Until then a client's mirror world does
-  not track the host. Migration to lockstep stays open: the command wire
-  format is shared, only the return channel changes — it requires the
+- **Phase 2 (shipped, first cut)**: `StateReplicator`
+  (`scripts/multiplayer/state_replicator.gd`, added by `GameWorld` when
+  online). The host samples the simulation every 4 physics ticks (15 Hz)
+  and streams unit position/state/HP and building HP/state by entity id
+  (unreliable-ordered RPC via `NetworkSession.send_state`); spawns,
+  removals and the match outcome go reliable (`send_events`). A client
+  puppets its mirror world — physics processing OFF (no local simulation,
+  no local damage; `_process` stays on for animation/depth) — and
+  interpolates between snapshots, deriving `velocity`/`current_state` so
+  walk/attack animations read. Host-spawned entities materialize from
+  spawn records (scene/script/unit_data/civ/gender) and adopt the host's
+  id via `EntityRegistry.register_as`. Stockpiles/population/ages ride the
+  snapshot into the managers' `apply_remote` (emit-on-change → client HUD
+  live). The `local_player_id` sweep landed with it: command submit sites,
+  selection filters, fog perspective, minimap, alerts and the game-over
+  title all follow `NetworkSession.local_player_id` (0 offline), and
+  victory is decided only by the authority.
+- **Phase 2 pending polish**: research/training queue mirroring, market
+  rates, projectile/FX echo, weather sync, resource-node amounts, save/
+  reconnect. Migration to lockstep stays open: the command wire format is
+  shared, only the return channel changes — it requires the
   simulation-determinism milestone (movement off Godot physics).
 
 Gated by `tests/unit/test_network_session.gd` (config snapshot round-trip,
@@ -150,10 +165,12 @@ JSON-serializable, offline defaults, open-seat accounting, civ-pick
 validation, humans-list install/reset) and the two-process
 `tools/check_net_smoke.tscn`: a real client joins a real host, picks a civ,
 receives the config (seed + assigned player 1 + civs + humans), boots the
-mirror world (asserting it runs ZERO AI brains), sends a move command for its
-scout by entity ID, and the host — running a mixed human + AI-slot match —
-asserts the AI brain exists only for the AI rival, the command arrived
-stamped as player 1, and the scout physically moved in its simulation.
+mirror world (asserting it runs ZERO AI brains and that mirror entities are
+puppets), sends a move command for its scout by entity ID, and the host —
+running a mixed human + AI-slot match — asserts the AI brain exists only for
+the AI rival, the command arrived stamped as player 1, and the scout
+physically moved in its simulation; the client then asserts the movement
+came BACK through the replication stream and its own mirror scout moved.
 
 ## Economy System
 
