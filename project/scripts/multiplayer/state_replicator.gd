@@ -22,9 +22,15 @@ var _interval: float = float(SNAPSHOT_TICKS) / float(Engine.physics_ticks_per_se
 var _announced: Dictionary = {}
 # Host: arrows fired since the last snapshot (visual echo for clients).
 var _fx_buffer: Array = []
+# Host: last row sent per entity id — deltas skip unchanged entities.
+var _last_sent: Dictionary = {}
+# Host: last per-player meta (stockpiles/pop/ages/weather) sent.
+var _last_meta: Dictionary = {}
 # Every SLOW_EVERY-th snapshot carries the slow extras (resources left,
 # researched techs) — they change on the seconds scale, not at 15 Hz.
 const SLOW_EVERY: int = 15
+# Deltas encoding beyond this ride the reliable channel (ENet MTU is 1392).
+const MTU_SAFE_BYTES: int = 1300
 var _snapshot_count: int = 0
 # Client: id -> {"a": Vector2, "b": Vector2, "t": float} interpolation spans.
 var _spans: Dictionary = {}
@@ -42,6 +48,8 @@ func setup(world) -> void:
 	else:
 		GameManager.game_over.connect(func(winner_id: int) -> void:
 			NetworkSession.send_events({"over": winner_id}))
+		GameManager.game_paused.connect(func(paused: bool) -> void:
+			NetworkSession.notify_pause(paused))
 		EventBus.projectile_spawned.connect(func(start: Vector2, target_pos: Vector2) -> void:
 			_fx_buffer.append([start.x, start.y, target_pos.x, target_pos.y]))
 		_seed_announced()
@@ -114,13 +122,16 @@ func _host_snapshot() -> void:
 	for id: Variant in _announced.keys():
 		if EntityRegistry.resolve(id as int) == null:
 			removes.append(id)
+			_last_sent.erase(id)
 			_announced.erase(id)
 	if not spawns.is_empty() or not removes.is_empty():
 		NetworkSession.send_events({"spawn": spawns, "remove": removes})
 	_snapshot_count += 1
-	var snapshot: Dictionary = {
-		"u": units,
-		"b": buildings,
+	var keyframe: bool = _snapshot_count % SLOW_EVERY == 1
+	var snapshot: Dictionary = {}
+	# Per-player meta and weather only travel when they changed (or in a
+	# keyframe) — they were half of every delta packet.
+	var meta: Dictionary = {
 		"res": _stockpiles(),
 		"pop": _populations(),
 		"age": _ages(),
@@ -128,13 +139,44 @@ func _host_snapshot() -> void:
 			WeatherManager._phase, WeatherManager._pending_weather as int,
 			WeatherManager._wind_dir],
 	}
+	for key: String in meta:
+		if keyframe or _last_meta.get(key) != meta[key]:
+			snapshot[key] = meta[key]
+			_last_meta[key] = meta[key]
+	if keyframe:
+		snapshot["u"] = units
+		snapshot["b"] = buildings
+		for row: Variant in units + buildings:
+			_last_sent[(row as Array)[0] as int] = row
+	else:
+		# Delta: only rows that changed since the last send. Idle armies cost
+		# nothing and the packet stays under the ENet MTU; a keyframe on the
+		# reliable channel heals whatever unreliable deltas lost.
+		snapshot["u"] = _changed_rows(units)
+		snapshot["b"] = _changed_rows(buildings)
 	if not _fx_buffer.is_empty():
 		snapshot["fx"] = _fx_buffer
 		_fx_buffer = []
-	if _snapshot_count % SLOW_EVERY == 1:
+	if keyframe:
 		snapshot["rn"] = _resource_nodes()
 		snapshot["tech"] = _researched_lists()
-	NetworkSession.send_state(snapshot)
+		NetworkSession.send_events(snapshot)
+	elif var_to_bytes(snapshot).size() > MTU_SAFE_BYTES:
+		# A big battle moves everything at once: route the oversized delta
+		# through the reliable channel, which fragments safely (an unreliable
+		# packet above the ENet MTU is mostly packet loss).
+		NetworkSession.send_events(snapshot)
+	else:
+		NetworkSession.send_state(snapshot)
+
+func _changed_rows(rows: Array) -> Array:
+	var out: Array = []
+	for row: Variant in rows:
+		var id: int = (row as Array)[0] as int
+		if _last_sent.get(id) != row:
+			_last_sent[id] = row
+			out.append(row)
+	return out
 
 ## Production queue + active research + market rates ride the building row so
 ## the client HUD shows the truth when this building is selected.
@@ -241,7 +283,22 @@ func _on_events(d: Dictionary) -> void:
 		_spans.erase(id as int)
 		if node != null:
 			node.queue_free()
+	if d.has("u") or d.has("b"):
+		# Reliable keyframe: same shape as the dense stream.
+		_on_state(d)
+	for e: Variant in d.get("rn", []) as Array:
+		var rn: Array = e as Array
+		var node: Node = EntityRegistry.resolve(rn[0] as int)
+		if node != null and node.get("remaining_amount") != null:
+			node.set("remaining_amount", rn[1] as float)
+	var techs: Variant = d.get("tech")
+	if techs is Dictionary:
+		for pid: Variant in techs as Dictionary:
+			TechManager.apply_remote_researched(pid as int, (techs as Dictionary)[pid] as Array)
+	if d.has("pause"):
+		_set_remote_pause(d["pause"] as bool)
 	if d.has("over"):
+		_set_remote_pause(false)
 		GameManager.declare_winner(d["over"] as int)
 
 func _apply_spawn(rec: Dictionary) -> void:
@@ -313,15 +370,6 @@ func _on_state(d: Dictionary) -> void:
 		var w: Array = weather as Array
 		WeatherManager.apply_remote(w[0] as int, w[1] as float, w[2] as String,
 			w[3] as int, w[4] as Vector2)
-	for e: Variant in d.get("rn", []) as Array:
-		var rn: Array = e as Array
-		var node: Node = EntityRegistry.resolve(rn[0] as int)
-		if node != null and node.get("remaining_amount") != null:
-			node.set("remaining_amount", rn[1] as float)
-	var techs: Variant = d.get("tech")
-	if techs is Dictionary:
-		for pid: Variant in techs as Dictionary:
-			TechManager.apply_remote_researched(pid as int, (techs as Dictionary)[pid] as Array)
 	var res: Variant = d.get("res")
 	if res is Dictionary:
 		for pid: Variant in res as Dictionary:
@@ -335,6 +383,28 @@ func _on_state(d: Dictionary) -> void:
 	if ages is Dictionary:
 		for pid: Variant in ages as Dictionary:
 			AgeManager.apply_remote(pid as int, (ages as Dictionary)[pid] as int)
+
+var _pause_banner: CanvasLayer = null
+
+## The host paused/resumed the simulation: freeze the mirror and say so.
+func _set_remote_pause(paused: bool) -> void:
+	get_tree().paused = paused
+	if paused and _pause_banner == null:
+		_pause_banner = CanvasLayer.new()
+		_pause_banner.layer = 20
+		var label: Label = Label.new()
+		label.text = tr("LAN_HOST_PAUSED")
+		label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		label.position = Vector2(0.0, 120.0)
+		label.add_theme_font_size_override("font_size", 30)
+		label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.45))
+		label.add_theme_constant_override("outline_size", 6)
+		label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
+		_pause_banner.add_child(label)
+		add_child(_pause_banner)
+	elif not paused and _pause_banner != null:
+		_pause_banner.queue_free()
+		_pause_banner = null
 
 ## Mirror the production queue, active research and market rates into the
 ## puppet building so the HUD answers truthfully when it is selected.

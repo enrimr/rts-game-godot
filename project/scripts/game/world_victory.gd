@@ -9,6 +9,9 @@ var _world  # GameWorld — untyped so dynamic access works
 
 # Wonder mode: per-player countdown. Key = player_id, value = seconds remaining.
 var _wonder_timers: Dictionary = {}  # int -> float
+# Players who resigned (or dropped mid-match): out of the game even though
+# their entities may still stand on the field.
+var _resigned: Dictionary = {}  # int -> true
 
 func setup(world) -> void:
 	_world = world
@@ -58,6 +61,23 @@ func _on_unit_died_check_victory(_unit: Node, owner_id: int) -> void:
 	if MatchConfig.victory_mode == MatchConfig.VictoryMode.CONQUEST:
 		_check_defeat_for.call_deferred(owner_id)
 
+## A human player resigned or dropped mid-match (host side, any victory
+## mode): eliminate them and end the match if nobody is left to fight.
+func handle_resignation(pid: int) -> void:
+	if NetworkSession.is_client() or pid == 0 or _resigned.has(pid):
+		return
+	if GameManager.state != GameManager.GameState.PLAYING \
+			and GameManager.state != GameManager.GameState.PAUSED:
+		return
+	_resigned[pid] = true
+	EventBus.player_eliminated.emit(pid)
+	for rival_id: int in MatchConfig.get_rival_player_ids():
+		if _resigned.has(rival_id):
+			continue
+		if _has_any_units(rival_id) or _has_any_buildings(rival_id):
+			return
+	GameManager.declare_winner(0)
+
 ## Conquest defeat check for any player. Deferred so queue_free() has
 ## processed before we scan. If the player is out, declare the other side winner.
 func _check_defeat_for(pid: int) -> void:
@@ -72,6 +92,8 @@ func _check_defeat_for(pid: int) -> void:
 	if pid == 0:
 		# Player lost — pick any surviving rival.
 		for rival_id: int in MatchConfig.get_rival_player_ids():
+			if _resigned.has(rival_id):
+				continue
 			if _has_any_units(rival_id) or _has_any_buildings(rival_id):
 				GameManager.declare_winner(rival_id)
 				return
@@ -79,6 +101,8 @@ func _check_defeat_for(pid: int) -> void:
 	else:
 		# A rival was eliminated — check if all rivals are now gone.
 		for rival_id: int in MatchConfig.get_rival_player_ids():
+			if _resigned.has(rival_id):
+				continue
 			if _has_any_units(rival_id) or _has_any_buildings(rival_id):
 				return
 		GameManager.declare_winner(0)

@@ -26,6 +26,13 @@ signal peer_left(peer_id: int)
 signal joined_host()
 signal join_failed()
 signal session_closed()
+## CLIENT only: the connection to the host dropped unexpectedly (host quit,
+## network loss) — emitted BEFORE the session resets, so a running match can
+## tell the player apart from a voluntary leave.
+signal connection_lost()
+## HOST only: a human player resigned (explicitly, or by disconnecting
+## mid-match). The victory system turns this into an elimination.
+signal player_resigned(player_id: int)
 ## The lobby roster (names/colours/civs/joins/leaves) changed on any machine.
 signal roster_changed()
 ## The host's lobby settings (MatchConfig snapshot + AI/open slots) changed.
@@ -53,6 +60,12 @@ var lobby_slots: Array = []
 ## Which player ids are humans in the RUNNING match (set at start; [0] offline
 ## so skirmish rivals always get their AI brains).
 var match_human_ids: Array = [0]
+
+func _ready() -> void:
+	# Networking must survive a paused SceneTree: the host keeps serving
+	# clients while its pause menu is open, and a remotely-paused client must
+	# still receive the unpause event.
+	process_mode = Node.PROCESS_MODE_ALWAYS
 
 func is_online() -> bool:
 	return role != Role.OFFLINE
@@ -183,6 +196,12 @@ func _on_peer_disconnected(peer_id: int) -> void:
 	if pid >= 0:
 		_roster.erase(pid)
 		_broadcast_roster()
+		# Dropping mid-match counts as resigning — the match must not hang on
+		# a ghost player nobody controls.
+		if role == Role.HOST and match_human_ids.has(pid) \
+				and (GameManager.state == GameManager.GameState.PLAYING
+					or GameManager.state == GameManager.GameState.PAUSED):
+			player_resigned.emit(pid)
 	peer_left.emit(peer_id)
 
 func _on_connected_to_server() -> void:
@@ -195,6 +214,7 @@ func _on_connection_failed() -> void:
 	join_failed.emit()
 
 func _on_server_disconnected() -> void:
+	connection_lost.emit()
 	leave()
 
 @rpc("authority", "reliable")
@@ -410,6 +430,24 @@ func _apply_and_start(cfg: Dictionary) -> void:
 	match_started.emit()
 	if auto_change_scene:
 		get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
+
+## CLIENT: give up the match. The host validates the sender and eliminates it.
+func resign() -> void:
+	if role == Role.CLIENT and multiplayer.multiplayer_peer != null:
+		_tx_resign.rpc_id(1)
+
+@rpc("any_peer", "reliable")
+func _tx_resign() -> void:
+	if role != Role.HOST:
+		return
+	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	if pid > 0:
+		player_resigned.emit(pid)
+
+## HOST: tell every client the simulation is paused/resumed.
+func notify_pause(paused: bool) -> void:
+	if role == Role.HOST:
+		send_events({"pause": paused})
 
 # ── State replication (host → clients, driven by StateReplicator) ───────────
 

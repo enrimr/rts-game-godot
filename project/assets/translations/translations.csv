@@ -441,3 +441,5 @@ LAN_SLOT,Seat %d:,Puesto %d:
 LAN_SLOT_OPEN,Open,Abierto
 LAN_SLOT_AI,AI,IA
 LAN_SLOT_CLOSED,Closed,Cerrado
+LAN_HOST_LEFT,The host has left the match.,El anfitrión ha abandonado la partida.
+LAN_HOST_PAUSED,The host has paused the game,El anfitrión ha pausado la partida

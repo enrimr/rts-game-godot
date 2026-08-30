@@ -30,7 +30,10 @@ func open_pause_menu() -> void:
 		return
 	if GameManager.state == GameManager.GameState.GAME_OVER:
 		return
-	GameManager.toggle_pause()
+	# A LAN client cannot pause the authoritative simulation — its menu opens
+	# over the live match (the HOST's pause replicates to everyone instead).
+	if not NetworkSession.is_client():
+		GameManager.toggle_pause()
 
 	var overlay: ColorRect = ColorRect.new()
 	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
@@ -101,7 +104,7 @@ func close_pause_menu() -> void:
 	if is_instance_valid(_pause_menu):
 		_pause_menu.queue_free()
 		_pause_menu = null
-	if GameManager.state == GameManager.GameState.PAUSED:
+	if not NetworkSession.is_client() and GameManager.state == GameManager.GameState.PAUSED:
 		GameManager.toggle_pause()
 
 func _open_save_slot_picker() -> void:
@@ -464,6 +467,11 @@ func _make_settings_pct_label(initial: float) -> Label:
 
 func _on_surrender() -> void:
 	close_pause_menu()
+	if NetworkSession.is_client():
+		# Tell the host (it eliminates us there); show our defeat locally.
+		NetworkSession.resign()
+		GameManager.declare_winner(-1)
+		return
 	GameManager.declare_winner(1)
 
 func _make_pause_btn(label_text: String, normal_col: Color, hover_col: Color) -> Button:

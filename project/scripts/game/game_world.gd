@@ -217,6 +217,10 @@ func _ready() -> void:
 		replicator.name = "StateReplicator"
 		add_child(replicator)
 		replicator.setup(self)
+		if NetworkSession.is_host():
+			NetworkSession.player_resigned.connect(_on_player_resigned)
+		else:
+			NetworkSession.connection_lost.connect(_on_connection_lost, CONNECT_ONE_SHOT)
 
 # --- Match bootstrap (implementation in WorldSetup) ---
 
@@ -258,6 +262,30 @@ func _process(delta: float) -> void:
 
 func _exit_tree() -> void:
 	CursorManager.set_context("default")
+	if NetworkSession.player_resigned.is_connected(_on_player_resigned):
+		NetworkSession.player_resigned.disconnect(_on_player_resigned)
+	if NetworkSession.connection_lost.is_connected(_on_connection_lost):
+		NetworkSession.connection_lost.disconnect(_on_connection_lost)
+
+func _on_player_resigned(pid: int) -> void:
+	_victory.handle_resignation(pid)
+
+## The host vanished mid-match: tell the player and go back to the menu —
+## the frozen mirror world is useless without its authority.
+func _on_connection_lost() -> void:
+	get_tree().paused = false
+	var dialog: AcceptDialog = AcceptDialog.new()
+	dialog.dialog_text = tr("LAN_HOST_LEFT")
+	dialog.title = tr("LAN_TITLE")
+	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+	dialog.confirmed.connect(_leave_to_menu)
+	dialog.canceled.connect(_leave_to_menu)
+	hud.add_child(dialog)
+	dialog.popup_centered()
+
+func _leave_to_menu() -> void:
+	NetworkSession.leave()
+	get_tree().change_scene_to_file("res://scenes/game/main_menu.tscn")
 
 func toggle_follow() -> void:
 	_camera_ctl.toggle_follow()
