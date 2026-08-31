@@ -85,6 +85,67 @@ func _exit_tree() -> void:
 		if NetworkSession.internet_failed.is_connected(_on_internet_failed):
 			NetworkSession.internet_failed.disconnect(_on_internet_failed)
 
+# --- LAN: Steam friend invite picker (the overlay needs a Steam launch) ---
+
+var _friend_popup: PopupPanel = null
+
+func _open_friend_picker() -> void:
+	if is_instance_valid(_friend_popup):
+		_friend_popup.popup_centered()
+		return
+	_friend_popup = PopupPanel.new()
+	add_child(_friend_popup)
+	var margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 14)
+	_friend_popup.add_child(margin)
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+	var title: Label = _make_label(tr("STEAM_INVITE"))
+	title.add_theme_font_size_override("font_size", 20)
+	vbox.add_child(title)
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(360, 300)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(scroll)
+	var list: VBoxContainer = VBoxContainer.new()
+	list.add_theme_constant_override("separation", 4)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	var friends: Array = NetworkSession.get_steam_friends()
+	if friends.is_empty():
+		var none: Label = Label.new()
+		none.text = tr("STEAM_NO_FRIENDS")
+		none.add_theme_font_size_override("font_size", 15)
+		list.add_child(none)
+	for friend: Variant in friends:
+		var f: Dictionary = friend as Dictionary
+		var row: HBoxContainer = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		list.add_child(row)
+		var dot: Label = Label.new()
+		dot.text = "●"
+		dot.add_theme_color_override("font_color",
+			Color(0.35, 0.85, 0.35) if (f["online"] as bool) else Color(0.45, 0.45, 0.45))
+		row.add_child(dot)
+		var name_lbl: Label = Label.new()
+		name_lbl.text = f["name"] as String
+		name_lbl.add_theme_font_size_override("font_size", 15)
+		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if not (f["online"] as bool):
+			name_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+		row.add_child(name_lbl)
+		var btn: Button = _make_btn(tr("STEAM_INVITE_ACTION"), Color(0.16, 0.28, 0.40, 0.95), Color(0.22, 0.38, 0.55, 0.95))
+		btn.add_theme_font_size_override("font_size", 13)
+		var sid: int = f["id"] as int
+		btn.pressed.connect(func() -> void:
+			if NetworkSession.invite_steam_friend(sid):
+				btn.text = tr("STEAM_INVITE_SENT")
+				btn.disabled = true)
+		row.add_child(btn)
+	_friend_popup.popup_centered()
+
 # --- LAN: Internet hosting (UPnP) ---
 
 var _inet_btn: Button = null
@@ -267,7 +328,9 @@ func _build() -> void:
 		if NetworkSession.is_steam_session():
 			var invite_btn: Button = _make_btn(tr("STEAM_INVITE"), Color(0.16, 0.28, 0.40, 0.95), Color(0.22, 0.38, 0.55, 0.95))
 			invite_btn.add_theme_font_size_override("font_size", 15)
-			invite_btn.pressed.connect(func() -> void: NetworkSession.invite_steam_friends())
+			invite_btn.pressed.connect(func() -> void:
+				NetworkSession.invite_steam_friends()
+				_open_friend_picker())
 			players_row.add_child(invite_btn)
 		elif NetworkSession.is_host():
 			# The address the other players must type to join.

@@ -608,10 +608,40 @@ func _on_steam_lobby_list(lobbies: Array) -> void:
 		})
 	steam_lobbies_found.emit(out)
 
-## Overlay dialog to invite Steam friends into the current lobby.
+## Overlay dialog to invite Steam friends into the current lobby. The
+## overlay only exists when the game was LAUNCHED through Steam — dev
+## builds need the in-game picker below instead.
 func invite_steam_friends() -> void:
-	if steam_lobby_id != 0:
+	if steam_lobby_id != 0 and Steam.isOverlayEnabled():
 		Steam.activateGameOverlayInviteDialog(steam_lobby_id)
+
+const FRIEND_FLAG_IMMEDIATE: int = 0x04
+
+## Steam friends for the in-game invite picker: online first.
+func get_steam_friends() -> Array:
+	if not _steam_initialized:
+		return []
+	var out: Array = []
+	var count: int = Steam.getFriendCount(FRIEND_FLAG_IMMEDIATE)
+	for i: int in range(count):
+		var sid: int = Steam.getFriendByIndex(i, FRIEND_FLAG_IMMEDIATE)
+		out.append({
+			"id": sid,
+			"name": Steam.getFriendPersonaName(sid),
+			"online": Steam.getFriendPersonaState(sid) > 0,
+		})
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if (a["online"] as bool) != (b["online"] as bool):
+			return a["online"] as bool
+		return (a["name"] as String).naturalnocasecmp_to(b["name"] as String) < 0)
+	return out
+
+## Direct API invite — lands in the friend's Steam chat, works without the
+## overlay. With the game open on their side, accepting fires join_requested.
+func invite_steam_friend(steam_id: int) -> bool:
+	if steam_lobby_id == 0:
+		return false
+	return Steam.inviteUserToLobby(steam_lobby_id, steam_id)
 
 ## A friend accepted an invite (game already running).
 func _on_steam_join_requested(lobby_id: int, _friend_id: int) -> void:

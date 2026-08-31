@@ -461,3 +461,6 @@ STEAM_BROWSE,Find matches,Buscar partidas
 STEAM_NO_LOBBIES,No matches found,No hay partidas ahora mismo
 STEAM_INVITE,Invite friends,Invitar amigos
 STEAM_UNAVAILABLE,Steam not available (client closed?),Steam no disponible (¿cliente cerrado?)
+STEAM_INVITE_ACTION,Invite,Invitar
+STEAM_INVITE_SENT,Sent ✓,Enviada ✓
+STEAM_NO_FRIENDS,No friends found,No se encontraron amigos
