@@ -450,3 +450,4 @@ CHAT_SYS_JOINED,%s joined the game,%s se ha unido a la partida
 CHAT_SYS_LEFT,%s left the game,%s ha salido de la partida
 CHAT_SYS_KICKED,%s was kicked,%s ha sido expulsado
 CHAT_SYS_RESIGNED,%s resigned,%s se ha rendido
+CHAT_SYS_RENAMED,Name change: %s,Cambio de nombre: %s

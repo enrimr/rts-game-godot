@@ -315,6 +315,27 @@ func _build() -> void:
 	right.add_child(detail_panel)
 	_rebuild_civ_detail(detail_vbox, _player_civ_index)
 
+	if lan_mode:
+		var name_row: HBoxContainer = HBoxContainer.new()
+		name_row.add_theme_constant_override("separation", 8)
+		right.add_child(name_row)
+		var name_lbl: Label = _make_label(tr("LAN_NAME"))
+		name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		name_row.add_child(name_lbl)
+		var name_edit: LineEdit = LineEdit.new()
+		name_edit.text = NetworkSession.player_name
+		name_edit.placeholder_text = tr("LAN_NAME_PLACEHOLDER")
+		name_edit.max_length = 24
+		name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		# Commit on Enter or when leaving the field — never per keystroke, so
+		# the roster is not rebroadcast while someone is still typing.
+		name_edit.text_submitted.connect(func(t: String) -> void:
+			NetworkSession.request_name(t)
+			name_edit.release_focus())
+		name_edit.focus_exited.connect(func() -> void:
+			NetworkSession.request_name(name_edit.text))
+		name_row.add_child(name_edit)
+
 	# Bottom buttons
 	vbox.add_child(_make_sep())
 

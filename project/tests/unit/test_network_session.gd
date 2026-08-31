@@ -145,3 +145,12 @@ func test_chat_display_name_falls_back_when_roster_is_gone() -> void:
 	assert_eq(NetworkSession.display_name_of(1), "Ana")
 	assert_eq(NetworkSession.display_name_of(3), tr("LAN_DEFAULT_NAME") % 4,
 		"an unknown id gets the default name, never a crash")
+
+func test_rename_updates_the_roster_and_rejects_empties() -> void:
+	NetworkSession._roster = {0: {"name": "Host", "color": 0, "civ": "guanches", "peer": 1}}
+	NetworkSession._apply_rename(0, "Enrique")
+	assert_eq(NetworkSession.display_name_of(0), "Enrique")
+	NetworkSession._apply_rename(0, "")
+	assert_eq(NetworkSession.display_name_of(0), "Enrique", "an empty rename is ignored")
+	NetworkSession._apply_rename(7, "Nadie")
+	assert_eq(NetworkSession.display_name_of(0), "Enrique", "unknown ids never crash")

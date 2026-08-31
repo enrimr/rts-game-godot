@@ -269,6 +269,36 @@ func _tx_profile(display_name: String) -> void:
 	_broadcast_roster()
 	announce("joined", (_roster[pid] as Dictionary)["name"] as String)
 
+## Rename YOURSELF mid-lobby (or mid-match); the host validates and the
+## roster broadcast updates every players panel and chat display name.
+func request_name(new_name: String) -> void:
+	var trimmed: String = new_name.strip_edges().left(24)
+	if trimmed.is_empty():
+		return
+	player_name = trimmed
+	if role == Role.HOST:
+		_apply_rename(0, trimmed)
+	elif role == Role.CLIENT:
+		_tx_rename.rpc_id(1, trimmed)
+
+@rpc("any_peer", "reliable")
+func _tx_rename(new_name: String) -> void:
+	if role != Role.HOST:
+		return
+	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	if pid >= 0:
+		_apply_rename(pid, new_name.strip_edges().left(24))
+
+func _apply_rename(pid: int, new_name: String) -> void:
+	if new_name.is_empty() or not _roster.has(pid):
+		return
+	var old_name: String = (_roster[pid] as Dictionary).get("name", "") as String
+	if old_name == new_name:
+		return
+	(_roster[pid] as Dictionary)["name"] = new_name
+	_broadcast_roster()
+	announce("renamed", "%s → %s" % [old_name, new_name])
+
 ## Pick a colour for YOURSELF; the host validates it is free.
 func request_color(idx: int) -> void:
 	if role == Role.HOST:
