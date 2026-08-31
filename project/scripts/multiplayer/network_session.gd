@@ -158,6 +158,7 @@ func leave() -> void:
 	local_player_id = 0
 	_peer_players.clear()
 	_kicked_peers.clear()
+	_teardown_internet()
 	_roster.clear()
 	lobby_slots = []
 	match_human_ids = [0]
@@ -490,6 +491,60 @@ func _tx_resign() -> void:
 func notify_pause(paused: bool) -> void:
 	if role == Role.HOST:
 		send_events({"pause": paused})
+
+# ── Internet hosting (UPnP port mapping, threaded — discovery blocks) ───────
+
+## UPnP succeeded: friends can join at this external address.
+signal internet_ready(external_ip: String)
+## UPnP failed: the player must forward the port manually.
+signal internet_failed(reason: String)
+
+var _upnp: UPNP = null
+var _upnp_thread: Thread = null
+var _upnp_mapped_port: int = 0
+
+## HOST: try to open the port on the router and learn the public address.
+func setup_internet(port: int = DEFAULT_PORT) -> void:
+	if role != Role.HOST or _upnp_thread != null or _upnp != null:
+		return
+	_upnp_thread = Thread.new()
+	_upnp_thread.start(_upnp_worker.bind(port))
+
+func _upnp_worker(port: int) -> void:
+	var upnp: UPNP = UPNP.new()
+	var err: int = upnp.discover(2000)
+	if err != UPNP.UPNP_RESULT_SUCCESS or upnp.get_gateway() == null \
+			or not upnp.get_gateway().is_valid_gateway():
+		call_deferred("_upnp_done", "", "discover", null, 0)
+		return
+	var map_err: int = upnp.add_port_mapping(port, port, "Calima RTS", "UDP")
+	if map_err != UPNP.UPNP_RESULT_SUCCESS:
+		call_deferred("_upnp_done", "", "mapping", null, 0)
+		return
+	var ip: String = upnp.query_external_address()
+	if ip.is_empty():
+		upnp.delete_port_mapping(port, "UDP")
+		call_deferred("_upnp_done", "", "address", null, 0)
+		return
+	call_deferred("_upnp_done", ip, "", upnp, port)
+
+func _upnp_done(ip: String, reason: String, upnp: UPNP, port: int) -> void:
+	if _upnp_thread != null:
+		_upnp_thread.wait_to_finish()
+		_upnp_thread = null
+	if ip.is_empty():
+		internet_failed.emit(reason)
+		return
+	_upnp = upnp
+	_upnp_mapped_port = port
+	internet_ready.emit(ip)
+
+func _teardown_internet() -> void:
+	if _upnp != null and _upnp_mapped_port > 0:
+		# Best effort; a stale mapping expires with the router anyway.
+		_upnp.delete_port_mapping(_upnp_mapped_port, "UDP")
+	_upnp = null
+	_upnp_mapped_port = 0
 
 # ── Chat (lobby AND in-game; host validates and rebroadcasts) ────────────────
 

@@ -80,6 +80,40 @@ func _exit_tree() -> void:
 			NetworkSession.chat_received.disconnect(_on_chat_line)
 		if NetworkSession.system_chat_received.is_connected(_on_system_line):
 			NetworkSession.system_chat_received.disconnect(_on_system_line)
+		if NetworkSession.internet_ready.is_connected(_on_internet_ready):
+			NetworkSession.internet_ready.disconnect(_on_internet_ready)
+		if NetworkSession.internet_failed.is_connected(_on_internet_failed):
+			NetworkSession.internet_failed.disconnect(_on_internet_failed)
+
+# --- LAN: Internet hosting (UPnP) ---
+
+var _inet_btn: Button = null
+var _inet_ip_label: Label = null
+
+func _build_internet_button(row: HBoxContainer, ip_label: Label) -> void:
+	_inet_ip_label = ip_label
+	_inet_btn = _make_btn(tr("LAN_INTERNET_BTN"), Color(0.16, 0.28, 0.40, 0.95), Color(0.22, 0.38, 0.55, 0.95))
+	_inet_btn.add_theme_font_size_override("font_size", 14)
+	_inet_btn.tooltip_text = tr("LAN_INTERNET_TIP")
+	row.add_child(_inet_btn)
+	_inet_btn.pressed.connect(func() -> void:
+		_inet_btn.disabled = true
+		_inet_ip_label.text = tr("LAN_INTERNET_WAIT")
+		NetworkSession.setup_internet())
+	NetworkSession.internet_ready.connect(_on_internet_ready)
+	NetworkSession.internet_failed.connect(_on_internet_failed)
+
+func _on_internet_ready(external_ip: String) -> void:
+	if is_instance_valid(_inet_ip_label):
+		_inet_ip_label.text = tr("LAN_INTERNET_OK") % [external_ip, NetworkSession.DEFAULT_PORT]
+	if is_instance_valid(_inet_btn):
+		_inet_btn.visible = false
+
+func _on_internet_failed(_reason: String) -> void:
+	if is_instance_valid(_inet_ip_label):
+		_inet_ip_label.text = tr("LAN_INTERNET_FAIL") % NetworkSession.DEFAULT_PORT
+	if is_instance_valid(_inet_btn):
+		_inet_btn.disabled = false
 
 # --- LAN: lobby chat ---
 
@@ -238,6 +272,7 @@ func _build() -> void:
 			ip_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.45))
 			ip_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			players_row.add_child(ip_label)
+			_build_internet_button(players_row, ip_label)
 		_players_panel = VBoxContainer.new()
 		_players_panel.add_theme_constant_override("separation", 6)
 		left.add_child(_players_panel)

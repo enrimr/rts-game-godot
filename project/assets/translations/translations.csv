@@ -451,3 +451,8 @@ CHAT_SYS_LEFT,%s left the game,%s ha salido de la partida
 CHAT_SYS_KICKED,%s was kicked,%s ha sido expulsado
 CHAT_SYS_RESIGNED,%s resigned,%s se ha rendido
 CHAT_SYS_RENAMED,Name change: %s,Cambio de nombre: %s
+LAN_INTERNET_BTN,Internet…,Internet…
+LAN_INTERNET_TIP,Open the port on your router (UPnP) so friends can join over the Internet,Abre el puerto en tu router (UPnP) para que se unan por Internet
+LAN_INTERNET_WAIT,Looking for your router (UPnP)…,Buscando tu router (UPnP)…
+LAN_INTERNET_OK,Internet: %s (port %d),Internet: %s (puerto %d)
+LAN_INTERNET_FAIL,UPnP unavailable — forward UDP port %d manually,UPnP no disponible — abre el puerto UDP %d a mano en tu router

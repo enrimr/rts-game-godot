@@ -183,7 +183,15 @@ phase-2 interpolation buffer absorbs latency).
   the `HudChat` component (online only) opens with Enter, swallows keys
   while typing (hotkeys listen in `_unhandled_input`), and fades lines
   above the command bar.
-- **Phase 2 still pending**: reconnection, siege-stone echo. Migration to lockstep stays open: the command wire format is
+- **Siege echo (shipped)**: `SiegeFx.launch_boulder` is the shared arcing
+  stone (host visual + client echo; the Mangonel finally shows a projectile
+  — damage timing untouched); the fx stream carries a kind (arrow|boulder).
+- **Internet hosting (shipped, UPnP)**: the lobby's "Internet…" button runs
+  `NetworkSession.setup_internet` on a thread (UPnP discover → UDP port
+  mapping → external address). Success swaps the header address for
+  "Internet: <ip> (port)"; failure instructs manual port forwarding. The
+  mapping is removed on leave. Clients join by typing the public IP.
+- **Phase 2 still pending**: reconnection. Migration to lockstep stays open: the command wire format is
   shared, only the return channel changes — it requires the
   simulation-determinism milestone (movement off Godot physics).
 
