@@ -49,10 +49,17 @@ func init(hud_root: Node) -> void:
 	anchor.add_child(_hint)
 
 	NetworkSession.chat_received.connect(_on_chat)
+	NetworkSession.system_chat_received.connect(_on_system)
 
 func _exit_tree() -> void:
 	if NetworkSession.chat_received.is_connected(_on_chat):
 		NetworkSession.chat_received.disconnect(_on_chat)
+	if NetworkSession.system_chat_received.is_connected(_on_system):
+		NetworkSession.system_chat_received.disconnect(_on_system)
+
+func _on_system(kind: String, display_name: String) -> void:
+	_push_line(tr("CHAT_SYS_" + kind.to_upper()) % display_name,
+		Color(0.72, 0.72, 0.72))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
@@ -86,10 +93,15 @@ func _on_submitted(text: String) -> void:
 	_close_input()
 
 func _on_chat(pid: int, text: String) -> void:
+	_push_line("%s: %s" % [NetworkSession.display_name_of(pid), text],
+		PlayerColors.get_color(pid).lightened(0.35))
+	AudioManager.play("select_generic", -14.0)
+
+func _push_line(text: String, color: Color) -> void:
 	var line: Label = Label.new()
-	line.text = "%s: %s" % [NetworkSession.display_name_of(pid), text]
+	line.text = text
 	line.add_theme_font_size_override("font_size", 15)
-	line.add_theme_color_override("font_color", PlayerColors.get_color(pid).lightened(0.35))
+	line.add_theme_color_override("font_color", color)
 	line.add_theme_constant_override("outline_size", 5)
 	line.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
 	_lines_box.add_child(line)
@@ -99,4 +111,3 @@ func _on_chat(pid: int, text: String) -> void:
 	tween.tween_interval(LINE_LIFETIME)
 	tween.tween_property(line, "modulate:a", 0.0, FADE_TIME)
 	tween.tween_callback(line.queue_free)
-	AudioManager.play("select_generic", -14.0)

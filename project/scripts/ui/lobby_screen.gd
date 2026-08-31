@@ -78,6 +78,8 @@ func _exit_tree() -> void:
 		NetworkSession.config_changed.disconnect(_refresh_lan_panels)
 		if NetworkSession.chat_received.is_connected(_on_chat_line):
 			NetworkSession.chat_received.disconnect(_on_chat_line)
+		if NetworkSession.system_chat_received.is_connected(_on_system_line):
+			NetworkSession.system_chat_received.disconnect(_on_system_line)
 
 # --- LAN: lobby chat ---
 
@@ -115,6 +117,13 @@ func _build_chat_panel(left: VBoxContainer) -> void:
 		_chat_input.text = "")
 	row.add_child(send)
 	NetworkSession.chat_received.connect(_on_chat_line)
+	NetworkSession.system_chat_received.connect(_on_system_line)
+
+func _on_system_line(kind: String, display_name: String) -> void:
+	if _chat_log == null:
+		return
+	_chat_log.append_text("[i][color=#9a9a9a]%s[/color][/i]\n"
+		% (tr("CHAT_SYS_" + kind.to_upper()) % display_name.replace("[", "[lb]")))
 
 func _on_chat_line(pid: int, text: String) -> void:
 	if _chat_log == null:

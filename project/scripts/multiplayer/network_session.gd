@@ -50,6 +50,8 @@ var player_name: String = ""
 var auto_change_scene: bool = true
 
 var _peer_players: Dictionary = {}   # peer_id -> player_id (host side)
+# Peers thrown out by the host: their disconnect must not announce "left".
+var _kicked_peers: Dictionary = {}
 var _next_player_id: int = 1
 ## player_id -> {"name": String, "color": int, "civ": String, "peer": int}.
 ## Host-authoritative, rebroadcast in full on every change (≤ 4 rows).
@@ -155,6 +157,7 @@ func leave() -> void:
 	role = Role.OFFLINE
 	local_player_id = 0
 	_peer_players.clear()
+	_kicked_peers.clear()
 	_roster.clear()
 	lobby_slots = []
 	match_human_ids = [0]
@@ -194,8 +197,13 @@ func _on_peer_disconnected(peer_id: int) -> void:
 	var pid: int = _peer_players.get(peer_id, -1) as int
 	_peer_players.erase(peer_id)
 	if pid >= 0:
+		var gone_name: String = display_name_of(pid)
 		_roster.erase(pid)
 		_broadcast_roster()
+		if _kicked_peers.has(peer_id):
+			_kicked_peers.erase(peer_id)
+		else:
+			announce("left", gone_name)
 		# Dropping mid-match counts as resigning — the match must not hang on
 		# a ghost player nobody controls.
 		if role == Role.HOST and match_human_ids.has(pid) \
@@ -259,6 +267,7 @@ func _tx_profile(display_name: String) -> void:
 	if not trimmed.is_empty():
 		(_roster[pid] as Dictionary)["name"] = trimmed
 	_broadcast_roster()
+	announce("joined", (_roster[pid] as Dictionary)["name"] as String)
 
 ## Pick a colour for YOURSELF; the host validates it is free.
 func request_color(idx: int) -> void:
@@ -326,6 +335,8 @@ func kick(player_id: int) -> void:
 		return
 	var peer_id: int = (_roster[player_id] as Dictionary).get("peer", 0) as int
 	if peer_id > 1:
+		_kicked_peers[peer_id] = true
+		announce("kicked", display_name_of(player_id))
 		_rx_kicked.rpc_id(peer_id)
 		# The disconnect lands right after the kick notice; the roster prunes
 		# itself in _on_peer_disconnected.
@@ -442,6 +453,7 @@ func _tx_resign() -> void:
 		return
 	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
 	if pid > 0:
+		announce("resigned", display_name_of(pid))
 		player_resigned.emit(pid)
 
 ## HOST: tell every client the simulation is paused/resumed.
@@ -453,6 +465,9 @@ func notify_pause(paused: bool) -> void:
 
 ## A chat line arrived on this machine (own lines included).
 signal chat_received(player_id: int, text: String)
+## A system event for the chat log (join/leave/kick/resign). Ships as a KIND
+## plus a display name so every machine renders it in its own language.
+signal system_chat_received(kind: String, display_name: String)
 
 const CHAT_MAX_LEN: int = 120
 
@@ -485,6 +500,17 @@ func _rx_chat(pid: int, text: String) -> void:
 	chat_received.emit(pid, text)
 
 ## The roster name for a player id, with a sane fallback after roster loss.
+## HOST: announce a lobby/match event to every chat log (self included).
+func announce(kind: String, display_name: String) -> void:
+	if role != Role.HOST:
+		return
+	_rx_system.rpc(kind, display_name)
+	system_chat_received.emit(kind, display_name)
+
+@rpc("authority", "reliable")
+func _rx_system(kind: String, display_name: String) -> void:
+	system_chat_received.emit(kind, display_name)
+
 func display_name_of(pid: int) -> String:
 	var entry: Variant = _roster.get(pid)
 	if entry is Dictionary:

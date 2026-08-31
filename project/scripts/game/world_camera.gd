@@ -24,15 +24,22 @@ var _edge_scroll_last_mouse: Vector2 = Vector2.ZERO
 func setup(world) -> void:
 	_world = world
 
+func _typing_in_text_field() -> bool:
+	var focus: Control = (_world as Node).get_viewport().gui_get_focus_owner()
+	return focus is LineEdit or focus is TextEdit
+
 ## Per-frame keyboard + edge-scroll panning; called from GameWorld._process.
 func handle_camera(delta: float) -> void:
 	# Keyboard input — immediate response
 	# Use is_physical_key_pressed to bypass UI focus interception of arrow keys
 	var key_dir: Vector2 = Vector2.ZERO
-	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):  key_dir.x -= 1.0
-	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): key_dir.x += 1.0
-	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):    key_dir.y -= 1.0
-	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):  key_dir.y += 1.0
+	# ...but polling also bypasses text fields: while the player types in the
+	# chat (or any LineEdit), WASD must write letters, not pan the map.
+	if not _typing_in_text_field():
+		if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):  key_dir.x -= 1.0
+		if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): key_dir.x += 1.0
+		if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):    key_dir.y -= 1.0
+		if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):  key_dir.y += 1.0
 
 	var edge_dir: Vector2 = Vector2.ZERO
 	if GameSettings.edge_scroll_enabled:
