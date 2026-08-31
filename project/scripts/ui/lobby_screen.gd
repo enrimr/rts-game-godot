@@ -441,7 +441,7 @@ func _build() -> void:
 	right.add_child(detail_panel)
 	_rebuild_civ_detail(detail_vbox, _player_civ_index)
 
-	if lan_mode:
+	if lan_mode and not NetworkSession.is_steam_session():
 		var name_row: HBoxContainer = HBoxContainer.new()
 		name_row.add_theme_constant_override("separation", 8)
 		right.add_child(name_row)

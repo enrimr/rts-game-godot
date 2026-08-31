@@ -355,6 +355,9 @@ func _tx_rename(new_name: String) -> void:
 		_apply_rename(pid, new_name.strip_edges().left(24))
 
 func _apply_rename(pid: int, new_name: String) -> void:
+	# Steam sessions show the players' real Steam names — never editable.
+	if is_steam_session():
+		return
 	if new_name.is_empty() or not _roster.has(pid):
 		return
 	var old_name: String = (_roster[pid] as Dictionary).get("name", "") as String
@@ -668,6 +671,7 @@ func _on_steam_lobby_created(connect_result: int, lobby_id: int) -> void:
 		steam_error.emit("lobby_create_failed")
 		return
 	steam_lobby_id = lobby_id
+	player_name = Steam.getPersonaName()
 	Steam.setLobbyData(lobby_id, "game", STEAM_GAME_KEY)
 	Steam.setLobbyData(lobby_id, "host", _display_name(0))
 	var peer: SteamMultiplayerPeer = SteamMultiplayerPeer.new()
@@ -691,6 +695,7 @@ func _on_steam_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response:
 		steam_error.emit("lobby_join_failed")
 		return
 	steam_lobby_id = lobby_id
+	player_name = Steam.getPersonaName()
 	var peer: SteamMultiplayerPeer = SteamMultiplayerPeer.new()
 	peer.connect_to_lobby(lobby_id)
 	multiplayer.multiplayer_peer = peer

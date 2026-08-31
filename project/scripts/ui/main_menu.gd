@@ -80,19 +80,32 @@ func _build_continue_button() -> void:
 var _lan_button: Button = null
 
 func _build_lan_button() -> void:
+	var container: Node = _play_button.get_parent()
+	var lan_btn: Button = _make_mp_button(tr("MENU_LAN"))
+	container.add_child(lan_btn)
+	container.move_child(lan_btn, _play_button.get_index() + 2)
+	_lan_button = lan_btn
+	lan_btn.pressed.connect(_open_lan_panel)
+	var inet_btn: Button = _make_mp_button(tr("MENU_INTERNET"))
+	container.add_child(inet_btn)
+	container.move_child(inet_btn, lan_btn.get_index() + 1)
+	inet_btn.pressed.connect(_open_internet_panel)
+
+func _make_mp_button(label_text: String) -> Button:
 	var btn: Button = Button.new()
-	btn.text = tr("MENU_LAN")
+	btn.text = label_text
 	btn.custom_minimum_size = Vector2(160, 40)
 	btn.add_theme_font_size_override("font_size", 22)
 	btn.focus_mode = Control.FOCUS_NONE
-	var container: Node = _play_button.get_parent()
-	container.add_child(btn)
-	container.move_child(btn, _play_button.get_index() + 2)
-	_lan_button = btn
-	btn.pressed.connect(_open_lan_panel)
+	return btn
 
 func _open_lan_panel() -> void:
 	var panel: LanLobby = LanLobby.new()
+	add_child(panel)
+
+func _open_internet_panel() -> void:
+	var panel: LanLobby = LanLobby.new()
+	panel.internet_mode = true
 	add_child(panel)
 
 func _open_load_picker() -> void:

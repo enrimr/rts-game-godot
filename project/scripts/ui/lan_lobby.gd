@@ -9,6 +9,10 @@ class_name LanLobby extends ColorRect
 
 signal closed()
 
+## Internet mode: the card shows only the Steam flow (host/browse/invites,
+## Valve relay) — names come from Steam. LAN mode keeps name + IP hosting.
+var internet_mode: bool = false
+
 const CARD_BG: Color = Color(0.08, 0.08, 0.12, 0.97)
 const GOLD: Color = Color(0.90, 0.82, 0.52)
 
@@ -65,7 +69,7 @@ func _build_card() -> void:
 	margin.add_child(vbox)
 
 	var title: Label = Label.new()
-	title.text = tr("LAN_TITLE")
+	title.text = tr("MENU_INTERNET") if internet_mode else tr("LAN_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 26)
 	title.add_theme_color_override("font_color", GOLD)
@@ -73,6 +77,7 @@ func _build_card() -> void:
 
 	var name_row: HBoxContainer = HBoxContainer.new()
 	name_row.add_theme_constant_override("separation", 8)
+	name_row.visible = not internet_mode
 	vbox.add_child(name_row)
 	var name_label: Label = Label.new()
 	name_label.text = tr("LAN_NAME")
@@ -87,7 +92,7 @@ func _build_card() -> void:
 	name_row.add_child(_name_edit)
 
 	_status = Label.new()
-	_status.text = tr("LAN_HINT")
+	_status.text = tr("INTERNET_HINT") if internet_mode else tr("LAN_HINT")
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.add_theme_font_size_override("font_size", 15)
 	_status.add_theme_color_override("font_color", Color(0.75, 0.78, 0.85))
@@ -97,9 +102,11 @@ func _build_card() -> void:
 	host_btn.text = tr("LAN_HOST")
 	host_btn.add_theme_font_size_override("font_size", 20)
 	host_btn.pressed.connect(_on_host_pressed)
+	host_btn.visible = not internet_mode
 	vbox.add_child(host_btn)
 	var join_row: HBoxContainer = HBoxContainer.new()
 	join_row.add_theme_constant_override("separation", 8)
+	join_row.visible = not internet_mode
 	vbox.add_child(join_row)
 	_ip_edit = LineEdit.new()
 	_ip_edit.text = "192.168.1."
@@ -112,7 +119,8 @@ func _build_card() -> void:
 	join_btn.pressed.connect(_on_join_pressed)
 	join_row.add_child(join_btn)
 
-	_build_steam_section(vbox)
+	if internet_mode:
+		_build_steam_section(vbox)
 
 	var back_btn: Button = Button.new()
 	back_btn.text = tr("LAN_LEAVE")
