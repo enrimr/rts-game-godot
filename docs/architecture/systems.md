@@ -201,7 +201,21 @@ phase-2 interpolation buffer absorbs latency).
   Missing Steam client degrades to a notice; `steam_appid.txt` (480) must
   ship next to exported executables; swap the real AppID in
   `NetworkSession.STEAM_APP_ID` once Steamworks registration lands.
-- **Phase 2 still pending**: reconnection; live Steam-lobby manual test. Migration to lockstep stays open: the command wire format is
+- **Reconnection (shipped)**: a dropped human's seat is reserved for
+  `rejoin_grace_sec` (90 s; env `CALIMA_REJOIN_GRACE`) — "disconnected,
+  holding their seat" in chat, match keeps running; grace expiry becomes
+  the old resignation. A mid-match connection is parked until its profile
+  claims a vacant seat (roster-name match, or the single vacancy), gets its
+  OLD player id back, the frozen match config (`in_progress` flag) and —
+  once its seed-identical world boots (`notify_resync_ready`) — a one-shot
+  full resync (`StateReplicator.full_resync_to`): removals of dead initial
+  entities, spawn records for everything born since, full keyframe. The
+  connection-lost dialog offers "Reconectar" (`rejoin_last`: last IP or
+  Steam lobby). Gate: `tools/check_net_rejoin.tscn` (three processes).
+- **Menu split**: "Multijugador LAN" vs "Multijugador Internet"
+  (`LanLobby.internet_mode` — Steam-only card); Steam sessions pin roster
+  names to the Steam persona (rename hidden + `_apply_rename` refuses).
+- **Phase 2 still pending**: live Steam-lobby manual test. Migration to lockstep stays open: the command wire format is
   shared, only the return channel changes — it requires the
   simulation-determinism milestone (movement off Godot physics).
 
