@@ -56,8 +56,13 @@ func _collect(layer: Node, owner_id: int, own: bool, drop_cloaked: bool) -> Arra
 		var pid: Variant = node.get("player_id")
 		if pid == null:
 			continue
-		var is_own: bool = (pid as int) == owner_id
-		if own != is_own:
+		# "own" keeps only the owner's entities; "enemy" keeps only HOSTILE
+		# ones — allied players are neither, so team-mates never get farmed
+		# as targets by the AI.
+		if own:
+			if (pid as int) != owner_id:
+				continue
+		elif GameManager.are_allied(pid as int, owner_id):
 			continue
 		if drop_cloaked and node.get("is_cloaked") == true:
 			continue

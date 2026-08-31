@@ -521,7 +521,7 @@ func _find_nearest_enemy() -> Node:
 		if not is_instance_valid(unit):
 			continue
 		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) == player_id:
+		if pid == null or GameManager.are_allied(pid as int, player_id):
 			continue
 		var d: float = global_position.distance_to((unit as Node2D).global_position)
 		if d < best_dist:

@@ -165,6 +165,8 @@ SETTINGS_ON,ON,Activado
 SETTINGS_OFF,OFF,Desactivado
 MENU_NEW_GAME,New Game,Nueva Partida
 LOBBY_TITLE,Match Setup,Configuración de Partida
+LOBBY_TEAM,Team,Equipo
+LOBBY_TEAM_YOU,Your Team,Tu Equipo
 LOBBY_MAP_TYPE,Map Type,Tipo de Mapa
 LOBBY_MAPTYPE_PLAINS,Plains,Llanura
 LOBBY_MAPTYPE_STANDARD,Standard,Estándar

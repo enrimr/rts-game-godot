@@ -314,8 +314,11 @@ func _setup_ai(rival_id: int, tc_pos: Vector2) -> void:
 		ai.set("units_layer", _world.units_layer)
 		ai.set("buildings_layer", _world.buildings_layer)
 		ai.set("drop_off", ai_drop_off if ai_drop_off != null else tc)
-		# AI targets player TC initially; will switch dynamically in Fase 4
-		ai.set("enemy_town_center", _world.drop_off)
+		# Initial target: the player's TC unless we are ALLIED with them —
+		# then any hostile AI's TC (refreshed once all TCs exist).
+		ai.set("enemy_town_center",
+			_world.drop_off if not GameManager.are_allied(rival_id, 0) else null)
+		_world.call_deferred("_assign_ai_enemy_targets")
 
 	_spawn_hero(rival_id, tc_pos)
 

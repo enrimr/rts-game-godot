@@ -155,7 +155,7 @@ func _reveal_from_units() -> void:
 		if not is_instance_valid(unit):
 			continue
 		var pid: Variant = unit.get("player_id")
-		if pid == null or (pid as int) != local_player_id:
+		if pid == null or not GameManager.are_allied(pid as int, local_player_id):
 			continue
 		var los: float
 		if unit is Animal:
@@ -183,7 +183,7 @@ func _reveal_from_buildings() -> void:
 			if not is_instance_valid(building):
 				continue
 			var pid: Variant = building.get("player_id")
-			if pid == null or (pid as int) != local_player_id:
+			if pid == null or not GameManager.are_allied(pid as int, local_player_id):
 				continue
 			var state_val: Variant = building.get("state")
 			if state_val != null and (state_val as int) != BuildingBase.BuildingState.COMPLETE:
@@ -199,7 +199,7 @@ func _reveal_from_buildings() -> void:
 	# Town Center (drop_off_node in world root)
 	if is_instance_valid(_drop_off_node):
 		var pid: Variant = _drop_off_node.get("player_id")
-		if pid != null and (pid as int) == local_player_id:
+		if pid != null and GameManager.are_allied(pid as int, local_player_id):
 			var tc_weather_mult: float = WeatherManager.get_vision_multiplier((_drop_off_node as Node2D).global_position, local_player_id)
 			var tc_coast_mult: float = _coastal_vision_mult((_drop_off_node as Node2D).global_position)
 			_mark_circle((_drop_off_node as Node2D).global_position,
@@ -262,7 +262,7 @@ func _apply_visibility() -> void:
 			if not is_instance_valid(unit):
 				continue
 			var pid: Variant = unit.get("player_id")
-			var is_own: bool = pid != null and (pid as int) == local_player_id
+			var is_own: bool = pid != null and GameManager.are_allied(pid as int, local_player_id)
 			if is_own:
 				continue
 			var was_visible: bool = (unit as Node2D).visible
@@ -281,7 +281,7 @@ func _apply_visibility() -> void:
 			if not is_instance_valid(building):
 				continue
 			var pid: Variant = building.get("player_id")
-			var is_own: bool = pid != null and (pid as int) == local_player_id
+			var is_own: bool = pid != null and GameManager.are_allied(pid as int, local_player_id)
 			if is_own:
 				continue
 			var state: int = get_cell_state((building as Node2D).global_position)
@@ -304,14 +304,14 @@ func _own_watcher_positions() -> PackedVector2Array:
 			if not is_instance_valid(unit):
 				continue
 			var pid: Variant = unit.get("player_id")
-			if pid != null and (pid as int) == local_player_id:
+			if pid != null and GameManager.are_allied(pid as int, local_player_id):
 				out.append((unit as Node2D).global_position)
 	if is_instance_valid(_buildings_node):
 		for building: Node in _buildings_node.get_children():
 			if not is_instance_valid(building):
 				continue
 			var pid: Variant = building.get("player_id")
-			if pid == null or (pid as int) != local_player_id:
+			if pid == null or not GameManager.are_allied(pid as int, local_player_id):
 				continue
 			var state_val: Variant = building.get("state")
 			if state_val != null and (state_val as int) != BuildingBase.BuildingState.COMPLETE:
@@ -319,7 +319,7 @@ func _own_watcher_positions() -> PackedVector2Array:
 			out.append((building as Node2D).global_position)
 	if is_instance_valid(_drop_off_node):
 		var tc_pid: Variant = _drop_off_node.get("player_id")
-		if tc_pid != null and (tc_pid as int) == local_player_id:
+		if tc_pid != null and GameManager.are_allied(tc_pid as int, local_player_id):
 			out.append((_drop_off_node as Node2D).global_position)
 	return out
 

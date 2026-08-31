@@ -41,7 +41,30 @@ var _player_civ_btns: Array[Button] = []
 var _player_civ_desc_label: Label = null  # kept for legacy reference, detail uses _rebuild_civ_detail
 
 var _rival_civ_indices: Array[int] = [0, 0, 0]
+var _rival_teams: Array[int] = [0, 0, 0]
+var _player_team: int = 0
 var _rivals_section: HBoxContainer = null
+
+const TEAM_LABELS: Array[String] = ["—", "1", "2", "3", "4"]
+
+func _sync_teams_to_match() -> void:
+	MatchConfig.player_teams.clear()
+	if _player_team > 0:
+		MatchConfig.player_teams[0] = _player_team
+	for i: int in range(MatchConfig.rival_count):
+		if _rival_teams[i] > 0:
+			MatchConfig.player_teams[i + 1] = _rival_teams[i]
+
+func _make_team_dropdown(initial: int, on_select: Callable) -> OptionButton:
+	var opt: OptionButton = OptionButton.new()
+	opt.focus_mode = Control.FOCUS_NONE
+	opt.add_theme_font_size_override("font_size", 15)
+	opt.tooltip_text = tr("LOBBY_TEAM")
+	for i: int in range(TEAM_LABELS.size()):
+		opt.add_item(TEAM_LABELS[i], i)
+	opt.select(initial)
+	opt.item_selected.connect(func(i: int) -> void: on_select.call(i))
+	return opt
 
 ## LAN mode: the SAME screen hosts the multiplayer lobby. The rivals row is
 ## replaced by a players panel (live roster + Open/AI/Closed slots), the civ
@@ -261,6 +284,7 @@ func _init_rival_state() -> void:
 		var civ_id: String = DEFAULT_RIVAL_CIVS[i] if i < DEFAULT_RIVAL_CIVS.size() else "castellanos"
 		_rival_civ_indices[i] = _civ_index_for_id(civ_id)
 	_sync_rival_config_to_match()
+	_sync_teams_to_match()
 
 func _civ_index_for_id(id: String) -> int:
 	for i: int in range(CIVS.size()):
@@ -563,6 +587,12 @@ func _build_setting_rows(left: VBoxContainer) -> void:
 		rivals_clip.add_child(_rivals_section)
 		_rebuild_rivals_section()
 
+	# Your team (offline: rival teams sit in each rival cell above)
+	left.add_child(_make_setting_row(tr("LOBBY_TEAM_YOU"), TEAM_LABELS, _player_team,
+		func(i: int) -> void:
+			_player_team = i
+			_sync_teams_to_match()))
+
 	# AI difficulty
 	var diff_opts: Array[String] = [
 		tr("LOBBY_DIFFICULTY_EASY"), tr("LOBBY_DIFFICULTY_NORMAL"), tr("LOBBY_DIFFICULTY_HARD"),
@@ -688,6 +718,16 @@ func _add_human_row(pid: int, roster: Dictionary) -> void:
 	civ_label.add_theme_font_size_override("font_size", 15)
 	civ_label.add_theme_color_override("font_color", Color(0.75, 0.95, 0.60))
 	row.add_child(civ_label)
+	var team: int = entry.get("team", 0) as int
+	if is_local:
+		row.add_child(_make_team_dropdown(team,
+			func(i: int) -> void: NetworkSession.request_team(i)))
+	else:
+		var team_lbl: Label = Label.new()
+		team_lbl.text = "%s %s" % [tr("LOBBY_TEAM"), TEAM_LABELS[clampi(team, 0, 4)]]
+		team_lbl.add_theme_font_size_override("font_size", 14)
+		team_lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.75))
+		row.add_child(team_lbl)
 
 	if NetworkSession.is_host() and pid != 0:
 		var kick_btn: Button = Button.new()
@@ -764,6 +804,10 @@ func _add_slot_row(si: int, slot: Dictionary) -> void:
 				NetworkSession.broadcast_lobby())
 		civ_opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(civ_opt)
+		row.add_child(_make_team_dropdown(slot.get("team", 0) as int,
+			func(i: int) -> void:
+				(NetworkSession.lobby_slots[si] as Dictionary)["team"] = i
+				NetworkSession.broadcast_lobby()))
 
 func _civ_name(civ_id: String) -> String:
 	for civ: Dictionary in CIVS:
@@ -795,6 +839,10 @@ func _rebuild_rivals_section() -> void:
 				_sync_rival_config_to_match())
 		dropdown.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cell.add_child(dropdown)
+		cell.add_child(_make_team_dropdown(_rival_teams[ri],
+			func(i: int) -> void:
+				_rival_teams[captured_ri] = i
+				_sync_teams_to_match()))
 
 # --- Civ detail panel ---
 

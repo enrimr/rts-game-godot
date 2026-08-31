@@ -272,6 +272,26 @@ func _exit_tree() -> void:
 func _on_player_resigned(pid: int) -> void:
 	_victory.handle_resignation(pid)
 
+## Player-allied AIs cannot target the player's TC — give each brain the
+## nearest HOSTILE town center once every TC exists (deferred from setup).
+func _assign_ai_enemy_targets() -> void:
+	for child: Node in get_children():
+		var script: Script = child.get_script() as Script
+		if script == null or not script.resource_path.contains("ai_player"):
+			continue
+		if child.get("enemy_town_center") != null:
+			continue
+		var my_pid: int = child.get("player_id") as int
+		var target: Node2D = null
+		if not GameManager.are_allied(my_pid, 0):
+			target = drop_off
+		else:
+			for other_pid: int in _ai_town_centers:
+				if not GameManager.are_allied(my_pid, other_pid):
+					target = _ai_town_centers[other_pid]
+					break
+		child.set("enemy_town_center", target if target != null else drop_off)
+
 ## The connection dropped mid-match (host gone OR our own wifi blip): offer
 ## a reconnect — the host reserves our seat for a grace window — or the menu.
 func _on_connection_lost() -> void:

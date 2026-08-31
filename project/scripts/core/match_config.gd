@@ -32,6 +32,11 @@ var hero_gender: int = HeroGender.RANDOM
 # Non-zero forces the world seed — set by NetworkSession so every machine in a
 # multiplayer match generates the identical map (and identical entity IDs).
 var forced_seed: int = 0
+## player_id -> team number (1..4). Absent or 0 = no team (free-for-all).
+var player_teams: Dictionary = {}
+
+func team_of(player_id: int) -> int:
+	return player_teams.get(player_id, 0) as int
 
 # Compatibility accessor — first rival's civ id
 var rival_civ_id: String:

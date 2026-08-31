@@ -138,11 +138,11 @@ func _enter_host_state() -> void:
 	local_player_id = 0
 	_peer_players.clear()
 	_next_player_id = 1
-	_roster = {0: {"name": _display_name(0), "color": 0, "civ": MatchConfig.player_civ_id, "peer": 1}}
+	_roster = {0: {"name": _display_name(0), "color": 0, "civ": MatchConfig.player_civ_id, "team": 0, "peer": 1}}
 	lobby_slots = [
-		{"type": "open", "civ": "castellanos"},
-		{"type": "closed", "civ": "franks"},
-		{"type": "closed", "civ": "atlantes"},
+		{"type": "open", "civ": "castellanos", "team": 0},
+		{"type": "closed", "civ": "franks", "team": 0},
+		{"type": "closed", "civ": "atlantes", "team": 0},
 	]
 	_connect_signals()
 	roster_changed.emit()
@@ -247,7 +247,7 @@ func _on_peer_connected(peer_id: int) -> void:
 	_next_player_id += 1
 	_peer_players[peer_id] = pid
 	_roster[pid] = {"name": tr("LAN_DEFAULT_NAME") % (pid + 1),
-		"color": _first_free_color(), "civ": "castellanos", "peer": peer_id}
+		"color": _first_free_color(), "civ": "castellanos", "team": 0, "peer": peer_id}
 	_rx_assign_player.rpc_id(peer_id, pid)
 	_broadcast_roster()
 	broadcast_lobby()
@@ -425,6 +425,27 @@ func request_color(idx: int) -> void:
 	elif role == Role.CLIENT:
 		_tx_pick_color.rpc_id(1, idx)
 
+## Pick YOUR team (0 = none / free-for-all).
+func request_team(team: int) -> void:
+	if role == Role.HOST:
+		_apply_team_pick(0, team)
+	elif role == Role.CLIENT:
+		_tx_pick_team.rpc_id(1, team)
+
+@rpc("any_peer", "reliable")
+func _tx_pick_team(team: int) -> void:
+	if role != Role.HOST:
+		return
+	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	if pid >= 0:
+		_apply_team_pick(pid, team)
+
+func _apply_team_pick(pid: int, team: int) -> void:
+	if not _roster.has(pid):
+		return
+	(_roster[pid] as Dictionary)["team"] = clampi(team, 0, 4)
+	_broadcast_roster()
+
 ## Pick YOUR civilization (duplicates allowed — mirror matches are fine).
 func request_civ(civ_id: String) -> void:
 	if role == Role.HOST:
@@ -521,6 +542,19 @@ func start_match() -> void:
 	cfg["rival_civ_ids"] = rival_civs
 	cfg["rival_count"] = rival_civs.size()
 	cfg["humans"] = human_ids
+	var teams: Dictionary = {}
+	for pid: Variant in human_ids:
+		var t: int = (_roster[pid] as Dictionary).get("team", 0) as int
+		if t > 0:
+			teams[pid as int] = t
+	var next_rival: int = human_ids.size()   # AI seats follow the humans
+	for slot: Variant in lobby_slots:
+		if ((slot as Dictionary).get("type", "") as String) == "ai":
+			var ai_team: int = (slot as Dictionary).get("team", 0) as int
+			if ai_team > 0:
+				teams[next_rival] = ai_team
+			next_rival += 1
+	cfg["player_teams"] = teams
 	# The lobby colour picks ride along so every machine paints players alike.
 	var colors: Dictionary = {}
 	for pid: Variant in _roster:
@@ -582,6 +616,11 @@ static func apply_config(cfg: Dictionary) -> void:
 	var humans: Variant = cfg.get("humans")
 	NetworkSession.match_human_ids = (humans as Array).duplicate() if humans is Array else [0]
 	NetworkSession.rejoin_pending = cfg.get("in_progress", false) as bool
+	MatchConfig.player_teams.clear()
+	var teams: Variant = cfg.get("player_teams")
+	if teams is Dictionary:
+		for key: Variant in teams as Dictionary:
+			MatchConfig.player_teams[int(str(key))] = int(str((teams as Dictionary)[key]))
 
 @rpc("authority", "reliable")
 func _rx_match_config(cfg: Dictionary) -> void:

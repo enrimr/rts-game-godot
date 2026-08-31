@@ -74,14 +74,20 @@ func handle_resignation(pid: int) -> void:
 		return
 	_resigned[pid] = true
 	EventBus.player_eliminated.emit(pid)
-	for rival_id: int in MatchConfig.get_rival_player_ids():
-		if _resigned.has(rival_id):
+	var active: Array[int] = []
+	var all_ids: Array[int] = [0]
+	all_ids.append_array(MatchConfig.get_rival_player_ids())
+	for other: int in all_ids:
+		if _resigned.has(other):
 			continue
-		if _has_any_units(rival_id) or _has_any_buildings(rival_id):
-			return
+		if other == 0 or _has_any_units(other) or _has_any_buildings(other):
+			active.append(other)
+	for other: int in active:
+		if not GameManager.are_allied(active[0], other):
+			return   # hostile sides remain — the match continues
 	# Let everyone read the system chat line before the overlay drops.
 	await _world.get_tree().create_timer(RESIGN_END_DELAY).timeout
-	GameManager.declare_winner(0)
+	GameManager.declare_winner(active[0] if not active.is_empty() else 0)
 
 ## Conquest defeat check for any player. Deferred so queue_free() has
 ## processed before we scan. If the player is out, declare the other side winner.
@@ -94,23 +100,28 @@ func _check_defeat_for(pid: int) -> void:
 		return
 	# Notify AI coordinator so it can clean up.
 	EventBus.player_eliminated.emit(pid)
-	if pid == 0:
-		# Player lost — pick any surviving rival.
-		for rival_id: int in MatchConfig.get_rival_player_ids():
-			if _resigned.has(rival_id):
-				continue
-			if _has_any_units(rival_id) or _has_any_buildings(rival_id):
-				GameManager.declare_winner(rival_id)
-				return
-		GameManager.declare_winner(1)
-	else:
-		# A rival was eliminated — check if all rivals are now gone.
-		for rival_id: int in MatchConfig.get_rival_player_ids():
-			if _resigned.has(rival_id):
-				continue
-			if _has_any_units(rival_id) or _has_any_buildings(rival_id):
-				return
-		GameManager.declare_winner(0)
+	_declare_if_one_side_left(pid)
+
+## Conquest/team end condition: collect every player still standing (not
+## resigned, still owning something); when they are all mutually allied,
+## that side has won. `just_out` is excluded even if its corpse cleanup is
+## still mid-frame.
+func _declare_if_one_side_left(just_out: int) -> void:
+	var active: Array[int] = []
+	var all_ids: Array[int] = [0]
+	all_ids.append_array(MatchConfig.get_rival_player_ids())
+	for pid: int in all_ids:
+		if pid == just_out or _resigned.has(pid):
+			continue
+		if _has_any_units(pid) or _has_any_buildings(pid):
+			active.append(pid)
+	if active.is_empty():
+		GameManager.declare_winner(just_out if just_out != 0 else 1)
+		return
+	for pid: int in active:
+		if not GameManager.are_allied(active[0], pid):
+			return   # at least two hostile sides remain — play on
+	GameManager.declare_winner(active[0])
 
 func _on_player_eliminated(eliminated_id: int) -> void:
 	# Clean up AI coordinator references; victory already handled in _check_defeat_for.

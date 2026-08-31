@@ -75,7 +75,7 @@ func _has_allied_units_inside() -> bool:
 
 func _is_allied(body: Node) -> bool:
 	var pid: Variant = body.get("player_id")
-	return pid != null and (pid as int) == player_id
+	return pid != null and GameManager.are_allied(pid as int, player_id)
 
 func get_nav_obstacle_polygon() -> PackedVector2Array:
 	if is_open:

@@ -404,7 +404,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 		AudioManager.play_if_visible("hit_melee", global_position, -8.0)
 	if source != null and is_instance_valid(source):
 		var src_pid: Variant = source.get("player_id")
-		if src_pid != null and (src_pid as int) != player_id:
+		if src_pid != null and not GameManager.are_allied(src_pid as int, player_id):
 			if player_id != 0:
 				EventBus.ai_unit_under_attack.emit(player_id)
 			else:
@@ -481,7 +481,7 @@ func _on_enemy_entered_range(body: Node) -> void:
 	if current_state != UnitState.IDLE and not (current_state == UnitState.MOVING and _attack_move_active):
 		return
 	var body_pid: Variant = body.get("player_id")
-	if body_pid == null or (body_pid as int) == player_id:
+	if body_pid == null or GameManager.are_allied(body_pid as int, player_id):
 		return
 	# Only auto-attack units, not buildings (buildings don't have unit_data)
 	if body.get("unit_data") == null and not (body is Animal):
@@ -746,7 +746,7 @@ func _scan_area_for_target() -> void:
 		return
 	for body: Node in attack_range_area.get_overlapping_bodies():
 		var pid: Variant = body.get("player_id")
-		if pid == null or (pid as int) == player_id:
+		if pid == null or GameManager.are_allied(pid as int, player_id):
 			continue
 		if body.get("unit_data") == null and not (body is Animal):
 			continue

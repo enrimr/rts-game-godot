@@ -2206,7 +2206,7 @@ func show_wonder_timer(owner_pid: int) -> void:
 		_wonder_label.offset_top = 8.0
 		_wonder_label.offset_bottom = 40.0
 		add_child(_wonder_label)
-	var who: String = tr("WONDER_TIMER_YOU") if owner_pid == local_player_id else tr("WONDER_TIMER_ENEMY")
+	var who: String = tr("WONDER_TIMER_YOU") if GameManager.are_allied(owner_pid, local_player_id) else tr("WONDER_TIMER_ENEMY")
 	_wonder_label.text = who + " — 4:00"
 
 func hide_wonder_timer() -> void:

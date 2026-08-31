@@ -254,10 +254,10 @@ func _on_game_over(winner_player_id: int) -> void:
 
 	# Title
 	var title: Label = Label.new()
-	title.text = tr("GAMEOVER_VICTORY") if winner_player_id == local_player_id else tr("GAMEOVER_DEFEAT")
+	title.text = tr("GAMEOVER_VICTORY") if winner_player_id >= 0 and GameManager.are_allied(winner_player_id, local_player_id) else tr("GAMEOVER_DEFEAT")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 60)
-	var title_col: Color = Color(0.25, 1.0, 0.35) if winner_player_id == local_player_id else Color(1.0, 0.25, 0.25)
+	var title_col: Color = Color(0.25, 1.0, 0.35) if winner_player_id >= 0 and GameManager.are_allied(winner_player_id, local_player_id) else Color(1.0, 0.25, 0.25)
 	title.add_theme_color_override("font_color", title_col)
 	vbox.add_child(title)
 
