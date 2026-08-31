@@ -215,6 +215,18 @@ phase-2 interpolation buffer absorbs latency).
 - **Menu split**: "Multijugador LAN" vs "Multijugador Internet"
   (`LanLobby.internet_mode` — Steam-only card); Steam sessions pin roster
   names to the Steam persona (rename hidden + `_apply_rename` refuses).
+- **Teams (shipped)**: `MatchConfig.player_teams` + `GameManager.are_allied`
+  choke point (auto-acquisition, WorldQuery, towers, gates, fog shared
+  vision, team victory in conquest/regicide/resignation, HUD winner-side).
+  Team pickers in both lobbies (`request_team` over the wire, AI-slot
+  teams); persisted in saves.
+- **Waypoints + patrol (shipped)**: Shift+right-click queues movement legs
+  (`UnitBase._waypoints`, command-layer clearing), Patrol [R] bounces
+  attack-move legs between two points; both ride `UnitPointCommand`
+  (`queued` flag / `patrol` verb).
+- **Steam social (shipped)**: roster carries steam ids → real avatars in
+  the players panel; rich presence set/cleared with the session; Alt+click
+  minimap pings (host-validated, ally-filtered display, SPACE-ring memory).
 - **Phase 2 still pending**: live Steam-lobby manual test. Migration to lockstep stays open: the command wire format is
   shared, only the return channel changes — it requires the
   simulation-determinism milestone (movement off Godot physics).
