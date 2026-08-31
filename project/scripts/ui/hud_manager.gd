@@ -1994,7 +1994,10 @@ const _TUTORIAL_MINIMUMS: Dictionary = {
 	"resource_gathered":   {"wood": 0},
 	"camp_complete":        {"wood": 100},
 	"house_complete":       {"wood": 25},
-	"militia_trained":     {"wood": 60, "food": 180},
+	"villager_trained":    {"food": 60},
+	# The step asks for a Barracks (175 wood) AND "queue up several" militia
+	# (60 food + 20 wood each) — the old 60 wood could not even start it.
+	"militia_trained":     {"wood": 260, "food": 240},
 	"age_advance_complete": {"food": 500},
 	"unit_attacked":       {"food": 60, "wood": 20},
 }
