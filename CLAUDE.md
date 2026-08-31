@@ -155,6 +155,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/ui/hud/hud_style.gd` | `HudStyle` — shared StyleBoxFlat panel/button factory, bold font + text outline helpers |
 | `project/scripts/ui/hud/hud_hero_widget.gd` | `HudHeroWidget` — persistent hero portrait + HP card in Regicide matches (click centers camera) |
 | `project/scripts/ui/hud/hud_control_groups.gd` | `HudControlGroups` — clickable chips for assigned control groups (dominant-type miniature + count) |
+| `project/scripts/ui/hud/hud_chat.gd` | `HudChat` — in-match multiplayer chat (online only): Enter opens/sends, Escape closes, focused input swallows hotkeys, colour-coded lines fade above the command bar; lobby chat lives in `LobbyScreen._build_chat_panel`, transport in `NetworkSession.send_chat`/`chat_received` |
 | `project/scripts/ui/ui_icons.gd` | `UiIcons` — procedural glyph library (37+ command/resource/stat glyphs, baked once, cost-row builders) |
 | `project/scripts/ui/action_button.gd` | `ActionButton` — uniform square command button: glyph/entity miniature, hotkey badge, queue badge, category accent |
 | `project/scripts/ui/cursor_manager.gd` | `CursorManager` — contextual mouse cursors (tabona/naife pointer + context glyph); pure resolve_context mapping |

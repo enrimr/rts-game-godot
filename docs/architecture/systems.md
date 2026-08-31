@@ -177,6 +177,12 @@ phase-2 interpolation buffer absorbs latency).
   oversized deltas (>1300 B) route reliably — nothing exceeds the ENet MTU.
   Gate: `tools/check_net_robustness.tscn` (CALIMA_ROB_CASE =
   drop | resign | hostleft, two processes).
+- **Chat (shipped)**: `NetworkSession.send_chat` → host validates the
+  sender and rebroadcasts `chat_received` (120-char cap, trimmed). The LAN
+  lobby shows a colour-coded log + input under the players panel; in match
+  the `HudChat` component (online only) opens with Enter, swallows keys
+  while typing (hotkeys listen in `_unhandled_input`), and fades lines
+  above the command bar.
 - **Phase 2 still pending**: reconnection, siege-stone echo. Migration to lockstep stays open: the command wire format is
   shared, only the return channel changes — it requires the
   simulation-determinism milestone (movement off Godot physics).
