@@ -442,6 +442,8 @@ LAN_SLOT_OPEN,Open,Abierto
 LAN_SLOT_AI,AI,IA
 LAN_SLOT_CLOSED,Closed,Cerrado
 LAN_HOST_LEFT,The host has left the match.,El anfitrión ha abandonado la partida.
+LAN_CONNECTION_LOST,Connection to the match lost. Your seat is held for a short while — reconnect?,Se ha perdido la conexión con la partida. Tu puesto se reserva un rato — ¿reconectar?
+LAN_RECONNECT,Reconnect,Reconectar
 LAN_HOST_PAUSED,The host has paused the game,El anfitrión ha pausado la partida
 CHAT_PLACEHOLDER,Type a message…,Escribe un mensaje…
 CHAT_SEND,Send,Enviar
@@ -451,6 +453,8 @@ CHAT_SYS_LEFT,%s left the game,%s ha salido de la partida
 CHAT_SYS_KICKED,%s was kicked,%s ha sido expulsado
 CHAT_SYS_RESIGNED,%s resigned,%s se ha rendido
 CHAT_SYS_RENAMED,Name change: %s,Cambio de nombre: %s
+CHAT_SYS_DISCONNECTED,%s disconnected — holding their seat…,%s se ha desconectado — reservando su puesto…
+CHAT_SYS_RETURNED,%s is back in the game!,¡%s ha vuelto a la partida!
 LAN_INTERNET_BTN,Internet…,Internet…
 LAN_INTERNET_TIP,Open the port on your router (UPnP) so friends can join over the Internet,Abre el puerto en tu router (UPnP) para que se unan por Internet
 LAN_INTERNET_WAIT,Looking for your router (UPnP)…,Buscando tu router (UPnP)…

@@ -7,6 +7,7 @@ extends Node2D
 ## Run host first (backgrounded), then client, same CALIMA_NET_PORT.
 
 var _matched: bool = false
+# The drop case waits out the (shrunken) rejoin grace before the resignation.
 var _lost: bool = false
 var _winner: int = -99
 

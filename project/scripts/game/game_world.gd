@@ -266,22 +266,44 @@ func _exit_tree() -> void:
 		NetworkSession.player_resigned.disconnect(_on_player_resigned)
 	if NetworkSession.connection_lost.is_connected(_on_connection_lost):
 		NetworkSession.connection_lost.disconnect(_on_connection_lost)
+	if NetworkSession.join_failed.is_connected(_on_rejoin_failed):
+		NetworkSession.join_failed.disconnect(_on_rejoin_failed)
 
 func _on_player_resigned(pid: int) -> void:
 	_victory.handle_resignation(pid)
 
-## The host vanished mid-match: tell the player and go back to the menu —
-## the frozen mirror world is useless without its authority.
+## The connection dropped mid-match (host gone OR our own wifi blip): offer
+## a reconnect — the host reserves our seat for a grace window — or the menu.
 func _on_connection_lost() -> void:
 	get_tree().paused = false
 	var dialog: AcceptDialog = AcceptDialog.new()
-	dialog.dialog_text = tr("LAN_HOST_LEFT")
+	dialog.dialog_text = tr("LAN_CONNECTION_LOST")
 	dialog.title = tr("LAN_TITLE")
 	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+	dialog.ok_button_text = tr("GAMEOVER_BACK_MENU")
+	dialog.add_button(tr("LAN_RECONNECT"), true, "retry")
 	dialog.confirmed.connect(_leave_to_menu)
 	dialog.canceled.connect(_leave_to_menu)
+	dialog.custom_action.connect(func(_action: StringName) -> void:
+		dialog.hide()
+		_attempt_rejoin())
+	_rejoin_dialog = dialog
 	hud.add_child(dialog)
 	dialog.popup_centered()
+
+var _rejoin_dialog: AcceptDialog = null
+
+## Success re-enters through the match config (full scene reload); a failed
+## attempt brings the dialog back for another try or the menu.
+func _attempt_rejoin() -> void:
+	if not NetworkSession.join_failed.is_connected(_on_rejoin_failed):
+		NetworkSession.join_failed.connect(_on_rejoin_failed)
+	if not NetworkSession.rejoin_last():
+		_on_rejoin_failed()
+
+func _on_rejoin_failed() -> void:
+	if is_instance_valid(_rejoin_dialog):
+		_rejoin_dialog.popup_centered()
 
 func _leave_to_menu() -> void:
 	NetworkSession.leave()

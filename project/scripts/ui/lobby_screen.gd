@@ -88,12 +88,35 @@ func _exit_tree() -> void:
 # --- LAN: Steam friend invite picker (the overlay needs a Steam launch) ---
 
 var _friend_popup: PopupPanel = null
+var _friend_shade: ColorRect = null
 
 func _open_friend_picker() -> void:
+	# Dim the whole lobby behind the picker and keep the panel itself fully
+	# opaque — the default PopupPanel skin let the lobby bleed through.
+	if not is_instance_valid(_friend_shade):
+		_friend_shade = ColorRect.new()
+		_friend_shade.color = Color(0.0, 0.0, 0.0, 0.62)
+		_friend_shade.mouse_filter = Control.MOUSE_FILTER_STOP
+		add_child(_friend_shade)
+		_friend_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_friend_shade.visible = true
 	if is_instance_valid(_friend_popup):
 		_friend_popup.popup_centered()
 		return
 	_friend_popup = PopupPanel.new()
+	var sty: StyleBoxFlat = StyleBoxFlat.new()
+	sty.bg_color = Color(0.10, 0.10, 0.15, 1.0)
+	sty.border_color = Color(0.90, 0.82, 0.52, 0.85)
+	for side: String in ["left", "right", "top", "bottom"]:
+		sty.set("border_width_" + side, 1)
+	sty.corner_radius_top_left = 6
+	sty.corner_radius_top_right = 6
+	sty.corner_radius_bottom_left = 6
+	sty.corner_radius_bottom_right = 6
+	_friend_popup.add_theme_stylebox_override("panel", sty)
+	_friend_popup.popup_hide.connect(func() -> void:
+		if is_instance_valid(_friend_shade):
+			_friend_shade.visible = false)
 	add_child(_friend_popup)
 	var margin: MarginContainer = MarginContainer.new()
 	for side: String in ["left", "right", "top", "bottom"]:

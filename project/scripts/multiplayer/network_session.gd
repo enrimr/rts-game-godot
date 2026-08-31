@@ -63,15 +63,44 @@ var lobby_slots: Array = []
 ## so skirmish rivals always get their AI brains).
 var match_human_ids: Array = [0]
 
+# ── Mid-match reconnection ──
+## Seconds a dropped player's seat stays reserved before it becomes a
+## resignation. Var (not const) so harnesses can shrink it via env.
+var rejoin_grace_sec: float = 90.0
+## pid -> {"entry": roster row, "deadline_msec": int} for dropped players.
+var _vacant_seats: Dictionary = {}
+## peer_id -> true: connected mid-match, waiting for its profile to claim a seat.
+var _pending_rejoin: Dictionary = {}
+## The frozen start_match config — resent verbatim to a rejoiner.
+var _match_cfg: Dictionary = {}
+## HOST: a rejoined client booted its mirror world and wants the full state.
+signal peer_resync_requested(player_id: int)
+## CLIENT: set by apply_config of an in-progress match; the replicator asks
+## for the resync once the world is up.
+var rejoin_pending: bool = false
+# Last endpoints, so "Reconectar" can retry after a drop.
+var _last_join_ip: String = ""
+var _last_steam_lobby: int = 0
+
 func _ready() -> void:
 	# Networking must survive a paused SceneTree: the host keeps serving
 	# clients while its pause menu is open, and a remotely-paused client must
 	# still receive the unpause event.
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	var grace_env: String = OS.get_environment("CALIMA_REJOIN_GRACE")
+	if not grace_env.is_empty():
+		rejoin_grace_sec = float(grace_env)
 
 func _process(_delta: float) -> void:
 	if _steam_initialized:
 		Steam.run_callbacks()
+	if role == Role.HOST and not _vacant_seats.is_empty():
+		for pid: Variant in _vacant_seats.keys():
+			if Time.get_ticks_msec() >= (_vacant_seats[pid] as Dictionary)["deadline_msec"] as int:
+				var gone: Dictionary = (_vacant_seats[pid] as Dictionary)["entry"] as Dictionary
+				_vacant_seats.erase(pid)
+				announce("resigned", gone.get("name", "") as String)
+				player_resigned.emit(pid as int)
 
 func is_online() -> bool:
 	return role != Role.OFFLINE
@@ -84,6 +113,10 @@ func is_host() -> bool:
 
 func player_count() -> int:
 	return 1 + _peer_players.size()
+
+func _match_running() -> bool:
+	return GameManager.state == GameManager.GameState.PLAYING \
+		or GameManager.state == GameManager.GameState.PAUSED
 
 func host_game(port: int = DEFAULT_PORT) -> Error:
 	# A stale session (e.g. a previous Host click whose lobby never opened)
@@ -149,6 +182,8 @@ func _display_name(player_id: int) -> String:
 func join_game(ip: String, port: int = DEFAULT_PORT) -> Error:
 	if is_online():
 		leave()
+	_last_join_ip = ip
+	_last_steam_lobby = 0
 	var peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
 	var err: Error = peer.create_client(ip, port)
 	if err != OK:
@@ -166,6 +201,10 @@ func leave() -> void:
 	local_player_id = 0
 	_peer_players.clear()
 	_kicked_peers.clear()
+	_vacant_seats.clear()
+	_pending_rejoin.clear()
+	_match_cfg = {}
+	rejoin_pending = false
 	_teardown_internet()
 	if steam_lobby_id != 0:
 		Steam.leaveLobby(steam_lobby_id)
@@ -191,6 +230,15 @@ func _connect_signals() -> void:
 func _on_peer_connected(peer_id: int) -> void:
 	if role != Role.HOST:
 		return
+	if _match_running():
+		# Mid-match only a dropped player may return; the seat is claimed by
+		# the profile that arrives next (identity by name — or by being the
+		# only vacancy).
+		if _vacant_seats.is_empty():
+			multiplayer.multiplayer_peer.disconnect_peer(peer_id)
+		else:
+			_pending_rejoin[peer_id] = true
+		return
 	# No open human seat left → refuse the connection outright.
 	if open_seats_left() <= 0:
 		multiplayer.multiplayer_peer.disconnect_peer(peer_id)
@@ -210,18 +258,18 @@ func _on_peer_disconnected(peer_id: int) -> void:
 	_peer_players.erase(peer_id)
 	if pid >= 0:
 		var gone_name: String = display_name_of(pid)
+		var gone_entry: Dictionary = (_roster.get(pid, {}) as Dictionary).duplicate()
 		_roster.erase(pid)
 		_broadcast_roster()
 		if _kicked_peers.has(peer_id):
 			_kicked_peers.erase(peer_id)
+		elif _match_running() and match_human_ids.has(pid):
+			# Reserve the seat: crashes and wifi blips deserve a way back.
+			_vacant_seats[pid] = {"entry": gone_entry,
+				"deadline_msec": Time.get_ticks_msec() + int(rejoin_grace_sec * 1000.0)}
+			announce("disconnected", gone_name)
 		else:
 			announce("left", gone_name)
-		# Dropping mid-match counts as resigning — the match must not hang on
-		# a ghost player nobody controls.
-		if role == Role.HOST and match_human_ids.has(pid) \
-				and (GameManager.state == GameManager.GameState.PLAYING
-					or GameManager.state == GameManager.GameState.PAUSED):
-			player_resigned.emit(pid)
 	peer_left.emit(peer_id)
 
 func _on_connected_to_server() -> void:
@@ -272,7 +320,12 @@ func _rx_roster(roster: Dictionary) -> void:
 func _tx_profile(display_name: String) -> void:
 	if role != Role.HOST:
 		return
-	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	var sender: int = multiplayer.get_remote_sender_id()
+	if _pending_rejoin.has(sender):
+		_pending_rejoin.erase(sender)
+		_try_rejoin(sender, display_name.strip_edges().left(24))
+		return
+	var pid: int = _peer_players.get(sender, -1) as int
 	if pid < 0 or not _roster.has(pid):
 		return
 	var trimmed: String = display_name.strip_edges().left(24)
@@ -310,6 +363,57 @@ func _apply_rename(pid: int, new_name: String) -> void:
 	(_roster[pid] as Dictionary)["name"] = new_name
 	_broadcast_roster()
 	announce("renamed", "%s → %s" % [old_name, new_name])
+
+## HOST: a mid-match connection introduced itself — match it to a vacant
+## seat (by roster name, or the single vacancy) and put it back in the game.
+func _try_rejoin(peer_id: int, claimed_name: String) -> void:
+	var seat_pid: int = -1
+	for pid: Variant in _vacant_seats:
+		if ((_vacant_seats[pid] as Dictionary)["entry"] as Dictionary).get("name", "") == claimed_name:
+			seat_pid = pid as int
+			break
+	if seat_pid < 0 and _vacant_seats.size() == 1:
+		seat_pid = _vacant_seats.keys()[0] as int
+	if seat_pid < 0:
+		multiplayer.multiplayer_peer.disconnect_peer(peer_id)
+		return
+	var entry: Dictionary = (_vacant_seats[seat_pid] as Dictionary)["entry"] as Dictionary
+	_vacant_seats.erase(seat_pid)
+	entry["peer"] = peer_id
+	if not claimed_name.is_empty():
+		entry["name"] = claimed_name
+	_roster[seat_pid] = entry
+	_peer_players[peer_id] = seat_pid
+	_rx_assign_player.rpc_id(peer_id, seat_pid)
+	_broadcast_roster()
+	announce("returned", entry.get("name", "") as String)
+	# Same frozen config, flagged so the client asks for the full resync
+	# once its mirror world is up.
+	var cfg: Dictionary = _match_cfg.duplicate(true)
+	cfg["in_progress"] = true
+	_rx_match_config.rpc_id(peer_id, cfg)
+
+## CLIENT (rejoiner): the mirror world finished booting — ask for the state.
+func notify_resync_ready() -> void:
+	if role == Role.CLIENT:
+		_tx_resync_ready.rpc_id(1)
+
+@rpc("any_peer", "reliable")
+func _tx_resync_ready() -> void:
+	if role != Role.HOST:
+		return
+	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	if pid > 0:
+		peer_resync_requested.emit(pid)
+
+## Retry the last session after a drop ("Reconectar" on the lost dialog).
+func rejoin_last() -> bool:
+	if _last_steam_lobby != 0 and ensure_steam():
+		join_steam_lobby(_last_steam_lobby)
+		return true
+	if not _last_join_ip.is_empty():
+		return join_game(_last_join_ip) == OK
+	return false
 
 ## Pick a colour for YOURSELF; the host validates it is free.
 func request_color(idx: int) -> void:
@@ -419,6 +523,7 @@ func start_match() -> void:
 	for pid: Variant in _roster:
 		colors[pid] = (_roster[pid] as Dictionary).get("color", pid) as int
 	cfg["colors"] = colors
+	_match_cfg = cfg.duplicate(true)
 	_rx_match_config.rpc(cfg)
 	_apply_and_start(cfg)
 
@@ -473,6 +578,7 @@ static func apply_config(cfg: Dictionary) -> void:
 			PlayerColors.set_override(pid as int, (colors as Dictionary)[pid] as int)
 	var humans: Variant = cfg.get("humans")
 	NetworkSession.match_human_ids = (humans as Array).duplicate() if humans is Array else [0]
+	NetworkSession.rejoin_pending = cfg.get("in_progress", false) as bool
 
 @rpc("authority", "reliable")
 func _rx_match_config(cfg: Dictionary) -> void:
@@ -574,6 +680,8 @@ func _on_steam_lobby_created(connect_result: int, lobby_id: int) -> void:
 func join_steam_lobby(lobby_id: int) -> void:
 	if not ensure_steam() or is_online():
 		return
+	_last_steam_lobby = lobby_id
+	_last_join_ip = ""
 	Steam.joinLobby(lobby_id)
 
 func _on_steam_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) -> void:
@@ -772,6 +880,15 @@ func send_state(d: Dictionary) -> void:
 func send_events(d: Dictionary) -> void:
 	if role == Role.HOST:
 		_rx_events.rpc(d)
+
+## Reliable events to ONE player (the rejoin resync).
+func send_events_to(player_id: int, d: Dictionary) -> void:
+	if role != Role.HOST:
+		return
+	for peer_id: Variant in _peer_players:
+		if (_peer_players[peer_id] as int) == player_id:
+			_rx_events.rpc_id(peer_id as int, d)
+			return
 
 @rpc("authority", "unreliable_ordered")
 func _rx_state(d: Dictionary) -> void:

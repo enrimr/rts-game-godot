@@ -20,6 +20,9 @@ var _interval: float = float(SNAPSHOT_TICKS) / float(Engine.physics_ticks_per_se
 
 # Host: ids already introduced to the clients (removal detection).
 var _announced: Dictionary = {}
+# Host: the ids alive at match start — a rejoiner boots exactly this world,
+# so its resync is removals(initial−alive) + spawns(alive−initial) + keyframe.
+var _initial_ids: Dictionary = {}
 # Host: arrows fired since the last snapshot (visual echo for clients).
 var _fx_buffer: Array = []
 # Host: last row sent per entity id — deltas skip unchanged entities.
@@ -45,6 +48,11 @@ func setup(world) -> void:
 		NetworkSession.state_received.connect(_on_state)
 		NetworkSession.events_received.connect(_on_events)
 		_puppet_existing_world()
+		if NetworkSession.rejoin_pending:
+			# We joined a match already in progress: the freshly generated
+			# start-of-match world must be fast-forwarded by the host.
+			NetworkSession.rejoin_pending = false
+			NetworkSession.notify_resync_ready()
 	else:
 		GameManager.game_over.connect(func(winner_id: int) -> void:
 			NetworkSession.send_events({"over": winner_id}))
@@ -53,6 +61,8 @@ func setup(world) -> void:
 		EventBus.projectile_spawned.connect(func(start: Vector2, target_pos: Vector2, kind: int) -> void:
 			_fx_buffer.append([start.x, start.y, target_pos.x, target_pos.y, kind]))
 		_seed_announced()
+		_initial_ids = _announced.duplicate()
+		NetworkSession.peer_resync_requested.connect(full_resync_to)
 
 ## Both machines boot the identical initial world (same seed → same ids), so
 ## everything alive at match start needs no spawn record — only removals.
@@ -76,6 +86,63 @@ func _exit_tree() -> void:
 			NetworkSession.state_received.disconnect(_on_state)
 		if NetworkSession.events_received.is_connected(_on_events):
 			NetworkSession.events_received.disconnect(_on_events)
+	elif NetworkSession.peer_resync_requested.is_connected(full_resync_to):
+		NetworkSession.peer_resync_requested.disconnect(full_resync_to)
+
+## HOST → one rejoined player: fast-forward its start-of-match mirror world
+## to the present, all on the reliable channel (order matters: removals of
+## dead initial entities, spawn records for everything born since, then a
+## full keyframe with positions/HP/queues/meta).
+func full_resync_to(player_id: int) -> void:
+	var removes: Array = []
+	for id: Variant in _initial_ids:
+		if not _announced.has(id):
+			removes.append(id)
+	var spawns: Array = []
+	for id: Variant in _announced:
+		if _initial_ids.has(id):
+			continue
+		var node: Node = EntityRegistry.resolve(id as int)
+		if node == null:
+			continue
+		var kind: String = "b" if node.get_parent() == _buildings_layer else "u"
+		spawns.append(_spawn_record(node, id as int, kind))
+	var units: Array = []
+	for node: Node in _units_layer.get_children():
+		if not is_instance_valid(node) or not (node is Node2D):
+			continue
+		var st: int = node.get("current_state") as int if node.get("current_state") != null else 0
+		units.append([EntityRegistry.id_of(node),
+			(node as Node2D).global_position.x, (node as Node2D).global_position.y,
+			st, node.get("health") as float if node.get("health") != null else 0.0])
+	var buildings: Array = []
+	var bld_nodes: Array = _buildings_layer.get_children()
+	var drop_off: Variant = _world.get("drop_off")
+	if drop_off is Node and is_instance_valid(drop_off as Node):
+		bld_nodes.append(drop_off)
+	for node: Variant in bld_nodes:
+		if not is_instance_valid(node) or not (node is Node2D):
+			continue
+		var row: Array = [EntityRegistry.id_of(node as Node), (node as Node).get("health") as float,
+			(node as Node).get("state") as int if (node as Node).get("state") != null else 0]
+		var extras: Dictionary = _building_extras(node as Node)
+		if not extras.is_empty():
+			row.append(extras)
+		buildings.append(row)
+	NetworkSession.send_events_to(player_id, {
+		"spawn": spawns,
+		"remove": removes,
+		"u": units,
+		"b": buildings,
+		"res": _stockpiles(),
+		"pop": _populations(),
+		"age": _ages(),
+		"w": [WeatherManager.current_weather as int, WeatherManager.intensity,
+			WeatherManager._phase, WeatherManager._pending_weather as int,
+			WeatherManager._wind_dir],
+		"rn": _resource_nodes(),
+		"tech": _researched_lists(),
+	})
 
 # ── Host side ────────────────────────────────────────────────────────────────
 
