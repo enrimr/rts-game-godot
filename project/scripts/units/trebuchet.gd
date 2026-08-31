@@ -212,44 +212,15 @@ func _play_fire_animation(target_pos: Vector2) -> void:
 	_spawn_projectile(target_pos)
 
 func _spawn_projectile(target_pos: Vector2) -> void:
-	var parent: Node = get_parent()
-	if not is_instance_valid(parent):
-		_apply_splash_damage(target_pos)
-		return
-
-	var boulder: Polygon2D = Polygon2D.new()
-	boulder.color = Color(0.45, 0.35, 0.20, 1.0)
-	boulder.polygon = PackedVector2Array([
-		Vector2(5, 0), Vector2(3.5, 3.5), Vector2(0, 5),
-		Vector2(-3.5, 3.5), Vector2(-5, 0), Vector2(-3.5, -3.5),
-		Vector2(0, -5), Vector2(3.5, -3.5)
-	])
-	boulder.z_index = IsoBillboard.Z_AIRBORNE
-	parent.add_child(boulder)
-	boulder.global_position = global_position + Vector2(0.0, -30.0)
-
-	# Fly time proportional to distance, 0.4–0.9 s
-	var dist: float = boulder.global_position.distance_to(target_pos)
-	var flight_time: float = clampf(dist / 600.0, 0.4, 0.9)
-
+	var start: Vector2 = global_position + Vector2(0.0, -30.0)
+	var flight_time: float = clampf(start.distance_to(target_pos) / 600.0, 0.4, 0.9)
 	# Apply wind/storm drift to final impact position
 	var drifted_target: Vector2 = target_pos + WeatherManager.get_projectile_drift() * flight_time
-
-	# Arc: rise to peak then fall to target
-	var peak: Vector2 = (boulder.global_position + drifted_target) * 0.5 + Vector2(0.0, -80.0)
-
-	var traj: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	traj.tween_property(boulder, "global_position", peak, flight_time * 0.5)
-	traj.set_ease(Tween.EASE_IN)
-	traj.tween_property(boulder, "global_position", drifted_target, flight_time * 0.5)
-	traj.tween_callback(boulder.queue_free)
-
-	var captured_target: Vector2 = drifted_target
 	var captured_self: Trebuchet = self
-	traj.tween_callback(func() -> void:
+	SiegeFx.launch_boulder(get_parent(), start, drifted_target, func() -> void:
 		if is_instance_valid(captured_self):
-			captured_self._apply_splash_damage(captured_target)
-			captured_self._spawn_impact_flash(captured_target)
+			captured_self._apply_splash_damage(drifted_target)
+			captured_self._spawn_impact_flash(drifted_target)
 	)
 
 func _spawn_impact_flash(target_pos: Vector2) -> void:

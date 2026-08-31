@@ -34,7 +34,7 @@ func _process(delta: float) -> void:
 	if not _reported and not echo:
 		_reported = true
 		if NetworkSession.is_host():
-			EventBus.projectile_spawned.emit(global_position, target_pos)
+			EventBus.projectile_spawned.emit(global_position, target_pos, SiegeFx.KIND_ARROW)
 	_lifetime += delta
 	if _lifetime >= MAX_LIFETIME:
 		queue_free()

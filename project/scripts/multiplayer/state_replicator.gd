@@ -50,8 +50,8 @@ func setup(world) -> void:
 			NetworkSession.send_events({"over": winner_id}))
 		GameManager.game_paused.connect(func(paused: bool) -> void:
 			NetworkSession.notify_pause(paused))
-		EventBus.projectile_spawned.connect(func(start: Vector2, target_pos: Vector2) -> void:
-			_fx_buffer.append([start.x, start.y, target_pos.x, target_pos.y]))
+		EventBus.projectile_spawned.connect(func(start: Vector2, target_pos: Vector2, kind: int) -> void:
+			_fx_buffer.append([start.x, start.y, target_pos.x, target_pos.y, kind]))
 		_seed_announced()
 
 ## Both machines boot the identical initial world (same seed → same ids), so
@@ -363,8 +363,14 @@ func _on_state(d: Dictionary) -> void:
 			TechManager.clear_remote_research(node)
 	for e: Variant in d.get("fx", []) as Array:
 		var fx: Array = e as Array
-		_spawn_echo_arrow(Vector2(fx[0] as float, fx[1] as float),
-			Vector2(fx[2] as float, fx[3] as float))
+		var kind: int = fx[4] as int if fx.size() > 4 else SiegeFx.KIND_ARROW
+		if kind == SiegeFx.KIND_BOULDER:
+			SiegeFx.launch_boulder(_units_layer,
+				Vector2(fx[0] as float, fx[1] as float),
+				Vector2(fx[2] as float, fx[3] as float))
+		else:
+			_spawn_echo_arrow(Vector2(fx[0] as float, fx[1] as float),
+				Vector2(fx[2] as float, fx[3] as float))
 	var weather: Variant = d.get("w")
 	if weather is Array and (weather as Array).size() >= 5:
 		var w: Array = weather as Array

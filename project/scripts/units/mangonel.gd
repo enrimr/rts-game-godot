@@ -49,6 +49,8 @@ func _fire_at(target_pos: Vector2) -> void:
 	var flight_time: float = clampf(dist / 500.0, 0.3, 0.8)
 	var drifted_target: Vector2 = target_pos + WeatherManager.get_projectile_drift() * flight_time
 
+	SiegeFx.launch_boulder(get_parent(), global_position + Vector2(0.0, -20.0), drifted_target)
+
 	var dmg: float = _get_effective_attack() * CivBonusManager.get_siege_attack_bonus(player_id)
 	# Splash: hit all units and buildings in radius around impact
 	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
