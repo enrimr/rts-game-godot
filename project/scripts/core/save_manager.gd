@@ -346,9 +346,11 @@ func _collect_unit(unit: Node) -> Dictionary:
 		"class":     cn,
 		"position":  _v2((unit as Node2D).global_position),
 		"player_id": unit.get("player_id") as int,
-		"civ_id":    str(unit.get("civ_id")),
+		"civ_id":    str(unit.get("civ_id")) if unit.get("civ_id") != null else "",
 		"health":    unit.get("health") as float,
-		"is_female": unit.get("is_female") as bool,
+		# Animals don't extend UnitBase and carry no gender — `null as bool`
+		# aborts the whole collect and silently DROPS the animal from the save.
+		"is_female": unit.get("is_female") == true,
 	}
 	if unit is HeroUnit:
 		var ud: Variant = unit.get("unit_data")

@@ -605,3 +605,17 @@ func test_save_game_with_minus_one_slot_creates_a_file() -> void:
 		# Auto slot is likely 1 on a clean machine; delete it.
 		SaveManager.delete_save(sl)
 		break  # just delete the newest (first in sorted list)
+
+func test_animals_survive_collection() -> void:
+	## Animals don't extend UnitBase (no is_female/civ_id): the collector must
+	## not abort on them — aborting silently dropped every animal from saves.
+	var sheep: Node2D = (load("res://scenes/units/sheep.tscn") as PackedScene).instantiate() as Node2D
+	add_child_autofree(sheep)
+	sheep.global_position = Vector2(100.0, 200.0)
+	var d: Dictionary = SaveManager._collect_unit(sheep)
+	assert_false(d.is_empty(), "the sheep is collected, not dropped")
+	assert_eq(d.get("class"), "Sheep")
+	assert_eq(d.get("is_female"), false, "genderless units default to false")
+	var deer: Node2D = (load("res://scenes/units/animal.tscn") as PackedScene).instantiate() as Node2D
+	add_child_autofree(deer)
+	assert_eq(SaveManager._collect_unit(deer).get("class"), "Animal")
