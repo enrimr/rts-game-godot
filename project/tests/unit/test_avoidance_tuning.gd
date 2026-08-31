@@ -44,3 +44,44 @@ func test_parked_units_yield_to_marching_ones() -> void:
 	militia.call("_process", 0.016)
 	assert_almost_eq(agent.avoidance_priority, UnitBase.AVOID_PRIORITY_MOVING, 0.01,
 		"marching units carry the high priority, so crowds part for them")
+func test_nudge_side_vector_steps_off_the_path_line() -> void:
+	# Mover travels +X; a blocker sitting slightly above the line steps UP.
+	var side_up: Vector2 = UnitBase.nudge_side_vector(
+		Vector2.RIGHT, Vector2(0, 0), Vector2(40, -5))
+	assert_lt(side_up.y, 0.0, "blocker above the line leaves upward")
+	# ...and one below the line steps DOWN — the shortest way out.
+	var side_down: Vector2 = UnitBase.nudge_side_vector(
+		Vector2.RIGHT, Vector2(0, 0), Vector2(40, 5))
+	assert_gt(side_down.y, 0.0, "blocker below the line leaves downward")
+	assert_almost_eq(side_up.length(), 1.0, 0.001, "unit vector")
+
+func test_nudge_aside_sidesteps_only_idle_units() -> void:
+	var militia: Node2D = _spawn("militia")
+	var start: Vector2 = Vector2(500.0, 500.0)
+	militia.global_position = start
+	militia.call("nudge_aside", Vector2.RIGHT, start + Vector2(-40.0, 5.0))
+	assert_eq(militia.get("current_state") as int, UnitBase.UnitState.MOVING as int,
+		"an idle blocker starts its side-step")
+	var agent: NavigationAgent2D = militia.get("nav_agent") as NavigationAgent2D
+	assert_almost_ne(agent.target_position.y, start.y, 1.0,
+		"the step is perpendicular to the mover's travel")
+	assert_eq(militia.get("_destination_state") as int, UnitBase.UnitState.IDLE as int,
+		"it settles back to idle afterwards")
+	# A fighting unit must never be shuffled away from its strike.
+	var fighter: Node2D = _spawn("militia")
+	fighter.global_position = start
+	fighter.set("current_state", UnitBase.UnitState.ATTACKING)
+	fighter.call("nudge_aside", Vector2.RIGHT, start + Vector2(-40.0, 0.0))
+	assert_eq(fighter.get("current_state") as int, UnitBase.UnitState.ATTACKING as int,
+		"non-idle units refuse the nudge")
+
+func test_nudge_has_a_cooldown() -> void:
+	var militia: Node2D = _spawn("militia")
+	militia.global_position = Vector2(500.0, 500.0)
+	militia.call("nudge_aside", Vector2.RIGHT, Vector2(460.0, 505.0))
+	militia.set("current_state", UnitBase.UnitState.IDLE)
+	var agent: NavigationAgent2D = militia.get("nav_agent") as NavigationAgent2D
+	var first_target: Vector2 = agent.target_position
+	militia.call("nudge_aside", Vector2.UP, Vector2(500.0, 540.0))
+	assert_eq(agent.target_position, first_target,
+		"a second nudge inside the cooldown is ignored — no shuffle loops")

@@ -77,6 +77,15 @@ const PATH_FAIL_FADE: float = 2.5
 const STUCK_TIMEOUT: float = 1.2
 const STUCK_THRESHOLD: float = 6.0
 const MAX_STUCK_RETRIES: int = 6
+# The idle-sidestep "shove": a slowed mover asks own idle units ahead to step
+# aside well before the full stuck recovery kicks in.
+const SHOVE_AFTER: float = 0.45
+const SHOVE_SCAN_AHEAD: float = 26.0
+const SHOVE_SCAN_RADIUS: float = 30.0
+const NUDGE_STEP: float = 30.0
+const NUDGE_COOLDOWN_MSEC: int = 900
+var _shoved_this_period: bool = false
+var _last_nudge_msec: int = -10000
 const GUARD_RADIUS: float = 250.0
 
 # ── RVO avoidance tuning (applied programmatically in _tune_avoidance) ──────
@@ -579,11 +588,65 @@ func _handle_movement(delta: float) -> void:
 		_destination_state = UnitState.IDLE
 		nav_agent.set_velocity(Vector2.ZERO)
 		return
+	# Well before declaring "stuck", ask idle friends parked on the path to
+	# step aside — the AoE2 shuffle. RVO alone never moves an idle agent.
+	if _stuck_timer >= SHOVE_AFTER and not _shoved_this_period:
+		_shoved_this_period = true
+		_try_shove_blockers()
 	if _advance_stuck(delta):
 		_on_movement_stuck()
 		_unstick()
 		return
 	nav_agent.set_velocity(_nav_velocity())
+
+## Blocked mover: find own idle units in front and nudge them sideways.
+func _try_shove_blockers() -> void:
+	var heading: Vector2 = velocity.normalized()
+	if heading == Vector2.ZERO:
+		heading = global_position.direction_to(nav_agent.get_next_path_position())
+	if heading == Vector2.ZERO:
+		return
+	var shape: CircleShape2D = CircleShape2D.new()
+	shape.radius = SHOVE_SCAN_RADIUS
+	var params: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	params.shape = shape
+	params.transform = Transform2D(0.0, global_position + heading * SHOVE_SCAN_AHEAD)
+	params.collision_mask = 2   # units layer
+	params.exclude = [get_rid()]
+	for hit: Dictionary in get_world_2d().direct_space_state.intersect_shape(params, 6):
+		var other: Node = hit.get("collider") as Node
+		if other == null or not (other is UnitBase):
+			continue
+		if (other as UnitBase).player_id != player_id:
+			continue
+		(other as UnitBase).nudge_aside(heading, global_position)
+
+## An own moving unit is blocked by us: take one deterministic side-step
+## (away from its path line) and settle back to idle. Never touches order
+## state — the stance anchor stays where the player put it.
+func nudge_aside(travel_dir: Vector2, mover_pos: Vector2) -> void:
+	if current_state != UnitState.IDLE:
+		return
+	if Time.get_ticks_msec() - _last_nudge_msec < NUDGE_COOLDOWN_MSEC:
+		return
+	_last_nudge_msec = Time.get_ticks_msec()
+	var side: Vector2 = UnitBase.nudge_side_vector(travel_dir, mover_pos, global_position)
+	# Forward-aside diagonal: in a corridor a pure side-step just presses into
+	# the wall — flowing with the traffic clears the lane anywhere.
+	var step: Vector2 = (side * 0.7 + travel_dir.normalized() * 0.7).normalized()
+	var dest: Vector2 = TerrainManager.nearest_passable(
+		global_position + step * NUDGE_STEP, civ_id, is_amphibious())
+	_destination_state = UnitState.IDLE
+	_navigate_to(dest)
+	current_state = UnitState.MOVING
+
+## Pure: the perpendicular of the mover's travel direction on WHICHEVER side
+## the blocker already leans toward — the shortest way off the path line.
+static func nudge_side_vector(travel_dir: Vector2, mover_pos: Vector2, blocker_pos: Vector2) -> Vector2:
+	var side: Vector2 = travel_dir.orthogonal().normalized()
+	if (blocker_pos - mover_pos).dot(side) < 0.0:
+		side = -side
+	return side
 
 # ATTACKING is included on purpose: chase and kite steps issue set_velocity
 # while in that state, and gating on MOVING alone silently dropped them —
@@ -905,11 +968,13 @@ func _advance_stuck(delta: float) -> bool:
 	if global_position.distance_squared_to(_last_position) >= STUCK_THRESHOLD * STUCK_THRESHOLD:
 		_stuck_timer = 0.0
 		_stuck_retries = 0
+		_shoved_this_period = false
 		_last_position = global_position
 		return false
 	_stuck_timer += delta
 	if _stuck_timer >= STUCK_TIMEOUT:
 		_stuck_timer = 0.0
+		_shoved_this_period = false
 		_last_position = global_position
 		_stuck_retries += 1
 		return true
