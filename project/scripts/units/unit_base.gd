@@ -71,6 +71,60 @@ var _last_position: Vector2 = Vector2.ZERO
 # Original requested destination — kept so we can re-issue after escaping a stuck.
 var _move_destination: Vector2 = Vector2.ZERO
 
+# ── Shift-queued waypoints + patrol ─────────────────────────────────────────
+# Queued legs [{pos, attack}] walked one by one; any explicit new order
+# clears them (the command layer calls clear_waypoints). Patrol bounces
+# between two points with attack-move legs until another order arrives.
+var _waypoints: Array = []
+var _patrol_a: Vector2 = Vector2.ZERO
+var _patrol_b: Vector2 = Vector2.ZERO
+var _patrol_active: bool = false
+var _patrol_to_b: bool = true
+
+func clear_waypoints() -> void:
+	_waypoints.clear()
+	_patrol_active = false
+
+## Shift-order: walk there after everything already queued. From idle the
+## first leg starts immediately, like AoE2.
+func queue_waypoint(p: Vector2, attack: bool) -> void:
+	if current_state == UnitState.IDLE and _waypoints.is_empty() and not _patrol_active:
+		_run_leg(p, attack)
+	else:
+		_waypoints.append({"pos": p, "attack": attack})
+
+func order_patrol(target: Vector2) -> void:
+	clear_waypoints()
+	_patrol_a = global_position
+	_patrol_b = target
+	_patrol_active = true
+	_patrol_to_b = true
+	order_attack_move(target)
+	_patrol_active = true   # order_attack_move must not cancel its own patrol
+
+func _run_leg(p: Vector2, attack: bool) -> void:
+	var keep: Array = _waypoints
+	var keep_patrol: bool = _patrol_active
+	if attack:
+		order_attack_move(p)
+	else:
+		order_move(p)
+	_waypoints = keep
+	_patrol_active = keep_patrol
+
+## Destination reached with nothing else to do: next queued leg, or the
+## patrol bounce. Returns true when a new leg started.
+func _advance_waypoints() -> bool:
+	if _patrol_active:
+		_patrol_to_b = not _patrol_to_b
+		_run_leg(_patrol_b if _patrol_to_b else _patrol_a, true)
+		return true
+	if _waypoints.is_empty():
+		return false
+	var leg: Dictionary = _waypoints.pop_front() as Dictionary
+	_run_leg(leg["pos"] as Vector2, leg["attack"] as bool)
+	return true
+
 const PATH_COLOR: Color = Color(0.3, 0.85, 1.0, 0.8)
 const PATH_FAIL_COLOR: Color = Color(1.0, 0.32, 0.25, 0.9)
 const PATH_FAIL_FADE: float = 2.5
@@ -550,6 +604,7 @@ func _physics_process(delta: float) -> void:
 	_combat_side_tick(delta)
 
 func order_move(destination: Vector2) -> void:
+	_patrol_active = false
 	_attack_move_active = false
 	attack_target = null
 	# A defensive/stand-ground unit holds its latest ordered position.
@@ -584,6 +639,8 @@ func _handle_movement(delta: float) -> void:
 			return
 	if nav_agent.is_navigation_finished():
 		_on_destination_reached()
+		if _destination_state == UnitState.IDLE and _advance_waypoints():
+			return
 		current_state = _destination_state
 		_destination_state = UnitState.IDLE
 		nav_agent.set_velocity(Vector2.ZERO)

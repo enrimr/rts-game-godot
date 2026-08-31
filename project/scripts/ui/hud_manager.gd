@@ -40,6 +40,7 @@ const ACTION_GLYPHS: Dictionary = {
 	"move_to": "move",
 	"stop": "stop",
 	"attack_move": "attack",
+	"patrol": "move",
 	"attack_ground": "attack_ground",
 	"cover_fire": "cover_fire",
 	"show_path": "patrol_route",
@@ -71,6 +72,7 @@ const VILLAGER_ACTIONS: Array = [
 	{"id": "build_menu",   "label": "ACTION_BUILD",        "color": Color(0.20, 0.30, 0.60), "cost": {}, "key": KEY_B, "description": "TOOLTIP_BUILD_MENU"},
 	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
 	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
+	{"id": "patrol",       "label": "ACTION_PATROL",       "color": Color(0.25, 0.35, 0.60), "cost": {}, "key": KEY_R, "description": "TOOLTIP_PATROL"},
 	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	{"id": "garrison_into", "label": "ACTION_GARRISON",    "color": Color(0.45, 0.38, 0.20), "cost": {}, "key": KEY_E, "description": "TOOLTIP_GARRISON"},
 	{"id": "show_path",    "label": "ACTION_SHOW_PATH",    "color": Color(0.15, 0.45, 0.55), "cost": {}, "key": KEY_P, "description": "TOOLTIP_SHOW_PATH"},
@@ -113,6 +115,7 @@ const TOWN_CENTER_ACTIONS: Array = [
 const UNIT_ACTIONS: Array = [
 	{"id": "move_to",      "label": "ACTION_MOVE_TO",      "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
 	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE",  "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
+	{"id": "patrol",       "label": "ACTION_PATROL",       "color": Color(0.25, 0.35, 0.60), "cost": {}, "key": KEY_R, "description": "TOOLTIP_PATROL"},
 	{"id": "stop",         "label": "ACTION_STOP",         "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	{"id": "show_path",    "label": "ACTION_SHOW_PATH",    "color": Color(0.15, 0.45, 0.55), "cost": {}, "key": KEY_P, "description": "TOOLTIP_SHOW_PATH"},
 	DESTROY_ACTION,
@@ -122,6 +125,7 @@ const RANGED_ACTIONS: Array = [
 	{"id": "cover_fire",   "label": "ACTION_COVER_FIRE",  "color": Color(0.60, 0.45, 0.10), "cost": {}, "key": KEY_C, "description": "TOOLTIP_COVER_FIRE"},
 	{"id": "move_to",      "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
 	{"id": "attack_move",  "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
+	{"id": "patrol",       "label": "ACTION_PATROL",      "color": Color(0.25, 0.35, 0.60), "cost": {}, "key": KEY_R, "description": "TOOLTIP_PATROL"},
 	{"id": "stop",         "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	DESTROY_ACTION,
 ]
@@ -314,7 +318,7 @@ func _accent_for_action(action_id: String) -> Color:
 			or action_id.begins_with("market:") or action_id == "repair":
 		return HudStyle.ACCENT_ECONOMY
 	if action_id in ["attack_move", "attack_ground", "cover_fire", "stop",
-			"destroy", "hero_ability"]:
+			"destroy", "hero_ability", "patrol"]:
 		return HudStyle.ACCENT_COMBAT
 	return HudStyle.ACCENT_UTILITY
 
@@ -705,7 +709,7 @@ func _on_action_button_pressed(action_id: String) -> void:
 		return
 	# Actions that wait for a map click before executing
 	if action_id == "move_to" or action_id == "attack_move" or action_id == "cover_fire" \
-			or action_id == "garrison_into":
+			or action_id == "garrison_into" or action_id == "patrol":
 		AudioManager.play("ui_click")
 		_set_pending_action(action_id)
 		return
@@ -1049,6 +1053,7 @@ func _populate_hero_buttons(hero: HeroUnit) -> void:
 	var actions: Array = [
 		{"id": "move_to",     "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
 		{"id": "attack_move", "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
+		{"id": "patrol", "label": "ACTION_PATROL", "color": Color(0.25, 0.35, 0.60), "cost": {}, "key": KEY_R, "description": "TOOLTIP_PATROL"},
 		{"id": "stop",        "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 		DESTROY_ACTION,
 	]
@@ -1454,6 +1459,7 @@ func _populate_scout_buttons(scout: Scout) -> void:
 	var actions: Array = [
 		{"id": "move_to",     "label": "ACTION_MOVE_TO",     "color": Color(0.18, 0.38, 0.58), "cost": {}, "key": KEY_M, "description": "TOOLTIP_MOVE_TO"},
 		{"id": "attack_move", "label": "ACTION_ATTACK_MOVE", "color": Color(0.60, 0.18, 0.10), "cost": {}, "key": KEY_Z, "description": "TOOLTIP_ATTACK_MOVE"},
+		{"id": "patrol", "label": "ACTION_PATROL", "color": Color(0.25, 0.35, 0.60), "cost": {}, "key": KEY_R, "description": "TOOLTIP_PATROL"},
 		{"id": "stop",        "label": "ACTION_STOP",        "color": Color(0.50, 0.10, 0.10), "cost": {}, "key": KEY_X, "description": "TOOLTIP_STOP"},
 	]
 	if scout.is_exploring():

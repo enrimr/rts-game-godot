@@ -35,6 +35,11 @@ func _read_payload(d: Dictionary) -> void:
 
 func execute(_world: Node2D) -> void:
 	var units: Array[Node] = _own_entities(unit_ids)
+	# Stances don't cancel movement plans; every other explicit action does.
+	if not STANCES.has(verb):
+		for unit: Node in units:
+			if unit.has_method("clear_waypoints"):
+				unit.call("clear_waypoints")
 	if STANCES.has(verb):
 		for unit: Node in units:
 			if unit.has_method("set_stance"):

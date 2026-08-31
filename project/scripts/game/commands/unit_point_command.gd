@@ -10,19 +10,22 @@ class_name UnitPointCommand extends GameCommand
 const FORMATION_SPACING: float = 34.0   # px between formation slots
 const FORMATIONS: Array[String] = ["line", "box", "spread", "rings"]
 
-var verb: String = "move"   # "move" | "attack_move" | "attack_ground"
+var verb: String = "move"   # "move" | "attack_move" | "attack_ground" | "patrol"
 var unit_ids: Array[int] = []
 var pos: Vector2 = Vector2.ZERO
 var formation: String = "rings"
+## Shift-order: append as a waypoint instead of replacing the current order.
+var queued: bool = false
 
 static func make(p_player: int, p_verb: String, p_units: Array[int], p_pos: Vector2,
-		p_formation: String = "rings") -> UnitPointCommand:
+		p_formation: String = "rings", p_queued: bool = false) -> UnitPointCommand:
 	var cmd: UnitPointCommand = UnitPointCommand.new()
 	cmd.player_id = p_player
 	cmd.verb = p_verb
 	cmd.unit_ids = p_units
 	cmd.pos = p_pos
 	cmd.formation = p_formation
+	cmd.queued = p_queued
 	return cmd
 
 func kind() -> String:
@@ -30,13 +33,14 @@ func kind() -> String:
 
 func _payload() -> Dictionary:
 	return {"verb": verb, "units": encode_ids(unit_ids), "pos": encode_vec(pos),
-		"form": formation}
+		"form": formation, "q": queued}
 
 func _read_payload(d: Dictionary) -> void:
 	verb = d.get("verb", "move") as String
 	unit_ids = decode_ids(d.get("units"))
 	pos = decode_vec(d.get("pos"))
 	formation = d.get("form", "rings") as String
+	queued = d.get("q", false) as bool
 
 func execute(_world: Node2D) -> void:
 	var units: Array[Node] = []
@@ -45,6 +49,10 @@ func execute(_world: Node2D) -> void:
 			units.append(unit)
 	if units.is_empty():
 		return
+	if not queued:
+		for unit: Node in units:
+			if unit.has_method("clear_waypoints"):
+				unit.call("clear_waypoints")
 	if verb == "attack_ground":
 		for unit: Node in units:
 			if unit.has_method("order_attack_ground"):
@@ -53,7 +61,11 @@ func execute(_world: Node2D) -> void:
 	var ordered: Array[Node] = rank_ordered(units) if formation != "rings" else units
 	var slots: Array[Vector2] = formation_slots(pos, ordered, formation)
 	for i: int in range(ordered.size()):
-		if verb == "attack_move" and ordered[i].has_method("order_attack_move"):
+		if verb == "patrol":
+			ordered[i].call("order_patrol", slots[i])
+		elif queued:
+			ordered[i].call("queue_waypoint", slots[i], verb == "attack_move")
+		elif verb == "attack_move" and ordered[i].has_method("order_attack_move"):
 			ordered[i].call("order_attack_move", slots[i])
 		else:
 			ordered[i].call("order_move", slots[i])

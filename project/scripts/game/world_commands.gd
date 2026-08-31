@@ -575,6 +575,11 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 				# Move to position; units will auto-attack any enemy they spot en route
 				_order_attack_move_all(world_pos)
 			_flash_point(world_pos, Color(1.0, 0.35, 0.15, 1.0))
+		"patrol":
+			AudioManager.play("cmd_move")
+			CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "patrol",
+				_selection_ids(), world_pos, _formation))
+			_flash_point(world_pos, Color(0.4, 0.65, 1.0, 1.0))
 		"cover_fire":
 			_order_attack_ground_all(world_pos)
 		"garrison_into":
@@ -594,7 +599,7 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 func _order_attack_move_all(world_pos: Vector2) -> void:
 	AudioManager.play("cmd_move")
 	CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "attack_move", _selection_ids(), world_pos,
-		_formation))
+		_formation, Input.is_key_pressed(KEY_SHIFT)))
 
 ## Briefly shows a coloured expanding ring at `world_pos` to confirm a click order.
 func _flash_point(world_pos: Vector2, color: Color) -> void:
@@ -618,11 +623,13 @@ func _order_move_all(world_pos: Vector2) -> void:
 			valid_units.append(u)
 	if valid_units.is_empty():
 		return
+	var queued: bool = Input.is_key_pressed(KEY_SHIFT)
 	CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "move",
-		EntityRegistry.ids_of(valid_units), world_pos, _formation))
+		EntityRegistry.ids_of(valid_units), world_pos, _formation, queued))
 	# Ground flash where the player clicked — move was the only order
 	# without click feedback (gather/attack flash their target already).
-	_flash_point(world_pos, Color(0.35, 1.0, 0.45, 1.0))
+	# Queued waypoints flash amber so the chain reads at a glance.
+	_flash_point(world_pos, Color(1.0, 0.8, 0.25, 1.0) if queued else Color(0.35, 1.0, 0.45, 1.0))
 	EventBus.unit_command_issued.emit(valid_units, {"type": "move", "pos": world_pos})
 
 # --- HUD action buttons ---

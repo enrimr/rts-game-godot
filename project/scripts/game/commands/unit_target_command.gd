@@ -44,6 +44,9 @@ func execute(world: Node2D) -> void:
 	var units: Array[Node] = _own_entities(unit_ids)
 	if units.is_empty():
 		return
+	for unit: Node in units:
+		if unit.has_method("clear_waypoints"):
+			unit.call("clear_waypoints")
 	match verb:
 		"attack":
 			for unit: Node in units:

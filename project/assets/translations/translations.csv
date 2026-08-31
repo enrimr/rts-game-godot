@@ -35,6 +35,8 @@ ACTION_STOP,Stop,Parar
 ACTION_COVER_FIRE,Cover Fire,Fuego de Cobertura
 ACTION_MOVE_TO,Move,Mover
 ACTION_ATTACK_MOVE,Attack Move,Atacar-Mover
+ACTION_PATROL,Patrol,Patrullar
+TOOLTIP_PATROL,Patrol between here and a point: your units walk back and forth attacking any enemy they meet. Shift + right-click queues movement waypoints.,Patrulla entre aquí y un punto: las unidades van y vienen atacando a cualquier enemigo que encuentren. Shift + clic derecho encola puntos de ruta.
 ACTION_DESTROY,Destroy,Destruir
 ACTION_SHOW_PATH,Show Path,Ver Ruta
 ACTION_BACK,← Back,← Volver
