@@ -2115,8 +2115,13 @@ func _on_tutorial_map_explored(_cells: int) -> void:
 
 func _on_tutorial_unit_attacked(attacker: Node, _target: Node) -> void:
 	var pid: Variant = attacker.get("player_id")
-	if pid != null and (pid as int) == local_player_id:
-		_tutorial_notify("unit_attacked")
+	if pid == null or (pid as int) != local_player_id:
+		return
+	# Auto-retaliation used to complete the step while the player just
+	# watched — only an attack THEY ordered counts as learning it.
+	if attacker.get("_auto_engaged") == true:
+		return
+	_tutorial_notify("unit_attacked")
 
 func _build_pause_menu_button() -> void:
 	var hud_root: Control = get_node_or_null("HUDRoot") as Control

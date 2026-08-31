@@ -40,7 +40,7 @@ const _STARTING_VILLAGER_SCREEN_OFFSETS: Array[Vector2] = [
 	Vector2(-55.0, 38.0), Vector2(0.0, 52.0), Vector2(55.0, 38.0),
 ]
 
-const TUTORIAL_SPAWN_MIN_DIST: float = 280.0
+const TUTORIAL_SPAWN_MIN_DIST: float = 190.0
 const TUTORIAL_UNIT_CLEAR_RADIUS: float = 40.0
 
 var _world  # GameWorld — untyped so dynamic access works
@@ -203,11 +203,19 @@ func _on_tutorial_spawn_enemy_scout(near_pos: Vector2) -> void:
 	_world.units_layer.add_child(militia)
 	PopulationManager.add_unit(1)
 	EventBus.unit_spawned.emit(militia, 1)
+	# Practice dummy, not a threat: it never fights back or chases, it is
+	# half-HP so it dies fast, and a low white ground halo marks it (white +
+	# flat on purpose — the hero's aura is a tall golden flame).
+	militia.set("stance", UnitBase.Stance.PASSIVE)
+	militia.set("health", (militia.get("health") as float) * 0.5)
+	militia.add_child(TutorialTargetHalo.new())
 
 # Returns a passable spawn position near near_pos, avoiding buildings and other units.
 # Tries candidate offsets at increasing distances until a clear spot is found.
 func _find_tutorial_spawn_pos(near_pos: Vector2, civ_id: String) -> Vector2:
-	var angles: Array[float] = [0.0, PI * 0.5, PI, PI * 1.5, PI * 0.25, PI * 0.75, PI * 1.25, PI * 1.75]
+	# PI/4 first: world (+x,+y) projects to screen-south — in FRONT of the
+	# TC where the tutorial camera is already looking.
+	var angles: Array[float] = [PI * 0.25, 0.0, PI * 0.5, PI, PI * 1.5, PI * 0.75, PI * 1.25, PI * 1.75]
 	for dist_mult: int in range(1, 6):
 		var dist: float = TUTORIAL_SPAWN_MIN_DIST + dist_mult * 60.0
 		for angle: float in angles:
