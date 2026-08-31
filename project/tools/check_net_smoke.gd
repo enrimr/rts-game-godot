@@ -53,7 +53,13 @@ func _ai_player_ids(world: Node2D) -> Array:
 	ids.sort()
 	return ids
 
+var _chat_lines: Array = []
+
 func _run_host(port: int) -> void:
+	# Listen from the very start: the client greets DURING the connection
+	# handshake, before the roster checks below run.
+	NetworkSession.chat_received.connect(func(pid: int, text: String) -> void:
+		_chat_lines.append([pid, text]))
 	_base_config()
 	if NetworkSession.host_game(port) != OK:
 		print("NET_SMOKE HOST: FAIL — could not open port %d" % port)
@@ -88,6 +94,16 @@ func _run_host(port: int) -> void:
 	# Mixed match: one human rival (the client) plus one AI slot.
 	(NetworkSession.lobby_slots[1] as Dictionary)["type"] = "ai"
 	(NetworkSession.lobby_slots[1] as Dictionary)["civ"] = "franks"
+	# Chat round-trip: the client greeted on join; answer and verify identity.
+	var chat_deadline: float = Time.get_ticks_msec() / 1000.0 + 5.0
+	while _chat_lines.is_empty() and Time.get_ticks_msec() / 1000.0 < chat_deadline:
+		await get_tree().create_timer(0.2).timeout
+	var first_line: Array = _chat_lines[0] as Array if not _chat_lines.is_empty() else [-1, ""]
+	if (first_line[0] as int) != 1 or (first_line[1] as String) != "gl hf":
+		print("NET_SMOKE HOST: FAIL — client chat never arrived: %s" % str(_chat_lines))
+		get_tree().quit(1)
+		return
+	NetworkSession.send_chat("gl!")
 	print("NET_SMOKE HOST: roster ok (%s, colour 3, civs mahos/fenicios + AI franks), starting match"
 		% str((roster[1] as Dictionary)["name"]))
 	NetworkSession.start_match()
@@ -134,8 +150,11 @@ func _run_host(port: int) -> void:
 
 func _run_client(port: int) -> void:
 	NetworkSession.player_name = "SmokeBot"
+	NetworkSession.chat_received.connect(func(pid: int, text: String) -> void:
+		_chat_lines.append([pid, text]))
 	NetworkSession.joined_host.connect(func() -> void:
-		NetworkSession.request_civ("fenicios"))
+		NetworkSession.request_civ("fenicios")
+		NetworkSession.send_chat("  gl hf  "))
 	if NetworkSession.join_game("127.0.0.1", port) != OK:
 		print("NET_SMOKE CLIENT: FAIL — join error")
 		get_tree().quit(1)
@@ -157,7 +176,16 @@ func _run_client(port: int) -> void:
 			% [MatchConfig.player_civ_id, str(MatchConfig.rival_civ_ids)])
 		get_tree().quit(1)
 		return
-	print("NET_SMOKE CLIENT: config received, booting mirror world")
+	var has_host_line: bool = false
+	for line: Variant in _chat_lines:
+		var row: Array = line as Array
+		if (row[0] as int) == 0 and str(row[1]) == "gl!":
+			has_host_line = true
+	if not has_host_line:
+		print("NET_SMOKE CLIENT: FAIL — host chat reply never arrived: %s" % str(_chat_lines))
+		get_tree().quit(1)
+		return
+	print("NET_SMOKE CLIENT: config received + chat round-trip ok, booting mirror world")
 	var world: Node2D = _boot_world()
 	await get_tree().create_timer(2.5).timeout
 

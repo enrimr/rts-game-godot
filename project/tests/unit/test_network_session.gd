@@ -140,3 +140,8 @@ func test_config_serializes_through_json() -> void:
 	assert_not_null(back)
 	for key: String in cfg.keys():
 		assert_true((back as Dictionary).has(key), "field %s survives JSON" % key)
+func test_chat_display_name_falls_back_when_roster_is_gone() -> void:
+	NetworkSession._roster = {1: {"name": "Ana", "color": 2, "civ": "mahos", "peer": 7}}
+	assert_eq(NetworkSession.display_name_of(1), "Ana")
+	assert_eq(NetworkSession.display_name_of(3), tr("LAN_DEFAULT_NAME") % 4,
+		"an unknown id gets the default name, never a crash")

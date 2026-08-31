@@ -449,6 +449,48 @@ func notify_pause(paused: bool) -> void:
 	if role == Role.HOST:
 		send_events({"pause": paused})
 
+# ── Chat (lobby AND in-game; host validates and rebroadcasts) ────────────────
+
+## A chat line arrived on this machine (own lines included).
+signal chat_received(player_id: int, text: String)
+
+const CHAT_MAX_LEN: int = 120
+
+func send_chat(text: String) -> void:
+	var msg: String = text.strip_edges().left(CHAT_MAX_LEN)
+	if msg.is_empty() or not is_online():
+		return
+	if role == Role.HOST:
+		_rx_chat.rpc(0, msg)
+		chat_received.emit(0, msg)
+	else:
+		_tx_chat.rpc_id(1, msg)
+
+@rpc("any_peer", "reliable")
+func _tx_chat(text: String) -> void:
+	if role != Role.HOST:
+		return
+	# Identity comes from the connection, never from the payload.
+	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	if pid < 0:
+		return
+	var msg: String = text.strip_edges().left(CHAT_MAX_LEN)
+	if msg.is_empty():
+		return
+	_rx_chat.rpc(pid, msg)
+	chat_received.emit(pid, msg)
+
+@rpc("authority", "reliable")
+func _rx_chat(pid: int, text: String) -> void:
+	chat_received.emit(pid, text)
+
+## The roster name for a player id, with a sane fallback after roster loss.
+func display_name_of(pid: int) -> String:
+	var entry: Variant = _roster.get(pid)
+	if entry is Dictionary:
+		return (entry as Dictionary).get("name", "") as String
+	return tr("LAN_DEFAULT_NAME") % (pid + 1)
+
 # ── State replication (host → clients, driven by StateReplicator) ───────────
 
 ## Dense per-snapshot stream (positions/HP/stockpiles) on this machine.

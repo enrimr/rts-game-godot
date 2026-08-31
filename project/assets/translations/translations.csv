@@ -443,3 +443,6 @@ LAN_SLOT_AI,AI,IA
 LAN_SLOT_CLOSED,Closed,Cerrado
 LAN_HOST_LEFT,The host has left the match.,El anfitrión ha abandonado la partida.
 LAN_HOST_PAUSED,The host has paused the game,El anfitrión ha pausado la partida
+CHAT_PLACEHOLDER,Type a message…,Escribe un mensaje…
+CHAT_SEND,Send,Enviar
+CHAT_HINT,Enter — chat,Enter — chat

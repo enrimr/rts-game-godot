@@ -49,6 +49,8 @@ var _rivals_section: HBoxContainer = null
 ## column becomes a read-only summary that tracks the host's picks live.
 var lan_mode: bool = false
 var _players_panel: VBoxContainer = null
+var _chat_log: RichTextLabel = null
+var _chat_input: LineEdit = null
 var _summary_label: Label = null
 var _civ_detail_vbox: VBoxContainer = null
 var _lobby_sync_timer: Timer = null
@@ -74,6 +76,52 @@ func _exit_tree() -> void:
 	if lan_mode:
 		NetworkSession.roster_changed.disconnect(_refresh_lan_panels)
 		NetworkSession.config_changed.disconnect(_refresh_lan_panels)
+		if NetworkSession.chat_received.is_connected(_on_chat_line):
+			NetworkSession.chat_received.disconnect(_on_chat_line)
+
+# --- LAN: lobby chat ---
+
+func _build_chat_panel(left: VBoxContainer) -> void:
+	var panel: PanelContainer = PanelContainer.new()
+	var sty: StyleBoxFlat = StyleBoxFlat.new()
+	sty.bg_color = Color(0.05, 0.05, 0.09, 0.85)
+	sty.corner_radius_top_left = 4
+	sty.corner_radius_top_right = 4
+	sty.corner_radius_bottom_left = 4
+	sty.corner_radius_bottom_right = 4
+	panel.add_theme_stylebox_override("panel", sty)
+	left.add_child(panel)
+	_chat_log = RichTextLabel.new()
+	_chat_log.bbcode_enabled = true
+	_chat_log.scroll_following = true
+	_chat_log.custom_minimum_size = Vector2(0, 96)
+	_chat_log.add_theme_font_size_override("normal_font_size", 14)
+	panel.add_child(_chat_log)
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	left.add_child(row)
+	_chat_input = LineEdit.new()
+	_chat_input.placeholder_text = tr("CHAT_PLACEHOLDER")
+	_chat_input.max_length = NetworkSession.CHAT_MAX_LEN
+	_chat_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_chat_input.text_submitted.connect(func(t: String) -> void:
+		NetworkSession.send_chat(t)
+		_chat_input.text = "")
+	row.add_child(_chat_input)
+	var send: Button = _make_btn(tr("CHAT_SEND"), Color(0.18, 0.30, 0.42, 0.95), Color(0.25, 0.42, 0.58, 0.95))
+	send.add_theme_font_size_override("font_size", 15)
+	send.pressed.connect(func() -> void:
+		NetworkSession.send_chat(_chat_input.text)
+		_chat_input.text = "")
+	row.add_child(send)
+	NetworkSession.chat_received.connect(_on_chat_line)
+
+func _on_chat_line(pid: int, text: String) -> void:
+	if _chat_log == null:
+		return
+	var col: Color = PlayerColors.get_color(pid).lightened(0.35)
+	_chat_log.append_text("[color=#%s]%s:[/color] %s\n"
+		% [col.to_html(false), NetworkSession.display_name_of(pid), text.replace("[", "[lb]")])
 
 func _maybe_broadcast_lobby() -> void:
 	var snap: Dictionary = NetworkSession.snapshot_config()
@@ -185,6 +233,7 @@ func _build() -> void:
 		_players_panel.add_theme_constant_override("separation", 6)
 		left.add_child(_players_panel)
 		_rebuild_players_panel()
+		_build_chat_panel(left)
 
 	# ── Right column: player civ ─────────────────────────────────────────────
 	var right: VBoxContainer = VBoxContainer.new()

@@ -274,6 +274,10 @@ func _ready() -> void:
 	_match_stats = HudMatchStats.new()
 	_match_stats.init(local_player_id, _clock_label, get_node("HUDRoot"))
 	add_child(_match_stats)
+	if NetworkSession.is_online():
+		var chat: HudChat = HudChat.new()
+		chat.init(get_node("HUDRoot"))
+		add_child(chat)
 	_style_command_bar()
 
 func _style_command_bar() -> void:
