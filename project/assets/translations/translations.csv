@@ -456,3 +456,8 @@ LAN_INTERNET_TIP,Open the port on your router (UPnP) so friends can join over th
 LAN_INTERNET_WAIT,Looking for your router (UPnP)…,Buscando tu router (UPnP)…
 LAN_INTERNET_OK,Internet: %s (port %d),Internet: %s (puerto %d)
 LAN_INTERNET_FAIL,UPnP unavailable — forward UDP port %d manually,UPnP no disponible — abre el puerto UDP %d a mano en tu router
+STEAM_HOST,Host (Steam),Crear partida (Steam)
+STEAM_BROWSE,Find matches,Buscar partidas
+STEAM_NO_LOBBIES,No matches found,No hay partidas ahora mismo
+STEAM_INVITE,Invite friends,Invitar amigos
+STEAM_UNAVAILABLE,Steam not available (client closed?),Steam no disponible (¿cliente cerrado?)

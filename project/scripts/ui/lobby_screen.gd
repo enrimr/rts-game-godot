@@ -264,7 +264,12 @@ func _build() -> void:
 		players_header.add_theme_font_size_override("font_size", 21)
 		players_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		players_row.add_child(players_header)
-		if NetworkSession.is_host():
+		if NetworkSession.is_steam_session():
+			var invite_btn: Button = _make_btn(tr("STEAM_INVITE"), Color(0.16, 0.28, 0.40, 0.95), Color(0.22, 0.38, 0.55, 0.95))
+			invite_btn.add_theme_font_size_override("font_size", 15)
+			invite_btn.pressed.connect(func() -> void: NetworkSession.invite_steam_friends())
+			players_row.add_child(invite_btn)
+		elif NetworkSession.is_host():
 			# The address the other players must type to join.
 			var ip_label: Label = Label.new()
 			ip_label.text = tr("LAN_HOST_IP") % [NetworkSession.local_ipv4(), NetworkSession.DEFAULT_PORT]

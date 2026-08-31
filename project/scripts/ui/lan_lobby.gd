@@ -30,12 +30,18 @@ func _ready() -> void:
 	NetworkSession.join_failed.connect(_on_join_failed)
 	NetworkSession.kicked.connect(_on_kicked)
 	NetworkSession.session_closed.connect(_on_session_closed)
+	NetworkSession.steam_session_started.connect(_open_match_lobby)
+	NetworkSession.steam_lobbies_found.connect(_on_steam_lobbies)
+	NetworkSession.steam_error.connect(_on_steam_error)
 
 func _exit_tree() -> void:
 	NetworkSession.joined_host.disconnect(_open_match_lobby)
 	NetworkSession.join_failed.disconnect(_on_join_failed)
 	NetworkSession.kicked.disconnect(_on_kicked)
 	NetworkSession.session_closed.disconnect(_on_session_closed)
+	NetworkSession.steam_session_started.disconnect(_open_match_lobby)
+	NetworkSession.steam_lobbies_found.disconnect(_on_steam_lobbies)
+	NetworkSession.steam_error.disconnect(_on_steam_error)
 
 func _build_card() -> void:
 	_card_center = CenterContainer.new()
@@ -106,6 +112,8 @@ func _build_card() -> void:
 	join_btn.pressed.connect(_on_join_pressed)
 	join_row.add_child(join_btn)
 
+	_build_steam_section(vbox)
+
 	var back_btn: Button = Button.new()
 	back_btn.text = tr("LAN_LEAVE")
 	back_btn.pressed.connect(func() -> void:
@@ -113,6 +121,68 @@ func _build_card() -> void:
 		closed.emit()
 		queue_free())
 	vbox.add_child(back_btn)
+
+var _steam_list: VBoxContainer = null
+
+## Steam block: host through Valve's relay (no ports, no IPs) or browse the
+## public Calima lobbies. Only shown when the Steam client is up.
+func _build_steam_section(vbox: VBoxContainer) -> void:
+	if not NetworkSession.ensure_steam():
+		var off: Label = Label.new()
+		off.text = tr("STEAM_UNAVAILABLE")
+		off.add_theme_font_size_override("font_size", 13)
+		off.add_theme_color_override("font_color", Color(0.55, 0.55, 0.60))
+		vbox.add_child(off)
+		return
+	vbox.add_child(HSeparator.new())
+	var title: Label = Label.new()
+	title.text = "Steam — %s" % Steam.getPersonaName()
+	title.add_theme_font_size_override("font_size", 17)
+	title.add_theme_color_override("font_color", Color(0.55, 0.75, 0.95))
+	vbox.add_child(title)
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	vbox.add_child(row)
+	var host_btn: Button = Button.new()
+	host_btn.text = tr("STEAM_HOST")
+	host_btn.add_theme_font_size_override("font_size", 18)
+	host_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host_btn.pressed.connect(func() -> void: NetworkSession.host_steam())
+	row.add_child(host_btn)
+	var browse_btn: Button = Button.new()
+	browse_btn.text = tr("STEAM_BROWSE")
+	browse_btn.add_theme_font_size_override("font_size", 18)
+	browse_btn.pressed.connect(func() -> void:
+		NetworkSession.request_steam_lobbies())
+	row.add_child(browse_btn)
+	_steam_list = VBoxContainer.new()
+	_steam_list.add_theme_constant_override("separation", 4)
+	vbox.add_child(_steam_list)
+
+func _on_steam_lobbies(lobbies: Array) -> void:
+	if _steam_list == null:
+		return
+	for c: Node in _steam_list.get_children():
+		c.queue_free()
+	if lobbies.is_empty():
+		var none: Label = Label.new()
+		none.text = tr("STEAM_NO_LOBBIES")
+		none.add_theme_font_size_override("font_size", 14)
+		none.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65))
+		_steam_list.add_child(none)
+		return
+	for lobby: Variant in lobbies:
+		var l: Dictionary = lobby as Dictionary
+		var btn: Button = Button.new()
+		btn.text = "%s  (%d/4)" % [l.get("host", "?"), l.get("members", 0) as int]
+		btn.add_theme_font_size_override("font_size", 15)
+		var lobby_id: int = l.get("id", 0) as int
+		btn.pressed.connect(func() -> void:
+			NetworkSession.join_steam_lobby(lobby_id))
+		_steam_list.add_child(btn)
+
+func _on_steam_error(_message: String) -> void:
+	_status.text = tr("LAN_JOIN_FAILED")
 
 func _on_host_pressed() -> void:
 	if NetworkSession.host_game() != OK:

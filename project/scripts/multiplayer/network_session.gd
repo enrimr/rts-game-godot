@@ -69,6 +69,10 @@ func _ready() -> void:
 	# still receive the unpause event.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
+func _process(_delta: float) -> void:
+	if _steam_initialized:
+		Steam.run_callbacks()
+
 func is_online() -> bool:
 	return role != Role.OFFLINE
 
@@ -92,6 +96,11 @@ func host_game(port: int = DEFAULT_PORT) -> Error:
 	if err != OK:
 		return err
 	multiplayer.multiplayer_peer = peer
+	_enter_host_state()
+	return OK
+
+## Everything a fresh host session needs, whatever the transport.
+func _enter_host_state() -> void:
 	role = Role.HOST
 	local_player_id = 0
 	_peer_players.clear()
@@ -104,7 +113,6 @@ func host_game(port: int = DEFAULT_PORT) -> Error:
 	]
 	_connect_signals()
 	roster_changed.emit()
-	return OK
 
 ## The LAN address other players must type to join (best-effort pick of the
 ## private-range interface; shown in the host's lobby).
@@ -159,6 +167,9 @@ func leave() -> void:
 	_peer_players.clear()
 	_kicked_peers.clear()
 	_teardown_internet()
+	if steam_lobby_id != 0:
+		Steam.leaveLobby(steam_lobby_id)
+		steam_lobby_id = 0
 	_roster.clear()
 	lobby_slots = []
 	match_human_ids = [0]
@@ -182,7 +193,7 @@ func _on_peer_connected(peer_id: int) -> void:
 		return
 	# No open human seat left → refuse the connection outright.
 	if open_seats_left() <= 0:
-		(multiplayer.multiplayer_peer as ENetMultiplayerPeer).disconnect_peer(peer_id)
+		multiplayer.multiplayer_peer.disconnect_peer(peer_id)
 		return
 	var pid: int = _next_player_id
 	_next_player_id += 1
@@ -371,7 +382,7 @@ func kick(player_id: int) -> void:
 		_rx_kicked.rpc_id(peer_id)
 		# The disconnect lands right after the kick notice; the roster prunes
 		# itself in _on_peer_disconnected.
-		(multiplayer.multiplayer_peer as ENetMultiplayerPeer).disconnect_peer(peer_id)
+		multiplayer.multiplayer_peer.disconnect_peer(peer_id)
 
 @rpc("authority", "reliable")
 func _rx_kicked() -> void:
@@ -491,6 +502,112 @@ func _tx_resign() -> void:
 func notify_pause(paused: bool) -> void:
 	if role == Role.HOST:
 		send_events({"pause": paused})
+
+# ── Steam transport (lobbies + invites + Valve relay; AppID 480 for dev) ────
+
+## Lobby search finished: [{ "id": int, "host": String, "members": int }].
+signal steam_lobbies_found(lobbies: Array)
+## A Steam session came up (host or client) — the UI can open the lobby.
+signal steam_session_started()
+signal steam_error(message: String)
+
+const STEAM_APP_ID: int = 480         # Valve's public test app ("Spacewar")
+const STEAM_GAME_KEY: String = "calima_fota"
+const LOBBY_TYPE_PUBLIC: int = 2      # k_ELobbyTypePublic
+const LOBBY_COMPARISON_EQUAL: int = 0
+const CHAT_ENTER_SUCCESS: int = 1     # k_EChatRoomEnterResponseSuccess
+
+var _steam_initialized: bool = false
+var steam_lobby_id: int = 0
+var _steam_signals_wired: bool = false
+
+## Lazily boot the Steam API (needs the Steam client running & logged in).
+## Called when the multiplayer screen opens — never at game start, so plain
+## offline play never touches Steam.
+func ensure_steam() -> bool:
+	if _steam_initialized:
+		return true
+	var result: Dictionary = Steam.steamInitEx(STEAM_APP_ID, false)
+	if (result.get("status", 1) as int) != 0 or not Steam.loggedOn():
+		return false
+	_steam_initialized = true
+	if not _steam_signals_wired:
+		_steam_signals_wired = true
+		Steam.lobby_created.connect(_on_steam_lobby_created)
+		Steam.lobby_joined.connect(_on_steam_lobby_joined)
+		Steam.lobby_match_list.connect(_on_steam_lobby_list)
+		Steam.join_requested.connect(_on_steam_join_requested)
+	return true
+
+func is_steam_session() -> bool:
+	return steam_lobby_id != 0
+
+## HOST over Steam: a public lobby (filterable) + the message-bridge peer.
+func host_steam() -> void:
+	if not ensure_steam() or is_online():
+		return
+	Steam.createLobby(LOBBY_TYPE_PUBLIC, MAX_CLIENTS + 1)
+
+func _on_steam_lobby_created(connect_result: int, lobby_id: int) -> void:
+	if connect_result != 1:
+		steam_error.emit("lobby_create_failed")
+		return
+	steam_lobby_id = lobby_id
+	Steam.setLobbyData(lobby_id, "game", STEAM_GAME_KEY)
+	Steam.setLobbyData(lobby_id, "host", _display_name(0))
+	var peer: SteamMultiplayerPeer = SteamMultiplayerPeer.new()
+	peer.host_with_lobby(lobby_id)
+	multiplayer.multiplayer_peer = peer
+	_enter_host_state()
+	steam_session_started.emit()
+
+## CLIENT over Steam: join the lobby, then bridge to its owner.
+func join_steam_lobby(lobby_id: int) -> void:
+	if not ensure_steam() or is_online():
+		return
+	Steam.joinLobby(lobby_id)
+
+func _on_steam_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) -> void:
+	if is_host():
+		return   # the host also "joins" its own lobby — already set up
+	if response != CHAT_ENTER_SUCCESS:
+		steam_error.emit("lobby_join_failed")
+		return
+	steam_lobby_id = lobby_id
+	var peer: SteamMultiplayerPeer = SteamMultiplayerPeer.new()
+	peer.connect_to_lobby(lobby_id)
+	multiplayer.multiplayer_peer = peer
+	role = Role.CLIENT
+	_connect_signals()
+	steam_session_started.emit()
+
+## Browse OUR lobbies only (everyone shares AppID 480 — filter by game key).
+func request_steam_lobbies() -> void:
+	if not ensure_steam():
+		steam_lobbies_found.emit([])
+		return
+	Steam.addRequestLobbyListStringFilter("game", STEAM_GAME_KEY, LOBBY_COMPARISON_EQUAL)
+	Steam.requestLobbyList()
+
+func _on_steam_lobby_list(lobbies: Array) -> void:
+	var out: Array = []
+	for lobby: Variant in lobbies:
+		out.append({
+			"id": lobby as int,
+			"host": Steam.getLobbyData(lobby as int, "host"),
+			"members": Steam.getNumLobbyMembers(lobby as int),
+		})
+	steam_lobbies_found.emit(out)
+
+## Overlay dialog to invite Steam friends into the current lobby.
+func invite_steam_friends() -> void:
+	if steam_lobby_id != 0:
+		Steam.activateGameOverlayInviteDialog(steam_lobby_id)
+
+## A friend accepted an invite (game already running).
+func _on_steam_join_requested(lobby_id: int, _friend_id: int) -> void:
+	if not is_online():
+		join_steam_lobby(lobby_id)
 
 # ── Internet hosting (UPnP port mapping, threaded — discovery blocks) ───────
 
