@@ -380,7 +380,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 
 ### Known Limitations (Planned for Future Milestones)
 
-- Multiplayer: phases 1–2 shipped (LAN host-authoritative session + unified lobby + client→host command pipe + host→client state replication at 15 Hz with puppet mirror worlds and interpolation via `StateReplicator`); queue/research/market/weather/arrow+boulder mirroring, robustness (drop/surrender→resignation, host-left dialog, replicated pause, delta+keyframe stream under the ENet MTU), chat (lobby+in-game, system lines), in-lobby rename and Internet hosting via UPnP shipped; pending: reconnection
+- Multiplayer: phases 1–2 shipped (LAN host-authoritative session + unified lobby + client→host command pipe + host→client state replication at 15 Hz with puppet mirror worlds and interpolation via `StateReplicator`); queue/research/market/weather/arrow+boulder mirroring, robustness (drop/surrender→resignation, host-left dialog, replicated pause, delta+keyframe stream under the ENet MTU), chat (lobby+in-game, system lines), in-lobby rename Internet hosting via UPnP, and a Steam transport prototype (GodotSteam GDExtension, lobbies+invites+Valve relay on test AppID 480) shipped; pending: reconnection, live Steam test
 - Tutorial mode exists but incomplete
 - Some unique unit abilities partially implemented
 - Mercenary system exists but UI incomplete

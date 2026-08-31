@@ -191,7 +191,17 @@ phase-2 interpolation buffer absorbs latency).
   mapping → external address). Success swaps the header address for
   "Internet: <ip> (port)"; failure instructs manual port forwarding. The
   mapping is removed on leave. Clients join by typing the public IP.
-- **Phase 2 still pending**: reconnection. Migration to lockstep stays open: the command wire format is
+- **Steam transport (prototype, AppID 480)**: GodotSteam 4.22 GDExtension
+  vendored (`addons/godotsteam`, macOS/win64/linux64). `ensure_steam()`
+  boots the API lazily; `host_steam()` = public lobby tagged
+  `game=calima_fota` + native `SteamMultiplayerPeer.host_with_lobby`;
+  clients browse tag-filtered lobbies or accept friend invites
+  (`join_requested` → `connect_to_lobby`). Everything above
+  `multiplayer_peer` (seats, commands, replication, chat) is untouched.
+  Missing Steam client degrades to a notice; `steam_appid.txt` (480) must
+  ship next to exported executables; swap the real AppID in
+  `NetworkSession.STEAM_APP_ID` once Steamworks registration lands.
+- **Phase 2 still pending**: reconnection; live Steam-lobby manual test. Migration to lockstep stays open: the command wire format is
   shared, only the return channel changes — it requires the
   simulation-determinism milestone (movement off Godot physics).
 
