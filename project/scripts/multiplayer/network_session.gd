@@ -208,6 +208,7 @@ func leave() -> void:
 	_teardown_internet()
 	if steam_lobby_id != 0:
 		Steam.leaveLobby(steam_lobby_id)
+		Steam.clearRichPresence()
 		steam_lobby_id = 0
 	_roster.clear()
 	lobby_slots = []
@@ -248,6 +249,9 @@ func _on_peer_connected(peer_id: int) -> void:
 	_peer_players[peer_id] = pid
 	_roster[pid] = {"name": tr("LAN_DEFAULT_NAME") % (pid + 1),
 		"color": _first_free_color(), "civ": "castellanos", "team": 0, "peer": peer_id}
+	if is_steam_session():
+		(_roster[pid] as Dictionary)["sid"] = \
+			(multiplayer.multiplayer_peer as SteamMultiplayerPeer).get_steam_id_for_peer_id(peer_id)
 	_rx_assign_player.rpc_id(peer_id, pid)
 	_broadcast_roster()
 	broadcast_lobby()
@@ -560,6 +564,8 @@ func start_match() -> void:
 	for pid: Variant in _roster:
 		colors[pid] = (_roster[pid] as Dictionary).get("color", pid) as int
 	cfg["colors"] = colors
+	if is_steam_session():
+		Steam.setRichPresence("status", "Playing Calima: Flames of the Atlantic")
 	_match_cfg = cfg.duplicate(true)
 	_rx_match_config.rpc(cfg)
 	_apply_and_start(cfg)
@@ -717,6 +723,8 @@ func _on_steam_lobby_created(connect_result: int, lobby_id: int) -> void:
 	peer.host_with_lobby(lobby_id)
 	multiplayer.multiplayer_peer = peer
 	_enter_host_state()
+	(_roster[0] as Dictionary)["sid"] = Steam.getSteamID()
+	Steam.setRichPresence("status", "In the Calima lobby")
 	steam_session_started.emit()
 
 ## CLIENT over Steam: join the lobby, then bridge to its owner.
@@ -909,6 +917,40 @@ func display_name_of(pid: int) -> String:
 	if entry is Dictionary:
 		return (entry as Dictionary).get("name", "") as String
 	return tr("LAN_DEFAULT_NAME") % (pid + 1)
+
+# ── Minimap pings (Alt+click; allies-only display, filtered on receive) ─────
+
+const PING_COOLDOWN_MSEC: int = 600
+var _last_ping_msec: Dictionary = {}   # host: pid -> last accepted ping
+
+func send_ping(world_pos: Vector2) -> void:
+	if not is_online():
+		EventBus.map_ping.emit(local_player_id, world_pos)
+		return
+	if role == Role.HOST:
+		_accept_ping(0, world_pos)
+	else:
+		_tx_ping.rpc_id(1, world_pos)
+
+@rpc("any_peer", "reliable")
+func _tx_ping(world_pos: Vector2) -> void:
+	if role != Role.HOST:
+		return
+	var pid: int = _peer_players.get(multiplayer.get_remote_sender_id(), -1) as int
+	if pid >= 0:
+		_accept_ping(pid, world_pos)
+
+func _accept_ping(pid: int, world_pos: Vector2) -> void:
+	var now: int = Time.get_ticks_msec()
+	if now - (_last_ping_msec.get(pid, -10000) as int) < PING_COOLDOWN_MSEC:
+		return
+	_last_ping_msec[pid] = now
+	_rx_ping.rpc(pid, world_pos)
+	EventBus.map_ping.emit(pid, world_pos)
+
+@rpc("authority", "reliable")
+func _rx_ping(pid: int, world_pos: Vector2) -> void:
+	EventBus.map_ping.emit(pid, world_pos)
 
 # ── State replication (host → clients, driven by StateReplicator) ───────────
 

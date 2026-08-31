@@ -200,6 +200,8 @@ func _ready() -> void:
 	# HUD does not keep showing (or ordering) a garrisoned ghost.
 	EventBus.garrison_changed.connect(_on_garrison_changed_prune_selection)
 
+	EventBus.map_ping.connect(_on_map_ping)
+
 	# Restore dynamic state from save (must be after start_game so GameState is PLAYING)
 	if SaveManager.pending_load:
 		SaveManager.restore_world(self)
@@ -271,6 +273,19 @@ func _exit_tree() -> void:
 
 func _on_player_resigned(pid: int) -> void:
 	_victory.handle_resignation(pid)
+
+## An ally pinged the map: ring on the ground, flash on the minimap, a blip
+## of sound, and the SPACE alert ring remembers the spot. Enemy pings are
+## never shown (the wire broadcasts; display filters here).
+func _on_map_ping(pid: int, world_pos: Vector2) -> void:
+	if not GameManager.are_allied(pid, NetworkSession.local_player_id):
+		return
+	_commands._flash_point(world_pos, PlayerColors.get_color(pid).lightened(0.3))
+	var minimap: MinimapRenderer = hud.get_node_or_null("%Minimap") as MinimapRenderer
+	if minimap != null:
+		minimap.add_flash(world_pos, PlayerColors.get_color(pid))
+	_camera_ctl.record_alert(world_pos)
+	AudioManager.play("ui_click", -6.0)
 
 ## Player-allied AIs cannot target the player's TC — give each brain the
 ## nearest HOSTILE town center once every TC exists (deferred from setup).

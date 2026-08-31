@@ -368,6 +368,9 @@ func _gui_input(event: InputEvent) -> void:
 	_refresh_world_bounds()
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and mb.alt_pressed:
+			NetworkSession.send_ping(_to_world(mb.position, size))
+			return
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
 			_move_camera_to(mb.position)
 		elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:

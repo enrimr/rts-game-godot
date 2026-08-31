@@ -101,6 +101,8 @@ func _exit_tree() -> void:
 		NetworkSession.config_changed.disconnect(_refresh_lan_panels)
 		if NetworkSession.chat_received.is_connected(_on_chat_line):
 			NetworkSession.chat_received.disconnect(_on_chat_line)
+		if _avatar_wired and Steam.avatar_loaded.is_connected(_on_avatar_loaded):
+			Steam.avatar_loaded.disconnect(_on_avatar_loaded)
 		if NetworkSession.system_chat_received.is_connected(_on_system_line):
 			NetworkSession.system_chat_received.disconnect(_on_system_line)
 		if NetworkSession.internet_ready.is_connected(_on_internet_ready):
@@ -691,6 +693,9 @@ func _add_human_row(pid: int, roster: Dictionary) -> void:
 	_players_panel.add_child(row)
 
 	var is_local: bool = pid == NetworkSession.local_player_id
+	var sid: int = entry.get("sid", 0) as int
+	if sid != 0:
+		row.add_child(_avatar_rect(sid))
 	if is_local:
 		# Your row carries the palette: pick your colour right here.
 		var own_color: int = entry.get("color", 0) as int
@@ -736,6 +741,29 @@ func _add_human_row(pid: int, roster: Dictionary) -> void:
 		kick_btn.add_theme_font_size_override("font_size", 13)
 		kick_btn.pressed.connect(func() -> void: NetworkSession.kick(pid))
 		row.add_child(kick_btn)
+
+# ── Steam avatars: async fetch, cached per steam id ──
+var _avatar_cache: Dictionary = {}
+var _avatar_wired: bool = false
+
+func _avatar_rect(sid: int) -> TextureRect:
+	var rect: TextureRect = TextureRect.new()
+	rect.custom_minimum_size = Vector2(24, 24)
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_SCALE
+	if _avatar_cache.has(sid):
+		rect.texture = _avatar_cache[sid]
+	else:
+		if not _avatar_wired:
+			_avatar_wired = true
+			Steam.avatar_loaded.connect(_on_avatar_loaded)
+		Steam.getPlayerAvatar(2, sid)   # AVATAR_MEDIUM (64x64)
+	return rect
+
+func _on_avatar_loaded(avatar_id: int, av_size: int, data: PackedByteArray) -> void:
+	var img: Image = Image.create_from_data(av_size, av_size, false, Image.FORMAT_RGBA8, data)
+	_avatar_cache[avatar_id] = ImageTexture.create_from_image(img)
+	_rebuild_players_panel()
 
 func _make_color_swatch(idx: int, own_color: int, roster: Dictionary) -> Button:
 	var taken: bool = false
