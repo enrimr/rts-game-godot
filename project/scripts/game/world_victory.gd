@@ -4,6 +4,9 @@ class_name WorldVictory extends RefCounted
 ## wonder countdown timers, and the end-of-game world freeze.
 
 const WONDER_COUNTDOWN_SEC: float = 240.0
+## Breathing room between a resignation and the game-over overlay, so the
+## "X resigned / X left" chat line can actually be read.
+const RESIGN_END_DELAY: float = 2.5
 
 var _world  # GameWorld — untyped so dynamic access works
 
@@ -76,6 +79,8 @@ func handle_resignation(pid: int) -> void:
 			continue
 		if _has_any_units(rival_id) or _has_any_buildings(rival_id):
 			return
+	# Let everyone read the system chat line before the overlay drops.
+	await _world.get_tree().create_timer(RESIGN_END_DELAY).timeout
 	GameManager.declare_winner(0)
 
 ## Conquest defeat check for any player. Deferred so queue_free() has

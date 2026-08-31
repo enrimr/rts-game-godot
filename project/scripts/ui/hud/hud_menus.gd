@@ -468,10 +468,17 @@ func _make_settings_pct_label(initial: float) -> Label:
 func _on_surrender() -> void:
 	close_pause_menu()
 	if NetworkSession.is_client():
-		# Tell the host (it eliminates us there); show our defeat locally.
+		# Tell the host (it eliminates us there); show our defeat locally
+		# after the same breathing room every machine gets.
 		NetworkSession.resign()
+		await get_tree().create_timer(WorldVictory.RESIGN_END_DELAY).timeout
 		GameManager.declare_winner(-1)
 		return
+	if NetworkSession.is_host():
+		# The host's surrender must reach the chat too before the match ends.
+		NetworkSession.announce("resigned",
+			NetworkSession.display_name_of(NetworkSession.local_player_id))
+		await get_tree().create_timer(WorldVictory.RESIGN_END_DELAY).timeout
 	GameManager.declare_winner(1)
 
 func _make_pause_btn(label_text: String, normal_col: Color, hover_col: Color) -> Button:
