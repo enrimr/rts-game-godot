@@ -524,11 +524,20 @@ var _steam_signals_wired: bool = false
 ## Lazily boot the Steam API (needs the Steam client running & logged in).
 ## Called when the multiplayer screen opens — never at game start, so plain
 ## offline play never touches Steam.
+var steam_init_error: String = ""
+
 func ensure_steam() -> bool:
 	if _steam_initialized:
 		return true
+	# A Finder-launched .app runs with cwd "/", where the Steam API would
+	# never find steam_appid.txt — the env vars work from anywhere.
+	OS.set_environment("SteamAppId", str(STEAM_APP_ID))
+	OS.set_environment("SteamGameId", str(STEAM_APP_ID))
 	var result: Dictionary = Steam.steamInitEx(STEAM_APP_ID, false)
 	if (result.get("status", 1) as int) != 0 or not Steam.loggedOn():
+		steam_init_error = str(result.get("verbal", "")) 			if (result.get("status", 1) as int) != 0 else "not logged on"
+		print("Steam init failed: status=%s verbal=%s logged_on=%s" % [
+			str(result.get("status")), str(result.get("verbal")), str(Steam.loggedOn())])
 		return false
 	_steam_initialized = true
 	if not _steam_signals_wired:

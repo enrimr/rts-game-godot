@@ -130,6 +130,8 @@ func _build_steam_section(vbox: VBoxContainer) -> void:
 	if not NetworkSession.ensure_steam():
 		var off: Label = Label.new()
 		off.text = tr("STEAM_UNAVAILABLE")
+		if not NetworkSession.steam_init_error.is_empty():
+			off.text += "  [%s]" % NetworkSession.steam_init_error
 		off.add_theme_font_size_override("font_size", 13)
 		off.add_theme_color_override("font_color", Color(0.55, 0.55, 0.60))
 		vbox.add_child(off)
