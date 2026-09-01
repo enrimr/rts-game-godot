@@ -255,7 +255,9 @@ CALIMA_SHOT_DIR=/tmp/calima-fx $GODOT --path project --resolution 1400x900 \
 # Selection voices: exports every baked formant voice to WAV (listen with afplay) + census
 CALIMA_SHOT_DIR=/tmp/calima-voices $GODOT --headless --path project res://tools/check_voice_gallery.tscn
 # Frame-time probe (real renderer): boots a fixed-seed match, prints avg process/physics
-# ms per frame — run on two builds (e.g. via a git worktree) and diff for perf A/Bs
+# ms per frame + nav/physics population counters — run on two builds for perf A/Bs.
+# env: CALIMA_PERF_LABEL/RIVALS/MAP_SIZE/MAP/RESOURCES, CALIMA_PERF_ARMY (units per side,
+# clashing armies), CALIMA_PERF_DEVELOP (game-seconds at 4x before measuring), _WINDOW
 $GODOT --path project --resolution 1280x720 res://tools/check_perf_probe.tscn
 ```
 
