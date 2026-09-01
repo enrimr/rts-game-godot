@@ -131,6 +131,21 @@ const PATH_FAIL_FADE: float = 2.5
 const STUCK_TIMEOUT: float = 1.2
 const STUCK_THRESHOLD: float = 6.0
 const MAX_STUCK_RETRIES: int = 6
+# ── Timed status effects (hero abilities: sandstorm slow, boarding stun) ────
+var _slow_mult: float = 1.0
+var _slow_until_msec: int = 0
+var _stun_until_msec: int = 0
+
+func apply_slow(mult: float, duration_msec: int) -> void:
+	_slow_mult = mult
+	_slow_until_msec = Time.get_ticks_msec() + duration_msec
+
+func apply_stun(duration_msec: int) -> void:
+	_stun_until_msec = Time.get_ticks_msec() + duration_msec
+
+func is_stunned() -> bool:
+	return Time.get_ticks_msec() < _stun_until_msec
+
 # The idle-sidestep "shove": a slowed mover asks own idle units ahead to step
 # aside well before the full stuck recovery kicks in.
 const SHOVE_AFTER: float = 0.45
@@ -621,6 +636,13 @@ func set_stance(new_stance: int) -> void:
 # top-level methods wholesale; everyone else overrides only the hooks.
 
 func _physics_process(delta: float) -> void:
+	if is_stunned():
+		# Stunned: no walking, no swinging — but side ticks (hero ability
+		# timers, cooldowns) keep counting.
+		if is_instance_valid(nav_agent):
+			nav_agent.set_velocity(Vector2.ZERO)
+		_combat_side_tick(delta)
+		return
 	match current_state:
 		UnitState.MOVING:
 			_handle_movement(delta)
@@ -1037,7 +1059,8 @@ func _nav_velocity() -> Vector2:
 
 ## Current effective movement speed (all multipliers applied).
 func _nav_speed() -> float:
-	return unit_data.move_speed \
+	var status: float = _slow_mult if Time.get_ticks_msec() < _slow_until_msec else 1.0
+	return unit_data.move_speed * status \
 		* CivBonusManager.get_unit_speed_multiplier(player_id, unit_data.id) \
 		* CivBonusManager.get_unit_move_speed_multiplier(player_id) \
 		* WeatherManager.get_move_speed_multiplier(global_position, player_id) \

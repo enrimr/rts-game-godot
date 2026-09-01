@@ -116,3 +116,49 @@ func test_mercenary_pact_converts_and_charges_gold() -> void:
 	assert_eq(enemy.get("player_id") as int, 0, "the enemy switched sides")
 	assert_almost_eq(ResourceManager.get_resources(0).get("gold", 0.0) as float, 600.0, 1.0,
 		"400 gold spent")
+
+func test_ambush_sets_the_real_cloak_flag_and_breaks_on_strike() -> void:
+	var hero: Node2D = _spawn_hero("ambush")
+	hero.call("use_ability")
+	assert_true(hero.get("is_cloaked") as bool, "targeting consults is_cloaked, not alpha")
+	hero.call("_after_strike", null)
+	assert_false(hero.get("is_cloaked") as bool, "striking breaks the ambush")
+	assert_eq(hero.modulate.a, 1.0)
+
+func test_honor_duel_compels_and_scales_damage() -> void:
+	var hero: Node2D = _spawn_hero("honor_duel")
+	var rival: Node2D = _spawn_enemy(Vector2(480.0, 400.0), "hero_bethencourt")
+	var outsider: Node2D = _spawn_enemy(Vector2(520.0, 400.0))
+	hero.call("use_ability")
+	assert_eq(hero.get("_duel_target"), rival, "the duel found its champion")
+	assert_true(rival.get("is_taunted") as bool, "the rival is compelled to fight")
+	var hp0: float = hero.get("health") as float
+	hero.call("take_damage", 10.0, rival)
+	assert_almost_eq(hp0 - (hero.get("health") as float), 20.0, 0.01,
+		"the rival hits the duelist twice as hard")
+	hp0 = hero.get("health") as float
+	hero.call("take_damage", 10.0, outsider)
+	assert_almost_eq(hp0 - (hero.get("health") as float), 5.0, 0.01,
+		"outsiders barely scratch the duel bubble")
+
+func test_slow_and_stun_status_effects() -> void:
+	var unit: Node2D = _spawn_enemy(Vector2(600.0, 400.0))
+	var base_speed: float = unit.call("_nav_speed") as float
+	unit.call("apply_slow", 0.6, 1300)
+	assert_almost_eq((unit.call("_nav_speed") as float) / base_speed, 0.6, 0.01,
+		"sandstorm slow reaches the nav speed")
+	assert_false(unit.call("is_stunned") as bool)
+	unit.call("apply_stun", 2000)
+	assert_true(unit.call("is_stunned") as bool, "boarding stun holds the unit")
+
+func test_mountain_voice_heals_the_buffed_allies() -> void:
+	var hero: Node2D = _spawn_hero("mountain_voice")
+	var ally: Node2D = (load("res://scenes/units/militia.tscn") as PackedScene).instantiate() as Node2D
+	ally.set("player_id", 0)
+	add_child_autofree(ally)
+	ally.global_position = Vector2(450.0, 400.0)
+	hero.call("use_ability")
+	ally.set("health", 10.0)
+	hero.call("_tick_mountain_voice_healing", 1.05)
+	assert_almost_eq(ally.get("health") as float, 14.0, 0.01,
+		"the chant heals 4 HP per second")

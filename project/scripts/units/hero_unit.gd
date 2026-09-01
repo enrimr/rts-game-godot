@@ -207,12 +207,34 @@ func _build_hero_aura() -> void:
 		move_child(_hero_aura, body.get_index())
 	IsoBillboard.make_upright(_hero_aura)
 
+const MOUNTAIN_VOICE_HEAL_PER_SEC: float = 4.0
+var _heal_accum: float = 0.0
+
+func _tick_mountain_voice_healing(delta: float) -> void:
+	if _ability != Ability.MOUNTAIN_VOICE or not _ability_active:
+		return
+	_heal_accum += delta
+	if _heal_accum < 1.0:
+		return
+	_heal_accum -= 1.0
+	for entry: Dictionary in _buffed_units:
+		var unit: Node = entry.get("unit") as Node
+		if not is_instance_valid(unit):
+			continue
+		var bar: Variant = unit.get("health_bar")
+		var max_hp: float = (bar as ProgressBar).max_value if bar is ProgressBar \
+			else (unit.get("health") as float)
+		unit.set("health", minf((unit.get("health") as float) + MOUNTAIN_VOICE_HEAL_PER_SEC, max_hp))
+		if unit.has_method("_refresh_health_bar"):
+			unit.call("_refresh_health_bar")
+
 func _combat_side_tick(delta: float) -> void:
 	if _cooldown_remaining > 0.0:
 		_cooldown_remaining -= delta
 		if _cooldown_remaining <= 0.0:
 			_cooldown_remaining = 0.0
 			ability_ready.emit(self)
+	_tick_mountain_voice_healing(delta)
 	if _ability_active:
 		_ability_timer -= delta
 		if _ability_timer <= 0.0:
@@ -246,6 +268,7 @@ func _trigger_ability() -> void:
 		Ability.AMBUSH:
 			duration = 15.0
 			modulate.a = 0.15
+			is_cloaked = true   # the flag targeting actually consults
 		Ability.FORCED_DIPLOMACY:
 			duration = 12.0
 			_convert_nearest_native()
@@ -314,9 +337,12 @@ func _end_ability() -> void:
 			_buffed_units.clear()
 		Ability.AMBUSH:
 			modulate.a = 1.0
+			is_cloaked = false
 		Ability.PLUNDER:
 			if EventBus.unit_died.is_connected(_on_plunder_kill):
 				EventBus.unit_died.disconnect(_on_plunder_kill)
+		Ability.HONOR_DUEL:
+			_end_duel()
 		Ability.CHALLENGE:
 			if is_instance_valid(_taunt_target):
 				_taunt_target.set("is_taunted", false)
@@ -363,6 +389,9 @@ func _attack_paused() -> bool:
 func _after_strike(_target: Node) -> void:
 	if _quijote_attack_delay > 0.0:
 		_quijote_post_attack_penalty = _quijote_attack_delay
+	# Striking breaks the ambush — you cannot stab from the shadows twice.
+	if _ability == Ability.AMBUSH and _ability_active:
+		_end_ability()
 
 # --- Ability implementations ---
 
@@ -447,6 +476,17 @@ func _do_charge() -> void:
 	var elapsed: float = 0.0
 	var total_time: float = charge_dist / charge_speed
 	var hit_nodes: Array = []
+	# One snapshot of hostile candidates: the old per-tween-tick group scan
+	# was O(units) every tick AND hit allies (no team filter).
+	var candidates: Array = []
+	for u: Node in get_tree().get_nodes_in_group("units"):
+		if u == self or not is_instance_valid(u):
+			continue
+		var upid: Variant = u.get("player_id")
+		if upid == null or GameManager.are_allied(upid as int, player_id):
+			continue
+		if (u as Node2D).global_position.distance_to(global_position) < charge_dist + 120.0:
+			candidates.append(u)
 
 	# Disable nav during charge
 	var saved_state: UnitBase.UnitState = current_state
@@ -458,9 +498,9 @@ func _do_charge() -> void:
 		var step: float = charge_speed * (t - elapsed) * total_time
 		elapsed = t
 		global_position += dir * charge_dist * get_process_delta_time() * (charge_speed / charge_dist)
-		# Damage nearby nodes that haven't been hit yet
-		for u: Node in get_tree().get_nodes_in_group("units"):
-			if u == self or hit_nodes.has(u):
+		# Damage nearby hostiles that haven't been hit yet
+		for u: Node in candidates:
+			if hit_nodes.has(u) or not is_instance_valid(u):
 				continue
 			if (u as Node2D).global_position.distance_to(global_position) < 28.0:
 				hit_nodes.append(u)
@@ -622,6 +662,10 @@ func _sandstorm_tick() -> void:
 			continue
 		if body.has_method("take_damage"):
 			body.take_damage(3.0, self)
+		if body.has_method("apply_slow"):
+			# Re-applied every 1 s tick with a 1.3 s window: leaving the
+			# storm lets the slow lapse on its own.
+			body.call("apply_slow", 0.60, 1300)
 
 func _cleanup_sandstorm() -> void:
 	if is_instance_valid(_sandstorm_area):
@@ -655,11 +699,37 @@ func _challenge_to_duel() -> void:
 
 	if nearest != null:
 		_duel_target = nearest
-		# Both get damage multipliers vs each other
-		# (This is simplified - a full implementation would track damage source in combat)
+		# The challenged champion is compelled to fight the duelist.
+		nearest.set("is_taunted", true)
+		nearest.set("taunt_source", self)
+		if nearest.has_method("order_attack"):
+			nearest.call("order_attack", self)
+		order_attack(nearest)
+	else:
+		_ability_fizzled = true
 
 func _end_duel() -> void:
+	if is_instance_valid(_duel_target):
+		_duel_target.set("is_taunted", false)
+		_duel_target.set("taunt_source", null)
 	_duel_target = null
+
+func _duel_active() -> bool:
+	return _ability == Ability.HONOR_DUEL and _ability_active \
+		and is_instance_valid(_duel_target)
+
+## Duel bubble: the duelist hits her rival twice as hard and everyone else
+## half as hard; damage FROM the rival doubles, from outsiders halves.
+func _strike_damage(target: Node) -> float:
+	var dmg: float = super._strike_damage(target)
+	if _duel_active():
+		dmg *= 2.0 if target == _duel_target else 0.5
+	return dmg
+
+func take_damage(amount: float, source: Node = null) -> void:
+	if _duel_active() and source != null:
+		amount *= 2.0 if source == _duel_target else 0.5
+	super.take_damage(amount, source)
 
 ## GRACE O'MALLEY - BOARDING ACTION
 func _boarding_dash() -> void:
@@ -706,7 +776,8 @@ func _boarding_dash() -> void:
 		if dist_to_line <= 40.0:  # 40px width of dash
 			if unit.has_method("take_damage"):
 				unit.take_damage(30.0, self)
-				# Stun: set state to IDLE and disable for 2s (simplified)
+			if unit.has_method("apply_stun"):
+				unit.call("apply_stun", 2000)
 
 	# Damage buildings
 	var buildings: Array = get_tree().get_nodes_in_group("buildings")
