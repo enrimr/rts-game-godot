@@ -419,6 +419,7 @@ UI_CONFIRM_DESTROY_GROUP,Demolish %d buildings?,¿Demoler %d edificios?
 MENU_LAN,LAN Multiplayer,Multijugador LAN
 LAN_TITLE,LAN Multiplayer,Multijugador LAN
 MENU_INTERNET,Internet Multiplayer,Multijugador Internet
+MENU_MADE_WITH,Made with Godot Engine %s,Creado con Godot Engine %s
 INTERNET_HINT,Play over the Internet through Steam: host a match or join one — no ports or IPs needed. Your Steam name is used.,Juega por Internet a través de Steam: crea una partida o únete — sin puertos ni IPs. Se usa tu nombre de Steam.
 LAN_HINT,Host a match or join one on your local network. The match uses the host's last lobby settings.,Crea una partida o únete a una en tu red local. La partida usa la última configuración de lobby del host.
 LAN_HOST,Host match,Crear partida

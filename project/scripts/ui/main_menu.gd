@@ -19,6 +19,7 @@ func _ready() -> void:
 	_build_how_to_play_button()
 	_build_continue_button()
 	_build_lan_button()
+	_build_engine_credit()
 	# Coming back from an aborted session must not leave a half-open peer.
 	if NetworkSession.is_online():
 		NetworkSession.leave()
@@ -98,6 +99,21 @@ func _make_mp_button(label_text: String) -> Button:
 	btn.add_theme_font_size_override("font_size", 22)
 	btn.focus_mode = Control.FOCUS_NONE
 	return btn
+
+func _build_engine_credit() -> void:
+	var v: Dictionary = Engine.get_version_info()
+	var lbl: Label = Label.new()
+	lbl.text = tr("MENU_MADE_WITH") % ("%d.%d" % [v["major"] as int, v["minor"] as int])
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(0.65, 0.62, 0.55, 0.75))
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(lbl)
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	lbl.offset_left = -240.0
+	lbl.offset_top = -32.0
+	lbl.offset_right = -14.0
+	lbl.offset_bottom = -12.0
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 func _open_lan_panel() -> void:
 	var panel: LanLobby = LanLobby.new()

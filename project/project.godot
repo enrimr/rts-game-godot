@@ -18,6 +18,8 @@ config/name="Calima: Flames of the Atlantic"
 config/description="A real-time strategy game inspired by Age of Empires II."
 run/main_scene="res://scenes/game/main_menu.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
+boot_splash/bg_color=Color(0.043, 0.031, 0.024, 1)
+boot_splash/image="res://assets/backgrounds/main-horizontal.png"
 config/icon="res://assets/app/calima-fota.icon.180.png"
 
 [autoload]
