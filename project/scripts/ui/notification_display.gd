@@ -41,6 +41,7 @@ func _ready() -> void:
 	EventBus.building_destroyed.connect(_on_building_destroyed)
 	EventBus.population_changed.connect(_on_population_changed)
 	EventBus.hero_low_hp.connect(_on_hero_low_hp)
+	EventBus.ally_message.connect(_on_ally_message)
 
 func _process(delta: float) -> void:
 	if _cd_unit     > 0.0: _cd_unit     -= delta
@@ -168,6 +169,17 @@ func _on_population_changed(player_id: int, current: int, cap: int) -> void:
 	_cd_pop = CD_POP_CAP
 	AudioManager.play("pop_cap")
 	push(tr("NOTIF_POP_CAP"), Color(1.0, 0.70, 0.25))
+
+func _on_ally_message(player_id: int, kind: String) -> void:
+	if player_id == NetworkSession.local_player_id \
+			or not GameManager.are_allied(player_id, NetworkSession.local_player_id):
+		return
+	var who: String = NetworkSession.display_name_of(player_id)
+	match kind:
+		"assist":
+			push(tr("NOTIF_ALLY_ASSIST") % who, Color(0.55, 0.85, 1.0), 5.0)
+		"attack":
+			push(tr("NOTIF_ALLY_ATTACK") % who, Color(0.55, 0.85, 1.0), 5.0)
 
 func _on_hero_low_hp(player_id: int) -> void:
 	if player_id != NetworkSession.local_player_id:

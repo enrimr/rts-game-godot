@@ -79,18 +79,32 @@ func _ready() -> void:
 	_naval = AINaval.new()
 	_naval.setup(self)
 	EventBus.ai_unit_under_attack.connect(_on_ai_unit_under_attack)
+	EventBus.player_entity_under_attack.connect(_on_human_ally_under_attack)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
 
 func _exit_tree() -> void:
 	if EventBus.ai_unit_under_attack.is_connected(_on_ai_unit_under_attack):
 		EventBus.ai_unit_under_attack.disconnect(_on_ai_unit_under_attack)
+	if EventBus.player_entity_under_attack.is_connected(_on_human_ally_under_attack):
+		EventBus.player_entity_under_attack.disconnect(_on_human_ally_under_attack)
 	if EventBus.building_destroyed.is_connected(_on_building_destroyed):
 		EventBus.building_destroyed.disconnect(_on_building_destroyed)
 
 func _on_ai_unit_under_attack(attacked_player_id: int) -> void:
-	if attacked_player_id != player_id:
+	if attacked_player_id == player_id:
+		_military.notify_under_attack()
 		return
-	_military.notify_under_attack()
+	# A team-mate (another AI, or a non-host human — their hits emit this
+	# signal too) is under fire: rally to their base.
+	if GameManager.are_allied(player_id, attacked_player_id):
+		var their_buildings: Array = world.own_buildings(attacked_player_id)
+		if not their_buildings.is_empty():
+			_military.assist_ally((their_buildings[0] as Node2D).global_position)
+
+## The HOST human (player 0) is under attack — the signal carries the spot.
+func _on_human_ally_under_attack(pos: Vector2, _attacker: Node) -> void:
+	if player_id != 0 and GameManager.are_allied(player_id, 0):
+		_military.assist_ally(pos)
 
 # Physics ticks, not render frames: delta is the fixed physics step, so the
 # decision cadence is a deterministic tick count — a replay of the same seed

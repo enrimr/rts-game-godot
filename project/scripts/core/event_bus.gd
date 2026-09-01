@@ -51,6 +51,8 @@ signal unit_attacked(attacker: Node, target: Node)
 signal projectile_spawned(start: Vector2, target_pos: Vector2, kind: int)
 ## Alt+click minimap ping — shown to the pinger and their allies.
 signal map_ping(player_id: int, world_pos: Vector2)
+## An allied AI talks to its team ("assist", "attack") — toast for allies only.
+signal ally_message(player_id: int, kind: String)
 signal hero_ability_used(player_id: int)
 signal damage_dealt(target: Node, amount: float, attacker: Node)
 signal ai_unit_under_attack(player_id: int)

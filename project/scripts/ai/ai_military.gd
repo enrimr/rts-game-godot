@@ -64,6 +64,10 @@ func launch_attack() -> void:
 			return
 		targets.append(fallback)
 
+	if _has_human_ally():
+		NetworkSession.ai_ping(_ai.player_id, (targets[0] as Node2D).global_position)
+		EventBus.ally_message.emit(_ai.player_id, "attack")
+
 	var target_count: int = targets.size()
 
 	var idle_attackers: Array[Node] = []
@@ -378,6 +382,44 @@ func _escalate_aggression(level: AggressionLevel) -> void:
 		_ai.debug_log("AGGRESSION → %s" % AggressionLevel.keys()[level])
 		_aggression = level
 	_aggression_timer = 0.0
+
+# ── Allied-team behaviour ────────────────────────────────────────────────────
+
+const ASSIST_COOLDOWN_SEC: float = 30.0
+const ASSIST_MIN_ARMY: int = 4
+const ASSIST_SQUAD_MAX: int = 8
+var _last_assist_msec: int = -100000
+
+## An ally is being attacked at `pos`: send a squad to help (attack-move, so
+## they engage whatever they meet), ping the spot for the team and say so.
+func assist_ally(pos: Vector2) -> void:
+	if Time.get_ticks_msec() - _last_assist_msec < int(ASSIST_COOLDOWN_SEC * 1000.0):
+		return
+	if count_military() < ASSIST_MIN_ARMY:
+		return
+	var soldiers: Array[Node] = []
+	for unit: Node in _ai.world.own_units(_ai.player_id):
+		if is_military_unit(unit):
+			soldiers.append(unit)
+	soldiers.sort_custom(func(a: Node, b: Node) -> bool:
+		return (a as Node2D).global_position.distance_squared_to(pos) \
+			< (b as Node2D).global_position.distance_squared_to(pos))
+	var squad: Array[int] = []
+	for i: int in range(mini(ASSIST_SQUAD_MAX, soldiers.size())):
+		squad.append(EntityRegistry.id_of(soldiers[i]))
+	if squad.is_empty():
+		return
+	_last_assist_msec = Time.get_ticks_msec()
+	CommandBus.submit(UnitPointCommand.make(_ai.player_id, "attack_move", squad, pos))
+	NetworkSession.ai_ping(_ai.player_id, pos)
+	EventBus.ally_message.emit(_ai.player_id, "assist")
+
+func _has_human_ally() -> bool:
+	for pid: Variant in NetworkSession.match_human_ids:
+		if (pid as int) != _ai.player_id \
+				and GameManager.are_allied(_ai.player_id, pid as int):
+			return true
+	return false
 
 func _defend_base() -> void:
 	# Find the enemy unit closest to any AI building/TC.

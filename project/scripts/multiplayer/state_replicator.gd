@@ -58,6 +58,8 @@ func setup(world) -> void:
 			NetworkSession.send_events({"over": winner_id}))
 		GameManager.game_paused.connect(func(paused: bool) -> void:
 			NetworkSession.notify_pause(paused))
+		EventBus.ally_message.connect(func(pid: int, msg_kind: String) -> void:
+			NetworkSession.send_events({"amsg": [pid, msg_kind]}))
 		EventBus.projectile_spawned.connect(func(start: Vector2, target_pos: Vector2, kind: int) -> void:
 			_fx_buffer.append([start.x, start.y, target_pos.x, target_pos.y, kind]))
 		_seed_announced()
@@ -362,6 +364,8 @@ func _on_events(d: Dictionary) -> void:
 	if techs is Dictionary:
 		for pid: Variant in techs as Dictionary:
 			TechManager.apply_remote_researched(pid as int, (techs as Dictionary)[pid] as Array)
+	if d.has("amsg"):
+		EventBus.ally_message.emit((d["amsg"] as Array)[0] as int, (d["amsg"] as Array)[1] as String)
 	if d.has("pause"):
 		_set_remote_pause(d["pause"] as bool)
 	if d.has("over"):

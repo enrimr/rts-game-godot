@@ -952,6 +952,14 @@ func _accept_ping(pid: int, world_pos: Vector2) -> void:
 func _rx_ping(pid: int, world_pos: Vector2) -> void:
 	EventBus.map_ping.emit(pid, world_pos)
 
+## Host-side AI ping (assist/attack callouts). Display filtering by alliance
+## happens at the receivers, same as player pings.
+func ai_ping(pid: int, world_pos: Vector2) -> void:
+	if is_online() and role == Role.HOST:
+		_accept_ping(pid, world_pos)
+	elif not is_online():
+		EventBus.map_ping.emit(pid, world_pos)
+
 # ── State replication (host → clients, driven by StateReplicator) ───────────
 
 ## Dense per-snapshot stream (positions/HP/stockpiles) on this machine.
