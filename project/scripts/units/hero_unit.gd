@@ -78,6 +78,10 @@ var _ability: Ability = Ability.NONE
 var _cooldown_remaining: float = 0.0
 var _ability_active: bool = false
 var _ability_timer: float = 0.0
+# Instant-ability bookkeeping: a fizzled cast charges no cooldown; a Fate's
+# Arrow kill refunds half of it. Both consumed by _trigger_ability.
+var _ability_fizzled: bool = false
+var _fates_kill_refund: bool = false
 var _trade_route_timer: Timer = null
 var _taunt_target: Node = null
 
@@ -252,7 +256,6 @@ func _trigger_ability() -> void:
 		Ability.KNIGHT_ERRANT_CHARGE:
 			duration = 0.0   # instant — runs the charge, no lingering state
 			_do_charge()
-			return
 		Ability.CALIMA:
 			duration = 12.0
 			_spawn_calima_cloud()
@@ -266,7 +269,6 @@ func _trigger_ability() -> void:
 		Ability.FATES_ARROW:
 			duration = 0.0  # instant
 			_fire_fates_arrow()
-			return
 		Ability.SANDSTORM:
 			duration = 10.0
 			_create_sandstorm()
@@ -276,22 +278,27 @@ func _trigger_ability() -> void:
 		Ability.BOARDING_ACTION:
 			duration = 0.0  # instant dash
 			_boarding_dash()
-			return
 		Ability.CALL_TO_ARMS:
 			duration = 40.0
 			_summon_militia()
 		Ability.RISING_TIDE:
 			duration = 0.0  # instant wave
 			_create_tidal_wave()
-			return
 		Ability.MERCENARY_PACT:
 			duration = 0.0  # instant conversion
 			_convert_enemy_for_gold()
-			return
 
 	_ability_active = duration > 0.0
 	_ability_timer = duration
+	if _ability_fizzled:
+		# Nothing happened (no target / not enough gold): no cooldown charged.
+		_ability_fizzled = false
+		_ability_active = false
+		return
 	_cooldown_remaining = unit_data.hero_ability_cooldown if unit_data else 50.0
+	if _fates_kill_refund:
+		_fates_kill_refund = false
+		_cooldown_remaining *= 0.5
 	ability_used.emit(self)
 	EventBus.hero_ability_used.emit(player_id)
 
@@ -366,7 +373,7 @@ func _buff_nearby_attack_speed(multiplier: float) -> void:
 	var units: Array = get_tree().get_nodes_in_group("units")
 	for u: Node in units:
 		var pid: Variant = u.get("player_id")
-		if pid == null or (pid as int) != player_id:
+		if pid == null or not GameManager.are_allied(pid as int, player_id):
 			continue
 		if not is_instance_valid(u) or u == self:
 			continue
@@ -387,7 +394,7 @@ func _taunt_nearest_enemy() -> void:
 	var units: Array = get_tree().get_nodes_in_group("units")
 	for u: Node in units:
 		var pid: Variant = u.get("player_id")
-		if pid == null or (pid as int) == player_id:
+		if pid == null or GameManager.are_allied(pid as int, player_id):
 			continue
 		var d: float = (u as Node2D).global_position.distance_to(global_position)
 		if d < best_dist:
@@ -407,7 +414,7 @@ func _convert_nearest_native() -> void:
 	var units: Array = get_tree().get_nodes_in_group("units")
 	for u: Node in units:
 		var pid: Variant = u.get("player_id")
-		if pid == null or (pid as int) == player_id:
+		if pid == null or GameManager.are_allied(pid as int, player_id):
 			continue
 		var d: float = (u as Node2D).global_position.distance_to(global_position)
 		if d < best_dist:
@@ -420,7 +427,7 @@ func _convert_nearest_native() -> void:
 	best.set("player_id", player_id)
 
 func _on_plunder_kill(unit: Node, killed_player_id: int) -> void:
-	if killed_player_id == player_id:
+	if GameManager.are_allied(killed_player_id, player_id):
 		return
 	var dist: float = (unit as Node2D).global_position.distance_to(global_position)
 	if dist <= 220.0:
@@ -462,8 +469,6 @@ func _do_charge() -> void:
 	, 0.0, 1.0, total_time)
 	tw.tween_callback(func() -> void:
 		current_state = saved_state
-		_cooldown_remaining = unit_data.hero_ability_cooldown if unit_data else 50.0
-		ability_used.emit(self)
 	)
 
 const CALIMA_RADIUS: float = 180.0
@@ -478,7 +483,10 @@ func _spawn_calima_cloud() -> void:
 	cloud.draw.connect(func() -> void:
 		cloud.draw_circle(Vector2.ZERO, CALIMA_RADIUS, cloud_color)
 	)
-	get_tree().current_scene.add_child(cloud)
+	# Parented to the units layer, not current_scene: harnesses (and any
+	# instanced world) have no current_scene to speak of.
+	get_parent().add_child(cloud)
+	cloud.global_position = global_position
 	cloud.queue_redraw()
 	_calima_cloud = cloud
 
@@ -487,7 +495,7 @@ func _spawn_calima_cloud() -> void:
 		if not is_instance_valid(unit) or not (unit is UnitBase):
 			continue
 		var uid: Variant = unit.get("player_id")
-		if uid == null or (uid as int) != player_id:
+		if uid == null or not GameManager.are_allied(uid as int, player_id):
 			continue
 		if (unit as Node2D).global_position.distance_to(global_position) > CALIMA_RADIUS:
 			continue
@@ -522,7 +530,7 @@ func _buff_nearby_armor_and_healing() -> void:
 		if not is_instance_valid(unit):
 			continue
 		var unit_pid: Variant = unit.get("player_id")
-		if unit_pid == null or (unit_pid as int) != player_id:
+		if unit_pid == null or not GameManager.are_allied(unit_pid as int, player_id):
 			continue
 		var dist: float = global_position.distance_to((unit as Node2D).global_position)
 		if dist <= 300.0:
@@ -557,7 +565,7 @@ func _fire_fates_arrow() -> void:
 		if not is_instance_valid(unit):
 			continue
 		var unit_pid: Variant = unit.get("player_id")
-		if unit_pid == null or (unit_pid as int) == player_id:
+		if unit_pid == null or GameManager.are_allied(unit_pid as int, player_id):
 			continue
 		var dist: float = global_position.distance_to((unit as Node2D).global_position)
 		if dist < nearest_dist:
@@ -570,7 +578,9 @@ func _fire_fates_arrow() -> void:
 		AudioManager.play_if_visible("hit_ranged", (nearest as Node2D).global_position, 0.0)
 		# Halve cooldown if kill
 		if target_hp <= 80.0:
-			_cooldown_remaining = (unit_data.hero_ability_cooldown if unit_data else 60.0) * 0.5
+			_fates_kill_refund = true
+	else:
+		_ability_fizzled = true
 
 ## TIBIABIN - SANDSTORM
 func _create_sandstorm() -> void:
@@ -608,7 +618,7 @@ func _sandstorm_tick() -> void:
 		if not is_instance_valid(body):
 			continue
 		var body_pid: Variant = body.get("player_id")
-		if body_pid == null or (body_pid as int) == player_id:
+		if body_pid == null or GameManager.are_allied(body_pid as int, player_id):
 			continue
 		if body.has_method("take_damage"):
 			body.take_damage(3.0, self)
@@ -628,7 +638,7 @@ func _challenge_to_duel() -> void:
 		if not is_instance_valid(unit):
 			continue
 		var unit_pid: Variant = unit.get("player_id")
-		if unit_pid == null or (unit_pid as int) == player_id:
+		if unit_pid == null or GameManager.are_allied(unit_pid as int, player_id):
 			continue
 		var data: UnitResource = unit.get("unit_data") as UnitResource
 		if data == null:
@@ -653,8 +663,23 @@ func _end_duel() -> void:
 
 ## GRACE O'MALLEY - BOARDING ACTION
 func _boarding_dash() -> void:
-	# Dash 200px towards mouse position or forward
-	var direction: Vector2 = (get_global_mouse_position() - global_position).normalized()
+	# Dash 200px toward the nearest hostile (mouse position would desync
+	# replays and the networked command execution), else along our facing.
+	var direction: Vector2 = Vector2.ZERO
+	var nearest_d: float = 400.0
+	for unit: Node in get_tree().get_nodes_in_group("units"):
+		if not is_instance_valid(unit):
+			continue
+		var upid: Variant = unit.get("player_id")
+		if upid == null or GameManager.are_allied(upid as int, player_id):
+			continue
+		var d: float = global_position.distance_to((unit as Node2D).global_position)
+		if d < nearest_d:
+			nearest_d = d
+			direction = (unit as Node2D).global_position - global_position
+	if direction == Vector2.ZERO:
+		direction = velocity if velocity != Vector2.ZERO else Vector2.RIGHT
+	direction = direction.normalized()
 	var start_pos: Vector2 = global_position
 	var end_pos: Vector2 = start_pos + direction * 200.0
 
@@ -673,7 +698,7 @@ func _boarding_dash() -> void:
 		if not is_instance_valid(unit):
 			continue
 		var unit_pid: Variant = unit.get("player_id")
-		if unit_pid == null or (unit_pid as int) == player_id:
+		if unit_pid == null or GameManager.are_allied(unit_pid as int, player_id):
 			continue
 		# Check if unit was in the dash path (simplified: just check distance to line)
 		var unit_pos: Vector2 = (unit as Node2D).global_position
@@ -689,7 +714,7 @@ func _boarding_dash() -> void:
 		if not is_instance_valid(building):
 			continue
 		var b_pid: Variant = building.get("player_id")
-		if b_pid == null or (b_pid as int) == player_id:
+		if b_pid == null or GameManager.are_allied(b_pid as int, player_id):
 			continue
 		var b_pos: Vector2 = (building as Node2D).global_position
 		var dist_to_line: float = _point_to_line_distance(b_pos, start_pos, end_pos)
@@ -758,7 +783,7 @@ func _create_tidal_wave() -> void:
 		if body_pid == null:
 			continue
 
-		if (body_pid as int) == player_id:
+		if GameManager.are_allied(body_pid as int, player_id):
 			# Ally: heal 60 HP
 			var health: Variant = body.get("health")
 			if health != null:
@@ -776,7 +801,8 @@ func _create_tidal_wave() -> void:
 ## ELISSA - MERCENARY PACT
 func _convert_enemy_for_gold() -> void:
 	# Check if player has 400 gold
-	if ResourceManager.get_resource(player_id, "gold") < 400.0:
+	if (ResourceManager.get_resources(player_id).get("gold", 0.0) as float) < 400.0:
+		_ability_fizzled = true
 		return
 
 	# Find nearest enemy unit (non-hero) within 200px
@@ -787,7 +813,7 @@ func _convert_enemy_for_gold() -> void:
 		if not is_instance_valid(unit):
 			continue
 		var unit_pid: Variant = unit.get("player_id")
-		if unit_pid == null or (unit_pid as int) == player_id:
+		if unit_pid == null or GameManager.are_allied(unit_pid as int, player_id):
 			continue
 		var data: UnitResource = unit.get("unit_data") as UnitResource
 		if data == null or data.is_hero:
@@ -797,6 +823,8 @@ func _convert_enemy_for_gold() -> void:
 			nearest = unit
 			nearest_dist = dist
 
+	if nearest == null:
+		_ability_fizzled = true
 	if nearest != null:
 		ResourceManager.add_resource(player_id, "gold", -400.0)
 		nearest.set("player_id", player_id)
