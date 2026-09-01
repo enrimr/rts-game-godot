@@ -32,6 +32,23 @@ func play(sound_id: String, volume_db: float = 0.0) -> void:
 	player.play()
 	_pool_idx[sound_id] = (idx + 1) % pool.size()
 
+## Play one variant of a voice bank (see _build_voices): resolves gender,
+## picks a random line that is never the same one twice in a row, and falls
+## back to the plain sound id for kinds without a voice (siege stays a clunk).
+func play_voice(sound_id: String, female: bool = false, volume_db: float = 0.0) -> void:
+	var bank: String = "%s_%s" % [sound_id, "f" if female else "m"]
+	if not _voice_counts.has(bank):
+		bank = "%s_m" % sound_id
+	var count: int = _voice_counts.get(bank, 0) as int
+	if count == 0:
+		play(sound_id, volume_db)
+		return
+	var pick: int = randi() % count
+	if count > 1 and pick == (_voice_last.get(bank, -1) as int):
+		pick = (pick + 1) % count
+	_voice_last[bank] = pick
+	play("%s_%d" % [bank, pick], volume_db)
+
 ## Play a combat sound only if world_pos is currently visible to the player.
 func play_if_visible(sound_id: String, world_pos: Vector2, volume_db: float = 0.0) -> void:
 	var fog: FogOfWar = _get_fog()
@@ -76,15 +93,12 @@ func _build_all() -> void:
 	_register("ui_select",      _synth_select())
 	_register("ui_error",       _synth_error())
 
-	# Unit selection voices
+	# Unit selection: siege stays mechanical (machines don't talk), the plain
+	# generic blip survives as a UI sound (chat focus); everything human gets
+	# a formant-synthesized gibberish voice bank (see _build_voices).
 	_register("select_generic",  _synth_sel_generic())
-	_register("select_villager", _synth_sel_villager())
-	_register("select_infantry", _synth_sel_infantry())
-	_register("select_archer",   _synth_sel_archer())
-	_register("select_cavalry",  _synth_sel_cavalry())
 	_register("select_siege",    _synth_sel_siege())
-	_register("select_naval",    _synth_sel_naval())
-	_register("select_hero",     _synth_sel_hero())
+	_build_voices()
 
 	# Commands
 	_register("cmd_move",       _synth_cmd_move())
@@ -377,56 +391,6 @@ func _synth_sel_generic() -> AudioStreamWAV:
 	var b: PackedFloat32Array = _sine(550.0, 0.08, 0.25)
 	return _make_wav(_concat(a, b))
 
-func _synth_sel_villager() -> AudioStreamWAV:
-	# Friendly, bright, short chirp — warm and approachable
-	var n: int = int(SAMPLE_RATE * 0.22)
-	var buf: PackedFloat32Array = PackedFloat32Array()
-	buf.resize(n)
-	for i: int in range(n):
-		var t: float = float(i) / SAMPLE_RATE
-		var env: float = exp(-t * 12.0)
-		# Two harmonics for warmth
-		buf[i] = (sin(TAU * 520.0 * t) * 0.35 + sin(TAU * 780.0 * t) * 0.18) * env
-	return _make_wav(buf)
-
-func _synth_sel_infantry() -> AudioStreamWAV:
-	# Gruff short grunt: band-passed noise burst with low punch
-	var n: int = int(SAMPLE_RATE * 0.18)
-	var buf: PackedFloat32Array = PackedFloat32Array()
-	buf.resize(n)
-	var lp: float = 0.0
-	var hp: float = 0.0
-	for i: int in range(n):
-		var t: float = float(i) / SAMPLE_RATE
-		var raw: float = randf_range(-1.0, 1.0)
-		lp = lp + 0.20 * (raw - lp)
-		hp = 0.70 * hp + 0.70 * (lp - hp)
-		var env: float = exp(-t * 18.0)
-		# Mix band-passed noise with a low thud tone
-		buf[i] = (hp * 0.40 + sin(TAU * 140.0 * t) * 0.30) * env
-	return _make_wav(buf)
-
-func _synth_sel_archer() -> AudioStreamWAV:
-	# Light bow-string pluck: sharp attack, fast decay, mid-high pitch
-	var n: int = int(SAMPLE_RATE * 0.20)
-	var buf: PackedFloat32Array = PackedFloat32Array()
-	buf.resize(n)
-	for i: int in range(n):
-		var t: float = float(i) / SAMPLE_RATE
-		var env: float = exp(-t * 22.0)
-		# Fundamental + slight inharmonic partial for a pluck timbre
-		buf[i] = (sin(TAU * 680.0 * t) * 0.38 + sin(TAU * 1020.0 * t * 1.005) * 0.18) * env
-	return _make_wav(buf)
-
-func _synth_sel_cavalry() -> AudioStreamWAV:
-	# Confident, bold — rising sweep with a snort-like noise burst
-	var sweep: PackedFloat32Array = _sweep(300.0, 520.0, 0.14, 0.38)
-	var snort: PackedFloat32Array = _noise(0.08, 0.18)
-	var gap: PackedFloat32Array = PackedFloat32Array()
-	gap.resize(int(SAMPLE_RATE * 0.02))
-	gap.fill(0.0)
-	return _make_wav(_concat(_concat(sweep, gap), snort))
-
 func _synth_sel_siege() -> AudioStreamWAV:
 	# Heavy, mechanical clunk: low noise burst + iron resonance
 	var n: int = int(SAMPLE_RATE * 0.28)
@@ -441,37 +405,253 @@ func _synth_sel_siege() -> AudioStreamWAV:
 		buf[i] = (lp * 0.45 + sin(TAU * 95.0 * t) * 0.25) * env
 	return _make_wav(buf)
 
-func _synth_sel_naval() -> AudioStreamWAV:
-	# Bell-like water tone: two partials, slow decay, slight chorus
-	var n: int = int(SAMPLE_RATE * 0.32)
-	var buf: PackedFloat32Array = PackedFloat32Array()
-	buf.resize(n)
-	for i: int in range(n):
-		var t: float = float(i) / SAMPLE_RATE
-		var env: float = exp(-t * 7.0)
-		buf[i] = (sin(TAU * 380.0 * t) * 0.35 + sin(TAU * 570.0 * t * 1.003) * 0.22) * env
-	return _make_wav(buf)
+# ── Formant voice synthesis (AoE-style gibberish selection barks) ────────────
+#
+# A voice is a glottal source (band-limited sawtooth with vibrato + jitter)
+# pushed through three parallel two-pole resonators tuned to vowel formants,
+# with noise bursts for consonants. Short 1–3 syllable "words" with a rising
+# contour read as a question ("¿Sí?"), falling as an acknowledgment ("¡Ha!").
+# Everything is baked once at startup — same zero-asset approach as the rest.
 
-func _synth_sel_hero() -> AudioStreamWAV:
-	# Celestial shimmer: high choir-like harmonics with slow attack and long tail
-	var n: int = int(SAMPLE_RATE * 0.70)
+## F1/F2/F3 formant frequencies per vowel (male vocal tract; females ×1.15).
+const VOICE_VOWELS: Dictionary = {
+	"a": [800.0, 1150.0, 2500.0],
+	"e": [450.0, 1900.0, 2600.0],
+	"i": [320.0, 2300.0, 3000.0],
+	"o": [450.0, 850.0, 2400.0],
+	"u": [350.0, 700.0, 2300.0],
+}
+const VOICE_FORMANT_BW: Array[float] = [90.0, 120.0, 170.0]
+const VOICE_FORMANT_AMP: Array[float] = [1.0, 0.65, 0.30]
+
+const VOICE_C_PLOSIVE: int = 0
+const VOICE_C_FRICATIVE: int = 1
+const VOICE_C_NASAL: int = 2
+const VOICE_C_LIQUID: int = 3
+
+## Consonant onset recipes: [type, center frequency, duration seconds].
+const VOICE_CONSONANTS: Dictionary = {
+	"t": [VOICE_C_PLOSIVE, 3200.0, 0.022],
+	"k": [VOICE_C_PLOSIVE, 1500.0, 0.026],
+	"p": [VOICE_C_PLOSIVE, 700.0, 0.022],
+	"d": [VOICE_C_PLOSIVE, 2600.0, 0.018],
+	"g": [VOICE_C_PLOSIVE, 1100.0, 0.022],
+	"b": [VOICE_C_PLOSIVE, 600.0, 0.018],
+	"s": [VOICE_C_FRICATIVE, 5200.0, 0.065],
+	"h": [VOICE_C_FRICATIVE, 1400.0, 0.050],
+	"m": [VOICE_C_NASAL, 0.0, 0.055],
+	"n": [VOICE_C_NASAL, 0.0, 0.045],
+	"r": [VOICE_C_LIQUID, 0.0, 0.040],
+	"l": [VOICE_C_LIQUID, 0.0, 0.042],
+}
+
+const VOICE_SYLLABLE_SEC: float = 0.115
+const VOICE_PEAK: float = 0.42
+
+var _voice_counts: Dictionary = {}   # "<id>_<m|f>" -> variant count
+var _voice_last: Dictionary = {}     # bank -> last variant played
+
+## The whole selection-voice cast. Each entry: 3 gibberish "words" per gender.
+## "?" on the last syllable rises (attentive question), "!" drops hard
+## (soldierly bark), nothing gives a soft statement fall.
+func _build_voices() -> void:
+	# Villagers — light, friendly, always a question.
+	_register_voice_bank("select_villager", false, 132.0,
+		[["na", "o?"], ["ta", "he?"], ["mo", "di?"]], {"breath": 0.05})
+	_register_voice_bank("select_villager", true, 218.0,
+		[["ne", "a?"], ["si", "o?"], ["ma", "hi?"]], {"breath": 0.07})
+	# Infantry — gruff and clipped, with a throaty growl.
+	_register_voice_bank("select_infantry", false, 98.0,
+		[["du", "ka!"], ["ha!"], ["ko", "ra!"]], {"growl": 0.8, "rate": 1.15})
+	_register_voice_bank("select_infantry", true, 168.0,
+		[["da", "ko!"], ["he", "ta!"], ["ra!"]], {"growl": 0.5, "rate": 1.15})
+	# Archers — quick and light.
+	_register_voice_bank("select_archer", false, 145.0,
+		[["ti", "ka?"], ["se", "o?"], ["li", "ho?"]], {"rate": 1.25, "breath": 0.06})
+	_register_voice_bank("select_archer", true, 230.0,
+		[["si", "ta?"], ["le", "i?"], ["ni", "o?"]], {"rate": 1.25, "breath": 0.08})
+	# Cavalry — confident, unhurried, downward assertion.
+	_register_voice_bank("select_cavalry", false, 112.0,
+		[["do", "ma"], ["ha", "ro"], ["ne", "da"]], {"rate": 0.9, "growl": 0.25})
+	_register_voice_bank("select_cavalry", true, 185.0,
+		[["ro", "na"], ["ma", "de"], ["ha", "li"]], {"rate": 0.9, "growl": 0.15})
+	# Ship crews — breathy hail across the water.
+	_register_voice_bank("select_naval", false, 122.0,
+		[["e", "ho!"], ["sa", "lo?"], ["hu", "ma!"]],
+		{"rate": 0.85, "breath": 0.12, "growl": 0.2})
+	# Heroes — slow, deep, three solemn syllables with a stone-hall echo.
+	_register_voice_bank("select_hero", false, 92.0,
+		[["a", "ta", "ra"], ["do", "ne", "ma"], ["ka", "ro", "na"]],
+		{"rate": 0.72, "growl": 0.35, "echo": 0.30})
+	_register_voice_bank("select_hero", true, 175.0,
+		[["a", "ni", "ra"], ["se", "la", "na"], ["mi", "ro", "da"]],
+		{"rate": 0.72, "breath": 0.06, "echo": 0.30})
+	# Generic humans (scouts, unclassed units).
+	_register_voice_bank("select_generic", false, 125.0,
+		[["ho?"], ["ne", "a?"], ["ta?"]], {"breath": 0.05})
+	_register_voice_bank("select_generic", true, 210.0,
+		[["ha?"], ["mi", "o?"], ["se?"]], {"breath": 0.07})
+
+func _register_voice_bank(base_id: String, female: bool, f0: float,
+		words: Array, opts: Dictionary = {}) -> void:
+	var bank: String = "%s_%s" % [base_id, "f" if female else "m"]
+	var formant_mult: float = 1.16 if female else 1.0
+	for i: int in range(words.size()):
+		var samples: PackedFloat32Array = _voice_word(
+			words[i] as Array, f0, formant_mult, opts)
+		_register("%s_%d" % [bank, i], _make_wav(samples), 2)
+	_voice_counts[bank] = words.size()
+
+## Renders one gibberish word: consonant onsets + formant vowels, a natural
+## pitch declination across syllables, and the ?/! contour on the last one.
+func _voice_word(syllables: Array, f0: float, formant_mult: float,
+		opts: Dictionary) -> PackedFloat32Array:
+	var rate: float = opts.get("rate", 1.0) as float
+	var breath: float = opts.get("breath", 0.03) as float
+	var growl: float = opts.get("growl", 0.0) as float
+	var echo: float = opts.get("echo", 0.0) as float
+	var out: PackedFloat32Array = PackedFloat32Array()
+	var syl_f0: float = f0
+	for s: int in range(syllables.size()):
+		var syl: String = syllables[s] as String
+		var last: bool = s == syllables.size() - 1
+		var mark: String = ""
+		if syl.ends_with("?") or syl.ends_with("!"):
+			mark = syl[syl.length() - 1]
+			syl = syl.left(syl.length() - 1)
+		var vowel: String = syl[syl.length() - 1]
+		var cons: String = syl.left(syl.length() - 1)
+		var dur: float = VOICE_SYLLABLE_SEC / rate * (1.55 if last else 1.0)
+		var f0_a: float = syl_f0
+		var f0_b: float = syl_f0 * 0.96
+		if last:
+			match mark:
+				"?": f0_b = syl_f0 * 1.32
+				"!":
+					f0_a = syl_f0 * 1.08
+					f0_b = syl_f0 * 0.74
+				_:  f0_b = syl_f0 * 0.85
+		if not cons.is_empty() and VOICE_CONSONANTS.has(cons):
+			out = _concat(out, _voice_consonant(cons, f0_a, formant_mult))
+		out = _concat(out, _voice_vowel(vowel, dur, f0_a, f0_b,
+			formant_mult, breath, growl))
+		syl_f0 *= 0.97
+	if echo > 0.0:
+		out = _voice_echo(out, echo)
+	return _voice_normalize(out)
+
+func _voice_vowel(vowel: String, dur: float, f0_a: float, f0_b: float,
+		formant_mult: float, breath: float, growl: float) -> PackedFloat32Array:
+	var formants: Array = VOICE_VOWELS.get(vowel, VOICE_VOWELS["a"]) as Array
+	var n: int = int(SAMPLE_RATE * dur)
 	var buf: PackedFloat32Array = PackedFloat32Array()
 	buf.resize(n)
+	# Per-formant resonator coefficients (two-pole bandpass).
+	var a1: Array[float] = []
+	var a2: Array[float] = []
+	var y1: Array[float] = [0.0, 0.0, 0.0]
+	var y2: Array[float] = [0.0, 0.0, 0.0]
+	for k: int in range(3):
+		var fk: float = minf((formants[k] as float) * formant_mult, 9500.0)
+		var r: float = exp(-PI * VOICE_FORMANT_BW[k] / SAMPLE_RATE)
+		a1.append(2.0 * r * cos(TAU * fk / SAMPLE_RATE))
+		a2.append(-r * r)
+	var phase: float = 0.0
+	var jitter: float = 0.0
 	for i: int in range(n):
 		var t: float = float(i) / SAMPLE_RATE
-		# Soft bell-curve envelope: slow rise, long decay
-		var attack: float = 1.0 - exp(-t * 18.0)
-		var decay: float = exp(-t * 3.5)
-		var env: float = attack * decay
-		# Five harmonic partials tuned to an open fifth + octave — airy and pure
-		buf[i] = (sin(TAU * 528.0 * t) * 0.30          # fundamental
-				+ sin(TAU * 792.0 * t) * 0.20          # fifth above
-				+ sin(TAU * 1056.0 * t) * 0.15         # octave
-				+ sin(TAU * 1320.0 * t) * 0.10         # fifth + octave
-				+ sin(TAU * 1584.0 * t) * 0.06         # double octave
-				# Subtle slow vibrato on the top partial for shimmer
-				+ sin(TAU * 1058.0 * t + sin(TAU * 5.5 * t) * 0.4) * 0.08) * env
-	return _make_wav(buf)
+		var t01: float = float(i) / float(n)
+		jitter = jitter * 0.998 + randf_range(-1.0, 1.0) * 0.0015
+		var f0: float = lerpf(f0_a, f0_b, t01) \
+			* (1.0 + 0.022 * sin(TAU * 5.3 * t) + jitter)
+		phase += TAU * f0 / SAMPLE_RATE
+		# Band-limited sawtooth: harmonics up to ~8.8 kHz.
+		var harmonics: int = mini(int(8800.0 / f0), 12)
+		var source: float = 0.0
+		for h: int in range(1, harmonics + 1):
+			source += sin(phase * h) / float(h)
+		source *= 0.5
+		if growl > 0.0:
+			source *= 1.0 + growl * 0.35 * sin(TAU * 74.0 * t)
+		source += randf_range(-1.0, 1.0) * breath
+		var mixed: float = 0.0
+		for k: int in range(3):
+			var y: float = source * 0.12 + a1[k] * y1[k] + a2[k] * y2[k]
+			y2[k] = y1[k]
+			y1[k] = y
+			mixed += y * VOICE_FORMANT_AMP[k]
+		var env: float = minf(t / 0.014, 1.0) * clampf((dur - t) / 0.035, 0.0, 1.0)
+		buf[i] = mixed * env
+	return buf
+
+func _voice_consonant(cons: String, f0: float, formant_mult: float) -> PackedFloat32Array:
+	var recipe: Array = VOICE_CONSONANTS[cons] as Array
+	var kind: int = recipe[0] as int
+	var center: float = (recipe[1] as float) * formant_mult
+	var dur: float = recipe[2] as float
+	match kind:
+		VOICE_C_NASAL:
+			# Voiced hum: closed-mouth fundamental + soft second harmonic.
+			var n: int = int(SAMPLE_RATE * dur)
+			var buf: PackedFloat32Array = PackedFloat32Array()
+			buf.resize(n)
+			for i: int in range(n):
+				var t: float = float(i) / SAMPLE_RATE
+				var env: float = minf(t / 0.012, 1.0) * clampf((dur - t) / 0.02, 0.0, 1.0)
+				buf[i] = (sin(TAU * f0 * t) * 0.30 + sin(TAU * f0 * 2.0 * t) * 0.08) * env
+			return buf
+		VOICE_C_LIQUID:
+			# A quiet schwa glide into the vowel.
+			return _voice_vowel("e", dur, f0, f0, formant_mult * 0.9, 0.02, 0.0)
+		VOICE_C_FRICATIVE:
+			return _voice_burst(center, dur, 0.16, false)
+		_:
+			# Plosive: a beat of closure silence, then the release burst.
+			var gap: PackedFloat32Array = PackedFloat32Array()
+			gap.resize(int(SAMPLE_RATE * 0.008))
+			gap.fill(0.0)
+			return _concat(gap, _voice_burst(center, dur, 0.30, true))
+
+## Noise shot through a single resonator — the release of a consonant.
+func _voice_burst(center: float, dur: float, amp: float, sharp: bool) -> PackedFloat32Array:
+	var n: int = int(SAMPLE_RATE * dur)
+	var buf: PackedFloat32Array = PackedFloat32Array()
+	buf.resize(n)
+	var r: float = exp(-PI * 600.0 / SAMPLE_RATE)
+	var a1: float = 2.0 * r * cos(TAU * minf(center, 9500.0) / SAMPLE_RATE)
+	var a2: float = -r * r
+	var y1: float = 0.0
+	var y2: float = 0.0
+	for i: int in range(n):
+		var t: float = float(i) / SAMPLE_RATE
+		var y: float = randf_range(-1.0, 1.0) * 0.30 + a1 * y1 + a2 * y2
+		y2 = y1
+		y1 = y
+		var env: float = exp(-t * 60.0) if sharp else \
+			(minf(t / 0.01, 1.0) * clampf((dur - t) / 0.02, 0.0, 1.0))
+		buf[i] = y * amp * env
+	return buf
+
+## A single soft reflection — reads as a stone hall around a hero.
+func _voice_echo(samples: PackedFloat32Array, wet: float) -> PackedFloat32Array:
+	var delay: int = int(SAMPLE_RATE * 0.085)
+	var out: PackedFloat32Array = PackedFloat32Array()
+	out.resize(samples.size() + delay)
+	for i: int in range(samples.size()):
+		out[i] += samples[i]
+		out[i + delay] += samples[i] * wet
+	return out
+
+func _voice_normalize(samples: PackedFloat32Array) -> PackedFloat32Array:
+	var peak: float = 0.0
+	for i: int in range(samples.size()):
+		peak = maxf(peak, absf(samples[i]))
+	if peak < 0.0001:
+		return samples
+	var gain: float = VOICE_PEAK / peak
+	for i: int in range(samples.size()):
+		samples[i] *= gain
+	return samples
 
 # ---------------------------------------------------------------------------
 # Weather ambient synthesizers (looping ~4 s textures)

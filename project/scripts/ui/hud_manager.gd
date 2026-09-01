@@ -843,7 +843,7 @@ func _on_unit_selected(units: Array) -> void:
 		var sound: String = "select_generic"
 		if lead.has_method("get_selection_sound"):
 			sound = lead.call("get_selection_sound") as String
-		AudioManager.play(sound, -4.0)
+		AudioManager.play_voice(sound, lead.get("is_female") == true, -4.0)
 
 func _on_building_selected(building: Node) -> void:
 	if is_instance_valid(_selected_building) and _selected_building.has_method("set_selected"):

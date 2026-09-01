@@ -64,7 +64,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/save_manager.gd` | Complete game save/load system, JSON-based, 99 save slots; multiplayer saves add a roster sheet (`multiplayer` key: names/Steam IDs/civs/colours/teams per seat) and per-player explored fog (`fog_by_player`, gathered from clients via `NetworkSession.collect_client_fogs` — `save_game` is a coroutine, await it); `resume_sheet`/`resume_fog_b64` feed the resume lobby and resync, `cancel_pending` backs out of an abandoned resume |
 | `project/scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
 | `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries, terrain gameplay effects (laurisilva vision mult, risco vantage, shallow water); `get_speed_mult`/`is_impassable_for`/`nearest_passable` take an `amphibious` flag (ocean is opened by the unit, never by the civ), `deep_water_speed(civ_id)` reads the civ's `deep_water_speed` multiplier (default 0.60); `distance_to_coast` is analytic + memoized per 24 px cell (the weather/fog hot path — invalidate via `reset`/`add_zone`/`set_land_polys` only) |
-| `project/scripts/core/audio_manager.gd` | Spatial audio playback, distance attenuation |
+| `project/scripts/core/audio_manager.gd` | Spatial audio playback, distance attenuation; ALL sfx/music are procedurally baked at startup (zero audio assets). Selection voices are formant-synthesized gibberish barks (glottal sawtooth → 3 two-pole vowel resonators + noise consonants): per-class banks with male/female variants and ?/! pitch contours, played via `play_voice(id, female)` (anti-repeat, falls back to the plain id — siege stays mechanical); audition/regression via `tools/check_voice_gallery.tscn` |
 | `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
 | `project/scripts/core/command_bus.gd` | `CommandBus` autoload — single entry point for player intents: tick-stamped command log (replay/LAN foundation), `submit`/`command_from_dict`/`save_log`; bound per match via `start_match(world)` |
 | `project/scripts/core/entity_registry.gd` | `EntityRegistry` autoload — stable per-match numeric IDs for units/buildings/resource nodes (tree-order rescan + spawn-signal registration), `id_of`/`resolve` |
@@ -252,6 +252,8 @@ CALIMA_SHOT_DIR=/tmp/calima-ships $GODOT --path project --resolution 1600x900 \
 # Damage fire/smoke stages + watch-tower arrows (real renderer): screenshot review
 CALIMA_SHOT_DIR=/tmp/calima-fx $GODOT --path project --resolution 1400x900 \
   res://tools/check_damage_fx.tscn
+# Selection voices: exports every baked formant voice to WAV (listen with afplay) + census
+CALIMA_SHOT_DIR=/tmp/calima-voices $GODOT --headless --path project res://tools/check_voice_gallery.tscn
 ```
 
 Note: GUT silently *skips* a test script that fails to parse while still
