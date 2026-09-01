@@ -82,6 +82,13 @@ NOTIF_HERO_LOW_HP,⚠ Your hero is critically wounded!,⚠ ¡Tu héroe está her
 NOTIF_ALLY_ASSIST,%s is sending troops to help you!,¡%s envía tropas en tu ayuda!
 NOTIF_ALLY_ATTACK,%s is launching an attack — join in!,¡%s lanza un ataque — únete!
 NOTIF_MERCENARY_HIRED,Mercenary hired!,¡Mercenario contratado!
+MARKET_SELL_FMT,Sell %s\n(%d→1 Gold),Vender %s\n(%d→1 Oro)
+MARKET_BUY_FMT,Buy %s\n(1 Gold→%d),Comprar %s\n(1 Oro→%d)
+MARKET_HIRE_FMT,Hire %s\n(%d Gold),Contratar %s\n(%d Oro)
+MARKET_HIRE_CD_FMT,Hire %s\n(%ds),Contratar %s\n(%ds)
+TOOLTIP_MARKET_SELL,Trade this resource for gold. Each trade worsens the rate for a while.,Cambia este recurso por oro. Cada venta empeora la tarifa un tiempo.
+TOOLTIP_MARKET_BUY,Spend gold to receive this resource. Each trade worsens the rate for a while.,Gasta oro para recibir este recurso. Cada compra empeora la tarifa un tiempo.
+TOOLTIP_MARKET_HIRE,Hire a mercenary for gold: spawns instantly at the market with a per-unit cooldown. Fenicios hire cheaper.,Contrata un mercenario por oro: aparece al instante junto al mercado con un tiempo de recarga por unidad. Los Fenicios contratan más barato.
 GAMEOVER_VICTORY,VICTORY!,¡VICTORIA!
 GAMEOVER_DEFEAT,DEFEAT,DERROTA
 GAMEOVER_SUMMARY,Match Summary,Resumen de partida

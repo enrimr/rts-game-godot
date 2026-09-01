@@ -1360,39 +1360,43 @@ func _populate_market_actions(market: Market) -> void:
 	var br_w: int = market.get_buy_rate(local_player_id, "wood")
 	var br_s: int = market.get_buy_rate(local_player_id, "stone")
 	var actions: Array = [
-		{"id": "market:sell:food",  "label": "Sell Food\n(%d→1G)" % sr_f,  "abbr": "-F", "cost": {"food":  sr_f}, "key": KEY_NONE, "raw_label": true},
-		{"id": "market:sell:wood",  "label": "Sell Wood\n(%d→1G)" % sr_w,  "abbr": "-W", "cost": {"wood":  sr_w}, "key": KEY_NONE, "raw_label": true},
-		{"id": "market:sell:stone", "label": "Sell Stone\n(%d→1G)" % sr_s, "abbr": "-S", "cost": {"stone": sr_s}, "key": KEY_NONE, "raw_label": true},
-		{"id": "market:buy:food",   "label": "Buy Food\n(1G→%d)" % br_f,   "abbr": "+F", "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
-		{"id": "market:buy:wood",   "label": "Buy Wood\n(1G→%d)" % br_w,   "abbr": "+W", "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
-		{"id": "market:buy:stone",  "label": "Buy Stone\n(1G→%d)" % br_s,  "abbr": "+S", "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true},
+		{"id": "market:sell:food",  "label": tr("MARKET_SELL_FMT") % [tr("ACTION_FOOD"), sr_f],  "abbr": "-F", "cost": {"food":  sr_f}, "key": KEY_NONE, "raw_label": true, "description": "TOOLTIP_MARKET_SELL"},
+		{"id": "market:sell:wood",  "label": tr("MARKET_SELL_FMT") % [tr("ACTION_WOOD"), sr_w],  "abbr": "-W", "cost": {"wood":  sr_w}, "key": KEY_NONE, "raw_label": true, "description": "TOOLTIP_MARKET_SELL"},
+		{"id": "market:sell:stone", "label": tr("MARKET_SELL_FMT") % [tr("ACTION_STONE"), sr_s], "abbr": "-S", "cost": {"stone": sr_s}, "key": KEY_NONE, "raw_label": true, "description": "TOOLTIP_MARKET_SELL"},
+		{"id": "market:buy:food",   "label": tr("MARKET_BUY_FMT") % [tr("ACTION_FOOD"), br_f],   "abbr": "+F", "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true, "description": "TOOLTIP_MARKET_BUY"},
+		{"id": "market:buy:wood",   "label": tr("MARKET_BUY_FMT") % [tr("ACTION_WOOD"), br_w],   "abbr": "+W", "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true, "description": "TOOLTIP_MARKET_BUY"},
+		{"id": "market:buy:stone",  "label": tr("MARKET_BUY_FMT") % [tr("ACTION_STONE"), br_s],  "abbr": "+S", "cost": {"gold": 1},     "key": KEY_NONE, "raw_label": true, "description": "TOOLTIP_MARKET_BUY"},
 	]
-	if MatchConfig.player_civ_id == "fenicios":
-		var current_age: int = AgeManager.get_age(local_player_id)
-		for def: Dictionary in MERCENARY_UNIT_DEFS:
-			if (def["age"] as int) > current_age:
-				continue
-			var uid: String = def["id"] as String
-			var scene_path: String = "res://scenes/units/%s.tscn" % uid
-			if not ResourceLoader.exists(scene_path):
-				continue
-			var gold_cost: int = market.get_mercenary_cost(uid)
-			var cooldown_remaining: float = market.get_mercenary_cooldown_fraction(uid) * market.MERCENARY_COOLDOWN
-			var on_cooldown: bool = cooldown_remaining > 0.0
-			var label: String
-			if on_cooldown:
-				label = "Hire %s\n(%ds)" % [def["display"] as String, int(ceil(cooldown_remaining))]
-			else:
-				label = "Hire %s\n(%dG)" % [def["display"] as String, gold_cost]
-			actions.append({
-				"id": "market:hire:%s" % uid,
-				"label": label,
-				"cost": {"gold": gold_cost},
-				"key": KEY_NONE,
-				"raw_label": true,
-				"locked": on_cooldown,
-				"badge": ("%ds" % int(ceil(cooldown_remaining))) if on_cooldown else "",
-			})
+	# Mercenaries: every civ can hire (Fenicios pay less — the market is
+	# their turf); gated by the LOCAL player's age, refreshed while open.
+	var current_age: int = AgeManager.get_age(local_player_id)
+	for def: Dictionary in MERCENARY_UNIT_DEFS:
+		if (def["age"] as int) > current_age:
+			continue
+		var uid: String = def["id"] as String
+		var scene_path: String = "res://scenes/units/%s.tscn" % uid
+		if not ResourceLoader.exists(scene_path):
+			continue
+		var unit_res: Resource = load("res://resources/units/%s_data.tres" % uid) as Resource
+		var display: String = EntityNames.unit_name(unit_res) if unit_res != null else (def["display"] as String)
+		var gold_cost: int = market.get_mercenary_cost(uid)
+		var cooldown_remaining: float = market.get_mercenary_cooldown_fraction(uid) * market.MERCENARY_COOLDOWN
+		var on_cooldown: bool = cooldown_remaining > 0.0
+		var label: String
+		if on_cooldown:
+			label = tr("MARKET_HIRE_CD_FMT") % [display, int(ceil(cooldown_remaining))]
+		else:
+			label = tr("MARKET_HIRE_FMT") % [display, gold_cost]
+		actions.append({
+			"id": "market:hire:%s" % uid,
+			"label": label,
+			"cost": {"gold": gold_cost},
+			"key": KEY_NONE,
+			"raw_label": true,
+			"locked": on_cooldown,
+			"badge": ("%ds" % int(ceil(cooldown_remaining))) if on_cooldown else "",
+			"description": "TOOLTIP_MARKET_HIRE",
+		})
 	actions.append(DESTROY_BUILDING_ACTION)
 	_active_actions = actions
 	_action_grid.columns = ACTION_COLS

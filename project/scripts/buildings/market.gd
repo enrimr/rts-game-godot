@@ -138,6 +138,11 @@ func get_mercenary_cost(unit_id: String) -> int:
 		return 0
 	var base: int = unit_res.cost_food + unit_res.cost_wood
 	var gold: int = int(round(base * 1.5 / 5.0)) * 5
+	# The trader civ hires muscle for less.
+	var civ: String = MatchConfig.player_civ_id if player_id == 0 \
+		else MatchConfig.get_rival_civ_id(player_id)
+	if civ == "fenicios":
+		gold = int(round(gold * 0.75 / 5.0)) * 5
 	return maxi(gold, 20)
 
 ## 0.0 = no cooldown, 1.0 = just hired (full cooldown). For UI progress display.
