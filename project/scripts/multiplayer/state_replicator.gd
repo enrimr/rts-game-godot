@@ -64,6 +64,15 @@ func setup(world) -> void:
 			_fx_buffer.append([start.x, start.y, target_pos.x, target_pos.y, kind]))
 		_seed_announced()
 		_initial_ids = _announced.duplicate()
+		if NetworkSession.resumed_match:
+			# A restored world shares NO deterministic baseline with the fresh
+			# world a client boots: the resync must ship EVERYTHING. The shared
+			# scene TC is the sole survivor — the registry rescan hands it the
+			# same id on both ends (it is registered first).
+			_initial_ids = {}
+			var tc: Variant = _world.get("drop_off")
+			if tc is Node and is_instance_valid(tc as Node):
+				_initial_ids[EntityRegistry.id_of(tc as Node)] = true
 		NetworkSession.peer_resync_requested.connect(full_resync_to)
 
 ## Both machines boot the identical initial world (same seed → same ids), so
@@ -107,7 +116,11 @@ func full_resync_to(player_id: int) -> void:
 		var node: Node = EntityRegistry.resolve(id as int)
 		if node == null:
 			continue
-		var kind: String = "b" if node.get_parent() == _buildings_layer else "u"
+		var kind: String = "u"
+		if node is ResourceNode:
+			kind = "r"
+		elif node.get_parent() == _buildings_layer:
+			kind = "b"
 		spawns.append(_spawn_record(node, id as int, kind))
 	var units: Array = []
 	for node: Node in _units_layer.get_children():
@@ -131,7 +144,7 @@ func full_resync_to(player_id: int) -> void:
 		if not extras.is_empty():
 			row.append(extras)
 		buildings.append(row)
-	NetworkSession.send_events_to(player_id, {
+	var payload: Dictionary = {
 		"spawn": spawns,
 		"remove": removes,
 		"u": units,
@@ -144,7 +157,14 @@ func full_resync_to(player_id: int) -> void:
 			WeatherManager._wind_dir],
 		"rn": _resource_nodes(),
 		"tech": _researched_lists(),
-	})
+	}
+	# Resumed match: the save carries this seat's explored map — restore it so
+	# the player comes back to what they had scouted, AoE2 style.
+	if NetworkSession.resumed_match:
+		var fog_b64: String = SaveManager.resume_fog_b64(player_id)
+		if not fog_b64.is_empty():
+			payload["fog"] = fog_b64
+	NetworkSession.send_events_to(player_id, payload)
 
 # ── Host side ────────────────────────────────────────────────────────────────
 
@@ -288,6 +308,10 @@ func _spawn_record(node: Node, id: int, kind: String) -> Dictionary:
 		"x": (node as Node2D).global_position.x,
 		"y": (node as Node2D).global_position.y,
 	}
+	if kind == "r":
+		rec["rt"] = node.get("resource_type") as int
+		rec["a"] = node.get("initial_amount") as float
+		return rec
 	var script: Script = node.get_script() as Script
 	if script != null:
 		rec["c"] = script.resource_path
@@ -364,6 +388,12 @@ func _on_events(d: Dictionary) -> void:
 	if techs is Dictionary:
 		for pid: Variant in techs as Dictionary:
 			TechManager.apply_remote_researched(pid as int, (techs as Dictionary)[pid] as Array)
+	if d.has("fog"):
+		_apply_fog(d["fog"] as String)
+	if NetworkSession.resumed_match and not _resume_centered \
+			and not (d.get("spawn", []) as Array).is_empty():
+		_resume_centered = true
+		_center_on_own_base()
 	if d.has("amsg"):
 		EventBus.ally_message.emit((d["amsg"] as Array)[0] as int, (d["amsg"] as Array)[1] as String)
 	if d.has("pause"):
@@ -372,9 +402,49 @@ func _on_events(d: Dictionary) -> void:
 		_set_remote_pause(false)
 		GameManager.declare_winner(d["over"] as int)
 
+## Resumed-match client: jump to our own base once, the moment the resync
+## repopulates the mirror world (the fresh-boot camera looked at map center).
+var _resume_centered: bool = false
+
+func _center_on_own_base() -> void:
+	var pid: int = NetworkSession.local_player_id
+	for node: Node in _buildings_layer.get_children():
+		if is_instance_valid(node) and node is TownCenterBuilding \
+				and node.get("player_id") != null and (node.get("player_id") as int) == pid:
+			_world.call("jump_camera_to", (node as Node2D).global_position)
+			return
+	for node: Node in _units_layer.get_children():
+		if is_instance_valid(node) and node is Node2D \
+				and node.get("player_id") != null and (node.get("player_id") as int) == pid:
+			_world.call("jump_camera_to", (node as Node2D).global_position)
+			return
+
+## The saved exploration of THIS seat, shipped once in the resumed resync.
+func _apply_fog(b64: String) -> void:
+	var fog: Variant = _world.get("_fog")
+	if not (fog is FogOfWar):
+		return
+	var cells: PackedByteArray = NetworkSession.fog_cells_from_b64(
+		b64, (fog as FogOfWar)._cells.size())
+	if cells.is_empty():
+		return
+	(fog as FogOfWar)._cells = cells
+	(fog as FogOfWar)._dirty_cells.fill(1)
+
 func _apply_spawn(rec: Dictionary) -> void:
 	var id: int = rec.get("i", 0) as int
 	if EntityRegistry.resolve(id) != null:
+		return
+	if (rec.get("k", "u") as String) == "r":
+		# Resource nodes are built programmatically (no scene to instance).
+		ResourceVisuals.create_resource_node(_world as Node2D,
+			Vector2(rec.get("x", 0.0) as float, rec.get("y", 0.0) as float),
+			rec.get("rt", 0) as ResourceNode.ResourceType,
+			rec.get("a", 100.0) as float)
+		var rn: Node = (_world as Node).get_children().back()
+		if rn is ResourceNode:
+			EntityRegistry.register_as(rn, id)
+			_make_puppet(rn)
 		return
 	var scene_path: String = rec.get("s", "") as String
 	if scene_path.is_empty() or not ResourceLoader.exists(scene_path):

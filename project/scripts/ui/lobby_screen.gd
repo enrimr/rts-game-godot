@@ -78,11 +78,15 @@ var _summary_label: Label = null
 var _civ_detail_vbox: VBoxContainer = null
 var _lobby_sync_timer: Timer = null
 var _last_lobby_snapshot: Dictionary = {}
+## What the current UI was built for; a flip (host picked a save / cancelled,
+## or the client learned of it via the lobby broadcast) forces a full rebuild.
+var _resume_built: bool = false
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
 	_init_rival_state()
 	_build()
+	_resume_built = NetworkSession.resume_active
 	if lan_mode:
 		NetworkSession.roster_changed.connect(_refresh_lan_panels)
 		NetworkSession.config_changed.connect(_refresh_lan_panels)
@@ -209,8 +213,10 @@ func _build_internet_button(row: HBoxContainer, ip_label: Label) -> void:
 		_inet_btn.disabled = true
 		_inet_ip_label.text = tr("LAN_INTERNET_WAIT")
 		NetworkSession.setup_internet())
-	NetworkSession.internet_ready.connect(_on_internet_ready)
-	NetworkSession.internet_failed.connect(_on_internet_failed)
+	if not NetworkSession.internet_ready.is_connected(_on_internet_ready):
+		NetworkSession.internet_ready.connect(_on_internet_ready)
+	if not NetworkSession.internet_failed.is_connected(_on_internet_failed):
+		NetworkSession.internet_failed.connect(_on_internet_failed)
 
 func _on_internet_ready(external_ip: String) -> void:
 	if is_instance_valid(_inet_ip_label):
@@ -259,8 +265,10 @@ func _build_chat_panel(left: VBoxContainer) -> void:
 		NetworkSession.send_chat(_chat_input.text)
 		_chat_input.text = "")
 	row.add_child(send)
-	NetworkSession.chat_received.connect(_on_chat_line)
-	NetworkSession.system_chat_received.connect(_on_system_line)
+	if not NetworkSession.chat_received.is_connected(_on_chat_line):
+		NetworkSession.chat_received.connect(_on_chat_line)
+	if not NetworkSession.system_chat_received.is_connected(_on_system_line):
+		NetworkSession.system_chat_received.connect(_on_system_line)
 
 func _on_system_line(kind: String, display_name: String) -> void:
 	if _chat_log == null:
@@ -359,7 +367,21 @@ func _build() -> void:
 
 	# Only the LAN host edits the match settings; clients get a live read-only
 	# summary that tracks the host's picks (broadcast_lobby → config_changed).
-	if lan_mode and not NetworkSession.is_host():
+	# A resumed match freezes the settings for everyone, host included.
+	if lan_mode and NetworkSession.resume_active:
+		var note: Label = _make_label(tr("LOBBY_RESUME_NOTE"))
+		note.add_theme_color_override("font_color", Color(0.95, 0.85, 0.45))
+		left.add_child(note)
+		_build_settings_summary(left)
+		if NetworkSession.is_host():
+			var cancel_btn: Button = _make_btn(tr("LOBBY_RESUME_CANCEL"),
+				Color(0.30, 0.16, 0.12, 0.95), Color(0.45, 0.24, 0.18, 0.95))
+			cancel_btn.add_theme_font_size_override("font_size", 14)
+			cancel_btn.pressed.connect(func() -> void:
+				NetworkSession.cancel_resume()
+				_refresh_lan_panels())
+			left.add_child(cancel_btn)
+	elif lan_mode and not NetworkSession.is_host():
 		_build_settings_summary(left)
 	else:
 		_build_setting_rows(left)
@@ -397,6 +419,61 @@ func _build() -> void:
 		_build_chat_panel(left)
 
 	# ── Right column: player civ ─────────────────────────────────────────────
+	# A resumed match fixes every seat's civ from the save — no picker.
+	if not (lan_mode and NetworkSession.resume_active):
+		_build_civ_column(columns)
+
+	# Bottom buttons
+	vbox.add_child(_make_sep())
+
+	var btn_row: HBoxContainer = HBoxContainer.new()
+	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_row.add_theme_constant_override("separation", 16)
+	vbox.add_child(btn_row)
+
+	var back_btn: Button = _make_btn(tr("LOBBY_BACK"), Color(0.20, 0.20, 0.25, 0.95), Color(0.35, 0.35, 0.40, 0.95))
+	back_btn.custom_minimum_size = Vector2(140, 44)
+	back_btn.pressed.connect(func() -> void: back_requested.emit())
+	btn_row.add_child(back_btn)
+
+	if lan_mode and NetworkSession.is_host() and not NetworkSession.resume_active:
+		var resume_btn: Button = _make_btn(tr("LOBBY_RESUME_BTN"),
+			Color(0.16, 0.28, 0.40, 0.95), Color(0.22, 0.38, 0.55, 0.95))
+		resume_btn.custom_minimum_size = Vector2(200, 44)
+		resume_btn.pressed.connect(_open_resume_picker)
+		btn_row.add_child(resume_btn)
+
+	var start_btn: Button = _make_btn(
+		tr("LOBBY_RESUME_START") if NetworkSession.resume_active else tr("LOBBY_START"),
+		Color(0.18, 0.38, 0.18, 0.95), Color(0.28, 0.55, 0.28, 0.95))
+	start_btn.custom_minimum_size = Vector2(200, 44)
+	start_btn.add_theme_font_size_override("font_size", 22)
+	if lan_mode:
+		# Only the host launches; every machine then loads the same world.
+		start_btn.visible = NetworkSession.is_host()
+		start_btn.pressed.connect(func() -> void:
+			start_btn.disabled = true
+			NetworkSession.start_match())
+	else:
+		start_btn.pressed.connect(func() -> void: start_requested.emit())
+	btn_row.add_child(start_btn)
+
+## Rebuilds the whole screen in place (used when resume mode flips on/off).
+func _rebuild_all() -> void:
+	for child: Node in get_children():
+		if child != _lobby_sync_timer:
+			child.queue_free()
+	_players_panel = null
+	_chat_log = null
+	_chat_input = null
+	_summary_label = null
+	_civ_detail_vbox = null
+	_inet_btn = null
+	_inet_ip_label = null
+	_player_civ_btns.clear()
+	_build()
+
+func _build_civ_column(columns: HBoxContainer) -> void:
 	var right: VBoxContainer = VBoxContainer.new()
 	right.add_theme_constant_override("separation", 10)
 	right.custom_minimum_size = Vector2(340, 0)
@@ -487,32 +564,6 @@ func _build() -> void:
 		name_edit.focus_exited.connect(func() -> void:
 			NetworkSession.request_name(name_edit.text))
 		name_row.add_child(name_edit)
-
-	# Bottom buttons
-	vbox.add_child(_make_sep())
-
-	var btn_row: HBoxContainer = HBoxContainer.new()
-	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_row.add_theme_constant_override("separation", 16)
-	vbox.add_child(btn_row)
-
-	var back_btn: Button = _make_btn(tr("LOBBY_BACK"), Color(0.20, 0.20, 0.25, 0.95), Color(0.35, 0.35, 0.40, 0.95))
-	back_btn.custom_minimum_size = Vector2(140, 44)
-	back_btn.pressed.connect(func() -> void: back_requested.emit())
-	btn_row.add_child(back_btn)
-
-	var start_btn: Button = _make_btn(tr("LOBBY_START"), Color(0.18, 0.38, 0.18, 0.95), Color(0.28, 0.55, 0.28, 0.95))
-	start_btn.custom_minimum_size = Vector2(200, 44)
-	start_btn.add_theme_font_size_override("font_size", 22)
-	if lan_mode:
-		# Only the host launches; every machine then loads the same world.
-		start_btn.visible = NetworkSession.is_host()
-		start_btn.pressed.connect(func() -> void:
-			start_btn.disabled = true
-			NetworkSession.start_match())
-	else:
-		start_btn.pressed.connect(func() -> void: start_requested.emit())
-	btn_row.add_child(start_btn)
 
 # --- Settings rows (offline lobby + LAN host) ---
 
@@ -644,6 +695,10 @@ func _settings_summary_text() -> String:
 func _refresh_lan_panels() -> void:
 	if not lan_mode:
 		return
+	if NetworkSession.resume_active != _resume_built:
+		_resume_built = NetworkSession.resume_active
+		_rebuild_all()
+		return
 	_rebuild_players_panel()
 	if _summary_label != null:
 		_summary_label.text = _settings_summary_text()
@@ -663,6 +718,10 @@ func _rebuild_players_panel() -> void:
 		return
 	for child: Node in _players_panel.get_children():
 		child.queue_free()
+	if NetworkSession.resume_active:
+		for seat: Variant in NetworkSession.resume_seat_view():
+			_add_resume_row(seat as Dictionary)
+		return
 	var roster: Dictionary = NetworkSession.get_roster()
 	_add_human_row(0, roster)
 	var client_ids: Array = []
@@ -683,6 +742,126 @@ func _rebuild_players_panel() -> void:
 	while next_client < client_ids.size():
 		_add_human_row(client_ids[next_client] as int, roster)
 		next_client += 1
+
+## One original seat of a resumed match: claimed (normal look) or greyed-out
+## "waiting for <name>…". Everything is locked — the save decides it all.
+func _add_resume_row(seat: Dictionary) -> void:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	_players_panel.add_child(row)
+
+	var connected: bool = seat.get("connected", false) as bool
+	var pid: int = seat.get("pid", -1) as int
+	var swatch: ColorRect = ColorRect.new()
+	swatch.custom_minimum_size = Vector2(22, 22)
+	swatch.color = PlayerColors.COLORS[clampi(seat.get("color", 0) as int,
+		0, PlayerColors.COLORS.size() - 1)]
+	if not connected:
+		swatch.color = swatch.color.darkened(0.55)
+	row.add_child(swatch)
+
+	var name_label: Label = Label.new()
+	var display: String = str(seat.get("name", "?"))
+	if pid == 0:
+		display += "  (%s)" % tr("LAN_HOST_TAG")
+	if connected and pid == NetworkSession.local_player_id:
+		display += "  ◄"
+	name_label.text = display if connected else tr("LAN_SEAT_WAITING") % display
+	if not connected:
+		name_label.add_theme_color_override("font_color", Color(0.60, 0.60, 0.65))
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override("font_size", 16)
+	row.add_child(name_label)
+
+	var civ_label: Label = Label.new()
+	civ_label.text = _civ_name(seat.get("civ", "") as String)
+	civ_label.add_theme_font_size_override("font_size", 15)
+	civ_label.add_theme_color_override("font_color", Color(0.75, 0.95, 0.60))
+	row.add_child(civ_label)
+
+	var team: int = seat.get("team", 0) as int
+	var team_lbl: Label = Label.new()
+	team_lbl.text = "%s %s" % [tr("LOBBY_TEAM"), TEAM_LABELS[clampi(team, 0, 4)]]
+	team_lbl.add_theme_font_size_override("font_size", 14)
+	team_lbl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.75))
+	row.add_child(team_lbl)
+
+## Overlay listing only MULTIPLAYER saves; picking one freezes the lobby.
+func _open_resume_picker() -> void:
+	var shade: ColorRect = ColorRect.new()
+	shade.color = Color(0.0, 0.0, 0.0, 0.62)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(shade)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var center: CenterContainer = CenterContainer.new()
+	shade.add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(560, 0)
+	var sty: StyleBoxFlat = StyleBoxFlat.new()
+	sty.bg_color = Color(0.10, 0.10, 0.15, 1.0)
+	sty.corner_radius_top_left = 6
+	sty.corner_radius_top_right = 6
+	sty.corner_radius_bottom_left = 6
+	sty.corner_radius_bottom_right = 6
+	card.add_theme_stylebox_override("panel", sty)
+	center.add_child(card)
+
+	var margin: MarginContainer = MarginContainer.new()
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 18)
+	card.add_child(margin)
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var title: Label = _make_label(tr("LOBBY_RESUME_TITLE"))
+	title.add_theme_font_size_override("font_size", 22)
+	vbox.add_child(title)
+	vbox.add_child(_make_sep())
+
+	var mp_saves: Array[Dictionary] = []
+	for meta: Dictionary in SaveManager.list_saves():
+		if meta.get("multiplayer", false):
+			mp_saves.append(meta)
+	if mp_saves.is_empty():
+		var none: Label = Label.new()
+		none.text = tr("LOBBY_RESUME_EMPTY")
+		none.add_theme_font_size_override("font_size", 15)
+		none.add_theme_color_override("font_color", Color(0.60, 0.60, 0.60))
+		vbox.add_child(none)
+
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, minf(56.0 * mp_saves.size() + 8.0, 300.0))
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(scroll)
+	var list: VBoxContainer = VBoxContainer.new()
+	list.add_theme_constant_override("separation", 6)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+
+	for meta: Dictionary in mp_saves:
+		var slot: int = meta.get("slot", 0) as int
+		var names: Array = meta.get("player_names", []) as Array
+		var btn: Button = _make_btn("%s\n%s" % [str(meta.get("display_name", "")),
+			", ".join(PackedStringArray(names))],
+			Color(0.16, 0.20, 0.32, 0.95), Color(0.24, 0.32, 0.50, 0.95))
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.add_theme_font_size_override("font_size", 15)
+		list.add_child(btn)
+		var captured_slot: int = slot
+		btn.pressed.connect(func() -> void:
+			if NetworkSession.begin_resume(captured_slot):
+				shade.queue_free()
+				_refresh_lan_panels())
+
+	vbox.add_child(_make_sep())
+	var cancel: Button = _make_btn(tr("SAVE_CANCEL"),
+		Color(0.22, 0.10, 0.10, 0.95), Color(0.38, 0.15, 0.12, 0.95))
+	cancel.pressed.connect(func() -> void: shade.queue_free())
+	vbox.add_child(cancel)
 
 func _add_human_row(pid: int, roster: Dictionary) -> void:
 	if not roster.has(pid):

@@ -32,6 +32,7 @@ func _ready() -> void:
 	_build_card()
 	NetworkSession.joined_host.connect(_open_match_lobby)
 	NetworkSession.join_failed.connect(_on_join_failed)
+	NetworkSession.join_refused.connect(_on_join_refused)
 	NetworkSession.kicked.connect(_on_kicked)
 	NetworkSession.session_closed.connect(_on_session_closed)
 	NetworkSession.steam_session_started.connect(_open_match_lobby)
@@ -41,6 +42,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	NetworkSession.joined_host.disconnect(_open_match_lobby)
 	NetworkSession.join_failed.disconnect(_on_join_failed)
+	NetworkSession.join_refused.disconnect(_on_join_refused)
 	NetworkSession.kicked.disconnect(_on_kicked)
 	NetworkSession.session_closed.disconnect(_on_session_closed)
 	NetworkSession.steam_session_started.disconnect(_open_match_lobby)
@@ -209,6 +211,10 @@ func _on_join_pressed() -> void:
 
 func _on_join_failed() -> void:
 	_status.text = tr("LAN_JOIN_FAILED")
+
+func _on_join_refused(kind: String, detail: String) -> void:
+	if kind == "version":
+		_status.text = tr("LAN_VERSION_MISMATCH") % [detail, NetworkSession.game_version()]
 
 func _on_kicked() -> void:
 	_status.text = tr("LAN_KICKED")

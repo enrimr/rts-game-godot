@@ -88,6 +88,9 @@ func open_pause_menu() -> void:
 
 	var save_btn: Button = _make_pause_btn(tr("PAUSEMENU_SAVE"), Color(0.16, 0.28, 0.44, 0.95), Color(0.24, 0.42, 0.62, 0.95))
 	save_btn.pressed.connect(_open_save_slot_picker)
+	# A client's world is a replicated mirror, not the simulation — only the
+	# host can write a faithful (and later resumable) save.
+	save_btn.disabled = NetworkSession.is_client()
 	vbox.add_child(save_btn)
 
 	vbox.add_child(HSeparator.new())
@@ -173,7 +176,7 @@ func _open_save_slot_picker() -> void:
 		new_btn.add_theme_stylebox_override("hover",  HudStyle.panel(Color(0.24, 0.46, 0.24, 0.95)))
 		new_row.add_child(new_btn)
 		new_btn.pressed.connect(func() -> void:
-			var ok: bool = SaveManager.save_game(world, -1)
+			var ok: bool = await SaveManager.save_game(world, -1)
 			overlay.queue_free()
 			close_pause_menu()
 			_show_save_notification(ok)
@@ -195,7 +198,7 @@ func _open_save_slot_picker() -> void:
 			row.add_child(slot_btn)
 			var captured_slot: int = slot
 			slot_btn.pressed.connect(func() -> void:
-				var ok: bool = SaveManager.save_game(world, captured_slot)
+				var ok: bool = await SaveManager.save_game(world, captured_slot)
 				overlay.queue_free()
 				close_pause_menu()
 				_show_save_notification(ok)

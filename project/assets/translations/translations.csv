@@ -493,3 +493,11 @@ STEAM_UNAVAILABLE,Steam not available (client closed?),Steam no disponible (¿cl
 STEAM_INVITE_ACTION,Invite,Invitar
 STEAM_INVITE_SENT,Sent ✓,Enviada ✓
 STEAM_NO_FRIENDS,No friends found,No se encontraron amigos
+LOBBY_RESUME_BTN,Load saved match,Cargar partida guardada
+LOBBY_RESUME_TITLE,Resume a saved match,Reanudar una partida guardada
+LOBBY_RESUME_START,Resume match,Reanudar partida
+LOBBY_RESUME_CANCEL,Cancel resume,Cancelar reanudación
+LOBBY_RESUME_NOTE,Resumed match — settings and seats come from the save,Partida reanudada — los ajustes y asientos vienen de la partida guardada
+LOBBY_RESUME_EMPTY,No multiplayer saves found,No hay partidas multijugador guardadas
+LAN_SEAT_WAITING,Waiting for %s…,Esperando a %s…
+LAN_VERSION_MISMATCH,Incompatible versions — host has %s and you have %s,Versiones incompatibles — el anfitrión tiene %s y tú %s

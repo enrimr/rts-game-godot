@@ -16,6 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="Calima: Flames of the Atlantic"
 config/description="A real-time strategy game inspired by Age of Empires II."
+config/version="0.9.8-beta"
 run/main_scene="res://scenes/game/main_menu.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 boot_splash/bg_color=Color(0.043, 0.031, 0.024, 1)

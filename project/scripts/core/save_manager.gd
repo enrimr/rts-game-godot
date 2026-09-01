@@ -16,6 +16,13 @@ const SCHEMA_VERSION: int = 1
 var pending_load: bool = false
 var _save_data: Dictionary = {}
 
+## Multiplayer sheet of the loaded save ({"humans": [...], "roster": {...}}),
+## empty for single-player saves. Kept out of _save_data so it survives
+## restore_world — the resume lobby and later rejoins read it all match long.
+var _resume_sheet: Dictionary = {}
+## Per-player explored fog of the loaded save: pid (String) -> raw base64.
+var _resume_fog: Dictionary = {}
+
 ## One entry per existing save, sorted newest-first.
 ## Each dict: { slot, display_name, timestamp, civ, map_type, play_time_sec }
 func list_saves() -> Array[Dictionary]:
@@ -67,17 +74,27 @@ func _read_meta(path: String) -> Dictionary:
 		return {}
 	var d: Dictionary = parsed as Dictionary
 	var mc: Dictionary = d.get("match_config", {}) as Dictionary
+	var mp: Dictionary = d.get("multiplayer", {}) as Dictionary
+	var names: Array = []
+	for entry: Variant in (mp.get("roster", {}) as Dictionary).values():
+		names.append(str((entry as Dictionary).get("name", "?")))
 	return {
 		"display_name": str(d.get("display_name", "")),
 		"timestamp":    d.get("timestamp", 0) as int,
 		"civ":          str(mc.get("player_civ_id", "?")),
 		"map_type":     mc.get("map_type", 0) as int,
 		"play_time_sec":d.get("play_time_sec", 0) as int,
+		"multiplayer":  not mp.is_empty(),
+		"player_names": names,
 	}
 
 func save_game(world: Node, slot: int = -1) -> bool:
 	if slot < 1:
 		slot = _next_free_slot()
+	# Each client's explored fog lives on its machine only — gather it first
+	# so a multiplayer save can restore every player's map, not just the host's.
+	if NetworkSession.is_host() and NetworkSession.is_online():
+		await NetworkSession.collect_client_fogs()
 	var data: Dictionary = _collect(world)
 	data["timestamp"]    = int(Time.get_unix_time_from_system())
 	data["display_name"] = _make_display_name(data)
@@ -114,9 +131,32 @@ func load_game(slot: int) -> bool:
 		push_error("SaveManager: corrupt save in slot %d" % slot)
 		return false
 	_save_data = parsed as Dictionary
+	_resume_sheet = (_save_data.get("multiplayer", {}) as Dictionary).duplicate(true)
+	_resume_fog = (_save_data.get("fog_by_player", {}) as Dictionary).duplicate()
 	pending_load = true
 	_restore_match_config(_save_data)
 	return true
+
+## Backs out of a load that will not happen (e.g. a cancelled resume lobby).
+func cancel_pending() -> void:
+	pending_load = false
+	_save_data = {}
+	_resume_sheet = {}
+	_resume_fog = {}
+
+func resume_sheet() -> Dictionary:
+	return _resume_sheet
+
+## One player's saved exploration, zstd+base64 for the resync wire ("" when
+## the save carries none for that seat).
+func resume_fog_b64(pid: int) -> String:
+	var raw_b64: Variant = _resume_fog.get(str(pid))
+	if raw_b64 == null:
+		return ""
+	var raw: PackedByteArray = Marshalls.base64_to_raw(str(raw_b64))
+	if raw.is_empty():
+		return ""
+	return Marshalls.raw_to_base64(raw.compress(FileAccess.COMPRESSION_ZSTD))
 
 func delete_save(slot: int) -> void:
 	var path: String = _slot_path(slot)
@@ -230,7 +270,24 @@ func _collect(world: Node) -> Dictionary:
 		"rival_civ_ids": Array(MatchConfig.rival_civ_ids),
 		"victory_mode":  MatchConfig.victory_mode,
 		"player_teams":  MatchConfig.player_teams.duplicate(),
+		"weather_enabled":   MatchConfig.weather_enabled,
+		"weather_frequency": MatchConfig.weather_frequency,
+		"hero_gender":       MatchConfig.hero_gender,
 	}
+
+	# Multiplayer sheet: who sat where, so the match can be resumed with the
+	# SAME players (seats matched by Steam ID or name in the resume lobby).
+	if NetworkSession.is_host() and NetworkSession.is_online():
+		var seats: Dictionary = NetworkSession.seat_snapshot()
+		var roster_out: Dictionary = {}
+		for spid: Variant in seats:
+			var entry: Dictionary = (seats[spid] as Dictionary).duplicate()
+			entry.erase("peer")
+			roster_out[str(spid)] = entry
+		data["multiplayer"] = {
+			"humans": NetworkSession.match_human_ids.duplicate(),
+			"roster": roster_out,
+		}
 
 	var player_ids: Array[int] = [0]
 	for rid: int in MatchConfig.get_rival_player_ids():
@@ -309,6 +366,16 @@ func _collect(world: Node) -> Dictionary:
 	var fog: FogOfWar = _find_fog(world)
 	if fog != null:
 		data["fog_cells"] = Marshalls.raw_to_base64(fog._cells)
+		# Client fogs were collected (compressed) just before _collect ran;
+		# store them raw-base64, same encoding as the host's fog_cells.
+		if NetworkSession.is_host() and NetworkSession.is_online():
+			var by_player: Dictionary = {}
+			for fpid: Variant in NetworkSession.client_fogs:
+				var cells: PackedByteArray = NetworkSession.fog_cells_from_b64(
+					NetworkSession.client_fogs[fpid] as String, fog._cells.size())
+				if not cells.is_empty():
+					by_player[str(fpid)] = Marshalls.raw_to_base64(cells)
+			data["fog_by_player"] = by_player
 
 	# As a String: the RNG state is a full 64-bit value and JSON numbers are
 	# doubles, so a raw int would silently lose the low bits.
@@ -419,6 +486,9 @@ func _restore_match_config(data: Dictionary) -> void:
 		for cid: Variant in (rcids as Array):
 			MatchConfig.rival_civ_ids.append(str(cid))
 	MatchConfig.victory_mode = mc.get("victory_mode", MatchConfig.victory_mode) as int
+	MatchConfig.weather_enabled   = mc.get("weather_enabled", MatchConfig.weather_enabled) as bool
+	MatchConfig.weather_frequency = mc.get("weather_frequency", MatchConfig.weather_frequency) as int
+	MatchConfig.hero_gender       = mc.get("hero_gender", MatchConfig.hero_gender) as int
 	MatchConfig.player_teams.clear()
 	var teams: Variant = mc.get("player_teams")
 	if teams is Dictionary:

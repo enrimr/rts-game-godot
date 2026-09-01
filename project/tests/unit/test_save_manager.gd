@@ -143,7 +143,7 @@ func test_save_game_creates_file_in_save_dir() -> void:
 	var world: Node = _make_fake_world()
 	add_child_autofree(world)
 
-	var ok: bool = SaveManager.save_game(world, _TEST_SLOT_A)
+	var ok: bool = await SaveManager.save_game(world, _TEST_SLOT_A)
 	assert_true(ok, "save_game() must return true on success")
 
 	var path: String = SaveManager.SAVE_DIR + "save_%02d.json" % _TEST_SLOT_A
@@ -591,7 +591,7 @@ func test_save_game_with_minus_one_slot_creates_a_file() -> void:
 
 	var world: Node = _make_fake_world()
 	add_child_autofree(world)
-	var ok: bool = SaveManager.save_game(world, -1)
+	var ok: bool = await SaveManager.save_game(world, -1)
 	assert_true(ok, "save_game(-1) must succeed")
 
 	var after: int = SaveManager.list_saves().size()
@@ -605,6 +605,107 @@ func test_save_game_with_minus_one_slot_creates_a_file() -> void:
 		# Auto slot is likely 1 on a clean machine; delete it.
 		SaveManager.delete_save(sl)
 		break  # just delete the newest (first in sorted list)
+
+# ---------------------------------------------------------------------------
+# 11. Multiplayer sheet (resume support)
+# ---------------------------------------------------------------------------
+
+func _fake_host_session() -> void:
+	NetworkSession.role = NetworkSession.Role.HOST
+	NetworkSession._roster = {
+		0: {"name": "Anfitrion", "color": 0, "civ": "guanches", "team": 1, "peer": 1},
+		1: {"name": "Invitado", "color": 2, "civ": "britons", "team": 2, "peer": 7},
+	}
+	NetworkSession.match_human_ids = [0, 1]
+
+func _reset_session() -> void:
+	NetworkSession.role = NetworkSession.Role.OFFLINE
+	NetworkSession._roster = {}
+	NetworkSession._vacant_seats = {}
+	NetworkSession.match_human_ids = [0]
+	NetworkSession.client_fogs.clear()
+
+func test_multiplayer_sheet_saved_when_hosting_online() -> void:
+	var world: Node = _make_fake_world()
+	add_child_autofree(world)
+	_fake_host_session()
+	SaveManager.save_game(world, _TEST_SLOT_A)
+	_reset_session()
+
+	var meta: Dictionary = {}
+	for entry: Dictionary in SaveManager.list_saves():
+		if (entry.get("slot", 0) as int) == _TEST_SLOT_A:
+			meta = entry
+	assert_true(meta.get("multiplayer", false) as bool,
+		"a save written while hosting online must be flagged multiplayer")
+	var names: Array = meta.get("player_names", []) as Array
+	assert_true(names.has("Anfitrion") and names.has("Invitado"),
+		"the save meta must list every seated player's name")
+
+	SaveManager.load_game(_TEST_SLOT_A)
+	var sheet: Dictionary = SaveManager.resume_sheet()
+	var roster: Dictionary = sheet.get("roster", {}) as Dictionary
+	assert_eq(roster.size(), 2, "resume sheet must keep both seats")
+	assert_false((roster.get("1", {}) as Dictionary).has("peer"),
+		"peer ids are connection-local and must not be persisted")
+	assert_eq((roster.get("1", {}) as Dictionary).get("civ"), "britons")
+	SaveManager.cancel_pending()
+
+func test_offline_save_has_no_multiplayer_sheet() -> void:
+	var world: Node = _make_fake_world()
+	add_child_autofree(world)
+	SaveManager.save_game(world, _TEST_SLOT_A)
+	var meta: Dictionary = {}
+	for entry: Dictionary in SaveManager.list_saves():
+		if (entry.get("slot", 0) as int) == _TEST_SLOT_A:
+			meta = entry
+	assert_false(meta.get("multiplayer", false) as bool,
+		"offline saves must not be offered in the resume lobby")
+
+func test_seat_snapshot_merges_vacant_seats() -> void:
+	_fake_host_session()
+	NetworkSession._roster.erase(1)
+	NetworkSession._vacant_seats = {1: {"entry": {"name": "Invitado", "color": 2,
+		"civ": "britons", "team": 2}, "deadline_msec": 0}}
+	var seats: Dictionary = NetworkSession.seat_snapshot()
+	_reset_session()
+	assert_true(seats.has(0) and seats.has(1),
+		"a dropped player's reserved seat must still be part of the snapshot")
+	assert_eq((seats[1] as Dictionary).get("name"), "Invitado")
+
+func test_restore_match_config_weather_and_hero_fields() -> void:
+	MatchConfig.weather_enabled = true
+	MatchConfig.weather_frequency = 1
+	MatchConfig.hero_gender = 0
+	SaveManager._restore_match_config({"match_config": {
+		"weather_enabled": false, "weather_frequency": 3, "hero_gender": 2}})
+	assert_false(MatchConfig.weather_enabled, "weather_enabled must restore")
+	assert_eq(MatchConfig.weather_frequency, 3, "weather_frequency must restore")
+	assert_eq(MatchConfig.hero_gender, 2, "hero_gender must restore")
+	MatchConfig.weather_enabled = true
+	MatchConfig.weather_frequency = 1
+	MatchConfig.hero_gender = 0
+
+func test_resume_fog_b64_roundtrips_through_wire_encoding() -> void:
+	var cells: PackedByteArray = PackedByteArray()
+	cells.resize(400)
+	for i: int in range(0, 400, 3):
+		cells[i] = 1
+	SaveManager._resume_fog = {"1": Marshalls.raw_to_base64(cells)}
+	var wire: String = SaveManager.resume_fog_b64(1)
+	assert_false(wire.is_empty(), "a stored fog must produce a wire payload")
+	var back: PackedByteArray = NetworkSession.fog_cells_from_b64(wire, 400)
+	assert_eq(back, cells, "wire compression must round-trip the cells exactly")
+	assert_eq(SaveManager.resume_fog_b64(5), "",
+		"an unknown seat has no fog payload")
+	assert_true(NetworkSession.fog_cells_from_b64(wire, 500).is_empty(),
+		"a size mismatch must be rejected, never half-applied")
+	SaveManager._resume_fog = {}
+
+func test_game_version_is_set() -> void:
+	assert_false(NetworkSession.game_version().is_empty(), "version must exist")
+	assert_ne(NetworkSession.game_version(), "dev",
+		"project.godot must define application/config/version for the handshake")
 
 func test_animals_survive_collection() -> void:
 	## Animals don't extend UnitBase (no is_female/civ_id): the collector must

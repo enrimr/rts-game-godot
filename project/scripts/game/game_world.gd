@@ -108,6 +108,11 @@ func _ready() -> void:
 	_saved_tc_position = tc_positions[0]
 	camera.position = drop_off.global_position
 
+	# A client of a RESUMED match boots the map but NO entities: the host's
+	# restored world shares no deterministic spawn baseline with a fresh one,
+	# so units, buildings and resource nodes all arrive via the full resync.
+	var resumed_client: bool = NetworkSession.is_client() and NetworkSession.resumed_match
+
 	if SaveManager.pending_load:
 		# AI node structure must still exist for signals / victory checks.
 		for rival_id: int in MatchConfig.get_rival_player_ids():
@@ -116,6 +121,8 @@ func _ready() -> void:
 			_setup._setup_ai_node_only(rival_id, tc_pos)
 		if _ai_town_centers.size() > 0:
 			_ai_town_center = _ai_town_centers[1]
+	elif resumed_client:
+		pass
 	else:
 		_setup.spawn_player_start()
 
@@ -207,6 +214,12 @@ func _ready() -> void:
 		SaveManager.restore_world(self)
 		camera.position = drop_off.global_position
 
+	# Resumed-match client: drop every map-generated entity (animals, scattered
+	# resources) BEFORE the registry rescan — the resync repopulates the world
+	# with the host's ids, and a leftover local entity would collide with them.
+	if resumed_client:
+		_clear_generated_entities()
+
 	# Last: every entity of the finished match setup (including a save restore)
 	# gets its deterministic EntityRegistry ID, and the command log starts.
 	CommandBus.start_match(self)
@@ -223,6 +236,21 @@ func _ready() -> void:
 			NetworkSession.player_resigned.connect(_on_player_resigned)
 		else:
 			NetworkSession.connection_lost.connect(_on_connection_lost, CONNECT_ONE_SHOT)
+
+## Immediate (not queued) removal so CommandBus.start_match's rescan, which
+## runs synchronously right after, sees none of the map-generated entities.
+func _clear_generated_entities() -> void:
+	for child: Node in units_layer.get_children():
+		units_layer.remove_child(child)
+		child.free()
+	for child: Node in buildings_layer.get_children():
+		buildings_layer.remove_child(child)
+		child.free()
+	for child: Node in get_children().duplicate():
+		if child is ResourceNode:
+			remove_child(child)
+			child.free()
+	ResourceManager.reset_resource_cache()
 
 # --- Match bootstrap (implementation in WorldSetup) ---
 
