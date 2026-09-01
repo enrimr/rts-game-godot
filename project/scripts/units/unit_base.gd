@@ -266,6 +266,28 @@ func _foot_anchor_y() -> float:
 
 func _add_player_color_stripe() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 11.0, 6.0)
+	_apply_owner_marker_last()
+
+## Screen-space height of the owner pennant pole base; ships override with
+## their mast tops.
+func _pennant_top_y() -> float:
+	return -20.0
+
+## Bodies are built procedurally in deferred steps and the civ dress repaints
+## them — so both the human-or-ship decision AND the tint must run a couple
+## of frames later, as the LAST paint layer.
+func _apply_owner_marker_last() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	if VisualFx.find_head(self) != null:
+		# Human figure: the tunic wears the team colour.
+		VisualFx.apply_owner_tint(self, player_id)
+	else:
+		# Ships and siege keep their art; they fly a team pennant instead
+		# (animals never run this — they don't extend UnitBase).
+		VisualFx.add_owner_pennant(self, player_id, _pennant_top_y())
 
 # Applies the female look to human units. Non-human units (no head polygon) and
 # male units are left as-is. Subclasses that style gender themselves (HeroUnit)
@@ -418,8 +440,11 @@ func set_selected(value: bool) -> void:
 	is_selected = value
 	selection_indicator.visible = value
 	var plinth: Node = get_node_or_null("PlayerColorStripe")
-	if plinth is CanvasItem:
-		(plinth as CanvasItem).visible = value
+	if plinth is Line2D:
+		# Always visible; selection makes the owner ring pop.
+		var ring_col: Color = PlayerColors.get_color(player_id)
+		ring_col.a = 0.95 if value else 0.55
+		(plinth as Line2D).default_color = ring_col
 	if value:
 		var col: Color = Color(0.0, 1.0, 0.0, 0.8) if player_id == 0 else Color(1.0, 0.85, 0.0, 0.85)
 		var circle: Node = selection_indicator.get_node_or_null("SelectionCircle")

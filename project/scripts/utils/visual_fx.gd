@@ -74,16 +74,89 @@ static func add_ground_ring(parent: Node2D, ring_name: String, rx: float, ry: fl
 ## recolours the existing ring (used when a unit changes owner).
 static func add_ground_plinth(parent: Node2D, player_id: int, rx: float, offset_y: float) -> void:
 	var color: Color = PlayerColors.get_color(player_id)
-	color.a = 0.9
+	# Always visible but deliberately faint — team readability without the old
+	# "every unit stands in a pond" effect; selection brightens it.
+	color.a = 0.55
 	var existing: Node = parent.get_node_or_null("PlayerColorStripe")
 	if existing != null and not (existing is Line2D):
 		# Legacy filled plinth or ColorRect stripe from an older save — replace.
 		existing.name = "PlayerColorStripeOld"
 		existing.queue_free()
 	var ring: Line2D = add_ground_ring(parent, "PlayerColorStripe", rx, rx * 0.5,
-		color, 1.8, offset_y, SHADOW_Z)
-	var sel: Variant = parent.get("is_selected")
-	ring.visible = sel is bool and (sel as bool)
+		color, 1.5, offset_y, SHADOW_Z)
+	ring.visible = true
+
+## Owner tint: blends the unit's LARGEST body polygon (torso/tunic on human
+## rigs) toward the player colour, so the team reads on the figure itself —
+## also while moving, where ground markers get lost in the crowd. Original
+## colours are stashed in metadata, so a change of owner (Mercenary Pact,
+## sheep conversion) re-tints from the true base.
+const OWNER_TINT: float = 0.45
+
+static func apply_owner_tint(unit: Node, player_id: int) -> void:
+	var body: Node = unit.get_node_or_null("Body")
+	if body == null:
+		return
+	var best: Polygon2D = null
+	var best_area: float = 0.0
+	for poly: Polygon2D in _all_polygons(body):
+		var a: float = _polygon_area(poly.polygon)
+		if a > best_area:
+			best_area = a
+			best = poly
+	if best == null:
+		return
+	if not best.has_meta(&"owner_tint_base"):
+		best.set_meta(&"owner_tint_base", best.color)
+	var base: Color = best.get_meta(&"owner_tint_base") as Color
+	best.color = base.lerp(PlayerColors.get_color(player_id), OWNER_TINT)
+
+## Owner pennant for units whose body must keep its art untouched (ships,
+## siege): a small player-coloured flag on a pole above the figure.
+static func add_owner_pennant(unit: Node, player_id: int, top_y: float) -> void:
+	var color: Color = PlayerColors.get_color(player_id)
+	# Inside the Body: the billboard keeps it upright over the figure —
+	# parented to the unit root it would lie flat on the ground plane.
+	var holder: Node = unit.get_node_or_null("Body")
+	if holder == null:
+		holder = unit
+	var existing: Node = holder.get_node_or_null("OwnerPennant")
+	if existing != null:
+		for child: Node in existing.get_children():
+			if child is Polygon2D and (child.name as String) == "Flag":
+				(child as Polygon2D).color = color
+		return
+	var pennant: Node2D = Node2D.new()
+	pennant.name = "OwnerPennant"
+	pennant.position = Vector2(0.0, top_y)
+	var pole: Polygon2D = Polygon2D.new()
+	pole.name = "Pole"
+	pole.color = Color(0.30, 0.24, 0.18)
+	pole.polygon = PackedVector2Array([
+		Vector2(-0.6, 0.0), Vector2(0.6, 0.0), Vector2(0.6, -10.0), Vector2(-0.6, -10.0)])
+	pennant.add_child(pole)
+	var flag: Polygon2D = Polygon2D.new()
+	flag.name = "Flag"
+	flag.color = color
+	flag.polygon = PackedVector2Array([
+		Vector2(0.6, -10.0), Vector2(9.0, -8.0), Vector2(0.6, -5.5)])
+	pennant.add_child(flag)
+	holder.add_child(pennant)
+
+static func _all_polygons(node: Node) -> Array[Polygon2D]:
+	var out: Array[Polygon2D] = []
+	if node is Polygon2D:
+		out.append(node as Polygon2D)
+	for child: Node in node.get_children():
+		out.append_array(_all_polygons(child))
+	return out
+
+static func _polygon_area(points: PackedVector2Array) -> float:
+	var area: float = 0.0
+	for i: int in range(points.size()):
+		var j: int = (i + 1) % points.size()
+		area += points[i].x * points[j].y - points[j].x * points[i].y
+	return absf(area) * 0.5
 
 ## Converts a scene-authored filled SelectionCircle (a flat world-space disc
 ## that shears into a blob under the projection) into a ground-aligned ellipse

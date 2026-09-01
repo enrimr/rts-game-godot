@@ -41,3 +41,7 @@ func _nav_velocity() -> Vector2:
 	var spd: float = unit_data.move_speed \
 		* WeatherManager.get_naval_speed_multiplier(dir.normalized(), player_id)
 	return dir.normalized() * spd
+
+## Ship masts are tall: fly the team pennant above the rigging.
+func _pennant_top_y() -> float:
+	return -12.0

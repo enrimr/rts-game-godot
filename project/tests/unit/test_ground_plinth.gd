@@ -29,18 +29,21 @@ func test_plinth_is_a_ring_outline() -> void:
 	assert_not_null(ring, "ownership marker should be a Line2D ring")
 	assert_true(ring.closed, "ring should be a closed outline")
 
-func test_plinth_hidden_while_unselected() -> void:
+func test_plinth_always_visible_but_faint_unselected() -> void:
+	## Team-readability request: the owner ring shows on EVERY unit, faint
+	## while unselected (selection brightens it via UnitBase.set_selected).
 	var u: FakeUnit = _make_unit(false)
 	VisualFx.add_ground_plinth(u, 0, 10.0, 5.0)
 	var ring: Line2D = u.get_node("PlayerColorStripe") as Line2D
-	assert_false(ring.visible, "ring must stay hidden while unselected")
+	assert_true(ring.visible, "always visible — teams must read at a glance")
+	assert_almost_eq(ring.default_color.a, 0.55, 0.01, "faint while unselected")
 
-func test_plinth_hidden_when_parent_has_no_selection_property() -> void:
+func test_plinth_visible_without_selection_property() -> void:
 	var plain: Node2D = Node2D.new()
 	add_child_autofree(plain)
 	VisualFx.add_ground_plinth(plain, 2, 8.0, 4.0)
 	var ring: Line2D = plain.get_node("PlayerColorStripe") as Line2D
-	assert_false(ring.visible, "no is_selected property -> treat as unselected")
+	assert_true(ring.visible)
 
 func test_plinth_visible_while_selected() -> void:
 	var u: FakeUnit = _make_unit(true)
@@ -56,7 +59,7 @@ func test_plinth_recolours_same_ring_on_owner_change() -> void:
 	var second: Line2D = u.get_node("PlayerColorStripe") as Line2D
 	assert_same(first, second, "re-call must reuse the existing ring")
 	var expected: Color = PlayerColors.get_color(1)
-	expected.a = 0.9
+	expected.a = 0.55
 	assert_eq(second.default_color, expected, "ring recoloured to new owner")
 
 func test_legacy_filled_plinth_is_replaced() -> void:
