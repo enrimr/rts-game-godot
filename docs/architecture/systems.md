@@ -227,6 +227,17 @@ phase-2 interpolation buffer absorbs latency).
 - **Steam social (shipped)**: roster carries steam ids → real avatars in
   the players panel; rich presence set/cleared with the session; Alt+click
   minimap pings (host-validated, ally-filtered display, SPACE-ring memory).
+- **Allied AI (shipped)**: an AI team-mate sends assist squads when an ally
+  is raided (attack-move, team ping, ally-only toast; 30 s cooldown, spare
+  army required) and announces its offensives with a target ping
+  (`ally_message` on the bus, replicated; gate `tools/check_ally_ai.tscn`).
+- **Mercenaries finished**: every civ hires at the Market (age-gated,
+  localized labels/tooltips, unit miniatures, cooldown badges); Fenicios
+  pay 25% less (`Market.get_mercenary_cost`).
+- **Hero abilities audited**: `tests/unit/test_hero_abilities.gd` casts all
+  16; fixed instant-ability cooldown skip (+fizzle/kill-refund flags), the
+  Mercenary Pact crash, the mouse-dependent Boarding dash, missing team
+  awareness and the Calima cloud parenting.
 - **Phase 2 still pending**: live Steam-lobby manual test. Migration to lockstep stays open: the command wire format is
   shared, only the return channel changes — it requires the
   simulation-determinism milestone (movement off Godot physics).
