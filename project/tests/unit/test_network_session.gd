@@ -154,3 +154,11 @@ func test_rename_updates_the_roster_and_rejects_empties() -> void:
 	assert_eq(NetworkSession.display_name_of(0), "Enrique", "an empty rename is ignored")
 	NetworkSession._apply_rename(7, "Nadie")
 	assert_eq(NetworkSession.display_name_of(0), "Enrique", "unknown ids never crash")
+
+func test_command_rate_limit_window() -> void:
+	NetworkSession._cmd_windows.clear()
+	for i: int in range(NetworkSession.COMMANDS_PER_SEC_LIMIT):
+		assert_true(NetworkSession._command_rate_ok(7), "within budget at %d" % i)
+	assert_false(NetworkSession._command_rate_ok(7), "the flood gets dropped")
+	assert_true(NetworkSession._command_rate_ok(8), "other players unaffected")
+	NetworkSession._cmd_windows.clear()

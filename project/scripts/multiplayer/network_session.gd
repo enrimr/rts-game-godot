@@ -375,19 +375,33 @@ func _apply_rename(pid: int, new_name: String) -> void:
 ## seat (by roster name, or the single vacancy) and put it back in the game.
 func _try_rejoin(peer_id: int, claimed_name: String) -> void:
 	var seat_pid: int = -1
-	for pid: Variant in _vacant_seats:
-		if ((_vacant_seats[pid] as Dictionary)["entry"] as Dictionary).get("name", "") == claimed_name:
-			seat_pid = pid as int
-			break
-	if seat_pid < 0 and _vacant_seats.size() == 1:
-		seat_pid = _vacant_seats.keys()[0] as int
+	if is_steam_session():
+		# Steam identity is cryptographic: the seat's steam id must match the
+		# connecting peer's — a display name proves nothing and is spoofable.
+		var sid: int = (multiplayer.multiplayer_peer as SteamMultiplayerPeer) \
+			.get_steam_id_for_peer_id(peer_id)
+		for pid: Variant in _vacant_seats:
+			if ((_vacant_seats[pid] as Dictionary)["entry"] as Dictionary).get("sid", 0) as int == sid \
+					and sid != 0:
+				seat_pid = pid as int
+				break
+	else:
+		for pid: Variant in _vacant_seats:
+			if ((_vacant_seats[pid] as Dictionary)["entry"] as Dictionary).get("name", "") == claimed_name:
+				seat_pid = pid as int
+				break
+		if seat_pid < 0 and _vacant_seats.size() == 1:
+			seat_pid = _vacant_seats.keys()[0] as int
 	if seat_pid < 0:
 		multiplayer.multiplayer_peer.disconnect_peer(peer_id)
 		return
 	var entry: Dictionary = (_vacant_seats[seat_pid] as Dictionary)["entry"] as Dictionary
 	_vacant_seats.erase(seat_pid)
 	entry["peer"] = peer_id
-	if not claimed_name.is_empty():
+	if is_steam_session():
+		entry["sid"] = (multiplayer.multiplayer_peer as SteamMultiplayerPeer) \
+			.get_steam_id_for_peer_id(peer_id)
+	if not claimed_name.is_empty() and not is_steam_session():
 		entry["name"] = claimed_name
 	_roster[seat_pid] = entry
 	_peer_players[peer_id] = seat_pid
@@ -1000,6 +1014,20 @@ func send_command(command: GameCommand) -> void:
 		return
 	_rx_command.rpc_id(1, command.to_dict())
 
+## A human cannot legitimately issue more than this many commands per
+## second; anything past it is a malfunctioning or hostile client.
+const COMMANDS_PER_SEC_LIMIT: int = 25
+var _cmd_windows: Dictionary = {}   # pid -> {"start_msec": int, "count": int}
+
+func _command_rate_ok(pid: int) -> bool:
+	var now: int = Time.get_ticks_msec()
+	var window: Dictionary = _cmd_windows.get(pid, {"start_msec": now, "count": 0}) as Dictionary
+	if now - (window["start_msec"] as int) >= 1000:
+		window = {"start_msec": now, "count": 0}
+	window["count"] = (window["count"] as int) + 1
+	_cmd_windows[pid] = window
+	return (window["count"] as int) <= COMMANDS_PER_SEC_LIMIT
+
 @rpc("any_peer", "reliable")
 func _rx_command(d: Dictionary) -> void:
 	if role != Role.HOST:
@@ -1007,6 +1035,8 @@ func _rx_command(d: Dictionary) -> void:
 	var sender: int = multiplayer.get_remote_sender_id()
 	var pid: int = _peer_players.get(sender, -1) as int
 	if pid < 0:
+		return
+	if not _command_rate_ok(pid):
 		return
 	var command: GameCommand = CommandBus.command_from_dict(d)
 	if command == null:
