@@ -254,6 +254,9 @@ CALIMA_SHOT_DIR=/tmp/calima-fx $GODOT --path project --resolution 1400x900 \
   res://tools/check_damage_fx.tscn
 # Selection voices: exports every baked formant voice to WAV (listen with afplay) + census
 CALIMA_SHOT_DIR=/tmp/calima-voices $GODOT --headless --path project res://tools/check_voice_gallery.tscn
+# Frame-time probe (real renderer): boots a fixed-seed match, prints avg process/physics
+# ms per frame — run on two builds (e.g. via a git worktree) and diff for perf A/Bs
+$GODOT --path project --resolution 1280x720 res://tools/check_perf_probe.tscn
 ```
 
 Note: GUT silently *skips* a test script that fails to parse while still

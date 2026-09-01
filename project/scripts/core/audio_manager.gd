@@ -41,7 +41,9 @@ func play_voice(sound_id: String, female: bool = false, volume_db: float = 0.0) 
 		bank = "%s_m" % sound_id
 	var count: int = _voice_counts.get(bank, 0) as int
 	if count == 0:
-		play(sound_id, volume_db)
+		# No bank: a non-voice kind (siege clunk) — or the worker is still
+		# baking, in which case the generic blip covers the gap.
+		play(sound_id if _pools.has(sound_id) else "select_generic", volume_db)
 		return
 	var pick: int = randi() % count
 	if count > 1 and pick == (_voice_last.get(bank, -1) as int):
@@ -95,10 +97,12 @@ func _build_all() -> void:
 
 	# Unit selection: siege stays mechanical (machines don't talk), the plain
 	# generic blip survives as a UI sound (chat focus); everything human gets
-	# a formant-synthesized gibberish voice bank (see _build_voices).
+	# a formant-synthesized gibberish voice bank (see _build_voices). The
+	# voice DSP costs ~0.5 s, so it bakes on a worker thread — app launch
+	# never waits, and play_voice falls back to the blip until it lands.
 	_register("select_generic",  _synth_sel_generic())
 	_register("select_siege",    _synth_sel_siege())
-	_build_voices()
+	_voice_task_id = WorkerThreadPool.add_task(_bake_voices_task)
 
 	# Commands
 	_register("cmd_move",       _synth_cmd_move())
@@ -450,10 +454,38 @@ const VOICE_PEAK: float = 0.42
 
 var _voice_counts: Dictionary = {}   # "<id>_<m|f>" -> variant count
 var _voice_last: Dictionary = {}     # bank -> last variant played
+var _voice_task_id: int = -1
+var _voices_installed: bool = false
+## Written by the worker task, read only after the task completed (deferred
+## install or an explicit ensure_voices_ready wait).
+var _baked_voices: Array = []        # [[sound_id, AudioStreamWAV, bank], …]
+
+func _bake_voices_task() -> void:
+	_build_voices()
+	call_deferred("_install_voices")
+
+## Blocks until the voice bank is registered — for tools and tests that need
+## the full cast deterministically (gameplay never calls this).
+func ensure_voices_ready() -> void:
+	if _voice_task_id >= 0:
+		WorkerThreadPool.wait_for_task_completion(_voice_task_id)
+		_voice_task_id = -1
+	_install_voices()
+
+func _install_voices() -> void:
+	if _voices_installed:
+		return
+	_voices_installed = true
+	for entry: Array in _baked_voices:
+		_register(entry[0] as String, entry[1] as AudioStreamWAV, 2)
+		var bank: String = entry[2] as String
+		_voice_counts[bank] = (_voice_counts.get(bank, 0) as int) + 1
+	_baked_voices = []
 
 ## The whole selection-voice cast. Each entry: 3 gibberish "words" per gender.
 ## "?" on the last syllable rises (attentive question), "!" drops hard
 ## (soldierly bark), nothing gives a soft statement fall.
+## Runs on a WorkerThreadPool thread: pure DSP into _baked_voices, no nodes.
 func _build_voices() -> void:
 	# Villagers — light, friendly, always a question.
 	_register_voice_bank("select_villager", false, 132.0,
@@ -499,8 +531,7 @@ func _register_voice_bank(base_id: String, female: bool, f0: float,
 	for i: int in range(words.size()):
 		var samples: PackedFloat32Array = _voice_word(
 			words[i] as Array, f0, formant_mult, opts)
-		_register("%s_%d" % [bank, i], _make_wav(samples), 2)
-	_voice_counts[bank] = words.size()
+		_baked_voices.append(["%s_%d" % [bank, i], _make_wav(samples), bank])
 
 ## Renders one gibberish word: consonant onsets + formant vowels, a natural
 ## pitch declination across syllables, and the ?/! contour on the last one.

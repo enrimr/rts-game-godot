@@ -11,6 +11,10 @@ const HUMAN_KINDS: Array[String] = [
 	"select_cavalry", "select_hero", "select_generic",
 ]
 
+func before_all() -> void:
+	# The bank bakes on a worker thread at startup — settle it first.
+	AudioManager.ensure_voices_ready()
+
 func test_every_human_kind_has_both_gender_banks() -> void:
 	for kind: String in HUMAN_KINDS:
 		for g: String in ["m", "f"]:

@@ -6,6 +6,7 @@ extends Node2D
 ## numbers and the clips themselves can be listened to from the terminal.
 
 func _ready() -> void:
+	AudioManager.ensure_voices_ready()
 	var dir: String = OS.get_environment("CALIMA_SHOT_DIR")
 	if dir.is_empty():
 		dir = "/tmp/calima-voices"
