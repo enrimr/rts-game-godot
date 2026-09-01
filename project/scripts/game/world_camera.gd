@@ -36,10 +36,11 @@ func handle_camera(delta: float) -> void:
 	# ...but polling also bypasses text fields: while the player types in the
 	# chat (or any LineEdit), WASD must write letters, not pan the map.
 	if not _typing_in_text_field():
-		if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):  key_dir.x -= 1.0
-		if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): key_dir.x += 1.0
-		if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):    key_dir.y -= 1.0
-		if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):  key_dir.y += 1.0
+		# InputMap actions, not raw keys: the settings panel can remap them.
+		if Input.is_action_pressed("camera_pan_left"):  key_dir.x -= 1.0
+		if Input.is_action_pressed("camera_pan_right"): key_dir.x += 1.0
+		if Input.is_action_pressed("camera_pan_up"):    key_dir.y -= 1.0
+		if Input.is_action_pressed("camera_pan_down"):  key_dir.y += 1.0
 
 	var edge_dir: Vector2 = Vector2.ZERO
 	if GameSettings.edge_scroll_enabled:

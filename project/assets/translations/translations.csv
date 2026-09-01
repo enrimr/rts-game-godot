@@ -172,6 +172,15 @@ SETTINGS_LANGUAGE,Language,Idioma
 SETTINGS_CONTROLS,Controls,Controles
 SETTINGS_SHOW_DPAD,Show D-Pad,Mostrar cruceta
 SETTINGS_EDGE_SCROLL,Edge Scroll,Desplazamiento por bordes
+SETTINGS_VIDEO,Display,Pantalla
+SETTINGS_FULLSCREEN,Fullscreen,Pantalla completa
+SETTINGS_VSYNC,VSync,Sincronía vertical (VSync)
+SETTINGS_CAMERA_KEYS,Camera keys (arrows always work),Teclas de cámara (las flechas siempre funcionan)
+SETTINGS_PAN_LEFT,Left,Izquierda
+SETTINGS_PAN_RIGHT,Right,Derecha
+SETTINGS_PAN_UP,Up,Arriba
+SETTINGS_PAN_DOWN,Down,Abajo
+SETTINGS_PRESS_KEY,Press a key…,Pulsa una tecla…
 SETTINGS_ON,ON,Activado
 SETTINGS_OFF,OFF,Desactivado
 MENU_NEW_GAME,New Game,Nueva Partida

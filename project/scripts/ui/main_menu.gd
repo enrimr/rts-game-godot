@@ -115,6 +115,25 @@ func _build_engine_credit() -> void:
 	lbl.offset_bottom = -12.0
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
+# ── Camera-key remap capture (the settings panel arms these) ──
+var _key_capture_action: String = ""
+var _key_capture_btn: Button = null
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if _key_capture_action.is_empty() or not (event is InputEventKey):
+		return
+	var key: InputEventKey = event as InputEventKey
+	if not key.pressed:
+		return
+	if key.keycode != KEY_ESCAPE:
+		GameSettings.set_pan_key(_key_capture_action,
+			key.physical_keycode if key.physical_keycode != 0 else key.keycode)
+	if is_instance_valid(_key_capture_btn):
+		_key_capture_btn.text = GameSettings.pan_key_name(_key_capture_action)
+	_key_capture_action = ""
+	_key_capture_btn = null
+	get_viewport().set_input_as_handled()
+
 func _open_lan_panel() -> void:
 	var panel: LanLobby = LanLobby.new()
 	add_child(panel)
@@ -540,6 +559,52 @@ func _open_settings() -> void:
 		GameSettings.edge_scroll_enabled = not GameSettings.edge_scroll_enabled
 		_style_toggle_btn(edge_row, GameSettings.edge_scroll_enabled)
 	)
+
+	# Video
+	vbox.add_child(_make_section_label(tr("SETTINGS_VIDEO")))
+	var fs_row: Button = _make_toggle_row(vbox, tr("SETTINGS_FULLSCREEN"), GameSettings.fullscreen)
+	fs_row.pressed.connect(func() -> void:
+		GameSettings.fullscreen = not GameSettings.fullscreen
+		GameSettings.apply_video()
+		_style_toggle_btn(fs_row, GameSettings.fullscreen)
+	)
+	var vs_row: Button = _make_toggle_row(vbox, tr("SETTINGS_VSYNC"), GameSettings.vsync)
+	vs_row.pressed.connect(func() -> void:
+		GameSettings.vsync = not GameSettings.vsync
+		GameSettings.apply_video()
+		_style_toggle_btn(vs_row, GameSettings.vsync)
+	)
+
+	# Camera pan keys (remappable; arrows always work as secondary)
+	vbox.add_child(_make_section_label(tr("SETTINGS_CAMERA_KEYS")))
+	var key_labels: Dictionary = {
+		"camera_pan_left": tr("SETTINGS_PAN_LEFT"), "camera_pan_right": tr("SETTINGS_PAN_RIGHT"),
+		"camera_pan_up": tr("SETTINGS_PAN_UP"), "camera_pan_down": tr("SETTINGS_PAN_DOWN"),
+	}
+	var keys_row: HBoxContainer = HBoxContainer.new()
+	keys_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(keys_row)
+	for action: String in key_labels:
+		var cell: VBoxContainer = VBoxContainer.new()
+		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		keys_row.add_child(cell)
+		var cl: Label = Label.new()
+		cl.text = key_labels[action] as String
+		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cl.add_theme_font_size_override("font_size", 14)
+		cl.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
+		cell.add_child(cl)
+		var kb: Button = Button.new()
+		kb.text = GameSettings.pan_key_name(action)
+		kb.custom_minimum_size = Vector2(0, 34)
+		kb.focus_mode = Control.FOCUS_NONE
+		kb.add_theme_font_size_override("font_size", 17)
+		cell.add_child(kb)
+		var captured_action: String = action
+		kb.pressed.connect(func() -> void:
+			kb.text = tr("SETTINGS_PRESS_KEY")
+			_key_capture_action = captured_action
+			_key_capture_btn = kb)
 
 	# Spacer + close button
 	var sep2: HSeparator = HSeparator.new()

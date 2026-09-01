@@ -14,9 +14,52 @@ var language:            String = "en"
 var tutorial_seen:       bool   = false
 var show_dpad:           bool   = false
 var edge_scroll_enabled: bool   = true
+var fullscreen:          bool   = false
+var vsync:               bool   = true
+## Custom camera-pan keys (action name -> keycode). Arrows always work too.
+var pan_keys:            Dictionary = {}
+
+const PAN_ACTIONS: Dictionary = {
+	"camera_pan_left": KEY_A, "camera_pan_right": KEY_D,
+	"camera_pan_up": KEY_W, "camera_pan_down": KEY_S,
+}
+const PAN_ARROWS: Dictionary = {
+	"camera_pan_left": KEY_LEFT, "camera_pan_right": KEY_RIGHT,
+	"camera_pan_up": KEY_UP, "camera_pan_down": KEY_DOWN,
+}
+
+func apply_video() -> void:
+	DisplayServer.window_set_mode(
+		DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_vsync_mode(
+		DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
+
+## Rebinds the four pan actions: the letter key is replaceable, the arrow
+## stays as a fixed secondary binding.
+func apply_pan_keys() -> void:
+	for action: String in PAN_ACTIONS:
+		if not InputMap.has_action(action):
+			continue
+		InputMap.action_erase_events(action)
+		var key_event: InputEventKey = InputEventKey.new()
+		key_event.physical_keycode = pan_keys.get(action, PAN_ACTIONS[action]) as Key
+		InputMap.action_add_event(action, key_event)
+		var arrow: InputEventKey = InputEventKey.new()
+		arrow.physical_keycode = PAN_ARROWS[action] as Key
+		InputMap.action_add_event(action, arrow)
+
+func set_pan_key(action: String, keycode: int) -> void:
+	pan_keys[action] = keycode
+	apply_pan_keys()
+	save_settings()
+
+func pan_key_name(action: String) -> String:
+	return OS.get_keycode_string(pan_keys.get(action, PAN_ACTIONS[action]) as Key)
 var ai_debug:            bool   = false  # toggled with F2 in-game
 
 func _ready() -> void:
+	call_deferred("apply_video")
+	call_deferred("apply_pan_keys")
 	load_settings()
 	apply_language()
 
@@ -95,6 +138,9 @@ func save_settings() -> void:
 	cfg.set_value("game",     "tutorial_seen",       tutorial_seen)
 	cfg.set_value("controls", "show_dpad",           show_dpad)
 	cfg.set_value("controls", "edge_scroll_enabled", edge_scroll_enabled)
+	cfg.set_value("controls", "pan_keys",            pan_keys)
+	cfg.set_value("video",    "fullscreen",          fullscreen)
+	cfg.set_value("video",    "vsync",               vsync)
 	cfg.save(SAVE_PATH)
 
 func load_settings() -> void:
@@ -108,6 +154,9 @@ func load_settings() -> void:
 	tutorial_seen       = cfg.get_value("game",     "tutorial_seen",       false) as bool
 	show_dpad           = cfg.get_value("controls", "show_dpad",           false) as bool
 	edge_scroll_enabled = cfg.get_value("controls", "edge_scroll_enabled", true) as bool
+	pan_keys            = cfg.get_value("controls", "pan_keys",            {}) as Dictionary
+	fullscreen          = cfg.get_value("video",    "fullscreen",          false) as bool
+	vsync               = cfg.get_value("video",    "vsync",               true) as bool
 	apply_language()
 
 func apply_language() -> void:
