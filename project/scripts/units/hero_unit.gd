@@ -119,6 +119,9 @@ func _ready() -> void:
 	_build_hero_aura()
 	if is_female:
 		_apply_female_appearance()
+	# Deferred so it lands AFTER the base class's deferred TeamDress pass —
+	# signature gear must not be repainted by the team dye.
+	HeroDress.apply.call_deferred(self, is_female)
 	# Update portrait label to hero initials instead of the militia default "M"
 	if unit_data:
 		var label_node: Node = get_node_or_null("UnitLabel")
