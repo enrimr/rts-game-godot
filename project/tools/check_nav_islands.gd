@@ -37,14 +37,69 @@ func _ready() -> void:
 	await get_tree().process_frame
 
 	print("NAV_ISLANDS map_type=%d" % MatchConfig.map_type)
+	# The navigation server syncs regions on its own schedule and the runtime
+	# rebake (debounced 1 s + async bake) lands whenever the machine lets it —
+	# fixed sleeps made this gate flake. Poll until the routes answer, then
+	# take the definitive sample.
+	await _wait_routes_ready(4.0)
 	_report("right after generation")
-	# The rebake is debounced by WorldPlacement.NAV_REBAKE_DELAY (1 s) and the
-	# bake itself is async, so leave room for both.
 	await get_tree().create_timer(2.5).timeout
+	await _wait_routes_ready(10.0)
 	_report("after the nav rebake")
 
 	print("NAV_ISLANDS: %s" % ("done" if _failures == 0 else "FAILED (%d)" % _failures))
 	get_tree().quit(0 if _failures == 0 else 1)
+
+## True once both nav maps answer path queries (the land query returns
+## points and, on Islands, the ocean route reaches the rival shore).
+func _routes_ready() -> bool:
+	var land: PackedVector2Array = _query_land_path()
+	if land.is_empty():
+		return false
+	if MatchConfig.map_type != MatchConfig.MapType.ISLANDS:
+		return true
+	var ocean: Array = _query_ocean_route()
+	return (ocean[0] as PackedVector2Array).size() >= 2 and (ocean[1] as int) <= 200
+
+func _wait_routes_ready(timeout_sec: float) -> void:
+	var deadline: int = Time.get_ticks_msec() + int(timeout_sec * 1000.0)
+	while Time.get_ticks_msec() < deadline and not _routes_ready():
+		await get_tree().create_timer(0.4).timeout
+
+func _query_land_path() -> PackedVector2Array:
+	var region: NavigationRegion2D = _world.get_node("NavigationRegion2D") as NavigationRegion2D
+	var params: NavigationPathQueryParameters2D = NavigationPathQueryParameters2D.new()
+	params.map = region.get_navigation_map()
+	params.navigation_layers = 1
+	params.start_position = (_world.drop_off as Node2D).global_position
+	params.target_position = _enemy_tc_pos()
+	var result: NavigationPathQueryResult2D = NavigationPathQueryResult2D.new()
+	NavigationServer2D.query_path(params, result)
+	return result.path
+
+## [path, gap_px_to_target] over the ocean mesh between the two shores.
+func _query_ocean_route() -> Array:
+	var region: NavigationRegion2D = _world.get_node_or_null(
+		"OceanNavigationRegion2D") as NavigationRegion2D
+	if region == null:
+		return [PackedVector2Array(), -1]
+	var from: Vector2 = TerrainManager.nearest_ocean((_world.drop_off as Node2D).global_position)
+	var to: Vector2 = TerrainManager.nearest_ocean(_enemy_tc_pos())
+	var params: NavigationPathQueryParameters2D = NavigationPathQueryParameters2D.new()
+	params.map = region.get_navigation_map()
+	params.navigation_layers = 2
+	params.start_position = from
+	params.target_position = to
+	var result: NavigationPathQueryResult2D = NavigationPathQueryResult2D.new()
+	NavigationServer2D.query_path(params, result)
+	var gap: int = roundi(result.path[result.path.size() - 1].distance_to(to)) \
+		if result.path.size() > 0 else -1
+	return [result.path, gap]
+
+func _enemy_tc_pos() -> Vector2:
+	for pid: Variant in (_world._ai_town_centers as Dictionary):
+		return ((_world._ai_town_centers as Dictionary)[pid] as Node2D).global_position
+	return Vector2.ZERO
 
 func _report(label: String) -> void:
 	var region: NavigationRegion2D = _world.get_node("NavigationRegion2D") as NavigationRegion2D

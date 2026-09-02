@@ -318,7 +318,30 @@ func _apply_team_dress() -> void:
 func _add_ground_shadow() -> void:
 	VisualFx.add_ground_shadow(self, 11.0, 4.5, 9.0)
 
+## Terrain containment cadence. The navmesh is the only thing keeping land
+## units out of the sea (water has no physics body), and RVO shoves or the
+## straight-line combat gap-closer can push a body off the mesh right at the
+## shoreline — after which nothing brings it back. A cheap periodic check
+## heals any entry vector. Lives in _process because leaf classes replace
+## _physics_process wholesale (villager!); staggered start so 400 units
+## don't all query the same frame. Client mirrors are excluded — their
+## positions belong to the host's stream.
+const CONTAINMENT_CHECK_SEC: float = 0.8
+
+@onready var _containment_timer: float = float(get_instance_id() % 16) * 0.05
+
+func _contain_to_passable() -> void:
+	if TerrainManager.is_impassable_for(global_position, civ_id, is_amphibious()):
+		global_position = TerrainManager.nearest_passable(
+			global_position, civ_id, is_amphibious())
+		reset_physics_interpolation()
+
 func _process(delta: float) -> void:
+	_containment_timer += delta
+	if _containment_timer >= CONTAINMENT_CHECK_SEC:
+		_containment_timer = 0.0
+		if current_state != UnitState.DEAD and not NetworkSession.is_client():
+			_contain_to_passable()
 	_anim_time += delta
 	IsoBillboard.update_depth(self)
 	_update_avoidance_priority()

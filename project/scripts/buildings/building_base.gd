@@ -65,10 +65,15 @@ static func find_spawn_pos(origin: Vector2, space: PhysicsDirectSpaceState2D,
 			var angle: float = s * TAU / float(steps_in_ring)
 			var candidate: Vector2 = origin + Vector2(cos(angle), sin(angle)) * r
 			query.transform = Transform2D(0.0, candidate)
-			if space.intersect_shape(query, 1).is_empty():
+			# Physics alone is NOT enough: water (and risco/caldera) has no
+			# collision body, so a shoreline building would happily hand out
+			# spawn spots in the sea. Land producers only — the Dock has its
+			# own water spiral.
+			if space.intersect_shape(query, 1).is_empty() \
+					and not TerrainManager.is_impassable_for(candidate, ""):
 				return candidate
-	# Fallback: just use a fixed offset
-	return origin + Vector2(step * 2.0, 0.0)
+	# Fallback: nudged onto walkable ground, never a fixed blind offset.
+	return TerrainManager.nearest_passable(origin + Vector2(step * 2.0, 0.0), "")
 
 static func _make_rally_marker() -> Node2D:
 	var root: Node2D = Node2D.new()
