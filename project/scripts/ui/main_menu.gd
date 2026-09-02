@@ -562,6 +562,11 @@ func _open_settings() -> void:
 
 	# Video
 	vbox.add_child(_make_section_label(tr("SETTINGS_VIDEO")))
+	var fps_row: Button = _make_toggle_row(vbox, tr("SETTINGS_SHOW_FPS"), GameSettings.show_fps)
+	fps_row.pressed.connect(func() -> void:
+		GameSettings.show_fps = not GameSettings.show_fps
+		_style_toggle_btn(fps_row, GameSettings.show_fps)
+	)
 	var fs_row: Button = _make_toggle_row(vbox, tr("SETTINGS_FULLSCREEN"), GameSettings.fullscreen)
 	fs_row.pressed.connect(func() -> void:
 		GameSettings.fullscreen = not GameSettings.fullscreen

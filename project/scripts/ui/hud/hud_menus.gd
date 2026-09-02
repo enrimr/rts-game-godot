@@ -410,6 +410,12 @@ func _open_ingame_settings() -> void:
 		_style_toggle_btn(edge_row, GameSettings.edge_scroll_enabled)
 	)
 
+	var fps_row: Button = _make_toggle_row(vbox, tr("SETTINGS_SHOW_FPS"), GameSettings.show_fps)
+	fps_row.pressed.connect(func() -> void:
+		GameSettings.show_fps = not GameSettings.show_fps
+		_style_toggle_btn(fps_row, GameSettings.show_fps)
+	)
+
 	vbox.add_child(HSeparator.new())
 
 	var close_btn: Button = Button.new()

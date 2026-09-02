@@ -501,3 +501,4 @@ LOBBY_RESUME_NOTE,Resumed match — settings and seats come from the save,Partid
 LOBBY_RESUME_EMPTY,No multiplayer saves found,No hay partidas multijugador guardadas
 LAN_SEAT_WAITING,Waiting for %s…,Esperando a %s…
 LAN_VERSION_MISMATCH,Incompatible versions — host has %s and you have %s,Versiones incompatibles — el anfitrión tiene %s y tú %s
+SETTINGS_SHOW_FPS,Show FPS counter,Mostrar contador de FPS

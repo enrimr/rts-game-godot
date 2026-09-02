@@ -278,6 +278,9 @@ func _ready() -> void:
 	_match_stats = HudMatchStats.new()
 	_match_stats.init(local_player_id, _clock_label, get_node("HUDRoot"))
 	add_child(_match_stats)
+	var fps_counter: HudFpsCounter = HudFpsCounter.new()
+	fps_counter.init(get_node("HUDRoot"))
+	add_child(fps_counter)
 	if NetworkSession.is_online():
 		var chat: HudChat = HudChat.new()
 		chat.init(get_node("HUDRoot"))

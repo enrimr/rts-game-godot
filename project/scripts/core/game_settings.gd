@@ -16,6 +16,7 @@ var show_dpad:           bool   = false
 var edge_scroll_enabled: bool   = true
 var fullscreen:          bool   = false
 var vsync:               bool   = true
+var show_fps:            bool   = false
 ## Custom camera-pan keys (action name -> keycode). Arrows always work too.
 var pan_keys:            Dictionary = {}
 
@@ -141,6 +142,7 @@ func save_settings() -> void:
 	cfg.set_value("controls", "pan_keys",            pan_keys)
 	cfg.set_value("video",    "fullscreen",          fullscreen)
 	cfg.set_value("video",    "vsync",               vsync)
+	cfg.set_value("video",    "show_fps",            show_fps)
 	cfg.save(SAVE_PATH)
 
 func load_settings() -> void:
@@ -157,6 +159,7 @@ func load_settings() -> void:
 	pan_keys            = cfg.get_value("controls", "pan_keys",            {}) as Dictionary
 	fullscreen          = cfg.get_value("video",    "fullscreen",          false) as bool
 	vsync               = cfg.get_value("video",    "vsync",               true) as bool
+	show_fps            = cfg.get_value("video",    "show_fps",            false) as bool
 	apply_language()
 
 func apply_language() -> void:
