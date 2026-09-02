@@ -32,24 +32,28 @@ func play(sound_id: String, volume_db: float = 0.0) -> void:
 	player.play()
 	_pool_idx[sound_id] = (idx + 1) % pool.size()
 
-## Play one variant of a voice bank (see _build_voices): resolves gender,
-## picks a random line that is never the same one twice in a row, and falls
-## back to the plain sound id for kinds without a voice (siege stays a clunk).
-func play_voice(sound_id: String, female: bool = false, volume_db: float = 0.0) -> void:
-	var bank: String = "%s_%s" % [sound_id, "f" if female else "m"]
-	if not _voice_counts.has(bank):
-		bank = "%s_m" % sound_id
-	var count: int = _voice_counts.get(bank, 0) as int
-	if count == 0:
-		# No bank: a non-voice kind (siege clunk) — or the worker is still
-		# baking, in which case the generic blip covers the gap.
-		play(sound_id if _pools.has(sound_id) else "select_generic", volume_db)
+## Play one variant of a voice bank (see _build_voices): resolves the civ
+## accent and gender, picks a random line that is never the same one twice
+## in a row, and falls back to the plain sound id for kinds without a voice
+## (siege stays a clunk).
+func play_voice(sound_id: String, female: bool = false, civ_id: String = "",
+		volume_db: float = 0.0) -> void:
+	var civ: String = civ_id if VOICE_CIV_POOLS.has(civ_id) else "default"
+	var g: String = "f" if female else "m"
+	for bank: String in ["%s_%s_%s" % [sound_id, civ, g], "%s_%s_m" % [sound_id, civ],
+			"%s_default_%s" % [sound_id, g], "%s_default_m" % sound_id]:
+		var count: int = _voice_counts.get(bank, 0) as int
+		if count == 0:
+			continue
+		var pick: int = randi() % count
+		if count > 1 and pick == (_voice_last.get(bank, -1) as int):
+			pick = (pick + 1) % count
+		_voice_last[bank] = pick
+		play("%s_%d" % [bank, pick], volume_db)
 		return
-	var pick: int = randi() % count
-	if count > 1 and pick == (_voice_last.get(bank, -1) as int):
-		pick = (pick + 1) % count
-	_voice_last[bank] = pick
-	play("%s_%d" % [bank, pick], volume_db)
+	# No bank: a non-voice kind (siege clunk) — or the worker is still
+	# baking, in which case the generic blip covers the gap.
+	play(sound_id if _pools.has(sound_id) else "select_generic", volume_db)
 
 ## Play a combat sound only if world_pos is currently visible to the player.
 func play_if_visible(sound_id: String, world_pos: Vector2, volume_db: float = 0.0) -> void:
@@ -102,25 +106,38 @@ func _build_all() -> void:
 	# never waits, and play_voice falls back to the blip until it lands.
 	_register("select_generic",  _synth_sel_generic())
 	_register("select_siege",    _synth_sel_siege())
-	_voice_task_id = WorkerThreadPool.add_task(_bake_voices_task)
+	# Headless runs (gates, CI) skip the ~460-clip cast — the engine waits for
+	# worker tasks on exit, and dummy audio can't play them anyway. Tools and
+	# tests that DO need voices call ensure_voices_ready (synchronous bake).
+	_voice_kind_keys = VOICE_KINDS.keys()
+	if DisplayServer.get_name() != "headless":
+		_baked_by_kind.resize(VOICE_KINDS.size())
+		_voice_group_id = WorkerThreadPool.add_group_task(
+			_bake_voice_kind, VOICE_KINDS.size())
+		set_process(true)
 
 	# Commands
 	_register("cmd_move",       _synth_cmd_move())
 	_register("cmd_attack",     _synth_cmd_attack())
 
-	# Combat
-	_register("hit_melee",      _synth_hit_melee())
-	_register("hit_ranged",     _synth_hit_ranged())
-	_register("unit_die",       _synth_unit_die())
+	# Combat — a few pitch/timbre takes each; the pool rotation varies them.
+	_register_multi("hit_melee",
+		[_synth_hit_melee(1.0), _synth_hit_melee(0.84), _synth_hit_melee(1.22)])
+	_register_multi("hit_ranged",
+		[_synth_hit_ranged(1.0), _synth_hit_ranged(0.88), _synth_hit_ranged(1.18)])
+	_register_multi("unit_die",
+		[_synth_unit_die(1.0), _synth_unit_die(0.9), _synth_unit_die(1.12)])
 
 	# Construction
 	_register("build_place",    _synth_build_place())
 	_register("build_complete", _synth_build_complete())
 	_register("build_destroy",  _synth_build_destroy())
 
-	# Economy
-	_register("chop_wood",      _synth_chop())
-	_register("mine_resource",  _synth_mine())
+	# Economy — gather sounds repeat for minutes; rotate takes.
+	_register_multi("chop_wood",
+		[_synth_chop(1.0), _synth_chop(0.86), _synth_chop(1.15), _synth_chop(0.94)])
+	_register_multi("mine_resource",
+		[_synth_mine(1.0), _synth_mine(0.88), _synth_mine(1.12), _synth_mine(0.95)])
 	_register("gather_food",    _synth_gather_food())
 
 	# Training
@@ -153,6 +170,20 @@ func _register(sound_id: String, stream: AudioStreamWAV, pool_size: int = POOL_S
 	for _i: int in range(pool_size):
 		var player: AudioStreamPlayer = AudioStreamPlayer.new()
 		player.stream = stream
+		player.bus = "Master"
+		add_child(player)
+		pool.append(player)
+	_pools[sound_id] = pool
+	_pool_idx[sound_id] = 0
+
+## Pool whose players carry DIFFERENT streams: the round-robin cursor in
+## play() then rotates the variants for free — repeated chops/hits stop
+## sounding like a stuck sampler.
+func _register_multi(sound_id: String, streams: Array) -> void:
+	var pool: Array[AudioStreamPlayer] = []
+	for i: int in range(maxi(POOL_SIZE, streams.size())):
+		var player: AudioStreamPlayer = AudioStreamPlayer.new()
+		player.stream = streams[i % streams.size()] as AudioStreamWAV
 		player.bus = "Master"
 		add_child(player)
 		pool.append(player)
@@ -311,17 +342,17 @@ func _synth_cmd_attack() -> AudioStreamWAV:
 	# Sharp aggressive blip
 	return _make_wav(_mix(_square(200.0, 0.08, 0.35), _noise(0.06, 0.20)))
 
-func _synth_hit_melee() -> AudioStreamWAV:
-	# Thud: low noise burst
-	return _make_wav(_mix(_noise(0.08, 0.50), _sine(120.0, 0.08, 0.30)))
+func _synth_hit_melee(k: float = 1.0) -> AudioStreamWAV:
+	# Thud: low noise burst. `k` scales pitch/length into sibling takes.
+	return _make_wav(_mix(_noise(0.08 / k, 0.50), _sine(120.0 * k, 0.08 / k, 0.30)))
 
-func _synth_hit_ranged() -> AudioStreamWAV:
+func _synth_hit_ranged(k: float = 1.0) -> AudioStreamWAV:
 	# Lighter thwack
-	return _make_wav(_mix(_noise(0.05, 0.35), _sine(200.0, 0.05, 0.20)))
+	return _make_wav(_mix(_noise(0.05 / k, 0.35), _sine(200.0 * k, 0.05 / k, 0.20)))
 
-func _synth_unit_die() -> AudioStreamWAV:
+func _synth_unit_die(k: float = 1.0) -> AudioStreamWAV:
 	# Descending sweep + noise
-	return _make_wav(_mix(_sweep(300.0, 80.0, 0.28, 0.40), _noise(0.20, 0.25)))
+	return _make_wav(_mix(_sweep(300.0 * k, 80.0 * k, 0.28, 0.40), _noise(0.20, 0.25)))
 
 func _synth_build_place() -> AudioStreamWAV:
 	# Wooden thunk
@@ -338,13 +369,13 @@ func _synth_build_destroy() -> AudioStreamWAV:
 	# Rumble + crumble
 	return _make_wav(_mix(_noise(0.35, 0.55), _sweep(250.0, 60.0, 0.35, 0.30)))
 
-func _synth_chop() -> AudioStreamWAV:
-	# Axe chop: sharp mid noise
-	return _make_wav(_mix(_noise(0.06, 0.50), _sine(280.0, 0.06, 0.20)))
+func _synth_chop(k: float = 1.0) -> AudioStreamWAV:
+	# Axe chop: sharp mid noise. `k` scales pitch/length into sibling takes.
+	return _make_wav(_mix(_noise(0.06 / k, 0.50), _sine(280.0 * k, 0.06 / k, 0.20)))
 
-func _synth_mine() -> AudioStreamWAV:
+func _synth_mine(k: float = 1.0) -> AudioStreamWAV:
 	# Pickaxe clink: high metallic
-	return _make_wav(_mix(_sine(900.0, 0.07, 0.30), _noise(0.05, 0.15)))
+	return _make_wav(_mix(_sine(900.0 * k, 0.07, 0.30), _noise(0.05 / k, 0.15)))
 
 func _synth_gather_food() -> AudioStreamWAV:
 	# Soft rustle
@@ -454,84 +485,152 @@ const VOICE_PEAK: float = 0.42
 
 var _voice_counts: Dictionary = {}   # "<id>_<m|f>" -> variant count
 var _voice_last: Dictionary = {}     # bank -> last variant played
-var _voice_task_id: int = -1
+var _voice_group_id: int = -1
+var _voice_kind_keys: Array = []
 var _voices_installed: bool = false
-## Written by the worker task, read only after the task completed (deferred
-## install or an explicit ensure_voices_ready wait).
-var _baked_voices: Array = []        # [[sound_id, AudioStreamWAV, bank], …]
+## One slot per voice kind, written by its own worker; read only after the
+## group task completed. Entries: [[sound_id, AudioStreamWAV, bank], …].
+var _baked_by_kind: Array = []
 
-func _bake_voices_task() -> void:
-	_build_voices()
-	call_deferred("_install_voices")
+## Group task: each worker bakes one voice KIND (all civs and genders) into
+## its own pre-sized slot — parallel across cores, no shared-array writes.
+func _bake_voice_kind(index: int) -> void:
+	var kind: String = _voice_kind_keys[index]
+	var out: Array = []
+	_build_voices_for_kind(kind, VOICE_KINDS[kind] as Dictionary, out)
+	_baked_by_kind[index] = out
+
+func _process(_delta: float) -> void:
+	if _voice_group_id >= 0 and WorkerThreadPool.is_group_task_completed(_voice_group_id):
+		WorkerThreadPool.wait_for_group_task_completion(_voice_group_id)
+		_voice_group_id = -1
+		_install_voices()
+	if _voice_group_id < 0:
+		set_process(false)
 
 ## Blocks until the voice bank is registered — for tools and tests that need
-## the full cast deterministically (gameplay never calls this).
+## the full cast deterministically (gameplay never calls this). In headless
+## runs nothing was scheduled: bake synchronously right here.
 func ensure_voices_ready() -> void:
-	if _voice_task_id >= 0:
-		WorkerThreadPool.wait_for_task_completion(_voice_task_id)
-		_voice_task_id = -1
+	if _voice_group_id >= 0:
+		WorkerThreadPool.wait_for_group_task_completion(_voice_group_id)
+		_voice_group_id = -1
+	elif not _voices_installed and _baked_by_kind.is_empty():
+		_baked_by_kind.resize(VOICE_KINDS.size())
+		for i: int in range(_voice_kind_keys.size()):
+			var out: Array = []
+			_build_voices_for_kind(_voice_kind_keys[i] as String,
+				VOICE_KINDS[_voice_kind_keys[i]] as Dictionary, out)
+			_baked_by_kind[i] = out
 	_install_voices()
 
 func _install_voices() -> void:
 	if _voices_installed:
 		return
 	_voices_installed = true
-	for entry: Array in _baked_voices:
-		_register(entry[0] as String, entry[1] as AudioStreamWAV, 2)
-		var bank: String = entry[2] as String
-		_voice_counts[bank] = (_voice_counts.get(bank, 0) as int) + 1
-	_baked_voices = []
+	for baked: Variant in _baked_by_kind:
+		if not (baked is Array):
+			continue
+		for entry: Array in baked as Array:
+			_register(entry[0] as String, entry[1] as AudioStreamWAV, 2)
+			var bank: String = entry[2] as String
+			_voice_counts[bank] = (_voice_counts.get(bank, 0) as int) + 1
+	_baked_by_kind = []
 
-## The whole selection-voice cast. Each entry: 3 gibberish "words" per gender.
-## "?" on the last syllable rises (attentive question), "!" drops hard
-## (soldierly bark), nothing gives a soft statement fall.
-## Runs on a WorkerThreadPool thread: pure DSP into _baked_voices, no nodes.
-func _build_voices() -> void:
-	# Villagers — light, friendly, always a question.
-	_register_voice_bank("select_villager", false, 132.0,
-		[["na", "o?"], ["ta", "he?"], ["mo", "di?"]], {"breath": 0.05})
-	_register_voice_bank("select_villager", true, 218.0,
-		[["ne", "a?"], ["si", "o?"], ["ma", "hi?"]], {"breath": 0.07})
-	# Infantry — gruff and clipped, with a throaty growl.
-	_register_voice_bank("select_infantry", false, 98.0,
-		[["du", "ka!"], ["ha!"], ["ko", "ra!"]], {"growl": 0.8, "rate": 1.15})
-	_register_voice_bank("select_infantry", true, 168.0,
-		[["da", "ko!"], ["he", "ta!"], ["ra!"]], {"growl": 0.5, "rate": 1.15})
-	# Archers — quick and light.
-	_register_voice_bank("select_archer", false, 145.0,
-		[["ti", "ka?"], ["se", "o?"], ["li", "ho?"]], {"rate": 1.25, "breath": 0.06})
-	_register_voice_bank("select_archer", true, 230.0,
-		[["si", "ta?"], ["le", "i?"], ["ni", "o?"]], {"rate": 1.25, "breath": 0.08})
-	# Cavalry — confident, unhurried, downward assertion.
-	_register_voice_bank("select_cavalry", false, 112.0,
-		[["do", "ma"], ["ha", "ro"], ["ne", "da"]], {"rate": 0.9, "growl": 0.25})
-	_register_voice_bank("select_cavalry", true, 185.0,
-		[["ro", "na"], ["ma", "de"], ["ha", "li"]], {"rate": 0.9, "growl": 0.15})
-	# Ship crews — breathy hail across the water.
-	_register_voice_bank("select_naval", false, 122.0,
-		[["e", "ho!"], ["sa", "lo?"], ["hu", "ma!"]],
-		{"rate": 0.85, "breath": 0.12, "growl": 0.2})
-	# Heroes — slow, deep, three solemn syllables with a stone-hall echo.
-	_register_voice_bank("select_hero", false, 92.0,
-		[["a", "ta", "ra"], ["do", "ne", "ma"], ["ka", "ro", "na"]],
-		{"rate": 0.72, "growl": 0.35, "echo": 0.30})
-	_register_voice_bank("select_hero", true, 175.0,
-		[["a", "ni", "ra"], ["se", "la", "na"], ["mi", "ro", "da"]],
-		{"rate": 0.72, "breath": 0.06, "echo": 0.30})
-	# Generic humans (scouts, unclassed units).
-	_register_voice_bank("select_generic", false, 125.0,
-		[["ho?"], ["ne", "a?"], ["ta?"]], {"breath": 0.05})
-	_register_voice_bank("select_generic", true, 210.0,
-		[["ha?"], ["mi", "o?"], ["se?"]], {"breath": 0.07})
+## Each civilization speaks its own gibberish "language": a syllable pool
+## (its phonetic identity) plus a pitch accent. Words are generated
+## deterministically (seeded by kind|civ|gender), so every machine and every
+## launch bakes the identical cast.
+const VOICE_CIV_POOLS: Dictionary = {
+	"guanches":    ["ta", "ke", "na", "ho", "ga", "ra"],
+	"canarii":     ["ti", "sa", "ne", "ro", "mi", "he"],
+	"mahos":       ["ha", "du", "ra", "ko", "su", "ma"],
+	"franks":      ["le", "du", "ba", "ro", "ne", "si"],
+	"britons":     ["to", "he", "ri", "da", "lo", "nu"],
+	"castellanos": ["ka", "so", "de", "ra", "no", "mi"],
+	"atlantes":    ["lo", "mu", "se", "na", "ti", "ra"],
+	"fenicios":    ["ba", "ki", "su", "ro", "ha", "de"],
+	"default":     ["na", "ta", "mo", "he", "so", "ri"],
+}
+## Pitch accent per civ (multiplies the class F0): Guanches speak deep,
+## Canarii and Fenicios bright, the continental Franks stay neutral.
+const VOICE_CIV_PITCH: Dictionary = {
+	"guanches": 0.94, "canarii": 1.05, "mahos": 0.98, "franks": 1.0,
+	"britons": 1.03, "castellanos": 1.0, "atlantes": 0.96, "fenicios": 1.06,
+	"default": 1.0,
+}
+## Class prosody: F0 per gender (0 = no bank for that gender), syllable count
+## range, contour mark ("?" rises, "!" drops hard, "" soft statement) and the
+## word-render opts (opts_f overrides for the female take). Selections ask;
+## acknowledgments affirm.
+const VOICE_KINDS: Dictionary = {
+	"select_villager": {"f0_m": 132.0, "f0_f": 218.0, "syl": [2, 2], "mark": "?",
+		"opts": {"breath": 0.05}},
+	"select_infantry": {"f0_m": 98.0, "f0_f": 168.0, "syl": [1, 2], "mark": "!",
+		"opts": {"growl": 0.8, "rate": 1.15}, "opts_f": {"growl": 0.5, "rate": 1.15}},
+	"select_archer": {"f0_m": 145.0, "f0_f": 230.0, "syl": [2, 2], "mark": "?",
+		"opts": {"rate": 1.25, "breath": 0.06}},
+	"select_cavalry": {"f0_m": 112.0, "f0_f": 185.0, "syl": [2, 2], "mark": "",
+		"opts": {"rate": 0.9, "growl": 0.25}, "opts_f": {"rate": 0.9, "growl": 0.15}},
+	"select_naval": {"f0_m": 122.0, "f0_f": 0.0, "syl": [2, 2], "mark": "!",
+		"opts": {"rate": 0.85, "breath": 0.12, "growl": 0.2}},
+	"select_hero": {"f0_m": 92.0, "f0_f": 175.0, "syl": [3, 3], "mark": "",
+		"opts": {"rate": 0.72, "growl": 0.35, "echo": 0.30},
+		"opts_f": {"rate": 0.72, "breath": 0.06, "echo": 0.30}},
+	"select_generic": {"f0_m": 125.0, "f0_f": 210.0, "syl": [1, 2], "mark": "?",
+		"opts": {"breath": 0.05}},
+	"ack_move": {"f0_m": 125.0, "f0_f": 212.0, "syl": [1, 2], "mark": "",
+		"opts": {"rate": 1.1, "breath": 0.04}},
+	"ack_attack": {"f0_m": 104.0, "f0_f": 178.0, "syl": [1, 2], "mark": "!",
+		"opts": {"growl": 0.6, "rate": 1.15}, "opts_f": {"growl": 0.35, "rate": 1.15}},
+}
+const VOICE_VARIANTS: int = 3
 
-func _register_voice_bank(base_id: String, female: bool, f0: float,
-		words: Array, opts: Dictionary = {}) -> void:
-	var bank: String = "%s_%s" % [base_id, "f" if female else "m"]
-	var formant_mult: float = 1.16 if female else 1.0
+## Bakes one kind's cast (every civ x gender) into `out`. Pure DSP over
+## const tables — safe on any worker thread, no nodes, no shared state.
+func _build_voices_for_kind(kind: String, prof: Dictionary, out: Array) -> void:
+	for civ: String in VOICE_CIV_POOLS:
+		for g: String in ["m", "f"]:
+			var f0: float = prof.get("f0_" + g, 0.0) as float
+			if f0 <= 0.0:
+				continue
+			var opts: Dictionary = prof.get("opts", {}) as Dictionary
+			if g == "f" and prof.has("opts_f"):
+				opts = prof["opts_f"] as Dictionary
+			_register_voice_bank(out, kind, civ, g,
+				f0 * (VOICE_CIV_PITCH.get(civ, 1.0) as float),
+				_voice_words_for(kind, civ, g, prof), opts)
+
+## Deterministic gibberish: the same (kind, civ, gender) always speaks the
+## same lines, drawn from the civ's syllable pool.
+func _voice_words_for(kind: String, civ: String, g: String, prof: Dictionary) -> Array:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = ("%s|%s|%s" % [kind, civ, g]).hash()
+	var pool: Array = VOICE_CIV_POOLS[civ] as Array
+	var syl_range: Array = prof.get("syl", [1, 2]) as Array
+	var mark: String = prof.get("mark", "") as String
+	var words: Array = []
+	for _i: int in range(VOICE_VARIANTS):
+		var count: int = rng.randi_range(syl_range[0] as int, syl_range[1] as int)
+		var word: Array = []
+		var last_syl: String = ""
+		for s: int in range(count):
+			var syl: String = pool[rng.randi() % pool.size()] as String
+			if syl == last_syl:
+				syl = pool[rng.randi() % pool.size()] as String
+			last_syl = syl
+			word.append(syl + (mark if s == count - 1 else ""))
+		words.append(word)
+	return words
+
+func _register_voice_bank(out: Array, base_id: String, civ: String, g: String,
+		f0: float, words: Array, opts: Dictionary = {}) -> void:
+	var bank: String = "%s_%s_%s" % [base_id, civ, g]
+	var formant_mult: float = 1.16 if g == "f" else 1.0
 	for i: int in range(words.size()):
 		var samples: PackedFloat32Array = _voice_word(
 			words[i] as Array, f0, formant_mult, opts)
-		_baked_voices.append(["%s_%d" % [bank, i], _make_wav(samples), bank])
+		out.append(["%s_%d" % [bank, i], _make_wav(samples), bank])
 
 ## Renders one gibberish word: consonant onsets + formant vowels, a natural
 ## pitch declination across syllables, and the ?/! contour on the last one.

@@ -1,9 +1,10 @@
 extends Node2D
 
-## Voice-bank audition gate: exports every baked selection voice to WAV files
-## (CALIMA_SHOT_DIR, default /tmp/calima-voices) and prints a census — id,
-## duration, peak — so a regression in the formant synth is visible in the
-## numbers and the clips themselves can be listened to from the terminal.
+## Voice-bank audition gate: verifies EVERY baked voice clip (selection +
+## order acknowledgments, all civs and genders) is real audio, prints a
+## per-bank census, and exports a listenable subset to WAV files
+## (CALIMA_SHOT_DIR, default /tmp/calima-voices). CALIMA_CIVS narrows the
+## export (comma list; default "default,guanches,canarii,fenicios").
 
 func _ready() -> void:
 	AudioManager.ensure_voices_ready()
@@ -11,12 +12,17 @@ func _ready() -> void:
 	if dir.is_empty():
 		dir = "/tmp/calima-voices"
 	DirAccess.make_dir_recursive_absolute(dir)
+	var civs_env: String = OS.get_environment("CALIMA_CIVS")
+	if civs_env.is_empty():
+		civs_env = "default,guanches,canarii,fenicios"
+	var export_civs: PackedStringArray = civs_env.split(",", false)
 	var ids: Array = []
 	for sound_id: Variant in AudioManager._pools.keys():
-		if (sound_id as String).begins_with("select_"):
+		if (sound_id as String).begins_with("select_") or (sound_id as String).begins_with("ack_"):
 			ids.append(sound_id)
 	ids.sort()
 	var bad: int = 0
+	var exported: int = 0
 	for sound_id: String in ids:
 		var pool: Array = AudioManager._pools[sound_id] as Array
 		var stream: AudioStreamWAV = (pool[0] as AudioStreamPlayer).stream as AudioStreamWAV
@@ -29,13 +35,16 @@ func _ready() -> void:
 			if v >= 32768:
 				v -= 65536
 			peak = maxi(peak, absi(v))
-		var peak01: float = float(peak) / 32767.0
-		print("VOICE %-26s %5.2fs peak %.2f" % [sound_id, dur, peak01])
-		if dur < 0.05 or peak01 < 0.05:
+		if dur < 0.05 or float(peak) / 32767.0 < 0.05:
 			bad += 1
-			print("VOICE_GALLERY: DEGENERATE clip %s" % sound_id)
-		stream.save_to_wav("%s/%s.wav" % [dir, sound_id])
-	print("VOICE_GALLERY: %d clips exported to %s" % [ids.size(), dir])
+			print("VOICE_GALLERY: DEGENERATE clip %s (%.2fs peak %.2f)" % [
+				sound_id, dur, float(peak) / 32767.0])
+		for civ: String in export_civs:
+			if sound_id.contains("_%s_" % civ) or not sound_id.contains("_"):
+				stream.save_to_wav("%s/%s.wav" % [dir, sound_id])
+				exported += 1
+				break
+	print("VOICE_GALLERY: %d clips checked, %d exported to %s" % [ids.size(), exported, dir])
 	if bad > 0 or ids.is_empty():
 		print("VOICE_GALLERY: FAIL")
 		get_tree().quit(1)

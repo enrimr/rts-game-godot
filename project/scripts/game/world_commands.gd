@@ -531,8 +531,19 @@ func _flash_target(node: Node, flash_color: Color = Color(2.0, 2.0, 2.0, 1.0)) -
 	tw.tween_property(n2d, "modulate", flash_color, 0.07)
 	tw.tween_property(n2d, "modulate", original,    0.28)
 
+## An order confirmation in the LEAD unit's voice ("¡voy!" / battle cry) —
+## the old cmd_move/cmd_attack blips only when nothing selected can speak.
+func _play_order_voice(kind: String, fallback: String) -> void:
+	for u: Node in _world.live_selection():
+		if not is_instance_valid(u) or u.get("civ_id") == null:
+			continue
+		AudioManager.play_voice(kind, u.get("is_female") == true,
+			str(u.get("civ_id")), -4.0)
+		return
+	AudioManager.play(fallback)
+
 func _order_attack_all(target: Node) -> void:
-	AudioManager.play("cmd_attack")
+	_play_order_voice("ack_attack", "cmd_attack")
 	_flash_target(target, Color(2.2, 0.4, 0.4, 1.0))
 	CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "attack", _selection_ids(),
 		EntityRegistry.id_of(target)))
@@ -576,7 +587,7 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 				_order_attack_move_all(world_pos)
 			_flash_point(world_pos, Color(1.0, 0.35, 0.15, 1.0))
 		"patrol":
-			AudioManager.play("cmd_move")
+			_play_order_voice("ack_move", "cmd_move")
 			CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "patrol",
 				_selection_ids(), world_pos, _formation))
 			_flash_point(world_pos, Color(0.4, 0.65, 1.0, 1.0))
@@ -597,7 +608,7 @@ func _execute_pending_action(world_pos: Vector2) -> void:
 					_flash_target(fort, Color(0.4, 1.0, 0.4, 1.0))
 
 func _order_attack_move_all(world_pos: Vector2) -> void:
-	AudioManager.play("cmd_move")
+	_play_order_voice("ack_move", "cmd_move")
 	CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "attack_move", _selection_ids(), world_pos,
 		_formation, Input.is_key_pressed(KEY_SHIFT)))
 
@@ -616,7 +627,7 @@ func _flash_point(world_pos: Vector2, color: Color) -> void:
 	)
 
 func _order_move_all(world_pos: Vector2) -> void:
-	AudioManager.play("cmd_move")
+	_play_order_voice("ack_move", "cmd_move")
 	var valid_units: Array[Node] = []
 	for u: Node in _world.live_selection():
 		if is_instance_valid(u) and u.has_method("order_move"):
