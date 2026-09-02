@@ -20,7 +20,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | TechManager | `scripts/core/tech_manager.gd` | Research queue, applies 21 technology effects, instant tech grants (civ bonuses) |
 | TerrainManager | `scripts/core/terrain_manager.gd` | Impassability queries, nearest-passable search, coastal zone detection |
 | WeatherManager | `scripts/core/weather_manager.gd` | Procedural weather state machine (5 types); stat-modifier query API (vision, speed, gather, drift, damage) |
-| AudioManager | `scripts/core/audio_manager.gd` | Spatial audio playback with distance attenuation |
+| AudioManager | `scripts/core/audio_manager.gd` | Spatial audio playback with distance attenuation; ALL audio (sfx, per-civ formant voices, music) is procedurally synthesized — see [audio_synthesis.md](audio_synthesis.md) |
 | SaveManager | `scripts/core/save_manager.gd` | Complete game save/load, 99 JSON slots with metadata UI |
 | GameSettings | `scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
 | MatchConfig | `scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
