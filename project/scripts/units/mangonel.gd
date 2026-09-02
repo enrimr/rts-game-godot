@@ -18,7 +18,7 @@ func order_attack_ground(world_pos: Vector2) -> void:
 	attack_target = null
 	_destination_state = UnitState.IDLE
 	current_state = UnitState.IDLE
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 	_fire_at(world_pos)
 
 # ── Combat machine hooks ──
@@ -35,7 +35,7 @@ func _combat_reposition(dist: float, reach: float) -> bool:
 	var away: Vector2 = global_position \
 		+ (global_position - (attack_target as Node2D).global_position).normalized() * 120.0
 	nav_agent.target_position = _safe_destination(away)
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 	return true
 
 # _fire_at deals the splash damage, emits unit_attacked and plays the impact

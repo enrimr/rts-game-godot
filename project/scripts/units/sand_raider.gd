@@ -52,7 +52,7 @@ func _handle_movement_override(delta: float) -> bool:
 	if _advance_stuck(delta):
 		_retreating = false
 		return true
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 	return true
 
 func _begin_retreat() -> void:

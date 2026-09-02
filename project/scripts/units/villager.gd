@@ -295,7 +295,7 @@ func _handle_movement(delta: float) -> void:
 		_jitter_repath()
 		return
 
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 
 func _enter_state(new_state: UnitState) -> void:
 	if new_state == UnitState.BUILDING and is_instance_valid(build_target):
@@ -305,7 +305,7 @@ func _enter_state(new_state: UnitState) -> void:
 			build_target.register_builder()
 	current_state = new_state
 	_destination_state = UnitState.IDLE
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 	_play_animation(_get_animation_name())
 
 func _unregister_from_build_target() -> void:
@@ -430,10 +430,10 @@ func _handle_building(delta: float) -> void:
 		if _advance_stuck(delta):
 			_jitter_repath()
 			return
-		nav_agent.set_velocity(_nav_velocity())
+		_drive_agent(_nav_velocity())
 		return
 
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 
 	# Repair: building is complete (or has no state, e.g. TownCenterBuilding) and damaged
 	var bstate: Variant = build_target.get("state")
@@ -477,10 +477,10 @@ func _handle_attacking(delta: float) -> void:
 		if _advance_stuck(delta):
 			_jitter_repath()
 			return
-		nav_agent.set_velocity(_nav_velocity())
+		_drive_agent(_nav_velocity())
 		return
 
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 	_attack_timer += delta
 	if _attack_timer >= _attack_interval():
 		_attack_timer = 0.0
@@ -551,7 +551,7 @@ func _handle_boarding_approach(delta: float) -> void:
 	if _advance_stuck(delta):
 		_jitter_repath()
 		return
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 
 func _on_transport_garrison_changed(ship: Node, _current_size: int, _capacity: int) -> void:
 	if ship != _boarding_ship:

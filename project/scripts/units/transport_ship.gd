@@ -60,7 +60,7 @@ func _handle_movement(delta: float) -> void:
 	if _advance_stuck(delta):
 		_unstick()
 		return
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 
 # Returns true if the ship is close enough to shore to allow unloading.
 func _is_near_shore() -> bool:

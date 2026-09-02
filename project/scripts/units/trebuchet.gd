@@ -57,7 +57,7 @@ func order_attack_ground(world_pos: Vector2) -> void:
 	attack_target = null
 	_destination_state = UnitState.IDLE
 	current_state = UnitState.IDLE
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 	if not is_deployed:
 		_start_deploy()
 	_fire_at(world_pos)
@@ -85,12 +85,12 @@ func order_undeploy() -> void:
 func _start_deploy() -> void:
 	_deploying = true
 	_deploy_timer = 0.0
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 
 func _start_undeploy() -> void:
 	_undeploying = true
 	_deploy_timer = 0.0
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 
 func _handle_deploy_animation(delta: float) -> void:
 	_deploy_timer += delta
@@ -116,18 +116,18 @@ func _handle_movement(delta: float) -> void:
 		var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
 		var reach: float = _attack_reach_to(attack_target)
 		if dist <= reach and dist >= reach * MIN_RANGE_RATIO:
-			nav_agent.set_velocity(Vector2.ZERO)
+			_drive_agent(Vector2.ZERO)
 			_start_deploy()
 			return
 	if nav_agent.is_navigation_finished():
 		current_state = _destination_state
 		_destination_state = UnitState.IDLE
-		nav_agent.set_velocity(Vector2.ZERO)
+		_drive_agent(Vector2.ZERO)
 		return
 	if _advance_stuck(delta):
 		_unstick()
 		return
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	if current_state != UnitState.MOVING:
@@ -153,7 +153,7 @@ func _handle_attacking(delta: float) -> void:
 		_start_undeploy()
 		return
 
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 	_attack_timer += delta
 	if _attack_timer >= _attack_interval():
 		_attack_timer = 0.0

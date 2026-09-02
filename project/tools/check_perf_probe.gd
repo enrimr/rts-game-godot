@@ -93,6 +93,10 @@ func _apply_disables(disables: PackedStringArray) -> void:
 					(wo as Node2D).visible = false
 			"units":
 				(_world.get("units_layer") as Node).propagate_call("set_process", [false])
+			"hide_units":
+				(_world.get("units_layer") as Node2D).visible = false
+			"hide_world":
+				_world.visible = false
 			"world":
 				_world.set_process(false)
 			"interp":
@@ -128,6 +132,47 @@ func _spawn_armies() -> void:
 	CommandBus.submit(UnitPointCommand.make(0, "attack_move", ids_a, mid + dir * 300.0))
 	CommandBus.submit(UnitPointCommand.make(1, "attack_move", ids_b, mid - dir * 300.0))
 
+## Physics-side attribution, applied when measuring starts (armies exist by
+## then): CALIMA_PERF_DISABLE=areas (attack-range Area2Ds), rvo (agent
+## avoidance), unit_physics (freeze every unit's _physics_process).
+func _apply_combat_disables(disables: PackedStringArray) -> void:
+	if disables.is_empty():
+		return
+	for unit: Node in (_world.get("units_layer") as Node).get_children():
+		if not is_instance_valid(unit):
+			continue
+		for what: String in disables:
+			match what:
+				"areas":
+					var area: Variant = unit.get("attack_range_area")
+					if area is Area2D:
+						(area as Area2D).monitoring = false
+						(area as Area2D).monitorable = false
+				"rvo":
+					var agent: Variant = unit.get("nav_agent")
+					if agent is NavigationAgent2D:
+						(agent as NavigationAgent2D).avoidance_enabled = false
+				"unit_physics":
+					unit.set_physics_process(false)
+				"no_velcb":
+					var nav: Variant = unit.get("nav_agent")
+					if nav is NavigationAgent2D and unit.has_method("_on_velocity_computed") \
+							and (nav as NavigationAgent2D).velocity_computed.is_connected(
+								Callable(unit, "_on_velocity_computed")):
+						(nav as NavigationAgent2D).velocity_computed.disconnect(
+							Callable(unit, "_on_velocity_computed"))
+				"rvo_lite":
+					var ag: Variant = unit.get("nav_agent")
+					if ag is NavigationAgent2D:
+						(ag as NavigationAgent2D).max_neighbors = 4
+						(ag as NavigationAgent2D).neighbor_distance = 48.0
+				"phys30":
+					Engine.physics_ticks_per_second = 30
+				"steps4":
+					Engine.max_physics_steps_per_frame = 4
+				"steps2":
+					Engine.max_physics_steps_per_frame = 2
+
 func _count_units() -> int:
 	var n: int = 0
 	for unit: Node in (_world.get("units_layer") as Node).get_children():
@@ -155,6 +200,7 @@ func _process(delta: float) -> void:
 		Phase.SETTLE:
 			if _t >= SETTLE_SEC:
 				_t = 0.0
+				_apply_combat_disables(OS.get_environment("CALIMA_PERF_DISABLE").split(",", false))
 				_phase = Phase.MEASURE
 		Phase.MEASURE:
 			var p: float = Performance.get_monitor(Performance.TIME_PROCESS)
@@ -174,12 +220,14 @@ func _report() -> void:
 		_proc_sum * 1000.0 / n, _phys_sum * 1000.0 / n, _worst * 1000.0,
 		n / _window, _count_units(),
 		(Time.get_ticks_msec() - _real_start_msec) / 1000])
-	print("PERF %-14s | nav_agents %d  nav_obstacles %d  nav_polys %d  phys_objects %d  nodes %d" % [
+	print("PERF %-14s | nav_agents %d  nav_obstacles %d  nav_polys %d  phys_objects %d  phys_pairs %d  phys_islands %d  nodes %d" % [
 		_label,
 		int(Performance.get_monitor(Performance.NAVIGATION_AGENT_COUNT)),
 		int(Performance.get_monitor(Performance.NAVIGATION_OBSTACLE_COUNT)),
 		int(Performance.get_monitor(Performance.NAVIGATION_POLYGON_COUNT)),
 		int(Performance.get_monitor(Performance.PHYSICS_2D_ACTIVE_OBJECTS)),
+		int(Performance.get_monitor(Performance.PHYSICS_2D_COLLISION_PAIRS)),
+		int(Performance.get_monitor(Performance.PHYSICS_2D_ISLAND_COUNT)),
 		int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))])
 	print("PERF: done")
 	get_tree().quit(0)

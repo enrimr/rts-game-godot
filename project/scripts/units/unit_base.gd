@@ -640,7 +640,7 @@ func _physics_process(delta: float) -> void:
 		# Stunned: no walking, no swinging — but side ticks (hero ability
 		# timers, cooldowns) keep counting.
 		if is_instance_valid(nav_agent):
-			nav_agent.set_velocity(Vector2.ZERO)
+			_drive_agent(Vector2.ZERO)
 		_combat_side_tick(delta)
 		return
 	match current_state:
@@ -682,7 +682,7 @@ func _handle_movement(delta: float) -> void:
 		if _in_attack_position(dist, _attack_reach_to(attack_target)):
 			current_state = UnitState.ATTACKING
 			_destination_state = UnitState.IDLE
-			nav_agent.set_velocity(Vector2.ZERO)
+			_drive_agent(Vector2.ZERO)
 			return
 	if nav_agent.is_navigation_finished():
 		_on_destination_reached()
@@ -690,7 +690,7 @@ func _handle_movement(delta: float) -> void:
 			return
 		current_state = _destination_state
 		_destination_state = UnitState.IDLE
-		nav_agent.set_velocity(Vector2.ZERO)
+		_drive_agent(Vector2.ZERO)
 		return
 	# Well before declaring "stuck", ask idle friends parked on the path to
 	# step aside — the AoE2 shuffle. RVO alone never moves an idle agent.
@@ -701,7 +701,7 @@ func _handle_movement(delta: float) -> void:
 		_on_movement_stuck()
 		_unstick()
 		return
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 
 ## Blocked mover: find own idle units in front and nudge them sideways.
 func _try_shove_blockers() -> void:
@@ -752,6 +752,31 @@ static func nudge_side_vector(travel_dir: Vector2, mover_pos: Vector2, blocker_p
 		side = -side
 	return side
 
+## Single funnel into the avoidance pipeline. The engine dispatches
+## velocity_computed to EVERY avoidance agent EVERY physics tick, connected
+## or not — in a 200v200 melee that was thousands of GDScript calls per
+## rendered frame for units standing still trading blows. A parked unit
+## flushes one final zero (so neighbors stop dodging its ghost trajectory),
+## then disconnects its callback until it drives again; the agent itself
+## stays in the RVO space, so movers keep steering around parked units.
+## Measured: 200v200 from 7.5 to ~13 fps.
+var _agent_stopped: bool = false
+
+func _drive_agent(vel: Vector2) -> void:
+	if vel == Vector2.ZERO:
+		velocity = Vector2.ZERO
+		if _agent_stopped:
+			return
+		_agent_stopped = true
+		nav_agent.set_velocity(Vector2.ZERO)
+		if nav_agent.velocity_computed.is_connected(_on_velocity_computed):
+			nav_agent.velocity_computed.disconnect(_on_velocity_computed)
+		return
+	if _agent_stopped and not nav_agent.velocity_computed.is_connected(_on_velocity_computed):
+		nav_agent.velocity_computed.connect(_on_velocity_computed)
+	_agent_stopped = false
+	nav_agent.set_velocity(vel)
+
 # ATTACKING is included on purpose: chase and kite steps issue set_velocity
 # while in that state, and gating on MOVING alone silently dropped them —
 # units froze the moment a target stepped out of reach.
@@ -768,7 +793,7 @@ func _handle_attacking(delta: float) -> void:
 		_on_target_lost()
 		return
 	if _attack_paused():
-		nav_agent.set_velocity(Vector2.ZERO)
+		_drive_agent(Vector2.ZERO)
 		return
 	var dist: float = global_position.distance_to((attack_target as Node2D).global_position)
 	var reach: float = _attack_reach_to(attack_target)
@@ -805,9 +830,9 @@ func _handle_attacking(delta: float) -> void:
 				* _nav_speed()
 			move_and_slide()
 			return
-		nav_agent.set_velocity(vel)
+		_drive_agent(vel)
 		return
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 	_attack_timer += delta
 	if _attack_timer >= _attack_interval():
 		_attack_timer = 0.0
@@ -1126,14 +1151,14 @@ func _break_off_combat() -> void:
 	_destination_state = UnitState.IDLE
 	current_state = UnitState.IDLE
 	if is_instance_valid(nav_agent):
-		nav_agent.set_velocity(Vector2.ZERO)
+		_drive_agent(Vector2.ZERO)
 
 # Give up the current move/chase and return to idle. Clears the combat targets
 # so an abandoned unit is not immediately re-engaged by _handle_attacking.
 func _abandon_movement() -> void:
 	_show_path_failure()
 	if is_instance_valid(nav_agent):
-		nav_agent.set_velocity(Vector2.ZERO)
+		_drive_agent(Vector2.ZERO)
 		# Giving up means having no destination: clearing the target empties
 		# the agent's path, or the cyan route would repaint after the red
 		# failure fade ends (the stale path survived in the NavigationAgent).

@@ -98,6 +98,7 @@ locale/locale_filter=PackedStringArray("en", "es")
 [physics]
 
 common/physics_interpolation=true
+common/max_physics_steps_per_frame=2
 
 [rendering]
 

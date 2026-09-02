@@ -33,7 +33,7 @@ func order_attack_ground(world_pos: Vector2) -> void:
 	if global_position.distance_to(world_pos) <= reach:
 		_destination_state = UnitState.IDLE
 		current_state = UnitState.IDLE
-		nav_agent.set_velocity(Vector2.ZERO)
+		_drive_agent(Vector2.ZERO)
 		_launch_arrow_to(world_pos)
 	else:
 		# Move to the edge of attack range toward the target, then fire
@@ -68,7 +68,7 @@ func _combat_reposition(dist: float, reach: float) -> bool:
 	var away: Vector2 = global_position \
 		+ (global_position - (attack_target as Node2D).global_position).normalized() * KITE_STEP
 	nav_agent.target_position = _safe_destination(away)
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 	return true
 
 # The arrow deals the damage and emits unit_attacked on impact.

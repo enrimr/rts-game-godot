@@ -86,7 +86,7 @@ func _handle_movement(delta: float) -> void:
 	if _advance_stuck(delta):
 		_unstick()
 		return
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 
 func _handle_fishing(delta: float) -> void:
 	if not is_instance_valid(fish_target):
@@ -131,7 +131,7 @@ func _handle_returning(delta: float) -> void:
 	if _advance_stuck(delta):
 		_unstick()
 		return
-	nav_agent.set_velocity(_nav_velocity())
+	_drive_agent(_nav_velocity())
 
 func _return_to_dock() -> void:
 	if not is_instance_valid(drop_off_target):
@@ -160,9 +160,9 @@ func _handle_boat_building(delta: float) -> void:
 		if _advance_stuck(delta):
 			_unstick()
 			return
-		nav_agent.set_velocity(_nav_velocity())
+		_drive_agent(_nav_velocity())
 		return
-	nav_agent.set_velocity(Vector2.ZERO)
+	_drive_agent(Vector2.ZERO)
 	var bstate: Variant = build_target.get("state")
 	if bstate != null and (bstate as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 		build_target.add_construction(25.0 * delta)
