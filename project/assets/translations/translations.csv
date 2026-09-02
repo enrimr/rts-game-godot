@@ -502,3 +502,24 @@ LOBBY_RESUME_EMPTY,No multiplayer saves found,No hay partidas multijugador guard
 LAN_SEAT_WAITING,Waiting for %s…,Esperando a %s…
 LAN_VERSION_MISMATCH,Incompatible versions — host has %s and you have %s,Versiones incompatibles — el anfitrión tiene %s y tú %s
 SETTINGS_SHOW_FPS,Show FPS counter,Mostrar contador de FPS
+MENU_CAMPAIGN,Campaign,Campaña
+CAMP_TITLE,The Flames of Tamarán,Las Llamas de Tamarán
+CAMP_SUBTITLE,The Canarii against the Atlante invasion — four battles for the archipelago,Los canarii contra la invasión atlante — cuatro batallas por el archipiélago
+CAMP_PLAY,Play,Jugar
+CAMP_REPLAY,Replay,Rejugar
+CAMP_START,Begin mission,Comenzar misión
+CAMP_HUD_SURVIVE,Hold out:,Resistid:
+CAMP_HUD_WAVE,Enemy warriors approach!,¡Se acercan guerreros enemigos!
+CAMP_HUD_OBJECTIVE_DONE,Objective complete,Objetivo cumplido
+CAMP_M1_TITLE,The Vanguard,La Vanguardia
+CAMP_M1_INTRO,Bronze sails cut the horizon at dawn. The Atlantes — lords of the deep sea — have raised a camp on the shores of Tamarán. Doramas gathers the warriors of the ravines: drive the vanguard back into the ocean before their roots take hold. Destroy their camp.,Velas de bronce cortan el horizonte al amanecer. Los atlantes — señores del mar profundo — han levantado un campamento en las costas de Tamarán. Doramas reúne a los guerreros de los barrancos: expulsad a la vanguardia de vuelta al océano antes de que eche raíces. Destruid su campamento.
+CAMP_M1_OBJ_TRAIN,Train 8 warriors,Entrena 8 guerreros
+CAMP_M2_TITLE,Land of Fire,Tierra de Fuego
+CAMP_M2_INTRO,"The mountain answers the invasion with ash and thunder. Among the volcano's black fields, your people shelter what little the scarce land gives. The Atlante host marches wave after wave under the falling ash. Guayarmina watches from the ridge: hold the settlement until the sacred night passes.","La montaña responde a la invasión con ceniza y truenos. Entre los campos negros del volcán, tu gente protege lo poco que da la tierra escasa. La hueste atlante marcha oleada tras oleada bajo la ceniza que cae. Guayarmina vigila desde el risco: mantened el asentamiento en pie hasta que pase la noche sagrada."
+CAMP_M2_OBJ_TOWERS,Raise 2 watch towers,Levanta 2 torres de vigilancia
+CAMP_M3_TITLE,The Strait,El Estrecho
+CAMP_M3_INTRO,"The invaders rule the water between the islands: no canoe crosses without meeting bronze rams. On the far shore, their dock feeds the war with warriors and steel. Build your own fleet in secret, cross the strait, and burn everything they have raised.","Los invasores dominan el agua entre las islas: ninguna canoa cruza sin encontrar espolones de bronce. En la otra orilla, su puerto alimenta la guerra con guerreros y acero. Construye tu propia flota en secreto, cruza el estrecho y quema todo lo que han levantado."
+CAMP_M3_OBJ_DOCK,Build a dock,Construye un puerto
+CAMP_M3_OBJ_SINK,Destroy the enemy dock,Destruye el puerto enemigo
+CAMP_M4_TITLE,The Last Mountain,La Última Montaña
+CAMP_M4_INTRO,"Everything ends at the foot of the volcano. Two Atlante armies close in on the last free stronghold of Tamarán, and at their head marches their deathless champion. The elders speak with one voice: while the champion stands, the invasion cannot be broken. Find them. Face them. End this.","Todo termina al pie del volcán. Dos ejércitos atlantes cercan el último bastión libre de Tamarán, y a su cabeza marcha su campeón inmortal. Los ancianos hablan con una sola voz: mientras el campeón siga en pie, la invasión no podrá romperse. Encontradlo. Plantadle cara. Acabad con esto."

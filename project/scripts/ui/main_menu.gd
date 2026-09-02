@@ -19,6 +19,9 @@ func _ready() -> void:
 	_build_how_to_play_button()
 	_build_continue_button()
 	_build_lan_button()
+	# Built LAST inserting at play+1, so the final order reads:
+	# Jugar, Campaña, Continuar, LAN, Internet.
+	_build_campaign_button()
 	_build_engine_credit()
 	# Coming back from an aborted session must not leave a half-open peer.
 	if NetworkSession.is_online():
@@ -60,6 +63,32 @@ func _style_play_button() -> void:
 	_play_button.add_theme_color_override("font_color", Color(0.92, 1.0, 0.88))
 
 # --- Continue button (shown only when a save exists) ---
+
+var _campaign_button: Button = null
+
+func _build_campaign_button() -> void:
+	var btn: Button = Button.new()
+	btn.text = tr("MENU_CAMPAIGN")
+	btn.custom_minimum_size = Vector2(160, 40)
+	btn.add_theme_font_size_override("font_size", 22)
+	btn.focus_mode = Control.FOCUS_NONE
+	var container: Node = _play_button.get_parent()
+	container.add_child(btn)
+	container.move_child(btn, _play_button.get_index() + 1)
+	_campaign_button = btn
+	btn.pressed.connect(_open_campaign_screen)
+
+var _campaign_screen: CampaignScreen = null
+
+func _open_campaign_screen() -> void:
+	if is_instance_valid(_campaign_screen):
+		return
+	_campaign_screen = CampaignScreen.new()
+	add_child(_campaign_screen)
+	_campaign_screen.back_requested.connect(func() -> void:
+		if is_instance_valid(_campaign_screen):
+			_campaign_screen.queue_free()
+		_campaign_screen = null)
 
 var _continue_button: Button = null
 
@@ -357,6 +386,7 @@ func _on_play_pressed() -> void:
 	)
 
 func _on_lobby_start() -> void:
+	MatchConfig.campaign_mission = -1
 	if is_instance_valid(_lobby):
 		_lobby.queue_free()
 		_lobby = null

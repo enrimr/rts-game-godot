@@ -224,6 +224,14 @@ func _ready() -> void:
 	# gets its deterministic EntityRegistry ID, and the command log starts.
 	CommandBus.start_match(self)
 
+	# Campaign mission: the director tracks objectives, spawns scripted waves
+	# and reports completion. Single-player only.
+	if MatchConfig.campaign_mission >= 0 and not NetworkSession.is_online():
+		var director: MissionDirector = MissionDirector.new()
+		director.name = "MissionDirector"
+		add_child(director)
+		director.setup(self)
+
 	# Multiplayer: the host streams the authoritative state, a client puppets
 	# its mirror world from it. Must come after start_match so both machines
 	# reference entities by the same deterministic IDs.

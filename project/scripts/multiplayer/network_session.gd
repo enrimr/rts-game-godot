@@ -816,6 +816,7 @@ static func apply_config(cfg: Dictionary) -> void:
 	MatchConfig.weather_frequency = cfg.get("weather_frequency", 1) as int
 	MatchConfig.hero_gender = cfg.get("hero_gender", 0) as int
 	MatchConfig.launch_tutorial = false
+	MatchConfig.campaign_mission = -1
 	PlayerColors.clear_overrides()
 	var colors: Variant = cfg.get("colors")
 	if colors is Dictionary:
