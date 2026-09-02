@@ -38,6 +38,14 @@ var _phys_sum: float = 0.0
 var _worst: float = 0.0
 var _frames: int = 0
 var _real_start_msec: int = 0
+var _ticks: int = 0
+var _nav_sum: float = 0.0
+var _frame_us_sum: int = 0
+var _last_frame_us: int = 0
+
+func _physics_process(_delta: float) -> void:
+	if _phase == Phase.MEASURE:
+		_ticks += 1
 
 func _env_int(key: String, fallback: int) -> int:
 	var v: String = OS.get_environment(key)
@@ -207,6 +215,11 @@ func _process(delta: float) -> void:
 			var f: float = Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)
 			_proc_sum += p
 			_phys_sum += f
+			_nav_sum += Performance.get_monitor(Performance.TIME_NAVIGATION_PROCESS)
+			var now_us: int = Time.get_ticks_usec()
+			if _last_frame_us > 0:
+				_frame_us_sum += now_us - _last_frame_us
+			_last_frame_us = now_us
 			_worst = maxf(_worst, p + f)
 			_frames += 1
 			if _t >= _window:
@@ -220,6 +233,9 @@ func _report() -> void:
 		_proc_sum * 1000.0 / n, _phys_sum * 1000.0 / n, _worst * 1000.0,
 		n / _window, _count_units(),
 		(Time.get_ticks_msec() - _real_start_msec) / 1000])
+	print("PERF %-14s | wall %.1f ms/frame  ticks/frame %.2f  nav %.2f ms" % [
+		_label, float(_frame_us_sum) / 1000.0 / maxf(float(_frames - 1), 1.0),
+		float(_ticks) / n, _nav_sum * 1000.0 / n])
 	print("PERF %-14s | nav_agents %d  nav_obstacles %d  nav_polys %d  phys_objects %d  phys_pairs %d  phys_islands %d  nodes %d" % [
 		_label,
 		int(Performance.get_monitor(Performance.NAVIGATION_AGENT_COUNT)),

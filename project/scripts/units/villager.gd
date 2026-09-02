@@ -426,7 +426,7 @@ func _handle_building(delta: float) -> void:
 	# MOVING-state check and works for large buildings; approach the edge via
 	# _nav_target_for, which lands on walkable navmesh past the carve margin.
 	if _edge_distance_to(build_target) > BUILD_RANGE:
-		nav_agent.target_position = _safe_destination(_nav_target_for(build_target))
+		_repath_to(_nav_target_for(build_target))
 		if _advance_stuck(delta):
 			_jitter_repath()
 			return
@@ -473,7 +473,7 @@ func _handle_attacking(delta: float) -> void:
 	var dist: float = global_position.distance_to(target_pos)
 	var attack_reach: float = _attack_reach_to(attack_target)
 	if dist > attack_reach:
-		nav_agent.target_position = _nav_target_for(attack_target)
+		_repath_to(_nav_target_for(attack_target))
 		if _advance_stuck(delta):
 			_jitter_repath()
 			return

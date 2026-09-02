@@ -44,7 +44,7 @@ func _handle_movement_override(delta: float) -> bool:
 		_retreating = false
 		if is_instance_valid(attack_target):
 			_destination_state = UnitState.ATTACKING
-			nav_agent.target_position = _safe_destination(_nav_target_for(attack_target))
+			_repath_to(_nav_target_for(attack_target))
 		else:
 			current_state = UnitState.IDLE
 			_destination_state = UnitState.IDLE

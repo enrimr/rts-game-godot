@@ -179,17 +179,14 @@ func _draw_content() -> void:
 	# the grid was stretched to the widget and the reveal sat offset from the
 	# units in it.
 	if fog != null:
+		# FogOfWar already maintains a per-cell texture with exactly these
+		# semantics (opaque unexplored, translucent explored, clear visible) —
+		# one textured quad replaces the ~12k per-cell draw_rect calls that
+		# made every content redraw a frame spike on big maps.
 		var fog_origin: Vector2 = _to_mm(fog.map_origin, ms)
 		var cell_px: Vector2 = Vector2(FogOfWar.CELL_SIZE, FogOfWar.CELL_SIZE) / _world_size * ms
-		var col_unexplored: Color = COLOR_FOG_UNEXPLORED
-		var col_explored: Color = Color(FogOfWar.SHROUD_RGB, 0.5)
-		for cy: int in range(fog.grid_h):
-			for cx: int in range(fog.grid_w):
-				var state: int = fog._cells[cy * fog.grid_w + cx]
-				if state == FogOfWar.STATE_VISIBLE:
-					continue
-				var fog_col: Color = col_unexplored if state == FogOfWar.STATE_UNEXPLORED else col_explored
-				_content.draw_rect(Rect2(fog_origin + Vector2(cx, cy) * cell_px, cell_px + Vector2.ONE), fog_col)
+		_content.draw_texture_rect(fog._texture,
+			Rect2(fog_origin, cell_px * Vector2(float(fog.grid_w), float(fog.grid_h))), false)
 
 	# Subtle grid lines every 25% of the map
 	for i: int in range(1, 4):
@@ -206,14 +203,19 @@ func _draw_content() -> void:
 		if not is_instance_valid(rn_node) or not (rn_node is ResourceNode):
 			continue
 		var rn: ResourceNode = rn_node as ResourceNode
-		if fog != null and fog.get_cell_state(rn.global_position) == FogOfWar.STATE_UNEXPLORED:
-			continue
-		var in_sight: bool = false
 		var rpos: Vector2 = rn.global_position
-		for entry: Dictionary in _own_unit_sights:
-			if (entry["pos"] as Vector2).distance_to(rpos) <= (entry["r"] as float):
-				in_sight = true
-				break
+		var cell_state: int = fog.get_cell_state(rpos) if fog != null else FogOfWar.STATE_VISIBLE
+		if cell_state == FogOfWar.STATE_UNEXPLORED:
+			continue
+		# The sight fraction is a subset of full LOS, so a node outside a
+		# VISIBLE cell can never pass the distance loop — skipping it keeps
+		# this O(nodes) instead of O(nodes x own units) every redraw.
+		var in_sight: bool = false
+		if cell_state == FogOfWar.STATE_VISIBLE:
+			for entry: Dictionary in _own_unit_sights:
+				if (entry["pos"] as Vector2).distance_to(rpos) <= (entry["r"] as float):
+					in_sight = true
+					break
 		var col: Color = _resource_color(rn.resource_type)
 		if not in_sight:
 			col.a = 0.4

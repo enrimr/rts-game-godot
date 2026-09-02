@@ -48,7 +48,7 @@ func order_build(target: Node) -> void:
 	fish_target = null
 	build_target = target
 	current_state = UnitState.MOVING
-	nav_agent.target_position = _safe_destination((target as Node2D).global_position)
+	_repath_to((target as Node2D).global_position)
 	var bstate: Variant = target.get("state")
 	if bstate != null and (bstate as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 		target.construction_complete.connect(_on_construction_complete, CONNECT_ONE_SHOT)
@@ -72,7 +72,7 @@ func order_fish(target: Node, dock: Node) -> void:
 	fish_target = target
 	drop_off_target = dock
 	current_state = UnitState.MOVING
-	nav_agent.target_position = _safe_destination((target as Node2D).global_position)
+	_repath_to((target as Node2D).global_position)
 
 func _handle_movement(delta: float) -> void:
 	if nav_agent.is_navigation_finished():
@@ -99,7 +99,7 @@ func _handle_fishing(delta: float) -> void:
 		return
 	var dist: float = global_position.distance_to((fish_target as Node2D).global_position)
 	if dist > GATHER_RANGE:
-		nav_agent.target_position = _safe_destination((fish_target as Node2D).global_position)
+		_repath_to((fish_target as Node2D).global_position)
 		current_state = UnitState.MOVING
 		return
 	_gather_timer += delta
@@ -127,7 +127,7 @@ func _handle_returning(delta: float) -> void:
 			current_state = UnitState.IDLE
 		return
 	if nav_agent.is_navigation_finished():
-		nav_agent.target_position = _safe_destination(berth)
+		_repath_to(berth)
 	if _advance_stuck(delta):
 		_unstick()
 		return
@@ -138,7 +138,7 @@ func _return_to_dock() -> void:
 		current_state = UnitState.IDLE
 		return
 	current_state = UnitState.RETURNING
-	nav_agent.target_position = _safe_destination(_drop_off_position())
+	_repath_to(_drop_off_position())
 
 ## Where the boat has to sail to unload. A dock's own origin sits on the
 ## shoreline — usually on land, always off the ocean navmesh — so aiming at it
@@ -156,7 +156,7 @@ func _handle_boat_building(delta: float) -> void:
 	var build_pos: Vector2 = (build_target as Node2D).global_position
 	var dist: float = global_position.distance_to(build_pos)
 	if dist > BUILD_RANGE:
-		nav_agent.target_position = _safe_destination(build_pos)
+		_repath_to(build_pos)
 		if _advance_stuck(delta):
 			_unstick()
 			return

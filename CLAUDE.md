@@ -258,9 +258,18 @@ CALIMA_SHOT_DIR=/tmp/calima-voices $GODOT --headless --path project res://tools/
 # ms per frame + nav/physics population counters — run on two builds for perf A/Bs.
 # env: CALIMA_PERF_LABEL/RIVALS/MAP_SIZE/MAP/RESOURCES, CALIMA_PERF_ARMY (units per side,
 # clashing armies), CALIMA_PERF_DEVELOP (game-seconds at 4x before measuring), _WINDOW,
-# CALIMA_PERF_DISABLE=fog,minimap,hud,weather,units,world,interp (cost attribution),
-# CALIMA_FOG_STATS=1 (per-phase fog tick timings). Vsync is disabled by the probe.
+# CALIMA_PERF_DISABLE=fog,minimap,hud,weather,units,world,interp,areas,rvo,
+#   unit_physics,rvo_lite,no_velcb,phys30,steps4,steps2,hide_units,hide_world
+#   (cost attribution), CALIMA_FOG_STATS=1 (per-phase fog tick timings).
+# Vsync is disabled by the probe; trust the "wall ms/frame + ticks/frame" line
+# (the TIME_PROCESS monitor is unreliable, and fps overstates when the sim dilates).
 $GODOT --path project --resolution 1280x720 res://tools/check_perf_probe.tscn
+# Simulation budget gate (headless, suite-friendly): 100v100 battle must hold
+# >= 30 ticks/s wall (healthy: 60). Catches sim-side regressions (RVO population,
+# per-tick chase repaths). Perf PROPERTIES (incremental fog, repath hysteresis,
+# avoidance dispatch reconnect) are locked machine-independently in
+# tests/unit/test_perf_properties.gd as part of the normal GUT suite.
+$GODOT --headless --path project res://tools/check_perf_gate.tscn
 ```
 
 Note: GUT silently *skips* a test script that fails to parse while still

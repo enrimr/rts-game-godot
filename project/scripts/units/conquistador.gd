@@ -43,7 +43,7 @@ func _combat_reposition(dist: float, reach: float) -> bool:
 		return false
 	var away: Vector2 = global_position \
 		+ (global_position - (attack_target as Node2D).global_position).normalized() * 64.0
-	nav_agent.target_position = _safe_destination(away)
+	_repath_to(away)
 	_drive_agent(_nav_velocity())
 	return true
 

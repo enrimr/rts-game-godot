@@ -814,7 +814,7 @@ func _handle_attacking(delta: float) -> void:
 		# only) the rotated destination must survive — re-deriving it here
 		# every tick silently undid the manoeuvre.
 		if _approach_step == 0:
-			nav_agent.target_position = _safe_destination(_nav_target_for(attack_target))
+			_repath_to(_nav_target_for(attack_target))
 		if _advance_stuck(delta):
 			_unstick()
 			return
@@ -1069,7 +1069,23 @@ func _safe_destination(destination: Vector2) -> Vector2:
 func _navigate_to(destination: Vector2) -> void:
 	_reset_path_style()
 	_move_destination = destination
+	_last_repath_goal = Vector2.INF
 	nav_agent.target_position = _safe_destination(destination)
+
+## Chase repath with hysteresis. Chasers used to assign target_position every
+## tick against a moving goal, forcing a nearest_passable terrain query plus a
+## full A* per unit per tick — the single largest per-tick cost of a big
+## battle's chase scrum. Recompute only when the goal drifted enough to change
+## the answer, or the current path ran out while the goal is still away.
+const REPATH_DISTANCE: float = 24.0
+var _last_repath_goal: Vector2 = Vector2.INF
+
+func _repath_to(goal: Vector2) -> void:
+	if goal.distance_to(_last_repath_goal) <= REPATH_DISTANCE \
+			and not nav_agent.is_navigation_finished():
+		return
+	_last_repath_goal = goal
+	nav_agent.target_position = _safe_destination(goal)
 
 # Returns the desired velocity toward the next nav path point.
 # Returns ZERO when already at the point or navigation is finished.
