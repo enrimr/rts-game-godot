@@ -33,7 +33,23 @@ const UPDATE_INTERVAL: float = 0.12
 const EXPLORE_THRESHOLD: int = 350  # cells newly revealed to satisfy tutorial
 
 var _cells: PackedByteArray
+## Dedupe mask + index list: _render walks only _dirty_list instead of the
+## whole grid (the full-grid scan twice per tick dominated big battles).
 var _dirty_cells: PackedByteArray
+var _dirty_list: PackedInt32Array = PackedInt32Array()
+## Transient marks (_mark_circle API: tutorial, tests): VISIBLE for one tick
+## unless a watcher's refcount below sustains the cell.
+var _lit: PackedInt32Array = PackedInt32Array()
+## Incremental reveal: per-cell watcher refcount + per-entity stamp cache.
+## A stationary army costs nothing per tick — only entities that changed grid
+## cell (or a weather shift that rescales every radius) pay the circle diff.
+var _watch_count: PackedInt32Array = PackedInt32Array()
+var _watch: Dictionary = {}   # instance_id -> [cell_x, cell_y, r, stamp]
+var _watch_stamp: int = 0
+var _weather_sig: String = ""
+## radius-in-cells -> PackedVector2Array of (dx, dy) offsets inside the circle;
+## shared template so _mark_circle stops re-testing dx²+dy² per unit per tick.
+static var _circle_offsets: Dictionary = {}
 var _image: Image
 var _texture: ImageTexture
 var _sprite: Sprite2D
@@ -60,6 +76,10 @@ func _ready() -> void:
 	_dirty_cells = PackedByteArray()
 	_dirty_cells.resize(grid_w * grid_h)
 	_dirty_cells.fill(0)
+
+	_watch_count = PackedInt32Array()
+	_watch_count.resize(grid_w * grid_h)
+	_watch_count.fill(0)
 
 	_image = Image.create(grid_w, grid_h, false, Image.FORMAT_RGBA8)
 	_image.fill(COLOR_UNEXPLORED)
@@ -90,7 +110,7 @@ func setup(units: Node, buildings: Node, drop_off: Node, world: Node = null) -> 
 
 func reveal_all() -> void:
 	_cells.fill(STATE_VISIBLE)
-	_dirty_cells.fill(1)
+	mark_all_dirty()
 	_render()
 	_sprite.visible = false
 	# Stop ticking or the next tick demotes everything back to EXPLORED and the
@@ -133,51 +153,53 @@ func _count_explored_cells() -> int:
 	return count
 
 func _tick() -> void:
-	for i: int in range(_cells.size()):
-		if _cells[i] == STATE_VISIBLE:
+	var t0: int = Time.get_ticks_usec()
+	for i: int in _lit:
+		if _watch_count[i] == 0 and _cells[i] == STATE_VISIBLE:
 			_cells[i] = STATE_EXPLORED
-			_dirty_cells[i] = 1
+			_mark_dirty(i)
+	_lit.clear()
 
-	_reveal_from_units()
-	_reveal_from_buildings()
+	var t1: int = Time.get_ticks_usec()
+	_update_watchers()
+	var t2: int = Time.get_ticks_usec()
+	var t3: int = Time.get_ticks_usec()
 	_render()
+	var t4: int = Time.get_ticks_usec()
 	if _explore_baseline >= 0 and not _explore_emitted:
 		var newly_explored: int = _count_explored_cells() - _explore_baseline
 		if newly_explored >= EXPLORE_THRESHOLD:
 			_explore_emitted = true
 			EventBus.map_explored.emit(newly_explored)
 	_apply_visibility()
+	if _stats:
+		var t5: int = Time.get_ticks_usec()
+		print("FOG demote %4d us  units %5d us  bld %4d us  render %5d us  vis %5d us" % [
+			t1 - t0, t2 - t1, t3 - t2, t4 - t3, t5 - t4])
 
-func _reveal_from_units() -> void:
-	if not is_instance_valid(_units_node):
-		return
-	for unit: Node in _units_node.get_children():
-		if not is_instance_valid(unit):
-			continue
-		var pid: Variant = unit.get("player_id")
-		if pid == null or not GameManager.are_allied(pid as int, local_player_id):
-			continue
-		var los: float
-		if unit is Animal:
-			# Only owned animals reveal; use their line_of_sight export
-			if (unit as Animal).current_state != Animal.AnimalState.OWNED:
+## CALIMA_FOG_STATS=1 prints a per-phase timing line each tick (perf triage).
+var _stats: bool = OS.get_environment("CALIMA_FOG_STATS") == "1"
+
+## Incremental reveal pass: every allied watcher is tracked by instance id;
+## only cell changes (or a global weather shift) restamp its circle, so an
+## army standing its ground — melee lock, eco routine — costs O(entities)
+## dictionary checks instead of O(entities × circle cells) rewrites.
+func _update_watchers() -> void:
+	_watch_stamp += 1
+	var sig: String = "%d|%.1f" % [WeatherManager.current_weather as int, WeatherManager.intensity]
+	var weather_changed: bool = sig != _weather_sig
+	_weather_sig = sig
+
+	if is_instance_valid(_units_node):
+		for unit: Node in _units_node.get_children():
+			if not is_instance_valid(unit):
 				continue
-			los = (unit as Animal).line_of_sight
-		else:
-			los = 5.0
-			var udata: Variant = unit.get("unit_data")
-			if udata is UnitResource:
-				los = (udata as UnitResource).line_of_sight
-		var weather_mult: float = WeatherManager.get_vision_multiplier((unit as Node2D).global_position, local_player_id)
-		# Terrain factor: laurisilva canopy shortens LOS. Buildings skip this —
-		# laurisilva is not buildable, so their factor is always 1.0.
-		var terrain_mult: float = TerrainManager.get_vision_mult((unit as Node2D).global_position)
-		var coast_mult: float = _coastal_vision_mult((unit as Node2D).global_position)
-		_mark_circle((unit as Node2D).global_position,
-			los * 64.0 * weather_mult * terrain_mult * coast_mult)
-
-func _reveal_from_buildings() -> void:
-	# Buildings layer
+			var pid: Variant = unit.get("player_id")
+			if pid == null or not GameManager.are_allied(pid as int, local_player_id):
+				continue
+			if unit is Animal and (unit as Animal).current_state != Animal.AnimalState.OWNED:
+				continue
+			_track(unit as Node2D, weather_changed, false)
 	if is_instance_valid(_buildings_node):
 		for building: Node in _buildings_node.get_children():
 			if not is_instance_valid(building):
@@ -188,22 +210,82 @@ func _reveal_from_buildings() -> void:
 			var state_val: Variant = building.get("state")
 			if state_val != null and (state_val as int) != BuildingBase.BuildingState.COMPLETE:
 				continue
-			var los: float = 8.0
-			var bdata: Variant = building.get("building_data")
-			if bdata is BuildingResource:
-				los = (bdata as BuildingResource).line_of_sight
-			var bweather_mult: float = WeatherManager.get_vision_multiplier((building as Node2D).global_position, local_player_id)
-			var bcoast_mult: float = _coastal_vision_mult((building as Node2D).global_position)
-			_mark_circle((building as Node2D).global_position, los * 64.0 * bweather_mult * bcoast_mult)
-
-	# Town Center (drop_off_node in world root)
+			_track(building as Node2D, weather_changed, true)
 	if is_instance_valid(_drop_off_node):
 		var pid: Variant = _drop_off_node.get("player_id")
 		if pid != null and GameManager.are_allied(pid as int, local_player_id):
-			var tc_weather_mult: float = WeatherManager.get_vision_multiplier((_drop_off_node as Node2D).global_position, local_player_id)
-			var tc_coast_mult: float = _coastal_vision_mult((_drop_off_node as Node2D).global_position)
-			_mark_circle((_drop_off_node as Node2D).global_position,
-				8.0 * 64.0 * tc_weather_mult * tc_coast_mult)
+			_track(_drop_off_node as Node2D, weather_changed, true)
+
+	# Watchers that vanished (death, conversion, demolition) release their cells.
+	for iid: Variant in _watch.keys():
+		var entry: Array = _watch[iid] as Array
+		if (entry[3] as int) != _watch_stamp:
+			_unstamp(Vector2i(entry[0] as int, entry[1] as int), entry[2] as int)
+			_watch.erase(iid)
+
+func _track(entity: Node2D, weather_changed: bool, is_building: bool) -> void:
+	var cell: Vector2i = _world_to_cell(entity.global_position)
+	var iid: int = entity.get_instance_id()
+	var prev: Variant = _watch.get(iid)
+	if prev != null and not weather_changed \
+			and ((prev as Array)[0] as int) == cell.x and ((prev as Array)[1] as int) == cell.y:
+		(prev as Array)[3] = _watch_stamp
+		return
+	var r: int = _vision_radius_cells(entity, is_building)
+	if prev != null:
+		var entry: Array = prev as Array
+		if (entry[0] as int) == cell.x and (entry[1] as int) == cell.y and (entry[2] as int) == r:
+			entry[3] = _watch_stamp
+			return
+		_unstamp(Vector2i(entry[0] as int, entry[1] as int), entry[2] as int)
+	_stamp(cell, r)
+	_watch[iid] = [cell.x, cell.y, r, _watch_stamp]
+
+func _vision_radius_cells(entity: Node2D, is_building: bool) -> int:
+	var los: float
+	if is_building:
+		los = 8.0
+		var bdata: Variant = entity.get("building_data")
+		if bdata is BuildingResource:
+			los = (bdata as BuildingResource).line_of_sight
+	elif entity is Animal:
+		los = (entity as Animal).line_of_sight
+	else:
+		los = 5.0
+		var udata: Variant = entity.get("unit_data")
+		if udata is UnitResource:
+			los = (udata as UnitResource).line_of_sight
+	var mult: float = WeatherManager.get_vision_multiplier(entity.global_position, local_player_id) \
+		* _coastal_vision_mult(entity.global_position)
+	# Terrain factor: laurisilva canopy shortens LOS. Buildings skip this —
+	# laurisilva is not buildable, so their factor is always 1.0.
+	if not is_building:
+		mult *= TerrainManager.get_vision_mult(entity.global_position)
+	return int(ceil(los * 64.0 * mult / CELL_SIZE)) + 1
+
+func _stamp(cell: Vector2i, r: int) -> void:
+	for off: Vector2 in _offsets_for_radius(r):
+		var nx: int = cell.x + int(off.x)
+		var ny: int = cell.y + int(off.y)
+		if nx < 0 or nx >= grid_w or ny < 0 or ny >= grid_h:
+			continue
+		var idx: int = ny * grid_w + nx
+		_watch_count[idx] += 1
+		if _watch_count[idx] == 1 and _cells[idx] != STATE_VISIBLE:
+			_cells[idx] = STATE_VISIBLE
+			_mark_dirty(idx)
+
+func _unstamp(cell: Vector2i, r: int) -> void:
+	for off: Vector2 in _offsets_for_radius(r):
+		var nx: int = cell.x + int(off.x)
+		var ny: int = cell.y + int(off.y)
+		if nx < 0 or nx >= grid_w or ny < 0 or ny >= grid_h:
+			continue
+		var idx: int = ny * grid_w + nx
+		_watch_count[idx] = maxi(_watch_count[idx] - 1, 0)
+		if _watch_count[idx] == 0 and _cells[idx] == STATE_VISIBLE:
+			_cells[idx] = STATE_EXPLORED
+			_mark_dirty(idx)
 
 ## Civ line-of-sight bonus along one's own shores: the "coastal_vision" multiplier
 ## applies inside the same band sea fog uses (COASTAL_ZONE_DEPTH), so the Atlantes
@@ -217,31 +299,58 @@ func _coastal_vision_mult(world_pos: Vector2) -> float:
 		return 1.0
 	return mult
 
+func _mark_dirty(idx: int) -> void:
+	if _dirty_cells[idx] == 0:
+		_dirty_cells[idx] = 1
+		_dirty_list.append(idx)
+
+## External state swaps (save restore, resumed-match resync, reveal_all)
+## repaint everything on the next render and rebuild the reveal bookkeeping:
+## restored VISIBLE cells become transient (they decay unless a watcher
+## re-stamps them on the next tick) and every watcher restamps fresh.
+func mark_all_dirty() -> void:
+	_dirty_cells.fill(1)
+	_dirty_list.clear()
+	_lit.clear()
+	_watch.clear()
+	_watch_count.fill(0)
+	for i: int in range(_cells.size()):
+		_dirty_list.append(i)
+		if _cells[i] == STATE_VISIBLE:
+			_lit.append(i)
+
+static func _offsets_for_radius(r: int) -> PackedVector2Array:
+	var cached: Variant = _circle_offsets.get(r)
+	if cached != null:
+		return cached as PackedVector2Array
+	var out: PackedVector2Array = PackedVector2Array()
+	var r2: int = r * r
+	for dy: int in range(-r, r + 1):
+		for dx: int in range(-r, r + 1):
+			if dx * dx + dy * dy <= r2:
+				out.append(Vector2(float(dx), float(dy)))
+	_circle_offsets[r] = out
+	return out
+
 func _mark_circle(world_pos: Vector2, radius_px: float) -> void:
 	var cell: Vector2i = _world_to_cell(world_pos)
 	var r: int = int(ceil(radius_px / CELL_SIZE)) + 1
-	var r2: int = r * r
-	for dy: int in range(-r, r + 1):
-		var ny: int = cell.y + dy
-		if ny < 0 or ny >= grid_h:
+	for off: Vector2 in _offsets_for_radius(r):
+		var nx: int = cell.x + int(off.x)
+		var ny: int = cell.y + int(off.y)
+		if nx < 0 or nx >= grid_w or ny < 0 or ny >= grid_h:
 			continue
-		for dx: int in range(-r, r + 1):
-			if dx * dx + dy * dy > r2:
-				continue
-			var nx: int = cell.x + dx
-			if nx < 0 or nx >= grid_w:
-				continue
-			var idx: int = ny * grid_w + nx
+		var idx: int = ny * grid_w + nx
+		if _cells[idx] != STATE_VISIBLE:
 			_cells[idx] = STATE_VISIBLE
-			_dirty_cells[idx] = 1
+			_mark_dirty(idx)
+			_lit.append(idx)
 
 func _render() -> void:
-	var any_updated: bool = false
-	for i: int in range(_dirty_cells.size()):
-		if _dirty_cells[i] == 0:
-			continue
+	if _dirty_list.is_empty():
+		return
+	for i: int in _dirty_list:
 		_dirty_cells[i] = 0
-		any_updated = true
 		var x: int = i % grid_w
 		var y: int = i / grid_w
 		match _cells[i]:
@@ -251,8 +360,8 @@ func _render() -> void:
 				_image.set_pixel(x, y, COLOR_EXPLORED)
 			_:
 				_image.set_pixel(x, y, COLOR_VISIBLE)
-	if any_updated:
-		_texture.update(_image)
+	_dirty_list.clear()
+	_texture.update(_image)
 
 func _apply_visibility() -> void:
 	var own_positions: PackedVector2Array = _own_watcher_positions()

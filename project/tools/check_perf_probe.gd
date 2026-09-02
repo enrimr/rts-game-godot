@@ -44,6 +44,9 @@ func _env_int(key: String, fallback: int) -> int:
 	return int(v) if v.is_valid_int() else fallback
 
 func _ready() -> void:
+	# Vsync waits leak into the frame-time monitors and cap fps at the display
+	# rate — a perf probe must measure real headroom, never the compositor.
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	_label = OS.get_environment("CALIMA_PERF_LABEL")
 	if _label.is_empty():
 		_label = "probe"
@@ -66,7 +69,34 @@ func _ready() -> void:
 	add_child(_world)
 	if _army > 0:
 		_spawn_armies.call_deferred()
+	_apply_disables.call_deferred(OS.get_environment("CALIMA_PERF_DISABLE").split(",", false))
 	_real_start_msec = Time.get_ticks_msec()
+
+## Cost attribution: switch whole systems off and diff against the baseline.
+## CALIMA_PERF_DISABLE=fog,minimap,hud,weather,units,world,interp
+func _apply_disables(disables: PackedStringArray) -> void:
+	for what: String in disables:
+		match what:
+			"fog":
+				(_world.get("_fog") as Node).set_process(false)
+			"minimap":
+				var mm: Node = (_world.get("hud") as Node).get_node_or_null("%Minimap")
+				if mm != null:
+					mm.set_process(false)
+					mm.propagate_call("set_process", [false])
+			"hud":
+				(_world.get("hud") as Node).propagate_call("set_process", [false])
+			"weather":
+				var wo: Node = _world.get_node_or_null("WeatherOverlay")
+				if wo != null:
+					wo.propagate_call("set_process", [false])
+					(wo as Node2D).visible = false
+			"units":
+				(_world.get("units_layer") as Node).propagate_call("set_process", [false])
+			"world":
+				_world.set_process(false)
+			"interp":
+				get_tree().root.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 
 ## Two mirrored blocks between the player TC and the first rival TC, ordered
 ## into each other with attack-move — a worst-case melee/pathfinding pile-up.

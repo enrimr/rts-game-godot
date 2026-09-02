@@ -429,7 +429,7 @@ func _apply_fog(b64: String) -> void:
 	if cells.is_empty():
 		return
 	(fog as FogOfWar)._cells = cells
-	(fog as FogOfWar)._dirty_cells.fill(1)
+	(fog as FogOfWar).mark_all_dirty()
 
 func _apply_spawn(rec: Dictionary) -> void:
 	var id: int = rec.get("i", 0) as int

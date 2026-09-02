@@ -257,7 +257,9 @@ CALIMA_SHOT_DIR=/tmp/calima-voices $GODOT --headless --path project res://tools/
 # Frame-time probe (real renderer): boots a fixed-seed match, prints avg process/physics
 # ms per frame + nav/physics population counters — run on two builds for perf A/Bs.
 # env: CALIMA_PERF_LABEL/RIVALS/MAP_SIZE/MAP/RESOURCES, CALIMA_PERF_ARMY (units per side,
-# clashing armies), CALIMA_PERF_DEVELOP (game-seconds at 4x before measuring), _WINDOW
+# clashing armies), CALIMA_PERF_DEVELOP (game-seconds at 4x before measuring), _WINDOW,
+# CALIMA_PERF_DISABLE=fog,minimap,hud,weather,units,world,interp (cost attribution),
+# CALIMA_FOG_STATS=1 (per-phase fog tick timings). Vsync is disabled by the probe.
 $GODOT --path project --resolution 1280x720 res://tools/check_perf_probe.tscn
 ```
 

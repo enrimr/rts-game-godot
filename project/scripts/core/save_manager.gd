@@ -737,7 +737,7 @@ func _restore_fog(world: Node, data: Dictionary) -> void:
 	var decoded: PackedByteArray = Marshalls.base64_to_raw(str(hex))
 	if decoded.size() == fog._cells.size():
 		fog._cells = decoded
-		fog._dirty_cells.fill(1)
+		fog.mark_all_dirty()
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
