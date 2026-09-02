@@ -44,11 +44,6 @@ static func create_resource_node(parent: Node2D, pos: Vector2,
 		body.add_child(body_shape)
 		node.add_child(body)
 
-		var obstacle: NavigationObstacle2D = NavigationObstacle2D.new()
-		obstacle.radius = collision_r + 4.0
-		obstacle.avoidance_enabled = true
-		node.add_child(obstacle)
-
 	IsoBillboard.setup_drawn_node(node)
 
 # Builds the visual Polygon2D children for a resource node.

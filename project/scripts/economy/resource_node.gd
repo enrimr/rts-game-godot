@@ -28,18 +28,11 @@ func _ready() -> void:
 	remaining_amount = initial_amount
 	add_to_group("resource_nodes")
 	ResourceManager.register_node(self)
-	_setup_nav_obstacle()
-
-func _setup_nav_obstacle() -> void:
-	var obs: NavigationObstacle2D = NavigationObstacle2D.new()
-	# RVO radius: wide enough for units to start steering around resource nodes early
-	obs.vertices = PackedVector2Array([
-		Vector2(-20.0, -20.0), Vector2(20.0, -20.0),
-		Vector2(20.0,  20.0), Vector2(-20.0,  20.0),
-	])
-	obs.avoidance_enabled = true
-	obs.affect_navigation_mesh = false
-	add_child(obs)
+	# No RVO avoidance obstacle here: the runtime navmesh rebake carves every
+	# resource node (get_nav_obstacle_polygon below), so paths already route
+	# around them and the physics body handles brush contact. Per-node RVO
+	# obstacles made the avoidance sim scale with the FOREST, not the armies
+	# (~2 600 participants on a large map — 40 ms of physics per frame).
 
 func get_nav_obstacle_polygon() -> PackedVector2Array:
 	# Bake footprint: tight so gatherers can still reach the node edge
