@@ -43,10 +43,11 @@ func after_each() -> void:
 	MatchConfig.weather_enabled = true
 
 func test_mission_data_is_launchable() -> void:
-	assert_eq(CampaignData.size(), 4, "the Canarii campaign has four missions")
+	assert_eq(CampaignData.size(), 5, "prologue + four missions")
 	for i: int in range(CampaignData.size()):
 		var m: Dictionary = CampaignData.mission(i)
-		assert_gt(m["seed"] as int, 0, "mission %d needs a fixed seed" % i)
+		if not (m.get("tutorial", false) as bool):
+			assert_gt(m["seed"] as int, 0, "mission %d needs a fixed seed" % i)
 		assert_true(ResourceLoader.exists(
 			"res://resources/civilizations/%s.tres" % (m["player_civ"] as String)),
 			"mission %d player civ exists" % i)
@@ -64,32 +65,32 @@ func test_mission_data_is_launchable() -> void:
 				(obj as Dictionary)["key"] as String) != &"" or true)
 
 func test_unlock_chain_and_persistence() -> void:
-	assert_true(CampaignManager.is_unlocked(0), "mission 1 starts open")
-	assert_false(CampaignManager.is_unlocked(1), "mission 2 starts locked")
-	CampaignManager.mark_completed(0)
-	assert_true(CampaignManager.is_unlocked(1), "completing 1 unlocks 2")
-	assert_eq(CampaignManager.first_playable(), 1)
+	assert_true(CampaignManager.is_unlocked(0), "the prologue starts open")
+	assert_true(CampaignManager.is_unlocked(1), "mission 1 starts open (veterans skip the tutorial)")
+	assert_false(CampaignManager.is_unlocked(2), "mission 2 starts locked")
+	CampaignManager.mark_completed(1)
+	assert_true(CampaignManager.is_unlocked(2), "completing mission 1 unlocks mission 2")
 	# A fresh load (new session) must see the same progress.
 	CampaignManager._completed.clear()
 	CampaignManager._load()
-	assert_true(CampaignManager.is_completed(0), "progress survives a reload")
+	assert_true(CampaignManager.is_completed(1), "progress survives a reload")
 
 func test_launch_refuses_locked_and_configures_match() -> void:
 	CampaignManager.auto_change_scene = false
-	assert_false(CampaignManager.launch_mission(2), "locked missions cannot launch")
-	assert_true(CampaignManager.launch_mission(0))
+	assert_false(CampaignManager.launch_mission(3), "locked missions cannot launch")
+	assert_true(CampaignManager.launch_mission(1))
 	CampaignManager.auto_change_scene = true
-	assert_eq(MatchConfig.campaign_mission, 0)
+	assert_eq(MatchConfig.campaign_mission, 1)
 	assert_eq(MatchConfig.player_civ_id, "canarii")
-	assert_eq(MatchConfig.forced_seed, CampaignData.mission(0)["seed"] as int)
+	assert_eq(MatchConfig.forced_seed, CampaignData.mission(1)["seed"] as int)
 	assert_eq(MatchConfig.rival_civ_ids, Array(["atlantes"], TYPE_STRING, "", null))
 
 func test_director_tracks_train_objectives() -> void:
-	MatchConfig.campaign_mission = 0
+	MatchConfig.campaign_mission = 1
 	var director: MissionDirector = MissionDirector.new()
 	add_child_autofree(director)
-	director._mission = CampaignData.mission(0)
-	director._mission_index = 0
+	director._mission = CampaignData.mission(1)
+	director._mission_index = 1
 	for obj: Variant in director._mission["objectives"] as Array:
 		var copy: Dictionary = (obj as Dictionary).duplicate()
 		copy["done"] = false
@@ -105,11 +106,11 @@ func test_director_tracks_train_objectives() -> void:
 	MatchConfig.campaign_mission = -1
 
 func test_director_ignores_enemy_progress() -> void:
-	MatchConfig.campaign_mission = 0
+	MatchConfig.campaign_mission = 1
 	var director: MissionDirector = MissionDirector.new()
 	add_child_autofree(director)
-	director._mission = CampaignData.mission(0)
-	director._mission_index = 0
+	director._mission = CampaignData.mission(1)
+	director._mission_index = 1
 	var copy: Dictionary = (director._mission["objectives"][0] as Dictionary).duplicate()
 	copy["done"] = false
 	copy["progress"] = 0

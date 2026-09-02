@@ -171,6 +171,10 @@ func start() -> void:
 func close() -> void:
 	GameSettings.tutorial_seen = true
 	GameSettings.save_settings()
+	# Played as the campaign prologue: finishing (or dismissing) the guide
+	# counts — the prologue exists to onboard, never to gate veterans.
+	if MatchConfig.campaign_mission >= 0:
+		CampaignManager.mark_completed(MatchConfig.campaign_mission)
 	finished.emit()
 	queue_free()
 

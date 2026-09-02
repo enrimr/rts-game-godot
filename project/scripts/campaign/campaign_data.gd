@@ -25,6 +25,19 @@ extends RefCounted
 
 const MISSIONS: Array = [
 	{
+		# The prologue IS the tutorial: a guided first settlement for players
+		# who start at the campaign. Optional — mission 1 is open regardless.
+		"id": "prologo",
+		"title_key": "CAMP_M0_TITLE",
+		"intro_key": "CAMP_M0_INTRO",
+		"tutorial": true,
+		"seed": 0,
+		"map_type": 0, "map_size": 0, "resources": 4,
+		"player_civ": "guanches", "rival_civs": ["castellanos"],
+		"starting_age": 0, "victory": "conquest", "weather": false,
+		"objectives": [], "waves": [],
+	},
+	{
 		"id": "vanguardia",
 		"title_key": "CAMP_M1_TITLE",
 		"intro_key": "CAMP_M1_INTRO",
@@ -32,6 +45,7 @@ const MISSIONS: Array = [
 		"map_type": 1, "map_size": 0, "resources": 1,
 		"player_civ": "canarii", "rival_civs": ["atlantes"],
 		"starting_age": 0, "victory": "conquest", "weather": false,
+		"hold_offense": true,
 		"objectives": [
 			{"type": "train", "unit": "Militia", "count": 8, "key": "CAMP_M1_OBJ_TRAIN"},
 		],
@@ -48,7 +62,7 @@ const MISSIONS: Array = [
 		"map_type": 2, "map_size": 1, "resources": 0,
 		"player_civ": "canarii", "rival_civs": ["atlantes"],
 		"starting_age": 1, "victory": "survive", "survive_sec": 720.0,
-		"weather": true,
+		"weather": true, "hold_offense": true,
 		"objectives": [
 			{"type": "build", "building": "WatchTower", "count": 2, "key": "CAMP_M2_OBJ_TOWERS"},
 		],

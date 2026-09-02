@@ -48,7 +48,17 @@ func setup(world) -> void:
 	EventBus.building_construction_complete.connect(_on_building_complete)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
 	GameManager.game_over.connect(_on_game_over)
+	if _mission.get("hold_offense", false):
+		_hold_ai_offense()
 	_build_panel()
+
+## Missions whose pressure is authored (scripted waves) muzzle the AI's own
+## attack launcher — it still builds, defends and retaliates.
+func _hold_ai_offense() -> void:
+	for child: Node in (_world as Node).get_children():
+		var script: Script = child.get_script() as Script
+		if script != null and script.resource_path.contains("ai_player"):
+			child.set("offense_held", true)
 
 func _process(delta: float) -> void:
 	if _finished or GameManager.state != GameManager.GameState.PLAYING:

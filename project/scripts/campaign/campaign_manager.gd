@@ -22,8 +22,10 @@ func _ready() -> void:
 func is_completed(index: int) -> bool:
 	return _completed.get(index, false) as bool
 
+## The prologue (tutorial) and mission 1 both start open — veterans must not
+## be forced through the tutorial; from mission 2 on the chain applies.
 func is_unlocked(index: int) -> bool:
-	return index == 0 or is_completed(index - 1)
+	return index <= 1 or is_completed(index - 1)
 
 func first_playable() -> int:
 	for i: int in range(CampaignData.size()):
@@ -48,6 +50,9 @@ func launch_mission(index: int) -> bool:
 	var m: Dictionary = CampaignData.mission(index)
 	if m.is_empty() or not is_unlocked(index):
 		return false
+	if m.get("tutorial", false):
+		return _launch_tutorial_mission(index, m)
+	MatchConfig.launch_tutorial = false
 	MatchConfig.forced_seed = m["seed"] as int
 	MatchConfig.map_type = m["map_type"] as int
 	MatchConfig.map_size = m["map_size"] as int
@@ -63,8 +68,34 @@ func launch_mission(index: int) -> bool:
 		if (m["victory"] as String) == "regicide" else MatchConfig.VictoryMode.CONQUEST
 	MatchConfig.weather_enabled = m.get("weather", false) as bool
 	MatchConfig.player_teams.clear()
-	MatchConfig.launch_tutorial = false
 	MatchConfig.campaign_mission = index
+	if auto_change_scene:
+		get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
+	return true
+
+## The prologue reuses the guided tutorial wholesale (same config the menu's
+## "how to play" uses, including the temporary TUTORIAL difficulty);
+## TutorialOverlay.close() reports the completion back to us.
+func _launch_tutorial_mission(index: int, m: Dictionary) -> bool:
+	var saved_difficulty: int = GameSettings.difficulty
+	MatchConfig.forced_seed = 0
+	MatchConfig.map_type = m["map_type"] as int
+	MatchConfig.map_size = m["map_size"] as int
+	MatchConfig.resources = m["resources"] as int
+	MatchConfig.player_civ_id = m["player_civ"] as String
+	MatchConfig.rival_civ_ids.assign(m["rival_civs"] as Array)
+	MatchConfig.rival_count = 1
+	MatchConfig.starting_age = 0
+	MatchConfig.victory_mode = MatchConfig.VictoryMode.CONQUEST
+	MatchConfig.weather_enabled = false
+	MatchConfig.player_teams.clear()
+	MatchConfig.launch_tutorial = true
+	MatchConfig.campaign_mission = index
+	GameSettings.difficulty = GameSettings.Difficulty.TUTORIAL
+	GameManager.game_over.connect(func(_winner: int) -> void:
+		GameSettings.difficulty = saved_difficulty
+		MatchConfig.resources = MatchConfig.Resources.NORMAL
+	, CONNECT_ONE_SHOT)
 	if auto_change_scene:
 		get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
 	return true

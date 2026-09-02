@@ -100,7 +100,9 @@ func _mission_row(index: int) -> Control:
 	row.add_child(state)
 
 	var name_lbl: Label = Label.new()
-	name_lbl.text = "%d. %s" % [index + 1, tr(m["title_key"] as String)]
+	# The prologue (tutorial) reads as chapter zero; real missions number 1..N.
+	name_lbl.text = tr(m["title_key"] as String) if m.get("tutorial", false) \
+		else "%d. %s" % [index, tr(m["title_key"] as String)]
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_lbl.add_theme_font_size_override("font_size", 18)
 	if not unlocked:

@@ -5,6 +5,7 @@ extends Node2D
 ## panel, the first scripted wave spawns and marches, and a player victory
 ## marks the mission completed (unlocking mission 2). Progress on disk is
 ## backed up and restored, so the gate never touches real campaign saves.
+## (Mission indices: 0 = tutorial prologue, 1 = La Vanguardia.)
 
 var _backup: PackedByteArray = PackedByteArray()
 var _had_progress: bool = false
@@ -19,7 +20,7 @@ func _ready() -> void:
 		_backup = FileAccess.get_file_as_bytes(CampaignManager.SAVE_PATH)
 	CampaignManager.reset_progress()
 	CampaignManager.auto_change_scene = false
-	if not CampaignManager.launch_mission(0):
+	if not CampaignManager.launch_mission(1):
 		return _fail("mission 1 refused to launch")
 	MatchConfig.weather_enabled = false
 	var world: Node2D = (load("res://scenes/game/game_world.tscn") as PackedScene).instantiate() as Node2D
@@ -33,6 +34,16 @@ func _ready() -> void:
 	print("CAMPAIGN: director mounted, %d objectives, %d waves pending" % [
 		director.objectives().size(), director._pending_waves.size()])
 
+	# Mission 1 authors its own pressure: the AI brain must hold its attacks.
+	var held: bool = false
+	for child: Node in world.get_children():
+		var script: Script = child.get_script() as Script
+		if script != null and script.resource_path.contains("ai_player"):
+			held = child.get("offense_held") as bool
+	if not held:
+		return _fail("the AI's offense is not held on mission 1")
+	print("CAMPAIGN: AI offense held (scripted waves are the only pressure)")
+
 	# Fast-forward to the first wave and verify it marches.
 	var before: int = _units_of_player(world, 1)
 	director._elapsed = 299.0
@@ -45,7 +56,7 @@ func _ready() -> void:
 	# Player victory must complete the mission and unlock the next one.
 	GameManager.declare_winner(0)
 	await get_tree().create_timer(0.5).timeout
-	if not CampaignManager.is_completed(0) or not CampaignManager.is_unlocked(1):
+	if not CampaignManager.is_completed(1) or not CampaignManager.is_unlocked(2):
 		return _fail("victory did not record progress")
 	print("CAMPAIGN: mission 1 completed, mission 2 unlocked")
 	_restore_progress()

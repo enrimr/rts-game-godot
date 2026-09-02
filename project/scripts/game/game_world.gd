@@ -225,8 +225,10 @@ func _ready() -> void:
 	CommandBus.start_match(self)
 
 	# Campaign mission: the director tracks objectives, spawns scripted waves
-	# and reports completion. Single-player only.
-	if MatchConfig.campaign_mission >= 0 and not NetworkSession.is_online():
+	# and reports completion. Single-player only; the tutorial prologue runs
+	# the TutorialOverlay instead (it reports its own completion).
+	if MatchConfig.campaign_mission >= 0 and not MatchConfig.launch_tutorial \
+			and not NetworkSession.is_online():
 		var director: MissionDirector = MissionDirector.new()
 		director.name = "MissionDirector"
 		add_child(director)

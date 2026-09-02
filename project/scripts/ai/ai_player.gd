@@ -44,6 +44,11 @@ var _timer: float        = 0.0
 var _attack_timer: float = 0.0
 var _threat_timer: float = 0.0
 
+## Campaign scripting (MissionDirector): while true this brain never LAUNCHES
+## attacks — economy, defense and retaliation keep running; the mission's
+## scripted waves provide the pressure at authored moments.
+var offense_held: bool = false
+
 var _tc_rebuild_pending: bool = false
 
 var _construction: AIConstruction
@@ -125,10 +130,11 @@ func _physics_process(delta: float) -> void:
 
 	if _attack_timer >= _military.get_effective_attack_interval():
 		_attack_timer = 0.0
-		if _is_naval_map():
-			_naval.launch_naval_assault()
-		else:
-			_military.launch_attack()
+		if not offense_held:
+			if _is_naval_map():
+				_naval.launch_naval_assault()
+			else:
+				_military.launch_attack()
 
 	if _threat_timer >= THREAT_CHECK_INTERVAL:
 		_threat_timer = 0.0
