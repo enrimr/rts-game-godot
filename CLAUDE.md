@@ -165,6 +165,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/utils/iso_billboard.gd` | `IsoBillboard` — upright entities on the projected ground, depth sort, z constants |
 | `project/scripts/utils/civ_style.gd` | `CivStyle` — per-civ visual identity (wall/roof silhouette/trim/headgear, plus the `NAVAL` hull/deck/sail/accent/motif palettes) |
 | `project/scripts/utils/unit_dress.gd` | `UnitDress` — per-civ headgear/sash decoration of shared unit rigs |
+| `project/scripts/utils/team_dress.gd` | `TeamDress` — AoE2-style team colours on unit rigs: cloth (tunic/hood/cap/sleeves/legs, knight caparison+plume) is repainted to the OWNER's colour keeping each polygon's brightness (shading survives); steel (saturation gate), leather/skin/wood and natural brown horses (hue-band gate on horse nodes) never change. Applied from `UnitBase._apply_team_dress`; review via `tools/check_team_colors.tscn` screenshots; contract locked by `test_team_dress.gd` |
 | `project/scripts/utils/ship_dress.gd` | `ShipDress` — per-civ hull/deck/sail repaint + prow ornament of the shared hulls (Atlantes bronze fin, Fenicios eye); civ-unique hulls stamp `META_APPLIED` to opt out |
 | `project/scripts/utils/entity_names.gd` | `EntityNames` — localized unit/building display names with fallback |
 | `project/scripts/utils/alert_ring.gd` | `AlertRing` — ring buffer of attack-alert positions for the SPACE jump |
@@ -252,6 +253,10 @@ CALIMA_SHOT_DIR=/tmp/calima-ships $GODOT --path project --resolution 1600x900 \
 # Damage fire/smoke stages + watch-tower arrows (real renderer): screenshot review
 CALIMA_SHOT_DIR=/tmp/calima-fx $GODOT --path project --resolution 1400x900 \
   res://tools/check_damage_fx.tscn
+# Team colours on unit rigs (real renderer): unit-type columns x player-colour rows,
+# full grid + two close-ups — cloth must follow the row, materials must not
+CALIMA_SHOT_DIR=/tmp/calima-teams $GODOT --path project --resolution 1500x900 \
+  res://tools/check_team_colors.tscn
 # Selection voices: exports every baked formant voice to WAV (listen with afplay) + census
 CALIMA_SHOT_DIR=/tmp/calima-voices $GODOT --headless --path project res://tools/check_voice_gallery.tscn
 # Frame-time probe (real renderer): boots a fixed-seed match, prints avg process/physics

@@ -218,6 +218,7 @@ func _ready() -> void:
 	call_deferred("_add_player_color_stripe")
 	call_deferred("_add_ground_shadow")
 	call_deferred("_apply_gender_appearance")
+	call_deferred("_apply_team_dress")
 	call_deferred("_setup_iso_billboard")
 
 ## One tuning source for every unit's avoidance agent — the scenes stay at
@@ -310,6 +311,9 @@ func _apply_owner_marker_last() -> void:
 func _apply_gender_appearance() -> void:
 	if is_female:
 		VisualFx.add_female_hair(self)
+
+func _apply_team_dress() -> void:
+	TeamDress.apply(self, player_id)
 
 func _add_ground_shadow() -> void:
 	VisualFx.add_ground_shadow(self, 11.0, 4.5, 9.0)
