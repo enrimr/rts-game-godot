@@ -137,6 +137,8 @@ func take_damage(amount: float, source: Node = null) -> void:
 		_start_flee(source)
 
 func _physics_process(delta: float) -> void:
+	if get_meta(&"icon_prop", false):
+		return
 	# Teleport back to nearest passable ground if the nav mesh walked us into
 	# impassable terrain (ocean, risco, caldera).
 	if TerrainManager.is_impassable_for(global_position, ""):

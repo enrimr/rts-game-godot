@@ -332,6 +332,10 @@ const CONTAINMENT_CHECK_SEC: float = 0.8
 @onready var _containment_timer: float = float(get_instance_id() % 16) * 0.05
 
 func _contain_to_passable() -> void:
+	# Icon-bake mannequins live in a SubViewport whose local (0,0) may sit on
+	# ocean terrain — containment would teleport them out of the icon frame.
+	if get_meta(&"icon_prop", false):
+		return
 	if TerrainManager.is_impassable_for(global_position, civ_id, is_amphibious()):
 		global_position = TerrainManager.nearest_passable(
 			global_position, civ_id, is_amphibious())

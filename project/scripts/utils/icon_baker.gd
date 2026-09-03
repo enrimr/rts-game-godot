@@ -51,6 +51,11 @@ static func _bake_async(target: ImageTexture, scene_path: String, player_id: int
 
 	var viewport: SubViewport = SubViewport.new()
 	viewport.disable_3d = true
+	# A private physics/canvas world: by default a SubViewport SHARES the
+	# main World2D, so the prop physically stood at the map centre — mid-
+	# match, enemy range Area2Ds (galleys patrolling island-map ocean!)
+	# detected and shot the mannequin during the bake.
+	viewport.world_2d = World2D.new()
 	viewport.transparent_bg = true
 	viewport.size = Vector2i(ICON_SIZE, ICON_SIZE)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -66,8 +71,27 @@ static func _bake_async(target: ImageTexture, scene_path: String, player_id: int
 	# Deterministic icon: skip the 50/50 random visual gender roll.
 	if "is_female" in entity:
 		entity.set("is_female", false)
+	# The prop is a mannequin, not a citizen. Its per-frame logic reads WORLD
+	# state from inside the bake viewport, where local (0,0) is the map
+	# centre — on island maps that's OCEAN, so the terrain-containment check
+	# teleported the prop to the nearest island mid-bake and the icon grabbed
+	# an empty frame (the stuck "rombo" placeholder, hitting whichever units'
+	# staggered timer fired inside the bake window). The meta tells world-
+	# reading logic to leave the prop alone; set BEFORE add_child so no tick
+	# ever runs unflagged. (Freezing via process_mode instead broke the
+	# deferred visual passes wholesale — don't.)
+	entity.set_meta(&"icon_prop", true)
 	viewport.add_child(entity)
-	tree.root.add_child(viewport)
+	# Deferred: get_icon may be called while the tree is mid-setup (a panel
+	# populating during scene build), where a synchronous add_child fails and
+	# the icon would stay a placeholder forever.
+	tree.root.add_child.call_deferred(viewport)
+	await tree.process_frame
+	if not is_instance_valid(viewport):
+		return
+	if not viewport.is_inside_tree():
+		viewport.free()
+		return
 	# The entity's _ready joined gameplay groups ("buildings", "animals", ...);
 	# leave them immediately so victory checks and queries never see the prop.
 	_strip_groups(entity)
@@ -99,12 +123,16 @@ static func _bake_async(target: ImageTexture, scene_path: String, player_id: int
 	# The dummy renderer has no render-target textures: headless runs keep the
 	# placeholder (tests only exercise the lifecycle, never the pixels).
 	if DisplayServer.get_name() != "headless":
-		await RenderingServer.frame_post_draw
-		if not is_instance_valid(viewport):
-			return
-		var img: Image = viewport.get_texture().get_image()
-		if img != null and not img.is_empty() and img.get_used_rect().has_area():
-			target.set_image(img)
+		# Retry a few draws: a single grab occasionally lands on an
+		# empty frame under load — better late than a stuck placeholder.
+		for _attempt: int in range(8):
+			await RenderingServer.frame_post_draw
+			if not is_instance_valid(viewport):
+				return
+			var img: Image = viewport.get_texture().get_image()
+			if img != null and not img.is_empty() and img.get_used_rect().has_area():
+				target.set_image(img)
+				break
 	# free (not queue_free) so no zombie nodes linger past the bake.
 	if is_instance_valid(viewport):
 		viewport.free()
