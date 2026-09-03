@@ -30,6 +30,14 @@ func _scan_techs() -> void:
 func init_player(player_id: int) -> void:
 	_researched[player_id] = []
 
+## Match-start cleanup: in-flight research from a PREVIOUS match is keyed by
+## dead building iids — left in place, the refund sweep would credit that
+## stale spend into the NEW match's stockpile on the first PLAYING tick.
+## Dropped WITHOUT refund (the old match's economy no longer exists).
+func reset_match_state() -> void:
+	_active_research.clear()
+	_research_queue.clear()
+
 func is_researched(player_id: int, tech_id: String) -> bool:
 	var list: Variant = _researched.get(player_id)
 	if list == null:
@@ -257,6 +265,71 @@ func apply_remote_researched(player_id: int, tech_ids: Array) -> void:
 		if not is_researched(player_id, tid as String):
 			_apply_tech(player_id, tid as String)
 			EventBus.technology_researched.emit(player_id, tid as String)
+
+# ── Save support ─────────────────────────────────────────────────────────────
+# Research is PAID at enqueue time, so the in-flight state must survive a save
+# or the stockpile silently loses the whole queue's cost. Instance ids don't
+# survive a load: buildings are keyed by a save-side String key provided by
+# SaveManager (the building's index in the saved buildings array, or "tc").
+
+func collect_state(keys_by_iid: Dictionary) -> Dictionary:
+	var active_arr: Array = []
+	for iid: Variant in _active_research.keys():
+		if not keys_by_iid.has(iid):
+			continue
+		var entry: Dictionary = _active_research[iid] as Dictionary
+		active_arr.append({
+			"building":   str(keys_by_iid[iid]),
+			"tech_id":    entry["tech_id"],
+			"player_id":  entry["player_id"],
+			"timer":      entry["timer"],
+			"total_time": entry["total_time"],
+		})
+	var queues_arr: Array = []
+	for iid: Variant in _research_queue.keys():
+		var queue: Array = _research_queue.get(iid, []) as Array
+		if queue.is_empty() or not keys_by_iid.has(iid):
+			continue
+		queues_arr.append({
+			"building": str(keys_by_iid[iid]),
+			"tech_ids": queue.duplicate(),
+		})
+	return {"active": active_arr, "queues": queues_arr}
+
+## Re-arms actives and queues WITHOUT charging (they were paid at enqueue).
+## buildings_by_key maps the save-side keys back to the restored nodes; entries
+## whose building did not come back are dropped (their refund already happened
+## or the save predates them). Legacy saves pass an empty dict — no-op.
+func restore_state(d: Dictionary, buildings_by_key: Dictionary) -> void:
+	for entry: Variant in (d.get("active", []) as Array):
+		var e: Dictionary = entry as Dictionary
+		var bld: Variant = buildings_by_key.get(str(e.get("building", "")))
+		if not (bld is Node) or not is_instance_valid(bld as Node):
+			continue
+		var tech_id: String = str(e.get("tech_id", ""))
+		if not _all_techs.has(tech_id):
+			continue
+		var tech: TechnologyResource = _all_techs[tech_id] as TechnologyResource
+		_active_research[(bld as Node).get_instance_id()] = {
+			"tech_id":    tech_id,
+			"player_id":  int(e.get("player_id", 0) as float),
+			"timer":      e.get("timer", 0.0) as float,
+			"total_time": e.get("total_time", tech.research_time) as float,
+		}
+		EventBus.research_state_changed.emit(bld as Node)
+	for entry: Variant in (d.get("queues", []) as Array):
+		var e: Dictionary = entry as Dictionary
+		var bld: Variant = buildings_by_key.get(str(e.get("building", "")))
+		if not (bld is Node) or not is_instance_valid(bld as Node):
+			continue
+		var ids: Array = []
+		for tid: Variant in (e.get("tech_ids", []) as Array):
+			if _all_techs.has(str(tid)):
+				ids.append(str(tid))
+		if ids.is_empty():
+			continue
+		_research_queue[(bld as Node).get_instance_id()] = ids
+		EventBus.research_state_changed.emit(bld as Node)
 
 func get_researched(player_id: int) -> Array:
 	return (_researched.get(player_id, []) as Array).duplicate()

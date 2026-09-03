@@ -115,6 +115,45 @@ func apply_remote(weather: int, new_intensity: float, phase: String,
 			if old_phase != "forecast":
 				weather_cleared.emit()
 
+# ── Save support ─────────────────────────────────────────────────────────────
+
+## The full live state-machine snapshot for SaveManager.
+func collect_state() -> Dictionary:
+	return {
+		"weather":        current_weather as int,
+		"intensity":      intensity,
+		"phase":          _phase,
+		"pending":        _pending_weather as int,
+		"phase_timer":    _phase_timer,
+		"phase_duration": _phase_duration,
+		"peak_duration":  _peak_duration,
+		"wind":           [_wind_dir.x, _wind_dir.y],
+	}
+
+## Adopts a saved snapshot and re-emits the signals the live machine would
+## have, so the overlay/HUD pick the event back up mid-flight. An empty dict
+## (legacy save) leaves the fresh-match state untouched; a disabled-weather
+## match stays inert because _physics_process gates on MatchConfig.
+func apply_saved_state(d: Dictionary) -> void:
+	if d.is_empty():
+		return
+	current_weather  = int(d.get("weather", WeatherType.CLEAR) as float) as WeatherType
+	intensity        = d.get("intensity", 0.0) as float
+	_phase           = str(d.get("phase", "clear"))
+	_pending_weather = int(d.get("pending", WeatherType.CLEAR) as float) as WeatherType
+	_phase_timer     = d.get("phase_timer", 0.0) as float
+	_phase_duration  = d.get("phase_duration", _phase_duration) as float
+	_peak_duration   = d.get("peak_duration", 0.0) as float
+	var wind: Array = d.get("wind", []) as Array
+	if wind.size() == 2:
+		_wind_dir = Vector2(wind[0] as float, wind[1] as float)
+	match _phase:
+		"forecast":
+			weather_incoming.emit(_weather_id_of(_pending_weather),
+				maxf(FORECAST_TIME - _phase_timer, 0.0))
+		"ramp_in", "peak", "ramp_out":
+			weather_changed.emit(get_weather_id(), intensity)
+
 func _physics_process(delta: float) -> void:
 	if NetworkSession.is_client():
 		return

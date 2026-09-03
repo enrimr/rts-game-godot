@@ -189,3 +189,17 @@ func test_every_tech_declares_a_research_time() -> void:
 	for tech_id: String in TechManager._all_techs.keys():
 		var tech: TechnologyResource = TechManager._all_techs[tech_id] as TechnologyResource
 		assert_gt(tech.research_time, 0.0, "%s must take real time to research" % tech_id)
+
+func test_match_start_drops_stale_research_without_refund() -> void:
+	# In-flight research from a PREVIOUS match (dead building iid): the match-
+	# start reset must drop it cold — refunding it would credit the OLD
+	# match's spend into the NEW match's stockpile.
+	TechManager._active_research[999999999] = {
+		"tech_id": "loom", "player_id": 3, "timer": 1.0, "total_time": 40.0}
+	TechManager._research_queue[999999999] = ["forging"]
+	ResourceManager.init_player(3, {"food": 100, "gold": 100})
+	TechManager.reset_match_state()
+	assert_false(TechManager._active_research.has(999999999))
+	assert_false(TechManager._research_queue.has(999999999))
+	assert_almost_eq(ResourceManager.get_resources(3).get("food", 0.0) as float, 100.0,
+		0.01, "no ghost refund lands in the new match")

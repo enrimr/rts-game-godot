@@ -94,6 +94,7 @@ func _apply_civilization() -> void:
 			ResourceManager.add_resource(0, key, (civ.starting_bonuses as Dictionary)[key] as float)
 		MatchConfig.set_meta("civ", civ)
 	CivBonusManager.init_player(0, MatchConfig.player_civ_id)
+	TechManager.reset_match_state()
 	TechManager.init_player(0)
 	for rival_id: int in MatchConfig.get_rival_player_ids():
 		CivBonusManager.init_player(rival_id, MatchConfig.get_rival_civ_id(rival_id))

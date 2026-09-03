@@ -10,7 +10,9 @@ extends Node
 
 const SAVE_DIR: String  = "user://saves/"
 const MAX_SLOTS: int    = 99
-const SCHEMA_VERSION: int = 1
+## v2: research queues, garrisons (buildings + transports), stances, weather.
+## Older saves load with defaults for the new keys; NEWER schemas are refused.
+const SCHEMA_VERSION: int = 2
 
 # When true, game_world skips fresh spawning and calls restore_world() instead.
 var pending_load: bool = false
@@ -135,6 +137,10 @@ func load_game(slot: int) -> bool:
 	if parsed == null or not (parsed is Dictionary):
 		push_error("SaveManager: corrupt save in slot %d" % slot)
 		return false
+	var schema: int = int((parsed as Dictionary).get("schema_version", 1) as float)
+	if schema > SCHEMA_VERSION:
+		push_error("SaveManager: slot %d uses save schema %d but this build only supports up to %d — update the game to load it" % [slot, schema, SCHEMA_VERSION])
+		return false
 	_save_data = parsed as Dictionary
 	_resume_sheet = (_save_data.get("multiplayer", {}) as Dictionary).duplicate(true)
 	_resume_fog = (_save_data.get("fog_by_player", {}) as Dictionary).duplicate()
@@ -226,6 +232,7 @@ func restore_world(world: Node) -> void:
 	_restore_resource_nodes(world, _save_data)
 	_restore_fog(world, _save_data)
 	_restore_match_rng(_save_data)
+	WeatherManager.apply_saved_state(_save_data.get("weather", {}) as Dictionary)
 	pending_load = false
 	_save_data = {}
 
@@ -343,9 +350,15 @@ func _collect(world: Node) -> Dictionary:
 
 	var units_layer: Node = world.get_node_or_null("UnitsLayer")
 	var units_arr: Array = []
+	# Garrisoned units stay in the tree (hidden, processing off): the sweep must
+	# skip them or they duplicate as free-standing units at their pre-boarding
+	# spot — they are saved NESTED under their holder instead.
+	var garrisoned: Dictionary = _garrisoned_unit_ids(world)
 	if units_layer != null:
 		for unit: Node in units_layer.get_children():
 			if not is_instance_valid(unit):
+				continue
+			if garrisoned.has(unit.get_instance_id()):
 				continue
 			var u: Dictionary = _collect_unit(unit)
 			if not u.is_empty():
@@ -365,6 +378,12 @@ func _collect(world: Node) -> Dictionary:
 		data["player_tc"] = tc_state
 
 	var buildings_arr: Array = []
+	# Research is keyed by instance id in TechManager, which does not survive a
+	# load: map each researching building to its INDEX in the saved array (the
+	# restore rebuilds the same array in the same order), "tc" for the scene TC.
+	var research_keys: Dictionary = {}
+	if is_instance_valid(drop_off):
+		research_keys[drop_off.get_instance_id()] = "tc"
 	var buildings_layer: Node = world.get_node_or_null("BuildingsLayer")
 	if buildings_layer != null:
 		for bld: Node in buildings_layer.get_children():
@@ -372,8 +391,11 @@ func _collect(world: Node) -> Dictionary:
 				continue
 			var b: Dictionary = _collect_building(bld, "")
 			if not b.is_empty():
+				research_keys[bld.get_instance_id()] = str(buildings_arr.size())
 				buildings_arr.append(b)
 	data["buildings"] = buildings_arr
+	data["research"] = TechManager.collect_state(research_keys)
+	data["weather"] = WeatherManager.collect_state()
 
 	var res_nodes_arr: Array = []
 	for child: Node in world.get_children():
@@ -459,7 +481,40 @@ func _collect_unit(unit: Node) -> Dictionary:
 	if unit is Villager:
 		u["carried_resource"] = str(unit.get("carried_resource"))
 		u["carried_amount"]   = unit.get("carried_amount") as float
+	var stance_v: Variant = unit.get("stance")
+	if stance_v != null:
+		u["stance"] = stance_v as int
+	if unit.has_method("get_garrison"):
+		var passengers: Array = _collect_garrison(unit)
+		if not passengers.is_empty():
+			u["garrison"] = passengers
 	return u
+
+## Nested unit records for a holder's occupants (transport ship or building):
+## excluded from the free-unit sweep, restored back INSIDE the holder.
+func _collect_garrison(holder: Node) -> Array:
+	var out: Array = []
+	for occupant: Variant in holder.call("get_garrison") as Array:
+		if occupant is Node and is_instance_valid(occupant as Node):
+			var rec: Dictionary = _collect_unit(occupant as Node)
+			if not rec.is_empty():
+				out.append(rec)
+	return out
+
+## Instance ids of every unit currently sheltered in a building or transport.
+func _garrisoned_unit_ids(world: Node) -> Dictionary:
+	var ids: Dictionary = {}
+	for layer_name: String in ["BuildingsLayer", "UnitsLayer"]:
+		var layer: Node = world.get_node_or_null(layer_name)
+		if layer == null:
+			continue
+		for holder: Node in layer.get_children():
+			if not is_instance_valid(holder) or not holder.has_method("get_garrison"):
+				continue
+			for occupant: Variant in holder.call("get_garrison") as Array:
+				if occupant is Node and is_instance_valid(occupant as Node):
+					ids[(occupant as Node).get_instance_id()] = true
+	return ids
 
 func _collect_building(bld: Node, role: String) -> Dictionary:
 	var cn: String = _class_name_of(bld)
@@ -501,6 +556,10 @@ func _collect_building(bld: Node, role: String) -> Dictionary:
 		b["is_depleted"] = farm._is_depleted
 	elif bld is FishTrap:
 		b["remaining"] = _float_or(bld.get("_remaining"), 0.0)
+	if bld.has_method("get_garrison"):
+		var occupants: Array = _collect_garrison(bld)
+		if not occupants.is_empty():
+			b["garrison"] = occupants
 	return b
 
 # ── Restoration ──────────────────────────────────────────────────────────────
@@ -588,53 +647,76 @@ func _restore_units(world: Node, data: Dictionary) -> void:
 		child.queue_free()
 
 	for entry: Variant in (data.get("units", []) as Array):
-		var u: Dictionary = entry as Dictionary
-		var cn: String = str(u.get("class", ""))
-		var scene_path: String = str(u.get("scene", ""))
-		if scene_path.is_empty() or not ResourceLoader.exists(scene_path):
-			scene_path = UNIT_SCENES.get(cn, "") as String
-		if cn == "HeroUnit":
-			# Mounted heroes (Quijote on Rocinante) restore onto their mount rig.
-			scene_path = HeroDress.scene_path_for(str(u.get("unit_data_path", "")))
-		if scene_path.is_empty():
-			continue
-		var packed: PackedScene = load(scene_path) as PackedScene
-		if packed == null:
-			continue
-		var unit: Node2D = packed.instantiate() as Node2D
-		if cn == "HeroUnit":
-			unit.set_script(load("res://scripts/units/hero_unit.gd"))
-			var udp: String = str(u.get("unit_data_path", ""))
-			if not udp.is_empty():
-				var ud: UnitResource = load(udp) as UnitResource
-				if ud != null:
-					unit.set("unit_data", ud)
-		var pid: int = u.get("player_id", 0) as int
-		unit.set("player_id", pid)
-		unit.set("civ_id", str(u.get("civ_id", "")))
-		# Set before add_child so _ready (which runs on enter) doesn't re-roll it.
-		unit.set("is_female", u.get("is_female", false) as bool)
-		var pos: Array = u.get("position", [0.0, 0.0]) as Array
-		unit.global_position = Vector2(pos[0] as float, pos[1] as float)
-		units_layer.add_child(unit)
-		# _ready() has run synchronously; now override health
-		var hp: float = u.get("health", -1.0) as float
-		if hp >= 0.0:
-			unit.set("health", hp)
-			var hbar: Variant = unit.get("health_bar")
-			if hbar != null:
-				(hbar as ProgressBar).value = hp
-		if cn == "HeroUnit":
-			unit.set("_cooldown_remaining", u.get("cooldown_remaining", 0.0) as float)
-		if cn == "Villager":
-			unit.set("carried_resource", str(u.get("carried_resource", "")))
-			unit.set("carried_amount",   u.get("carried_amount", 0.0) as float)
-		PopulationManager.add_unit(pid)
-		EventBus.unit_spawned.emit(unit, pid)
+		_restore_unit_record(units_layer, entry as Dictionary)
+
+## One saved unit record → a live unit, including a transport's nested
+## passengers (boarded back in, never spilled as free units at sea).
+func _restore_unit_record(units_layer: Node, u: Dictionary) -> Node2D:
+	var unit: Node2D = _spawn_saved_unit(units_layer, u)
+	if unit == null:
+		return null
+	for grec: Variant in (u.get("garrison", []) as Array):
+		var passenger: Node2D = _spawn_saved_unit(units_layer, grec as Dictionary)
+		if passenger != null and unit.has_method("board"):
+			unit.call("board", passenger)
+	return unit
+
+func _spawn_saved_unit(units_layer: Node, u: Dictionary) -> Node2D:
+	var cn: String = str(u.get("class", ""))
+	var scene_path: String = str(u.get("scene", ""))
+	if scene_path.is_empty() or not ResourceLoader.exists(scene_path):
+		scene_path = UNIT_SCENES.get(cn, "") as String
+	if cn == "HeroUnit":
+		# Mounted heroes (Quijote on Rocinante) restore onto their mount rig.
+		scene_path = HeroDress.scene_path_for(str(u.get("unit_data_path", "")))
+	if scene_path.is_empty():
+		return null
+	var packed: PackedScene = load(scene_path) as PackedScene
+	if packed == null:
+		return null
+	var unit: Node2D = packed.instantiate() as Node2D
+	if cn == "HeroUnit":
+		unit.set_script(load("res://scripts/units/hero_unit.gd"))
+		var udp: String = str(u.get("unit_data_path", ""))
+		if not udp.is_empty():
+			var ud: UnitResource = load(udp) as UnitResource
+			if ud != null:
+				unit.set("unit_data", ud)
+	var pid: int = u.get("player_id", 0) as int
+	unit.set("player_id", pid)
+	unit.set("civ_id", str(u.get("civ_id", "")))
+	# Set before add_child so _ready (which runs on enter) doesn't re-roll it.
+	unit.set("is_female", u.get("is_female", false) as bool)
+	var pos: Array = u.get("position", [0.0, 0.0]) as Array
+	unit.global_position = Vector2(pos[0] as float, pos[1] as float)
+	units_layer.add_child(unit)
+	# _ready() has run synchronously; now override health
+	var hp: float = u.get("health", -1.0) as float
+	if hp >= 0.0:
+		unit.set("health", hp)
+		var hbar: Variant = unit.get("health_bar")
+		if hbar != null:
+			(hbar as ProgressBar).value = hp
+	if cn == "HeroUnit":
+		unit.set("_cooldown_remaining", u.get("cooldown_remaining", 0.0) as float)
+	if cn == "Villager":
+		unit.set("carried_resource", str(u.get("carried_resource", "")))
+		unit.set("carried_amount",   u.get("carried_amount", 0.0) as float)
+	var stance_v: Variant = u.get("stance")
+	if stance_v != null and unit.has_method("set_stance"):
+		unit.call("set_stance", int(stance_v as float))
+	PopulationManager.add_unit(pid)
+	EventBus.unit_spawned.emit(unit, pid)
+	return unit
 
 func _restore_buildings(world: Node, data: Dictionary) -> void:
 	var buildings_layer: Node = world.get_node_or_null("BuildingsLayer")
 	var drop_off: Node        = world.get_node_or_null("DropOffNode")
+	var units_layer: Node     = world.get_node_or_null("UnitsLayer")
+	# Save-side research keys → restored nodes (same array, same order).
+	var research_buildings: Dictionary = {}
+	if is_instance_valid(drop_off):
+		research_buildings["tc"] = drop_off
 
 	# Restore player TC from its dedicated key
 	var tc_data: Variant = data.get("player_tc")
@@ -650,8 +732,9 @@ func _restore_buildings(world: Node, data: Dictionary) -> void:
 		for child: Node in buildings_layer.get_children().duplicate():
 			child.queue_free()
 
-	for entry: Variant in (data.get("buildings", []) as Array):
-		var b: Dictionary = entry as Dictionary
+	var saved_buildings: Array = data.get("buildings", []) as Array
+	for index: int in range(saved_buildings.size()):
+		var b: Dictionary = saved_buildings[index] as Dictionary
 		var cn: String   = str(b.get("class", ""))
 
 		var scene_path: String = str(b.get("scene", ""))
@@ -668,9 +751,12 @@ func _restore_buildings(world: Node, data: Dictionary) -> void:
 		bld.rotation = b.get("rotation", 0.0) as float
 		bld.set("player_id", b.get("player_id", 0) as int)
 		buildings_layer.add_child(bld)
-		_apply_building_state(bld, b)
+		research_buildings[str(index)] = bld
+		_apply_building_state(bld, b, units_layer)
+	# Re-arm active research and queues — paid at enqueue, never charged again.
+	TechManager.restore_state(data.get("research", {}) as Dictionary, research_buildings)
 
-func _apply_building_state(bld: Node, b: Dictionary) -> void:
+func _apply_building_state(bld: Node, b: Dictionary, units_layer: Node = null) -> void:
 	var hp: float = b.get("health", -1.0) as float
 	if hp >= 0.0:
 		bld.set("health", hp)
@@ -729,6 +815,14 @@ func _apply_building_state(bld: Node, b: Dictionary) -> void:
 		farm._is_depleted = b.get("is_depleted", false) as bool
 	elif bld is FishTrap:
 		bld.set("_remaining", b.get("remaining", 0.0) as float)
+
+	# Garrison LAST: state is already COMPLETE (can_garrison_unit's gate). On a
+	# failed re-entry the occupant simply stands free at its saved position.
+	if units_layer != null and bld.has_method("garrison_unit"):
+		for grec: Variant in (b.get("garrison", []) as Array):
+			var occupant: Node2D = _spawn_saved_unit(units_layer, grec as Dictionary)
+			if occupant != null:
+				bld.call("garrison_unit", occupant)
 
 func _apply_tc_state(tc: Node, d: Dictionary) -> void:
 	var hp: float = d.get("health", -1.0) as float
