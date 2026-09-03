@@ -9,6 +9,10 @@ signal resource_depleted(player_id: int, resource: String)
 
 # Units
 signal unit_spawned(unit: Node, player_id: int)
+## A herding dog completed a trip: the animal was released at the owner's
+## base (campaign objectives listen; the shepherd's-yield food is paid by
+## the dog itself).
+signal animal_herded(animal: Node, player_id: int)
 signal unit_died(unit: Node, player_id: int)
 signal hero_died(player_id: int, hero_data: UnitResource)
 signal hero_respawned(player_id: int)

@@ -516,6 +516,8 @@ CAMP_HUD_OBJECTIVE_DONE,Objective complete,Objetivo cumplido
 CAMP_M1_TITLE,The Vanguard,La Vanguardia
 CAMP_M1_INTRO,Bronze sails cut the horizon at dawn. The Atlantes — lords of the deep sea — have raised a camp on the shores of Tamarán. Doramas gathers the warriors of the ravines: drive the vanguard back into the ocean before their roots take hold. Destroy their camp.,Velas de bronce cortan el horizonte al amanecer. Los atlantes — señores del mar profundo — han levantado un campamento en las costas de Tamarán. Doramas reúne a los guerreros de los barrancos: expulsad a la vanguardia de vuelta al océano antes de que eche raíces. Destruid su campamento.
 CAMP_M1_OBJ_TRAIN,Train 8 warriors,Entrena 8 guerreros
+CAMP_M1_OBJ_MILL,Raise a Mill,Levanta un Molino
+CAMP_M1_OBJ_HERD,Have a Presa Canario herd 2 sheep home,Que un presa canario traiga 2 ovejas a casa
 CAMP_M2_TITLE,Land of Fire,Tierra de Fuego
 CAMP_M2_INTRO,"The mountain answers the invasion with ash and thunder. Among the volcano's black fields, your people shelter what little the scarce land gives. The Atlante host marches wave after wave under the falling ash. Guayarmina watches from the ridge: hold the settlement until the sacred night passes.","La montaña responde a la invasión con ceniza y truenos. Entre los campos negros del volcán, tu gente protege lo poco que da la tierra escasa. La hueste atlante marcha oleada tras oleada bajo la ceniza que cae. Guayarmina vigila desde el risco: mantened el asentamiento en pie hasta que pase la noche sagrada."
 CAMP_M2_OBJ_TOWERS,Raise 2 watch towers,Levanta 2 torres de vigilancia

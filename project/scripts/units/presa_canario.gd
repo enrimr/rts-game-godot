@@ -101,6 +101,7 @@ func _finish_herd() -> void:
 			ResourceManager.add_resource(player_id, "food", gained)
 			if player_id == 0:
 				AudioManager.play("gather_food")
+		EventBus.animal_herded.emit(herd_target, player_id)
 		herd_target.stop_following()
 	herd_target = null
 	_herd_phase = HerdPhase.NONE

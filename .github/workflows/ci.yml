@@ -79,7 +79,7 @@ jobs:
         run: CALIMA_TICKS=2400 $GODOT_BIN --headless --path project res://tools/check_sea_containment.tscn
 
       - name: Gate — simulation perf budget (100v100)
-        run: CALIMA_PERF_MIN_TICKS=12 $GODOT_BIN --headless --path project res://tools/check_perf_gate.tscn
+        run: CALIMA_PERF_MIN_TICKS=20 $GODOT_BIN --headless --path project res://tools/check_perf_gate.tscn
 
       - name: Gate — multiplayer smoke (host + client)
         run: |

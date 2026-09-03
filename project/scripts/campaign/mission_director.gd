@@ -46,6 +46,7 @@ func setup(world) -> void:
 		_survive_left = _mission.get("survive_sec", 600.0) as float
 	_apply_restored_state(SaveManager.consume_campaign_state())
 	EventBus.unit_spawned.connect(_on_unit_spawned)
+	EventBus.animal_herded.connect(_on_animal_herded)
 	EventBus.building_construction_complete.connect(_on_building_complete)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
 	GameManager.game_over.connect(_on_game_over)
@@ -142,6 +143,11 @@ func _on_unit_spawned(unit: Node, pid: int) -> void:
 	if pid != 0:
 		return
 	_bump_objectives("train", _class_of(unit))
+
+func _on_animal_herded(animal: Node, pid: int) -> void:
+	if pid != 0:
+		return
+	_bump_objectives("herd", _class_of(animal))
 
 func _on_building_complete(building: Node) -> void:
 	var pid: Variant = building.get("player_id")

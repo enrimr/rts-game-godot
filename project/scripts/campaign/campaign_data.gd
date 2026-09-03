@@ -15,6 +15,7 @@ extends RefCounted
 ##   {"type":"train","unit":"Militia","count":8}
 ##   {"type":"build","building":"Dock","count":1}
 ##   {"type":"destroy","building":"Dock"}   (any enemy building of that class)
+##   {"type":"herd","unit":"Sheep","count":2}   (dog trips completed home)
 ## wave: {"at_sec": 240.0, "units": {"Militia": 3, "Archer": 2}} — spawns at
 ## the FIRST rival's town center and attack-moves the player's base.
 ##
@@ -48,6 +49,8 @@ const MISSIONS: Array = [
 		"hold_offense": true,
 		"objectives": [
 			{"type": "train", "unit": "Militia", "count": 8, "key": "CAMP_M1_OBJ_TRAIN"},
+			{"type": "build", "building": "Mill", "count": 1, "key": "CAMP_M1_OBJ_MILL"},
+			{"type": "herd", "unit": "Sheep", "count": 2, "key": "CAMP_M1_OBJ_HERD"},
 		],
 		"waves": [
 			{"at_sec": 300.0, "units": {"Militia": 3}},
