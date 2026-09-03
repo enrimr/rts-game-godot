@@ -95,6 +95,16 @@ func _process(delta: float) -> void:
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	if current_state == AnimalState.DEAD:
 		return
+	# Same step veto units carry: the per-tick containment teleport heals an
+	# animal ALREADY overboard, but between its check and this movement a
+	# shoreline step could still dip a hoof in the sea for a visible tick
+	# (the wild flocks graze near coasts, so it actually happened).
+	if TerrainManager.distance_to_coast(global_position) <= 64.0 \
+			and TerrainManager.is_ocean(
+				global_position + safe_velocity * get_physics_process_delta_time()) \
+			and not TerrainManager.is_ocean(global_position):
+		velocity = Vector2.ZERO
+		return
 	velocity = safe_velocity
 	move_and_slide()
 	_face_movement(safe_velocity)
