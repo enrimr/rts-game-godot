@@ -42,7 +42,7 @@ jobs:
           # GUT silently SKIPS a test script that fails to parse while still
           # reporting success — the reported script count must match the
           # test files on disk, or the suite lied.
-          expected=$(find project/tests/unit -name 'test_*.gd' | wc -l)
+          expected=$(find project/tests/unit project/tests/integration -name 'test_*.gd' | wc -l)
           reported=$(grep -E '^Scripts\s+[0-9]+' /tmp/gut.log | awk '{print $2}')
           echo "test scripts on disk: $expected — reported by GUT: $reported"
           if [ "$expected" != "$reported" ]; then
@@ -74,6 +74,9 @@ jobs:
 
       - name: Gate — amphibious rules
         run: $GODOT_BIN --headless --path project res://tools/check_amphibious.tscn
+
+      - name: Gate — sea containment chaos (no land unit in the ocean)
+        run: CALIMA_TICKS=2400 $GODOT_BIN --headless --path project res://tools/check_sea_containment.tscn
 
       - name: Gate — simulation perf budget (100v100)
         run: CALIMA_PERF_MIN_TICKS=12 $GODOT_BIN --headless --path project res://tools/check_perf_gate.tscn

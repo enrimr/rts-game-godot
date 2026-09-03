@@ -337,6 +337,23 @@ func _contain_to_passable() -> void:
 			global_position, civ_id, is_amphibious())
 		reset_physics_interpolation()
 
+## Water has no physics body, so nothing but the navmesh keeps land units
+## ashore — and two movement paths bypass the mesh: RVO's safe_velocity
+## (a shove near the shoreline) and the straight-line combat gap-closer.
+## This guard vetoes any step that would ENTER the sea. Cheap by
+## construction: amphibians and units away from the coast (memoized
+## distance_to_coast cell lookup) exit before the precise terrain test,
+## and a unit already overboard is left to the containment teleport, so a
+## mesh/polygon sliver at the waterline can never freeze anyone.
+const COAST_GUARD_DIST: float = 64.0
+
+func _step_enters_sea(next_pos: Vector2) -> bool:
+	if is_amphibious():
+		return false
+	if TerrainManager.distance_to_coast(global_position) > COAST_GUARD_DIST:
+		return false
+	return TerrainManager.is_ocean(next_pos) and not TerrainManager.is_ocean(global_position)
+
 func _process(delta: float) -> void:
 	_containment_timer += delta
 	if _containment_timer >= CONTAINMENT_CHECK_SEC:
@@ -849,6 +866,9 @@ func _drive_agent(vel: Vector2) -> void:
 func _on_velocity_computed(safe_velocity: Vector2) -> void:
 	if current_state != UnitState.MOVING and current_state != UnitState.ATTACKING:
 		return
+	if _step_enters_sea(global_position + safe_velocity * get_physics_process_delta_time()):
+		velocity = Vector2.ZERO
+		return
 	velocity = safe_velocity
 	move_and_slide()
 
@@ -894,6 +914,11 @@ func _handle_attacking(delta: float) -> void:
 			# what stops us anyway.
 			velocity = global_position.direction_to((attack_target as Node2D).global_position) \
 				* _nav_speed()
+			# ...unless the last gap is WATER: unlike a wall, the sea has no
+			# collision to stop the push — hold the shoreline instead.
+			if _step_enters_sea(global_position + velocity * delta):
+				velocity = Vector2.ZERO
+				return
 			move_and_slide()
 			return
 		_drive_agent(vel)
