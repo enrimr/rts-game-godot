@@ -16,6 +16,11 @@ const SCHEMA_VERSION: int = 1
 var pending_load: bool = false
 var _save_data: Dictionary = {}
 
+## Campaign state of the loaded save (mission index + director runtime).
+## Kept out of _save_data so it survives restore_world; the MissionDirector
+## consumes it when it mounts (it mounts after restore_world).
+var _restored_campaign: Dictionary = {}
+
 ## Multiplayer sheet of the loaded save ({"humans": [...], "roster": {...}}),
 ## empty for single-player saves. Kept out of _save_data so it survives
 ## restore_world — the resume lobby and later rejoins read it all match long.
@@ -133,9 +138,17 @@ func load_game(slot: int) -> bool:
 	_save_data = parsed as Dictionary
 	_resume_sheet = (_save_data.get("multiplayer", {}) as Dictionary).duplicate(true)
 	_resume_fog = (_save_data.get("fog_by_player", {}) as Dictionary).duplicate()
+	_restored_campaign = (_save_data.get("campaign", {}) as Dictionary).duplicate(true)
 	pending_load = true
 	_restore_match_config(_save_data)
 	return true
+
+## One-shot: the MissionDirector takes the restored campaign runtime when it
+## mounts (after restore_world), empty for non-campaign saves.
+func consume_campaign_state() -> Dictionary:
+	var out: Dictionary = _restored_campaign
+	_restored_campaign = {}
+	return out
 
 ## Backs out of a load that will not happen (e.g. a cancelled resume lobby).
 func cancel_pending() -> void:
@@ -143,6 +156,7 @@ func cancel_pending() -> void:
 	_save_data = {}
 	_resume_sheet = {}
 	_resume_fog = {}
+	_restored_campaign = {}
 
 func resume_sheet() -> Dictionary:
 	return _resume_sheet
@@ -274,6 +288,17 @@ func _collect(world: Node) -> Dictionary:
 		"weather_frequency": MatchConfig.weather_frequency,
 		"hero_gender":       MatchConfig.hero_gender,
 	}
+
+	# Campaign missions: without this a reloaded mission silently became a
+	# plain skirmish — no objectives, no waves, no survive timer, no progress.
+	if MatchConfig.campaign_mission >= 0:
+		var camp: Dictionary = {"mission": MatchConfig.campaign_mission}
+		var director: Node = world.get_node_or_null("MissionDirector")
+		if director != null:
+			camp["elapsed"] = director.get("_elapsed") as float
+			camp["survive_left"] = director.get("_survive_left") as float
+			camp["objectives"] = (director.call("objectives") as Array).duplicate(true)
+		data["campaign"] = camp
 
 	# Multiplayer sheet: who sat where, so the match can be resumed with the
 	# SAME players (seats matched by Steam ID or name in the resume lobby).
@@ -471,6 +496,16 @@ func _collect_building(bld: Node, role: String) -> Dictionary:
 # ── Restoration ──────────────────────────────────────────────────────────────
 
 func _restore_match_config(data: Dictionary) -> void:
+	# Campaign flag first — BEFORE the empty-config early return: any loaded
+	# save without campaign data must clear a stale index from a previous
+	# session, or a skirmish would mount a MissionDirector. Tutorial-prologue
+	# saves also load as plain matches (overlay mid-state is not persisted).
+	var camp: Dictionary = data.get("campaign", {}) as Dictionary
+	var mission_index: int = camp.get("mission", -1) as int
+	if mission_index >= 0 and (CampaignData.mission(mission_index).get("tutorial", false) as bool):
+		mission_index = -1
+	MatchConfig.campaign_mission = mission_index
+	MatchConfig.launch_tutorial = false
 	var mc: Dictionary = data.get("match_config", {}) as Dictionary
 	if mc.is_empty():
 		return

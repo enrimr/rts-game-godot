@@ -78,7 +78,15 @@ if [[ "$SKIP_TESTS" == "0" ]]; then
         || { echo "ERROR: tests failed — see /tmp/release_tag_tests.log" >&2; exit 1; }
     grep -E "All tests passed" /tmp/release_tag_tests.log >/dev/null \
         || { echo "ERROR: could not confirm a green suite — see /tmp/release_tag_tests.log" >&2; exit 1; }
-    echo "    Suite green."
+    # GUT silently skips unparseable test scripts and still reports success:
+    # the reported script count must match the files on disk.
+    expected=$(find project/tests/unit -name 'test_*.gd' | wc -l | tr -d ' ')
+    reported=$(grep -E '^Scripts[[:space:]]+[0-9]+' /tmp/release_tag_tests.log | awk '{print $2}')
+    if [[ "$expected" != "$reported" ]]; then
+        echo "ERROR: GUT ran $reported of $expected test scripts — a parse error is being skipped silently." >&2
+        exit 1
+    fi
+    echo "    Suite green ($reported/$expected scripts)."
 fi
 
 # ── Version bump (the handshake source of truth) ─────────────────────────────

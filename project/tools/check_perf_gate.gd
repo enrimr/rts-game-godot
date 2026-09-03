@@ -11,8 +11,15 @@ extends Node2D
 const ARMY_PER_SIDE: int = 100
 const MEASURE_WALL_SEC: float = 8.0
 const WARMUP_WALL_SEC: float = 4.0
-## Healthy today: ~60 ticks/s headless. Gate at half of that.
+## Healthy today: ~60 ticks/s headless on dev hardware. Gate at half of
+## that; CI runners are far weaker, so they override the floor via
+## CALIMA_PERF_MIN_TICKS — the gate still catches order-of-magnitude
+## regressions there (the RVO bug ran at a small fraction of healthy).
 const MIN_TICK_RATE: float = 30.0
+
+static func _min_tick_rate() -> float:
+	var env: String = OS.get_environment("CALIMA_PERF_MIN_TICKS")
+	return float(env) if env.is_valid_float() else MIN_TICK_RATE
 
 const ARMY_SCENES: Array[String] = [
 	"res://scenes/units/militia.tscn",
@@ -86,8 +93,8 @@ func _run() -> void:
 		if is_instance_valid(unit):
 			alive += 1
 	print("PERF_GATE: %d units, %.1f ticks/s over %.1f s (gate: >= %.0f)" % [
-		alive, tick_rate, wall, MIN_TICK_RATE])
-	if tick_rate < MIN_TICK_RATE:
+		alive, tick_rate, wall, _min_tick_rate()])
+	if tick_rate < _min_tick_rate():
 		print("PERF_GATE: FAIL — the simulation lost more than half its speed under a 100v100 battle")
 		get_tree().quit(1)
 		return

@@ -121,3 +121,55 @@ func test_director_ignores_enemy_progress() -> void:
 	assert_eq((director.objectives()[0] as Dictionary)["progress"] as int, 0,
 		"an ENEMY militia must not advance the player's objective")
 	MatchConfig.campaign_mission = -1
+
+## ── Save / load of a running mission (review #08 red flag) ──────────────────
+
+func test_save_collects_campaign_state() -> void:
+	MatchConfig.campaign_mission = 1
+	var world: Node = Node.new()
+	var script: GDScript = GDScript.new()
+	script.source_code = "extends Node\nvar _saved_rng_seed: int = 7\nvar _saved_tc_position: Vector2 = Vector2.ZERO\n"
+	script.reload()
+	world.set_script(script)
+	add_child_autofree(world)
+	for layer_name: String in ["UnitsLayer", "BuildingsLayer"]:
+		var layer: Node = Node.new()
+		layer.name = layer_name
+		world.add_child(layer)
+	var director: MissionDirector = MissionDirector.new()
+	director.name = "MissionDirector"
+	world.add_child(director)
+	director._mission = CampaignData.mission(1)
+	director._mission_index = 1
+	director._elapsed = 400.0
+	director._objectives = [{"type": "train", "unit": "Militia", "count": 8,
+		"key": "CAMP_M1_OBJ_TRAIN", "progress": 5, "done": false}]
+
+	var data: Dictionary = SaveManager._collect(world)
+	var camp: Dictionary = data.get("campaign", {}) as Dictionary
+	assert_eq(camp.get("mission", -1) as int, 1, "the mission index is persisted")
+	assert_eq(camp.get("elapsed", 0.0) as float, 400.0, "the mission clock is persisted")
+	assert_eq(((camp["objectives"] as Array)[0] as Dictionary)["progress"] as int, 5,
+		"objective progress is persisted")
+
+func test_restored_state_rewinds_the_director() -> void:
+	MatchConfig.campaign_mission = 1
+	var director: MissionDirector = MissionDirector.new()
+	add_child_autofree(director)
+	director._mission = CampaignData.mission(1)
+	director._mission_index = 1
+	director._pending_waves = (director._mission["waves"] as Array).duplicate()
+	director._objectives = [{"type": "train", "unit": "Militia", "count": 8,
+		"key": "CAMP_M1_OBJ_TRAIN", "progress": 0, "done": false}]
+	director._apply_restored_state({"elapsed": 400.0,
+		"objectives": [{"progress": 5, "done": false}]})
+	assert_eq(director._elapsed, 400.0)
+	assert_eq(director._pending_waves.size(), 1,
+		"the 300s wave already fired — only the 600s wave stays pending")
+	assert_eq((director.objectives()[0] as Dictionary)["progress"] as int, 5)
+
+func test_loading_a_skirmish_save_resets_the_campaign_flag() -> void:
+	MatchConfig.campaign_mission = 2
+	SaveManager._restore_match_config({"match_config": {}})
+	assert_eq(MatchConfig.campaign_mission, -1,
+		"a save without campaign data must never leak a MissionDirector")

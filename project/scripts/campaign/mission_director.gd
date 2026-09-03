@@ -44,6 +44,7 @@ func setup(world) -> void:
 	_pending_waves = (_mission.get("waves", []) as Array).duplicate()
 	if (_mission.get("victory", "") as String) == "survive":
 		_survive_left = _mission.get("survive_sec", 600.0) as float
+	_apply_restored_state(SaveManager.consume_campaign_state())
 	EventBus.unit_spawned.connect(_on_unit_spawned)
 	EventBus.building_construction_complete.connect(_on_building_complete)
 	EventBus.building_destroyed.connect(_on_building_destroyed)
@@ -51,6 +52,27 @@ func setup(world) -> void:
 	if _mission.get("hold_offense", false):
 		_hold_ai_offense()
 	_build_panel()
+
+## Reload of a saved mission: rewind the clock and the checkmarks to where
+## the save left them — waves already fired stay fired (their survivors were
+## restored as regular units), pending ones keep their schedule.
+func _apply_restored_state(restored: Dictionary) -> void:
+	if restored.is_empty():
+		return
+	_elapsed = restored.get("elapsed", 0.0) as float
+	if _survive_left > 0.0:
+		_survive_left = restored.get("survive_left", _survive_left) as float
+	var waves_left: Array = []
+	for wave: Variant in _pending_waves:
+		if ((wave as Dictionary)["at_sec"] as float) > _elapsed:
+			waves_left.append(wave)
+	_pending_waves = waves_left
+	var saved_objectives: Array = restored.get("objectives", []) as Array
+	for i: int in range(mini(saved_objectives.size(), _objectives.size())):
+		var saved: Dictionary = saved_objectives[i] as Dictionary
+		var obj: Dictionary = _objectives[i] as Dictionary
+		obj["progress"] = saved.get("progress", 0) as int
+		obj["done"] = saved.get("done", false) as bool
 
 ## Missions whose pressure is authored (scripted waves) muzzle the AI's own
 ## attack launcher — it still builds, defends and retaliates.

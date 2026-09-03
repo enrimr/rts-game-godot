@@ -6,17 +6,88 @@ on:
   pull_request:
     branches: [main]
 
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check GDScript formatting
-        run: echo "Add gdtoolkit lint step here"
+env:
+  GODOT_VERSION: "4.6"
+  GODOT_BIN: /usr/local/bin/godot
 
-  export-check:
+jobs:
+  tests-and-gates:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Verify project opens
-        run: echo "Add Godot headless export check here"
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
+      - name: Install Godot ${{ env.GODOT_VERSION }}
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          sudo mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$GODOT_BIN"
+          sudo chmod +x "$GODOT_BIN"
+
+      - name: Import project
+        run: $GODOT_BIN --headless --path project --import || true
+
+      - name: GUT suite (with silent-skip guard)
+        run: |
+          GODOT="$GODOT_BIN" ./run_tests.sh | tee /tmp/gut.log
+          # GUT silently SKIPS a test script that fails to parse while still
+          # reporting success — the reported script count must match the
+          # test files on disk, or the suite lied.
+          expected=$(find project/tests/unit -name 'test_*.gd' | wc -l)
+          reported=$(grep -E '^Scripts\s+[0-9]+' /tmp/gut.log | awk '{print $2}')
+          echo "test scripts on disk: $expected — reported by GUT: $reported"
+          if [ "$expected" != "$reported" ]; then
+            echo "::error::GUT skipped $((expected - reported)) unparseable test script(s)"
+            exit 1
+          fi
+          grep -q "All tests passed" /tmp/gut.log
+
+      - name: Gate — map generation census
+        run: CALIMA_SEED=777 $GODOT_BIN --headless --path project res://tools/check_map_gen.tscn
+
+      - name: Gate — command bus match
+        run: $GODOT_BIN --headless --path project res://tools/check_command_bus.tscn
+
+      - name: Gate — campaign mission end-to-end
+        run: $GODOT_BIN --headless --path project res://tools/check_campaign.tscn
+
+      - name: Gate — volcanic navigation
+        run: $GODOT_BIN --headless --path project res://tools/check_volcanic_nav.tscn
+
+      - name: Gate — islands navigation after rebake
+        run: $GODOT_BIN --headless --path project res://tools/check_nav_islands.tscn
+
+      - name: Gate — islands layout
+        run: CALIMA_RIVALS=3 CALIMA_MAP_SIZE=0 $GODOT_BIN --headless --path project res://tools/check_islands_layout.tscn
+
+      - name: Gate — diagonal building bake
+        run: $GODOT_BIN --headless --path project res://tools/check_nav_bake_diag.tscn
+
+      - name: Gate — amphibious rules
+        run: $GODOT_BIN --headless --path project res://tools/check_amphibious.tscn
+
+      - name: Gate — simulation perf budget (100v100)
+        run: CALIMA_PERF_MIN_TICKS=12 $GODOT_BIN --headless --path project res://tools/check_perf_gate.tscn
+
+      - name: Gate — multiplayer smoke (host + client)
+        run: |
+          CALIMA_NET_ROLE=host CALIMA_NET_PORT=8910 \
+            $GODOT_BIN --headless --path project res://tools/check_net_smoke.tscn &
+          HOST_PID=$!
+          sleep 3
+          CALIMA_NET_ROLE=client CALIMA_NET_PORT=8910 \
+            $GODOT_BIN --headless --path project res://tools/check_net_smoke.tscn
+          CLIENT_RC=$?
+          wait $HOST_PID
+          HOST_RC=$?
+          echo "host=$HOST_RC client=$CLIENT_RC"
+          test "$HOST_RC" = "0" -a "$CLIENT_RC" = "0"
