@@ -6,7 +6,7 @@
 script = ExtResource("1_presa")
 id = "presa_canario"
 display_name = "Presa Canario"
-description = "Herding dog bred at the Mill. Sent at an animal it fetches it and leads it home: sheep join your flock on the way, wild game settles near your base for the hunters. Never fights."
+description = "Herding dog bred at the Mill. Sent at an animal it fetches it and leads it home: sheep join your flock on the way, wild game settles near your base for the hunters — and every trip pays food for how far he brought the animal. Never fights."
 max_health = 45.0
 move_speed = 145.0
 line_of_sight = 4.0

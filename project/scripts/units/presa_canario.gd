@@ -12,11 +12,18 @@ const HERD_REACH: float = 44.0        # close enough to take the animal in tow
 const RELEASE_REACH: float = 90.0     # close enough to home to let it go
 const HERD_LAG_LIMIT: float = 150.0   # never outrun the animal by more than this
 
+## The shepherd's yield: every herding trip pays food for the NET distance
+## the animal was brought toward home (1 food / HERD_FOOD_PX px). Net, not
+## walked — shuttling a sheep in circles pays nothing, only real approach
+## does, so the reward can't be farmed without doing the actual job.
+const HERD_FOOD_PX: float = 40.0
+
 enum HerdPhase { NONE, FETCH, LEAD }
 
 var herd_target: Animal = null
 var _herd_phase: HerdPhase = HerdPhase.NONE
 var _home: Vector2 = Vector2.ZERO
+var _pickup_home_dist: float = 0.0
 var _trot_time: float = 0.0
 
 func _ready() -> void:
@@ -58,6 +65,7 @@ func _handle_herding() -> void:
 			if global_position.distance_to(herd_target.global_position) <= HERD_REACH:
 				herd_target.start_following(self)
 				_herd_phase = HerdPhase.LEAD
+				_pickup_home_dist = herd_target.global_position.distance_to(_home)
 				_repath_to(_home)
 			else:
 				_repath_to(herd_target.global_position)
@@ -77,6 +85,13 @@ func _handle_herding() -> void:
 
 func _finish_herd() -> void:
 	if is_instance_valid(herd_target) and _herd_phase == HerdPhase.LEAD:
+		var approach: float = _pickup_home_dist \
+			- herd_target.global_position.distance_to(_home)
+		var gained: int = int(maxf(approach, 0.0) / HERD_FOOD_PX)
+		if gained > 0:
+			ResourceManager.add_resource(player_id, "food", gained)
+			if player_id == 0:
+				AudioManager.play("gather_food")
 		herd_target.stop_following()
 	herd_target = null
 	_herd_phase = HerdPhase.NONE
@@ -112,8 +127,31 @@ func _add_ground_shadow() -> void:
 	VisualFx.add_ground_shadow(self, 13.0, 5.0, 9.0)
 
 ## Diagonal-pair trot, the Animal gait on a UnitBase machine: the rig's four
-## legs (Front/Back × Near/Far) swing in counter-phase while moving.
+## legs (Front/Back × Near/Far) swing in counter-phase while moving. This
+## replaces the base _animate_body wholesale, so it must ALSO face the dog:
+## the base orientation helper only knows attack/gather/build targets, and a
+## herding dog steers at herd_target or home instead.
 func _animate_body(delta: float) -> void:
+	var body: Node2D = get_node_or_null("Body") as Node2D
+	if body == null:
+		return
+	var face: Vector2 = Vector2.INF
+	if current_state == UnitState.ATTACKING and _herd_phase == HerdPhase.FETCH \
+			and is_instance_valid(herd_target):
+		face = herd_target.global_position
+	elif current_state == UnitState.ATTACKING and _herd_phase == HerdPhase.LEAD:
+		face = _home
+	elif current_state == UnitState.MOVING and is_instance_valid(nav_agent) \
+			and not nav_agent.is_navigation_finished():
+		face = nav_agent.target_position
+	elif velocity.length_squared() > 4.0:
+		face = global_position + velocity
+	if face != Vector2.INF:
+		var screen_dx: float = IsoProjection.world_to_screen(face - global_position).x
+		if absf(screen_dx) > 2.0:
+			body.scale.x = -1.0 if screen_dx < 0.0 else 1.0
+	body.rotation = IsoBillboard.UPRIGHT_ROTATION
+
 	var moving: bool = current_state != UnitState.DEAD and velocity.length_squared() > 4.0
 	if moving:
 		_trot_time += delta

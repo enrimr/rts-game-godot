@@ -129,3 +129,43 @@ func test_herd_verb_is_answered_by_dogs_alone() -> void:
 	assert_eq(dog.get("herd_target"), sheep, "the dog took the order")
 	assert_ne(soldier.get("current_state") as int, UnitBase.UnitState.ATTACKING,
 		"the soldier ignored a verb that is not his")
+
+func test_the_shepherds_yield_pays_for_net_approach() -> void:
+	ResourceManager.init_player(DOG_PID, {"food": 0})
+	var dog: CharacterBody2D = _spawn_dog()
+	var sheep: CharacterBody2D = _spawn_sheep()
+	dog.global_position = Vector2.ZERO
+	sheep.global_position = Vector2(400, 0)
+	dog.call("order_herd", sheep)   # home = start point (no own drop-off)
+	dog.global_position = Vector2(390, 0)
+	dog.call("_handle_herding")     # tow taken 400 px from home
+	dog.global_position = Vector2.ZERO
+	sheep.global_position = Vector2(20, 0)
+	dog.call("_handle_herding")     # released 20 px from home
+	assert_almost_eq(ResourceManager.get_resources(DOG_PID).get("food", 0.0) as float,
+		9.0, 0.01, "380 px of net approach at 1 food / 40 px")
+
+func test_shuttling_a_sheep_in_circles_pays_nothing() -> void:
+	ResourceManager.init_player(DOG_PID, {"food": 0})
+	var dog: CharacterBody2D = _spawn_dog()
+	var sheep: CharacterBody2D = _spawn_sheep()
+	dog.global_position = Vector2.ZERO
+	sheep.global_position = Vector2(10, 0)
+	dog.call("order_herd", sheep)
+	dog.call("_handle_herding")     # tow taken right at home
+	dog.call("_handle_herding")     # and released right there
+	assert_almost_eq(ResourceManager.get_resources(DOG_PID).get("food", 0.0) as float,
+		0.0, 0.01, "no approach, no pay — the yield can't be farmed in place")
+
+func test_dog_faces_the_animal_he_was_sent_at() -> void:
+	var dog: CharacterBody2D = _spawn_dog()
+	var sheep: CharacterBody2D = _spawn_sheep()
+	dog.global_position = Vector2.ZERO
+	sheep.global_position = Vector2(-300, 300)
+	dog.call("order_herd", sheep)
+	dog.call("_animate_body", 0.016)
+	var expected: float = -1.0 \
+		if IsoProjection.world_to_screen(sheep.global_position - dog.global_position).x < 0.0 \
+		else 1.0
+	assert_eq((dog.get_node("Body") as Node2D).scale.x, expected,
+		"the rig flips toward the herd target — he used to stare one way forever")
