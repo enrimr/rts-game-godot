@@ -51,3 +51,5 @@ func execute(_world: Node2D) -> void:
 			TechManager.start_research(player_id, item, building)
 		"cancel_research":
 			TechManager.cancel_research(building)
+		"cancel_research_queued":
+			TechManager.cancel_queued_research(building, index)

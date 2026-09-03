@@ -3,6 +3,10 @@ extends Node
 var _researched: Dictionary = {}        # {player_id: Array[String]}
 var _all_techs: Dictionary = {}         # {tech_id: TechnologyResource}
 var _active_research: Dictionary = {}   # {building_instance_id (int): {tech_id, player_id, timer, total_time}}
+## Techs waiting behind the active one, AoE2-training-queue style: paid at
+## enqueue time, refunded slot by slot on cancel, promoted automatically.
+var _research_queue: Dictionary = {}    # {building_instance_id (int): Array[String]}
+const MAX_RESEARCH_QUEUE: int = 5
 
 func _ready() -> void:
 	_scan_techs()
@@ -55,27 +59,107 @@ func can_research(player_id: int, tech_id: String) -> bool:
 	if tech.cost_gold > 0: costs["gold"] = tech.cost_gold
 	return ResourceManager.can_afford(player_id, costs)
 
+## Entry point for the research verb: starts immediately when the building is
+## idle, otherwise QUEUES behind the active tech (paid now, like unit
+## training). Chains queue naturally — a queued prerequisite counts as met.
 func start_research(player_id: int, tech_id: String, building: Node) -> bool:
-	if not can_research(player_id, tech_id):
-		return false
 	if not is_instance_valid(building):
 		return false
-	var tech: TechnologyResource = _all_techs[tech_id] as TechnologyResource
-	var costs: Dictionary = {}
-	if tech.cost_food > 0: costs["food"] = tech.cost_food
-	if tech.cost_wood > 0: costs["wood"] = tech.cost_wood
-	if tech.cost_gold > 0: costs["gold"] = tech.cost_gold
-	if not ResourceManager.spend_resource(player_id, costs):
-		return false
 	var iid: int = building.get_instance_id()
+	if not _can_queue(player_id, tech_id, iid):
+		return false
+	var tech: TechnologyResource = _all_techs[tech_id] as TechnologyResource
+	if not ResourceManager.spend_resource(player_id, _costs_of(tech)):
+		return false
+	if _active_research.has(iid):
+		var queue: Array = _research_queue.get(iid, []) as Array
+		queue.append(tech_id)
+		_research_queue[iid] = queue
+	else:
+		_activate(player_id, tech_id, iid)
+	EventBus.research_state_changed.emit(building)
+	return true
+
+func _activate(player_id: int, tech_id: String, iid: int) -> void:
+	var tech: TechnologyResource = _all_techs[tech_id] as TechnologyResource
 	_active_research[iid] = {
 		"tech_id": tech_id,
 		"player_id": player_id,
 		"timer": 0.0,
 		"total_time": tech.research_time,
 	}
+
+func _costs_of(tech: TechnologyResource) -> Dictionary:
+	var costs: Dictionary = {}
+	if tech.cost_food > 0: costs["food"] = tech.cost_food
+	if tech.cost_wood > 0: costs["wood"] = tech.cost_wood
+	if tech.cost_gold > 0: costs["gold"] = tech.cost_gold
+	return costs
+
+## can_research, but a tech already active or queued in THIS building counts
+## as done for prerequisites and as a duplicate for itself.
+func _can_queue(player_id: int, tech_id: String, iid: int) -> bool:
+	if not _all_techs.has(tech_id) or is_researched(player_id, tech_id):
+		return false
+	var in_flight: Array = pending_research_ids(iid)
+	if tech_id in in_flight:
+		return false
+	if in_flight.size() >= MAX_RESEARCH_QUEUE:
+		return false
+	var tech: TechnologyResource = _all_techs[tech_id] as TechnologyResource
+	if AgeManager.get_age(player_id) < tech.required_age:
+		return false
+	for prereq: String in tech.prerequisites:
+		if not is_researched(player_id, prereq) and not (prereq in in_flight):
+			return false
+	return ResourceManager.can_afford(player_id, _costs_of(tech))
+
+## Active + queued tech ids for one building (HUD and validation).
+func pending_research_ids(iid: int) -> Array:
+	var out: Array = []
+	if _active_research.has(iid):
+		out.append((_active_research[iid] as Dictionary)["tech_id"])
+	out.append_array(_research_queue.get(iid, []) as Array)
+	return out
+
+func get_research_queue(building: Node) -> Array:
+	if not is_instance_valid(building):
+		return []
+	return (_research_queue.get(building.get_instance_id(), []) as Array).duplicate()
+
+## Cancels ONE queued (not yet active) tech by queue index, with full refund.
+func cancel_queued_research(building: Node, index: int) -> bool:
+	if not is_instance_valid(building):
+		return false
+	var iid: int = building.get_instance_id()
+	var queue: Array = _research_queue.get(iid, []) as Array
+	if index < 0 or index >= queue.size():
+		return false
+	var tech: TechnologyResource = _all_techs.get(queue[index]) as TechnologyResource
+	queue.remove_at(index)
+	_research_queue[iid] = queue
+	if tech != null:
+		_refund(building.get("player_id") as int, tech)
 	EventBus.research_state_changed.emit(building)
 	return true
+
+func _refund(player_id: int, tech: TechnologyResource) -> void:
+	if tech.cost_food > 0: ResourceManager.add_resource(player_id, "food", float(tech.cost_food))
+	if tech.cost_wood > 0: ResourceManager.add_resource(player_id, "wood", float(tech.cost_wood))
+	if tech.cost_gold > 0: ResourceManager.add_resource(player_id, "gold", float(tech.cost_gold))
+
+## The next queued tech takes the bench the moment the active slot frees up.
+func _promote_next(iid: int, building: Node) -> void:
+	var queue: Array = _research_queue.get(iid, []) as Array
+	if queue.is_empty():
+		return
+	var pid: int = -1
+	if is_instance_valid(building) and building.get("player_id") != null:
+		pid = building.get("player_id") as int
+	if pid < 0:
+		return
+	_activate(pid, queue.pop_front() as String, iid)
+	_research_queue[iid] = queue
 
 ## Aborts a building's active research with a full refund (AoE2 rule).
 func cancel_research(building: Node) -> bool:
@@ -88,10 +172,9 @@ func cancel_research(building: Node) -> bool:
 	var tech: TechnologyResource = _all_techs.get(entry["tech_id"]) as TechnologyResource
 	var pid: int = entry["player_id"] as int
 	if tech != null:
-		if tech.cost_food > 0: ResourceManager.add_resource(pid, "food", float(tech.cost_food))
-		if tech.cost_wood > 0: ResourceManager.add_resource(pid, "wood", float(tech.cost_wood))
-		if tech.cost_gold > 0: ResourceManager.add_resource(pid, "gold", float(tech.cost_gold))
+		_refund(pid, tech)
 	_active_research.erase(iid)
+	_promote_next(iid, building)
 	EventBus.research_state_changed.emit(building)
 	return true
 
@@ -108,6 +191,13 @@ func _physics_process(delta: float) -> void:
 		var instance_id: int = iid as int
 		var obj: Object = instance_from_id(instance_id)
 		if not is_instance_valid(obj as Node):
+			# The lab fell: refund whatever was still waiting in its queue.
+			var pid: int = entry["player_id"] as int
+			for queued: Variant in _research_queue.get(iid, []) as Array:
+				var qtech: TechnologyResource = _all_techs.get(queued) as TechnologyResource
+				if qtech != null:
+					_refund(pid, qtech)
+			_research_queue.erase(iid)
 			finished_keys.append(iid)
 			continue
 		entry["timer"] = (entry["timer"] as float) + delta
@@ -118,6 +208,11 @@ func _physics_process(delta: float) -> void:
 			EventBus.research_state_changed.emit(obj as Node)
 	for key: Variant in finished_keys:
 		_active_research.erase(key)
+		var obj: Object = instance_from_id(key as int)
+		if is_instance_valid(obj as Node):
+			_promote_next(key as int, obj as Node)
+			if _active_research.has(key):
+				EventBus.research_state_changed.emit(obj as Node)
 
 ## Replication: mirror a building's active research (client HUD slot).
 func apply_remote_research(building: Node, tech_id: String, timer: float, total: float) -> void:
@@ -135,6 +230,16 @@ func apply_remote_research(building: Node, tech_id: String, timer: float, total:
 	}
 	if changed:
 		EventBus.research_state_changed.emit(building)
+
+## Replication: mirror a building's research QUEUE (client HUD slots).
+func apply_remote_research_queue(building: Node, tech_ids: Array) -> void:
+	if not is_instance_valid(building):
+		return
+	var iid: int = building.get_instance_id()
+	if (_research_queue.get(iid, []) as Array) == tech_ids:
+		return
+	_research_queue[iid] = tech_ids.duplicate()
+	EventBus.research_state_changed.emit(building)
 
 ## Replication: the host reports no active research for this building.
 func clear_remote_research(building: Node) -> void:

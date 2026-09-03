@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_carreta"]
+
+[resource]
+script = ExtResource("1_carreta")
+id = "carreta_canaria"
+display_name = "Canarian Cart"
+description = "Sturdy wooden carts let villagers carry 25% more per trip. Farms deposit instantly and are unaffected."
+required_age = 1
+research_building = 0
+research_time = 40.0
+cost_food = 150
+cost_wood = 75
+cost_gold = 0
+effects = {"villager_carry_capacity": 1.25}
+prerequisites = []

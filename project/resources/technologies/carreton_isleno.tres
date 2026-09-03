@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_carreton"]
+
+[resource]
+script = ExtResource("1_carreton")
+id = "carreton_isleno"
+display_name = "Island Handcart"
+description = "Reinforced handcarts: villagers carry another 25% more per trip."
+required_age = 2
+research_building = 0
+research_time = 55.0
+cost_food = 200
+cost_wood = 125
+cost_gold = 0
+effects = {"villager_carry_capacity": 1.25}
+prerequisites = ["carreta_canaria"]

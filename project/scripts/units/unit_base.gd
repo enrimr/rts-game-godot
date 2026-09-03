@@ -212,6 +212,7 @@ func _ready() -> void:
 	if player_id == 0:
 		EventBus.player_entity_under_attack.connect(_on_player_entity_under_attack)
 	EventBus.unit_upgrade_applied.connect(_on_unit_upgrade_applied)
+	EventBus.technology_researched.connect(_on_technology_researched)
 	# Decide visual gender (50/50) unless a spawner or save already set it.
 	if not _gender_assigned:
 		is_female = MatchRng.randf() < 0.5
@@ -463,6 +464,22 @@ func _reset_path_style() -> void:
 		_path_line.default_color = PATH_COLOR
 		_path_line.modulate.a = 1.0
 		_path_line.visible = false
+
+## HP technologies apply to LIVING units, AoE2 style: rescale max HP keeping
+## the current health ratio. Upgrades already did this; plain HP techs
+## (Loom-likes, Sanctity, Shipwright) only reached freshly spawned units.
+func _on_technology_researched(pid: int, _tech_id: String) -> void:
+	if pid != player_id or unit_data == null or not is_instance_valid(health_bar):
+		return
+	var new_max: float = unit_data.max_health \
+		* CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
+	if is_equal_approx(new_max, float(health_bar.max_value)):
+		return
+	var ratio: float = clampf(health / maxf(float(health_bar.max_value), 1.0), 0.0, 1.0)
+	health = new_max * ratio
+	health_bar.max_value = new_max
+	health_bar.value = health
+	_refresh_health_bar()
 
 func _on_unit_upgrade_applied(pid: int, from_id: String, to_res: UnitResource) -> void:
 	if pid != player_id:
@@ -992,8 +1009,9 @@ func _get_target_armor(target: Node) -> float:
 	var udata: Variant = target.get("unit_data")
 	if udata is UnitResource:
 		base_armor = (udata as UnitResource).armor_pierce if pierce else (udata as UnitResource).armor_melee
-		# Archer-type targets gain extra pierce armour from the padded_archer_armor tech
-		if pierce and (udata as UnitResource).id == "archer":
+		# Archer-LINE targets gain extra pierce armour from padded_archer_armor
+		# (the whole roster, not just the base archer — unique archers count).
+		if pierce and (udata as UnitResource).id in CivBonusManager._ARCHER_IDS:
 			var atid: Variant = target.get("player_id")
 			if atid != null:
 				base_armor += CivBonusManager.get_archer_armor_pierce_bonus(atid as int)
@@ -1001,11 +1019,13 @@ func _get_target_armor(target: Node) -> float:
 		var bdata: Variant = target.get("building_data")
 		if bdata is BuildingResource:
 			base_armor = (bdata as BuildingResource).get("armor_melee") if (bdata as BuildingResource).get("armor_melee") != null else 0.0
-	# The generic per-civ armour bonus is melee armour; it does not shield against pierce.
-	if not pierce:
+	# Barding melee armour: cavalry only (the target's unit id decides), and
+	# never against pierce.
+	if not pierce and udata is UnitResource:
 		var target_pid: Variant = target.get("player_id")
 		if target_pid != null:
-			base_armor += CivBonusManager.get_unit_armor_bonus(target_pid as int)
+			base_armor += CivBonusManager.get_unit_armor_bonus(
+				target_pid as int, (udata as UnitResource).id)
 	return base_armor
 
 func _get_effective_attack() -> float:

@@ -280,6 +280,9 @@ func _building_extras(node: Node) -> Dictionary:
 	if research is Dictionary:
 		extras["r"] = [(research as Dictionary)["tech_id"],
 			(research as Dictionary)["timer"], (research as Dictionary)["total_time"]]
+		var rq: Array = TechManager._research_queue.get(node.get_instance_id(), []) as Array
+		if not rq.is_empty():
+			extras["rq"] = rq
 	if node.get("_sell_offsets") != null:
 		extras["so"] = node.get("_sell_offsets")
 		extras["bo"] = node.get("_buy_offsets")
@@ -577,8 +580,10 @@ func _apply_building_extras(node: Node, extras: Dictionary) -> void:
 	if extras.has("r"):
 		var r: Array = extras["r"] as Array
 		TechManager.apply_remote_research(node, r[0] as String, r[1] as float, r[2] as float)
+		TechManager.apply_remote_research_queue(node, extras.get("rq", []) as Array)
 	else:
 		TechManager.clear_remote_research(node)
+		TechManager.apply_remote_research_queue(node, [])
 	if extras.has("so"):
 		node.set("_sell_offsets", extras["so"])
 		node.set("_buy_offsets", extras["bo"])

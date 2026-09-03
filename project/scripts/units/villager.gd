@@ -18,6 +18,11 @@ class_name Villager
 var gather_target: Node = null
 var carried_resource: String = ""
 var carried_amount: float = 0.0
+
+## Carry techs (Canarian Cart line) scale how much fits in one trip. Farms
+## are unaffected by design: they deposit instantly (see the farm branch).
+func _effective_capacity() -> float:
+	return carry_capacity * CivBonusManager.get_carry_capacity_multiplier(player_id)
 var drop_off_target: Node = null
 var build_target: Node = null
 
@@ -362,7 +367,7 @@ func _handle_gathering(delta: float) -> void:
 		var available: float = gather_target.gather(gather_rate)
 		var rate_mult: float = CivBonusManager.get_gather_rate_multiplier(player_id, carried_resource) \
 			* WeatherManager.get_gather_rate_multiplier(carried_resource, global_position, player_id)
-		carried_amount = minf(carried_amount + available * rate_mult, carry_capacity)
+		carried_amount = minf(carried_amount + available * rate_mult, _effective_capacity())
 
 		if not (gather_target is ResourceNode):
 			_farm_gathered += available
@@ -373,7 +378,7 @@ func _handle_gathering(delta: float) -> void:
 		else:
 			_update_gather_indicator()
 
-		if gather_target is ResourceNode and carried_amount >= carry_capacity:
+		if gather_target is ResourceNode and carried_amount >= _effective_capacity():
 			var drop_off: Node = _resolve_drop_off()
 			if is_instance_valid(drop_off):
 				_release_gather_target()

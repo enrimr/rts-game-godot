@@ -52,6 +52,12 @@ func apply_tech_effect(player_id: int, effect_key: String, value: float) -> void
 		(_multipliers[player_id] as Dictionary)[effect_key] = current * value
 
 const _ARCHER_IDS: Array[String] = ["archer", "ravine_archer", "longbowman"]
+## Category rosters for tech scoping. Upgraded units and civ uniques belong to
+## their line: a Long Swordsman keeps benefiting from the swordsman HP tech he
+## qualified for as a Militia (tech-tree audit fix).
+const _CAVALRY_IDS: Array[String] = ["scout", "heavy_scout", "knight", "sand_raider", "chevalier_normand"]
+const _INFANTRY_IDS: Array[String] = ["militia", "man_at_arms", "long_swordsman", "pikeman", "menceyes_guard", "conquistador"]
+const _SHIP_IDS: Array[String] = ["fishing_boat", "transport_ship", "war_galley", "tidecaller", "trireme"]
 
 func get_unit_cost_multiplier(player_id: int, unit_id: String) -> Dictionary:
 	var result: Dictionary = {}
@@ -81,11 +87,11 @@ func get_age_advance_cost_multiplier(player_id: int) -> float:
 func get_unit_hp_multiplier(player_id: int, unit_id: String) -> float:
 	if unit_id == "villager":
 		return get_multiplier(player_id, "villager_hp")
-	if unit_id == "scout" or unit_id == "heavy_scout" or unit_id == "knight" or unit_id == "sand_raider":
+	if unit_id in _CAVALRY_IDS:
 		return get_multiplier(player_id, "cavalry_hp")
-	if unit_id == "militia" or unit_id == "pikeman":
+	if unit_id in _INFANTRY_IDS:
 		return get_multiplier(player_id, "swordsman_hp")
-	if unit_id == "fishing_boat" or unit_id == "transport_ship" or unit_id == "war_galley" or unit_id == "tidecaller" or unit_id == "trireme":
+	if unit_id in _SHIP_IDS:
 		return get_multiplier(player_id, "ship_hp")
 	return 1.0
 
@@ -136,10 +142,16 @@ func get_siege_attack_bonus(player_id: int) -> float:
 func get_ship_cost_multiplier(player_id: int) -> float:
 	return get_multiplier(player_id, "ship_cost")
 
-func get_unit_armor_bonus(player_id: int) -> float:
-	# unit_armor_melee is stored as a multiplier but used additively as extra armor
-	# scale_barding adds 15% of base armor — we expose the raw multiplier for the caller
-	return get_multiplier(player_id, "unit_armor_melee")
+## Barding techs (scale/chain/plate) are HORSE armour: only cavalry benefits.
+## They used to shield every unit of the player — villagers included.
+func get_unit_armor_bonus(player_id: int, unit_id: String = "") -> float:
+	if unit_id in _CAVALRY_IDS:
+		return get_multiplier(player_id, "unit_armor_melee")
+	return 0.0
+
+## Canarian Cart / Island Handcart: how much more a villager carries per trip.
+func get_carry_capacity_multiplier(player_id: int) -> float:
+	return get_multiplier(player_id, "villager_carry_capacity")
 
 func get_attack_speed_multiplier(player_id: int, unit_id: String) -> float:
 	# Generic key composes with the category-specific ones (same pattern as

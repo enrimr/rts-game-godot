@@ -1555,29 +1555,47 @@ func _on_research_state_changed(building: Node) -> void:
 func _refresh_research_slot() -> void:
 	if not is_instance_valid(_train_queue_row):
 		return
-	var old: Node = _train_queue_row.get_node_or_null("ResearchSlot")
-	if old != null:
-		old.name = "ResearchSlotFreeing"   # frees end-of-frame; keep the name free
-		old.queue_free()
+	for child: Node in _train_queue_row.get_children():
+		if (child.name as String).begins_with("ResearchSlot"):
+			child.name = String(child.name) + "Freeing"   # frees end-of-frame; keep names free
+			child.queue_free()
 	if not is_instance_valid(_selected_building):
 		return
 	var tech: TechnologyResource = TechManager.get_researching_tech(_selected_building)
 	if tech == null:
 		return
-	var initials: String = ""
-	for part: String in tech.display_name.split(" "):
-		if not part.is_empty():
-			initials += part[0]
-	var slot: TrainQueueSlot = TrainQueueSlot.new()
-	slot.name = "ResearchSlot"
-	_train_queue_row.add_child(slot)
-	slot.setup(0, initials.left(2).to_upper(), Color(0.25, 0.55, 0.75), true, false, null)
-	slot.tooltip_text = tech.display_name
+	var slot: TrainQueueSlot = _make_research_slot(tech, "ResearchSlot")
 	slot.set_progress(TechManager.get_research_progress(_selected_building))
 	slot.cancel_requested.connect(func(_idx: int) -> void:
 		if is_instance_valid(_selected_building):
 			CommandBus.submit(ProductionCommand.make(0, "cancel_research",
 				EntityRegistry.id_of(_selected_building))))
+	# Queued techs line up behind the active one, exactly like queued units:
+	# each with its own cancel (full refund at the slot).
+	var queue: Array = TechManager.get_research_queue(_selected_building)
+	for qi: int in range(queue.size()):
+		var queued: TechnologyResource = TechManager._all_techs.get(queue[qi]) as TechnologyResource
+		if queued == null:
+			continue
+		var qslot: TrainQueueSlot = _make_research_slot(queued, "ResearchSlotQ%d" % qi)
+		qslot.set_progress(0.0)
+		var captured: int = qi
+		qslot.cancel_requested.connect(func(_idx: int) -> void:
+			if is_instance_valid(_selected_building):
+				CommandBus.submit(ProductionCommand.make(0, "cancel_research_queued",
+					EntityRegistry.id_of(_selected_building), "", captured)))
+
+func _make_research_slot(tech: TechnologyResource, slot_name: String) -> TrainQueueSlot:
+	var initials: String = ""
+	for part: String in tech.display_name.split(" "):
+		if not part.is_empty():
+			initials += part[0]
+	var slot: TrainQueueSlot = TrainQueueSlot.new()
+	slot.name = slot_name
+	_train_queue_row.add_child(slot)
+	slot.setup(0, initials.left(2).to_upper(), Color(0.25, 0.55, 0.75), true, false, null)
+	slot.tooltip_text = tech.display_name
+	return slot
 
 func _build_research_bar(building: Node) -> void:
 	if not is_instance_valid(building):
