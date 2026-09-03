@@ -18,7 +18,7 @@ The nine command classes live in `scripts/game/commands/`:
 | Class | kind | Verbs / payload |
 |---|---|---|
 | `UnitPointCommand` | `unit_point` | move / attack_move (formation ring fan-out) / attack_ground; unit IDs + point |
-| `UnitTargetCommand` | `unit_target` | attack / gather (restores depleted farms & fish traps, routes fishing boats to their dock; optional `drop_id` pins the drop-off, used by the AI) / build / drop_off / board (walk-then-board poll) / board_instant (the AI's distance-free garrison) / set_drop_off; unit IDs + target ID |
+| `UnitTargetCommand` | `unit_target` | attack / gather (restores depleted farms & fish traps, routes fishing boats to their dock; optional `drop_id` pins the drop-off, used by the AI) / build / drop_off / board (walk-then-board poll) / board_instant (the AI's distance-free garrison) / set_drop_off / heal (Harimaguada) / herd (only units with `order_herd` answer — the Presa Canario; any animal targetable); unit IDs + target ID |
 | `UnitActionCommand` | `unit_action` | stop / delete / hero_ability / trebuchet_toggle / scout_explore(_stop); unit IDs |
 | `TransportCommand` | `transport` | unload_all / unload_one(index) / move_unload(pos); transport ID |
 | `ProductionCommand` | `production` | train(unit_id — empty = the TC's no-arg signature) / cancel_train(index) / research(tech_id) / cancel_research (full refund); building ID |
@@ -408,6 +408,29 @@ and falls back to `DEEP_WATER_SPEED` (0.60). Shallow water (ocean within
 `SHALLOW_WATER_DEPTH` of the coast) is waded at full speed. Gated by
 `tests/unit/test_shallow_water.gd` and the `tools/check_amphibious.tscn` harness.
 
+### Sea containment (the step veto)
+
+Water has no physics body, so nothing but the navmesh keeps land units ashore —
+and two movement paths bypass the mesh: RVO's `safe_velocity` (a shove near the
+shoreline, applied in `_on_velocity_computed`) and the straight-line combat
+last-gap closer in `_handle_attacking`, which pushes directly at the target on
+the theory that the target's collision stops the unit ("the sea doesn't"). The
+old containment teleport healed the position ~0.8 s later, so units oscillated:
+wade in, snap out, wade back — some fighting in the water for seconds.
+
+`UnitBase._step_enters_sea(next_pos)` vetoes any step that would **enter** ocean
+terrain at both leak sites (the velocity is zeroed for that tick). Cheap by
+construction: amphibians and units farther than `COAST_GUARD_DIST` (64 px) from
+the coast (memoized `distance_to_coast` cell lookup) exit before the precise
+terrain test, and a unit already overboard is left to the containment teleport,
+so a mesh/polygon sliver at the waterline can never freeze anyone.
+
+Gated by `tools/check_sea_containment.tscn` — a chaos probe that boots a real
+Islands match, actively tries every entry vector a live game produces
+(cross-water attack-moves, move orders into deep ocean, villagers sent at fish
+nodes, a shoreline brawl) and audits every land unit every sampled tick. It runs
+in CI with `CALIMA_TICKS=2400`.
+
 ## Terrain Impassability
 
 `TerrainManager` (autoload) is the single authority on whether a world position is passable for a given actor.
@@ -541,29 +564,35 @@ once their cell is EXPLORED (AoE2-style memory).
 
 ## Tech Tree System
 
-Technologies are defined as `TechnologyResource` `.tres` files under `resources/technologies/`. Seventeen technologies are currently implemented:
+Technologies are defined as `TechnologyResource` `.tres` files under `resources/technologies/`. Twenty-three technologies are currently implemented:
 
 | Technology | Researched at | Effect |
 |---|---|---|
-| `loom` | Barracks | Villager HP / armor |
-| `fletching` | Barracks | Archer attack / range |
-| `scale_barding` | Barracks | Cavalry armor |
-| `bodkin_arrow` | Barracks | Archer attack |
-| `chain_barding` | Barracks | Cavalry armor |
-| `blast_furnace` | Barracks | Infantry attack |
-| `plate_barding` | Barracks | Cavalry armor |
-| `shipwright` | Barracks | Ship speed / cost |
-| `forging` | Blacksmith | Melee attack |
-| `padded_archer_armor` | Blacksmith | Archer pierce armor |
-| `iron_casting` | Blacksmith | Melee attack |
-| `siege_engineering` | University | Siege weapon effectiveness |
-| `ballistics` | University | Projectile accuracy |
-| `chemistry` | University | Projectile attack bonus |
-| `sanctity` | Temple | Monk HP |
-| `fervor` | Temple | Monk move speed |
-| `atonement` | Temple | Monks can convert buildings |
+| `loom` | Blacksmith | Villager HP ×1.15 |
+| `forging` | Blacksmith | Unit attack ×1.15 |
+| `iron_casting` | Blacksmith | Unit attack ×1.20 |
+| `blast_furnace` | Blacksmith | Unit attack ×1.15 |
+| `fletching` | Blacksmith | Archer attack ×1.20 |
+| `bodkin_arrow` | Blacksmith | Archer attack ×1.20, range ×1.10 |
+| `scale_barding` | Blacksmith | Melee armour +1 |
+| `chain_barding` | Blacksmith | Melee armour +1 |
+| `plate_barding` | Blacksmith | Melee armour +1 |
+| `padded_archer_armor` | Blacksmith | Archer pierce armour +1 |
+| `shipwright` | Blacksmith | Ship HP ×1.15, ship cost ×0.85 |
+| `carreta_canaria` | Blacksmith | Villager carry capacity ×1.25 (farms deposit instantly, unaffected) |
+| `carreton_isleno` | Blacksmith | Villager carry capacity ×1.25 again (requires `carreta_canaria`) |
+| `siege_engineering` | University | Siege damage vs buildings ×1.20 |
+| `ballistics` | University | Archer attack speed ×1.20 |
+| `chemistry` | University | Archer attack ×1.15 |
+| `sanctity` | Temple | Swordsman HP ×1.15 |
+| `fervor` | Temple | Unit move speed ×1.10 |
+| `atonement` | Temple | Cavalry HP ×1.20 |
+| `upgrade_man_at_arms` | Barracks | Militia → Man-at-Arms |
+| `upgrade_long_swordsman` | Barracks | Man-at-Arms → Long Swordsman |
+| `upgrade_heavy_scout` | Stable | Scout → Heavy Scout |
+| `upgrade_knight` | Stable | Heavy Scout → Knight |
 
-`TechManager` (autoload) owns the research queue and applies effects when research completes. `CivBonusManager` (autoload) stores per-player multipliers derived from civilization bonuses and applied techs.
+`TechManager` (autoload) owns per-building research: one active tech plus an AoE2-training-queue-style waiting list, capped at `MAX_RESEARCH_QUEUE` (5) techs in flight per building. Queued techs are paid at enqueue time, refunded slot by slot on cancel (`cancel_queued_research(building, index)`; `cancel_research` refunds the active one in full), and promoted automatically the moment the active slot frees up. A queued prerequisite counts as met, so chains queue naturally; if the lab is destroyed, everything still waiting in its queue is refunded. Effects are applied when research completes. `CivBonusManager` (autoload) stores per-player multipliers derived from civilization bonuses and applied techs.
 
 When a `TechnologyResource` has non-empty `upgrade_from_unit_id` and `upgrade_to_unit_id` fields, `TechManager` treats it as a unit upgrade: on completion it immediately replaces all live units of type `upgrade_from_unit_id` with instances of `upgrade_to_unit_id` (HP scaled proportionally), and the source building switches its training queue to produce the new type going forward. Upgrade techs are researched at the same building that trains the unit (Barracks for infantry upgrades, Stable for cavalry upgrades).
 
@@ -731,7 +760,26 @@ Training cost is read from `UnitResource` fields (`cost_food`, `cost_wood`, `cos
 
 ### Research-only buildings
 
-`Blacksmith`, `University`, and `Temple` extend `BuildingBase` and add no new API beyond the base class. They exist as production-building nodes so that `TechManager` can gate technology research by building type.
+`Blacksmith` and `University` extend `BuildingBase` and add no new API beyond the base class. They exist as production-building nodes so that `TechManager` can gate technology research by building type.
+
+### Temple — research, field hospital, and Harimaguada training
+
+`Temple` (`scripts/buildings/temple.gd`) hosts its three research techs (Fervor/Sanctity/Atonement) and adds two subsystems on top of `BuildingBase`:
+
+- **Field hospital** — garrisoned units (capacity 5, from `temple.tres`) heal `HEAL_RATE` (4) HP/s, channelled by the building (`_heal_ward` in `_process`; occupants have processing off). Heroes heal at `HERO_HEAL_MULT` (0.5) so an immortal king parked inside a Temple never turns Regicide into a waiting game. Skipped on replication puppets.
+- **Harimaguada training** — the standard producer contract (`order_train` / `order_cancel_train` / `get_queue` / `get_max_queue`, queue cap 5, pay-at-enqueue with full refund on cancel). The Harimaguada (`scripts/units/healer_unit.gd`, `harimaguada_data.tres`: 85 Food + 25 Gold, 24 s, Castle Age) is the priestess-healer: always female (`is_female = true` set before `super._ready()`), attack 0, stance locked PASSIVE with a no-op `_auto_engage`. Her machine is follow-and-mend: `order_heal` (the `UnitTargetCommand` "heal" verb) walks her within `HEAL_RANGE` (42 px) and channels `HEAL_RATE` (5) HP/s through `UnitBase.heal()`; when idle she auto-triages the most wounded ally within `AUTO_SCAN_RADIUS` (260 px) every 0.6 s. Visual review harness: `tools/check_harimaguada_look.tscn`.
+
+The Temple's visual identity is the **almogarén** — an open dry-stone Canarian shrine (ring wall, stone cairn ward, leaning monolith with the only CivStyle trim band, offering fire) — authored twice, as the `_temple()` massing recipe in `iso_building_massing.gd` and as the scene facade in `temple.tscn`; ownership reads from a single team pennant. Review harness: `tools/check_temple_look.tscn`.
+
+### Mill — food drop-off and the Presa Canario
+
+`Mill` (`scripts/buildings/mill.gd`, `class_name Mill`, `mill.tres`: 100 Wood, 600 HP, Dark Age) completes the drop-off set: a `DropOffBuilding` child is registered on construction complete, exactly like the Lumber/Mining Camps, so villagers deposit food there. It also trains the **Presa Canario** (`scripts/units/presa_canario.gd`, `presa_canario_data.tres`: 30 Food + 10 Gold, 18 s) with the same producer contract (queue cap 5, pay-at-enqueue, refund on cancel). HUD: build key **M**, train key **P**.
+
+The dog never fights (attack 0, PASSIVE, no-op `_auto_engage`); its machine is **fetch-and-lead** (`order_herd`, the `UnitTargetCommand` "herd" verb — only units with `order_herd` answer, any `Animal` is targetable): FETCH walks to the animal (`HERD_REACH` 44 px), takes it in tow via `Animal.start_following`, then LEAD returns to the nearest own drop-off resolved at order time (`_resolve_home`) and releases within `RELEASE_REACH` (90 px), pausing whenever the animal lags more than `HERD_LAG_LIMIT` (150 px). In `world_commands.gd` a right-clicked animal is herded only by a dogs-ONLY selection (`_selection_all_dogs`); any mixed selection slaughters it as before.
+
+Animal-side, `Animal` gained a `HERDED` state (`start_following` / `stop_following` / `_handle_herded`): the animal follows at `HERD_FOLLOW_SPEED`, frees itself the moment its dog leaves the job (reassignment, death, release — checked herd-side every tick), breaks tow if wounded, and its wander `_origin` moves to the release point so wild game settles near the player's base. A sheep converting mid-trip (the dog carries `player_id` into the ConvertArea) stays in tow and lands OWNED on release. Contract pinned by `tests/unit/test_herding.gd`.
+
+The Lumber Camp, Mining Camp, and Mill massing recipes replaced the shared house-shaped `_camp()` (logging yard / timber-framed adit / stone tower with canvas sails); review harness: `tools/check_camps_look.tscn`.
 
 ### Market
 

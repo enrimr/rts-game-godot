@@ -17,11 +17,12 @@
 | Market | 175 wood | 1 | 900 | Resource trading |
 | Lumber Camp | 100 wood | 0 | 600 | Wood drop-off |
 | Mining Camp | 100 wood | 0 | 600 | Gold / stone drop-off |
+| Mill | 100 wood | 0 | 600 | Food drop-off · trains Presa Canario herding dogs |
 | Farm | 60 wood | 0 | 300 | Continuous food source |
 | Dock | 150 wood | 0 | 1800 | Trains ships |
 | Siege Workshop | 200 wood | 2 | 1200 | Trains siege units |
 | University | 200 wood | 2 | 1100 | Advanced technology research |
-| Temple | 175 wood | 2 | 900 | Morale and healing research |
+| Temple | 175 wood | 2 | 900 | Morale and healing research · field hospital (garrisoned units heal 4 HP/s, heroes half rate) · trains Harimaguada |
 | Wall Segment | 5 stone | 0 | 700 | Defensive barrier |
 | Gate | 30 wood | 0 | 500 | Allied passage |
 | Fish Trap | 75 wood | 0 | 600 | Passive food source (ocean) |
@@ -35,6 +36,13 @@
 | Unit | Cost | Time | HP | Speed | Attack | Range |
 |---|---|---|---|---|---|---|
 | Villager | 50 food | 25 s | 25 | 120 | 3 | 1.5 |
+
+### Support
+
+| Unit | Trained at | Age | Cost | Time | HP | Speed | Role |
+|---|---|---|---|---|---|---|---|
+| Harimaguada | Temple | 2 | 85f + 25g | 24 s | 40 | 118 | Priestess-healer (always female): heals allies 5 HP/s in touch range, auto-tends nearby wounded while idle; never fights |
+| Presa Canario | Mill | 0 | 30f + 10g | 18 s | 45 | 145 | Herding dog: right-click an animal with a dogs-only selection to lead it to your nearest drop-off; sheep (even enemy ones) convert on the way; never fights |
 
 ### Infantry (Barracks)
 | Unit | Age | Cost | Time | HP | Speed | Attack | Range | Armour M/P |
@@ -109,6 +117,8 @@ Each civilization has one unique unit trained at their primary military building
 | Fletching | 1 | 100g | 35 s | — | Archer attack ×1.20 |
 | Bodkin Arrow | 2 | 100f + 150g | 35 s | Fletching | Archer attack ×1.20 · Range ×1.10 |
 | Shipwright | 1 | 200w + 60g | 40 s | — | Ship HP ×1.15 · Cost −15% |
+| Canarian Cart | 1 | 150f + 75w | 40 s | — | Villager carry capacity +25% (farms unaffected) |
+| Island Handcart | 2 | 200f + 125w | 55 s | Canarian Cart | Villager carry capacity +25% again |
 
 ### University
 | Technology | Age | Cost | Time | Prerequisite | Effect |

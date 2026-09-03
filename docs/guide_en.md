@@ -240,12 +240,12 @@ Four resources drive everything in *Calima*. You start with 200 Food, 75 Wood, a
 
 | Resource | How to gather |
 |---|---|
-| **Food** | Send Villagers to berry bushes, hunt animals, or build Farms. On Islands maps, Fishing Boats pull food from ocean nodes and Fish Traps provide a passive stream. |
+| **Food** | Send Villagers to berry bushes, hunt animals, or build Farms. The Mill is the food drop-off and trains Presa Canario herding dogs, which lead animals (including enemy sheep, which convert on the way) back to your base. On Islands maps, Fishing Boats pull food from ocean nodes and Fish Traps provide a passive stream. |
 | **Wood** | Order Villagers to chop trees. Build a Lumber Camp close to the forest — it acts as the drop-off point. |
 | **Gold** | Mine gold deposits. Build a Mining Camp nearby. The Market also converts other resources to gold. |
 | **Stone** | Mine stone quarries. Same drop-off logic as gold: Mining Camp required. Controlling a volcanic caldera tile provides passive stone income. |
 
-Villagers carry up to **10 units** of any resource before returning to drop off. Build drop-off buildings close to resource nodes to reduce travel time.
+Villagers carry up to **10 units** of any resource before returning to drop off — raise it with the **Canarian Cart** (Feudal) and **Island Handcart** (Castle) Blacksmith technologies, +25% each. Build drop-off buildings close to resource nodes to reduce travel time.
 
 ### Population
 
@@ -306,6 +306,7 @@ Heroes are not trained — each civilization starts with one, free of charge. If
 |---|---|---|
 | **Lumber Camp** | 100 Wood | Wood drop-off point; place close to trees |
 | **Mining Camp** | 100 Wood | Gold and stone drop-off point |
+| **Mill** | 100 Wood | Food drop-off point; trains the Presa Canario herding dog (30 Food + 10 Gold); queue cap 5 |
 | **Farm** | 60 Wood | Continuous food source; Villager works it passively |
 | **Fish Trap** | 75 Wood | Built on ocean tiles by Fishing Boats; passive food without travel |
 | **Market** | 175 Wood | Sell/buy resources for gold; requires Feudal Age (Fenicios can build from Dark Age) |
@@ -316,7 +317,7 @@ Heroes are not trained — each civilization starts with one, free of charge. If
 |---|---|---|
 | **Blacksmith** | 150 Wood | Weapon and armor upgrades; available from Feudal Age |
 | **University** | 200 Wood | Advanced military technology; available from Castle Age |
-| **Temple** | 175 Wood | Morale and cavalry upgrades; available from Castle Age |
+| **Temple** | 175 Wood | Morale and cavalry upgrades; field hospital — garrisoned units heal 4 HP/s (heroes at half rate); trains the Harimaguada healer (85 Food + 25 Gold); available from Castle Age |
 
 ### Defence
 
@@ -336,27 +337,29 @@ Heroes are not trained — each civilization starts with one, free of charge. If
 
 ## Research (Tech Tree)
 
-Three buildings handle research: **Blacksmith** (weapons and armor), **University** (advanced military and siege), and **Temple** (morale and cavalry). Each tech occupies its building for the full research time — you can only research one tech per building at a time.
+Three buildings handle research: **Blacksmith** (weapons, armor, and villager carts), **University** (advanced military and siege), and **Temple** (morale and cavalry). Each building researches one tech at a time, but you can queue more — up to 5 techs in flight per building. Queued techs are paid when queued and fully refunded if you cancel them.
 
 Technologies apply globally to all matching units for the player who researches them. Several have prerequisites: you must complete the earlier tech before the later one becomes available.
 
 | Tech | Building | Age | Cost | Effect |
 |---|---|---|---|---|
-| **Loom** | Barracks | Dark | 50 Food | Villager HP +15% |
+| **Loom** | Blacksmith | Dark | 50 Food | Villager HP +15% |
 | **Forging** | Blacksmith | Feudal | 75 Food | All unit attack +15% |
-| **Scale Barding** | Barracks | Feudal | 100 Food + 50 Gold | Unit melee armor upgrade |
-| **Fletching** | Barracks | Feudal | 100 Gold | Archer attack +20% |
+| **Scale Barding** | Blacksmith | Feudal | 100 Food + 50 Gold | Unit melee armor upgrade |
+| **Fletching** | Blacksmith | Feudal | 100 Gold | Archer attack +20% |
 | **Padded Archer Armor** | Blacksmith | Feudal | 100 Food | Archer pierce armor upgrade |
-| **Shipwright** | Barracks | Feudal | 200 Wood + 60 Gold | Ship HP +15%; ship cost −15% |
+| **Shipwright** | Blacksmith | Feudal | 200 Wood + 60 Gold | Ship HP +15%; ship cost −15% |
+| **Canarian Cart** | Blacksmith | Feudal | 150 Food + 75 Wood | Villager carry capacity +25% (farms unaffected) |
 | **Iron Casting** | Blacksmith | Castle | 150 Gold | All unit attack +20% (requires Forging) |
-| **Chain Barding** | Barracks | Castle | 200 Food + 100 Gold | Unit melee armor upgrade (requires Scale Barding) |
-| **Bodkin Arrow** | Barracks | Castle | 100 Food + 150 Gold | Archer attack +20%, archer range +10% (requires Fletching) |
+| **Chain Barding** | Blacksmith | Castle | 200 Food + 100 Gold | Unit melee armor upgrade (requires Scale Barding) |
+| **Bodkin Arrow** | Blacksmith | Castle | 100 Food + 150 Gold | Archer attack +20%, archer range +10% (requires Fletching) |
+| **Island Handcart** | Blacksmith | Castle | 200 Food + 125 Wood | Villager carry capacity +25% again (requires Canarian Cart) |
 | **Ballistics** | University | Castle | 175 Gold | Archer attack speed +20% (requires Fletching) |
 | **Siege Engineering** | University | Castle | 200 Gold | All units deal +20% damage to buildings |
 | **Sanctity** | Temple | Castle | 100 Food | Swordsman HP +15% |
 | **Fervor** | Temple | Castle | 150 Gold | All unit move speed +10% |
-| **Blast Furnace** | Barracks | Imperial | 275 Food + 225 Gold | All unit attack +15% |
-| **Plate Barding** | Barracks | Imperial | 300 Food + 200 Gold | Unit melee armor upgrade (requires Chain Barding) |
+| **Blast Furnace** | Blacksmith | Imperial | 275 Food + 225 Gold | All unit attack +15% |
+| **Plate Barding** | Blacksmith | Imperial | 300 Food + 200 Gold | Unit melee armor upgrade (requires Chain Barding) |
 | **Chemistry** | University | Imperial | 300 Gold | Archer attack +15% (requires Ballistics) |
 | **Atonement** | Temple | Imperial | 150 Food + 100 Gold | Cavalry HP +20% (requires Sanctity) |
 

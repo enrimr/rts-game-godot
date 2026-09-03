@@ -56,7 +56,9 @@ Every gather_interval (default 1 s):
   ResourceNode.gather(gather_rate)
     → apply CivBonusManager multiplier
     → apply WeatherManager multiplier
-    → accumulate carried_amount (cap: carry_capacity = 10)
+    → accumulate carried_amount (cap: carry_capacity = 10
+      × CivBonusManager.get_carry_capacity_multiplier — the Blacksmith
+      carreta_canaria / carreton_isleno techs each add +25%)
 
 When carried_amount == carry_capacity (or node depleted):
   order_drop_off() → move to nearest DropOffBuilding
@@ -78,7 +80,7 @@ On arrival at drop-off:
 
 If the gather target becomes invalid or unreachable (blocked 3 times), the villager searches for the nearest node of the same resource type within `FALLBACK_RESOURCE_RANGE`, then falls back to any resource within `BLOCKED_RESOURCE_RANGE`.
 
-Drop-off buildings are found via the `"drop_off_buildings"` group (town center, lumber camp, mining camp, farm). The `DropOffBuilding` node in each scene adds itself to that group on `_ready`.
+Drop-off buildings are found via the `"drop_off_buildings"` group (town center, lumber camp, mining camp, mill, farm). The `DropOffBuilding` node in each scene adds itself to that group on `_ready` (the Mill registers its node programmatically on construction complete).
 
 ---
 

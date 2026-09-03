@@ -34,7 +34,7 @@ The game draws from three historical and mythological layers:
 
 | Resource | Sources | Primary use |
 |---|---|---|
-| **Food** | Farms, hunting, fishing (ocean), foraging | Unit training |
+| **Food** | Farms, hunting, fishing (ocean), foraging, herded livestock (a Presa Canario dog, trained at the Mill, leads animals to the nearest own drop-off — enemy sheep convert on the way) | Unit training |
 | **Food (Fish)** | Ocean fish nodes (`FOOD_FISH`); gathered by Fishing Boats | Unit training — same stockpile as Food |
 | **Wood** | Trees, Laurisilva forest | Buildings, ships, archers |
 | **Gold** | Gold mines, trade, hero abilities | Military upgrades, mercenaries |
@@ -158,9 +158,9 @@ Produced at the **Siege Workshop** (Castle Age, 200 Wood).
 
 ## Technology Tree
 
-21 technologies across 4 research buildings. Technologies provide permanent stat bonuses to units/buildings.
+23 technologies across 4 research buildings. Technologies provide permanent stat bonuses to units/buildings. Each research building runs one active tech plus a waiting queue — up to 5 techs in flight per building, paid at enqueue and fully refunded on cancel.
 
-### Blacksmith (9 technologies)
+### Blacksmith (13 technologies)
 
 | Tech | Age | Cost | Time | Effect |
 |---|---|---|---|---|
@@ -170,7 +170,9 @@ Produced at the **Siege Workshop** (Castle Age, 200 Wood).
 | **Padded Archer Armour** | Feudal | 100f | 35s | Archer pierce armour +1 |
 | **Fletching** | Feudal | 100g | 35s | Archer attack ×1.20 |
 | **Shipwright** | Feudal | 200w+60g | 40s | Ship HP ×1.15, cost −15% |
+| **Canarian Cart** (`carreta_canaria`) | Feudal | 150f+75w | 40s | Villager carry capacity +25% (farms deposit instantly, unaffected) |
 | **Iron Casting** | Castle | 150g | 55s | Unit attack ×1.20 (requires Forging) |
+| **Island Handcart** (`carreton_isleno`) | Castle | 200f+125w | 55s | Villager carry capacity +25% again (requires Canarian Cart) |
 | **Chain Barding** | Castle | 200f+100g | 45s | Unit melee armour +1 (requires Scale Barding) |
 | **Bodkin Arrow** | Castle | 100f+150g | 35s | Archer attack ×1.20, range ×1.10 (requires Fletching) |
 | **Blast Furnace** | Imperial | 275f+225g | 50s | Unit attack ×1.15 |
@@ -188,7 +190,7 @@ Castle Age building (200 wood). Researches advanced military upgrades.
 
 ### Temple (3 technologies)
 
-Castle Age building (175 wood). Researches morale and HP buffs.
+Castle Age building (175 wood). Researches morale and HP buffs. The Temple is also the field hospital — garrisoned units (capacity 5) heal 4 HP/s, heroes at half rate — and trains the **Harimaguada** priestess-healer (85 Food + 25 Gold, Castle Age): always female, never fights, mends allies at 5 HP/s in touch range and auto-triages nearby wounded while idle.
 
 | Tech | Age | Cost | Time | Effect |
 |---|---|---|---|---|

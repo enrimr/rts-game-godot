@@ -17,7 +17,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | AgeManager | `scripts/core/age_manager.gd` | Per-player Age tracking (Dark/Feudal/Castle/Imperial), age-advance timers |
 | PopulationManager | `scripts/core/population_manager.gd` | Per-player population current/cap tracking |
 | CivBonusManager | `scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats (HP, attack, speed, armor), gather rates, age-up costs, attack speed, archer range bonuses per age |
-| TechManager | `scripts/core/tech_manager.gd` | Research queue, applies 21 technology effects, instant tech grants (civ bonuses) |
+| TechManager | `scripts/core/tech_manager.gd` | Research queue (up to 5 in flight per building, paid at enqueue, refunded on cancel), applies 23 technology effects, instant tech grants (civ bonuses) |
 | TerrainManager | `scripts/core/terrain_manager.gd` | Impassability queries, nearest-passable search, coastal zone detection |
 | WeatherManager | `scripts/core/weather_manager.gd` | Procedural weather state machine (5 types); stat-modifier query API (vision, speed, gather, drift, damage) |
 | AudioManager | `scripts/core/audio_manager.gd` | Spatial audio playback with distance attenuation; ALL audio (sfx, per-civ formant voices, music) is procedurally synthesized — see [audio_synthesis.md](audio_synthesis.md) |
@@ -25,12 +25,14 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | GameSettings | `scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
 | MatchConfig | `scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
 
-### Unit Classes (28 total)
+### Unit Classes (30 total)
 
 | Unit | Script | Notes |
 |---|---|---|
-| UnitBase | `scripts/units/unit_base.gd` | Base class: Area2D range detection, attack-move, stuck detection, body animation |
+| UnitBase | `scripts/units/unit_base.gd` | Base class: Area2D range detection, attack-move, stuck detection, body animation; `_step_enters_sea()` vetoes steps entering ocean at the off-mesh movement paths (RVO safe_velocity, combat gap-closer) |
 | Villager | `scripts/units/villager.gd` | Gather, build, repair; work/walk animation differentiation |
+| Harimaguada | `scripts/units/healer_unit.gd` | Priestess-healer trained at the Temple (Castle Age, 85F+25G); always female; never fights; follow-and-mend (5 HP/s) + idle auto-triage |
+| PresaCanario | `scripts/units/presa_canario.gd` | Herding dog trained at the Mill (Dark Age, 30F+10G); never fights; `order_herd` fetches an animal and leads it to the nearest own drop-off (sheep convert on contact) |
 | HeroUnit | `scripts/units/hero_unit.gd` | 8 unique hero abilities (extends Militia) |
 | Militia | `scripts/units/militia.gd` | Dark Age infantry |
 | ManAtArms | `scripts/units/man_at_arms.gd` | Feudal Age infantry upgrade |
@@ -58,7 +60,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | Sheep | `scripts/units/sheep.gd` | Convertible livestock |
 | ShipBase | `scripts/units/ship_base.gd` | Base class for naval units; ocean passability via `is_amphibious()`, hull painted per civ by `ShipDress` |
 
-### Building Classes (22 total)
+### Building Classes (23 total)
 
 | Building | Script | Notes |
 |---|---|---|
@@ -72,7 +74,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | Dock | `scripts/buildings/dock.gd` | Naval: ships (FishingBoat/TransportShip/WarGalley/Trireme), fish drop-off |
 | Blacksmith | `scripts/buildings/blacksmith.gd` | 9 weapon/armour technologies |
 | University | `scripts/buildings/university.gd` | Castle Age: 3 advanced techs (Ballistics/Chemistry/Siege Engineering) |
-| Temple | `scripts/buildings/temple.gd` | Castle Age: 3 morale/HP buffs (Fervor/Sanctity/Atonement) |
+| Temple | `scripts/buildings/temple.gd` | Castle Age: 3 morale/HP buffs (Fervor/Sanctity/Atonement); field hospital (garrisoned units heal 4 HP/s, heroes half rate); trains Harimaguada |
 | Market | `scripts/buildings/market.gd` | Resource trading (dynamic rates), mercenary hiring |
 | Wonder | `scripts/buildings/wonder.gd` | Imperial Age: Wonder victory condition |
 | WatchTower | `scripts/buildings/watch_tower.gd` | Defensive tower with auto-attack, tall stone visual |
@@ -83,6 +85,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | FishTrap | `scripts/buildings/fish_trap.gd` | Naval renewable food source (75 wood) |
 | LumberCamp | `scripts/buildings/lumber_camp.gd` | Wood drop-off (100 wood) |
 | MiningCamp | `scripts/buildings/mining_camp.gd` | Gold/stone drop-off (100 wood) |
+| Mill | `scripts/buildings/mill.gd` | Food drop-off (100 wood, 600 HP); trains Presa Canario (queue cap 5) |
 
 ### AI Systems
 
