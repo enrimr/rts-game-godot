@@ -624,10 +624,24 @@ const _DROP_OFF_RESOURCE_TYPES: Dictionary = {
 	"mining_camp":  [ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE],
 }
 
+func _farm_taken(farm: Node) -> bool:
+	for u: Node in get_tree().get_nodes_in_group("units"):
+		if u != self and u is Villager and (u as Villager).gather_target == farm:
+			return true
+	return false
+
 func _on_construction_complete() -> void:
 	_unregister_from_build_target()
 	var just_built: Node = build_target
 	build_target = null
+
+	# The farmer stays on the farm: whoever finishes a Farm works it —
+	# clicking every fresh plot back to work was pure busywork (AoE2 rule).
+	# One plot, one farmer: the completion signal reaches every builder in
+	# order, so the first one claims it and the rest fall through.
+	if just_built is Farm and not _farm_taken(just_built):
+		order_gather(just_built, "food", null)
+		return
 
 	# If the completed building is a resource drop-off, go gather the nearest
 	# matching resource instead of looking for more construction.
