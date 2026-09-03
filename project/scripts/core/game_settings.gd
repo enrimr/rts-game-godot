@@ -134,7 +134,11 @@ func save_settings() -> void:
 	var cfg: ConfigFile = ConfigFile.new()
 	cfg.set_value("audio",    "music_volume",        music_volume)
 	cfg.set_value("audio",    "sfx_volume",          sfx_volume)
-	cfg.set_value("game",     "difficulty",          difficulty)
+	# TUTORIAL is transient match state, never a preference: quitting the
+	# tutorial mid-lesson left it active, any settings save persisted it,
+	# and every later match ran with half-HP rivals forever.
+	cfg.set_value("game", "difficulty",
+		difficulty if difficulty != Difficulty.TUTORIAL else Difficulty.NORMAL)
 	cfg.set_value("game",     "language",            language)
 	cfg.set_value("game",     "tutorial_seen",       tutorial_seen)
 	cfg.set_value("controls", "show_dpad",           show_dpad)
@@ -152,6 +156,9 @@ func load_settings() -> void:
 	music_volume        = cfg.get_value("audio",    "music_volume",        1.0) as float
 	sfx_volume          = cfg.get_value("audio",    "sfx_volume",          1.0) as float
 	difficulty          = cfg.get_value("game",     "difficulty",          Difficulty.NORMAL) as int
+	# Heal configs already poisoned by the persisted-TUTORIAL bug.
+	if difficulty == Difficulty.TUTORIAL:
+		difficulty = Difficulty.NORMAL
 	language            = cfg.get_value("game",     "language",            "en") as String
 	tutorial_seen       = cfg.get_value("game",     "tutorial_seen",       false) as bool
 	show_dpad           = cfg.get_value("controls", "show_dpad",           false) as bool

@@ -9,6 +9,11 @@ var _settings_button: Button = null
 var _how_to_play_button: Button = null
 
 func _ready() -> void:
+	# Back at the menu with TUTORIAL still active = a tutorial abandoned
+	# mid-lesson (the game_over restore never fired). Drop the transient
+	# difficulty before it leaks into the next match or a settings save.
+	if GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL:
+		GameSettings.difficulty = GameSettings.Difficulty.NORMAL
 	GameSettings.apply_language()
 	_play_button.text = tr("MENU_PLAY")
 	_quit_button.text = tr("MENU_QUIT")

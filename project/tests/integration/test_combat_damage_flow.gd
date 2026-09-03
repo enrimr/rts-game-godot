@@ -1,5 +1,17 @@
 extends GutTest
 
+## Combat numbers must not depend on the developer's persisted settings:
+## a TUTORIAL difficulty left in user://settings.cfg halved every non-zero
+## player's HP and broke the volley arithmetic below.
+var _saved_difficulty: int = GameSettings.Difficulty.NORMAL
+
+func before_all() -> void:
+	_saved_difficulty = GameSettings.difficulty
+	GameSettings.difficulty = GameSettings.Difficulty.NORMAL
+
+func after_all() -> void:
+	GameSettings.difficulty = _saved_difficulty
+
 ## End-to-end combat damage flow, complementing the isolated
 ## test_pierce_armor.gd unit test.
 ##
