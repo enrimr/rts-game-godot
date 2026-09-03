@@ -63,7 +63,7 @@ func _spawn_duel() -> void:
 	_label("duel", Vector2(-10.0, duel_y + 24.0))
 
 func _make_hero(data_path: String, civ: String, female: bool, pid: int) -> Node2D:
-	var hero: CharacterBody2D = (load("res://scenes/units/militia.tscn") as PackedScene)\
+	var hero: CharacterBody2D = (load(HeroDress.scene_path_for(data_path)) as PackedScene)\
 		.instantiate() as CharacterBody2D
 	hero.set_script(load("res://scripts/units/hero_unit.gd"))
 	hero.set("unit_data", load(data_path))
@@ -78,7 +78,7 @@ func _hero_name(data_path: String) -> String:
 	return data.display_name if data != null else data_path.get_file()
 
 func _spawn_hero(data_path: String, civ: String, female: bool, screen_pos: Vector2) -> void:
-	var hero: CharacterBody2D = (load("res://scenes/units/militia.tscn") as PackedScene)\
+	var hero: CharacterBody2D = (load(HeroDress.scene_path_for(data_path)) as PackedScene)\
 		.instantiate() as CharacterBody2D
 	hero.set_script(load("res://scripts/units/hero_unit.gd"))
 	hero.set("unit_data", load(data_path))

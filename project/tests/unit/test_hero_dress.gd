@@ -85,3 +85,22 @@ func test_null_and_freed_are_safe() -> void:
 	HeroDress.apply(null, false)
 	HeroDress.apply(RefCounted.new(), true)
 	pass_test("no crash on null / non-node input")
+
+func test_quijote_rides_rocinante() -> void:
+	assert_eq(HeroDress.scene_path_for("res://resources/units/hero_quijote.tres"),
+		HeroDress.MOUNT_SCENE, "Quijote spawns on the mount rig")
+	assert_eq(HeroDress.scene_path_for("res://resources/units/hero_bencomo.tres"),
+		HeroDress.FOOT_SCENE, "everyone else stays on foot")
+	var hero: CharacterBody2D = (load(HeroDress.MOUNT_SCENE) as PackedScene)\
+		.instantiate() as CharacterBody2D
+	hero.set_script(load("res://scripts/units/hero_unit.gd"))
+	hero.set("unit_data", load("res://resources/units/hero_quijote.tres"))
+	add_child_autofree(hero)
+	HeroDress.apply(hero, false)
+	assert_not_null(hero.get_node_or_null("Body/HeroLance"),
+		"the couched lance dresses the mount rig")
+	assert_not_null(hero.get_node_or_null("Body/HeroBasin"),
+		"the yelmo de Mambrino sits on the rider's head")
+	assert_eq(str(hero.call("data_source_path")),
+		"res://resources/units/hero_quijote.tres",
+		"identity survives the Rocinante stat duplicate")

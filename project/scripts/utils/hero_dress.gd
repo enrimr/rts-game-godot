@@ -42,6 +42,19 @@ const _KEY_BY_ABILITY: Dictionary = {
 	"mercenary_pact":       "elissa",
 }
 
+## Heroes that ride into battle spawn on a mount rig instead of the militia
+## foot rig; every hero spawner (setup, TC respawns, save restore, gallery)
+## picks its scene through scene_path_for so the choice lives in ONE place.
+## Rocinante is the scout's lean brown nag, not the knight's armoured charger.
+const _MOUNTED_HEROES: Dictionary = {"hero_quijote": true}
+const FOOT_SCENE: String = "res://scenes/units/militia.tscn"
+const MOUNT_SCENE: String = "res://scenes/units/scout.tscn"
+
+static func scene_path_for(hero_data_path: String) -> String:
+	if _MOUNTED_HEROES.has(hero_data_path.get_file().get_basename()):
+		return MOUNT_SCENE
+	return FOOT_SCENE
+
 const _GOLD: Color = Color(0.85, 0.70, 0.30)
 const _GOLD_DARK: Color = Color(0.70, 0.56, 0.24)
 const _BRONZE: Color = Color(0.78, 0.62, 0.32)
@@ -328,8 +341,22 @@ static func _dress_grace(body: Node2D) -> void:
 # ── CASTELLANOS ───────────────────────────────────────────────────────────
 
 ## Don Quijote, knight errant: the golden barber's basin — the yelmo de
-## Mambrino — and a long tilting lance in place of the sword.
+## Mambrino — and a couched tilting lance. Normally mounted on Rocinante
+## (scout rig, see scene_path_for); the foot variant survives as a fallback
+## for legacy saves that restored him onto the militia rig.
 static func _dress_quijote(body: Node2D) -> void:
+	if body.get_node_or_null("RiderHead") != null:
+		_hide(body, ["Cap"])
+		_backed_piece(body, "HeroBasinBrim", _GOLD_DARK, PackedVector2Array([
+			Vector2(-3.8, -16.2), Vector2(3.8, -16.2), Vector2(2.8, -17.6), Vector2(-2.8, -17.6)]), 2)
+		_piece(body, "HeroBasin", _GOLD, PackedVector2Array([
+			Vector2(-2.6, -17.2), Vector2(-1.8, -19.6), Vector2(0.0, -20.4),
+			Vector2(1.8, -19.6), Vector2(2.6, -17.2)]), 2)
+		_piece(body, "HeroLance", Color(0.48, 0.34, 0.18), PackedVector2Array([
+			Vector2(3.0, -8.6), Vector2(3.4, -10.2), Vector2(20.0, -12.4), Vector2(20.0, -10.8)]), 1)
+		_backed_piece(body, "HeroLanceTip", _STEEL, PackedVector2Array([
+			Vector2(20.0, -12.4), Vector2(24.5, -11.4), Vector2(20.0, -10.4)]), 1)
+		return
 	_hide(body, ["Helmet", "Sword", "SwordGuard"])
 	_backed_piece(body, "HeroBasinBrim", _GOLD_DARK, PackedVector2Array([
 		Vector2(-5.6, -11.4), Vector2(5.6, -11.4), Vector2(4.4, -13.2), Vector2(-4.4, -13.2)]), 2)

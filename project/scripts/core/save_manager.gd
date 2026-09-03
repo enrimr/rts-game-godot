@@ -421,9 +421,9 @@ func _collect_unit(unit: Node) -> Dictionary:
 		"is_female": unit.get("is_female") == true,
 	}
 	if unit is HeroUnit:
-		var ud: Variant = unit.get("unit_data")
-		if ud != null:
-			u["unit_data_path"] = (ud as Resource).resource_path
+		# Through the source-path accessor: stat-mutating duplicates (Quijote's
+		# Rocinante) wipe unit_data.resource_path and would break the restore.
+		u["unit_data_path"] = str(unit.call("data_source_path"))
 		u["cooldown_remaining"] = unit.get("_cooldown_remaining") as float
 	if unit is Villager:
 		u["carried_resource"] = str(unit.get("carried_resource"))
@@ -546,6 +546,9 @@ func _restore_units(world: Node, data: Dictionary) -> void:
 		var u: Dictionary = entry as Dictionary
 		var cn: String = str(u.get("class", ""))
 		var scene_path: String = UNIT_SCENES.get(cn, "") as String
+		if cn == "HeroUnit":
+			# Mounted heroes (Quijote on Rocinante) restore onto their mount rig.
+			scene_path = HeroDress.scene_path_for(str(u.get("unit_data_path", "")))
 		if scene_path.is_empty():
 			continue
 		var packed: PackedScene = load(scene_path) as PackedScene

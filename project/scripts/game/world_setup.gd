@@ -158,10 +158,10 @@ func _spawn_hero(player_id: int, tc_pos: Vector2) -> void:
 	var hero_data: UnitResource = load(data_path) as UnitResource
 	if hero_data == null:
 		return
-	var militia_scene: PackedScene = load("res://scenes/units/militia.tscn") as PackedScene
-	if militia_scene == null:
+	var hero_scene: PackedScene = load(HeroDress.scene_path_for(data_path)) as PackedScene
+	if hero_scene == null:
 		return
-	var hero: CharacterBody2D = militia_scene.instantiate() as CharacterBody2D
+	var hero: CharacterBody2D = hero_scene.instantiate() as CharacterBody2D
 	hero.set_script(load("res://scripts/units/hero_unit.gd"))
 	hero.set("unit_data", hero_data)
 	hero.set("player_id", player_id)

@@ -318,9 +318,15 @@ func _spawn_record(node: Node, id: int, kind: String) -> Dictionary:
 	var civ: Variant = node.get("civ_id")
 	if civ is String and not (civ as String).is_empty():
 		rec["v"] = civ
-	var udata: Variant = node.get("unit_data")
-	if udata is Resource and not (udata as Resource).resource_path.is_empty():
-		rec["d"] = (udata as Resource).resource_path
+	if node.has_method("data_source_path"):
+		# Heroes: survives Rocinante's stat-mutating duplicate (empty path).
+		var dsp: String = str(node.call("data_source_path"))
+		if not dsp.is_empty():
+			rec["d"] = dsp
+	else:
+		var udata: Variant = node.get("unit_data")
+		if udata is Resource and not (udata as Resource).resource_path.is_empty():
+			rec["d"] = (udata as Resource).resource_path
 	var female: Variant = node.get("is_female")
 	if female is bool:
 		rec["f"] = female

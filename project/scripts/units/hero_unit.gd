@@ -107,8 +107,20 @@ var _duel_target: Node = null
 var _duel_original_dmg_mult: float = 1.0
 var _summoned_militia: Array[Node] = []
 
+## The .tres this hero was built from, surviving stat-mutating duplicates
+## (Rocinante wipes unit_data.resource_path): the save, the network spawn
+## record and the mount-scene choice all identify the hero through this.
+var _data_source_path: String = ""
+
+func data_source_path() -> String:
+	if not _data_source_path.is_empty():
+		return _data_source_path
+	return unit_data.resource_path if unit_data != null else ""
+
 func _ready() -> void:
 	super._ready()
+	if unit_data:
+		_data_source_path = unit_data.resource_path
 	if unit_data and not unit_data.hero_ability_id.is_empty():
 		_ability = ABILITY_MAP.get(unit_data.hero_ability_id, Ability.NONE) as Ability
 	# Rocinante passive: faster movement but a post-attack stumble delay

@@ -178,10 +178,10 @@ func _spawn_villager() -> void:
 	EventBus.unit_spawned.emit(unit, player_id)
 
 func _do_respawn_hero(hero_data: UnitResource) -> void:
-	var militia_scene: PackedScene = load("res://scenes/units/militia.tscn") as PackedScene
-	if militia_scene == null:
+	var hero_scene: PackedScene = load(HeroDress.scene_path_for(hero_data.resource_path)) as PackedScene
+	if hero_scene == null:
 		return
-	var hero: CharacterBody2D = militia_scene.instantiate() as CharacterBody2D
+	var hero: CharacterBody2D = hero_scene.instantiate() as CharacterBody2D
 	hero.set_script(load("res://scripts/units/hero_unit.gd"))
 	hero.set("unit_data", hero_data)
 	hero.set("player_id", player_id)
