@@ -35,6 +35,12 @@ const C_APRON: Color = Color(0.47, 0.40, 0.28, 0.85)
 const C_APRON_STONE: Color = Color(0.50, 0.48, 0.44, 0.85)
 const C_POLE: Color = Color(0.32, 0.23, 0.12)
 const C_SCAFFOLD: Color = Color(0.58, 0.44, 0.24)
+const C_BASALT: Color = Color(0.37, 0.35, 0.34)
+const C_BASALT_DARK: Color = Color(0.26, 0.245, 0.24)
+const C_EARTH_SACRED: Color = Color(0.61, 0.49, 0.31, 0.96)
+const C_BONE: Color = Color(0.91, 0.87, 0.77)
+const C_EMBER: Color = Color(0.93, 0.47, 0.15)
+const C_SMOKE: Color = Color(0.78, 0.77, 0.75)
 
 const WALL_L_DARKEN: float = 0.34
 const WALL_R_DARKEN: float = 0.12
@@ -576,18 +582,112 @@ static func _university(b: Builder, hx: float, hy: float) -> void:
 	b.opening_left(0, 0, wx, wy, 0.35, 0.6, 0.0, 15.0, C_DOOR, "Portal")
 	b.flag(0, wy, 36.0, 52.0, true)
 
+## Almogarén: an open pre-conquest mountain shrine — dry-stone precinct with
+## a stone cairn, a standing monolith and ritual dressings instead of a roofed
+## hall. The sanctuary is Canarian whichever banner flies over it
+## (docs/lore/harimaguada.md), so civ identity rides only on the monolith's
+## painted band and ownership only on the Team* flag by the entrance.
 static func _temple(b: Builder, hx: float, hy: float) -> void:
-	b.footprint(0, 0, hx, hy, C_APRON_STONE)
-	var wx: float = hx - 5.0
-	var wy: float = hy - 5.0
-	b.walls(0, 0, wx, wy, 0.0, 18.0, b.wall().lightened(0.10))
-	b.flat_roof(0, 0, wx + 2.0, wy + 2.0, 18.0, b.wall().lightened(0.18), "Cornice")
-	for t: Array in [[0.14, 0.2], [0.36, 0.42], [0.58, 0.64], [0.8, 0.86]]:
-		b.opening_right(0, 0, wx, wy, t[0], t[1], 0.0, 16.0, b.wall().lightened(0.28), "Column")
-	b.opening_left(0, 0, wx, wy, 0.38, 0.62, 0.0, 14.0, C_DOOR, "Portal")
-	b.walls(0, 0, 17.0, 17.0, 18.0, 26.0, b.wall().lightened(0.04))
-	b.civ_roof(0, 0, 19.0, 19.0, 26.0, 14.0, true)
-	b.flag(0, 0, 42.0, 54.0)
+	b.footprint(0, 0, hx, hy, C_EARTH_SACRED)
+	_temple_ring_wall(b, 0.0, -hy + 4.5, hx - 2.0, 2.5)
+	_temple_ring_wall(b, -hx + 4.5, 0.0, 2.5, hy - 2.0)
+	_temple_monolith(b, Vector2(3.0, -hy + 11.0), b.trim())
+	_temple_cairn(b, Vector2(-13.0, -11.0))
+	b.ground_ellipse(-3.0, 4.0, 2.4, C_BONE, "Bowl")
+	b.ground_ellipse(2.5, 9.0, 2.0, C_BONE.darkened(0.12), "Bowl")
+	_temple_fire(b, Vector2(13.0, 11.0))
+	_temple_tunics(b, hx)
+	_temple_ring_wall(b, hx - 4.5, 0.0, 2.5, hy - 2.0)
+	var seg: float = (hx - 11.0) * 0.5
+	_temple_ring_wall(b, -9.0 - seg, hy - 4.5, seg, 2.5)
+	_temple_ring_wall(b, 9.0 + seg, hy - 4.5, seg, 2.5)
+	_temple_idol(b, Vector2(-11.5, hy - 4.5))
+	_temple_idol(b, Vector2(11.5, hy - 4.5))
+	b.flag(-hx + 9.0, hy - 9.0, 0.0, 26.0, true)
+
+## Low dry-stone course with a lighter walk top and irregular capstones.
+static func _temple_ring_wall(b: Builder, cx: float, cy: float,
+		sx: float, sy: float) -> void:
+	b.walls(cx, cy, sx, sy, 0.0, 6.0, C_BASALT)
+	b.flat_roof(cx, cy, sx, sy, 6.0, C_BASALT.lightened(0.16), "RingTop")
+	var axis: Vector2 = Vector2(1.0, 0.0) if sx > sy else Vector2(0.0, 1.0)
+	var span: float = maxf(sx, sy) - 2.0
+	for t: float in [-0.6, 0.05, 0.65]:
+		var p: Vector2 = Vector2(cx, cy) + axis * span * t
+		var e: Vector2 = axis * 1.8
+		b.poly("CapStone", C_BASALT.darkened(0.12 - 0.1 * t),
+			Builder._quad(p - e, p + e, p + e, p - e, 6.0, 8.6))
+
+## Tall standing stone, slightly tapered and leaning, with the civ-trim
+## painted band — the shrine's landmark silhouette.
+static func _temple_monolith(b: Builder, at: Vector2, band: Color) -> void:
+	var warm: Color = Color(0.47, 0.43, 0.38)
+	var m: Vector2 = IsoBuildingMassing.gp(at.x, at.y)
+	b.poly("MonolithBack", warm.darkened(0.30), PackedVector2Array([
+		m + Vector2(1.6, -0.4), m + Vector2(7.0, -1.6),
+		m + Vector2(2.6, -23.5), m + Vector2(-0.4, -27.0)]))
+	b.poly("Monolith", warm.lightened(0.08), PackedVector2Array([
+		m + Vector2(-7.0, 0.4), m + Vector2(2.6, -0.7), m + Vector2(1.4, -20.0),
+		m + Vector2(-1.8, -27.6), m + Vector2(-5.4, -22.0), m + Vector2(-6.4, -12.0)]))
+	b.poly("MonolithBand", band, PackedVector2Array([
+		m + Vector2(-6.1, -14.5), m + Vector2(1.75, -14.2),
+		m + Vector2(1.55, -17.4), m + Vector2(-5.85, -17.8)]))
+	b.post(at.x + 6.0, at.y + 2.5, 4.5, 3.6, warm.darkened(0.22), "BaseStone")
+	b.post(at.x - 6.0, at.y + 3.5, 3.2, 3.0, C_BASALT_DARK, "BaseStone")
+
+## Rounded stacked-stone cairn with a dark chamber mouth facing the entrance.
+static func _temple_cairn(b: Builder, at: Vector2) -> void:
+	b.ground_ellipse(at.x, at.y, 16.0, C_BASALT_DARK, "CairnBase")
+	var c0: Vector2 = IsoBuildingMassing.gp(at.x, at.y, 0.5)
+	b.poly("Cairn", C_BASALT, Builder._dome_pts(c0, 14.5, 12.5))
+	b.poly("CairnLight", C_BASALT.lightened(0.13),
+		Builder._dome_pts(c0 + Vector2(4.0, 0.0), 8.0, 9.5))
+	for s: Vector2 in [Vector2(-11.0, 5.0), Vector2(-2.0, 9.5), Vector2(9.0, 3.0)]:
+		b.post(at.x + s.x, at.y + s.y, 3.4, 3.0, C_BASALT_DARK.lightened(0.06), "CairnStone")
+	b.poly("CaveMouth", Color(0.13, 0.11, 0.10),
+		Builder._dome_pts(IsoBuildingMassing.gp(at.x + 6.5, at.y + 6.5), 5.0, 6.5))
+
+## Offering fire: stone ring, embers, one flame lick and a rising smoke wisp.
+static func _temple_fire(b: Builder, at: Vector2) -> void:
+	b.ground_ellipse(at.x, at.y, 6.0, C_BASALT_DARK, "FireRing")
+	b.ground_ellipse(at.x, at.y, 3.4, C_EMBER, "Embers")
+	var f: Vector2 = IsoBuildingMassing.gp(at.x, at.y)
+	b.poly("Flame", Color(0.98, 0.74, 0.28), PackedVector2Array([
+		f + Vector2(-2.2, 0.5), f + Vector2(2.2, 0.5), f + Vector2(0.4, -6.5)]))
+	for i: int in range(3):
+		var k: float = float(i)
+		var c: Vector2 = f + Vector2(1.5 + k * 1.8, -9.0 - k * 7.5)
+		var r: float = 2.6 + k * 1.1
+		var pts: PackedVector2Array = PackedVector2Array()
+		for j: int in range(10):
+			var a: float = TAU * float(j) / 10.0
+			pts.append(c + Vector2(cos(a) * r, sin(a) * r * 0.8))
+		b.poly("Smoke", Color(C_SMOKE.r, C_SMOKE.g, C_SMOKE.b, 0.40 - k * 0.09), pts)
+
+## The harimaguadas' white leather tunics drying on a cord between two posts.
+static func _temple_tunics(b: Builder, hx: float) -> void:
+	var a: Vector2 = Vector2(hx - 16.0, -12.0)
+	var c: Vector2 = Vector2(hx - 16.0, 14.0)
+	b.post(a.x, a.y, 15.0, 2.2, C_WOOD_DARK, "CordPost")
+	b.post(c.x, c.y, 15.0, 2.2, C_WOOD_DARK, "CordPost")
+	b.poly("Cord", C_POLE, Builder._quad(a, c, c, a, 13.6, 14.3))
+	for t: float in [0.22, 0.5, 0.78]:
+		var p: Vector2 = a.lerp(c, t)
+		var drop: float = 4.5 if t == 0.5 else 6.5
+		b.poly("Tunic", C_BONE.darkened(absf(t - 0.5) * 0.20), Builder._quad(
+			Vector2(p.x, p.y - 2.8), Vector2(p.x, p.y + 2.8),
+			Vector2(p.x, p.y + 2.8), Vector2(p.x, p.y - 2.8), drop, 13.8))
+
+## Carved wooden idol post flanking the precinct entrance.
+static func _temple_idol(b: Builder, at: Vector2) -> void:
+	b.post(at.x, at.y, 12.0, 2.6, C_WOOD_DARK, "IdolPost")
+	var t: Vector2 = IsoBuildingMassing.gp(at.x, at.y, 12.0)
+	b.poly("IdolHead", C_WOOD_DARK.lightened(0.22), PackedVector2Array([
+		t + Vector2(-2.2, 0.0), t + Vector2(2.2, 0.0),
+		t + Vector2(1.6, -4.2), t + Vector2(-1.6, -4.2)]))
+	b.poly("IdolNotch", C_WOOD_DARK.darkened(0.2), PackedVector2Array([
+		t + Vector2(-1.6, -1.2), t + Vector2(1.6, -1.2),
+		t + Vector2(1.6, -2.0), t + Vector2(-1.6, -2.0)]))
 
 static func _market(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON)
