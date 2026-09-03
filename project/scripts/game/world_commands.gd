@@ -442,6 +442,23 @@ func _find_fish_trap_at(world_pos: Vector2) -> FishTrap:
 				return ft
 	return null
 
+## Rearrange the current selection around its centroid in the chosen
+## formation. A plain move command, so it deliberately breaks off combat —
+## clicking a formation mid-fight IS an order to regroup.
+func _reform_selection() -> void:
+	var units: Array[Node] = []
+	var centroid: Vector2 = Vector2.ZERO
+	for unit: Node in _world.live_selection():
+		if is_instance_valid(unit) and unit is UnitBase and not (unit is Animal):
+			units.append(unit)
+			centroid += (unit as Node2D).global_position
+	if units.size() < 2:
+		return
+	centroid /= float(units.size())
+	CommandBus.submit(UnitPointCommand.make(NetworkSession.local_player_id, "move",
+		EntityRegistry.ids_of(units), centroid, _formation))
+	_flash_point(centroid, Color(0.5, 0.9, 0.5, 1.0))
+
 func _selection_all_dogs() -> bool:
 	var any: bool = false
 	for unit: Node in _world.live_selection():
@@ -756,6 +773,10 @@ func _on_action_requested(action_id: String) -> void:
 		var form: String = action_id.trim_prefix("formation:")
 		if form in UnitPointCommand.FORMATIONS:
 			_formation = form
+			# AoE2 behaviour: the choice is visible IMMEDIATELY — the selection
+			# reforms in place around its own centroid. Without this the button
+			# only affected the next move order and read as broken.
+			_reform_selection()
 		return
 	if action_id.begins_with("stance:"):
 		CommandBus.submit(UnitActionCommand.make(NetworkSession.local_player_id,
