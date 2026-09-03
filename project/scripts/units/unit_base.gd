@@ -524,6 +524,28 @@ func _refresh_health_bar() -> void:
 	if is_instance_valid(health_bar):
 		health_bar.visible = health < health_bar.max_value - 0.01
 
+## Canonical healing — EVERY heal in the game goes through here (temple
+## hospital, the Harimaguada, hero abilities). Ad-hoc health writes kept
+## re-inventing this and missing the bar refresh or the civ-scaled cap
+## (the Rising Tide bug called a refresh method that never existed).
+func heal(amount: float) -> void:
+	if current_state == UnitState.DEAD or amount <= 0.0:
+		return
+	var max_hp: float = health
+	if is_instance_valid(health_bar):
+		max_hp = float(health_bar.max_value)
+	elif unit_data != null:
+		max_hp = unit_data.max_health * CivBonusManager.get_unit_hp_multiplier(player_id, unit_data.id)
+	health = minf(health + amount, max_hp)
+	if is_instance_valid(health_bar):
+		health_bar.value = health
+	_refresh_health_bar()
+
+func is_fully_healed() -> bool:
+	if not is_instance_valid(health_bar):
+		return true
+	return health >= float(health_bar.max_value) - 0.01
+
 func take_damage(amount: float, source: Node = null) -> void:
 	# Replication puppet (LAN client mirror): the host owns all damage; local
 	# hits would kill entities the authority still considers alive.

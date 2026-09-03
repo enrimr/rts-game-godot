@@ -579,6 +579,9 @@ const VOICE_KINDS: Dictionary = {
 		"opts_f": {"rate": 0.72, "breath": 0.06, "echo": 0.30}},
 	"select_generic": {"f0_m": 125.0, "f0_f": 210.0, "syl": [1, 2], "mark": "?",
 		"opts": {"breath": 0.05}},
+	# The priestess-healer: calm, unhurried, almost a blessing.
+	"select_healer": {"f0_m": 118.0, "f0_f": 196.0, "syl": [2, 3], "mark": "",
+		"opts": {"rate": 0.8, "breath": 0.10}},
 	"ack_move": {"f0_m": 125.0, "f0_f": 212.0, "syl": [1, 2], "mark": "",
 		"opts": {"rate": 1.1, "breath": 0.04}},
 	"ack_attack": {"f0_m": 104.0, "f0_f": 178.0, "syl": [1, 2], "mark": "!",

@@ -870,15 +870,10 @@ func _create_tidal_wave() -> void:
 			continue
 
 		if GameManager.are_allied(body_pid as int, player_id):
-			# Ally: heal 60 HP
-			var health: Variant = body.get("health")
-			if health != null:
-				var data: UnitResource = body.get("unit_data") as UnitResource
-				if data != null:
-					var new_hp: float = minf((health as float) + 60.0, data.max_health)
-					body.set("health", new_hp)
-					if body.has_method("_update_health_bar"):
-						body.call("_update_health_bar")
+			# Ally: heal 60 HP through the canonical path (the old ad-hoc write
+			# called a bar-refresh method that never existed — silent no-op).
+			if body.has_method("heal"):
+				body.call("heal", 60.0)
 		else:
 			# Enemy: damage 20
 			if body.has_method("take_damage"):

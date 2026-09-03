@@ -157,6 +157,15 @@ func _handle_right_click(world_pos: Vector2) -> void:
 			_flash_target(fort, Color(0.4, 1.0, 0.4, 1.0))
 			return
 
+	# 0d. Healer selected + own wounded unit clicked → tend them.
+	if _selection_has_healer():
+		var patient: Node = _find_own_wounded_unit_at(world_pos)
+		if patient != null:
+			CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "heal",
+				_selection_ids(), EntityRegistry.id_of(patient)))
+			_flash_target(patient, Color(0.5, 1.0, 0.6, 1.0))
+			return
+
 	# 1. Enemy unit clicked → attack
 	var enemy_unit: Node = _find_enemy_unit_at(world_pos)
 	if enemy_unit != null:
@@ -424,6 +433,25 @@ func _find_fish_trap_at(world_pos: Vector2) -> FishTrap:
 			var ft: FishTrap = building as FishTrap
 			if ft.state == BuildingBase.BuildingState.COMPLETE:
 				return ft
+	return null
+
+func _selection_has_healer() -> bool:
+	for unit: Node in _world.live_selection():
+		if is_instance_valid(unit) and unit.has_method("order_heal"):
+			return true
+	return false
+
+func _find_own_wounded_unit_at(world_pos: Vector2) -> Node:
+	for unit: Node in _world.units_layer.get_children():
+		if not is_instance_valid(unit) or unit is Animal or not (unit is UnitBase):
+			continue
+		var pid: Variant = unit.get("player_id")
+		if pid == null or not GameManager.are_allied(pid as int, NetworkSession.local_player_id):
+			continue
+		if (unit as UnitBase).is_fully_healed():
+			continue
+		if world_pos.distance_to((unit as Node2D).global_position) < UNIT_CLICK_RADIUS:
+			return unit
 	return null
 
 func _find_enemy_unit_at(world_pos: Vector2) -> Node:
@@ -761,6 +789,8 @@ func _on_action_requested(action_id: String) -> void:
 			_train_at_least_loaded(func(b: Node) -> bool: return b is ArcheryRange, action_id)
 		"train:scout", "train:heavy_scout", "train:knight":
 			_train_at_least_loaded(func(b: Node) -> bool: return b is Stable, action_id)
+		"train:harimaguada":
+			_train_at_least_loaded(func(b: Node) -> bool: return b is Temple, action_id)
 		"train:battering_ram", "train:mangonel", "train:trebuchet":
 			_train_at_least_loaded(func(b: Node) -> bool: return b is SiegeWorkshop, action_id)
 		"trebuchet_deploy":

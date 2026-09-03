@@ -164,6 +164,30 @@ func manage_military() -> void:
 				EntityRegistry.id_of(br), unit_id))
 			break
 
+## Field medicine: once a Temple stands, keep a couple of Harimaguadas
+## alive — their idle auto-triage mends the army between assaults.
+const MAX_AI_HEALERS: int = 2
+
+func manage_healers() -> void:
+	if AgeManager.get_age(_ai.player_id) < 2:
+		return
+	if not ResourceManager.can_afford(_ai.player_id, {"food": 85, "gold": 25}):
+		return
+	var healers: int = 0
+	for unit: Node in _ai.world.own_units(_ai.player_id):
+		if unit.has_method("order_heal"):
+			healers += 1
+	if healers >= MAX_AI_HEALERS:
+		return
+	for temple: Temple in WorldQuery.of_type(_ai.world.own_buildings(_ai.player_id), Temple):
+		if temple.state != BuildingBase.BuildingState.COMPLETE:
+			continue
+		if temple.get_queue().size() >= temple.get_max_queue():
+			continue
+		CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
+			EntityRegistry.id_of(temple), "harimaguada"))
+		break
+
 func manage_unique_barracks_unit() -> void:
 	if _ai._construction._built.get("barracks", 0) as int == 0 \
 			and _ai._construction._built.get("archery_range", 0) as int == 0:

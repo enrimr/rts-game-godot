@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitResource" format=3]
+
+[ext_resource type="Script" path="res://resources/units/unit_resource.gd" id="1_hari"]
+
+[resource]
+script = ExtResource("1_hari")
+id = "harimaguada"
+display_name = "Harimaguada"
+description = "Canarii priestess-healer. Never fights: follows the wounded and mends them on the field."
+max_health = 40.0
+move_speed = 118.0
+line_of_sight = 5.0
+population_cost = 1
+attack = 0.0
+attack_range = 1.0
+attack_speed = 1.0
+armor_melee = 0.0
+armor_pierce = 0.0
+train_time = 24.0
+cost_food = 85
+cost_wood = 0
+cost_gold = 25

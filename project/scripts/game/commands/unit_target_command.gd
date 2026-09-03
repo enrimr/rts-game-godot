@@ -52,6 +52,11 @@ func execute(world: Node2D) -> void:
 			for unit: Node in units:
 				if unit.has_method("order_attack"):
 					unit.call("order_attack", target)
+		"heal":
+			# Only healers answer; the rest of a mixed selection ignores it.
+			for unit: Node in units:
+				if unit.has_method("order_heal"):
+					unit.call("order_heal", target)
 		"gather":
 			_execute_gather(world, units, target)
 		"build":

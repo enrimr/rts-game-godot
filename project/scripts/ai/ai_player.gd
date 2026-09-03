@@ -157,6 +157,7 @@ func _run_tick() -> void:
 	if not is_saving_for_age_up():
 		_military.manage_military()
 		_military.manage_unique_barracks_unit()
+		_military.manage_healers()
 		_military.manage_stable_training()
 		_military.manage_siege_training()
 	if _is_naval_map():

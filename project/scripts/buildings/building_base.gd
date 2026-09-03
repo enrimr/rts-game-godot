@@ -409,9 +409,12 @@ func _destroy() -> void:
 
 var _garrison: Array[Node] = []
 
-## 0 = this building cannot garrison. Overridden by WatchTower (5) and
-## TownCenterBuildable (10).
+## 0 = this building cannot garrison. Data-driven from the .tres when set
+## (the Temple's hospital ward); WatchTower (5) and TownCenterBuildable (10)
+## still override in code.
 func garrison_capacity() -> int:
+	if building_data != null and building_data.garrison_capacity > 0:
+		return building_data.garrison_capacity
 	return 0
 
 func get_garrison() -> Array:

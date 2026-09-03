@@ -608,7 +608,9 @@ func _render_action_page() -> void:
 		btn.action_costs = cost
 		var icon_scene: String = _action_icon_scene(btn.action_id)
 		var glyph: String = data.get("glyph", ACTION_GLYPHS.get(btn.action_id, "")) as String
-		if not icon_scene.is_empty():
+		if btn.action_id.begins_with("research:"):
+			btn.set_glyph(UiIcons.tech_glyph(btn.action_id.trim_prefix("research:")))
+		elif not icon_scene.is_empty():
 			btn.set_entity_icon(IconBaker.get_icon(icon_scene, local_player_id))
 		elif not glyph.is_empty():
 			btn.set_glyph(UiIcons.get_icon(glyph))
@@ -1249,7 +1251,7 @@ func _barracks_key_for(uid: String) -> Key:
 
 func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
 	var actions: Array = []
-	var active_tech: TechnologyResource = TechManager.get_researching_tech(blacksmith)
+	var pending: Array = TechManager.pending_research_ids(blacksmith.get_instance_id())
 	var techs: Array[TechnologyResource] = TechManager.get_available_techs(local_player_id, TechnologyResource.ResearchBuilding.BLACKSMITH)
 	for tech: TechnologyResource in techs:
 		var cost_str: String = ""
@@ -1260,7 +1262,6 @@ func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
 		if tech.cost_food > 0: tech_costs["food"] = tech.cost_food
 		if tech.cost_wood > 0: tech_costs["wood"] = tech.cost_wood
 		if tech.cost_gold > 0: tech_costs["gold"] = tech.cost_gold
-		var is_active: bool = active_tech != null and active_tech.id == tech.id
 		actions.append({
 			"id": "research:%s" % tech.id,
 			"label": tech.display_name + cost_str,
@@ -1268,7 +1269,8 @@ func _populate_blacksmith_actions(blacksmith: Blacksmith) -> void:
 			"cost": tech_costs,
 			"key": 0,
 			"raw_label": true,
-			"locked": is_active,
+			# Queueing: only a tech already active or queued HERE locks.
+			"locked": tech.id in pending,
 		})
 	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
@@ -1322,7 +1324,6 @@ func _populate_stable_actions(stable: Stable) -> void:
 
 func _populate_research_only_actions(building: Node, research_type: TechnologyResource.ResearchBuilding) -> void:
 	var actions: Array = []
-	var active_tech: TechnologyResource = TechManager.get_researching_tech(building)
 	var techs: Array[TechnologyResource] = TechManager.get_available_techs(local_player_id, research_type)
 	for tech: TechnologyResource in techs:
 		var cost_str: String = ""
@@ -1333,7 +1334,9 @@ func _populate_research_only_actions(building: Node, research_type: TechnologyRe
 		if tech.cost_food > 0: tech_costs["food"] = tech.cost_food
 		if tech.cost_wood > 0: tech_costs["wood"] = tech.cost_wood
 		if tech.cost_gold > 0: tech_costs["gold"] = tech.cost_gold
-		var is_active: bool = active_tech != null and active_tech.id == tech.id
+		# With queueing, an ACTIVE research no longer locks the button — only a
+		# tech already pending (active or queued) in this building does.
+		var pending: Array = TechManager.pending_research_ids(building.get_instance_id())
 		actions.append({
 			"id": "research:%s" % tech.id,
 			"label": tech.display_name + cost_str,
@@ -1341,7 +1344,16 @@ func _populate_research_only_actions(building: Node, research_type: TechnologyRe
 			"cost": tech_costs,
 			"key": 0,
 			"raw_label": true,
-			"locked": is_active,
+			"locked": tech.id in pending,
+		})
+	if building is Temple and AgeManager.get_age(local_player_id) >= 2:
+		actions.append({
+			"id": "train:harimaguada",
+			"label": "Harimaguada\n85F 25G",
+			"color": Color(0.55, 0.52, 0.44),
+			"cost": {"food": 85, "gold": 25},
+			"key": KEY_H,
+			"raw_label": true,
 		})
 	actions.append(DESTROY_BUILDING_ACTION)
 	_populate_buttons(actions)
@@ -1593,7 +1605,8 @@ func _make_research_slot(tech: TechnologyResource, slot_name: String) -> TrainQu
 	var slot: TrainQueueSlot = TrainQueueSlot.new()
 	slot.name = slot_name
 	_train_queue_row.add_child(slot)
-	slot.setup(0, initials.left(2).to_upper(), Color(0.25, 0.55, 0.75), true, false, null)
+	slot.setup(0, initials.left(2).to_upper(), Color(0.25, 0.55, 0.75), true, false,
+		UiIcons.tech_glyph(tech.id))
 	slot.tooltip_text = tech.display_name
 	return slot
 
