@@ -78,7 +78,11 @@ func execute(world: Node2D) -> void:
 			_execute_garrison(world, units, target)
 		"board_instant":
 			# The AI garrisons idle troops without the walk: distance is not
-			# checked, matching its pre-command behaviour.
+			# checked, matching its pre-command behaviour. Host-local ONLY —
+			# off the wire this is a teleport cheat, so remote commands are
+			# refused (a legitimate client always sends "board").
+			if remote_origin:
+				return
 			if target is TransportShip:
 				for unit: Node in units:
 					if not (unit is ShipBase) and not (target as TransportShip).is_full():

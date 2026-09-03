@@ -69,6 +69,12 @@ func _costs() -> Dictionary:
 
 func execute(world: Node2D) -> void:
 	last_placed.clear()
+	# Wire-borne commands lose every local privilege: `instant` is the host
+	# AI's building path, and the EXTRA_SCENES (AI town center) are not in
+	# the player build menu for a reason. A legitimate client never sends
+	# either — refusing them wholesale closes the cheat vector.
+	if remote_origin and (instant or not WorldPlacement.BUILDING_SCENES.has(building_type)):
+		return
 	var scene_path: String = _scene_path()
 	if scene_path.is_empty() or positions.is_empty():
 		return
@@ -79,6 +85,12 @@ func execute(world: Node2D) -> void:
 	var builders: Array[Node] = _own_entities(builder_ids)
 	var buildings_layer: Node = world.get("buildings_layer") as Node
 	for pos: Vector2 in positions:
+		# The ghost preview validates at the submission site, which only the
+		# HOST's own UI is guaranteed to have run — every remote placement is
+		# re-validated here (terrain class + overlap) before a coin moves.
+		if remote_origin and not WorldPlacement.placement_legal(
+				world, building_type, pos, build_rotation):
+			continue
 		if not ResourceManager.spend_resource(player_id, costs):
 			break
 		var building: Node2D = scene.instantiate() as Node2D

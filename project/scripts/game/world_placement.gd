@@ -53,6 +53,61 @@ const COASTAL_BUILDINGS: Array = ["dock"]
 # Buildings that must be placed fully in ocean (all footprint probes in ocean terrain).
 const OCEAN_BUILDINGS: Array = ["fish_trap"]
 
+## ── Host-side legality (static, no ghost) ──────────────────────────────────
+## The ghost preview validates at the submission site, which a modified
+## client can simply skip — the host re-validates every WIRE-borne placement
+## with the same rules: terrain class (land / coastal / fully-ocean) and no
+## overlap with existing world bodies. Shape sizes are read once per type
+## from the scene's collision rect and cached.
+
+static var _shape_size_cache: Dictionary = {}
+
+static func placement_shape_size(building_type: String) -> Vector2:
+	if _shape_size_cache.has(building_type):
+		return _shape_size_cache[building_type] as Vector2
+	var size: Vector2 = Vector2(52.0, 52.0)
+	var path: String = BUILDING_SCENES.get(building_type, "") as String
+	if not path.is_empty():
+		var probe: Node = (load(path) as PackedScene).instantiate()
+		var cs: CollisionShape2D = probe.get_node_or_null("CollisionShape2D") as CollisionShape2D
+		if cs != null and cs.shape is RectangleShape2D:
+			size = (cs.shape as RectangleShape2D).size
+		probe.free()
+	_shape_size_cache[building_type] = size
+	return size
+
+static func placement_legal(world: Node2D, building_type: String,
+		pos: Vector2, rot: float) -> bool:
+	var size: Vector2 = placement_shape_size(building_type)
+	var half: Vector2 = size * 0.5
+	if building_type in OCEAN_BUILDINGS:
+		for p: Vector2 in [pos, pos + half, pos - half,
+				pos + Vector2(half.x, -half.y), pos + Vector2(-half.x, half.y)]:
+			if not TerrainManager.is_ocean(p):
+				return false
+	elif building_type in COASTAL_BUILDINGS:
+		var edge: Vector2 = half + Vector2(8.0, 8.0)
+		var has_ocean: bool = false
+		var has_land: bool = false
+		for p: Vector2 in [pos + Vector2(0.0, edge.y), pos + Vector2(0.0, -edge.y),
+				pos + Vector2(edge.x, 0.0), pos + Vector2(-edge.x, 0.0)]:
+			if TerrainManager.is_ocean(p):
+				has_ocean = true
+			else:
+				has_land = true
+		if not (has_ocean and has_land):
+			return false
+	elif TerrainManager.is_ocean(pos):
+		return false
+	var shape: RectangleShape2D = RectangleShape2D.new()
+	shape.size = size
+	var params: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	params.shape = shape
+	params.transform = Transform2D(rot, pos)
+	params.collision_mask = 1
+	var space: PhysicsDirectSpaceState2D = world.get_world_2d().direct_space_state
+	return space.intersect_shape(params, 1).is_empty()
+
 const PLACEMENT_OK_FILL: Color = Color(0.35, 1.0, 0.45, 0.22)
 const PLACEMENT_OK_LINE: Color = Color(0.45, 1.0, 0.55, 0.9)
 const PLACEMENT_BAD_FILL: Color = Color(1.0, 0.25, 0.2, 0.28)

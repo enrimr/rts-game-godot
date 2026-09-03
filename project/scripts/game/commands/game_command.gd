@@ -9,6 +9,12 @@ class_name GameCommand extends RefCounted
 ## the submission site — execute() touches the simulation only.
 
 var player_id: int = 0
+## True only when the host deserialized this command off the wire (set by
+## NetworkSession._rx_command, never serialized): privileged verbs the local
+## simulation grants itself — the AI's instant placement, board_instant —
+## must refuse remote commands, and placement legality is re-validated
+## host-side because a modified client can skip its own ghost checks.
+var remote_origin: bool = false
 
 ## Serialization tag; must match a key in CommandBus.KINDS.
 func kind() -> String:

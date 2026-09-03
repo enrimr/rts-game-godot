@@ -1285,6 +1285,9 @@ func _rx_command(d: Dictionary) -> void:
 	var command: GameCommand = CommandBus.command_from_dict(d)
 	if command == null:
 		return
-	# Identity comes from the connection, never from the payload.
+	# Identity comes from the connection, never from the payload — and the
+	# command is branded as wire-borne so privileged local-only verbs
+	# (instant placement, board_instant) refuse it at execute time.
 	command.player_id = pid
+	command.remote_origin = true
 	CommandBus.submit_remote(command)
