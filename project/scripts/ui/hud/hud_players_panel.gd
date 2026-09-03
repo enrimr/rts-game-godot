@@ -8,8 +8,10 @@ extends Control
 ##
 ## The score is deliberately simple and readable (the aim is "who is ahead",
 ## not accounting): 200 per Age reached, 50 per technology, 10 per living
-## unit, 20 per standing building, 1 per 10 stockpiled resources. Refreshed
-## at 1 Hz while open only.
+## unit, 20 per standing building. No stockpile term on purpose: hoarded
+## resources made a passive player look ahead of an AI that SPENDS its
+## income on army and buildings — the things the score already counts.
+## Refreshed at 1 Hz while open only.
 
 const REFRESH_SEC: float = 1.0
 
@@ -72,12 +74,12 @@ func _refresh() -> void:
 	for pid: int in pids:
 		_rows_box.add_child(_make_row(pid,
 			units_of.get(pid, 0) as int, buildings_of.get(pid, 0) as int))
-	# The panel opens LEFT of the minimap, bottom-aligned, into the command
-	# bar's empty strip — above the minimap live the idle/alert buttons.
+	# The panel sits ABOVE the minimap, right-aligned to its frame — clear of
+	# the idle/alert buttons that live just left of the minimap's top edge.
 	_panel.reset_size()
-	var parent_h: float = (get_parent() as Control).size.y \
+	var parent_w: float = (get_parent() as Control).size.x \
 		if get_parent() is Control else 0.0
-	_panel.position = Vector2(-_panel.size.x - 8.0, parent_h - _panel.size.y)
+	_panel.position = Vector2(parent_w - _panel.size.x, -30.0 - _panel.size.y)
 
 func _make_row(pid: int, units: int, buildings: int) -> HBoxContainer:
 	var row: HBoxContainer = HBoxContainer.new()
@@ -121,6 +123,4 @@ func _score(pid: int, units: int, buildings: int) -> int:
 	var s: float = AgeManager.get_age(pid) * 200.0
 	s += TechManager.get_researched_count(pid) * 50.0
 	s += units * 10.0 + buildings * 20.0
-	for v: Variant in ResourceManager.get_resources(pid).values():
-		s += (v as float) * 0.1
 	return int(s)

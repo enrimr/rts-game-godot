@@ -99,6 +99,14 @@ func _apply_civilization() -> void:
 	for rival_id: int in MatchConfig.get_rival_player_ids():
 		CivBonusManager.init_player(rival_id, MatchConfig.get_rival_civ_id(rival_id))
 		TechManager.init_player(rival_id)
+		# A civ's starting bonus belongs to the CIV, not to seat 0 — rivals
+		# used to be silently denied theirs (the players panel exposed it).
+		var rival_civ: CivilizationResource = load("res://resources/civilizations/%s.tres"
+			% MatchConfig.get_rival_civ_id(rival_id)) as CivilizationResource
+		if rival_civ != null:
+			for key: String in (rival_civ.starting_bonuses as Dictionary):
+				ResourceManager.add_resource(rival_id, key,
+					(rival_civ.starting_bonuses as Dictionary)[key] as float)
 
 func _get_civ_id_for_player(player_id: int) -> String:
 	if player_id == 0:
