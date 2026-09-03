@@ -1,0 +1,106 @@
+[gd_scene load_steps=4 format=3 uid="uid://building_mill"]
+
+[ext_resource type="Script" path="res://scripts/buildings/mill.gd" id="1_mill"]
+[ext_resource type="Resource" path="res://resources/buildings/mill.tres" id="2_data"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(52.0, 52.0)
+
+[node name="Mill" type="StaticBody2D"]
+script = ExtResource("1_mill")
+building_data = ExtResource("2_data")
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_1")
+
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Building" type="Polygon2D" parent="Body"]
+color = Color(0.72, 0.62, 0.42, 1.0)
+polygon = PackedVector2Array(-16, 26, 16, 26, 12, -12, -12, -12)
+
+[node name="WallShade" type="Polygon2D" parent="Body"]
+color = Color(0.60, 0.50, 0.32, 1.0)
+polygon = PackedVector2Array(-16, 26, 16, 26, 15, 18, -15, 18)
+
+[node name="StoneBand" type="Polygon2D" parent="Body"]
+color = Color(0.64, 0.55, 0.37, 1.0)
+polygon = PackedVector2Array(-13.6, 4, 13.6, 4, 13.3, 1, -13.3, 1)
+
+[node name="Door" type="Polygon2D" parent="Body"]
+color = Color(0.28, 0.17, 0.08, 1.0)
+polygon = PackedVector2Array(-4, 26, 4, 26, 4, 14, 0, 11, -4, 14)
+
+[node name="Window" type="Polygon2D" parent="Body"]
+color = Color(0.92, 0.86, 0.55, 1.0)
+polygon = PackedVector2Array(-2.5, -3, 2.5, -3, 2.5, -8, -2.5, -8)
+
+[node name="TeamRoof" type="Polygon2D" parent="Body"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(-15, -12, 15, -12, 0, -31)
+
+[node name="TeamRoofDark" type="Polygon2D" parent="Body"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(-15, -12, -6, -12, 0, -31)
+
+[node name="MillStone" type="Polygon2D" parent="Body"]
+color = Color(0.70, 0.68, 0.63, 1.0)
+polygon = PackedVector2Array(17, 26, 25, 26, 25, 19, 21, 17, 17, 19)
+
+[node name="MillStoneEye" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.40, 0.37, 1.0)
+polygon = PackedVector2Array(19.5, 23, 22.5, 23, 22.5, 20.5, 19.5, 20.5)
+
+[node name="GrainSacks" type="Polygon2D" parent="Body"]
+color = Color(0.78, 0.64, 0.40, 1.0)
+polygon = PackedVector2Array(-24, 26, -16, 26, -16, 17, -20, 14, -24, 17)
+
+[node name="GrainSack2" type="Polygon2D" parent="Body"]
+color = Color(0.72, 0.58, 0.35, 1.0)
+polygon = PackedVector2Array(-17, 26, -10, 26, -10, 19, -13.5, 16.5, -17, 19)
+
+[node name="SailA" type="Polygon2D" parent="Body"]
+color = Color(0.93, 0.90, 0.80, 1.0)
+polygon = PackedVector2Array(0.9, -21.2, 14.5, -31.5, 9.5, -36.5, -0.9, -22.8)
+
+[node name="SailB" type="Polygon2D" parent="Body"]
+color = Color(0.90, 0.86, 0.75, 1.0)
+polygon = PackedVector2Array(-0.9, -22.8, -14.5, -12.5, -9.5, -7.5, 0.9, -21.2)
+
+[node name="SailC" type="Polygon2D" parent="Body"]
+color = Color(0.93, 0.90, 0.80, 1.0)
+polygon = PackedVector2Array(0.9, -22.8, -9.5, -36.5, -14.5, -31.5, -0.9, -21.2)
+
+[node name="SailD" type="Polygon2D" parent="Body"]
+color = Color(0.90, 0.86, 0.75, 1.0)
+polygon = PackedVector2Array(-0.9, -21.2, 9.5, -7.5, 14.5, -12.5, 0.9, -22.8)
+
+[node name="MillAxle" type="Polygon2D" parent="Body"]
+color = Color(0.36, 0.26, 0.14, 1.0)
+polygon = PackedVector2Array(-2.2, -24.2, 2.2, -24.2, 2.2, -19.8, -2.2, -19.8)
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -36.0
+offset_top = -40.0
+offset_right = 36.0
+offset_bottom = -28.0
+text = "Mill"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 8
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+mouse_filter = 2
+
+[node name="NavigationObstacle2D" type="NavigationObstacle2D" parent="."]
+avoidance_enabled = true
+
+[node name="ConstructionBar" type="ProgressBar" parent="."]
+offset_left = -26.0
+offset_top = 28.0
+offset_right = 26.0
+offset_bottom = 36.0
+max_value = 100.0
+value = 0.0
+show_percentage = false
+mouse_filter = 2

@@ -45,6 +45,7 @@ ACTION_BARRACKS,Barracks\n175W,Cuartel\n175M
 ACTION_LUMBER,Lumber\n100W,Campamento Maderero\n100M
 ACTION_MINING,Mining\n100W,Minería\n100M
 ACTION_FARM,Farm\n60W,Granja\n60M
+ACTION_MILL,Mill\n100W,Molino\n100M
 ACTION_WALL,Wall\n5S,Muro\n5P
 ACTION_GATE,Gate\n30W,Puerta\n30M
 ACTION_VILLAGER,Villager\n50F,Aldeano\n50C
@@ -276,6 +277,7 @@ TOOLTIP_BUILD_STABLE,Trains cavalry: Heavy Scout (Feudal Age) and Knight (Castle
 TOOLTIP_BUILD_LUMBER,Wood drop-off point. Villagers deposit gathered wood here.,Punto de entrega de madera. Los aldeanos depositan aquí la madera recolectada.
 TOOLTIP_BUILD_MINING,Drop-off point for gold and stone.,Punto de entrega de oro y piedra.
 TOOLTIP_BUILD_FARM,Generates food passively over time. No villager required.,Genera comida de forma pasiva con el tiempo. No requiere aldeanos.
+TOOLTIP_BUILD_MILL,Food drop-off point. Breeds Presa Canario herding dogs that fetch animals home.,Punto de entrega de comida. Cría perros de presa canario que traen animales a casa.
 TOOLTIP_BUILD_WALL,Stone wall that blocks enemy movement. Chain walls to protect your base.,Muro de piedra que bloquea el movimiento enemigo. Enlaza muros para proteger tu base.
 TOOLTIP_BUILD_GATE,A wall section that can be opened closed or locked to control passage.,Una sección de muro que se puede abrir cerrar o bloquear para controlar el paso.
 TOOLTIP_BUILD_DOCK,Naval production building. Train ships and fishing boats.,Edificio de producción naval. Entrena barcos y botes de pesca.

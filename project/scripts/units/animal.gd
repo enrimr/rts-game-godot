@@ -2,13 +2,15 @@ extends CharacterBody2D
 
 class_name Animal
 
-enum AnimalState { WILD, OWNED, FLEEING, DEAD }
+enum AnimalState { WILD, OWNED, FLEEING, DEAD, HERDED }
 
 const FOOD_AMOUNT: float = 150.0
 const WANDER_SPEED: float = 40.0
 const FLEE_SPEED: float   = 110.0
 const WANDER_RADIUS: float = 220.0
 const FLEE_DURATION: float = 3.0
+const HERD_FOLLOW_SPEED: float = 105.0
+const HERD_FOLLOW_GAP: float = 34.0
 
 @export var max_health: float = 40.0
 @export var animal_name: String = "Deer"
@@ -21,6 +23,8 @@ var current_state: AnimalState = AnimalState.WILD
 
 var _wander_timer: float = 0.0
 var _flee_timer: float = 0.0
+var _herder: Node = null
+var _pre_herd_state: AnimalState = AnimalState.WILD
 var _origin: Vector2 = Vector2.ZERO
 var _hit_tween: Tween = null
 
@@ -127,6 +131,8 @@ func take_damage(amount: float, source: Node = null) -> void:
 	if health <= 0.0:
 		_die()
 		return
+	if current_state == AnimalState.HERDED and source != null:
+		stop_following()
 	if current_state == AnimalState.WILD and source != null:
 		_start_flee(source)
 
@@ -145,6 +151,8 @@ func _physics_process(delta: float) -> void:
 			_handle_owned_move()
 		AnimalState.FLEEING:
 			_handle_flee(delta)
+		AnimalState.HERDED:
+			_handle_herded()
 
 func _handle_wander(delta: float) -> void:
 	_wander_timer -= delta
@@ -160,6 +168,42 @@ func _handle_owned_move() -> void:
 		velocity = Vector2.ZERO
 		return
 	_nav.set_velocity(_direction_to_target() * WANDER_SPEED)
+
+## Herding: a Presa Canario takes the animal in tow. The animal stays herded
+## only while the DOG is still on that job — any dog reassignment, death or
+## release reverts it next tick (checked herd-side, so every cancellation
+## path is covered without the dog having to remember to say goodbye).
+func start_following(dog: Node) -> void:
+	if current_state == AnimalState.DEAD:
+		return
+	_pre_herd_state = AnimalState.OWNED if current_state == AnimalState.OWNED \
+		or player_id >= 0 else AnimalState.WILD
+	_herder = dog
+	current_state = AnimalState.HERDED
+
+func stop_following() -> void:
+	if current_state != AnimalState.HERDED:
+		return
+	_herder = null
+	current_state = _pre_herd_state
+	# The trip moves the animal's home: it now wanders around the base.
+	_origin = global_position
+	_nav.target_position = global_position
+	velocity = Vector2.ZERO
+
+func _handle_herded() -> void:
+	var on_the_job: bool = is_instance_valid(_herder) \
+		and _herder.get("herd_target") == self \
+		and (_herder.get("current_state") as int) == UnitBase.UnitState.ATTACKING
+	if not on_the_job:
+		stop_following()
+		return
+	var dog_pos: Vector2 = (_herder as Node2D).global_position
+	if global_position.distance_to(dog_pos) <= HERD_FOLLOW_GAP:
+		velocity = Vector2.ZERO
+		return
+	_nav.target_position = dog_pos
+	_nav.set_velocity(_direction_to_target() * HERD_FOLLOW_SPEED)
 
 func order_move(destination: Vector2) -> void:
 	if current_state != AnimalState.OWNED:
@@ -198,7 +242,11 @@ func _try_convert(owner_id: int) -> void:
 
 func _convert_to(owner_id: int) -> void:
 	player_id = owner_id
-	current_state = AnimalState.OWNED
+	# A herded sheep converting mid-trip stays in tow; it lands OWNED on release.
+	if current_state == AnimalState.HERDED:
+		_pre_herd_state = AnimalState.OWNED
+	else:
+		current_state = AnimalState.OWNED
 	_on_converted()
 	_origin = global_position
 	_nav.target_position = global_position

@@ -57,6 +57,13 @@ func execute(world: Node2D) -> void:
 			for unit: Node in units:
 				if unit.has_method("order_heal"):
 					unit.call("order_heal", target)
+		"herd":
+			# Only dogs answer. Any animal is fair game — herding an enemy's
+			# sheep home is honest AoE2 sheep-stealing.
+			if target is Animal:
+				for unit: Node in units:
+					if unit.has_method("order_herd"):
+						unit.call("order_herd", target)
 		"gather":
 			_execute_gather(world, units, target)
 		"build":

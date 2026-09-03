@@ -1,0 +1,125 @@
+[gd_scene format=3 uid="uid://unit_presa_canario"]
+
+[ext_resource type="Script" path="res://scripts/units/presa_canario.gd" id="1_presascr"]
+[ext_resource type="Resource" path="res://resources/units/presa_canario_data.tres" id="2_presadat"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]
+radius = 8.0
+height = 16.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_attack"]
+radius = 32.0
+
+[node name="PresaCanario" type="CharacterBody2D"]
+script = ExtResource("1_presascr")
+unit_data = ExtResource("2_presadat")
+collision_layer = 2
+collision_mask = 1
+
+[node name="Body" type="Node2D" parent="."]
+
+[node name="LegFrontFar" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.28, 0.16, 1.0)
+polygon = PackedVector2Array(5, 1, 8, 1, 7.5, 9, 5, 9)
+
+[node name="LegBackFar" type="Polygon2D" parent="Body"]
+color = Color(0.40, 0.28, 0.16, 1.0)
+polygon = PackedVector2Array(-9, 1, -6, 1, -6.5, 9, -9, 9)
+
+[node name="Tail" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.30, 0.18, 1.0)
+polygon = PackedVector2Array(-9, -6, -12.5, -9.5, -11, -11, -7.5, -8)
+
+[node name="DogTorso" type="Polygon2D" parent="Body"]
+color = Color(0.55, 0.40, 0.24, 1.0)
+polygon = PackedVector2Array(-10, -1, -10, -6, -7, -8.5, 2, -9, 7, -8.5, 9, -5, 9, 1, 6, 3, -7, 3)
+
+[node name="BrindleStripe1" type="Polygon2D" parent="Body"]
+color = Color(0.47, 0.34, 0.19, 1.0)
+polygon = PackedVector2Array(-6.5, -8, -5, -8.4, -6.5, 2.6, -8, 2.2)
+
+[node name="BrindleStripe2" type="Polygon2D" parent="Body"]
+color = Color(0.47, 0.34, 0.19, 1.0)
+polygon = PackedVector2Array(-1.5, -9, 0, -9, -1, 2.8, -2.5, 2.8)
+
+[node name="BrindleStripe3" type="Polygon2D" parent="Body"]
+color = Color(0.47, 0.34, 0.19, 1.0)
+polygon = PackedVector2Array(3.5, -8.8, 5, -8.5, 4.5, 1.5, 3, 1.5)
+
+[node name="LegBackNear" type="Polygon2D" parent="Body"]
+color = Color(0.52, 0.38, 0.22, 1.0)
+polygon = PackedVector2Array(-6, 2, -3, 2, -3.5, 9, -6, 9)
+
+[node name="LegFrontNear" type="Polygon2D" parent="Body"]
+color = Color(0.52, 0.38, 0.22, 1.0)
+polygon = PackedVector2Array(7, 2, 10, 2, 9.5, 9, 7, 9)
+
+[node name="Chest" type="Polygon2D" parent="Body"]
+color = Color(0.64, 0.50, 0.32, 1.0)
+polygon = PackedVector2Array(6, -5, 10, -3, 10.5, 2, 8, 3, 5, 1)
+
+[node name="Neck" type="Polygon2D" parent="Body"]
+color = Color(0.52, 0.38, 0.22, 1.0)
+polygon = PackedVector2Array(4, -9, 9, -11.5, 12, -10, 12, -4, 8, -3, 4, -6)
+
+[node name="Head" type="Polygon2D" parent="Body"]
+color = Color(0.50, 0.36, 0.21, 1.0)
+polygon = PackedVector2Array(9, -15, 15, -15, 17, -12, 16.5, -9, 12, -8, 9, -11)
+
+[node name="Muzzle" type="Polygon2D" parent="Body"]
+color = Color(0.24, 0.19, 0.14, 1.0)
+polygon = PackedVector2Array(14, -12.5, 18.5, -11.5, 18.5, -8.8, 14, -8.5)
+
+[node name="Nose" type="Polygon2D" parent="Body"]
+color = Color(0.12, 0.10, 0.09, 1.0)
+polygon = PackedVector2Array(17.8, -11.6, 19.2, -11, 19.2, -9.6, 17.8, -9.4)
+
+[node name="Eye" type="Polygon2D" parent="Body"]
+color = Color(0.10, 0.08, 0.07, 1.0)
+polygon = PackedVector2Array(12.5, -12.8, 13.8, -12.8, 13.8, -11.8, 12.5, -11.8)
+
+[node name="EarFar" type="Polygon2D" parent="Body"]
+color = Color(0.36, 0.26, 0.15, 1.0)
+polygon = PackedVector2Array(13.5, -15, 15, -17.5, 16.3, -14.6)
+
+[node name="EarNear" type="Polygon2D" parent="Body"]
+color = Color(0.42, 0.30, 0.18, 1.0)
+polygon = PackedVector2Array(10, -15.3, 11.3, -18, 12.8, -14.9)
+
+[node name="Collar" type="Polygon2D" parent="Body"]
+color = Color(0.80, 0.15, 0.12, 1.0)
+polygon = PackedVector2Array(6.5, -9.6, 11, -8.0, 11, -6.2, 6.5, -7.8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_1")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
+path_desired_distance = 16.0
+target_desired_distance = 24.0
+avoidance_enabled = true
+avoidance_priority = 0.5
+
+[node name="SelectionIndicator" type="Node2D" parent="."]
+visible = false
+
+[node name="SelectionCircle" type="Polygon2D" parent="SelectionIndicator"]
+color = Color(0, 1, 0, 0.7)
+polygon = PackedVector2Array(14.0, 0.0, 13.47, 3.43, 12.12, 6.70, 9.90, 9.90, 6.70, 12.12, 3.43, 13.47, 0.0, 14.0, -3.43, 13.47, -6.70, 12.12, -9.90, 9.90, -12.12, 6.70, -13.47, 3.43, -14.0, 0.0, -13.47, -3.43, -12.12, -6.70, -9.90, -9.90, -6.70, -12.12, -3.43, -13.47, 0.0, -14.0, 3.43, -13.47, 6.70, -12.12, 9.90, -9.90, 12.12, -6.70, 13.47, -3.43)
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = -14.0
+offset_top = -28.0
+offset_right = 14.0
+offset_bottom = -22.0
+min_value = 0.0
+max_value = 100.0
+value = 100.0
+show_percentage = false
+mouse_filter = 2
+
+[node name="AttackRange" type="Area2D" parent="."]
+collision_mask = 3
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackRange"]
+shape = SubResource("CircleShape2D_attack")

@@ -12,6 +12,7 @@ const BUILDING_SCENES: Dictionary = {
 	"stable":        "res://scenes/buildings/stable.tscn",
 	"lumber_camp":   "res://scenes/buildings/lumber_camp.tscn",
 	"mining_camp":   "res://scenes/buildings/mining_camp.tscn",
+	"mill":          "res://scenes/buildings/mill.tscn",
 	"farm":          "res://scenes/buildings/farm.tscn",
 	"wall_segment":  "res://scenes/buildings/wall_segment.tscn",
 	"gate":          "res://scenes/buildings/gate.tscn",

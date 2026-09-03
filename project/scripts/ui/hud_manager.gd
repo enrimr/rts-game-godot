@@ -88,6 +88,7 @@ const BUILD_ACTIONS: Array = [
 	{"id": "build:lumber_camp",   "label": "ACTION_LUMBER",       "color": Color(0.30, 0.20, 0.08), "cost": {"wood": 100}, "key": KEY_L, "description": "TOOLTIP_BUILD_LUMBER",   "min_age": 0},
 	{"id": "build:mining_camp",   "label": "ACTION_MINING",       "color": Color(0.50, 0.46, 0.34), "cost": {"wood": 100}, "key": KEY_N, "description": "TOOLTIP_BUILD_MINING",   "min_age": 0},
 	{"id": "build:farm",          "label": "ACTION_FARM",         "color": Color(0.60, 0.52, 0.18), "cost": {"wood": 60},  "key": KEY_F, "description": "TOOLTIP_BUILD_FARM",     "min_age": 0},
+	{"id": "build:mill",          "label": "ACTION_MILL",         "color": Color(0.68, 0.56, 0.30), "cost": {"wood": 100}, "key": KEY_M, "description": "TOOLTIP_BUILD_MILL",    "min_age": 0},
 	{"id": "build:wall_segment",  "label": "ACTION_WALL",         "color": Color(0.55, 0.52, 0.48), "cost": {"stone": 5},  "key": KEY_Q, "description": "TOOLTIP_BUILD_WALL",     "min_age": 0},
 	{"id": "build:gate",          "label": "ACTION_GATE",         "color": Color(0.42, 0.30, 0.12), "cost": {"wood": 30},  "key": KEY_G, "description": "TOOLTIP_BUILD_GATE",       "min_age": 0},
 	{"id": "build:watch_tower",   "label": "ACTION_WATCH_TOWER",  "color": Color(0.45, 0.42, 0.38), "cost": {"stone": 125}, "key": KEY_O, "description": "TOOLTIP_WATCH_TOWER",    "min_age": 1},
@@ -833,6 +834,8 @@ func _on_technology_researched(player_id: int, _tech_id: String) -> void:
 		_populate_research_only_actions(_selected_building, TechnologyResource.ResearchBuilding.UNIVERSITY)
 	elif _selected_building is Temple:
 		_populate_research_only_actions(_selected_building, TechnologyResource.ResearchBuilding.MONASTERY)
+	elif _selected_building is Mill:
+		_populate_mill_actions(_selected_building as Mill)
 
 func _on_unit_selected(units: Array) -> void:
 	if is_instance_valid(_selected_building) and _selected_building.has_method("set_selected"):
@@ -929,6 +932,10 @@ func _on_building_selected(building: Node) -> void:
 		_populate_market_actions(building as Market)
 	elif building is Temple:
 		_populate_research_only_actions(building, TechnologyResource.ResearchBuilding.MONASTERY)
+	elif building is Mill:
+		_populate_mill_actions(building as Mill)
+		var ml: Mill = building as Mill
+		_on_train_queue_changed(building, ml.get_queue(), ml.get_max_queue())
 	elif building is Barracks:
 		_populate_barracks_actions(building as Barracks)
 		var br: Barracks = building as Barracks
@@ -1157,6 +1164,18 @@ func _populate_tc_actions() -> void:
 	if is_instance_valid(_selected_building) and _selected_building.has_method("is_respawning_hero"):
 		if _selected_building.is_respawning_hero() as bool:
 			_build_hero_respawn_bar()
+
+func _populate_mill_actions(_mill: Mill) -> void:
+	var actions: Array = [{
+		"id": "train:presa_canario",
+		"label": "Presa Canario\n30F 10G",
+		"color": Color(0.62, 0.46, 0.28),
+		"cost": {"food": 30, "gold": 10},
+		"key": KEY_P,
+		"raw_label": true,
+	}]
+	actions.append(DESTROY_BUILDING_ACTION)
+	_populate_buttons(actions)
 
 func _populate_barracks_actions(barracks: Barracks) -> void:
 	var actions: Array = []

@@ -582,6 +582,10 @@ const VOICE_KINDS: Dictionary = {
 	# The priestess-healer: calm, unhurried, almost a blessing.
 	"select_healer": {"f0_m": 118.0, "f0_f": 196.0, "syl": [2, 3], "mark": "",
 		"opts": {"rate": 0.8, "breath": 0.10}},
+	# The presa canario: one short low growl-burst — the formant synth's
+	# closest thing to a "wuff" (max growl, fast rate, single syllable).
+	"select_dog": {"f0_m": 95.0, "f0_f": 0.0, "syl": [1, 1], "mark": "!",
+		"opts": {"growl": 0.95, "rate": 1.45, "breath": 0.02}},
 	"ack_move": {"f0_m": 125.0, "f0_f": 212.0, "syl": [1, 2], "mark": "",
 		"opts": {"rate": 1.1, "breath": 0.04}},
 	"ack_attack": {"f0_m": 104.0, "f0_f": 178.0, "syl": [1, 2], "mark": "!",

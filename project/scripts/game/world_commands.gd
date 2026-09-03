@@ -172,9 +172,16 @@ func _handle_right_click(world_pos: Vector2) -> void:
 		_order_attack_all(enemy_unit)
 		return
 
-	# 2. Animal clicked → send the selection to slaughter it for food (own
-	# herded sheep included — that's how a sheep yields meat); soldiers attack it.
+	# 2. Animal clicked. A dogs-only selection HERDS it home instead of biting:
+	# the mental model is clean — dogs alone shepherd, anyone else slaughters.
 	var animal: Animal = _find_animal_at(world_pos)
+	if animal != null and _selection_all_dogs():
+		CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "herd",
+			_selection_ids(), EntityRegistry.id_of(animal)))
+		_flash_target(animal, Color(0.5, 1.0, 0.6, 1.0))
+		return
+	# Otherwise send the selection to slaughter it for food (own herded sheep
+	# included — that's how a sheep yields meat); soldiers attack it.
 	if animal != null:
 		CommandBus.submit(UnitTargetCommand.make(NetworkSession.local_player_id, "attack", _selection_ids(),
 			EntityRegistry.id_of(animal)))
@@ -434,6 +441,16 @@ func _find_fish_trap_at(world_pos: Vector2) -> FishTrap:
 			if ft.state == BuildingBase.BuildingState.COMPLETE:
 				return ft
 	return null
+
+func _selection_all_dogs() -> bool:
+	var any: bool = false
+	for unit: Node in _world.live_selection():
+		if not is_instance_valid(unit):
+			continue
+		if not unit.has_method("order_herd"):
+			return false
+		any = true
+	return any
 
 func _selection_has_healer() -> bool:
 	for unit: Node in _world.live_selection():
@@ -791,6 +808,8 @@ func _on_action_requested(action_id: String) -> void:
 			_train_at_least_loaded(func(b: Node) -> bool: return b is Stable, action_id)
 		"train:harimaguada":
 			_train_at_least_loaded(func(b: Node) -> bool: return b is Temple, action_id)
+		"train:presa_canario":
+			_train_at_least_loaded(func(b: Node) -> bool: return b is Mill, action_id)
 		"train:battering_ram", "train:mangonel", "train:trebuchet":
 			_train_at_least_loaded(func(b: Node) -> bool: return b is SiegeWorkshop, action_id)
 		"trebuchet_deploy":

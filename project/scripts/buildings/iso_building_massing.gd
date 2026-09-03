@@ -410,7 +410,7 @@ static func _massing_key(building: Node2D) -> String:
 static func _has_recipe(key: String) -> bool:
 	return key in ["house", "town_center", "barracks", "archery_range", "stable",
 		"blacksmith", "university", "temple", "market", "siege_workshop",
-		"lumber_camp", "mining_camp", "dock", "watch_tower", "wonder",
+		"lumber_camp", "mining_camp", "mill", "dock", "watch_tower", "wonder",
 		"wall_segment", "gate", "fish_trap"]
 
 static func _half_extents(building: Node2D) -> Vector2:
@@ -484,8 +484,9 @@ static func _build(key: String, b: Builder, hx: float, hy: float) -> void:
 		"temple": _temple(b, hx, hy)
 		"market": _market(b, hx, hy)
 		"siege_workshop": _siege_workshop(b, hx, hy)
-		"lumber_camp": _camp(b, hx, hy, true)
-		"mining_camp": _camp(b, hx, hy, false)
+		"lumber_camp": _lumber_camp(b, hx, hy)
+		"mining_camp": _mining_camp(b, hx, hy)
+		"mill": _mill(b, hx, hy)
 		"dock": _dock(b, hx, hy)
 		"watch_tower": _watch_tower(b, hx, hy)
 		"wonder": _wonder(b, hx, hy)
@@ -717,26 +718,208 @@ static func _siege_workshop(b: Builder, hx: float, hy: float) -> void:
 	b.post(hx - 8.0, hy - 8.0, 12.0, 2.2, C_WOOD_DARK, "Crane")
 	b.flag(0, -wy, 30.0, 46.0)
 
-static func _camp(b: Builder, hx: float, hy: float, is_lumber: bool) -> void:
+## Screen-space ellipse (small discs: log ends, wheels, ore lumps).
+static func _disc(c: Vector2, rx: float, ry: float) -> PackedVector2Array:
+	var pts: PackedVector2Array = PackedVector2Array()
+	for i: int in range(12):
+		var a: float = TAU * float(i) / 12.0
+		pts.append(c + Vector2(cos(a) * rx, sin(a) * ry))
+	return pts
+
+## Open-air logging yard, not a house: pole lean-to under a team tarp,
+## stacked log pile with pale cut ends, a saw-horse trunk mid-cut, a
+## chopping block with an axe planted in it and fresh stumps.
+static func _lumber_camp(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, C_APRON)
-	var wall_c: Color = b.wall() if is_lumber else b.wall2()
-	var wx: float = hx - 9.0
-	var wy: float = hy - 9.0
-	b.walls(-4.0, -4.0, wx, wy, 0.0, 13.0, wall_c)
-	b.civ_roof(-4.0, -4.0, wx + 3.0, wy + 3.0, 12.0, 9.0, true, wall_c)
-	b.opening_right(-4.0, -4.0, wx, wy, 0.28, 0.6, 0.0, 10.0, C_DOOR, "Door")
-	if is_lumber:
-		for i: int in range(3):
-			var lh: float = 1.5 + float(i) * 3.0
-			b.poly("Log", Color(0.5, 0.36, 0.2).darkened(float(i) * 0.08), Builder._quad(
-				Vector2(hx - 20.0, hy - 7.0), Vector2(hx - 6.0, hy - 7.0),
-				Vector2(hx - 6.0, hy - 7.0), Vector2(hx - 20.0, hy - 7.0), lh - 1.5, lh + 1.5))
-	else:
-		b.ground_ellipse(hx - 13.0, hy - 9.0, 7.0, Color(0.45, 0.43, 0.4), "OrePile")
-		b.poly("OreTop", Color(0.55, 0.53, 0.5), PackedVector2Array([
-			gp(hx - 18.0, hy - 9.0), gp(hx - 8.0, hy - 9.0), gp(hx - 13.0, hy - 9.0, 6.0),
-		]))
-	b.flag(-4.0, -4.0 - wy, 17.0, 32.0)
+	b.ground_ellipse(1.0, 8.0, 9.0, Color(0.68, 0.56, 0.36, 0.45), "ChipFloor")
+	_lc_lean_to(b, -hx + 13.0, -hy + 12.0)
+	_lc_log_pile(b, hx - 13.0, -hy + 14.0)
+	_lc_stump(b, hx - 7.0, hy - 6.0)
+	_lc_saw_horse(b, -1.0, hy - 10.0)
+	_lc_chop_block(b, -hx + 9.0, hy - 8.0)
+	b.flag(hx - 4.0, -hy + 4.0, 0.0, 30.0, true)
+
+## Pole shelter with a mono-pitch tarp (high back, low front) over a
+## firewood row — the crew's only "roof".
+static func _lc_lean_to(b: Builder, cx: float, cy: float) -> void:
+	var sx: float = 10.0
+	var sy: float = 8.0
+	var back_h: float = 17.0
+	var front_h: float = 10.0
+	b.poly("FireWood", C_WOOD_DARK.lightened(0.10), Builder._quad(
+		Vector2(cx - sx + 2.0, cy), Vector2(cx + sx - 2.0, cy),
+		Vector2(cx + sx - 2.0, cy), Vector2(cx - sx + 2.0, cy), 0.0, 5.5))
+	b.poly("FireWoodEnd", Color(0.82, 0.68, 0.42),
+		_disc(gp(cx + sx - 2.0, cy, 2.7), 2.2, 2.5))
+	b.post(cx - sx, cy - sy, back_h, 1.8, C_POLE, "LeanPost")
+	b.post(cx - sx, cy + sy, back_h, 1.8, C_POLE, "LeanPost")
+	b.post(cx + sx, cy - sy, front_h, 1.8, C_POLE, "LeanPost")
+	b.post(cx + sx, cy + sy, front_h, 1.8, C_POLE, "LeanPost")
+	b.poly("TeamRoof", Color.WHITE, PackedVector2Array([
+		gp(cx - sx - 2.0, cy - sy - 2.0, back_h + 1.0),
+		gp(cx - sx - 2.0, cy + sy + 2.0, back_h + 1.0),
+		gp(cx + sx + 2.5, cy + sy + 2.0, front_h + 1.0),
+		gp(cx + sx + 2.5, cy - sy - 2.0, front_h + 1.0)]))
+	b.poly("TeamRoofDark", Color.WHITE, Builder._quad(
+		Vector2(cx + sx + 2.5, cy - sy - 2.0), Vector2(cx + sx + 2.5, cy + sy + 2.0),
+		Vector2(cx + sx + 2.5, cy + sy + 2.0), Vector2(cx + sx + 2.5, cy - sy - 2.0),
+		front_h - 2.2, front_h + 1.0))
+
+## One felled trunk lying along x with a pale sawn end + growth ring.
+static func _lc_log(b: Builder, cx: float, y: float, half: float,
+		h: float, c: Color) -> void:
+	b.poly("Log", c, Builder._quad(
+		Vector2(cx - half, y), Vector2(cx + half, y),
+		Vector2(cx + half, y), Vector2(cx - half, y), h - 2.4, h + 2.4))
+	var e: Vector2 = gp(cx + half, y, h)
+	b.poly("LogEnd", Color(0.85, 0.72, 0.46), _disc(e, 2.5, 2.9))
+	b.poly("LogRing", Color(0.62, 0.47, 0.26), _disc(e, 1.2, 1.4))
+
+static func _lc_log_pile(b: Builder, cx: float, cy: float) -> void:
+	b.post(cx - 10.5, cy + 5.0, 10.0, 1.7, C_POLE, "PileStake")
+	_lc_log(b, cx, cy + 3.5, 9.0, 2.4, Color(0.47, 0.33, 0.18))
+	_lc_log(b, cx, cy - 3.5, 9.0, 2.4, Color(0.52, 0.38, 0.20))
+	_lc_log(b, cx, cy, 9.0, 6.9, Color(0.57, 0.43, 0.24))
+	b.post(cx + 10.5, cy + 5.0, 10.0, 1.7, C_POLE, "PileStake")
+
+## Trunk up on two splayed trestles with a two-man saw standing in the kerf.
+static func _lc_saw_horse(b: Builder, cx: float, cy: float) -> void:
+	for tx: float in [cx - 7.0, cx + 7.0]:
+		var t: Vector2 = gp(tx, cy, 8.0)
+		var g: Vector2 = gp(tx, cy)
+		b.poly("Trestle", C_WOOD_DARK, PackedVector2Array([
+			t + Vector2(-1.0, 0.0), t + Vector2(1.0, 0.0),
+			g + Vector2(4.5, 0.5), g + Vector2(2.3, 0.5)]))
+		b.poly("Trestle", C_WOOD_DARK.darkened(0.12), PackedVector2Array([
+			t + Vector2(-1.0, 0.0), t + Vector2(1.0, 0.0),
+			g + Vector2(-2.3, 0.5), g + Vector2(-4.5, 0.5)]))
+	_lc_log(b, cx, cy, 11.0, 8.0, Color(0.55, 0.40, 0.22))
+	var k: Vector2 = gp(cx + 2.0, cy, 10.0)
+	b.poly("SawBlade", Color(0.74, 0.76, 0.80), PackedVector2Array([
+		k + Vector2(-0.7, 0.5), k + Vector2(0.7, 0.5),
+		k + Vector2(1.5, -8.0), k + Vector2(-1.5, -8.0)]))
+	b.poly("SawHandle", C_WOOD_DARK, PackedVector2Array([
+		k + Vector2(-2.8, -8.0), k + Vector2(2.8, -8.0),
+		k + Vector2(2.8, -9.6), k + Vector2(-2.8, -9.6)]))
+
+static func _lc_chop_block(b: Builder, cx: float, cy: float) -> void:
+	b.walls(cx, cy, 3.2, 3.2, 0.0, 6.0, Color(0.46, 0.33, 0.18))
+	b.flat_roof(cx, cy, 3.2, 3.2, 6.0, Color(0.80, 0.66, 0.42), "BlockTop")
+	var t: Vector2 = gp(cx, cy, 6.0)
+	b.poly("AxeHandle", C_WOOD_DARK.lightened(0.18), PackedVector2Array([
+		t + Vector2(0.2, -1.2), t + Vector2(1.6, -0.6),
+		t + Vector2(6.6, -9.0), t + Vector2(5.2, -9.7)]))
+	b.poly("AxeHead", Color(0.74, 0.76, 0.80), PackedVector2Array([
+		t + Vector2(-1.8, -1.4), t + Vector2(1.8, -0.2),
+		t + Vector2(2.6, -2.5), t + Vector2(-0.8, -3.6)]))
+
+static func _lc_stump(b: Builder, cx: float, cy: float) -> void:
+	b.walls(cx, cy, 2.6, 2.6, 0.0, 3.4, Color(0.42, 0.30, 0.16))
+	b.flat_roof(cx, cy, 2.6, 2.6, 3.4, Color(0.78, 0.64, 0.40), "StumpTop")
+
+## Timber-framed mine adit cut into a rock knoll, not a house: dark tunnel
+## mouth under posts and a lintel, a rail track out to an ore cart, a grey
+## tailings heap with a gold fleck and a pick left against a prop rock.
+static func _mining_camp(b: Builder, hx: float, hy: float) -> void:
+	b.footprint(0, 0, hx, hy, C_APRON_STONE)
+	_mc_knoll(b, -hx + 15.0, -hy + 14.0)
+	_mc_rails(b, Vector2(-2.0, -2.0), Vector2(hx - 9.0, hy - 15.0))
+	_mc_tailings(b, hx - 12.0, -hy + 12.0)
+	_mc_cart(b, hx - 11.0, hy - 16.5)
+	_mc_pick(b, -hx + 8.0, hy - 8.0)
+	for s: Vector2 in [Vector2(2.0, hy - 7.0), Vector2(7.5, hy - 5.0)]:
+		b.poly("OreBasket", Color(0.66, 0.52, 0.30),
+			Builder._dome_pts(gp(s.x, s.y), 3.2, 3.4))
+	b.flag(-hx + 5.0, hy - 5.0, 0.0, 30.0, true)
+
+static func _mc_knoll(b: Builder, cx: float, cy: float) -> void:
+	b.ground_ellipse(cx, cy, 18.0, C_BASALT_DARK, "KnollBase")
+	var c0: Vector2 = gp(cx, cy, 0.5)
+	b.poly("Knoll", C_BASALT, Builder._dome_pts(c0, 17.0, 15.0))
+	b.poly("KnollLight", C_BASALT.lightened(0.12),
+		Builder._dome_pts(c0 + Vector2(5.0, -1.0), 9.5, 11.0))
+	var m: Vector2 = c0 + Vector2(1.0, 4.0)
+	b.poly("AditMouth", Color(0.10, 0.09, 0.08),
+		Builder._dome_pts(m + Vector2(0.0, 1.0), 6.0, 8.5))
+	for dx: float in [-6.8, 6.8]:
+		b.poly("AditPost", C_WOOD_DARK, PackedVector2Array([
+			m + Vector2(dx - 1.2, 1.6), m + Vector2(dx + 1.2, 1.6),
+			m + Vector2(dx + 1.2, -7.6), m + Vector2(dx - 1.2, -7.6)]))
+	b.poly("AditLintel", C_WOOD_DARK.lightened(0.14), PackedVector2Array([
+		m + Vector2(-8.6, -7.0), m + Vector2(8.6, -7.0),
+		m + Vector2(8.6, -9.8), m + Vector2(-8.6, -9.8)]))
+
+static func _mc_rails(b: Builder, a: Vector2, c: Vector2) -> void:
+	var dir: Vector2 = (c - a).normalized()
+	var n: Vector2 = Vector2(-dir.y, dir.x) * 2.2
+	for t: float in [0.12, 0.4, 0.68, 0.92]:
+		var p: Vector2 = a.lerp(c, t)
+		b.poly("Sleeper", C_WOOD_DARK.darkened(0.10), Builder._quad(
+			p - n * 1.5, p + n * 1.5, p + n * 1.5, p - n * 1.5, 0.0, 0.8))
+	for s: float in [-1.0, 1.0]:
+		b.poly("Rail", Color(0.42, 0.36, 0.28), Builder._quad(
+			a + n * s, c + n * s, c + n * s, a + n * s, 0.0, 1.0))
+
+static func _mc_cart(b: Builder, cx: float, cy: float) -> void:
+	var c0: Vector2 = gp(cx, cy)
+	for dx: float in [-4.2, 4.2]:
+		b.poly("CartWheel", Color(0.20, 0.18, 0.16), _disc(c0 + Vector2(dx, 0.2), 2.2, 2.4))
+	b.walls(cx, cy, 5.0, 4.0, 2.0, 9.0, Color(0.50, 0.36, 0.20))
+	b.flat_roof(cx, cy, 5.0, 4.0, 9.0, Color(0.34, 0.25, 0.13), "CartRim")
+	b.poly("CartOre", Color(0.85, 0.68, 0.22),
+		Builder._dome_pts(gp(cx, cy, 9.0), 4.6, 3.6))
+	b.poly("OreGlint", Color(0.98, 0.87, 0.42), _disc(gp(cx, cy, 11.0) + Vector2(-1.2, 0.0), 1.3, 1.0))
+
+static func _mc_tailings(b: Builder, cx: float, cy: float) -> void:
+	b.ground_ellipse(cx, cy, 11.5, Color(0.38, 0.36, 0.34), "TailingsBase")
+	b.poly("Tailings", Color(0.55, 0.52, 0.49), Builder._dome_pts(gp(cx, cy), 10.0, 7.5))
+	b.poly("TailingsLight", Color(0.66, 0.63, 0.59),
+		Builder._dome_pts(gp(cx + 2.5, cy - 1.0), 5.5, 4.8))
+	b.poly("GoldFleck", Color(0.90, 0.75, 0.30), _disc(gp(cx + 3.0, cy + 4.0), 1.3, 1.0))
+	b.poly("StoneChunk", C_BASALT.lightened(0.05), _disc(gp(cx - 6.0, cy + 6.0), 2.0, 1.5))
+
+static func _mc_pick(b: Builder, cx: float, cy: float) -> void:
+	b.post(cx, cy, 4.5, 4.2, C_BASALT, "PropRock")
+	var t: Vector2 = gp(cx, cy, 4.0)
+	b.poly("PickHandle", C_WOOD_DARK.lightened(0.22), PackedVector2Array([
+		t + Vector2(-5.6, 3.6), t + Vector2(-4.4, 4.3),
+		t + Vector2(2.0, -5.0), t + Vector2(0.8, -5.7)]))
+	b.poly("PickHead", Color(0.62, 0.64, 0.68), PackedVector2Array([
+		t + Vector2(-2.0, -6.6), t + Vector2(1.2, -7.6), t + Vector2(4.6, -4.4),
+		t + Vector2(3.6, -3.5), t + Vector2(1.0, -5.6), t + Vector2(-1.4, -4.9)]))
+
+## Rustic island gofio windmill: tapered stone tower under a conical civ
+## roof, four canvas sails facing the viewer, millstone and grain sacks.
+static func _mill(b: Builder, hx: float, hy: float) -> void:
+	b.footprint(0, 0, hx, hy, C_APRON)
+	b.ground_ellipse(hx - 12.0, hy - 14.0, 8.0, Color(0.74, 0.66, 0.48, 0.55), "ThreshFloor")
+	b.ground_ellipse(16.0, 19.0, 6.0, Color(0.70, 0.68, 0.63), "MillStone")
+	b.ground_ellipse(16.0, 19.0, 2.0, Color(0.42, 0.40, 0.37), "MillStoneEye")
+	b.walls(0, 0, 13.0, 13.0, 0.0, 4.0, b.wall2())
+	b.flat_roof(0, 0, 13.0, 13.0, 4.0, b.wall2().lightened(0.15), "FootingTop")
+	b.walls(0, 0, 11.5, 11.5, 4.0, 28.0, b.wall())
+	b.opening_right(0, 0, 11.5, 11.5, 0.30, 0.62, 0.0, 12.0, C_DOOR, "Door")
+	b.opening_left(0, 0, 11.5, 11.5, 0.36, 0.56, 16.0, 22.0, C_WINDOW, "Window")
+	b.pyramid_roof(0, 0, 13.0, 13.0, 28.0, 11.0, false, b.roof())
+	for s: Vector2 in [Vector2(-13.0, 17.0), Vector2(-8.0, 21.0), Vector2(-16.0, 22.0)]:
+		b.poly("GrainSack", Color(0.80, 0.66, 0.42),
+			Builder._dome_pts(gp(s.x, s.y), 3.2, 4.4))
+		b.poly("SackTie", Color(0.55, 0.42, 0.24),
+			_disc(gp(s.x, s.y) + Vector2(0.0, -4.2), 1.1, 0.8))
+	b.flag(13.0, -13.0, 0.0, 30.0, true)
+	var hub: Vector2 = Vector2(0.0, -31.0)
+	for i: int in range(4):
+		var a: float = TAU * 0.125 + TAU * float(i) / 4.0
+		var dir: Vector2 = Vector2(cos(a), sin(a))
+		var pn: Vector2 = Vector2(-dir.y, dir.x)
+		var tip: Vector2 = hub + dir * 19.0
+		b.poly("SailCanvas", Color(0.93, 0.90, 0.80), PackedVector2Array([
+			hub + dir * 4.0, tip, tip + pn * 5.5, hub + dir * 4.0 + pn * 3.0]))
+		b.poly("SailSeam", Color(0.78, 0.73, 0.60), PackedVector2Array([
+			hub + dir * 11.0, tip, tip + pn * 5.5, hub + dir * 11.0 + pn * 4.2]))
+		b.poly("SailSpar", C_WOOD_DARK, PackedVector2Array([
+			hub + pn * 0.8, tip + pn * 0.8, tip - pn * 0.8, hub - pn * 0.8]))
+	b.poly("SailHub", C_WOOD_DARK.darkened(0.15), _disc(hub, 2.7, 2.7))
 
 static func _dock(b: Builder, hx: float, hy: float) -> void:
 	b.footprint(0, 0, hx, hy, Color(0.55, 0.42, 0.26, 0.95))
