@@ -129,3 +129,84 @@ func test_null_layer_safe() -> void:
 	assert_eq(q.own_units(1).size(), 0)
 	assert_eq(q.enemy_buildings(1).size(), 0)
 	assert_eq(q.all_units().size(), 0)
+
+# ── 9 — Sighting layer (fog-honest targeting) ─────────────────────────────────
+# Doubles carry no unit_data/.tres, so the FogOfWar defaults apply:
+# unit LOS 5.0 × 64 = 320 px, building LOS 8.0 × 64 = 512 px.
+
+const UNIT_LOS_PX: float = 5.0 * 64.0
+
+func test_enemy_beyond_all_los_is_not_sighted() -> void:
+	var own: UnitDouble = _unit(1); own.global_position = Vector2.ZERO
+	var enemy: UnitDouble = _unit(2); enemy.global_position = Vector2(UNIT_LOS_PX + 200.0, 0)
+	var q: WorldQuery = WQ.new(_units, _buildings)
+	q.refresh_sightings(1, true)
+	assert_eq(q.enemies_sighted(1).size(), 0, "enemy outside every own LOS must not be sighted")
+	assert_null(q.nearest_sighted_enemy(1, Vector2.ZERO))
+	assert_false(q.is_sighted(1, enemy))
+	assert_eq(q.remembered_enemy_positions(1).size(), 0, "never seen -> never remembered")
+
+func test_enemy_inside_own_unit_los_is_sighted() -> void:
+	var own: UnitDouble = _unit(1); own.global_position = Vector2.ZERO
+	var enemy: UnitDouble = _unit(2); enemy.global_position = Vector2(100, 0)
+	var q: WorldQuery = WQ.new(_units, _buildings)
+	q.refresh_sightings(1, true)
+	assert_true(q.is_sighted(1, enemy))
+	assert_eq(q.sighted_enemy_units(1), [enemy])
+	assert_eq(q.nearest_sighted_enemy(1, Vector2.ZERO), enemy)
+
+func test_sighted_then_hidden_is_remembered_at_last_position() -> void:
+	var own: UnitDouble = _unit(1); own.global_position = Vector2.ZERO
+	var enemy: UnitDouble = _unit(2); enemy.global_position = Vector2(100, 0)
+	var q: WorldQuery = WQ.new(_units, _buildings)
+	q.refresh_sightings(1, true)
+	assert_true(q.is_sighted(1, enemy), "precondition: seen once")
+	enemy.global_position = Vector2(5000, 0)   # slips out of sight
+	q.refresh_sightings(1, true)
+	assert_false(q.is_sighted(1, enemy), "no longer in any LOS")
+	var mem: Dictionary = q.remembered_enemy_positions(1)
+	assert_eq(mem.get(enemy.get_instance_id()), Vector2(100, 0),
+		"remembered at the LAST SEEN position, not the current one")
+
+func test_known_enemy_buildings_keeps_remembered_drops_unseen() -> void:
+	var own: UnitDouble = _unit(1); own.global_position = Vector2.ZERO
+	var scouted: UnitDouble = _building(2); scouted.global_position = Vector2(200, 0)
+	var hidden: UnitDouble = _building(2); hidden.global_position = Vector2(9000, 0)
+	var q: WorldQuery = WQ.new(_units, _buildings)
+	q.refresh_sightings(1, true)
+	assert_eq(q.known_enemy_buildings(1), [scouted], "only the scouted building is known")
+	own.global_position = Vector2(-5000, 0)    # scout retreats: building leaves sight
+	q.refresh_sightings(1, true)
+	assert_false(q.is_sighted(1, scouted))
+	assert_eq(q.known_enemy_buildings(1), [scouted],
+		"a building once scouted stays a known target after leaving sight")
+
+func test_cloaked_enemy_is_never_sighted() -> void:
+	var own: UnitDouble = _unit(1); own.global_position = Vector2.ZERO
+	var cloaked: UnitDouble = _unit(2, true); cloaked.global_position = Vector2(50, 0)
+	var q: WorldQuery = WQ.new(_units, _buildings)
+	q.refresh_sightings(1, true)
+	assert_false(q.is_sighted(1, cloaked), "cloak filter applies to sighting too")
+	assert_eq(q.sighted_enemy_units(1).size(), 0)
+
+func test_sighting_refresh_is_throttled() -> void:
+	var own: UnitDouble = _unit(1); own.global_position = Vector2.ZERO
+	var enemy: UnitDouble = _unit(2); enemy.global_position = Vector2(100, 0)
+	var q: WorldQuery = WQ.new(_units, _buildings)
+	assert_true(q.is_sighted(1, enemy), "first query refreshes")
+	enemy.global_position = Vector2(9000, 0)
+	assert_true(q.is_sighted(1, enemy),
+		"within the throttle window the cached sighting is served, not recomputed")
+	q.refresh_sightings(1, true)
+	assert_false(q.is_sighted(1, enemy), "forced refresh recomputes")
+
+func test_freed_enemy_pruned_from_memory() -> void:
+	var own: UnitDouble = _unit(1); own.global_position = Vector2.ZERO
+	var enemy: UnitDouble = _unit(2); enemy.global_position = Vector2(100, 0)
+	var q: WorldQuery = WQ.new(_units, _buildings)
+	q.refresh_sightings(1, true)
+	assert_eq(q.remembered_enemy_positions(1).size(), 1)
+	_units.remove_child(enemy)
+	enemy.free()
+	q.refresh_sightings(1, true)
+	assert_eq(q.remembered_enemy_positions(1).size(), 0, "dead entities are forgotten")

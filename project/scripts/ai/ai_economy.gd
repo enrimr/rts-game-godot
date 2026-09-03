@@ -88,6 +88,8 @@ func find_nearest_drop_off(rtype: ResourceNode.ResourceType) -> Node2D:
 			preferred_id = "lumber_camp"
 		ResourceNode.ResourceType.GOLD, ResourceNode.ResourceType.STONE:
 			preferred_id = "mining_camp"
+		ResourceNode.ResourceType.FOOD_HUNT, ResourceNode.ResourceType.FOOD_BERRY:
+			preferred_id = "mill"
 		_:
 			return _base_drop_off()
 	var best: Node2D = null
@@ -136,37 +138,38 @@ func spawn_villager() -> void:
 	CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
 		EntityRegistry.id_of(_ai.town_center)))
 
-func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> void:
-	var age: int = AgeManager.get_age(_ai.player_id)
-
-	var target_fractions: Dictionary = {
-		ResourceNode.ResourceType.FOOD_HUNT: 0.25,
-		ResourceNode.ResourceType.WOOD:      0.20,
-		ResourceNode.ResourceType.GOLD:      0.45,
-		ResourceNode.ResourceType.STONE:     0.10,
-	}
+func _target_fractions_for_age(age: int) -> Dictionary:
 	match age:
 		GameManager.Age.DARK:
-			target_fractions = {
+			return {
 				ResourceNode.ResourceType.FOOD_HUNT: 0.60,
 				ResourceNode.ResourceType.WOOD:      0.40,
 				ResourceNode.ResourceType.GOLD:      0.00,
 				ResourceNode.ResourceType.STONE:     0.00,
 			}
 		GameManager.Age.FEUDAL:
-			target_fractions = {
+			return {
 				ResourceNode.ResourceType.FOOD_HUNT: 0.40,
 				ResourceNode.ResourceType.WOOD:      0.30,
 				ResourceNode.ResourceType.GOLD:      0.25,
 				ResourceNode.ResourceType.STONE:     0.05,
 			}
 		GameManager.Age.CASTLE:
-			target_fractions = {
+			return {
 				ResourceNode.ResourceType.FOOD_HUNT: 0.30,
 				ResourceNode.ResourceType.WOOD:      0.25,
 				ResourceNode.ResourceType.GOLD:      0.35,
 				ResourceNode.ResourceType.STONE:     0.10,
 			}
+	return {
+		ResourceNode.ResourceType.FOOD_HUNT: 0.25,
+		ResourceNode.ResourceType.WOOD:      0.20,
+		ResourceNode.ResourceType.GOLD:      0.45,
+		ResourceNode.ResourceType.STONE:     0.10,
+	}
+
+func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> void:
+	var target_fractions: Dictionary = _target_fractions_for_age(AgeManager.get_age(_ai.player_id))
 
 	var best_node: ResourceNode = null
 	var best_deficit: float = -INF
@@ -201,3 +204,152 @@ func _assign_villager(v: Villager, counts: Dictionary, assigned_total: int) -> v
 
 func _count_of_type_villager() -> int:
 	return _own_villagers().size()
+
+# ── Pastoral economy: Presa Canario herding + eating the flock ────────────────
+
+const MAX_AI_DOGS: int = 2
+const DOG_COST: Dictionary = {"food": 30, "gold": 10}
+const DOG_HERD_RADIUS: float = 2000.0
+const SLAUGHTER_RADIUS: float = 350.0
+
+## The one slaughter order allowed in flight: while this sheep still lives the
+## next order waits — its carcass feeds the hunters for a while anyway.
+var _slaughter_target: Animal = null
+
+## Own dogs, by capability (the Presa Canario has no class_name — order_herd
+## is its contract, mirroring how manage_healers finds Harimaguadas).
+func _own_dogs() -> Array:
+	var dogs: Array = []
+	for unit: Node in _ai.world.own_units(_ai.player_id):
+		if unit.has_method("order_herd"):
+			dogs.append(unit)
+	return dogs
+
+func manage_dogs() -> void:
+	var dogs: Array = _own_dogs()
+	if not _ai.is_saving_for_age_up():
+		_train_dog_if_wanted(dogs)
+	# A herding trip rides the ATTACKING state, so only truly idle dogs get a
+	# new order — that is the whole anti-spam throttle.
+	var claimed: Dictionary = {}
+	for dog: Node in dogs:
+		var target: Variant = dog.get("herd_target")
+		if target != null and is_instance_valid(target as Node):
+			claimed[(target as Node).get_instance_id()] = true
+	for dog: Node in dogs:
+		if dog.get("current_state") as int != UnitBase.UnitState.IDLE:
+			continue
+		var animal: Animal = find_herdable_animal((dog as Node2D).global_position, claimed)
+		if animal == null:
+			return
+		claimed[animal.get_instance_id()] = true
+		_ai.debug_log("HERD dog → animal at (%.0f,%.0f)" % [animal.global_position.x, animal.global_position.y])
+		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "herd",
+			[EntityRegistry.id_of(dog)] as Array[int], EntityRegistry.id_of(animal)))
+
+func _train_dog_if_wanted(dogs: Array) -> void:
+	if dogs.size() >= MAX_AI_DOGS:
+		return
+	if not ResourceManager.can_afford(_ai.player_id, DOG_COST):
+		return
+	if PopulationManager.at_cap(_ai.player_id):
+		return
+	for mill: Mill in WorldQuery.of_type(_ai.world.own_buildings(_ai.player_id), Mill):
+		if mill.state != BuildingBase.BuildingState.COMPLETE:
+			continue
+		if dogs.size() + mill.get_queue().size() >= MAX_AI_DOGS:
+			return
+		_ai.debug_log("TRAIN presa_canario at mill")
+		CommandBus.submit(ProductionCommand.make(_ai.player_id, "train",
+			EntityRegistry.id_of(mill), "presa_canario"))
+		return
+
+## Nearest live animal worth fetching: wild game or an enemy's sheep — never
+## the AI's own flock, never an ally's, never one already in tow.
+func find_herdable_animal(from: Vector2, claimed: Dictionary = {}) -> Animal:
+	var best: Animal = null
+	var best_d: float = DOG_HERD_RADIUS
+	for unit: Node in _ai.world.all_units():
+		if not (unit is Animal):
+			continue
+		var a: Animal = unit as Animal
+		if a.current_state == Animal.AnimalState.DEAD \
+				or a.current_state == Animal.AnimalState.HERDED:
+			continue
+		if a.player_id == _ai.player_id:
+			continue
+		if a.player_id >= 0 and GameManager.are_allied(a.player_id, _ai.player_id):
+			continue
+		if claimed.has(a.get_instance_id()):
+			continue
+		var d: float = from.distance_to(a.global_position)
+		if d < best_d:
+			best_d = d
+			best = a
+	return best
+
+## Eats the flock: one villager is sent to slaughter one own sheep near the TC
+## when food income is wanted — the carcass becomes a FOOD_HUNT node the
+## hunters already handle (the butcher auto-gathers it, villager hunt logic).
+func manage_flock() -> void:
+	if is_instance_valid(_slaughter_target) \
+			and _slaughter_target.current_state != Animal.AnimalState.DEAD:
+		return
+	_slaughter_target = null
+	if not is_instance_valid(_ai.town_center):
+		return
+	if not _wants_food():
+		return
+	var tc_pos: Vector2 = _ai.town_center.global_position
+	var sheep: Animal = null
+	var best_d: float = SLAUGHTER_RADIUS
+	for unit: Node in _ai.world.own_units(_ai.player_id):
+		if not (unit is Animal):
+			continue
+		var a: Animal = unit as Animal
+		if a.current_state != Animal.AnimalState.OWNED:
+			continue
+		var d: float = tc_pos.distance_to(a.global_position)
+		if d < best_d:
+			best_d = d
+			sheep = a
+	if sheep == null:
+		return
+	var butcher: Villager = _nearest_food_villager(sheep.global_position)
+	if butcher == null:
+		return
+	_slaughter_target = sheep
+	_ai.debug_log("SLAUGHTER sheep at (%.0f,%.0f)" % [sheep.global_position.x, sheep.global_position.y])
+	CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "attack",
+		[EntityRegistry.id_of(butcher)] as Array[int], EntityRegistry.id_of(sheep)))
+
+func _nearest_food_villager(from: Vector2) -> Villager:
+	var best: Villager = null
+	var best_d: float = INF
+	for v: Villager in _own_villagers():
+		if not is_instance_valid(v.gather_target) or not (v.gather_target is ResourceNode):
+			continue
+		if _food_bucket((v.gather_target as ResourceNode).resource_type) != ResourceNode.ResourceType.FOOD_HUNT:
+			continue
+		var d: float = from.distance_squared_to(v.global_position)
+		if d < best_d:
+			best_d = d
+			best = v
+	return best
+
+## Food income is wanted while the food-gatherer share has not overshot the
+## age's target fraction — the same allocation signal _assign_villager uses.
+func _wants_food() -> bool:
+	var food_assigned: int = 0
+	var assigned_total: int = 0
+	for v: Villager in _own_villagers():
+		if not is_instance_valid(v.gather_target) or not (v.gather_target is ResourceNode):
+			continue
+		assigned_total += 1
+		if _food_bucket((v.gather_target as ResourceNode).resource_type) == ResourceNode.ResourceType.FOOD_HUNT:
+			food_assigned += 1
+	if food_assigned == 0:
+		return false
+	var want: float = _target_fractions_for_age(AgeManager.get_age(_ai.player_id)) \
+		.get(ResourceNode.ResourceType.FOOD_HUNT, 0.25) as float
+	return float(food_assigned) / float(assigned_total) <= want + 0.01

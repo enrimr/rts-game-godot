@@ -4,8 +4,9 @@ var _ai  # AIPlayer — untyped Variant so dynamic property access works at runt
 
 var _built: Dictionary = {
 	"barracks": 0, "archery_range": 0, "blacksmith": 0, "stable": 0, "house": 0,
-	"lumber_camp": 0, "mining_camp": 0, "farm": 0, "dock": 0,
-	"university": 0, "market": 0, "temple": 0, "siege_workshop": 0, "wonder": 0
+	"lumber_camp": 0, "mining_camp": 0, "farm": 0, "dock": 0, "mill": 0,
+	"university": 0, "market": 0, "temple": 0, "siege_workshop": 0, "wonder": 0,
+	"watch_tower": 0
 }
 var _building_costs: Dictionary = {}
 var _build_fail_counts: Dictionary = {}
@@ -19,6 +20,8 @@ const BUILDING_SCENES: Dictionary = {
 	"house":          "res://scenes/buildings/house.tscn",
 	"lumber_camp":    "res://scenes/buildings/lumber_camp.tscn",
 	"mining_camp":    "res://scenes/buildings/mining_camp.tscn",
+	"mill":           "res://scenes/buildings/mill.tscn",
+	"watch_tower":    "res://scenes/buildings/watch_tower.tscn",
 	"farm":           "res://scenes/buildings/farm.tscn",
 	"dock":           "res://scenes/buildings/dock.tscn",
 	"fish_trap":      "res://scenes/buildings/fish_trap.tscn",
@@ -51,8 +54,16 @@ const BUILDING_FOOTPRINT: Dictionary = {
 	"siege_workshop": 60.0,
 	"lumber_camp":    52.0,
 	"mining_camp":    52.0,
+	"mill":           52.0,
+	"watch_tower":    36.0,
 	"wonder":        110.0,
 }
+
+# Watch towers per age: none in the Dark Age, one from Feudal, two from Castle.
+func tower_target_for_age(age: int) -> int:
+	if age <= GameManager.Age.DARK:
+		return 0
+	return 1 if age == GameManager.Age.FEUDAL else 2
 
 func setup(ai) -> void:
 	_ai = ai
@@ -104,6 +115,11 @@ func manage_economy_buildings() -> void:
 			and ResourceManager.can_afford(_ai.player_id, _building_costs["mining_camp"]):
 		_build_near_resource("mining_camp", ResourceNode.ResourceType.GOLD)
 
+	# One Mill, early: the food drop-off (and the herding-dog kennel) sits by
+	# the TC where the flock is brought home.
+	if _built["mill"] == 0 and ResourceManager.can_afford(_ai.player_id, _building_costs["mill"]):
+		_build("mill")
+
 	if age >= GameManager.Age.FEUDAL:
 		var farm_count: int = _built.get("farm", 0) as int
 		var _easy_mode: bool = GameSettings.difficulty == GameSettings.Difficulty.EASY or GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL
@@ -128,6 +144,19 @@ func manage_military_buildings() -> void:
 	if age >= GameManager.Age.CASTLE and barracks_count < 3 \
 			and ResourceManager.can_afford(_ai.player_id, _building_costs["barracks"]):
 		_build("barracks")
+		return
+
+	manage_defensive_towers(age)
+
+## Watch towers on the base perimeter from the Feudal Age (walls stay a
+## player-only tool for now — the AI just anchors its edge with towers).
+func manage_defensive_towers(age: int) -> void:
+	var target: int = tower_target_for_age(age)
+	if (_built.get("watch_tower", 0) as int) >= target:
+		return
+	if not ResourceManager.can_afford(_ai.player_id, _building_costs["watch_tower"]):
+		return
+	_build("watch_tower")
 
 func manage_advanced_buildings() -> void:
 	var age: int = AgeManager.get_age(_ai.player_id)
@@ -302,6 +331,10 @@ func _get_build_zone(building_id: String) -> Dictionary:
 			return {"min_r": GRID_STEP * 2.0, "max_r": GRID_STEP * 4.0, "toward_enemy": true}
 		"blacksmith":
 			return {"min_r": GRID_STEP * 1.5, "max_r": GRID_STEP * 3.0, "toward_enemy": true}
+		"mill":
+			return {"min_r": GRID_STEP * 1.0, "max_r": GRID_STEP * 2.5, "toward_enemy": false}
+		"watch_tower":
+			return {"min_r": GRID_STEP * 3.0, "max_r": GRID_STEP * 5.0, "toward_enemy": true}
 		"university", "temple", "market":
 			return {"min_r": GRID_STEP * 1.5, "max_r": GRID_STEP * 3.0, "toward_enemy": false}
 		"wonder":

@@ -37,7 +37,7 @@ func check_zone_threat() -> void:
 		anchors.append((b as Node2D).global_position)
 	if anchors.is_empty():
 		return
-	for unit: Node in _ai.world.enemy_units_visible(_ai.player_id):
+	for unit: Node in _ai.world.sighted_enemy_units(_ai.player_id):
 		var upos: Vector2 = (unit as Node2D).global_position
 		for anchor: Vector2 in anchors:
 			if upos.distance_to(anchor) <= CONTROL_ZONE_RADIUS:
@@ -354,13 +354,17 @@ func count_military() -> int:
 		+ _count_of_type("ChevalierNormand") + _count_of_type("Longbowman") + _count_of_type("Conquistador") \
 		+ _count_of_type("Tidecaller")
 
+## Fog-honest attack-target picks: only buildings the AI has actually scouted
+## (sighted now, or remembered from an earlier sighting — they don't move) are
+## candidates. The primary enemy TC stays known: starting positions are map
+## knowledge, and without a destination the AI would never leave its base.
 func _find_enemy_building_targets(max_count: int) -> Array[Node]:
 	var origin: Vector2 = _ai.town_center.global_position if is_instance_valid(_ai.town_center) else Vector2.ZERO
 	var candidates: Array[Node] = []
 	var etc: Node2D = get_primary_enemy_tc()
 	if etc != null:
 		candidates.append(etc)
-	for building: Node in _ai.world.enemy_buildings(_ai.player_id):
+	for building: Node in _ai.world.known_enemy_buildings(_ai.player_id):
 		var sv: Variant = building.get("state")
 		if sv != null and (sv as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 			continue
@@ -380,7 +384,7 @@ func find_nearest_enemy_building() -> Node:
 	if etc != null:
 		best = etc
 		best_dist = origin.distance_to(etc.global_position)
-	for building: Node in _ai.world.enemy_buildings(_ai.player_id):
+	for building: Node in _ai.world.known_enemy_buildings(_ai.player_id):
 		var sv: Variant = building.get("state")
 		if sv != null and (sv as int) == BuildingBase.BuildingState.UNDER_CONSTRUCTION:
 			continue
@@ -394,7 +398,7 @@ func find_nearest_enemy_unit() -> Node:
 	var origin: Vector2 = _ai.town_center.global_position if is_instance_valid(_ai.town_center) else Vector2.ZERO
 	var best: Node = null
 	var best_dist: float = INF
-	for unit: Node in _ai.world.enemy_units_visible(_ai.player_id):
+	for unit: Node in _ai.world.sighted_enemy_units(_ai.player_id):
 		var d: float = origin.distance_to((unit as Node2D).global_position)
 		if d < best_dist:
 			best_dist = d
@@ -449,7 +453,7 @@ func _defend_base() -> void:
 	# Find the enemy unit closest to any AI building/TC.
 	var best_enemy: Node = null
 	var best_dist: float = CONTROL_ZONE_RADIUS
-	for unit: Node in _ai.world.enemy_units_visible(_ai.player_id):
+	for unit: Node in _ai.world.sighted_enemy_units(_ai.player_id):
 		var upos: Vector2 = (unit as Node2D).global_position
 		var min_d: float = INF
 		if is_instance_valid(_ai.town_center):

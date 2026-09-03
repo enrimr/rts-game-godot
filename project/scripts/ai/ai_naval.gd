@@ -306,10 +306,12 @@ func _retreat_galley(wg: WarGalley) -> void:
 	if TerrainManager.is_ocean(dest):
 		_move_unit(wg, dest)
 
+## Fog-honest patrol targeting: only enemy ships an own unit/building can
+## actually see are engaged.
 func _find_nearest_enemy_ship(from: Vector2) -> Node:
 	var best: Node = null
 	var best_dist: float = 800.0
-	for unit: Node in _ai.world.enemy_units(_ai.player_id):
+	for unit: Node in _ai.world.sighted_enemy_units(_ai.player_id):
 		if not (unit is WarGalley or unit is FishingBoat or unit is TransportShip):
 			continue
 		var d: float = from.distance_to((unit as Node2D).global_position)

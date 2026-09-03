@@ -144,6 +144,8 @@ func _run_tick() -> void:
 	_construction.sync_built_counts()
 	_construction.manage_population()
 	_economy.manage_villagers()
+	_economy.manage_dogs()
+	_economy.manage_flock()
 	_construction.manage_economy_buildings()
 	_construction.manage_military_buildings()
 	_construction.manage_advanced_buildings()
