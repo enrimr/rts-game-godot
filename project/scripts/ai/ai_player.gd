@@ -48,6 +48,15 @@ var _threat_timer: float = 0.0
 ## attacks — economy, defense and retaliation keep running; the mission's
 ## scripted waves provide the pressure at authored moments.
 var offense_held: bool = false
+## Tutorial mode (campaign prologue): the AI runs its economy so the world
+## feels alive, but raises no army, breeds no dogs and never advances an
+## age — a rival mob mid-lesson derails the guided steps.
+var passive: bool = false
+## Campaign difficulty ramp (set by MissionDirector): a hard ceiling on the
+## standing army (-1 = the normal GameSettings target) and a brake on the
+## decision tick, so early missions face a smaller, slower rival.
+var military_cap: int = -1
+var tick_interval_scale: float = 1.0
 
 var _tc_rebuild_pending: bool = false
 
@@ -124,7 +133,7 @@ func _physics_process(delta: float) -> void:
 	_construction.update_cooldowns(delta)
 	_military.update_aggression(delta)
 
-	if _timer >= GameSettings.get_ai_tick_interval():
+	if _timer >= GameSettings.get_ai_tick_interval() * tick_interval_scale:
 		_timer = 0.0
 		_run_tick()
 
@@ -144,9 +153,11 @@ func _run_tick() -> void:
 	_construction.sync_built_counts()
 	_construction.manage_population()
 	_economy.manage_villagers()
+	_construction.manage_economy_buildings()
+	if passive:
+		return
 	_economy.manage_dogs()
 	_economy.manage_flock()
-	_construction.manage_economy_buildings()
 	_construction.manage_military_buildings()
 	_construction.manage_advanced_buildings()
 	_military.manage_research()

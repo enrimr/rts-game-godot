@@ -173,3 +173,27 @@ func test_loading_a_skirmish_save_resets_the_campaign_flag() -> void:
 	SaveManager._restore_match_config({"match_config": {}})
 	assert_eq(MatchConfig.campaign_mission, -1,
 		"a save without campaign data must never leak a MissionDirector")
+
+func test_prologue_fights_the_same_war_it_introduces() -> void:
+	var m: Dictionary = CampaignData.mission(0)
+	assert_eq(m.get("player_civ"), "canarii", "same protagonist as the campaign")
+	assert_eq((m.get("rival_civs") as Array)[0], "atlantes", "same enemy too")
+	assert_true(m.get("ai_passive", false) as bool,
+		"the scouting party must not raise an army mid-lesson")
+	assert_true(m.get("hold_offense", false) as bool)
+
+func test_difficulty_ramps_across_missions() -> void:
+	var caps: Array = []
+	for i: int in [1, 2, 3]:
+		caps.append(CampaignData.mission(i).get("ai_military_cap", 999))
+	assert_true((caps[0] as int) < (caps[1] as int) and (caps[1] as int) < (caps[2] as int),
+		"each mission faces a bigger garrison than the last")
+	assert_false(CampaignData.mission(4).has("ai_military_cap"),
+		"the finale fights at full strength")
+	assert_gt(CampaignData.mission(1).get("ai_tick_scale", 1.0) as float, 1.5,
+		"mission 1's rival also thinks slowly")
+
+func test_every_mission_has_its_outro() -> void:
+	for i: int in range(CampaignData.size()):
+		assert_false(str(CampaignData.mission(i).get("outro_key", "")).is_empty(),
+			"mission %d ends in silence" % i)

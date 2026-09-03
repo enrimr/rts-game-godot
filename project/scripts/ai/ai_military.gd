@@ -123,6 +123,9 @@ func manage_military() -> void:
 	var military: int = count_military()
 	var passive_target: int = GameSettings.get_ai_military_target_passive()
 	var target: int = passive_target if _aggression == AggressionLevel.PASSIVE else passive_target + 4
+	# Campaign ramp: early missions cap the standing army hard.
+	if _ai.military_cap >= 0:
+		target = mini(target, _ai.military_cap)
 
 	if military >= target:
 		return

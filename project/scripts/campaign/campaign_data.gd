@@ -40,6 +40,10 @@ const MISSIONS: Array = [
 		# opens the same war: Canarii against an Atlante scouting party.
 		"player_civ": "canarii", "rival_civs": ["atlantes"],
 		"starting_age": 0, "victory": "conquest", "weather": false,
+		# The scouting party keeps to itself: economy only, no army, no dogs
+		# — a lesson interrupted by a raid (or a sheep-stealing presa) is a
+		# bugged lesson.
+		"hold_offense": true, "ai_passive": true,
 		"objectives": [], "waves": [],
 	},
 	{
@@ -52,6 +56,9 @@ const MISSIONS: Array = [
 		"player_civ": "canarii", "rival_civs": ["atlantes"],
 		"starting_age": 0, "victory": "conquest", "weather": false,
 		"hold_offense": true,
+		# Difficulty ramp: mission 1 faces a small, slow garrison — the
+		# scripted waves are the real pressure. Caps rise mission by mission.
+		"ai_military_cap": 4, "ai_tick_scale": 2.0,
 		"objectives": [
 			{"type": "train", "unit": "Militia", "count": 8, "key": "CAMP_M1_OBJ_TRAIN"},
 			{"type": "build", "building": "Mill", "count": 1, "key": "CAMP_M1_OBJ_MILL"},
@@ -72,6 +79,7 @@ const MISSIONS: Array = [
 		"player_civ": "canarii", "rival_civs": ["atlantes"],
 		"starting_age": 1, "victory": "survive", "survive_sec": 720.0,
 		"weather": true, "hold_offense": true,
+		"ai_military_cap": 8, "ai_tick_scale": 1.5,
 		"objectives": [
 			{"type": "build", "building": "WatchTower", "count": 2, "key": "CAMP_M2_OBJ_TOWERS"},
 		],
@@ -91,6 +99,7 @@ const MISSIONS: Array = [
 		"map_type": 4, "map_size": 1, "resources": 1,
 		"player_civ": "canarii", "rival_civs": ["atlantes"],
 		"starting_age": 2, "victory": "conquest", "weather": true,
+		"ai_military_cap": 14, "ai_tick_scale": 1.2,
 		"objectives": [
 			{"type": "build", "building": "Dock", "count": 1, "key": "CAMP_M3_OBJ_DOCK"},
 			{"type": "destroy", "building": "Dock", "key": "CAMP_M3_OBJ_SINK"},

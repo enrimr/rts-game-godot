@@ -1088,6 +1088,10 @@ func _populate_hero_buttons(hero: HeroUnit) -> void:
 			"key": KEY_Q,
 			"raw_label": true,
 			"description": udata.hero_ability_description,
+			# Tutorial: the ability unlocks at step 9 with the military lesson
+			# — fired earlier it derails the guided steps (same gate the age
+			# advance uses at step 7).
+			"locked": _tutorial_gates_active and _tutorial_step < 9,
 		})
 	_populate_buttons(actions)
 

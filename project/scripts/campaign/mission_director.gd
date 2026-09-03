@@ -52,6 +52,12 @@ func setup(world) -> void:
 	GameManager.game_over.connect(_on_game_over)
 	if _mission.get("hold_offense", false):
 		_hold_ai_offense()
+	if _mission.get("ai_passive", false):
+		_set_ai_flag("passive")
+	if _mission.has("ai_military_cap"):
+		_set_ai_value("military_cap", _mission.get("ai_military_cap") as int)
+	if _mission.has("ai_tick_scale"):
+		_set_ai_value("tick_interval_scale", _mission.get("ai_tick_scale") as float)
 	_build_panel()
 
 ## Reload of a saved mission: rewind the clock and the checkmarks to where
@@ -78,10 +84,16 @@ func _apply_restored_state(restored: Dictionary) -> void:
 ## Missions whose pressure is authored (scripted waves) muzzle the AI's own
 ## attack launcher — it still builds, defends and retaliates.
 func _hold_ai_offense() -> void:
+	_set_ai_flag("offense_held")
+
+func _set_ai_flag(flag: String) -> void:
+	_set_ai_value(flag, true)
+
+func _set_ai_value(prop: String, value: Variant) -> void:
 	for child: Node in (_world as Node).get_children():
 		var script: Script = child.get_script() as Script
 		if script != null and script.resource_path.contains("ai_player"):
-			child.set("offense_held", true)
+			child.set(prop, value)
 
 func _process(delta: float) -> void:
 	if _finished or GameManager.state != GameManager.GameState.PLAYING:
