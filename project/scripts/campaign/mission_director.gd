@@ -193,6 +193,57 @@ func _class_of(node: Node) -> String:
 func _on_game_over(winner_id: int) -> void:
 	if winner_id == 0:
 		CampaignManager.mark_completed(_mission_index)
+		_show_outro()
+
+## Victory epilogue: the mission's closing story beat, shown as a panel above
+## the game-over overlay. Dismissing it reveals the normal end screen — the
+## arc gets its connective tissue without touching the game-over flow.
+func _show_outro() -> void:
+	var key: String = _mission.get("outro_key", "") as String
+	if key.is_empty() or _world == null:
+		return
+	var hud_root: Node = (_world.get("hud") as Node).get_node_or_null("HUDRoot")
+	if hud_root == null:
+		return
+	var veil: Control = Control.new()
+	veil.name = "MissionOutro"
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.process_mode = Node.PROCESS_MODE_ALWAYS
+	var dim: ColorRect = ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.55)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.add_child(dim)
+	var panel: PanelContainer = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", HudStyle.panel(Color(0.09, 0.10, 0.13, 0.96)))
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(560, 0)
+	veil.add_child(panel)
+	var box: VBoxContainer = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 12)
+	panel.add_child(box)
+	var title: Label = Label.new()
+	title.text = tr(_mission.get("title_key", "") as String)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_override("font", HudStyle.bold_font())
+	title.add_theme_font_size_override("font_size", 20)
+	HudStyle.add_text_outline(title)
+	box.add_child(title)
+	var body: Label = Label.new()
+	body.text = tr(key)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.custom_minimum_size = Vector2(540, 0)
+	HudStyle.add_text_outline(body)
+	box.add_child(body)
+	var btn: Button = Button.new()
+	btn.text = tr("CAMP_CONTINUE")
+	btn.custom_minimum_size = Vector2(160, 36)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	btn.pressed.connect(veil.queue_free)
+	box.add_child(btn)
+	hud_root.add_child(veil)
+	# Centering must run after the panel measures its wrapped text.
+	panel.reset_size.call_deferred()
+	panel.set_anchors_preset.call_deferred(Control.PRESET_CENTER)
 
 # ── HUD panel ────────────────────────────────────────────────────────────────
 
