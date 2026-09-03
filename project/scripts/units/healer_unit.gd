@@ -16,6 +16,9 @@ var heal_target: Node = null
 var _scan_timer: float = 0.0
 
 func _ready() -> void:
+	# The harimaguadas were consecrated WOMEN — never a gender roll here
+	# (set before super so UnitBase._ready sees it as already decided).
+	is_female = true
 	super._ready()
 	stance = Stance.PASSIVE
 
@@ -95,3 +98,27 @@ func _auto_scan(delta: float) -> void:
 ## She never fights back — a threatened healer's answer is her legs.
 func _auto_engage(_target: Node) -> void:
 	pass
+
+## Her rig carries no weapon, so the base ATTACKING swing would read as a
+## strike: instead walking is a soft sway and tending is a slow nursing lean
+## toward the patient, while the ritual motes over her bowl breathe. Rotations
+## compose on the upright billboard base, as in UnitBase._animate_body.
+func _animate_body(delta: float) -> void:
+	var body: Node2D = get_node_or_null("Body") as Node2D
+	if body == null:
+		return
+	_update_body_orientation(body)
+	var t: float = _anim_time
+	match current_state:
+		UnitState.MOVING:
+			body.rotation = IsoBillboard.UPRIGHT_ROTATION + sin(t * TAU * 1.9) * 0.05
+		UnitState.ATTACKING:
+			body.rotation = IsoBillboard.UPRIGHT_ROTATION + 0.09 + sin(t * TAU * 0.8) * 0.05
+		_:
+			body.rotation = move_toward(body.rotation,
+				IsoBillboard.UPRIGHT_ROTATION, delta * 4.0)
+	var motes: Node2D = body.get_node_or_null("Motes") as Node2D
+	if motes != null:
+		var tending: bool = current_state == UnitState.ATTACKING
+		motes.position.y = sin(t * TAU * 0.7) * (1.6 if tending else 0.8)
+		motes.modulate.a = 0.85 + sin(t * TAU * 1.1) * 0.15
