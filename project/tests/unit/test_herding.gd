@@ -169,3 +169,32 @@ func test_dog_faces_the_animal_he_was_sent_at() -> void:
 		else 1.0
 	assert_eq((dog.get_node("Body") as Node2D).scale.x, expected,
 		"the rig flips toward the herd target — he used to stare one way forever")
+
+func test_the_dog_bites_but_the_flock_comes_first() -> void:
+	var dog: CharacterBody2D = _spawn_dog()
+	assert_eq(dog.get("stance") as int, UnitBase.Stance.DEFENSIVE,
+		"a guard dog holds its post by default")
+	assert_true(dog.call("is_combat_unit") as bool)
+	assert_gt((dog.get("unit_data") as UnitResource).attack, 0.0, "he has a bite now")
+
+	var sheep: CharacterBody2D = _spawn_sheep()
+	var enemy: CharacterBody2D = (load("res://scenes/units/militia.tscn") as PackedScene)\
+		.instantiate() as CharacterBody2D
+	enemy.set("player_id", DOG_PID + 1)
+	add_child_autofree(enemy)
+	dog.global_position = Vector2.ZERO
+	sheep.global_position = Vector2(10, 0)
+	enemy.global_position = Vector2(50, 0)
+
+	dog.call("order_herd", sheep)
+	dog.call("_handle_herding")   # sheep in tow
+	dog.call("_auto_engage", enemy)
+	assert_eq(dog.get("attack_target"), null,
+		"no auto-acquired scrap abandons a herding trip")
+	assert_eq(sheep.get("current_state") as int, Animal.AnimalState.HERDED)
+
+	dog.call("order_attack", enemy)
+	assert_eq(dog.get("attack_target"), enemy,
+		"an explicit attack order is obeyed")
+	assert_ne(sheep.get("current_state") as int, Animal.AnimalState.HERDED,
+		"…and the flock is released where it stands first")

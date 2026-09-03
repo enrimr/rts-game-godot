@@ -1,10 +1,14 @@
 extends UnitBase
 
-## Presa Canario — the Mill's herding dog. It never fights: its machine is
-## fetch-and-lead. An explicit herd order (right-click an animal with a
-## dogs-only selection) walks it to the animal, puts the animal in tow
-## (a sheep converts on contact — the dog carries the owner's player_id into
-## the ConvertArea — wild game merely follows), then leads it back to the
+## Presa Canario — the Mill's herding dog, and a guard dog when pressed: a
+## villager-grade bite on a fast frame, DEFENSIVE by default. Herding is
+## sacred, though — while a trip is underway he ignores auto-engagement
+## entirely, and only an explicit attack order makes him drop the flock
+## (releasing the animal where it stands, paying the approach earned so far).
+## The herd machine: an explicit herd order (right-click an animal with a
+## dogs-only selection) walks him to the animal, puts it in tow (a sheep
+## converts on contact — the dog carries the owner's player_id into the
+## ConvertArea — wild game merely follows), then leads it back to the
 ## nearest own drop-off and releases it there: sheep join the flock, deer
 ## settle within hunting range of the base.
 
@@ -28,10 +32,7 @@ var _trot_time: float = 0.0
 
 func _ready() -> void:
 	super._ready()
-	stance = Stance.PASSIVE
-
-func is_combat_unit() -> bool:
-	return false
+	stance = Stance.DEFENSIVE
 
 func get_selection_sound() -> String:
 	return "select_dog"
@@ -48,12 +49,20 @@ func order_herd(target: Node) -> void:
 	current_state = UnitState.ATTACKING   # reused as the "working" state
 	_navigate_to(herd_target.global_position)
 
+## Herding rides the ATTACKING state (phase set); real combat is the base
+## machine untouched.
 func _physics_process(delta: float) -> void:
-	match current_state:
-		UnitState.MOVING:
-			_handle_movement(delta)
-		UnitState.ATTACKING:
-			_handle_herding()
+	if current_state == UnitState.ATTACKING and _herd_phase != HerdPhase.NONE:
+		_handle_herding()
+		return
+	super._physics_process(delta)
+
+## An explicit attack order drops the flock first — the animal is released
+## where it stands and the approach earned so far is paid out.
+func order_attack(target: Node) -> void:
+	if _herd_phase != HerdPhase.NONE:
+		_finish_herd()
+	super.order_attack(target)
 
 func _handle_herding() -> void:
 	if not is_instance_valid(herd_target) \
@@ -114,9 +123,12 @@ func _resolve_home() -> Vector2:
 			best = pos
 	return best
 
-## He never fights back — a barked warning is not a combat state.
-func _auto_engage(_target: Node) -> void:
-	pass
+## Herding is sacred: no auto-acquired scrap may abandon a flock mid-trip.
+## Idle or guarding, he engages like any DEFENSIVE unit.
+func _auto_engage(target: Node) -> void:
+	if _herd_phase != HerdPhase.NONE:
+		return
+	super._auto_engage(target)
 
 ## Quadruped footprint: the humanoid-width plinth/shadow looked like a
 ## saucer under a long low body.
@@ -141,6 +153,8 @@ func _animate_body(delta: float) -> void:
 		face = herd_target.global_position
 	elif current_state == UnitState.ATTACKING and _herd_phase == HerdPhase.LEAD:
 		face = _home
+	elif current_state == UnitState.ATTACKING and is_instance_valid(attack_target):
+		face = (attack_target as Node2D).global_position
 	elif current_state == UnitState.MOVING and is_instance_valid(nav_agent) \
 			and not nav_agent.is_navigation_finished():
 		face = nav_agent.target_position
