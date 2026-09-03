@@ -150,17 +150,25 @@ func _update_chip(group_id: int, members: Array) -> void:
 	count.text = str(members.size())
 	chip.tooltip_text = "%s %d (%d)" % [tr("UI_CONTROL_GROUP") \
 		if tr("UI_CONTROL_GROUP") != "UI_CONTROL_GROUP" else "Group", group_id, members.size()]
-	var scene_path: String = _dominant_scene_path(members)
-	if scene_path.is_empty() or _chip_icons.get(group_id, "") == scene_path:
+	var rep: Node = _dominant_member(members)
+	if rep == null:
 		return
-	_chip_icons[group_id] = scene_path
+	# Heroes share the militia rig's scene path, so the cache key must carry
+	# the hero identity or a hero chip would keep a plain-militia icon.
+	var icon_key: String = str(rep.call("data_source_path")) \
+		if rep is HeroUnit else rep.scene_file_path
+	if icon_key.is_empty() or _chip_icons.get(group_id, "") == icon_key:
+		return
+	_chip_icons[group_id] = icon_key
 	(chip.get_node("TypeIcon") as TextureRect).texture = \
-		IconBaker.get_icon(scene_path, local_player_id)
+		IconBaker.get_icon_for(rep, local_player_id)
 
-## Most frequent member scene: the chip background shows what the group
-## mostly is (10 knights + 2 monks reads as a knight chip).
-func _dominant_scene_path(members: Array) -> String:
+## Most frequent member: the chip background shows what the group mostly is
+## (10 knights + 2 monks reads as a knight chip). Returns a representative
+## NODE so hero identity survives the shared-rig scene path.
+func _dominant_member(members: Array) -> Node:
 	var counts: Dictionary = {}
+	var reps: Dictionary = {}
 	var best_path: String = ""
 	var best_count: int = 0
 	for member: Node in members:
@@ -170,10 +178,12 @@ func _dominant_scene_path(members: Array) -> String:
 		if path.is_empty():
 			continue
 		counts[path] = (counts.get(path, 0) as int) + 1
+		if not reps.has(path) or member is HeroUnit:
+			reps[path] = member
 		if (counts[path] as int) > best_count:
 			best_count = counts[path] as int
 			best_path = path
-	return best_path
+	return reps.get(best_path) as Node if not best_path.is_empty() else null
 
 func _sort_chips() -> void:
 	var ids: Array = _chips.keys()

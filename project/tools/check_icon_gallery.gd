@@ -65,6 +65,36 @@ func _ready() -> void:
 		else:
 			print("  ok: %s" % name)
 
+	# Hero icons bake from configured mannequins, not their shared rig scene:
+	# the miniature must show THE hero (dress, mount, gender), not a militia.
+	for hero_cfg: Array in [["res://resources/units/hero_doramas.tres", false],
+			["res://resources/units/hero_guayarmina.tres", true],
+			["res://resources/units/hero_quijote.tres", false]]:
+		var data_path: String = hero_cfg[0] as String
+		var rig: Node2D = (load(HeroDress.scene_path_for(data_path)) as PackedScene)\
+			.instantiate() as Node2D
+		rig.set_script(load("res://scripts/units/hero_unit.gd"))
+		rig.set("unit_data", load(data_path))
+		rig.set("player_id", 0)
+		rig.set("is_female", hero_cfg[1] as bool)
+		add_child(rig)
+		rig.position = Vector2(-4000, -4000)
+		var htex: Texture2D = IconBaker.get_icon_for(rig, 0)
+		var hname: String = data_path.get_file().get_basename()
+		var himg: Image = (htex as ImageTexture).get_image()
+		for _i: int in range(WAIT_FRAMES):
+			await get_tree().process_frame
+			himg = (htex as ImageTexture).get_image()
+			if not _same_image(himg, placeholder):
+				break
+		himg.save_png("%s/icon_%s.png" % [shot_dir, hname])
+		if _same_image(himg, placeholder):
+			failed.append(hname)
+			print("  PLACEHOLDER (rombo): %s" % hname)
+		else:
+			print("  ok: %s" % hname)
+		rig.queue_free()
+
 	print("ICON_GALLERY: %d scenes, %d stuck on the placeholder" % [paths.size(), failed.size()])
 	if not failed.is_empty():
 		print("ICON_GALLERY failed: %s" % ", ".join(failed))

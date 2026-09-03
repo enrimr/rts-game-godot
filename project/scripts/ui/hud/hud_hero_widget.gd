@@ -110,7 +110,13 @@ func _build_widget() -> void:
 	_restyle()
 
 func _bake_icon() -> void:
-	if is_instance_valid(_icon):
+	if not is_instance_valid(_icon):
+		return
+	# The real hero when we have one — mount rig, dress and gender included;
+	# the plain rig only as the pre-spawn fallback.
+	if is_instance_valid(_hero):
+		_icon.texture = IconBaker.get_icon_for(_hero, local_player_id)
+	else:
 		_icon.texture = IconBaker.get_icon(HERO_ICON_SCENE, local_player_id)
 
 func _restyle() -> void:
@@ -133,6 +139,8 @@ func _refresh() -> void:
 		return
 	if not is_instance_valid(_hero):
 		_hero = _find_hero()
+		if is_instance_valid(_hero):
+			_bake_icon()
 	if _hero_dead or not is_instance_valid(_hero):
 		_hp_bar.value = 0.0
 		return
@@ -176,6 +184,7 @@ func _on_unit_spawned(unit: Node, player_id: int) -> void:
 	_hero = unit
 	_hero_dead = false
 	_alert = false
+	_bake_icon()
 	_restyle()
 	_refresh()
 

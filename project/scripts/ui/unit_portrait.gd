@@ -71,9 +71,8 @@ func setup(unit: Node) -> void:
 				display_name = name_val
 
 	_icon_backdrop.color = PlayerColors.get_color(pid).darkened(0.55)
-	var scene_path: String = unit.scene_file_path if is_instance_valid(unit) else ""
-	if not scene_path.is_empty():
-		_icon_rect.texture = IconBaker.get_icon(scene_path, pid)
+	if is_instance_valid(unit) and not unit.scene_file_path.is_empty():
+		_icon_rect.texture = IconBaker.get_icon_for(unit, pid)
 	_name_label.text = display_name.left(8)
 
 	var hp_percent: float = 100.0

@@ -34,18 +34,51 @@ static func get_icon(scene_path: String, player_id: int) -> Texture2D:
 	_bake_async(texture, scene_path, player_id)
 	return texture
 
+## Node-aware icon: heroes are a script+data+dress over a shared rig, so
+## baking their scene_file_path produced a plain militia — the miniature
+## never matched the sprite on the map. A hero bakes from a mannequin
+## configured exactly like the real one (mount rig, unit_data, gender);
+## everything else falls back to the plain scene bake.
+static func get_icon_for(entity: Node, player_id: int) -> Texture2D:
+	if entity is HeroUnit:
+		var data_path: String = str(entity.call("data_source_path"))
+		var female: bool = entity.get("is_female") == true
+		var key: String = "hero|%s|%s|%s" % [data_path, female,
+			CivStyle.civ_id_for_player(player_id)]
+		if _cache.has(key):
+			return _cache[key] as Texture2D
+		var texture: ImageTexture = ImageTexture.create_from_image(_placeholder_image(player_id))
+		_cache[key] = texture
+		var rig: Node2D = (load(HeroDress.scene_path_for(data_path)) as PackedScene)\
+			.instantiate() as Node2D
+		rig.set_script(load("res://scripts/units/hero_unit.gd"))
+		if not data_path.is_empty():
+			rig.set("unit_data", load(data_path))
+		rig.set("player_id", player_id)
+		rig.set("is_female", female)
+		_bake_async(texture, "", player_id, rig)
+		return texture
+	return get_icon(entity.scene_file_path, player_id)
+
 ## Call on match (re)start: players may pick different civilizations.
 static func clear_cache() -> void:
 	_cache.clear()
 
-static func _bake_async(target: ImageTexture, scene_path: String, player_id: int) -> void:
+static func _bake_async(target: ImageTexture, scene_path: String, player_id: int,
+		prebuilt: Node2D = null) -> void:
 	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	if tree == null or tree.root == null or not ResourceLoader.exists(scene_path):
+	if tree == null or tree.root == null:
+		if prebuilt != null:
+			prebuilt.free()
 		return
-	var packed: PackedScene = load(scene_path) as PackedScene
-	if packed == null:
-		return
-	var entity: Node2D = packed.instantiate() as Node2D
+	var entity: Node2D = prebuilt
+	if entity == null:
+		if not ResourceLoader.exists(scene_path):
+			return
+		var packed: PackedScene = load(scene_path) as PackedScene
+		if packed == null:
+			return
+		entity = packed.instantiate() as Node2D
 	if entity == null:
 		return
 
@@ -67,10 +100,13 @@ static func _bake_async(target: ImageTexture, scene_path: String, player_id: int
 	viewport.add_child(camera)
 
 	# player_id must be assigned before _ready so civ style/HP passes see it.
-	entity.set("player_id", player_id)
-	# Deterministic icon: skip the 50/50 random visual gender roll.
-	if "is_female" in entity:
-		entity.set("is_female", false)
+	# A prebuilt mannequin (hero) arrives fully configured — including its
+	# real gender, which the deterministic false would destroy.
+	if prebuilt == null:
+		entity.set("player_id", player_id)
+		# Deterministic icon: skip the 50/50 random visual gender roll.
+		if "is_female" in entity:
+			entity.set("is_female", false)
 	# The prop is a mannequin, not a citizen. Its per-frame logic reads WORLD
 	# state from inside the bake viewport, where local (0,0) is the map
 	# centre — on island maps that's OCEAN, so the terrain-containment check
