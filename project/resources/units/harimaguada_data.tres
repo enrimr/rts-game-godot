@@ -6,7 +6,7 @@
 script = ExtResource("1_hari")
 id = "harimaguada"
 display_name = "Harimaguada"
-description = "Canarii priestess-healer. Never fights: follows the wounded and mends them on the field."
+description = "Island priestess-healer. The harimaguadas belong to the archipelago, not to any banner: they tend every army that respects their shrines. Never fights — follows the wounded and mends them on the field."
 max_health = 40.0
 move_speed = 118.0
 line_of_sight = 5.0
