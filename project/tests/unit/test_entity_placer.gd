@@ -70,21 +70,28 @@ func test_starting_sheep_spawn_next_to_each_town_center() -> void:
 		_placer.register_town_center(tc)
 	_placer.spawn_animals(units, tcs)
 
-	var sheep: int = 0
+	var home_sheep: int = 0
+	var wild_sheep: int = 0
 	var deer: int = 0
 	for child: Node in units.get_children():
 		if child is Sheep:
-			sheep += 1
-			var d: float = mini(
-				roundi((child as Node2D).global_position.distance_to(tcs[0])),
-				roundi((child as Node2D).global_position.distance_to(tcs[1])))
-			assert_lt(float(d), 400.0, "starting sheep graze within reach of a TC")
+			var d: float = minf(
+				(child as Node2D).global_position.distance_to(tcs[0]),
+				(child as Node2D).global_position.distance_to(tcs[1]))
+			if d < 400.0:
+				home_sheep += 1
+			else:
+				wild_sheep += 1
+				assert_gt(d, 520.0,
+					"wild flocks graze in CONTESTED ground, never on a doorstep")
 		else:
 			deer += 1
 			for tc: Vector2 in tcs:
 				assert_gt((child as Node2D).global_position.distance_to(tc), 300.0,
 					"neutral deer are hunted for, not handed over")
-	assert_eq(sheep, 8, "4 sheep per town center")
+	assert_eq(home_sheep, 8, "4 starting sheep per town center")
+	assert_gt(wild_sheep, 0,
+		"wild flocks dot the open map — the herding dog needs work to race for")
 	assert_gt(deer, 0, "the map holds neutral huntables")
 
 # 4 — islets feed the same array the nav mesh reads

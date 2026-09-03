@@ -224,6 +224,43 @@ func spawn_animals(units_layer: Node2D, tc_positions: Array[Vector2]) -> void:
 		_place_animal(deer_scene, units_layer, pos, false)
 		placed_deer += 1
 
+	# Wild sheep flocks in the open, deliberately AWAY from every TC: they are
+	# contested — the Presa Canario's whole game is racing the rival to fetch
+	# them home. Flock count scales with map size; each flock is a small
+	# cluster so one dog trip collects several convertible sheep. The flocks
+	# draw from their own seeded stream: spending _rng draws here would
+	# reshuffle every placement downstream (the census showed Plains losing
+	# 98 trees), and the intended change is MORE SHEEP, not a new forest.
+	var flock_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	flock_rng.seed = hash("wild-flocks-%d" % _rng.seed)
+	var flocks: int = 2 + int(_map_half / 900.0)
+	for _flock: int in range(flocks):
+		for _attempt: int in range(MAX_PLACE_TRIES * 4):
+			var centre: Vector2 = Vector2(
+				flock_rng.randf_range(-_map_half * 0.8, _map_half * 0.8),
+				flock_rng.randf_range(-_map_half * 0.8, _map_half * 0.8))
+			var near_tc: bool = false
+			for tc: Vector2 in tc_positions:
+				if centre.distance_to(tc) < 520.0:
+					near_tc = true
+					break
+			if near_tc or TerrainManager.is_impassable_for(centre, "") \
+					or not _is_free(centre, R_ANIMAL):
+				continue
+			var flock_size: int = 2 + flock_rng.randi_range(0, 2)
+			var grazing: int = 0
+			for _s: int in range(flock_size * 3):
+				if grazing >= flock_size:
+					break
+				var pos: Vector2 = centre + Vector2(
+					flock_rng.randf_range(-70.0, 70.0), flock_rng.randf_range(-70.0, 70.0))
+				if TerrainManager.is_impassable_for(pos, "") or not _is_free(pos, R_ANIMAL):
+					continue
+				_register(pos, R_ANIMAL)
+				_place_animal(sheep_scene, units_layer, pos, true)
+				grazing += 1
+			break
+
 func _place_animal(scene: PackedScene, units_layer: Node2D,
 		pos: Vector2, is_sheep: bool) -> void:
 	var animal: Node2D = scene.instantiate() as Node2D
