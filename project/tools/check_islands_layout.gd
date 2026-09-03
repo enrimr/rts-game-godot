@@ -36,6 +36,10 @@ func _ready() -> void:
 	add_child(_world)
 	await get_tree().process_frame
 	await get_tree().process_frame
+	# The NavigationServer syncs regions on its own schedule; on slow machines
+	# (CI runners) two frames are not enough and the ocean queries below answer
+	# garbage — poll until the map responds (same cure as check_nav_islands).
+	await _wait_ocean_synced(8.0)
 
 	print("ISLANDS_LAYOUT players=%d map_size=%d map_half=%d seed=%s" % [
 		MatchConfig.rival_count + 1, MatchConfig.map_size,
@@ -50,6 +54,20 @@ func _ready() -> void:
 func _fail(msg: String) -> void:
 	print("    FAIL: %s" % msg)
 	_failures += 1
+
+func _wait_ocean_synced(timeout_sec: float) -> void:
+	var region: NavigationRegion2D = _world.get_node_or_null(
+		"OceanNavigationRegion2D") as NavigationRegion2D
+	if region == null:
+		return
+	var probe: Vector2 = TerrainManager.nearest_ocean((_world.drop_off as Node2D).global_position)
+	var deadline: int = Time.get_ticks_msec() + int(timeout_sec * 1000.0)
+	while Time.get_ticks_msec() < deadline:
+		var snapped: Vector2 = NavigationServer2D.map_get_closest_point(
+			region.get_navigation_map(), probe)
+		if probe.distance_to(snapped) < 80.0:
+			return
+		await get_tree().create_timer(0.4).timeout
 
 # ── Land polygon layout ─────────────────────────────────────────────────────
 
