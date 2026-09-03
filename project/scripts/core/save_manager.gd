@@ -433,10 +433,16 @@ func _collect_tc_state(tc: Node) -> Dictionary:
 
 func _collect_unit(unit: Node) -> Dictionary:
 	var cn: String = _class_name_of(unit)
-	if cn.is_empty():
+	# The true scene beats the class table: `is`-checks degraded every unique
+	# unit to its base class on load (a Menceyes Guard came back a Militia),
+	# and anything OUTSIDE the table — all siege, the Harimaguada, the Presa
+	# Canario — was silently DROPPED from the save.
+	var scene: String = unit.scene_file_path
+	if cn.is_empty() and scene.is_empty():
 		return {}
 	var u: Dictionary = {
 		"class":     cn,
+		"scene":     scene,
 		"position":  _v2((unit as Node2D).global_position),
 		"player_id": unit.get("player_id") as int,
 		"civ_id":    str(unit.get("civ_id")) if unit.get("civ_id") != null else "",
@@ -457,10 +463,14 @@ func _collect_unit(unit: Node) -> Dictionary:
 
 func _collect_building(bld: Node, role: String) -> Dictionary:
 	var cn: String = _class_name_of(bld)
-	if cn.is_empty():
+	# Same scene-beats-table rule as units: the Mill (and any future
+	# building) must survive a save without a table entry.
+	var scene: String = bld.scene_file_path
+	if cn.is_empty() and scene.is_empty():
 		return {}
 	var b: Dictionary = {
 		"class":                 cn,
+		"scene":                 scene,
 		"role":                  role,
 		"position":              _v2((bld as Node2D).global_position),
 		"rotation":              (bld as Node2D).rotation,
@@ -580,7 +590,9 @@ func _restore_units(world: Node, data: Dictionary) -> void:
 	for entry: Variant in (data.get("units", []) as Array):
 		var u: Dictionary = entry as Dictionary
 		var cn: String = str(u.get("class", ""))
-		var scene_path: String = UNIT_SCENES.get(cn, "") as String
+		var scene_path: String = str(u.get("scene", ""))
+		if scene_path.is_empty() or not ResourceLoader.exists(scene_path):
+			scene_path = UNIT_SCENES.get(cn, "") as String
 		if cn == "HeroUnit":
 			# Mounted heroes (Quijote on Rocinante) restore onto their mount rig.
 			scene_path = HeroDress.scene_path_for(str(u.get("unit_data_path", "")))
@@ -642,7 +654,9 @@ func _restore_buildings(world: Node, data: Dictionary) -> void:
 		var b: Dictionary = entry as Dictionary
 		var cn: String   = str(b.get("class", ""))
 
-		var scene_path: String = BUILDING_SCENES.get(cn, "") as String
+		var scene_path: String = str(b.get("scene", ""))
+		if scene_path.is_empty() or not ResourceLoader.exists(scene_path):
+			scene_path = BUILDING_SCENES.get(cn, "") as String
 		if scene_path.is_empty() or buildings_layer == null:
 			continue
 		var packed: PackedScene = load(scene_path) as PackedScene
@@ -674,6 +688,17 @@ func _apply_building_state(bld: Node, b: Dictionary) -> void:
 	var st: int = b.get("state", -1) as int
 	if st >= 0:
 		bld.set("state", st)
+	# State lands AFTER _ready and construction_complete never fires on a
+	# restore, so a loaded camp/dock/mill missed its drop-off registration —
+	# villagers in loaded games hauled everything back to the TC.
+	if st == BuildingBase.BuildingState.COMPLETE and bld.has_method("_register_drop_off"):
+		var has_drop: bool = false
+		for c: Node in bld.get_children():
+			if c is DropOffBuilding:
+				has_drop = true
+				break
+		if not has_drop:
+			bld.call("_register_drop_off")
 
 	bld.set("construction_progress", b.get("construction_progress", 0.0) as float)
 

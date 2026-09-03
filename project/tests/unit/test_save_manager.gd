@@ -720,3 +720,45 @@ func test_animals_survive_collection() -> void:
 	var deer: Node2D = (load("res://scenes/units/animal.tscn") as PackedScene).instantiate() as Node2D
 	add_child_autofree(deer)
 	assert_eq(SaveManager._collect_unit(deer).get("class"), "Animal")
+
+# ---------------------------------------------------------------------------
+# 9. Scene-beats-table collection (the silent-drop / degradation fix)
+# ---------------------------------------------------------------------------
+
+func _instance_for_save(path: String) -> Node2D:
+	var node: Node2D = (load(path) as PackedScene).instantiate() as Node2D
+	node.set("player_id", 0)
+	add_child_autofree(node)
+	return node
+
+func test_collect_unit_no_longer_drops_off_table_units() -> void:
+	var hari: Node2D = _instance_for_save("res://scenes/units/harimaguada.tscn")
+	var d: Dictionary = SaveManager._collect_unit(hari)
+	assert_false(d.is_empty(), "the Harimaguada used to vanish from every save")
+	assert_eq(str(d.get("scene", "")), "res://scenes/units/harimaguada.tscn")
+
+func test_collect_unit_keeps_unique_units_unique() -> void:
+	var guard: Node2D = _instance_for_save("res://scenes/units/menceyes_guard.tscn")
+	var d: Dictionary = SaveManager._collect_unit(guard)
+	assert_false(d.is_empty(), "unique units used to be dropped or degraded")
+	assert_eq(str(d.get("scene", "")), "res://scenes/units/menceyes_guard.tscn",
+		"the scene restores the real Menceyes Guard")
+
+func test_collect_building_saves_the_mill() -> void:
+	var mill: Node2D = _instance_for_save("res://scenes/buildings/mill.tscn")
+	var d: Dictionary = SaveManager._collect_building(mill, "generic")
+	assert_false(d.is_empty(), "a building without a table entry must still save")
+	assert_eq(str(d.get("scene", "")), "res://scenes/buildings/mill.tscn")
+
+func test_apply_building_state_reregisters_the_drop_off() -> void:
+	var camp: Node2D = _instance_for_save("res://scenes/buildings/lumber_camp.tscn")
+	for c: Node in camp.get_children():
+		if c is DropOffBuilding:
+			c.free()
+	SaveManager._apply_building_state(camp, {"state": BuildingBase.BuildingState.COMPLETE})
+	var has_drop: bool = false
+	for c: Node in camp.get_children():
+		if c is DropOffBuilding:
+			has_drop = true
+	assert_true(has_drop,
+		"a restored COMPLETE camp registers its drop-off — loaded games hauled everything to the TC")
