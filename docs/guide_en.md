@@ -240,7 +240,7 @@ Four resources drive everything in *Calima*. You start with 200 Food, 75 Wood, a
 
 | Resource | How to gather |
 |---|---|
-| **Food** | Send Villagers to berry bushes, hunt animals, or build Farms. The Mill is the food drop-off and trains Presa Canario herding dogs, which lead animals (including enemy sheep, which convert on the way) back to your base. On Islands maps, Fishing Boats pull food from ocean nodes and Fish Traps provide a passive stream. |
+| **Food** | Send Villagers to berry bushes, hunt animals, or build Farms. The Mill is the food drop-off and trains Presa Canario herding dogs, which lead animals (including enemy sheep, which convert on the way) back to your base — every trip also pays food for how far the dog brought the animal home. Wild sheep flocks graze the open map, and the AI raises dogs of its own, so unclaimed flocks are a race. On Islands maps, Fishing Boats pull food from ocean nodes and Fish Traps provide a passive stream. |
 | **Wood** | Order Villagers to chop trees. Build a Lumber Camp close to the forest — it acts as the drop-off point. |
 | **Gold** | Mine gold deposits. Build a Mining Camp nearby. The Market also converts other resources to gold. |
 | **Stone** | Mine stone quarries. Same drop-off logic as gold: Mining Camp required. Controlling a volcanic caldera tile provides passive stone income. |
@@ -306,7 +306,7 @@ Heroes are not trained — each civilization starts with one, free of charge. If
 |---|---|---|
 | **Lumber Camp** | 100 Wood | Wood drop-off point; place close to trees |
 | **Mining Camp** | 100 Wood | Gold and stone drop-off point |
-| **Mill** | 100 Wood | Food drop-off point; trains the Presa Canario herding dog (30 Food + 10 Gold); queue cap 5 |
+| **Mill** | 100 Wood | Food drop-off point; trains the Presa Canario herding dog (30 Food + 10 Gold); queue cap 5. The dog also bites back when its post or flock is threatened, but never abandons a herding trip on its own |
 | **Farm** | 60 Wood | Continuous food source; Villager works it passively |
 | **Fish Trap** | 75 Wood | Built on ocean tiles by Fishing Boats; passive food without travel |
 | **Market** | 175 Wood | Sell/buy resources for gold; requires Feudal Age (Fenicios can build from Dark Age) |

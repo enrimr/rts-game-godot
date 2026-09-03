@@ -107,6 +107,19 @@ phase-2 interpolation buffer absorbs latency).
   assigned player (identity comes from the connection, never the payload — a
   hostile client cannot order another player's units), and runs it through
   `CommandBus.submit_remote`.
+- **Wire hardening (shipped)**: `_rx_command` also brands every deserialized
+  command `remote_origin = true` (a `GameCommand` field, never serialized).
+  With that brand, privileged local-only verbs refuse the command at execute
+  time: `PlaceBuildingCommand` rejects `instant` (the host AI's path) and any
+  building type outside the player build menu (`EXTRA_SCENES`), and
+  `UnitTargetCommand` rejects `board_instant` (a distance-free teleport off
+  the wire). Every remote placement is additionally re-validated host-side
+  via the static `WorldPlacement.placement_legal` — terrain class (land /
+  coastal dock / fully-ocean fish trap) plus physics overlap, the same rules
+  the client's ghost preview runs and a modified client can skip
+  (`placement_shape_size` caches each type's collision rect). The host's own
+  paths keep every privilege and an honest client loses nothing. Pinned by
+  `tests/unit/test_wire_hardening.gd`.
 - **Match start**: the host freezes a `snapshot_config()` of MatchConfig plus
   a shared seed (`MatchConfig.forced_seed`, read by `GameWorld._ready` ahead
   of the CALIMA_SEED env) and broadcasts it; every machine loads game_world
@@ -253,6 +266,41 @@ running a mixed human + AI-slot match — asserts the AI brain exists only for
 the AI rival, the command arrived stamped as player 1, and the scout
 physically moved in its simulation; the client then asserts the movement
 came BACK through the replication stream and its own mirror scout moved.
+
+## Save / Load (schema v2)
+
+`SaveManager` (autoload, `scripts/core/save_manager.gd`) writes JSON saves to
+`user://saves/` (99 slots). `SCHEMA_VERSION` is 2 and is **read-enforced**:
+a save newer than the build is refused with a reason; an older one loads with
+defaults for every key it lacks (a minimal v1-shaped save runs the full
+restore path — pinned by `tests/unit/test_save_state_v2.gd`).
+
+Beyond the v1 baseline (entities, stockpiles, ages, fog, MatchRng state,
+resource nodes), schema 2 persists everything the player already paid for:
+
+- **In-flight research** — `TechManager.collect_state`/`restore_state`.
+  Research is paid at enqueue, so it must survive the round-trip without
+  re-charging. TechManager keys research by building instance id, which does
+  not survive a load: SaveManager maps each researching building to its
+  **index in the saved buildings array** (`"tc"` for the scene Town Center)
+  and the restore rebuilds the same array in the same order. Related fix:
+  `TechManager.reset_match_state` (called from `WorldSetup`) drops in-flight
+  research from a PREVIOUS match cold at match start — left in place, its
+  refund sweep credited stale spend into the new match's stockpile; a loaded
+  game restores its research AFTER that reset.
+- **Garrisons** — occupants of a building or transport are saved as records
+  **nested** under their holder (`_collect_garrison`; the free-unit sweep
+  skips them via `_garrisoned_unit_ids`) and restored back INSIDE via
+  `garrison_unit`/`board` — they used to duplicate as free-standing units at
+  their pre-boarding spot.
+- **Unit stances** — each unit record carries its `stance`.
+- **Weather** — `WeatherManager.collect_state`/`apply_saved_state` snapshot
+  the live state machine (phase, timers, pending event, wind); on restore the
+  machine re-emits the signals it would have, so a forecast in progress
+  re-warns and an active event picks its overlay back up.
+
+Multiplayer saves additionally carry the roster sheet and per-player fog (see
+the resume flow in the Multiplayer section).
 
 ## Economy System
 
@@ -602,10 +650,18 @@ When a `TechnologyResource` has non-empty `upgrade_from_unit_id` and `upgrade_to
 
 | Module | Class | File | Responsibilities |
 |---|---|---|---|
-| `_construction` | `AIConstruction` | `scripts/ai/ai_construction.gd` | Building placement; placement-failure cooldowns (`_build_fail_counts`, `_build_cooldowns`); population-house management; loads all building costs at startup via `BuildingResource.get_cost_dict()` |
-| `_economy` | `AIEconomy` | `scripts/ai/ai_economy.gd` | Villager spawning and idle-villager assignment; per-age resource-type target fractions; age-advance trigger; `find_nearest_resource` / `find_nearest_drop_off` helpers |
-| `_military` | `AIMilitary` | `scripts/ai/ai_military.gd` | `AggressionLevel` enum (PASSIVE / ALERTED / AGGRESSIVE) with decay timer; Barracks, Stable, and SiegeWorkshop training; tech research priority queue (`_TECH_PRIORITY`); multi-target attack dispatch; control-zone threat detection and base defense |
-| `_naval` | `AINaval` | `scripts/ai/ai_naval.gd` | Naval unit training; galley patrol and HP-based retreat (`GALLEY_RETREAT_HP_RATIO = 0.30`); transport boarding and `order_move_then_unload` assault sequence; fish-trap construction; idle land-unit attack once units have crossed to the enemy island |
+| `_construction` | `AIConstruction` | `scripts/ai/ai_construction.gd` | Building placement; placement-failure cooldowns (`_build_fail_counts`, `_build_cooldowns`); population-house management; loads all building costs at startup via `BuildingResource.get_cost_dict()`; builds a Mill early (food drop-off near the TC) and Watch Towers on the base perimeter from the Feudal Age (`tower_target_for_age`: 0 Dark, 1 Feudal, 2 Castle+) |
+| `_economy` | `AIEconomy` | `scripts/ai/ai_economy.gd` | Villager spawning and idle-villager assignment; per-age resource-type target fractions (`_target_fractions_for_age`); age-advance trigger; `find_nearest_resource` / `find_nearest_drop_off` helpers (hunt/berry food prefers the Mill); pastoral economy — `manage_dogs` and `manage_flock` (see below) |
+| `_military` | `AIMilitary` | `scripts/ai/ai_military.gd` | `AggressionLevel` enum (PASSIVE / ALERTED / AGGRESSIVE) with decay timer; Barracks, Stable, and SiegeWorkshop training; tech research priority queue (`_TECH_PRIORITY`); multi-target attack dispatch; control-zone threat detection and base defense — threat scans, attack-target picks and base defense all run on the fog-honest sighted/known queries |
+| `_naval` | `AINaval` | `scripts/ai/ai_naval.gd` | Naval unit training; galley patrol and HP-based retreat (`GALLEY_RETREAT_HP_RATIO = 0.30`) — patrols engage only sighted enemy ships; transport boarding and `order_move_then_unload` assault sequence; fish-trap construction; idle land-unit attack once units have crossed to the enemy island |
+
+### Fog-honest sighting layer (WorldQuery)
+
+The AI is no longer omniscient. `WorldQuery` (`scripts/ai/world_query.gd`) carries a sighting layer: an enemy entity is **sighted** while inside the line-of-sight radius of any own unit or building (LOS read from the entity's `.tres`, converted at FogOfWar's 64 px per LOS unit), and once seen a **building** is remembered at its last position while a **unit** fades back into the fog — the same AoE2 semantics the minimap already gives the human. The refresh (`refresh_sightings`) is a throttled flat-array sweep (`SIGHT_REFRESH_TICKS` 36 physics frames, ~1.7×/s per AI) so query volume never multiplies the cost. Query surface: `sighted_enemy_units` (seen now, cloak-honest), `known_enemy_buildings` (seen now or remembered), `enemies_sighted` / `nearest_sighted_enemy` / `is_sighted` / `remembered_enemy_positions`. The primary enemy TC (`get_primary_enemy_tc`) deliberately stays map knowledge — starting positions are scouting-free information, and without a destination the AI would never leave home. Semantics pinned by `tests/unit/test_world_query.gd`.
+
+### Pastoral economy (dogs and mutton)
+
+`AIEconomy.manage_dogs` trains up to `MAX_AI_DOGS` (2) Presa Canarios at a complete Mill (`DOG_COST` 30F/10G, capped counting the Mill's queue) and sends each **idle** dog at the nearest unclaimed live animal within `DOG_HERD_RADIUS` — wild flocks and enemy sheep included, never its own or an ally's — via the same CommandBus `"herd"` verb the player uses; a herding trip rides the ATTACKING state, so idleness is the whole anti-spam throttle. `manage_flock` eats the herd: while food income is wanted (`_wants_food`, the same per-age target fraction `_assign_villager` uses) and no slaughter is already in flight, one hunting villager is sent to kill one own OWNED sheep within `SLAUGHTER_RADIUS` of the TC — the carcass becomes a normal FOOD_HUNT node the hunters gather. Behavioural probe: `tools/check_ai_pastoral.tscn` (real match at 8×: mill built, dog trained, herd command issued); unit tests in `tests/unit/test_ai_full_game.gd`.
 
 `AIPlayer` also contains TC-loss handling: on `EventBus.building_destroyed`, if the destroyed building is the AI's Town Center, a 0.5 s deferred call to `_attempt_tc_rebuild` finds the safest villager (maximally distant from the enemy center-of-mass) and places a new TC. If the AI has no units and no buildings it emits `EventBus.player_eliminated`.
 
@@ -775,7 +831,7 @@ The Temple's visual identity is the **almogarén** — an open dry-stone Canaria
 
 `Mill` (`scripts/buildings/mill.gd`, `class_name Mill`, `mill.tres`: 100 Wood, 600 HP, Dark Age) completes the drop-off set: a `DropOffBuilding` child is registered on construction complete, exactly like the Lumber/Mining Camps, so villagers deposit food there. It also trains the **Presa Canario** (`scripts/units/presa_canario.gd`, `presa_canario_data.tres`: 30 Food + 10 Gold, 18 s) with the same producer contract (queue cap 5, pay-at-enqueue, refund on cancel). HUD: build key **M**, train key **P**.
 
-The dog never fights (attack 0, PASSIVE, no-op `_auto_engage`); its machine is **fetch-and-lead** (`order_herd`, the `UnitTargetCommand` "herd" verb — only units with `order_herd` answer, any `Animal` is targetable): FETCH walks to the animal (`HERD_REACH` 44 px), takes it in tow via `Animal.start_following`, then LEAD returns to the nearest own drop-off resolved at order time (`_resolve_home`) and releases within `RELEASE_REACH` (90 px), pausing whenever the animal lags more than `HERD_LAG_LIMIT` (150 px). In `world_commands.gd` a right-clicked animal is herded only by a dogs-ONLY selection (`_selection_all_dogs`); any mixed selection slaughters it as before.
+The dog is a **guard dog when pressed** (attack 3, 30 HP, DEFENSIVE by default) but herding comes first: while a trip is underway `_auto_engage` is vetoed entirely, and only an explicit attack order makes him drop the flock (the animal is released where it stands and the approach earned so far is paid out). His machine is **fetch-and-lead** (`order_herd`, the `UnitTargetCommand` "herd" verb — only units with `order_herd` answer, any `Animal` is targetable): FETCH walks to the animal (`HERD_REACH` 44 px), takes it in tow via `Animal.start_following`, then LEAD returns to the nearest own drop-off resolved at order time (`_resolve_home`) and releases within `RELEASE_REACH` (90 px), pausing whenever the animal lags more than `HERD_LAG_LIMIT` (150 px). Every completed trip pays the **shepherd's yield** — 1 food per `HERD_FOOD_PX` (40 px) of NET approach toward home (shuttling in circles pays nothing) — and emits `EventBus.animal_herded` (campaign herd objectives listen). In `world_commands.gd` a right-clicked animal is herded only by a dogs-ONLY selection (`_selection_all_dogs`); any mixed selection slaughters it as before. The AI plays the same game: `AIEconomy.manage_dogs` trains dogs at its Mill and races for unclaimed animals through the same command verb (see the AI System section). Wild sheep flocks (`EntityPlacer.spawn_animals`: 2 + map_half/900 clusters, always >520 px from every TC, own seeded RNG stream) give both sides something to race for.
 
 Animal-side, `Animal` gained a `HERDED` state (`start_following` / `stop_following` / `_handle_herded`): the animal follows at `HERD_FOLLOW_SPEED`, frees itself the moment its dog leaves the job (reassignment, death, release — checked herd-side every tick), breaks tow if wounded, and its wander `_origin` moves to the release point so wild game settles near the player's base. A sheep converting mid-trip (the dog carries `player_id` into the ConvertArea) stays in tow and lands OWNED on release. Contract pinned by `tests/unit/test_herding.gd`.
 

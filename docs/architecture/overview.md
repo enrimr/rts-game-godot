@@ -21,7 +21,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | TerrainManager | `scripts/core/terrain_manager.gd` | Impassability queries, nearest-passable search, coastal zone detection |
 | WeatherManager | `scripts/core/weather_manager.gd` | Procedural weather state machine (5 types); stat-modifier query API (vision, speed, gather, drift, damage) |
 | AudioManager | `scripts/core/audio_manager.gd` | Spatial audio playback with distance attenuation; ALL audio (sfx, per-civ formant voices, music) is procedurally synthesized — see [audio_synthesis.md](audio_synthesis.md) |
-| SaveManager | `scripts/core/save_manager.gd` | Complete game save/load, 99 JSON slots with metadata UI |
+| SaveManager | `scripts/core/save_manager.gd` | Complete game save/load, 99 JSON slots with metadata UI; schema v2 (read-enforced: newer refused, older defaulted) persists in-flight research, garrisons, unit stances and weather |
 | GameSettings | `scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
 | MatchConfig | `scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
 
@@ -32,7 +32,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | UnitBase | `scripts/units/unit_base.gd` | Base class: Area2D range detection, attack-move, stuck detection, body animation; `_step_enters_sea()` vetoes steps entering ocean at the off-mesh movement paths (RVO safe_velocity, combat gap-closer) |
 | Villager | `scripts/units/villager.gd` | Gather, build, repair; work/walk animation differentiation |
 | Harimaguada | `scripts/units/healer_unit.gd` | Priestess-healer trained at the Temple (Castle Age, 85F+25G); always female; never fights; follow-and-mend (5 HP/s) + idle auto-triage |
-| PresaCanario | `scripts/units/presa_canario.gd` | Herding dog trained at the Mill (Dark Age, 30F+10G); never fights; `order_herd` fetches an animal and leads it to the nearest own drop-off (sheep convert on contact) |
+| PresaCanario | `scripts/units/presa_canario.gd` | Herding dog trained at the Mill (Dark Age, 30F+10G); `order_herd` fetches an animal and leads it to the nearest own drop-off (sheep convert on contact); each trip pays food for the net approach; guard dog (attack 3, DEFENSIVE) that never abandons a trip on its own |
 | HeroUnit | `scripts/units/hero_unit.gd` | 8 unique hero abilities (extends Militia) |
 | Militia | `scripts/units/militia.gd` | Dark Age infantry |
 | ManAtArms | `scripts/units/man_at_arms.gd` | Feudal Age infantry upgrade |
@@ -92,10 +92,11 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | System | Script | Responsibility |
 |---|---|---|
 | AIPlayer | `scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic |
-| AIEconomy | `scripts/ai/ai_economy.gd` | Villager spawning/assignment, resource targets per age, age-advance trigger |
-| AIConstruction | `scripts/ai/ai_construction.gd` | Building placement, placement-failure cooldowns, population management |
-| AIMilitary | `scripts/ai/ai_military.gd` | Military training, research priority, combat targeting, base defense, aggression escalation |
-| AINaval | `scripts/ai/ai_naval.gd` | Naval training, galley patrol/retreat, transport assault, fish-trap construction |
+| WorldQuery | `scripts/ai/world_query.gd` | Read-only query service over the unit/building layers; fog-honest sighting layer (`sighted_enemy_units` = seen now, `known_enemy_buildings` = seen or remembered, LOS from .tres × 64 px, throttled refresh) |
+| AIEconomy | `scripts/ai/ai_economy.gd` | Villager spawning/assignment, resource targets per age, age-advance trigger; herding-dog management (up to 2 dogs) + single-in-flight sheep slaughter |
+| AIConstruction | `scripts/ai/ai_construction.gd` | Building placement, placement-failure cooldowns, population management; Mill early, Watch Towers from Feudal |
+| AIMilitary | `scripts/ai/ai_military.gd` | Military training, research priority, fog-honest combat targeting (sighted/known queries), base defense, aggression escalation |
+| AINaval | `scripts/ai/ai_naval.gd` | Naval training, galley patrol/retreat (sighted ships only), transport assault, fish-trap construction |
 
 ### UI Systems
 
