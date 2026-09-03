@@ -282,6 +282,10 @@ func _ready() -> void:
 	var fps_counter: HudFpsCounter = HudFpsCounter.new()
 	fps_counter.init(get_node("HUDRoot"))
 	add_child(fps_counter)
+	var minimap_node: Control = get_node_or_null("%Minimap") as Control
+	if minimap_node != null:
+		var players_panel: HudPlayersPanel = HudPlayersPanel.new()
+		minimap_node.add_child(players_panel)
 	if NetworkSession.is_online():
 		var chat: HudChat = HudChat.new()
 		chat.init(get_node("HUDRoot"))

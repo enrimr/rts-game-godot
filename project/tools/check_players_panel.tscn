@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://check_players_panel"]
+
+[ext_resource type="Script" path="res://tools/check_players_panel.gd" id="1_pp"]
+
+[node name="CheckPlayersPanel" type="Node2D"]
+script = ExtResource("1_pp")
