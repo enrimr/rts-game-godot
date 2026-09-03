@@ -34,6 +34,19 @@ const GLYPHS: Array[String] = [
 ## Stockpile display order shared by every cost row.
 const RES_ORDER: Array[String] = ["food", "wood", "gold", "stone"]
 
+## Technology ids with a dedicated research glyph (drawn by _build_tech).
+## Unknown ids fall back to the generic "tech_research" scroll-and-book.
+const TECH_GLYPHS: Array[String] = [
+	"loom", "forging", "iron_casting", "blast_furnace",
+	"scale_barding", "chain_barding", "plate_barding",
+	"fletching", "bodkin_arrow", "padded_archer_armor", "shipwright",
+	"ballistics", "chemistry", "siege_engineering",
+	"fervor", "sanctity", "atonement",
+	"upgrade_man_at_arms", "upgrade_long_swordsman",
+	"upgrade_heavy_scout", "upgrade_knight",
+	"carreta_canaria", "carreton_isleno",
+]
+
 # ── Palette (flat fills; outlines derive as darkened shades) ──────────────────
 const C_WOOD: Color = Color(0.56, 0.38, 0.19)
 const C_WOOD_DARK: Color = Color(0.36, 0.23, 0.10)
@@ -52,12 +65,23 @@ const C_BODY: Color = Color(0.47, 0.50, 0.58)
 const C_PARCH: Color = Color(0.88, 0.79, 0.60)
 const C_SAND: Color = Color(0.81, 0.67, 0.43)
 const C_DARK: Color = Color(0.14, 0.12, 0.10)
+const C_FLAME: Color = Color(0.93, 0.45, 0.12)
+const C_FLAME_HOT: Color = Color(1.0, 0.82, 0.30)
+const C_GREEN: Color = Color(0.35, 0.62, 0.30)
+const C_HORSE: Color = Color(0.55, 0.38, 0.22)
 
 ## id -> ImageTexture (shared instance, filled async once).
 static var _cache: Dictionary = {}
 
 static func has_glyph(id: String) -> bool:
 	return id in GLYPHS
+
+## Research icon for a technology id; unknown ids get the generic scroll so
+## future techs never break the HUD.
+static func tech_glyph(tech_id: String) -> Texture2D:
+	if tech_id in TECH_GLYPHS:
+		return get_icon("tech_" + tech_id)
+	return get_icon("tech_research")
 
 static func get_icon(id: String) -> Texture2D:
 	if _cache.has(id):
@@ -269,6 +293,9 @@ static func _chevron(parent: Node2D) -> void:
 # ── Glyph builders ────────────────────────────────────────────────────────────
 
 static func _build(id: String, root: Node2D) -> void:
+	if id.begins_with("tech_"):
+		_build_tech(id.trim_prefix("tech_"), root)
+		return
 	match id:
 		"gather_wood":
 			_rect(root, 10.0, 42.0, 44.0, 14.0, C_LOG)
@@ -614,3 +641,302 @@ static func _build(id: String, root: Node2D) -> void:
 		_:
 			# Unknown id: leave the texture transparent (caller falls back to text).
 			pass
+
+# ── Tech-glyph sub-figures ────────────────────────────────────────────────────
+
+## Gold double up-chevron, the shared "unit upgrade" motif (top-right corner).
+static func _up_chevron(parent: Node2D, at: Vector2) -> void:
+	var g: Node2D = _group(parent, at, 0.0)
+	_poly(g, PackedVector2Array([Vector2(-9, 2), Vector2(0, -7), Vector2(9, 2),
+		Vector2(9, 8), Vector2(0, -1), Vector2(-9, 8)]), C_GOLD)
+	_poly(g, PackedVector2Array([Vector2(-9, 13), Vector2(0, 4), Vector2(9, 13),
+		Vector2(9, 19), Vector2(0, 10), Vector2(-9, 19)]), C_GOLD)
+
+## Horse head + neck profile facing left, full glyph space. Bardings overlay
+## armour on it; cavalry upgrades mirror it to face right.
+static func _horse_head(parent: Node2D) -> void:
+	_poly(parent, PackedVector2Array([Vector2(6, 30), Vector2(18, 18),
+		Vector2(30, 14), Vector2(44, 26), Vector2(54, 58), Vector2(30, 58),
+		Vector2(24, 44), Vector2(16, 42), Vector2(6, 38)]), C_HORSE)
+	_poly(parent, PackedVector2Array([Vector2(28, 15), Vector2(33, 4),
+		Vector2(38, 17)]), C_HORSE.darkened(0.25))
+	_stroke(parent, PackedVector2Array([Vector2(33, 15), Vector2(44, 28),
+		Vector2(52, 55)]), C_HORSE.darkened(0.40), 5.0)
+	_circle(parent, Vector2(21, 26), 2.6, C_DARK)
+	_circle(parent, Vector2(10, 34), 1.8, C_DARK)
+
+## Spoked wooden cart wheel.
+static func _cart_wheel(parent: Node2D, c: Vector2, r: float,
+		rim: Color = Color(0.0, 0.0, 0.0, 0.0)) -> void:
+	_circle(parent, c, r, C_WOOD if rim.a <= 0.0 else rim)
+	_circle(parent, c, r * 0.72, C_LOG_END)
+	_stroke(parent, PackedVector2Array([c + Vector2(-r * 0.6, 0), c + Vector2(r * 0.6, 0)]),
+		C_WOOD_DARK, 2.5)
+	_stroke(parent, PackedVector2Array([c + Vector2(0, -r * 0.6), c + Vector2(0, r * 0.6)]),
+		C_WOOD_DARK, 2.5)
+	_circle(parent, c, r * 0.18, C_WOOD_DARK)
+
+## Two-tongued flame (outer hot orange, inner gold core), tip up, base at origin.
+static func _flame(parent: Node2D, at: Vector2, s: float = 1.0) -> void:
+	var g: Node2D = _group(parent, at, 0.0)
+	g.scale = Vector2(s, s)
+	_poly(g, PackedVector2Array([Vector2(-8, 0), Vector2(-6, -10), Vector2(-2, -6),
+		Vector2(0, -18), Vector2(4, -8), Vector2(8, -13), Vector2(8, 0)]), C_FLAME)
+	_poly(g, PackedVector2Array([Vector2(-3, 0), Vector2(0, -9), Vector2(3, 0)]),
+		C_FLAME_HOT)
+
+# ── Technology glyph builders ─────────────────────────────────────────────────
+
+static func _build_tech(id: String, root: Node2D) -> void:
+	match id:
+		"loom":
+			_rect(root, 8.0, 6.0, 48.0, 6.0, C_WOOD_DARK)
+			_rect(root, 10.0, 10.0, 6.0, 46.0, C_WOOD)
+			_rect(root, 48.0, 10.0, 6.0, 46.0, C_WOOD)
+			for i: int in range(5):
+				_stroke(root, PackedVector2Array([Vector2(20.0 + i * 6.0, 12.0),
+					Vector2(20.0 + i * 6.0, 38.0)]), C_PALE, 2.0)
+			_rect(root, 16.0, 38.0, 32.0, 16.0, C_RED)
+			_stroke(root, PackedVector2Array([Vector2(17, 43), Vector2(47, 43)]),
+				C_RED.darkened(0.35), 2.0)
+			_stroke(root, PackedVector2Array([Vector2(17, 49), Vector2(47, 49)]),
+				C_RED.darkened(0.35), 2.0)
+			_poly(root, _ellipse_pts(Vector2(32, 34), 9.0, 4.0, 0.0), C_GOLD)
+		"forging":
+			_poly(root, PackedVector2Array([Vector2(4, 27), Vector2(14, 20),
+				Vector2(52, 20), Vector2(52, 32), Vector2(14, 32)]), C_STEEL)
+			_poly(root, PackedVector2Array([Vector2(24, 32), Vector2(44, 32),
+				Vector2(40, 44), Vector2(28, 44)]), C_STEEL_DARK)
+			_poly(root, PackedVector2Array([Vector2(20, 44), Vector2(48, 44),
+				Vector2(52, 54), Vector2(16, 54)]), C_STEEL)
+			for p: Vector2 in [Vector2(22, 11), Vector2(34, 6), Vector2(45, 12)]:
+				_poly(root, PackedVector2Array([p + Vector2(0, -4), p + Vector2(3, 0),
+					p + Vector2(0, 4), p + Vector2(-3, 0)]), C_GOLD)
+		"iron_casting":
+			_poly(root, PackedVector2Array([Vector2(8, 44), Vector2(28, 44),
+				Vector2(31, 55), Vector2(4, 55)]), C_STEEL_DARK)
+			_poly(root, PackedVector2Array([Vector2(35, 44), Vector2(55, 44),
+				Vector2(59, 55), Vector2(31, 55)]), C_STEEL_DARK)
+			_poly(root, PackedVector2Array([Vector2(19, 28), Vector2(43, 28),
+				Vector2(47, 42), Vector2(15, 42)]), C_FLAME)
+			_poly(root, PackedVector2Array([Vector2(21, 23), Vector2(41, 23),
+				Vector2(43, 28), Vector2(19, 28)]), C_FLAME_HOT)
+			_stroke(root, PackedVector2Array([Vector2(23, 17), Vector2(26, 12),
+				Vector2(23, 7)]), C_FLAME_HOT, 2.5)
+			_stroke(root, PackedVector2Array([Vector2(38, 17), Vector2(41, 12),
+				Vector2(38, 7)]), C_FLAME_HOT, 2.5)
+		"blast_furnace":
+			_poly(root, PackedVector2Array([Vector2(14, 58), Vector2(19, 22),
+				Vector2(26, 14), Vector2(38, 14), Vector2(45, 22),
+				Vector2(50, 58)]), C_STONE)
+			_stroke(root, PackedVector2Array([Vector2(19, 32), Vector2(45, 32)]),
+				C_STONE.darkened(0.30), 2.2)
+			_stroke(root, PackedVector2Array([Vector2(17, 44), Vector2(47, 44)]),
+				C_STONE.darkened(0.30), 2.2)
+			_poly(root, PackedVector2Array([Vector2(25, 58), Vector2(25, 48),
+				Vector2(32, 42), Vector2(39, 48), Vector2(39, 58)]), C_DARK)
+			_poly(root, PackedVector2Array([Vector2(29, 58), Vector2(29, 51),
+				Vector2(32, 48), Vector2(35, 51), Vector2(35, 58)]), C_FLAME)
+			_flame(root, Vector2(32, 14), 1.6)
+		"scale_barding":
+			_horse_head(root)
+			_poly(root, PackedVector2Array([Vector2(33, 17), Vector2(46, 27),
+				Vector2(56, 58), Vector2(28, 58), Vector2(26, 34)]), C_STEEL)
+			for row: int in range(3):
+				for k: int in range(3):
+					_circle(root, Vector2(34.0 + k * 8.0 + (row % 2) * 4.0,
+						28.0 + row * 10.0), 3.4, C_STEEL_DARK if (k + row) % 2 == 0
+						else C_STEEL.darkened(0.25))
+		"chain_barding":
+			_horse_head(root)
+			_poly(root, PackedVector2Array([Vector2(33, 17), Vector2(46, 27),
+				Vector2(56, 58), Vector2(22, 58), Vector2(24, 40),
+				Vector2(26, 30)]), C_STEEL_DARK)
+			for row: int in range(4):
+				for k: int in range(3):
+					_circle(root, Vector2(31.0 + k * 8.0 + (row % 2) * 4.0,
+						27.0 + row * 8.5), 2.2, C_PALE)
+		"plate_barding":
+			_horse_head(root)
+			_poly(root, PackedVector2Array([Vector2(6, 30), Vector2(18, 18),
+				Vector2(30, 14), Vector2(42, 24), Vector2(32, 36), Vector2(14, 40),
+				Vector2(6, 38)]), C_STEEL)
+			_poly(root, PackedVector2Array([Vector2(33, 17), Vector2(46, 27),
+				Vector2(56, 58), Vector2(24, 58), Vector2(26, 32)]), C_STEEL)
+			_stroke(root, PackedVector2Array([Vector2(30, 40), Vector2(52, 40)]),
+				C_STEEL_DARK, 2.5)
+			_stroke(root, PackedVector2Array([Vector2(28, 50), Vector2(54, 50)]),
+				C_STEEL_DARK, 2.5)
+			_circle(root, Vector2(21, 26), 2.6, C_DARK)
+			for p: Vector2 in [Vector2(38, 26), Vector2(42, 35), Vector2(40, 45)]:
+				_circle(root, p, 1.8, C_GOLD)
+		"fletching":
+			var g: Node2D = _group(root, Vector2(32, 32), 45.0)
+			_bar(g, Vector2(0, 28), Vector2(0, -24), 3.0, C_WOOD)
+			_poly(g, PackedVector2Array([Vector2(0, -30), Vector2(-5, -20),
+				Vector2(5, -20)]), C_STEEL)
+			for fy: float in [8.0, 17.0]:
+				_poly(g, PackedVector2Array([Vector2(1, fy), Vector2(11, fy + 7),
+					Vector2(11, fy + 13), Vector2(1, fy + 6)]), C_RED)
+				_poly(g, PackedVector2Array([Vector2(-1, fy), Vector2(-11, fy + 7),
+					Vector2(-11, fy + 13), Vector2(-1, fy + 6)]), C_RED)
+		"bodkin_arrow":
+			_poly(root, PackedVector2Array([Vector2(32, 2), Vector2(38, 24),
+				Vector2(26, 24)]), C_STEEL)
+			_stroke(root, PackedVector2Array([Vector2(32, 5), Vector2(32, 22)]),
+				C_PALE, 2.2)
+			_rect(root, 29.0, 24.0, 6.0, 6.0, C_STEEL_DARK)
+			_bar(root, Vector2(32, 30), Vector2(32, 54), 3.5, C_WOOD)
+			_bar(root, Vector2(32, 48), Vector2(26, 56), 2.5, C_PALE)
+			_bar(root, Vector2(32, 48), Vector2(38, 56), 2.5, C_PALE)
+		"padded_archer_armor":
+			_poly(root, PackedVector2Array([Vector2(22, 10), Vector2(42, 10),
+				Vector2(48, 18), Vector2(46, 54), Vector2(18, 54),
+				Vector2(16, 18)]), C_SAND)
+			_poly(root, PackedVector2Array([Vector2(27, 10), Vector2(37, 10),
+				Vector2(32, 20)]), C_DARK)
+			for i: int in range(4):
+				_stroke(root, PackedVector2Array([Vector2(16.0, 14.0 + i * 11.0),
+					Vector2(48.0, 25.0 + i * 11.0)]), C_SAND.darkened(0.35), 1.8)
+				_stroke(root, PackedVector2Array([Vector2(48.0, 14.0 + i * 11.0),
+					Vector2(16.0, 25.0 + i * 11.0)]), C_SAND.darkened(0.35), 1.8)
+		"shipwright":
+			for rib: Array in [[Vector2(14, 40), Vector2(8, 18)],
+					[Vector2(23, 45), Vector2(20, 14)], [Vector2(32, 47), Vector2(32, 12)],
+					[Vector2(41, 45), Vector2(44, 14)], [Vector2(50, 40), Vector2(56, 18)]]:
+				_stroke(root, PackedVector2Array([rib[0] as Vector2, rib[1] as Vector2]),
+					C_WOOD, 3.5)
+			_poly(root, PackedVector2Array([Vector2(4, 30), Vector2(14, 30),
+				Vector2(22, 34), Vector2(42, 34), Vector2(50, 30), Vector2(60, 30),
+				Vector2(52, 44), Vector2(40, 50), Vector2(24, 50),
+				Vector2(12, 44)]), C_LOG)
+			_stroke(root, PackedVector2Array([Vector2(10, 36), Vector2(32, 44),
+				Vector2(54, 36)]), C_WOOD_DARK, 2.5)
+			_stroke(root, PackedVector2Array([Vector2(6, 31), Vector2(32, 36),
+				Vector2(58, 31)]), C_LOG_END, 2.5)
+			_stroke(root, PackedVector2Array([Vector2(16, 56), Vector2(48, 56)]),
+				C_STONE.darkened(0.2), 4.0)
+		"ballistics":
+			_circle(root, Vector2(46, 44), 14.0, C_PALE)
+			_circle(root, Vector2(46, 44), 9.5, C_RED)
+			_circle(root, Vector2(46, 44), 5.0, C_PALE)
+			_circle(root, Vector2(46, 44), 2.2, C_RED)
+			for t: float in [0.0, 0.16, 0.32, 0.48, 0.64, 0.8]:
+				var p: Vector2 = Vector2(8, 52).bezier_interpolate(
+					Vector2(14, 2), Vector2(38, 2), Vector2(46, 40), t)
+				_circle(root, p, 2.4, C_GOLD)
+			_poly(root, PackedVector2Array([Vector2(46, 40), Vector2(41, 28),
+				Vector2(51, 28)]), C_STEEL)
+		"chemistry":
+			_rect(root, 27.0, 8.0, 10.0, 4.0, C_STEEL_DARK)
+			_poly(root, PackedVector2Array([Vector2(28, 12), Vector2(36, 12),
+				Vector2(38, 30), Vector2(50, 52), Vector2(14, 52),
+				Vector2(26, 30)]), C_BLUE.lightened(0.25))
+			_poly(root, PackedVector2Array([Vector2(24, 38), Vector2(40, 38),
+				Vector2(47, 50), Vector2(17, 50)]), C_GREEN)
+			_circle(root, Vector2(29, 30), 2.4, C_PALE)
+			_circle(root, Vector2(35, 22), 2.0, C_PALE)
+		"siege_engineering":
+			_bar(root, Vector2(8, 54), Vector2(56, 54), 5.0, C_WOOD_DARK)
+			_stroke(root, PackedVector2Array([Vector2(18, 53), Vector2(31, 33)]), C_WOOD, 5.0)
+			_stroke(root, PackedVector2Array([Vector2(44, 53), Vector2(31, 33)]), C_WOOD, 5.0)
+			_stroke(root, PackedVector2Array([Vector2(46, 48), Vector2(12, 12)]), C_LOG, 4.5)
+			_rect(root, 42.0, 44.0, 9.0, 8.0, C_STEEL_DARK)
+			_circle(root, Vector2(31, 33), 3.0, C_STEEL_DARK)
+			_circle(root, Vector2(11, 8), 5.5, C_STONE)
+		"fervor":
+			_poly(root, PackedVector2Array([Vector2(32, 58), Vector2(12, 38),
+				Vector2(10, 29), Vector2(16, 22), Vector2(25, 23), Vector2(32, 31),
+				Vector2(39, 23), Vector2(48, 22), Vector2(54, 29), Vector2(52, 38)]),
+				C_RED)
+			_flame(root, Vector2(32, 27), 1.35)
+		"sanctity":
+			var ring: Line2D = Line2D.new()
+			ring.points = _circle_pts(Vector2(32, 27), 13.5)
+			ring.closed = true
+			ring.width = 4.0
+			ring.default_color = C_PALE
+			ring.antialiased = true
+			root.add_child(ring)
+			_bar(root, Vector2(32, 8), Vector2(32, 56), 7.0, C_GOLD)
+			_bar(root, Vector2(18, 27), Vector2(46, 27), 7.0, C_GOLD)
+		"atonement":
+			_stroke(root, PackedVector2Array([Vector2(9, 34), Vector2(4, 44)]),
+				C_GREEN.darkened(0.2), 2.2)
+			_poly(root, _ellipse_pts(Vector2(6, 38), 4.5, 2.2, -60.0), C_GREEN)
+			_poly(root, _ellipse_pts(Vector2(8, 42), 4.5, 2.2, -20.0), C_GREEN)
+			_poly(root, _ellipse_pts(Vector2(29, 36), 15.0, 8.5, -8.0), C_BONE)
+			_circle(root, Vector2(14, 30), 5.5, C_BONE)
+			_poly(root, PackedVector2Array([Vector2(9, 29), Vector2(4, 32),
+				Vector2(9, 33)]), C_GOLD)
+			_poly(root, PackedVector2Array([Vector2(26, 33), Vector2(38, 8),
+				Vector2(48, 14), Vector2(36, 36)]), C_BONE.darkened(0.08))
+			_poly(root, PackedVector2Array([Vector2(41, 38), Vector2(58, 32),
+				Vector2(58, 45), Vector2(43, 44)]), C_BONE.darkened(0.08))
+			_circle(root, Vector2(13, 29), 1.5, C_DARK)
+		"upgrade_man_at_arms":
+			_circle(root, Vector2(38, 40), 13.0, C_RED)
+			_circle(root, Vector2(38, 40), 4.5, C_GOLD)
+			var sg: Node2D = _group(root, Vector2(24, 30), -32.0)
+			sg.scale = Vector2(1.05, 1.05)
+			_sword(sg)
+			_up_chevron(root, Vector2(51, 12))
+		"upgrade_long_swordsman":
+			_poly(root, PackedVector2Array([Vector2(30, 2), Vector2(34, 2),
+				Vector2(36, 10), Vector2(36, 38), Vector2(28, 38),
+				Vector2(28, 10)]), C_STEEL)
+			_stroke(root, PackedVector2Array([Vector2(32, 6), Vector2(32, 36)]),
+				C_PALE, 1.8)
+			_rect(root, 17.0, 38.0, 30.0, 5.5, C_GOLD)
+			_rect(root, 29.0, 43.5, 6.0, 12.0, C_WOOD_DARK)
+			_circle(root, Vector2(32, 58), 3.8, C_GOLD)
+			_up_chevron(root, Vector2(52, 12))
+		"upgrade_heavy_scout":
+			var hg: Node2D = _group(root, Vector2(64, 0), 0.0)
+			hg.scale = Vector2(-1, 1)
+			_horse_head(hg)
+			_up_chevron(root, Vector2(13, 12))
+		"upgrade_knight":
+			var kg: Node2D = _group(root, Vector2(64, 0), 0.0)
+			kg.scale = Vector2(-1, 1)
+			_horse_head(kg)
+			_stroke(root, PackedVector2Array([Vector2(16, 56), Vector2(46, 14)]),
+				C_WOOD_DARK, 3.5)
+			_poly(root, PackedVector2Array([Vector2(46, 14), Vector2(51, 4),
+				Vector2(54, 15)]), C_STEEL)
+			_poly(root, PackedVector2Array([Vector2(44, 19), Vector2(24, 9),
+				Vector2(44, 8)]), C_RED)
+			_up_chevron(root, Vector2(13, 12))
+		"carreta_canaria":
+			_rect(root, 10.0, 26.0, 42.0, 7.0, C_WOOD)
+			_stroke(root, PackedVector2Array([Vector2(48, 28), Vector2(60, 21)]),
+				C_WOOD_DARK, 3.5)
+			_stroke(root, PackedVector2Array([Vector2(48, 33), Vector2(60, 29)]),
+				C_WOOD_DARK, 3.5)
+			_cart_wheel(root, Vector2(26, 44), 12.0)
+			_circle(root, Vector2(24, 18), 8.0, C_SAND)
+			_stroke(root, PackedVector2Array([Vector2(22, 11), Vector2(27, 9)]),
+				C_WOOD_DARK, 2.5)
+		"carreton_isleno":
+			_rect(root, 8.0, 20.0, 48.0, 16.0, C_WOOD)
+			_stroke(root, PackedVector2Array([Vector2(9, 21), Vector2(55, 21)]), C_GOLD, 2.5)
+			for i: int in range(3):
+				_stroke(root, PackedVector2Array([Vector2(19.0 + i * 13.0, 22.0),
+					Vector2(19.0 + i * 13.0, 35.0)]), C_WOOD_DARK, 2.5)
+			_rect(root, 14.0, 10.0, 12.0, 10.0, C_STONE)
+			_circle(root, Vector2(38, 13), 7.0, C_SAND)
+			_cart_wheel(root, Vector2(20, 46), 10.0, C_STEEL_DARK)
+			_cart_wheel(root, Vector2(44, 46), 10.0, C_STEEL_DARK)
+		_:
+			_rect(root, 14.0, 14.0, 36.0, 40.0, C_PARCH)
+			_rect(root, 10.0, 10.0, 36.0, 40.0, C_PARCH.lightened(0.08))
+			_stroke(root, PackedVector2Array([Vector2(16, 20), Vector2(40, 20)]),
+				C_WOOD_DARK, 2.2)
+			_stroke(root, PackedVector2Array([Vector2(16, 27), Vector2(40, 27)]),
+				C_WOOD_DARK, 2.2)
+			_stroke(root, PackedVector2Array([Vector2(16, 34), Vector2(33, 34)]),
+				C_WOOD_DARK, 2.2)
+			_poly(root, PackedVector2Array([Vector2(36, 38), Vector2(52, 54),
+				Vector2(47, 58), Vector2(33, 42)]), C_GOLD)
+			_poly(root, PackedVector2Array([Vector2(52, 54), Vector2(58, 60),
+				Vector2(47, 58)]), C_STEEL_DARK)
