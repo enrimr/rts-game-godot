@@ -39,8 +39,18 @@ func _ready() -> void:
 		add_child(building)
 		if building.has_method("force_complete"):
 			building.call("force_complete")
-	_spawn_unit("res://scenes/units/presa_canario.tscn", Vector2(-30.0, DOG_ROW_Y))
-	_spawn_unit("res://scenes/units/sheep.tscn", Vector2(30.0, DOG_ROW_Y))
+	_spawn_unit("res://scenes/units/presa_canario.tscn", Vector2(-90.0, DOG_ROW_Y))
+	# A WILD sheep (no owner: bare neck) and a CONVERTED one whose team collar
+	# must read the owner's colour (player 1, red) — spaced beyond the 96 px
+	# ConvertArea, or the neighbours convert each other mid-screenshot.
+	for cfg: Array in [[Vector2(170.0, DOG_ROW_Y), -1], [Vector2(20.0, DOG_ROW_Y), 1]]:
+		var sheep: Node2D = (load("res://scenes/units/sheep.tscn") as PackedScene)\
+			.instantiate() as Node2D
+		add_child(sheep)
+		sheep.global_position = IsoProjection.screen_to_world(cfg[0] as Vector2)
+		sheep.set_physics_process(false)
+		if (cfg[1] as int) >= 0:
+			sheep.call("_try_convert", cfg[1] as int)
 	var cam: Camera2D = Camera2D.new()
 	add_child(cam)
 	cam.make_current()

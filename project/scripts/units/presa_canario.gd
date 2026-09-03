@@ -33,6 +33,12 @@ var _trot_time: float = 0.0
 func _ready() -> void:
 	super._ready()
 	stance = Stance.DEFENSIVE
+	# The collar IS the ownership mark on a natural-coat animal: dye it the
+	# team colour directly (TeamDress's cloth rules never matched it, so it
+	# shipped stuck on its authored red whoever owned the dog).
+	var collar: Polygon2D = get_node_or_null("Body/Collar") as Polygon2D
+	if collar != null:
+		collar.color = PlayerColors.get_color(player_id)
 
 func get_selection_sound() -> String:
 	return "select_dog"

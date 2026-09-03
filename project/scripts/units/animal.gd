@@ -51,6 +51,12 @@ func _ready() -> void:
 	_origin = global_position
 	_pick_wander_target()
 	add_to_group("animals")
+	# A restored save (or a replicated puppet) arrives with player_id already
+	# set but never went through _try_convert — heal the OWNED state and its
+	# markers (plinth + collar) here.
+	if player_id >= 0:
+		current_state = AnimalState.OWNED
+		_on_converted()
 	_nav.velocity_computed.connect(_on_velocity_computed)
 	_convert_area.body_entered.connect(_on_body_entered_range)
 	_collect_legs()
@@ -265,11 +271,22 @@ func _convert_to(owner_id: int) -> void:
 	velocity = Vector2.ZERO
 
 # Ownership marker: the same ground-ellipse plinth at the feet every unit
-# uses — never a full-body repaint, which makes the animal unreadable.
-# Re-conversion just recolours the existing plinth (add_ground_plinth is
-# idempotent-recolour).
+# uses — never a full-body repaint, which makes the animal unreadable — plus
+# a team-colour COLLAR at the neck for convertibles (a shepherd reads flock
+# ownership at a glance). Re-conversion recolours both (idempotent).
 func _on_converted() -> void:
 	VisualFx.add_ground_plinth(self, player_id, 8.5, FOOT_ANCHOR_Y)
+	if not convertible:
+		return
+	var collar: Polygon2D = _body.get_node_or_null("TeamCollar") as Polygon2D
+	if collar == null:
+		collar = Polygon2D.new()
+		collar.name = "TeamCollar"
+		collar.polygon = PackedVector2Array([
+			Vector2(6.2, -5.4), Vector2(8.4, -4.6),
+			Vector2(8.4, -1.8), Vector2(6.2, -2.6)])
+		_body.add_child(collar)
+	collar.color = PlayerColors.get_color(player_id)
 
 func _start_flee(from_source: Node) -> void:
 	current_state = AnimalState.FLEEING
