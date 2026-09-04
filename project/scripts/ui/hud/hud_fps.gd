@@ -26,6 +26,9 @@ func init(hud_root: Node) -> void:
 	_label.visible = GameSettings.show_fps
 
 func _process(delta: float) -> void:
+	if HudReplayBar.cinematic_active:
+		_label.visible = false
+		return
 	if not GameSettings.show_fps:
 		if _label.visible:
 			_label.visible = false

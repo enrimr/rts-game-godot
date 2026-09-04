@@ -546,3 +546,8 @@ REPLAYS_CLOSE,Close,Cerrar
 GAMEOVER_WATCH_REPLAY,Watch replay,Ver repetición
 REPLAY_BADGE,REPLAY,REPETICIÓN
 REPLAY_VIEW_ALL,Reveal map,Ver todo
+REPLAY_CINEMATIC,Cinematic (C),Modo cine (C)
+REPLAYS_EXPORT,To video,A vídeo
+REPLAYS_EXPORT_TIP,Renders the replay to a smooth 30 FPS video file in the background (cinematic + revealed map),Renderiza la repetición a un vídeo fluido a 30 FPS en segundo plano (modo cine + mapa revelado)
+"REPLAYS_EXPORTING","Rendering in the background — the video will appear at:\n%s\nYou can keep playing meanwhile.","Renderizando en segundo plano — el vídeo aparecerá en:\n%s\nPuedes seguir jugando mientras tanto."
+REPLAYS_EXPORT_FAILED,Could not start the export process.,No se pudo iniciar el proceso de exportación.

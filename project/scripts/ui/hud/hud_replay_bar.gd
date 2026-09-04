@@ -17,14 +17,27 @@ var _pause_btn: Button = null
 var _speed_btn: Button = null
 var _dragging: bool = false
 var _speed_idx: int = 0
+var _hud_root: Control = null
+var _cine: bool = false
+var _panel: PanelContainer = null
+var _watermark: TextureRect = null
+var _bar_idle: float = 0.0
+var _finished_for: float = 0.0
+
+## Global flag other HUD pieces that re-assert their own visibility every
+## frame (the FPS counter) must respect.
+static var cinematic_active: bool = false
 
 const SPEEDS: Array[float] = [1.0, 2.0, 4.0]
+## In cinematic mode the bar hides after this long without the mouse near it.
+const BAR_HIDE_SEC: float = 2.0
 
 func init(hud_root: Control, replicator: StateReplicator,
 		fog: CanvasItem, minimap: MinimapRenderer) -> void:
 	_replicator = replicator
 	_fog = fog
 	_minimap = minimap
+	_hud_root = hud_root
 
 	set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	offset_left = -320.0
@@ -36,6 +49,7 @@ func init(hud_root: Control, replicator: StateReplicator,
 		HudStyle.panel(Color(0.07, 0.08, 0.11, 0.92)))
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(panel)
+	_panel = panel
 	var row: HBoxContainer = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	panel.add_child(row)
@@ -86,9 +100,95 @@ func init(hud_root: Control, replicator: StateReplicator,
 	reveal.toggled.connect(_set_reveal_all)
 	row.add_child(reveal)
 
-	hud_root.add_child(self)
+	var cine: Button = Button.new()
+	cine.text = tr("REPLAY_CINEMATIC")
+	cine.custom_minimum_size = Vector2(0, 30)
+	cine.focus_mode = Control.FOCUS_NONE
+	cine.pressed.connect(func() -> void: _set_cinematic(not _cine))
+	row.add_child(cine)
 
-func _process(_delta: float) -> void:
+	hud_root.add_child(self)
+	_build_watermark()
+	_show_intro_card()
+	# A video-export run is hands-free: cinematic from frame one, reveal-all
+	# for the spectacle, quit when the story ends.
+	if OS.has_feature("movie") or OS.get_environment("CALIMA_CINE") == "1":
+		_set_reveal_all(true)
+		reveal.set_pressed_no_signal(true)
+		_set_cinematic(true)
+
+## ── Creator mode ─────────────────────────────────────────────────────────────
+
+## Cinematic: every HUD element hides except this bar (which fades unless the
+## mouse visits the top edge) and a small logo watermark — clean footage with
+## brand attribution built in. C toggles it too.
+func _set_cinematic(on: bool) -> void:
+	_cine = on
+	cinematic_active = on
+	for child: Node in _hud_root.get_children():
+		if child == self or not (child is CanvasItem):
+			continue
+		(child as CanvasItem).visible = not on
+	if is_instance_valid(_watermark):
+		_watermark.visible = on
+	_bar_idle = 0.0
+	_panel.visible = true
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	var ke: InputEventKey = event as InputEventKey
+	if ke != null and ke.pressed and not ke.echo and ke.physical_keycode == KEY_C:
+		_set_cinematic(not _cine)
+
+func _build_watermark() -> void:
+	_watermark = TextureRect.new()
+	_watermark.texture = load("res://assets/backgrounds/calima-fota-logo.png") as Texture2D
+	_watermark.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_watermark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+	_watermark.custom_minimum_size = Vector2(150, 68)
+	_watermark.modulate = Color(1, 1, 1, 0.5)
+	_watermark.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	_watermark.offset_left = -166.0
+	_watermark.offset_top = -84.0
+	_watermark.offset_right = -16.0
+	_watermark.offset_bottom = -16.0
+	_watermark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_watermark.visible = false
+	_hud_root.add_child(_watermark)
+
+## Title card over the first seconds: logo, matchup, map and date — every
+## shared clip opens introducing the game and the match.
+func _show_intro_card() -> void:
+	var header: Dictionary = ReplayFile.active_header
+	var cfg: Dictionary = header.get("config", {}) as Dictionary
+	var card: VBoxContainer = VBoxContainer.new()
+	card.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	card.add_theme_constant_override("separation", 10)
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var logo: TextureRect = TextureRect.new()
+	logo.texture = load("res://assets/backgrounds/calima-fota-logo.png") as Texture2D
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+	logo.custom_minimum_size = Vector2(420, 190)
+	card.add_child(logo)
+	var rivals: Array = cfg.get("rival_civ_ids", []) as Array
+	var line: Label = Label.new()
+	var dt: Dictionary = Time.get_datetime_dict_from_unix_time(header.get("timestamp", 0) as int)
+	line.text = "%s  vs  %s\n%02d/%02d/%04d" % [
+		str(cfg.get("player_civ_id", "?")).capitalize(),
+		", ".join(rivals.map(func(c: Variant) -> String: return str(c).capitalize())),
+		dt.get("day", 0), dt.get("month", 0), dt.get("year", 0)]
+	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	line.add_theme_font_size_override("font_size", 24)
+	line.add_theme_font_override("font", HudStyle.bold_font())
+	HudStyle.add_text_outline(line)
+	card.add_child(line)
+	_hud_root.add_child(card)
+	var tween: Tween = create_tween()
+	tween.tween_interval(3.2)
+	tween.tween_property(card, "modulate:a", 0.0, 0.8)
+	tween.tween_callback(card.queue_free)
+
+func _process(delta: float) -> void:
 	if _replicator == null or not is_instance_valid(_replicator):
 		return
 	var total: float = maxf(_replicator.replay_duration(), 0.001)
@@ -97,6 +197,15 @@ func _process(_delta: float) -> void:
 	_time_label.text = "%s / %s" % [_fmt(_replicator.replay_time()), _fmt(total)]
 	if _replicator.replay_finished():
 		_pause_btn.text = "■"
+		# Export runs end themselves two beats after the last packet.
+		if OS.has_feature("movie"):
+			_finished_for += delta
+			if _finished_for > 2.0:
+				get_tree().quit()
+	if _cine:
+		var near_top: bool = get_viewport().get_mouse_position().y < 90.0
+		_bar_idle = 0.0 if near_top or _dragging else _bar_idle + delta
+		_panel.visible = near_top or _dragging or _bar_idle < BAR_HIDE_SEC
 
 func _fmt(t: float) -> String:
 	return "%d:%02d" % [int(t) / 60, int(t) % 60]
@@ -114,6 +223,9 @@ func _toggle_pause() -> void:
 ## The bar must keep working while the tree is paused, or play never resumes.
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+
+func _exit_tree() -> void:
+	cinematic_active = false
 
 func _cycle_speed() -> void:
 	_speed_idx = (_speed_idx + 1) % SPEEDS.size()

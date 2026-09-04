@@ -17,6 +17,14 @@ func _ready() -> void:
 	# Same for replay leftovers: the mode ends where the menu begins.
 	NetworkSession.replay_mode = false
 	MatchConfig.replay_path = ""
+	# Creator pipeline: a video-export subprocess (or a scripted capture run)
+	# boots straight into the replay, skipping the menu. Consumed once.
+	var auto_replay: String = OS.get_environment("CALIMA_REPLAY")
+	if not auto_replay.is_empty():
+		OS.set_environment("CALIMA_REPLAY", "")
+		if FileAccess.file_exists(auto_replay) \
+				and ReplayFile.launch(auto_replay, get_tree()):
+			return
 	GameSettings.apply_language()
 	_play_button.text = tr("MENU_PLAY")
 	_quit_button.text = tr("MENU_QUIT")
@@ -176,7 +184,39 @@ func _make_replay_row(header: Dictionary) -> HBoxContainer:
 	watch.custom_minimum_size = Vector2(90, 32)
 	watch.pressed.connect(func() -> void: _play_replay(header))
 	row.add_child(watch)
+	var export_btn: Button = Button.new()
+	export_btn.text = tr("REPLAYS_EXPORT")
+	export_btn.custom_minimum_size = Vector2(90, 32)
+	export_btn.tooltip_text = tr("REPLAYS_EXPORT_TIP")
+	export_btn.pressed.connect(func() -> void: _export_replay_video(header))
+	row.add_child(export_btn)
 	return row
+
+## Creator pipeline: renders the replay to a video file in a BACKGROUND
+## process using the engine's Movie Maker mode — fixed 30 FPS, so the footage
+## is butter regardless of the machine, audio included. The subprocess boots
+## straight into the replay (CALIMA_REPLAY env), plays it cinematic with the
+## map revealed, and quits itself at the end.
+func _export_replay_video(header: Dictionary) -> void:
+	var replay_path: String = str(header.get("path", ""))
+	var out: String = ProjectSettings.globalize_path(
+		replay_path.get_basename() + ".avi")
+	OS.set_environment("CALIMA_REPLAY", replay_path)
+	OS.set_environment("CALIMA_CINE", "1")
+	var args: PackedStringArray = PackedStringArray(
+		["--write-movie", out, "--fixed-fps", "30"])
+	if OS.has_feature("editor"):
+		args = PackedStringArray(["--path", ProjectSettings.globalize_path("res://")]) + args
+	var pid: int = OS.create_process(OS.get_executable_path(), args)
+	OS.set_environment("CALIMA_REPLAY", "")
+	OS.set_environment("CALIMA_CINE", "")
+	var dialog: AcceptDialog = AcceptDialog.new()
+	dialog.title = tr("REPLAYS_EXPORT")
+	dialog.dialog_text = (tr("REPLAYS_EXPORTING") % out) if pid > 0 		else tr("REPLAYS_EXPORT_FAILED")
+	add_child(dialog)
+	dialog.popup_centered()
+	dialog.confirmed.connect(dialog.queue_free)
+	dialog.canceled.connect(dialog.queue_free)
 
 func _play_replay(header: Dictionary) -> void:
 	ReplayFile.launch(str(header.get("path", "")), get_tree())

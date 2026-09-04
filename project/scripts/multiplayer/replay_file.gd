@@ -18,6 +18,9 @@ const FORMAT_VERSION: int = 1
 ## Path of the most recently finalized recording this session — the
 ## game-over screen offers to watch it back.
 static var last_recorded_path: String = ""
+## Header of the replay currently playing — the intro card reads matchup
+## and date from here.
+static var active_header: Dictionary = {}
 
 var _file: FileAccess = null
 var _path: String = ""
@@ -88,6 +91,7 @@ static func launch(path: String, tree: SceneTree, seek_to: float = 0.0) -> bool:
 		return false
 	NetworkSession.apply_config(header.get("config", {}) as Dictionary)
 	NetworkSession.replay_mode = true
+	active_header = header
 	MatchConfig.replay_path = path
 	MatchConfig.replay_seek_to = seek_to
 	tree.change_scene_to_file("res://scenes/game/game_world.tscn")
