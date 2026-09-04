@@ -538,3 +538,8 @@ CAMP_CONTINUE,Continue,Continuar
 PLAYERS_PANEL_TOOLTIP,Players: civilization / age / score,Jugadores: civilización / edad / puntuación
 PLAYERS_PANEL_YOU,You,Tú
 PLAYERS_PANEL_AI,AI %d,IA %d
+MENU_REPLAYS,Replays,Repeticiones
+REPLAYS_TITLE,Replays,Repeticiones
+REPLAYS_EMPTY,No replays yet — finish a match first.,Aún no hay repeticiones — termina una partida primero.
+REPLAYS_WATCH,Watch,Ver
+REPLAYS_CLOSE,Close,Cerrar

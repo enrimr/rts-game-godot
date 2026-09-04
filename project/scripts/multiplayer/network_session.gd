@@ -128,8 +128,15 @@ static func game_version() -> String:
 	var v: String = str(ProjectSettings.get_setting("application/config/version", ""))
 	return v if not v.is_empty() else "dev"
 
+## Replay playback IS a client of a recorded host: every simulation-authority
+## gate in the codebase asks is_client(), so flipping this one flag gives the
+## replay world puppet semantics for free — no local sim, no local victory
+## checks, no local weather, commands silently dropped. Set by the replay
+## launcher before the scene boots; cleared on returning to the main menu.
+var replay_mode: bool = false
+
 func is_client() -> bool:
-	return role == Role.CLIENT
+	return role == Role.CLIENT or replay_mode
 
 func is_host() -> bool:
 	return role == Role.HOST

@@ -18,6 +18,15 @@ var _buildings_layer: Node = null
 var _tick: int = 0
 var _interval: float = float(SNAPSHOT_TICKS) / float(Engine.physics_ticks_per_second)
 
+# ── Replays ───────────────────────────────────────────────────────────────────
+# The SAME snapshot stream, recorded to disk (any authoritative match — SP or
+# MP host) and played back into a puppet mirror world (no network, no local
+# simulation): faithful by construction, immune to physics nondeterminism.
+var _recorder: ReplayFile = null
+var _playback: FileAccess = null
+var _playback_clock: float = 0.0
+var _playback_next: Dictionary = {}
+
 # Host: ids already introduced to the clients (removal detection).
 var _announced: Dictionary = {}
 # Host: the ids alive at match start — a rejoiner boots exactly this world,
@@ -55,7 +64,9 @@ func setup(world) -> void:
 			NetworkSession.notify_resync_ready()
 	else:
 		GameManager.game_over.connect(func(winner_id: int) -> void:
-			NetworkSession.send_events({"over": winner_id}))
+			_emit_events({"over": winner_id})
+			if _recorder != null:
+				_recorder.finalize())
 		GameManager.game_paused.connect(func(paused: bool) -> void:
 			NetworkSession.notify_pause(paused))
 		EventBus.ally_message.connect(func(pid: int, msg_kind: String) -> void:
@@ -92,6 +103,12 @@ func _seed_announced() -> void:
 			_announced[EntityRegistry.id_of(node)] = true
 
 func _exit_tree() -> void:
+	# An abandoned match still leaves a watchable replay up to the quit.
+	if _recorder != null:
+		_recorder.finalize()
+	if _playback != null:
+		_playback.close()
+		_playback = null
 	if NetworkSession.is_client():
 		if NetworkSession.state_received.is_connected(_on_state):
 			NetworkSession.state_received.disconnect(_on_state)
@@ -168,13 +185,66 @@ func full_resync_to(player_id: int) -> void:
 
 # ── Host side ────────────────────────────────────────────────────────────────
 
-func _physics_process(_delta: float) -> void:
-	if not NetworkSession.is_host():
+## Playback mode: puppet the freshly booted mirror world (the client path,
+## minus the network) and feed it the recorded packets on the match clock.
+func setup_playback(world, path: String) -> void:
+	_world = world
+	_units_layer = world.units_layer
+	_buildings_layer = world.buildings_layer
+	_playback = ReplayFile.open_packets(path)
+	_puppet_existing_world()
+	_advance_playback_cursor()
+
+## Recording mode: sample exactly like a host, write to disk instead of
+## (or besides) the wire. Called by GameWorld after the normal setup().
+func start_recording(header: Dictionary) -> void:
+	_recorder = ReplayFile.new()
+	if not _recorder.open_for_write(header):
+		_recorder = null
+
+func _emit_events(d: Dictionary) -> void:
+	NetworkSession.send_events(d)   # no-op unless an online host
+	if _recorder != null:
+		_recorder.append("e", d, float(_tick) / float(Engine.physics_ticks_per_second))
+
+func _emit_state(d: Dictionary) -> void:
+	NetworkSession.send_state(d)
+	if _recorder != null:
+		_recorder.append("s", d, float(_tick) / float(Engine.physics_ticks_per_second))
+
+func _physics_process(delta: float) -> void:
+	if _playback != null:
+		_playback_clock += delta
+		_pump_playback()
+		return
+	if not NetworkSession.is_host() and _recorder == null:
 		return
 	_tick += 1
 	if _tick % SNAPSHOT_TICKS != 0:
 		return
 	_host_snapshot()
+
+func _pump_playback() -> void:
+	while not _playback_next.is_empty() \
+			and (_playback_next.get("t", 0.0) as float) <= _playback_clock:
+		var kind: String = _playback_next.get("k", "") as String
+		var d: Dictionary = _playback_next.get("d", {}) as Dictionary
+		if kind == "e":
+			_on_events(d)
+		else:
+			_on_state(d)
+		_advance_playback_cursor()
+	if _playback_next.is_empty() and _playback != null:
+		_playback.close()
+		_playback = null
+
+func _advance_playback_cursor() -> void:
+	_playback_next = {}
+	if _playback == null or _playback.get_position() >= _playback.get_length():
+		return
+	var rec: Variant = _playback.get_var()
+	if rec is Dictionary:
+		_playback_next = rec as Dictionary
 
 func _host_snapshot() -> void:
 	var units: Array = []
@@ -214,7 +284,7 @@ func _host_snapshot() -> void:
 			_last_sent.erase(id)
 			_announced.erase(id)
 	if not spawns.is_empty() or not removes.is_empty():
-		NetworkSession.send_events({"spawn": spawns, "remove": removes})
+		_emit_events({"spawn": spawns, "remove": removes})
 	_snapshot_count += 1
 	var keyframe: bool = _snapshot_count % SLOW_EVERY == 1
 	var snapshot: Dictionary = {}
@@ -249,14 +319,14 @@ func _host_snapshot() -> void:
 	if keyframe:
 		snapshot["rn"] = _resource_nodes()
 		snapshot["tech"] = _researched_lists()
-		NetworkSession.send_events(snapshot)
+		_emit_events(snapshot)
 	elif var_to_bytes(snapshot).size() > MTU_SAFE_BYTES:
 		# A big battle moves everything at once: route the oversized delta
 		# through the reliable channel, which fragments safely (an unreliable
 		# packet above the ENet MTU is mostly packet loss).
-		NetworkSession.send_events(snapshot)
+		_emit_events(snapshot)
 	else:
-		NetworkSession.send_state(snapshot)
+		_emit_state(snapshot)
 
 func _changed_rows(rows: Array) -> Array:
 	var out: Array = []
@@ -615,7 +685,7 @@ func _apply_unit_health(node: Node, hp: float) -> void:
 		node.call("_refresh_health_bar")
 
 func _process(delta: float) -> void:
-	if not NetworkSession.is_client():
+	if not NetworkSession.is_client() and _playback == null:
 		return
 	for id: int in _spans:
 		var span: Dictionary = _spans[id]

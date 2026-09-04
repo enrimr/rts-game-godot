@@ -36,6 +36,13 @@ var forced_seed: int = 0
 ## GameWorld mounts the MissionDirector. Single-player only — skirmish and
 ## multiplayer starts reset it to -1.
 var campaign_mission: int = -1
+
+## Path of the replay being PLAYED BACK ("" = a normal match). Set by the
+## replay browser together with NetworkSession.replay_mode.
+var replay_path: String = ""
+
+func is_replay() -> bool:
+	return not replay_path.is_empty()
 ## player_id -> team number (1..4). Absent or 0 = no team (free-for-all).
 var player_teams: Dictionary = {}
 

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://check_replay"]
+
+[ext_resource type="Script" path="res://tools/check_replay.gd" id="1_replay"]
+
+[node name="CheckReplay" type="Node2D"]
+script = ExtResource("1_replay")

@@ -75,6 +75,9 @@ jobs:
       - name: Gate — amphibious rules
         run: $GODOT_BIN --headless --path project res://tools/check_amphibious.tscn
 
+      - name: Gate — replay record + playback round-trip
+        run: $GODOT_BIN --headless --path project res://tools/check_replay.tscn
+
       - name: Gate — single-player save/load round-trip (schema v2 live state)
         run: $GODOT_BIN --headless --path project res://tools/check_sp_saveload.tscn
 

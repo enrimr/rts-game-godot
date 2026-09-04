@@ -2,6 +2,10 @@ extends Node2D
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _saved_rng_seed: int = 0
+# True when this world was restored from a save — captured at _ready's top
+# because restore_world clears SaveManager.pending_load mid-boot. A restored
+# world has no deterministic fresh baseline, so it is never replay-recorded.
+var _was_loaded_match: bool = false
 var _saved_tc_position: Vector2 = Vector2.ZERO
 
 @onready var units_layer: Node2D = $UnitsLayer
@@ -74,6 +78,7 @@ func _ready() -> void:
 
 	# Deterministic seed: when loading a save we re-use the stored seed so the
 	# map generator produces the exact same layout.
+	_was_loaded_match = SaveManager.pending_load
 	if SaveManager.pending_load:
 		_rng.seed = SaveManager.get_saved_rng_seed()
 		_saved_rng_seed = _rng.seed
@@ -236,16 +241,48 @@ func _ready() -> void:
 
 	# Multiplayer: the host streams the authoritative state, a client puppets
 	# its mirror world from it. Must come after start_match so both machines
-	# reference entities by the same deterministic IDs.
-	if NetworkSession.is_online():
+	# reference entities by the same deterministic IDs. The same machinery
+	# carries REPLAYS: playback feeds a recorded stream into the puppet world
+	# (replay_mode makes is_client() true, so the whole boot already took the
+	# no-sim client path), and any authoritative fresh match records itself.
+	if MatchConfig.is_replay():
+		var player: StateReplicator = StateReplicator.new()
+		player.name = "StateReplicator"
+		add_child(player)
+		player.setup_playback(self, MatchConfig.replay_path)
+	elif NetworkSession.is_online():
 		var replicator: StateReplicator = StateReplicator.new()
 		replicator.name = "StateReplicator"
 		add_child(replicator)
 		replicator.setup(self)
 		if NetworkSession.is_host():
 			NetworkSession.player_resigned.connect(_on_player_resigned)
+			_maybe_record(replicator)
 		else:
 			NetworkSession.connection_lost.connect(_on_connection_lost, CONNECT_ONE_SHOT)
+	elif GameSettings.record_replays and not _was_loaded_match \
+			and not MatchConfig.launch_tutorial:
+		# Single-player: a replicator exists purely to sample the recording.
+		var recorder: StateReplicator = StateReplicator.new()
+		recorder.name = "StateReplicator"
+		add_child(recorder)
+		recorder.setup(self)
+		_maybe_record(recorder)
+
+## A replay must reboot the IDENTICAL world: the header carries the lobby
+## config with the RESOLVED seed (forced_seed may have been 0 = random).
+func _maybe_record(replicator: StateReplicator) -> void:
+	if _was_loaded_match or NetworkSession.resumed_match \
+			or MatchConfig.launch_tutorial or not GameSettings.record_replays:
+		return
+	# Headless tooling boots hundreds of matches — don't litter user://replays
+	# (the replay gate opts back in explicitly).
+	if DisplayServer.get_name() == "headless" \
+			and OS.get_environment("CALIMA_FORCE_REPLAY_RECORD") != "1":
+		return
+	var cfg: Dictionary = NetworkSession.snapshot_config()
+	cfg["seed"] = _saved_rng_seed
+	replicator.start_recording({"config": cfg})
 
 ## Immediate (not queued) removal so CommandBus.start_match's rescan, which
 ## runs synchronously right after, sees none of the map-generated entities.

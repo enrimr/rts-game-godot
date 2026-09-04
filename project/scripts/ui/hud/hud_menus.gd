@@ -111,6 +111,9 @@ func close_pause_menu() -> void:
 		GameManager.toggle_pause()
 
 func _open_save_slot_picker() -> void:
+	# A replay is a puppet world — "saving" it would write garbage entities.
+	if MatchConfig.is_replay():
+		return
 	var overlay: ColorRect = ColorRect.new()
 	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)

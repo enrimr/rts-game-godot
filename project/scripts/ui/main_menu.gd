@@ -14,6 +14,9 @@ func _ready() -> void:
 	# difficulty before it leaks into the next match or a settings save.
 	if GameSettings.difficulty == GameSettings.Difficulty.TUTORIAL:
 		GameSettings.difficulty = GameSettings.Difficulty.NORMAL
+	# Same for replay leftovers: the mode ends where the menu begins.
+	NetworkSession.replay_mode = false
+	MatchConfig.replay_path = ""
 	GameSettings.apply_language()
 	_play_button.text = tr("MENU_PLAY")
 	_quit_button.text = tr("MENU_QUIT")
@@ -24,6 +27,7 @@ func _ready() -> void:
 	_build_how_to_play_button()
 	_build_continue_button()
 	_build_lan_button()
+	_build_replays_button()
 	# Built LAST inserting at play+1, so the final order reads:
 	# Jugar, Campaña, Continuar, LAN, Internet.
 	_build_campaign_button()
@@ -125,6 +129,93 @@ func _build_lan_button() -> void:
 	container.add_child(inet_btn)
 	container.move_child(inet_btn, lan_btn.get_index() + 1)
 	inet_btn.pressed.connect(_open_internet_panel)
+
+# --- Replays (recorded snapshot streams; see StateReplicator/ReplayFile) ---
+
+var _replays_button: Button = null
+var _replays_panel: Control = null
+
+func _build_replays_button() -> void:
+	var container: Node = _play_button.get_parent()
+	var btn: Button = _make_mp_button(tr("MENU_REPLAYS"))
+	btn.disabled = ReplayFile.list_replays().is_empty()
+	container.add_child(btn)
+	container.move_child(btn, _quit_button.get_index())
+	_replays_button = btn
+	btn.pressed.connect(_open_replays_panel)
+
+func _open_replays_panel() -> void:
+	if is_instance_valid(_replays_panel):
+		return
+	var veil: Control = Control.new()
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var dim: ColorRect = ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.6)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.add_child(dim)
+	var panel: PanelContainer = PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", HudStyle.panel(Color(0.09, 0.10, 0.13, 0.97)))
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(520, 0)
+	veil.add_child(panel)
+	var box: VBoxContainer = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+	var title: Label = Label.new()
+	title.text = tr("REPLAYS_TITLE")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 22)
+	box.add_child(title)
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(500, 300)
+	box.add_child(scroll)
+	var rows: VBoxContainer = VBoxContainer.new()
+	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(rows)
+	for header: Dictionary in ReplayFile.list_replays():
+		rows.add_child(_make_replay_row(header))
+	if rows.get_child_count() == 0:
+		var empty: Label = Label.new()
+		empty.text = tr("REPLAYS_EMPTY")
+		rows.add_child(empty)
+	var close: Button = Button.new()
+	close.text = tr("REPLAYS_CLOSE")
+	close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	close.custom_minimum_size = Vector2(140, 36)
+	close.pressed.connect(func() -> void:
+		veil.queue_free()
+		_replays_panel = null)
+	box.add_child(close)
+	add_child(veil)
+	_replays_panel = veil
+	panel.reset_size.call_deferred()
+	panel.set_anchors_preset.call_deferred(Control.PRESET_CENTER)
+
+func _make_replay_row(header: Dictionary) -> HBoxContainer:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var cfg: Dictionary = header.get("config", {}) as Dictionary
+	var dt: Dictionary = Time.get_datetime_dict_from_unix_time(header.get("timestamp", 0) as int)
+	var rivals: Array = cfg.get("rival_civ_ids", []) as Array
+	var label: Label = Label.new()
+	label.text = "%02d/%02d %02d:%02d — %s vs %s" % [
+		dt.get("day", 0), dt.get("month", 0), dt.get("hour", 0), dt.get("minute", 0),
+		str(cfg.get("player_civ_id", "?")).capitalize(),
+		", ".join(rivals.map(func(c: Variant) -> String: return str(c).capitalize()))]
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	var watch: Button = Button.new()
+	watch.text = tr("REPLAYS_WATCH")
+	watch.custom_minimum_size = Vector2(90, 32)
+	watch.pressed.connect(func() -> void: _play_replay(header))
+	row.add_child(watch)
+	return row
+
+func _play_replay(header: Dictionary) -> void:
+	NetworkSession.apply_config(header.get("config", {}) as Dictionary)
+	NetworkSession.replay_mode = true
+	MatchConfig.replay_path = str(header.get("path", ""))
+	get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
 
 func _make_mp_button(label_text: String) -> Button:
 	var btn: Button = Button.new()
