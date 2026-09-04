@@ -1009,42 +1009,67 @@ func _style_menu_button(btn: Button, primary: bool) -> void:
 	if primary:
 		btn.text = btn.text.to_upper()
 		btn.add_theme_font_override("font", HudStyle.bold_font())
-	var normal: StyleBoxFlat = StyleBoxFlat.new()
-	normal.set_corner_radius_all(7)
+	var normal: StyleBox
+	var hover: StyleBox
+	var pressed: StyleBox
 	if primary:
-		# The one solid button on screen: a gold slab with dark lettering.
-		normal.bg_color = Color(0.87, 0.72, 0.34)
-		normal.border_width_bottom = 3
-		normal.border_color = Color(0.55, 0.42, 0.16)
+		# A bevelled metal plaque, not a flat pill: vertical gold gradient,
+		# near-square corners, dark 1 px rim, inner light line as the bevel.
+		normal = _plaque_box(Color(0.91, 0.78, 0.47), Color(0.66, 0.47, 0.15))
+		hover = _plaque_box(Color(1.0, 0.88, 0.56), Color(0.75, 0.56, 0.20))
+		pressed = _plaque_box(Color(0.62, 0.46, 0.16), Color(0.52, 0.38, 0.12), true)
 	else:
-		normal.bg_color = Color(0.03, 0.03, 0.05, 0.52)
-	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
-	if primary:
-		hover.bg_color = Color(1.0, 0.86, 0.46)
-		hover.border_color = Color(0.68, 0.53, 0.22)
-	else:
-		hover.bg_color = Color(0.10, 0.08, 0.04, 0.66)
-		hover.border_width_left = 2
-		hover.border_width_right = 2
-		hover.border_width_top = 2
-		hover.border_width_bottom = 2
-		hover.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.9)
-	var pressed: StyleBoxFlat = hover.duplicate() as StyleBoxFlat
-	pressed.bg_color = Color(0.72, 0.58, 0.26) if primary else Color(0.16, 0.13, 0.06, 0.75)
-	if primary:
-		# Hover juice: the slab brightens AND swells a touch.
-		btn.pivot_offset = btn.custom_minimum_size * 0.5
-		btn.mouse_entered.connect(func() -> void:
-			create_tween().tween_property(btn, "scale", Vector2(1.05, 1.05), 0.12)\
-				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT))
-		btn.mouse_exited.connect(func() -> void:
-			create_tween().tween_property(btn, "scale", Vector2.ONE, 0.12)\
-				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT))
+		var flat: StyleBoxFlat = StyleBoxFlat.new()
+		flat.bg_color = Color(0.03, 0.03, 0.05, 0.52)
+		flat.set_corner_radius_all(3)
+		flat.border_width_bottom = 1
+		flat.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.18)
+		normal = flat
+		var fh: StyleBoxFlat = flat.duplicate() as StyleBoxFlat
+		fh.bg_color = Color(0.10, 0.08, 0.04, 0.66)
+		fh.border_width_bottom = 2
+		fh.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.85)
+		hover = fh
+		var fp: StyleBoxFlat = fh.duplicate() as StyleBoxFlat
+		fp.bg_color = Color(0.16, 0.13, 0.06, 0.75)
+		pressed = fp
 	btn.add_theme_stylebox_override("normal", normal)
 	btn.add_theme_stylebox_override("hover", hover)
 	btn.add_theme_stylebox_override("pressed", pressed)
 	btn.add_theme_stylebox_override("disabled", normal)
 	btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+## Bakes a bevelled 9-slice plaque texture: vertical gradient between the
+## two golds, 1 px dark rim, a light inner line on top (bevel) — inverted
+## when pressed so the slab reads as sunk. All procedural, like the rest of
+## the game's art.
+func _plaque_box(top: Color, bottom: Color, sunk: bool = false) -> StyleBoxTexture:
+	const S: int = 24
+	const R: int = 2
+	var rim: Color = Color(0.32, 0.22, 0.06)
+	var img: Image = Image.create(S, S, false, Image.FORMAT_RGBA8)
+	for y: int in range(S):
+		var row: Color = top.lerp(bottom, float(y) / float(S - 1))
+		for x: int in range(S):
+			var corner: bool = (x < R or x >= S - R) and (y < R or y >= S - R) \
+				and Vector2(minf(x, S - 1 - x), minf(y, S - 1 - y)).length() < 1.0
+			if corner:
+				img.set_pixel(x, y, Color(0, 0, 0, 0))
+			elif x == 0 or y == 0 or x == S - 1 or y == S - 1:
+				img.set_pixel(x, y, rim)
+			elif y == 1:
+				img.set_pixel(x, y, (bottom if sunk else Color(1.0, 0.96, 0.80)).lerp(row, 0.35))
+			elif y == S - 2:
+				img.set_pixel(x, y, (Color(1.0, 0.96, 0.80) if sunk else bottom.darkened(0.25)).lerp(row, 0.35))
+			else:
+				img.set_pixel(x, y, row)
+	var box: StyleBoxTexture = StyleBoxTexture.new()
+	box.texture = ImageTexture.create_from_image(img)
+	box.texture_margin_left = 4.0
+	box.texture_margin_right = 4.0
+	box.texture_margin_top = 4.0
+	box.texture_margin_bottom = 4.0
+	return box
 
 ## A barely-there breathing drift on the painting: alive, never distracting.
 func _start_ken_burns() -> void:
