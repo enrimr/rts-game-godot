@@ -179,18 +179,55 @@ func _make_replay_row(header: Dictionary) -> HBoxContainer:
 		", ".join(rivals.map(func(c: Variant) -> String: return str(c).capitalize()))]
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
+	# The primary action stands out (gold, like the menu's JUGAR); the rest
+	# live behind a three-dots menu.
 	var watch: Button = Button.new()
-	watch.text = tr("REPLAYS_WATCH")
-	watch.custom_minimum_size = Vector2(90, 32)
+	watch.text = "▶ " + tr("REPLAYS_WATCH")
+	watch.custom_minimum_size = Vector2(110, 34)
+	watch.add_theme_color_override("font_color", Color(0.16, 0.11, 0.03))
+	watch.add_theme_color_override("font_hover_color", Color(0.10, 0.06, 0.01))
+	watch.add_theme_color_override("font_pressed_color", Color(0.16, 0.11, 0.03))
+	watch.add_theme_stylebox_override("normal",
+		_plaque_box(Color(0.91, 0.78, 0.47), Color(0.66, 0.47, 0.15)))
+	watch.add_theme_stylebox_override("hover",
+		_plaque_box(Color(1.0, 0.88, 0.56), Color(0.75, 0.56, 0.20)))
+	watch.add_theme_stylebox_override("pressed",
+		_plaque_box(Color(0.62, 0.46, 0.16), Color(0.52, 0.38, 0.12), true))
 	watch.pressed.connect(func() -> void: _play_replay(header))
 	row.add_child(watch)
-	var export_btn: Button = Button.new()
-	export_btn.text = tr("REPLAYS_EXPORT")
-	export_btn.custom_minimum_size = Vector2(90, 32)
-	export_btn.tooltip_text = tr("REPLAYS_EXPORT_TIP")
-	export_btn.pressed.connect(func() -> void: _export_replay_video(header))
-	row.add_child(export_btn)
+
+	var more: MenuButton = MenuButton.new()
+	more.text = "···"
+	more.custom_minimum_size = Vector2(40, 34)
+	more.add_theme_font_size_override("font_size", 22)
+	more.flat = false
+	var pop: PopupMenu = more.get_popup()
+	pop.add_item(tr("REPLAYS_EXPORT_LONG"), 0)
+	pop.add_item(tr("REPLAYS_DELETE"), 1)
+	pop.id_pressed.connect(func(id: int) -> void:
+		if id == 0:
+			_export_replay_video(header)
+		elif id == 1:
+			_confirm_delete_replay(header))
+	row.add_child(more)
 	return row
+
+func _confirm_delete_replay(header: Dictionary) -> void:
+	var confirm: ConfirmationDialog = ConfirmationDialog.new()
+	confirm.title = tr("REPLAYS_DELETE")
+	confirm.dialog_text = tr("REPLAYS_DELETE_CONFIRM")
+	confirm.confirmed.connect(func() -> void:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(
+			str(header.get("path", ""))))
+		confirm.queue_free()
+		# Rebuild the browser so the row vanishes.
+		if is_instance_valid(_replays_panel):
+			_replays_panel.queue_free()
+			_replays_panel = null
+		_open_replays_panel())
+	confirm.canceled.connect(confirm.queue_free)
+	add_child(confirm)
+	confirm.popup_centered()
 
 ## Creator pipeline: renders the replay to a video file in a BACKGROUND
 ## process using the engine's Movie Maker mode — fixed 30 FPS, so the footage

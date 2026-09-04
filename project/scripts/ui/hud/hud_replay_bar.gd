@@ -23,6 +23,14 @@ var _panel: PanelContainer = null
 var _watermark: TextureRect = null
 var _bar_idle: float = 0.0
 var _finished_for: float = 0.0
+## Optional floating minimap while cinematic: the minimap lives inside the
+## (hidden) command bar, so showing it alone means temporarily reparenting
+## it to the HUD root and pinning it to the bottom-right corner.
+var _mini_in_cine: bool = false
+var _mini_home: Node = null
+var _mini_index: int = 0
+var _mini_pos: Vector2 = Vector2.ZERO
+var _mini_size: Vector2 = Vector2.ZERO
 
 ## Global flag other HUD pieces that re-assert their own visibility every
 ## frame (the FPS counter) must respect.
@@ -107,6 +115,19 @@ func init(hud_root: Control, replicator: StateReplicator,
 	cine.pressed.connect(func() -> void: _set_cinematic(not _cine))
 	row.add_child(cine)
 
+	var mini: CheckButton = CheckButton.new()
+	mini.text = tr("REPLAY_CINE_MINIMAP")
+	mini.add_theme_font_size_override("font_size", 13)
+	mini.focus_mode = Control.FOCUS_NONE
+	mini.toggled.connect(func(on: bool) -> void:
+		_mini_in_cine = on
+		if _cine:
+			_float_minimap() if on else _restore_minimap())
+	row.add_child(mini)
+	if OS.get_environment("CALIMA_CINE_MINIMAP") == "1":
+		_mini_in_cine = true
+		mini.set_pressed_no_signal(true)
+
 	hud_root.add_child(self)
 	_build_watermark()
 	_show_intro_card()
@@ -126,13 +147,61 @@ func _set_cinematic(on: bool) -> void:
 	_cine = on
 	cinematic_active = on
 	for child: Node in _hud_root.get_children():
-		if child == self or not (child is CanvasItem):
+		if child == self or child == _minimap or not (child is CanvasItem):
 			continue
 		(child as CanvasItem).visible = not on
 	if is_instance_valid(_watermark):
 		_watermark.visible = on
+	if on and _mini_in_cine:
+		_float_minimap()
+	elif not on:
+		_restore_minimap()
 	_bar_idle = 0.0
 	_panel.visible = true
+
+func _float_minimap() -> void:
+	if not is_instance_valid(_minimap) or _mini_home != null:
+		if is_instance_valid(_minimap):
+			_minimap.visible = true
+		return
+	_mini_home = _minimap.get_parent()
+	_mini_index = _minimap.get_index()
+	_mini_pos = _minimap.position
+	_mini_size = _minimap.size
+	_mini_home.remove_child(_minimap)
+	_hud_root.add_child(_minimap)
+	# Outside its container the anchors would stretch it across the screen:
+	# pin it top-left-anchored at its ORIGINAL size, docked bottom-right.
+	_minimap.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_minimap.size = _mini_size
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	_minimap.position = vp - _mini_size - Vector2(14.0, 14.0)
+	_minimap.visible = true
+	# The corner is taken now — the watermark steps aside to bottom-left.
+	if is_instance_valid(_watermark):
+		_watermark.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+		_watermark.offset_left = 16.0
+		_watermark.offset_top = -84.0
+		_watermark.offset_right = 166.0
+		_watermark.offset_bottom = -16.0
+
+func _restore_minimap() -> void:
+	if not is_instance_valid(_minimap):
+		return
+	if _mini_home != null:
+		_hud_root.remove_child(_minimap)
+		_mini_home.add_child(_minimap)
+		_mini_home.move_child(_minimap, _mini_index)
+		_minimap.size = _mini_size
+		_minimap.position = _mini_pos
+		_mini_home = null
+	_minimap.visible = true
+	if is_instance_valid(_watermark):
+		_watermark.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+		_watermark.offset_left = -166.0
+		_watermark.offset_top = -84.0
+		_watermark.offset_right = -16.0
+		_watermark.offset_bottom = -16.0
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var ke: InputEventKey = event as InputEventKey
