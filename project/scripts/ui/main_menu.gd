@@ -1000,31 +1000,46 @@ func _style_menu_button(btn: Button, primary: bool) -> void:
 		52.0 if primary else 38.0)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	btn.add_theme_font_size_override("font_size", 28 if primary else 20)
-	btn.add_theme_color_override("font_color", GOLD if primary else GOLD_DIM)
-	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.75))
-	btn.add_theme_color_override("font_pressed_color", GOLD)
+	var ink: Color = Color(0.16, 0.11, 0.03)   # dark letters on the gold slab
+	btn.add_theme_color_override("font_color", ink if primary else GOLD_DIM)
+	btn.add_theme_color_override("font_hover_color",
+		Color(0.10, 0.06, 0.01) if primary else Color(1.0, 0.95, 0.75))
+	btn.add_theme_color_override("font_pressed_color", ink if primary else GOLD)
 	btn.add_theme_color_override("font_disabled_color", Color(0.6, 0.58, 0.52, 0.5))
 	if primary:
 		btn.text = btn.text.to_upper()
 		btn.add_theme_font_override("font", HudStyle.bold_font())
 	var normal: StyleBoxFlat = StyleBoxFlat.new()
-	normal.bg_color = Color(0.03, 0.03, 0.05, 0.52)
 	normal.set_corner_radius_all(7)
 	if primary:
-		normal.border_width_left = 2
-		normal.border_width_right = 2
-		normal.border_width_top = 2
-		normal.border_width_bottom = 2
-		normal.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.75)
+		# The one solid button on screen: a gold slab with dark lettering.
+		normal.bg_color = Color(0.87, 0.72, 0.34)
+		normal.border_width_bottom = 3
+		normal.border_color = Color(0.55, 0.42, 0.16)
+	else:
+		normal.bg_color = Color(0.03, 0.03, 0.05, 0.52)
 	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color(0.10, 0.08, 0.04, 0.66)
-	hover.border_width_left = 2
-	hover.border_width_right = 2
-	hover.border_width_top = 2
-	hover.border_width_bottom = 2
-	hover.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.9)
+	if primary:
+		hover.bg_color = Color(1.0, 0.86, 0.46)
+		hover.border_color = Color(0.68, 0.53, 0.22)
+	else:
+		hover.bg_color = Color(0.10, 0.08, 0.04, 0.66)
+		hover.border_width_left = 2
+		hover.border_width_right = 2
+		hover.border_width_top = 2
+		hover.border_width_bottom = 2
+		hover.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.9)
 	var pressed: StyleBoxFlat = hover.duplicate() as StyleBoxFlat
-	pressed.bg_color = Color(0.16, 0.13, 0.06, 0.75)
+	pressed.bg_color = Color(0.72, 0.58, 0.26) if primary else Color(0.16, 0.13, 0.06, 0.75)
+	if primary:
+		# Hover juice: the slab brightens AND swells a touch.
+		btn.pivot_offset = btn.custom_minimum_size * 0.5
+		btn.mouse_entered.connect(func() -> void:
+			create_tween().tween_property(btn, "scale", Vector2(1.05, 1.05), 0.12)\
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT))
+		btn.mouse_exited.connect(func() -> void:
+			create_tween().tween_property(btn, "scale", Vector2.ONE, 0.12)\
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT))
 	btn.add_theme_stylebox_override("normal", normal)
 	btn.add_theme_stylebox_override("hover", hover)
 	btn.add_theme_stylebox_override("pressed", pressed)
