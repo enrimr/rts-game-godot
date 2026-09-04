@@ -22,7 +22,6 @@ func _ready() -> void:
 	_quit_button.text = tr("MENU_QUIT")
 	_play_button.pressed.connect(_on_play_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
-	_style_play_button()
 	_build_settings_button()
 	_build_how_to_play_button()
 	_build_continue_button()
@@ -35,41 +34,9 @@ func _ready() -> void:
 	# Coming back from an aborted session must not leave a half-open peer.
 	if NetworkSession.is_online():
 		NetworkSession.leave()
-	_adapt_to_viewport()
-	get_viewport().size_changed.connect(_adapt_to_viewport)
+	_restyle_menu()
 	if not GameSettings.tutorial_seen:
 		_prompt_tutorial()
-
-func _adapt_to_viewport() -> void:
-	var vp: Vector2 = get_viewport().get_visible_rect().size
-	var logo_w: float = clampf(vp.x * 0.45, 280.0, 720.0)
-	var logo_h: float = logo_w * 0.45
-	var btn_w: float  = clampf(vp.x * 0.18, 160.0, 320.0)
-	_logo.custom_minimum_size = Vector2(logo_w, logo_h)
-	_play_button.custom_minimum_size = Vector2(btn_w, 52.0)
-	_quit_button.custom_minimum_size = Vector2(btn_w, 44.0)
-	var container: Node = _play_button.get_parent()
-	(container as Control).custom_minimum_size = Vector2(maxf(logo_w, btn_w), 0.0)
-	# Resize dynamic buttons (Continue, Settings) created at runtime
-	for child: Node in container.get_children():
-		if child is Button and child != _play_button and child != _quit_button:
-			(child as Button).custom_minimum_size = Vector2(btn_w, 44.0)
-
-func _style_play_button() -> void:
-	var normal: StyleBoxFlat = StyleBoxFlat.new()
-	normal.bg_color = Color(0.18, 0.42, 0.18, 0.95)
-	normal.corner_radius_top_left    = 6
-	normal.corner_radius_top_right   = 6
-	normal.corner_radius_bottom_left = 6
-	normal.corner_radius_bottom_right = 6
-	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color(0.26, 0.58, 0.26, 0.95)
-	var pressed: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
-	pressed.bg_color = Color(0.14, 0.32, 0.14, 0.95)
-	_play_button.add_theme_stylebox_override("normal",  normal)
-	_play_button.add_theme_stylebox_override("hover",   hover)
-	_play_button.add_theme_stylebox_override("pressed", pressed)
-	_play_button.add_theme_color_override("font_color", Color(0.92, 1.0, 0.88))
 
 # --- Continue button (shown only when a save exists) ---
 
@@ -947,3 +914,130 @@ func _style_toggle_btn(btn: Button, active: bool) -> void:
 	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
 	sh.bg_color = s.bg_color.lightened(0.2)
 	btn.add_theme_stylebox_override("hover", sh)
+
+# ── Side-rail layout (AoE2-DE style) ─────────────────────────────────────────
+# The old centered stack inherited the LOGO's width from the shared VBox, so
+# nine 720 px grey bars sat exactly over the painting's sunset. The rail keeps
+# every control on a dark gradient at the left edge, grouped by intent, and
+# lets the artwork breathe — with a slow Ken Burns drift to make it live.
+
+const RAIL_W: float = 348.0
+const GOLD: Color = Color(0.93, 0.80, 0.45)
+const GOLD_DIM: Color = Color(0.88, 0.82, 0.68)
+
+func _restyle_menu() -> void:
+	var container: VBoxContainer = _play_button.get_parent() as VBoxContainer
+
+	# The full-screen darkening flattened the art; the rail gradient replaces it.
+	var overlay: ColorRect = get_node_or_null("Overlay") as ColorRect
+	if overlay != null:
+		overlay.color = Color(0.0, 0.0, 0.0, 0.14)
+	var grad: Gradient = Gradient.new()
+	grad.colors = PackedColorArray([Color(0, 0, 0, 0.86), Color(0, 0, 0, 0.62), Color(0, 0, 0, 0.0)])
+	grad.offsets = PackedFloat32Array([0.0, 0.6, 1.0])
+	var gtex: GradientTexture2D = GradientTexture2D.new()
+	gtex.gradient = grad
+	gtex.fill_from = Vector2(0.0, 0.0)
+	gtex.fill_to = Vector2(1.0, 0.0)
+	var rail: TextureRect = TextureRect.new()
+	rail.texture = gtex
+	rail.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
+	rail.offset_right = RAIL_W + 200.0
+	rail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(rail)
+	move_child(rail, container.get_index())
+
+	container.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
+	container.offset_left = 52.0
+	container.offset_right = 52.0 + RAIL_W - 48.0
+	container.offset_top = 30.0
+	container.offset_bottom = -30.0
+	container.add_theme_constant_override("separation", 6)
+	container.custom_minimum_size = Vector2.ZERO
+
+	_logo.custom_minimum_size = Vector2(300.0, 150.0)
+	_logo.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+
+	var internet_btn: Button = _find_button_by_text(container, tr("MENU_INTERNET"))
+	var order: Array = [_play_button, _campaign_button, _continue_button,
+		_replays_button, null, _lan_button, internet_btn, null,
+		_settings_button, _how_to_play_button]
+	var slot: int = _logo.get_index() + 2   # after logo + its spacer
+	for entry: Variant in order:
+		if entry == null:
+			var sep: ColorRect = ColorRect.new()
+			sep.color = Color(GOLD.r, GOLD.g, GOLD.b, 0.22)
+			sep.custom_minimum_size = Vector2(RAIL_W - 120.0, 1.0)
+			sep.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+			container.add_child(sep)
+			container.move_child(sep, slot)
+		elif is_instance_valid(entry as Node):
+			container.move_child(entry as Node, slot)
+			_style_rail_button(entry as Button, entry == _play_button)
+		slot += 1
+	var expander: Control = Control.new()
+	expander.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	container.add_child(expander)
+	container.move_child(expander, slot)
+	container.move_child(_quit_button, container.get_child_count() - 1)
+	_style_rail_button(_quit_button, false)
+
+	var version: Label = Label.new()
+	version.text = "v" + NetworkSession.game_version()
+	version.add_theme_font_size_override("font_size", 13)
+	version.add_theme_color_override("font_color", Color(1, 1, 1, 0.45))
+	version.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	version.offset_left = -140.0
+	version.offset_top = -48.0
+	version.offset_bottom = -30.0
+	add_child(version)
+
+	_start_ken_burns()
+
+func _find_button_by_text(container: Node, text: String) -> Button:
+	for child: Node in container.get_children():
+		if child is Button and (child as Button).text == text:
+			return child as Button
+	return null
+
+func _style_rail_button(btn: Button, primary: bool) -> void:
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	btn.custom_minimum_size = Vector2(RAIL_W - 60.0, 54.0 if primary else 40.0)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	btn.add_theme_font_size_override("font_size", 30 if primary else 21)
+	btn.add_theme_color_override("font_color", GOLD if primary else GOLD_DIM)
+	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.75))
+	btn.add_theme_color_override("font_pressed_color", GOLD)
+	btn.add_theme_color_override("font_disabled_color", Color(0.6, 0.58, 0.52, 0.5))
+	if primary:
+		btn.text = btn.text.to_upper()
+		btn.add_theme_font_override("font", HudStyle.bold_font())
+	var normal: StyleBoxFlat = StyleBoxFlat.new()
+	normal.bg_color = Color(0, 0, 0, 0)
+	normal.border_width_left = 3 if primary else 0
+	normal.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.85)
+	normal.content_margin_left = 18.0
+	normal.content_margin_top = 4.0
+	normal.content_margin_bottom = 4.0
+	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
+	hover.bg_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.10)
+	hover.border_width_left = 3
+	var pressed: StyleBoxFlat = hover.duplicate() as StyleBoxFlat
+	pressed.bg_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.18)
+	btn.add_theme_stylebox_override("normal", normal)
+	btn.add_theme_stylebox_override("hover", hover)
+	btn.add_theme_stylebox_override("pressed", pressed)
+	btn.add_theme_stylebox_override("disabled", normal)
+	btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+## A barely-there breathing drift on the painting: alive, never distracting.
+func _start_ken_burns() -> void:
+	var bg: TextureRect = get_node_or_null("Background") as TextureRect
+	if bg == null:
+		return
+	bg.pivot_offset = bg.size * 0.5
+	var tween: Tween = create_tween().set_loops()
+	tween.tween_property(bg, "scale", Vector2(1.045, 1.045), 26.0)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(bg, "scale", Vector2.ONE, 26.0)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
