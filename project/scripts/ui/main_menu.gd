@@ -212,10 +212,16 @@ func _make_replay_row(header: Dictionary) -> HBoxContainer:
 	more.flat = false
 	var pop: PopupMenu = more.get_popup()
 	pop.add_item(tr("REPLAYS_EXPORT_LONG"), 0)
+	pop.add_check_item(tr("REPLAYS_EXPORT_MINIMAP"), 2)
+	pop.set_item_checked(pop.get_item_index(2), GameSettings.export_minimap)
 	pop.add_item(tr("REPLAYS_DELETE"), 1)
 	pop.id_pressed.connect(func(id: int) -> void:
 		if id == 0:
 			_export_replay_video(header)
+		elif id == 2:
+			GameSettings.export_minimap = not GameSettings.export_minimap
+			pop.set_item_checked(pop.get_item_index(2), GameSettings.export_minimap)
+			GameSettings.save_settings()
 		elif id == 1:
 			_confirm_delete_replay(header))
 	row.add_child(more)
@@ -249,6 +255,8 @@ func _export_replay_video(header: Dictionary) -> void:
 		replay_path.get_basename() + ".avi")
 	OS.set_environment("CALIMA_REPLAY", replay_path)
 	OS.set_environment("CALIMA_CINE", "1")
+	if GameSettings.export_minimap:
+		OS.set_environment("CALIMA_CINE_MINIMAP", "1")
 	var args: PackedStringArray = PackedStringArray(
 		["--write-movie", out, "--fixed-fps", "30"])
 	if OS.has_feature("editor"):
@@ -256,6 +264,7 @@ func _export_replay_video(header: Dictionary) -> void:
 	var pid: int = OS.create_process(OS.get_executable_path(), args)
 	OS.set_environment("CALIMA_REPLAY", "")
 	OS.set_environment("CALIMA_CINE", "")
+	OS.set_environment("CALIMA_CINE_MINIMAP", "")
 	var dialog: AcceptDialog = AcceptDialog.new()
 	dialog.title = tr("REPLAYS_EXPORT")
 	dialog.dialog_text = (tr("REPLAYS_EXPORTING") % out) if pid > 0 		else tr("REPLAYS_EXPORT_FAILED")

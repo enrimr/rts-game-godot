@@ -46,6 +46,9 @@ var _mark_label: Label = null
 ## frame (the FPS counter) must respect.
 static var cinematic_active: bool = false
 
+static func _export_run_env() -> bool:
+	return OS.has_feature("movie") or OS.get_environment("CALIMA_CINE") == "1"
+
 const SPEEDS: Array[float] = [1.0, 2.0, 4.0]
 ## In cinematic mode the bar hides after this long without the mouse near it.
 const BAR_HIDE_SEC: float = 2.0
@@ -165,7 +168,8 @@ func init(hud_root: Control, replicator: StateReplicator,
 		if _cine:
 			_float_minimap() if on else _restore_minimap())
 	row.add_child(mini)
-	if OS.get_environment("CALIMA_CINE_MINIMAP") == "1":
+	var mini_env: String = OS.get_environment("CALIMA_CINE_MINIMAP")
+	if (GameSettings.export_minimap if mini_env.is_empty() else mini_env == "1"):
 		_mini_in_cine = true
 		mini.set_pressed_no_signal(true)
 
@@ -174,6 +178,10 @@ func init(hud_root: Control, replicator: StateReplicator,
 	_show_intro_card()
 	# A video-export run is hands-free: cinematic from frame one, reveal-all
 	# for the spectacle, quit when the story ends.
+	# The render window is NOT a viewing session — say so in its title bar
+	# (titles never enter the captured frames).
+	if _export_run_env():
+		get_window().title = tr("REPLAY_RENDERING_TITLE")
 	var end_env: String = OS.get_environment("CALIMA_REPLAY_TO")
 	if not end_env.is_empty():
 		_export_end = float(end_env)

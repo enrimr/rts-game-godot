@@ -12,6 +12,8 @@ var sfx_volume:          float  = 1.0    # 0.0 – 1.0 linear
 var difficulty:          int    = Difficulty.NORMAL
 ## Record every authoritative match (SP and MP host) as a watchable replay.
 var record_replays:      bool   = true
+## Include the floating minimap in exported replay videos.
+var export_minimap:      bool   = true
 var language:            String = "en"
 var tutorial_seen:       bool   = false
 var show_dpad:           bool   = false
@@ -143,6 +145,7 @@ func save_settings() -> void:
 		difficulty if difficulty != Difficulty.TUTORIAL else Difficulty.NORMAL)
 	cfg.set_value("game",     "language",            language)
 	cfg.set_value("game",     "record_replays",      record_replays)
+	cfg.set_value("game",     "export_minimap",      export_minimap)
 	cfg.set_value("game",     "tutorial_seen",       tutorial_seen)
 	cfg.set_value("controls", "show_dpad",           show_dpad)
 	cfg.set_value("controls", "edge_scroll_enabled", edge_scroll_enabled)
@@ -164,6 +167,7 @@ func load_settings() -> void:
 		difficulty = Difficulty.NORMAL
 	language            = cfg.get_value("game",     "language",            "en") as String
 	record_replays      = cfg.get_value("game",     "record_replays",      true) as bool
+	export_minimap      = cfg.get_value("game",     "export_minimap",      true) as bool
 	tutorial_seen       = cfg.get_value("game",     "tutorial_seen",       false) as bool
 	show_dpad           = cfg.get_value("controls", "show_dpad",           false) as bool
 	edge_scroll_enabled = cfg.get_value("controls", "edge_scroll_enabled", true) as bool

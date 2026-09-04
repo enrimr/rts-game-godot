@@ -558,3 +558,5 @@ REPLAYS_DELETE_CONFIRM,Delete this replay? This cannot be undone.,¿Borrar esta 
 REPLAY_MARK_A,Mark clip start here,Marca aquí el inicio del clip
 REPLAY_MARK_B,Mark clip end here,Marca aquí el final del clip
 REPLAY_EXPORT_CLIP,Export clip,Exportar clip
+REPLAYS_EXPORT_MINIMAP,Include minimap in videos,Incluir minimapa en los vídeos
+REPLAY_RENDERING_TITLE,Calima — Rendering video… do not close,Calima — Renderizando vídeo… no cerrar
