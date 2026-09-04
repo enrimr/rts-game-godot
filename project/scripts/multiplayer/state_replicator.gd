@@ -287,15 +287,19 @@ func _apply_packet(rec: Dictionary) -> void:
 const SEEK_CHUNK: int = 600
 
 func _fast_forward_chunk() -> void:
+	# In a movie render every tick becomes a video frame: chunking the seek
+	# would film the buffering. Apply it whole — one long tick costs exactly
+	# one (discarded-in-a-blink) frame of output.
+	var budget: int = _packets.size() if OS.has_feature("movie") else SEEK_CHUNK
 	var applied: int = 0
-	while _cursor < _packets.size() and applied < SEEK_CHUNK:
+	while _cursor < _packets.size() and applied < budget:
 		var rec: Dictionary = _packets[_cursor] as Dictionary
 		if (rec.get("t", 0.0) as float) > _seek_target:
 			break
 		_apply_packet(rec)
 		_cursor += 1
 		applied += 1
-	if applied < SEEK_CHUNK or _cursor >= _packets.size():
+	if applied < budget or _cursor >= _packets.size():
 		_playback_clock = _seek_target
 		_seek_target = 0.0
 

@@ -22,9 +22,18 @@ func _ready() -> void:
 	var auto_replay: String = OS.get_environment("CALIMA_REPLAY")
 	if not auto_replay.is_empty():
 		OS.set_environment("CALIMA_REPLAY", "")
+		var from_env: String = OS.get_environment("CALIMA_REPLAY_FROM")
+		var seek_to: float = float(from_env) if not from_env.is_empty() else 0.0
 		if FileAccess.file_exists(auto_replay) \
-				and ReplayFile.launch(auto_replay, get_tree()):
+				and ReplayFile.launch(auto_replay, get_tree(), seek_to):
 			return
+	# A movie render that lands on the MENU has nothing to film — without
+	# this, a bad replay path recorded the idle menu until the disk filled
+	# (3.6 GB of main menu in five minutes, ask me how I know).
+	if OS.has_feature("movie"):
+		push_error("Movie run reached the menu (bad or missing CALIMA_REPLAY) — quitting.")
+		get_tree().quit(1)
+		return
 	GameSettings.apply_language()
 	_play_button.text = tr("MENU_PLAY")
 	_quit_button.text = tr("MENU_QUIT")

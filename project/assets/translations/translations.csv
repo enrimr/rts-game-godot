@@ -555,3 +555,6 @@ REPLAY_CINE_MINIMAP,Minimap,Minimapa
 REPLAYS_EXPORT_LONG,Export to video,Exportar a vídeo
 REPLAYS_DELETE,Delete replay,Borrar repetición
 REPLAYS_DELETE_CONFIRM,Delete this replay? This cannot be undone.,¿Borrar esta repetición? No se puede deshacer.
+REPLAY_MARK_A,Mark clip start here,Marca aquí el inicio del clip
+REPLAY_MARK_B,Mark clip end here,Marca aquí el final del clip
+REPLAY_EXPORT_CLIP,Export clip,Exportar clip

@@ -34,6 +34,13 @@ var _mini_size: Vector2 = Vector2.ZERO
 ## A video-export run has no operator: the bar must never enter the frame
 ## (the headless mouse sits at (0,0), which reads as "near the top edge").
 var _export_run: bool = false
+## Clip markers (seconds): the bar chooses WHAT gets exported — the video
+## then contains only that stretch, with zero UI in frame.
+var _mark_a: float = -1.0
+var _mark_b: float = -1.0
+var _export_end: float = -1.0
+var _clip_btn: Button = null
+var _mark_label: Label = null
 
 ## Global flag other HUD pieces that re-assert their own visibility every
 ## frame (the FPS counter) must respect.
@@ -118,6 +125,37 @@ func init(hud_root: Control, replicator: StateReplicator,
 	cine.pressed.connect(func() -> void: _set_cinematic(not _cine))
 	row.add_child(cine)
 
+	var mark_a_btn: Button = Button.new()
+	mark_a_btn.text = "A"
+	mark_a_btn.tooltip_text = tr("REPLAY_MARK_A")
+	mark_a_btn.custom_minimum_size = Vector2(30, 30)
+	mark_a_btn.focus_mode = Control.FOCUS_NONE
+	mark_a_btn.pressed.connect(func() -> void:
+		_mark_a = _replicator.replay_time()
+		_refresh_clip_ui())
+	row.add_child(mark_a_btn)
+	var mark_b_btn: Button = Button.new()
+	mark_b_btn.text = "B"
+	mark_b_btn.tooltip_text = tr("REPLAY_MARK_B")
+	mark_b_btn.custom_minimum_size = Vector2(30, 30)
+	mark_b_btn.focus_mode = Control.FOCUS_NONE
+	mark_b_btn.pressed.connect(func() -> void:
+		_mark_b = _replicator.replay_time()
+		_refresh_clip_ui())
+	row.add_child(mark_b_btn)
+	_clip_btn = Button.new()
+	_clip_btn.text = tr("REPLAY_EXPORT_CLIP")
+	_clip_btn.custom_minimum_size = Vector2(0, 30)
+	_clip_btn.focus_mode = Control.FOCUS_NONE
+	_clip_btn.disabled = true
+	_clip_btn.pressed.connect(_export_clip)
+	row.add_child(_clip_btn)
+	_mark_label = Label.new()
+	_mark_label.add_theme_font_size_override("font_size", 12)
+	_mark_label.add_theme_color_override("font_color", Color(0.93, 0.80, 0.45))
+	_mark_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_mark_label)
+
 	var mini: CheckButton = CheckButton.new()
 	mini.text = tr("REPLAY_CINE_MINIMAP")
 	mini.add_theme_font_size_override("font_size", 13)
@@ -136,6 +174,9 @@ func init(hud_root: Control, replicator: StateReplicator,
 	_show_intro_card()
 	# A video-export run is hands-free: cinematic from frame one, reveal-all
 	# for the spectacle, quit when the story ends.
+	var end_env: String = OS.get_environment("CALIMA_REPLAY_TO")
+	if not end_env.is_empty():
+		_export_end = float(end_env)
 	if OS.has_feature("movie") or OS.get_environment("CALIMA_CINE") == "1":
 		_export_run = true
 		_set_reveal_all(true)
@@ -276,6 +317,10 @@ func _process(delta: float) -> void:
 			_finished_for += delta
 			if _finished_for > 2.0:
 				get_tree().quit()
+	# Clip exports stop at the B mark instead of the end of the match.
+	if OS.has_feature("movie") and _export_end > 0.0 \
+			and _replicator.replay_time() >= _export_end:
+		get_tree().quit()
 	if _cine:
 		if _export_run:
 			_panel.visible = false
@@ -283,6 +328,42 @@ func _process(delta: float) -> void:
 			var near_top: bool = get_viewport().get_mouse_position().y < 90.0
 			_bar_idle = 0.0 if near_top or _dragging else _bar_idle + delta
 			_panel.visible = near_top or _dragging or _bar_idle < BAR_HIDE_SEC
+
+func _refresh_clip_ui() -> void:
+	var ok: bool = _mark_a >= 0.0 and _mark_b > _mark_a
+	_clip_btn.disabled = not ok
+	var a_txt: String = _fmt(_mark_a) if _mark_a >= 0.0 else "—"
+	var b_txt: String = _fmt(_mark_b) if _mark_b >= 0.0 else "—"
+	_mark_label.text = "%s→%s" % [a_txt, b_txt]
+
+## Background render of JUST the marked stretch: the subprocess seeks to A
+## before its first frame and quits at B — the operator's bar never existed
+## as far as the video knows.
+func _export_clip() -> void:
+	var out: String = ProjectSettings.globalize_path(
+		MatchConfig.replay_path.get_basename() + "_clip.avi")
+	OS.set_environment("CALIMA_REPLAY", MatchConfig.replay_path)
+	OS.set_environment("CALIMA_CINE", "1")
+	OS.set_environment("CALIMA_REPLAY_FROM", str(_mark_a))
+	OS.set_environment("CALIMA_REPLAY_TO", str(_mark_b))
+	if _mini_in_cine:
+		OS.set_environment("CALIMA_CINE_MINIMAP", "1")
+	var args: PackedStringArray = PackedStringArray(
+		["--write-movie", out, "--fixed-fps", "30"])
+	if OS.has_feature("editor"):
+		args = PackedStringArray(["--path", ProjectSettings.globalize_path("res://")]) + args
+	var pid: int = OS.create_process(OS.get_executable_path(), args)
+	for key: String in ["CALIMA_REPLAY", "CALIMA_CINE", "CALIMA_REPLAY_FROM",
+			"CALIMA_REPLAY_TO", "CALIMA_CINE_MINIMAP"]:
+		OS.set_environment(key, "")
+	var dialog: AcceptDialog = AcceptDialog.new()
+	dialog.title = tr("REPLAY_EXPORT_CLIP")
+	dialog.dialog_text = (tr("REPLAYS_EXPORTING") % out) if pid > 0 		else tr("REPLAYS_EXPORT_FAILED")
+	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(dialog)
+	dialog.popup_centered()
+	dialog.confirmed.connect(dialog.queue_free)
+	dialog.canceled.connect(dialog.queue_free)
 
 func _fmt(t: float) -> String:
 	return "%d:%02d" % [int(t) / 60, int(t) % 60]
