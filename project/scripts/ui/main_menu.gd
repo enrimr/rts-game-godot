@@ -513,9 +513,20 @@ func _open_settings() -> void:
 		margin.add_theme_constant_override("margin_" + side, 32)
 	card.add_child(margin)
 
+	# The card outgrew the screen as settings accumulated (audio, difficulty,
+	# language, controls, video, camera keys): title kissing the top edge,
+	# close button lost below the bottom. Content scrolls inside a viewport-
+	# bounded height instead.
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(452.0,
+		minf(700.0, get_viewport().get_visible_rect().size.y - 160.0))
+	margin.add_child(scroll)
+
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 18)
-	margin.add_child(vbox)
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(vbox)
 
 	# Title
 	var title: Label = Label.new()
@@ -915,47 +926,29 @@ func _style_toggle_btn(btn: Button, active: bool) -> void:
 	sh.bg_color = s.bg_color.lightened(0.2)
 	btn.add_theme_stylebox_override("hover", sh)
 
-# ── Side-rail layout (AoE2-DE style) ─────────────────────────────────────────
-# The old centered stack inherited the LOGO's width from the shared VBox, so
-# nine 720 px grey bars sat exactly over the painting's sunset. The rail keeps
-# every control on a dark gradient at the left edge, grouped by intent, and
-# lets the artwork breathe — with a slow Ken Burns drift to make it live.
+# ── Centered layout, done right ──────────────────────────────────────────────
+# The background painting is the hero and the logo is the crown: big and
+# centered, as the original. What changes is the column under it — the old
+# buttons inherited the LOGO's 720 px width from the shared VBox (a layout
+# bug) and buried the sunset under nine grey bars. Now: a NARROW centered
+# column of translucent pills, grouped by intent with thin gold separators,
+# JUGAR as the single large primary, Salir last and dimmer.
 
-const RAIL_W: float = 348.0
+const COL_W: float = 300.0
 const GOLD: Color = Color(0.93, 0.80, 0.45)
-const GOLD_DIM: Color = Color(0.88, 0.82, 0.68)
+const GOLD_DIM: Color = Color(0.90, 0.85, 0.72)
 
 func _restyle_menu() -> void:
 	var container: VBoxContainer = _play_button.get_parent() as VBoxContainer
-
-	# The full-screen darkening flattened the art; the rail gradient replaces it.
 	var overlay: ColorRect = get_node_or_null("Overlay") as ColorRect
 	if overlay != null:
-		overlay.color = Color(0.0, 0.0, 0.0, 0.14)
-	var grad: Gradient = Gradient.new()
-	grad.colors = PackedColorArray([Color(0, 0, 0, 0.86), Color(0, 0, 0, 0.62), Color(0, 0, 0, 0.0)])
-	grad.offsets = PackedFloat32Array([0.0, 0.6, 1.0])
-	var gtex: GradientTexture2D = GradientTexture2D.new()
-	gtex.gradient = grad
-	gtex.fill_from = Vector2(0.0, 0.0)
-	gtex.fill_to = Vector2(1.0, 0.0)
-	var rail: TextureRect = TextureRect.new()
-	rail.texture = gtex
-	rail.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
-	rail.offset_right = RAIL_W + 200.0
-	rail.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(rail)
-	move_child(rail, container.get_index())
-
-	container.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
-	container.offset_left = 52.0
-	container.offset_right = 52.0 + RAIL_W - 48.0
-	container.offset_top = 30.0
-	container.offset_bottom = -30.0
-	container.add_theme_constant_override("separation", 6)
+		overlay.color = Color(0.0, 0.0, 0.0, 0.30)
+	container.add_theme_constant_override("separation", 8)
 	container.custom_minimum_size = Vector2.ZERO
 
-	_logo.custom_minimum_size = Vector2(300.0, 150.0)
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	var logo_w: float = clampf(vp.x * 0.42, 320.0, 680.0)
+	_logo.custom_minimum_size = Vector2(logo_w, logo_w * 0.45)
 	_logo.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 
 	var internet_btn: Button = _find_button_by_text(container, tr("MENU_INTERNET"))
@@ -966,21 +959,22 @@ func _restyle_menu() -> void:
 	for entry: Variant in order:
 		if entry == null:
 			var sep: ColorRect = ColorRect.new()
-			sep.color = Color(GOLD.r, GOLD.g, GOLD.b, 0.22)
-			sep.custom_minimum_size = Vector2(RAIL_W - 120.0, 1.0)
-			sep.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+			sep.color = Color(GOLD.r, GOLD.g, GOLD.b, 0.30)
+			sep.custom_minimum_size = Vector2(120.0, 1.0)
+			sep.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 			container.add_child(sep)
 			container.move_child(sep, slot)
 		elif is_instance_valid(entry as Node):
 			container.move_child(entry as Node, slot)
-			_style_rail_button(entry as Button, entry == _play_button)
+			_style_menu_button(entry as Button, entry == _play_button)
 		slot += 1
-	var expander: Control = Control.new()
-	expander.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	container.add_child(expander)
-	container.move_child(expander, slot)
+	var gap: Control = Control.new()
+	gap.custom_minimum_size = Vector2(0, 10)
+	container.add_child(gap)
+	container.move_child(gap, slot)
 	container.move_child(_quit_button, container.get_child_count() - 1)
-	_style_rail_button(_quit_button, false)
+	_style_menu_button(_quit_button, false)
+	_quit_button.add_theme_color_override("font_color", Color(0.75, 0.70, 0.62))
 
 	var version: Label = Label.new()
 	version.text = "v" + NetworkSession.game_version()
@@ -1000,11 +994,12 @@ func _find_button_by_text(container: Node, text: String) -> Button:
 			return child as Button
 	return null
 
-func _style_rail_button(btn: Button, primary: bool) -> void:
-	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	btn.custom_minimum_size = Vector2(RAIL_W - 60.0, 54.0 if primary else 40.0)
-	btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	btn.add_theme_font_size_override("font_size", 30 if primary else 21)
+func _style_menu_button(btn: Button, primary: bool) -> void:
+	btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn.custom_minimum_size = Vector2(COL_W + (40.0 if primary else 0.0),
+		52.0 if primary else 38.0)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	btn.add_theme_font_size_override("font_size", 28 if primary else 20)
 	btn.add_theme_color_override("font_color", GOLD if primary else GOLD_DIM)
 	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.75))
 	btn.add_theme_color_override("font_pressed_color", GOLD)
@@ -1013,17 +1008,23 @@ func _style_rail_button(btn: Button, primary: bool) -> void:
 		btn.text = btn.text.to_upper()
 		btn.add_theme_font_override("font", HudStyle.bold_font())
 	var normal: StyleBoxFlat = StyleBoxFlat.new()
-	normal.bg_color = Color(0, 0, 0, 0)
-	normal.border_width_left = 3 if primary else 0
-	normal.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.85)
-	normal.content_margin_left = 18.0
-	normal.content_margin_top = 4.0
-	normal.content_margin_bottom = 4.0
+	normal.bg_color = Color(0.03, 0.03, 0.05, 0.52)
+	normal.set_corner_radius_all(7)
+	if primary:
+		normal.border_width_left = 2
+		normal.border_width_right = 2
+		normal.border_width_top = 2
+		normal.border_width_bottom = 2
+		normal.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.75)
 	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.10)
-	hover.border_width_left = 3
+	hover.bg_color = Color(0.10, 0.08, 0.04, 0.66)
+	hover.border_width_left = 2
+	hover.border_width_right = 2
+	hover.border_width_top = 2
+	hover.border_width_bottom = 2
+	hover.border_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.9)
 	var pressed: StyleBoxFlat = hover.duplicate() as StyleBoxFlat
-	pressed.bg_color = Color(GOLD.r, GOLD.g, GOLD.b, 0.18)
+	pressed.bg_color = Color(0.16, 0.13, 0.06, 0.75)
 	btn.add_theme_stylebox_override("normal", normal)
 	btn.add_theme_stylebox_override("hover", hover)
 	btn.add_theme_stylebox_override("pressed", pressed)
