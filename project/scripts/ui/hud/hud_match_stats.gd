@@ -426,6 +426,23 @@ func _on_game_over(winner_player_id: int) -> void:
 	map_btn.add_theme_stylebox_override("normal", HudStyle.panel(Color(0.15, 0.30, 0.50, 0.95)))
 	map_btn.add_theme_stylebox_override("hover",  HudStyle.panel(Color(0.25, 0.45, 0.70, 0.95)))
 
+	# The natural next click after a match: watch it back. Only when this
+	# match actually recorded itself (never inside a replay of a replay).
+	if not MatchConfig.is_replay() and not ReplayFile.last_recorded_path.is_empty():
+		var replay_btn: Button = Button.new()
+		replay_btn.text = tr("GAMEOVER_WATCH_REPLAY")
+		replay_btn.custom_minimum_size = Vector2(180.0, 36.0)
+		replay_btn.add_theme_font_size_override("font_size", 20)
+		replay_btn.add_theme_stylebox_override("normal",
+			HudStyle.panel(Color(0.45, 0.35, 0.10, 0.95)))
+		replay_btn.add_theme_stylebox_override("hover",
+			HudStyle.panel(Color(0.62, 0.49, 0.16, 0.95)))
+		replay_btn.pressed.connect(func() -> void:
+			get_tree().paused = false
+			Engine.time_scale = 1.0
+			ReplayFile.launch(ReplayFile.last_recorded_path, get_tree()))
+		btn_row.add_child(replay_btn)
+
 	var exit_btn: Button = Button.new()
 	exit_btn.text = tr("GAMEOVER_EXIT")
 	exit_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)

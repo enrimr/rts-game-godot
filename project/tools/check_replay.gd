@@ -91,6 +91,31 @@ func _ready() -> void:
 	if scout2 != null and is_instance_valid(scout2):
 		_check(scout2.global_position.distance_to(live_end) < 60.0,
 			"…and ends where the live match ended (fidelity)")
+	var duration: float = player.replay_duration()
+	_check(duration > 5.0, "timeline knows the total duration (%.1f s)" % duration)
+	world2.free()
+	await get_tree().process_frame
+
+	# ── Phase 3: the backward-seek path — a reboot that fast-forwards to a
+	# target time before the first rendered frame (what the timeline does).
+	MatchConfig.replay_seek_to = duration
+	var world3: Node2D = (load("res://scenes/game/game_world.tscn") as PackedScene)\
+		.instantiate() as Node2D
+	add_child(world3)
+	for _i: int in range(60):
+		await get_tree().physics_frame
+	var player3: StateReplicator = world3.get_node_or_null("StateReplicator") as StateReplicator
+	var scout3: Node2D = null
+	for u: Node in (world3.get("units_layer") as Node).get_children():
+		if u is Scout and (u.get("player_id") as int) == 0:
+			scout3 = u as Node2D
+	_check(player3 != null and absf(player3.replay_time() - duration) < 1.0,
+		"seek landed on the target time")
+	_check(scout3 != null and is_instance_valid(scout3) \
+		and scout3.global_position.distance_to(live_end) < 60.0,
+		"seek-to-end shows the final positions")
+	world3.free()
+	await get_tree().process_frame
 
 	DirAccess.remove_absolute(str(header.get("path", "")))
 	NetworkSession.replay_mode = false

@@ -23,9 +23,12 @@ var _interval: float = float(SNAPSHOT_TICKS) / float(Engine.physics_ticks_per_se
 # MP host) and played back into a puppet mirror world (no network, no local
 # simulation): faithful by construction, immune to physics nondeterminism.
 var _recorder: ReplayFile = null
-var _playback: FileAccess = null
+var _playback_active: bool = false
+var _packets: Array = []
+var _cursor: int = 0
 var _playback_clock: float = 0.0
-var _playback_next: Dictionary = {}
+var _duration: float = 0.0
+var _seek_target: float = 0.0
 
 # Host: ids already introduced to the clients (removal detection).
 var _announced: Dictionary = {}
@@ -106,9 +109,6 @@ func _exit_tree() -> void:
 	# An abandoned match still leaves a watchable replay up to the quit.
 	if _recorder != null:
 		_recorder.finalize()
-	if _playback != null:
-		_playback.close()
-		_playback = null
 	if NetworkSession.is_client():
 		if NetworkSession.state_received.is_connected(_on_state):
 			NetworkSession.state_received.disconnect(_on_state)
@@ -187,13 +187,52 @@ func full_resync_to(player_id: int) -> void:
 
 ## Playback mode: puppet the freshly booted mirror world (the client path,
 ## minus the network) and feed it the recorded packets on the match clock.
+## The whole stream loads into memory up front (a long match is tens of MB
+## of small dicts): that buys the timeline its total duration and makes
+## seeking an index jump instead of file surgery.
 func setup_playback(world, path: String) -> void:
 	_world = world
 	_units_layer = world.units_layer
 	_buildings_layer = world.buildings_layer
-	_playback = ReplayFile.open_packets(path)
+	var f: FileAccess = ReplayFile.open_packets(path)
+	_packets = []
+	if f != null:
+		while f.get_position() < f.get_length():
+			var rec: Variant = f.get_var()
+			if rec is Dictionary:
+				_packets.append(rec)
+		f.close()
+	_playback_active = true
+	if not _packets.is_empty():
+		_duration = (_packets[_packets.size() - 1] as Dictionary).get("t", 0.0) as float
 	_puppet_existing_world()
-	_advance_playback_cursor()
+	# A backward seek reboots the scene and lands here with a target time:
+	# fast-forward to it before the first rendered frame.
+	if MatchConfig.replay_seek_to > 0.0:
+		_seek_target = MatchConfig.replay_seek_to
+		MatchConfig.replay_seek_to = 0.0
+
+## ── Playback API (the replay bar drives these) ──────────────────────────────
+
+func replay_duration() -> float:
+	return _duration
+
+func replay_time() -> float:
+	return _playback_clock
+
+func replay_finished() -> bool:
+	return _playback_active and _cursor >= _packets.size()
+
+## Forward seeks fast-forward in place (chunked so the UI never freezes);
+## backward seeks reboot the mirror world and fast-forward from zero.
+func seek(t: float) -> void:
+	if not _playback_active:
+		return
+	if t >= _playback_clock:
+		_seek_target = t
+		return
+	MatchConfig.replay_seek_to = clampf(t, 0.0, _duration)
+	get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
 
 ## Recording mode: sample exactly like a host, write to disk instead of
 ## (or besides) the wire. Called by GameWorld after the normal setup().
@@ -213,9 +252,12 @@ func _emit_state(d: Dictionary) -> void:
 		_recorder.append("s", d, float(_tick) / float(Engine.physics_ticks_per_second))
 
 func _physics_process(delta: float) -> void:
-	if _playback != null:
-		_playback_clock += delta
-		_pump_playback()
+	if _playback_active:
+		if _seek_target > 0.0:
+			_fast_forward_chunk()
+		else:
+			_playback_clock += delta
+			_pump_playback()
 		return
 	if not NetworkSession.is_host() and _recorder == null:
 		return
@@ -225,26 +267,37 @@ func _physics_process(delta: float) -> void:
 	_host_snapshot()
 
 func _pump_playback() -> void:
-	while not _playback_next.is_empty() \
-			and (_playback_next.get("t", 0.0) as float) <= _playback_clock:
-		var kind: String = _playback_next.get("k", "") as String
-		var d: Dictionary = _playback_next.get("d", {}) as Dictionary
-		if kind == "e":
-			_on_events(d)
-		else:
-			_on_state(d)
-		_advance_playback_cursor()
-	if _playback_next.is_empty() and _playback != null:
-		_playback.close()
-		_playback = null
+	while _cursor < _packets.size():
+		var rec: Dictionary = _packets[_cursor] as Dictionary
+		if (rec.get("t", 0.0) as float) > _playback_clock:
+			break
+		_apply_packet(rec)
+		_cursor += 1
 
-func _advance_playback_cursor() -> void:
-	_playback_next = {}
-	if _playback == null or _playback.get_position() >= _playback.get_length():
-		return
-	var rec: Variant = _playback.get_var()
-	if rec is Dictionary:
-		_playback_next = rec as Dictionary
+func _apply_packet(rec: Dictionary) -> void:
+	var d: Dictionary = rec.get("d", {}) as Dictionary
+	if (rec.get("k", "") as String) == "e":
+		_on_events(d)
+	else:
+		_on_state(d)
+
+## Chunked fast-forward: applies up to SEEK_CHUNK packets per physics tick
+## until the clock reaches the target — a cross-match jump takes a moment
+## of "buffering", never a frozen frame.
+const SEEK_CHUNK: int = 600
+
+func _fast_forward_chunk() -> void:
+	var applied: int = 0
+	while _cursor < _packets.size() and applied < SEEK_CHUNK:
+		var rec: Dictionary = _packets[_cursor] as Dictionary
+		if (rec.get("t", 0.0) as float) > _seek_target:
+			break
+		_apply_packet(rec)
+		_cursor += 1
+		applied += 1
+	if applied < SEEK_CHUNK or _cursor >= _packets.size():
+		_playback_clock = _seek_target
+		_seek_target = 0.0
 
 func _host_snapshot() -> void:
 	var units: Array = []
@@ -685,7 +738,7 @@ func _apply_unit_health(node: Node, hp: float) -> void:
 		node.call("_refresh_health_bar")
 
 func _process(delta: float) -> void:
-	if not NetworkSession.is_client() and _playback == null:
+	if not NetworkSession.is_client() and not _playback_active:
 		return
 	for id: int in _spans:
 		var span: Dictionary = _spans[id]

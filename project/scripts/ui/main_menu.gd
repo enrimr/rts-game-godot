@@ -179,10 +179,7 @@ func _make_replay_row(header: Dictionary) -> HBoxContainer:
 	return row
 
 func _play_replay(header: Dictionary) -> void:
-	NetworkSession.apply_config(header.get("config", {}) as Dictionary)
-	NetworkSession.replay_mode = true
-	MatchConfig.replay_path = str(header.get("path", ""))
-	get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
+	ReplayFile.launch(str(header.get("path", "")), get_tree())
 
 func _make_mp_button(label_text: String) -> Button:
 	var btn: Button = Button.new()

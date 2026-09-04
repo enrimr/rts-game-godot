@@ -250,6 +250,9 @@ func _ready() -> void:
 		player.name = "StateReplicator"
 		add_child(player)
 		player.setup_playback(self, MatchConfig.replay_path)
+		var bar: HudReplayBar = HudReplayBar.new()
+		bar.init(hud.get_node("HUDRoot") as Control, player, _fog,
+			hud.get_node_or_null("%Minimap") as MinimapRenderer)
 	elif NetworkSession.is_online():
 		var replicator: StateReplicator = StateReplicator.new()
 		replicator.name = "StateReplicator"

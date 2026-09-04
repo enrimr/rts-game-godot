@@ -40,6 +40,8 @@ var campaign_mission: int = -1
 ## Path of the replay being PLAYED BACK ("" = a normal match). Set by the
 ## replay browser together with NetworkSession.replay_mode.
 var replay_path: String = ""
+## Backward-seek handoff: a replay reboot fast-forwards to this time.
+var replay_seek_to: float = 0.0
 
 func is_replay() -> bool:
 	return not replay_path.is_empty()

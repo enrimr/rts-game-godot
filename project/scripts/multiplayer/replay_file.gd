@@ -15,6 +15,10 @@ const DIR: String = "user://replays/"
 const EXT: String = ".calrep"
 const FORMAT_VERSION: int = 1
 
+## Path of the most recently finalized recording this session — the
+## game-over screen offers to watch it back.
+static var last_recorded_path: String = ""
+
 var _file: FileAccess = null
 var _path: String = ""
 
@@ -45,6 +49,7 @@ func finalize() -> void:
 	if _file != null:
 		_file.close()
 		_file = null
+		last_recorded_path = _path
 
 func path() -> String:
 	return _path
@@ -74,6 +79,19 @@ static func open_packets(path: String) -> FileAccess:
 		f.close()
 		return null
 	return f
+
+## One call to watch a replay from anywhere (menu browser, game-over
+## screen): applies the recorded config, arms replay mode, boots the world.
+static func launch(path: String, tree: SceneTree, seek_to: float = 0.0) -> bool:
+	var header: Dictionary = read_header(path)
+	if header.is_empty():
+		return false
+	NetworkSession.apply_config(header.get("config", {}) as Dictionary)
+	NetworkSession.replay_mode = true
+	MatchConfig.replay_path = path
+	MatchConfig.replay_seek_to = seek_to
+	tree.change_scene_to_file("res://scenes/game/game_world.tscn")
+	return true
 
 static func list_replays() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []

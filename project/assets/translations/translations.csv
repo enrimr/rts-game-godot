@@ -543,3 +543,6 @@ REPLAYS_TITLE,Replays,Repeticiones
 REPLAYS_EMPTY,No replays yet — finish a match first.,Aún no hay repeticiones — termina una partida primero.
 REPLAYS_WATCH,Watch,Ver
 REPLAYS_CLOSE,Close,Cerrar
+GAMEOVER_WATCH_REPLAY,Watch replay,Ver repetición
+REPLAY_BADGE,REPLAY,REPETICIÓN
+REPLAY_VIEW_ALL,Reveal map,Ver todo
