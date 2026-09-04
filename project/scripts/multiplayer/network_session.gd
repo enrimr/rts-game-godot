@@ -897,6 +897,15 @@ var steam_init_error: String = ""
 func ensure_steam() -> bool:
 	if _steam_initialized:
 		return true
+	# No Steam client running (or none installed) is a NORMAL situation for a
+	# LAN/offline player, not an error: asking first keeps the native
+	# extension from printing a red console error during steamInitEx. One
+	# quiet warning, the UI shows steam_init_error, everything else works.
+	if not Steam.isSteamRunning():
+		steam_init_error = "Steam is not running"
+		push_warning("Steam unavailable (client not running or not installed) — "
+			+ "Steam multiplayer disabled; LAN and Internet play are unaffected.")
+		return false
 	# A Finder-launched .app runs with cwd "/", where the Steam API would
 	# never find steam_appid.txt — the env vars work from anywhere.
 	OS.set_environment("SteamAppId", str(STEAM_APP_ID))
@@ -904,7 +913,7 @@ func ensure_steam() -> bool:
 	var result: Dictionary = Steam.steamInitEx(STEAM_APP_ID, false)
 	if (result.get("status", 1) as int) != 0 or not Steam.loggedOn():
 		steam_init_error = str(result.get("verbal", "")) 			if (result.get("status", 1) as int) != 0 else "not logged on"
-		print("Steam init failed: status=%s verbal=%s logged_on=%s" % [
+		push_warning("Steam init failed: status=%s verbal=%s logged_on=%s" % [
 			str(result.get("status")), str(result.get("verbal")), str(Steam.loggedOn())])
 		return false
 	_steam_initialized = true
