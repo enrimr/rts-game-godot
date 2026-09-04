@@ -437,6 +437,15 @@ func _collect_tc_state(tc: Node) -> Dictionary:
 		"rally_point": _v2(_vec_or(tc.get("rally_point"), Vector2.ZERO)),
 		"position":    _v2((tc as Node2D).global_position),
 	}
+	if tc.has_method("get_garrison"):
+		var g: Array = []
+		for occupant: Variant in tc.call("get_garrison") as Array:
+			if occupant is Node and is_instance_valid(occupant as Node):
+				var rec: Dictionary = _collect_unit(occupant as Node)
+				if not rec.is_empty():
+					g.append(rec)
+		if not g.is_empty():
+			d["garrison"] = g
 	if tc.has_method("get_queue"):
 		var q: Array = tc.call("get_queue") as Array
 		var queue_arr: Array = []
@@ -504,6 +513,13 @@ func _collect_garrison(holder: Node) -> Array:
 ## Instance ids of every unit currently sheltered in a building or transport.
 func _garrisoned_unit_ids(world: Node) -> Dictionary:
 	var ids: Dictionary = {}
+	# The scene TC lives outside both layers — without this, its occupants
+	# duplicated as free units AND its garrison was never saved.
+	var tc: Variant = world.get("drop_off")
+	if tc is Node and is_instance_valid(tc as Node) and (tc as Node).has_method("get_garrison"):
+		for occupant: Variant in (tc as Node).call("get_garrison") as Array:
+			if occupant is Node and is_instance_valid(occupant as Node):
+				ids[(occupant as Node).get_instance_id()] = true
 	for layer_name: String in ["BuildingsLayer", "UnitsLayer"]:
 		var layer: Node = world.get_node_or_null(layer_name)
 		if layer == null:
@@ -835,6 +851,14 @@ func _apply_tc_state(tc: Node, d: Dictionary) -> void:
 	var rp: Vector2 = Vector2(rp_arr[0] as float, rp_arr[1] as float)
 	if rp != Vector2.ZERO and tc.has_method("set_rally_point"):
 		tc.call("set_rally_point", rp)
+	if tc.has_method("garrison_unit"):
+		var units_layer: Node = (tc.get_parent() as Node).get_node_or_null("UnitsLayer") \
+			if tc.get_parent() != null else null
+		if units_layer != null:
+			for grec: Variant in (d.get("garrison", []) as Array):
+				var occupant: Node2D = _spawn_saved_unit(units_layer, grec as Dictionary)
+				if occupant != null:
+					tc.call("garrison_unit", occupant)
 	var queue_arr: Variant = d.get("train_queue")
 	if queue_arr != null and tc.has_method("get_queue"):
 		var train_q: Array = []

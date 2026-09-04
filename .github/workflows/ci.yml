@@ -75,6 +75,9 @@ jobs:
       - name: Gate — amphibious rules
         run: $GODOT_BIN --headless --path project res://tools/check_amphibious.tscn
 
+      - name: Gate — single-player save/load round-trip (schema v2 live state)
+        run: $GODOT_BIN --headless --path project res://tools/check_sp_saveload.tscn
+
       - name: Gate — sea containment chaos (no land unit in the ocean)
         run: CALIMA_TICKS=2400 $GODOT_BIN --headless --path project res://tools/check_sea_containment.tscn
 

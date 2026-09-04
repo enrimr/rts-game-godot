@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://check_sp_saveload"]
+
+[ext_resource type="Script" path="res://tools/check_sp_saveload.gd" id="1_spsl"]
+
+[node name="CheckSpSaveload" type="Node2D"]
+script = ExtResource("1_spsl")
