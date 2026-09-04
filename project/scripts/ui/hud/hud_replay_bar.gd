@@ -31,6 +31,9 @@ var _mini_home: Node = null
 var _mini_index: int = 0
 var _mini_pos: Vector2 = Vector2.ZERO
 var _mini_size: Vector2 = Vector2.ZERO
+## A video-export run has no operator: the bar must never enter the frame
+## (the headless mouse sits at (0,0), which reads as "near the top edge").
+var _export_run: bool = false
 
 ## Global flag other HUD pieces that re-assert their own visibility every
 ## frame (the FPS counter) must respect.
@@ -134,9 +137,11 @@ func init(hud_root: Control, replicator: StateReplicator,
 	# A video-export run is hands-free: cinematic from frame one, reveal-all
 	# for the spectacle, quit when the story ends.
 	if OS.has_feature("movie") or OS.get_environment("CALIMA_CINE") == "1":
+		_export_run = true
 		_set_reveal_all(true)
 		reveal.set_pressed_no_signal(true)
 		_set_cinematic(true)
+		_panel.visible = false
 
 ## ── Creator mode ─────────────────────────────────────────────────────────────
 
@@ -272,9 +277,12 @@ func _process(delta: float) -> void:
 			if _finished_for > 2.0:
 				get_tree().quit()
 	if _cine:
-		var near_top: bool = get_viewport().get_mouse_position().y < 90.0
-		_bar_idle = 0.0 if near_top or _dragging else _bar_idle + delta
-		_panel.visible = near_top or _dragging or _bar_idle < BAR_HIDE_SEC
+		if _export_run:
+			_panel.visible = false
+		else:
+			var near_top: bool = get_viewport().get_mouse_position().y < 90.0
+			_bar_idle = 0.0 if near_top or _dragging else _bar_idle + delta
+			_panel.visible = near_top or _dragging or _bar_idle < BAR_HIDE_SEC
 
 func _fmt(t: float) -> String:
 	return "%d:%02d" % [int(t) / 60, int(t) % 60]
