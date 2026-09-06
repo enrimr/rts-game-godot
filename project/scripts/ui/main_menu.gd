@@ -137,11 +137,15 @@ func _open_replays_panel() -> void:
 	dim.color = Color(0.0, 0.0, 0.0, 0.6)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	veil.add_child(dim)
+	# A CenterContainer keeps the panel centred no matter how its content
+	# resizes; anchoring the panel itself let long titles grow it rightwards.
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.add_child(center)
 	var panel: PanelContainer = PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", HudStyle.panel(Color(0.09, 0.10, 0.13, 0.97)))
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(520, 0)
-	veil.add_child(panel)
+	panel.custom_minimum_size = Vector2(560, 0)
+	center.add_child(panel)
 	var box: VBoxContainer = VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
@@ -151,7 +155,8 @@ func _open_replays_panel() -> void:
 	title.add_theme_font_size_override("font_size", 22)
 	box.add_child(title)
 	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(500, 300)
+	scroll.custom_minimum_size = Vector2(540, 300)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(scroll)
 	var rows: VBoxContainer = VBoxContainer.new()
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -172,8 +177,6 @@ func _open_replays_panel() -> void:
 	box.add_child(close)
 	add_child(veil)
 	_replays_panel = veil
-	panel.reset_size.call_deferred()
-	panel.set_anchors_preset.call_deferred(Control.PRESET_CENTER)
 
 func _make_replay_row(header: Dictionary) -> HBoxContainer:
 	var row: HBoxContainer = HBoxContainer.new()
@@ -187,6 +190,10 @@ func _make_replay_row(header: Dictionary) -> HBoxContainer:
 		str(cfg.get("player_civ_id", "?")).capitalize(),
 		", ".join(rivals.map(func(c: Variant) -> String: return str(c).capitalize()))]
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# A long roster must never push the buttons out of the row.
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.tooltip_text = label.text
+	label.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.add_child(label)
 	# The primary action stands out (gold, like the menu's JUGAR); the rest
 	# live behind a three-dots menu.
@@ -775,6 +782,7 @@ func _open_settings() -> void:
 		GameSettings.apply_video()
 		_style_toggle_btn(vs_row, GameSettings.vsync)
 	)
+	_make_unit_style_row(vbox)
 
 	# Camera pan keys (remappable; arrows always work as secondary)
 	vbox.add_child(_make_section_label(tr("SETTINGS_CAMERA_KEYS")))
@@ -986,6 +994,41 @@ func _make_pct_label(initial: float) -> Label:
 	lbl.add_theme_font_size_override("font_size", 17)
 	lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
 	return lbl
+
+const UNIT_STYLE_KEYS: Array[String] = [
+	"UNIT_STYLE_CLASSIC", "UNIT_STYLE_ENHANCED", "UNIT_STYLE_REDESIGNED",
+]
+
+## 3-way unit style selector: the button cycles Classic → Enhanced → Redesigned.
+## Live: the GameSettings setter re-dresses every unit through its signal.
+func _make_unit_style_row(parent: VBoxContainer) -> Button:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	var lbl: Label = Label.new()
+	lbl.text = tr("SETTINGS_UNIT_STYLE")
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
+	row.add_child(lbl)
+	var btn: Button = Button.new()
+	btn.custom_minimum_size = Vector2(160, 32)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 16)
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.bg_color = Color(0.20, 0.32, 0.50, 0.95)
+	s.set_corner_radius_all(4)
+	btn.add_theme_stylebox_override("normal", s)
+	var sh: StyleBoxFlat = s.duplicate() as StyleBoxFlat
+	sh.bg_color = s.bg_color.lightened(0.15)
+	btn.add_theme_stylebox_override("hover", sh)
+	btn.text = tr(UNIT_STYLE_KEYS[GameSettings.unit_style])
+	row.add_child(btn)
+	btn.pressed.connect(func() -> void:
+		GameSettings.unit_style = (GameSettings.unit_style + 1) % UNIT_STYLE_KEYS.size()
+		btn.text = tr(UNIT_STYLE_KEYS[GameSettings.unit_style])
+	)
+	return btn
 
 func _make_toggle_row(parent: VBoxContainer, label_text: String, initial: bool) -> Button:
 	var row: HBoxContainer = HBoxContainer.new()

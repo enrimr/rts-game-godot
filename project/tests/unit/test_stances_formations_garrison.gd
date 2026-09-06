@@ -56,6 +56,45 @@ func test_defensive_returning_home_does_not_reacquire() -> void:
 	assert_null(own.get("attack_target"),
 		"beyond the leash the unit is walking home, not picking new fights")
 
+# ---------------------------------------------------------------------------
+# Idle acquisition (line-of-sight aggression)
+# ---------------------------------------------------------------------------
+
+func test_idle_unit_hunts_enemy_within_acquire_radius() -> void:
+	var own: Node2D = _militia(0)
+	var enemy: Node2D = _militia(1, Vector2(150.0, 0.0))   # far beyond strike range
+	own.call("_tick_idle_acquire", UnitBase.ACQUIRE_INTERVAL)
+	assert_eq(own.get("attack_target"), enemy,
+		"an idle soldier hunts what stands within the acquisition radius")
+	assert_true(own.get("_auto_engaged") as bool, "the hunt counts as auto")
+
+func test_idle_acquire_ignores_enemies_beyond_radius() -> void:
+	var own: Node2D = _militia(0)
+	_militia(1, Vector2(UnitBase.ACQUIRE_RADIUS + 60.0, 0.0))
+	own.call("_tick_idle_acquire", UnitBase.ACQUIRE_INTERVAL)
+	assert_null(own.get("attack_target"), "out of sight, out of mind")
+
+func test_idle_acquire_is_throttled() -> void:
+	var own: Node2D = _militia(0)
+	_militia(1, Vector2(150.0, 0.0))
+	own.call("_tick_idle_acquire", UnitBase.ACQUIRE_INTERVAL * 0.5)
+	assert_null(own.get("attack_target"), "the sweep only fires on its interval")
+
+func test_stand_ground_never_walks_to_acquire() -> void:
+	var own: Node2D = _militia(0)
+	own.call("set_stance", UnitBase.Stance.STAND_GROUND)
+	_militia(1, Vector2(150.0, 0.0))
+	own.call("_tick_idle_acquire", UnitBase.ACQUIRE_INTERVAL)
+	assert_null(own.get("attack_target"),
+		"stand ground only strikes what it can already reach")
+
+func test_passive_idle_never_hunts() -> void:
+	var own: Node2D = _militia(0)
+	own.call("set_stance", UnitBase.Stance.PASSIVE)
+	_militia(1, Vector2(150.0, 0.0))
+	own.call("_tick_idle_acquire", UnitBase.ACQUIRE_INTERVAL)
+	assert_null(own.get("attack_target"))
+
 func test_stance_command_sets_stance_via_bus() -> void:
 	CommandBus.start_match(_holder)
 	var own: Node2D = _militia(0)

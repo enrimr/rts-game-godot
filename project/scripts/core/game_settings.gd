@@ -21,6 +21,29 @@ var edge_scroll_enabled: bool   = true
 var fullscreen:          bool   = false
 var vsync:               bool   = true
 var show_fps:            bool   = false
+## Unit visual style. CLASSIC is the flat default; ENHANCED layers outline +
+## shading + extra animation over the classic rig (UnitEnhancer); REDESIGNED
+## swaps in the lore-driven from-scratch rigs (UnitRedesign). Changing the
+## style re-dresses every live unit via the signal (UnitBase listens).
+enum UnitStyle { CLASSIC = 0, ENHANCED = 1, REDESIGNED = 2 }
+signal unit_style_changed(style: int)
+## Legacy signal, kept for external listeners of the old bool toggle.
+signal enhanced_units_changed(enabled: bool)
+var unit_style:          int    = UnitStyle.CLASSIC:
+	set(value):
+		value = clampi(value, UnitStyle.CLASSIC, UnitStyle.REDESIGNED)
+		if unit_style == value:
+			return
+		unit_style = value
+		unit_style_changed.emit(value)
+		enhanced_units_changed.emit(value == UnitStyle.ENHANCED)
+
+## Legacy alias: pre-3-style settings, tests and tooling read/write a bool.
+var enhanced_units: bool:
+	get:
+		return unit_style == UnitStyle.ENHANCED
+	set(value):
+		unit_style = UnitStyle.ENHANCED if value else UnitStyle.CLASSIC
 ## Custom camera-pan keys (action name -> keycode). Arrows always work too.
 var pan_keys:            Dictionary = {}
 
@@ -66,6 +89,13 @@ func _ready() -> void:
 	call_deferred("apply_video")
 	call_deferred("apply_pan_keys")
 	load_settings()
+	# Tooling/perf overrides: force a unit style from the environment
+	# (harnesses, perf A/Bs) without touching the persisted preference.
+	var style_env: String = OS.get_environment("CALIMA_UNIT_STYLE")
+	if not style_env.is_empty() and style_env.is_valid_int():
+		unit_style = style_env.to_int()
+	elif OS.get_environment("CALIMA_ENHANCED_UNITS") == "1":
+		unit_style = UnitStyle.ENHANCED
 	apply_language()
 
 # ---------------------------------------------------------------------------
@@ -153,6 +183,9 @@ func save_settings() -> void:
 	cfg.set_value("video",    "fullscreen",          fullscreen)
 	cfg.set_value("video",    "vsync",               vsync)
 	cfg.set_value("video",    "show_fps",            show_fps)
+	cfg.set_value("video",    "unit_style",          unit_style)
+	# Downgrade compatibility: older builds only read the bool.
+	cfg.set_value("video",    "enhanced_units",      enhanced_units)
 	cfg.save(SAVE_PATH)
 
 func load_settings() -> void:
@@ -175,6 +208,10 @@ func load_settings() -> void:
 	fullscreen          = cfg.get_value("video",    "fullscreen",          false) as bool
 	vsync               = cfg.get_value("video",    "vsync",               true) as bool
 	show_fps            = cfg.get_value("video",    "show_fps",            false) as bool
+	# Migration: configs from before the 3-way style only carry the bool.
+	var legacy_enhanced: bool = cfg.get_value("video", "enhanced_units", false) as bool
+	unit_style          = cfg.get_value("video",    "unit_style",
+		UnitStyle.ENHANCED if legacy_enhanced else UnitStyle.CLASSIC) as int
 	apply_language()
 
 func apply_language() -> void:

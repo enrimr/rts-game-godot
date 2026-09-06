@@ -40,6 +40,14 @@ var attack_target: Node = null
 enum Stance { AGGRESSIVE, DEFENSIVE, STAND_GROUND, PASSIVE }
 const DEFENSIVE_LEASH: float = 200.0
 
+## Idle acquisition (AoE2 line-of-sight aggression): an IDLE combat unit
+## periodically hunts the nearest enemy unit within this radius instead of
+## waiting for one to physically step into its (tiny) attack-range Area2D —
+## before this, an idle army stood beside enemy villagers forever.
+const ACQUIRE_RADIUS: float = 240.0
+const ACQUIRE_INTERVAL: float = 0.6
+var _acquire_timer: float = 0.0
+
 var stance: int = Stance.AGGRESSIVE
 var _stance_anchor: Vector2 = Vector2.INF   # INF = unset; falls back to current pos
 
@@ -221,6 +229,8 @@ func _ready() -> void:
 	call_deferred("_apply_gender_appearance")
 	call_deferred("_apply_team_dress")
 	call_deferred("_setup_iso_billboard")
+	GameSettings.unit_style_changed.connect(_on_unit_style_changed)
+	call_deferred("_apply_style_look")
 
 ## One tuning source for every unit's avoidance agent — the scenes stay at
 ## engine defaults, which are wrong for an RTS (see the AVOID_* constants).
@@ -316,6 +326,46 @@ func _apply_gender_appearance() -> void:
 func _apply_team_dress() -> void:
 	TeamDress.apply(self, player_id)
 
+# ── Optional unit styles (GameSettings.unit_style) ─────────────────────────
+# ENHANCED (UnitEnhancer) layers over the classic rig; REDESIGNED
+# (UnitRedesign) hides the classic Body behind a from-scratch rig and owns
+# the whole animation. Applied as the LAST paint layer, after the deferred
+# gender/dress/owner-tint repaints (which finish two frames after _ready).
+# Fully reversible: the live settings selector re-dresses on the spot via
+# the GameSettings signal.
+var _enhanced_look: bool = false
+var _redesigned_look: bool = false
+
+func _apply_style_look() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_inside_tree() or current_state == UnitState.DEAD:
+		return
+	if not get_meta(&"icon_prop", false):
+		_set_style_look(GameSettings.unit_style)
+
+func _on_unit_style_changed(style: int) -> void:
+	if get_meta(&"icon_prop", false):
+		return
+	_set_style_look(style)
+
+func _set_style_look(style: int) -> void:
+	match style:
+		GameSettings.UnitStyle.ENHANCED:
+			UnitRedesign.strip(self)
+			UnitEnhancer.apply(self)
+		GameSettings.UnitStyle.REDESIGNED:
+			UnitEnhancer.strip(self)
+			UnitRedesign.apply(self)
+		_:
+			UnitEnhancer.strip(self)
+			UnitRedesign.strip(self)
+	_enhanced_look = style == GameSettings.UnitStyle.ENHANCED
+	# Units without a redesigned rig yet keep their classic look + animation.
+	_redesigned_look = style == GameSettings.UnitStyle.REDESIGNED \
+		and UnitRedesign.is_applied(self)
+
 func _add_ground_shadow() -> void:
 	VisualFx.add_ground_shadow(self, 11.0, 4.5, 9.0)
 
@@ -367,7 +417,12 @@ func _process(delta: float) -> void:
 	_anim_time += delta
 	IsoBillboard.update_depth(self)
 	_update_avoidance_priority()
-	_animate_body(delta)
+	if _redesigned_look:
+		UnitRedesign.animate(self, delta)
+	else:
+		_animate_body(delta)
+		if _enhanced_look:
+			UnitEnhancer.animate_extras(self)
 	if _path_visible and is_instance_valid(_path_line) and not _path_failed:
 		var pts: PackedVector2Array = nav_agent.get_current_navigation_path()
 		if pts.size() >= 2:
@@ -731,6 +786,8 @@ func _physics_process(delta: float) -> void:
 		_combat_side_tick(delta)
 		return
 	match current_state:
+		UnitState.IDLE:
+			_tick_idle_acquire(delta)
 		UnitState.MOVING:
 			_handle_movement(delta)
 		UnitState.ATTACKING:
@@ -961,7 +1018,9 @@ func is_revealed_by_combat() -> bool:
 		return false
 	return float(Time.get_ticks_msec() - _last_strike_msec) / 1000.0 < COMBAT_REVEAL_TIME
 
-## Re-acquire something in range after the current target dies. Taunts win.
+## Re-acquire something in range after the current target dies. Taunts win;
+## with nothing touching the strike area, the acquisition radius takes over so
+## a unit that just won a fight chains onto the survivors nearby.
 func _scan_area_for_target() -> void:
 	if is_taunted and is_instance_valid(taunt_source):
 		order_attack(taunt_source)
@@ -978,6 +1037,56 @@ func _scan_area_for_target() -> void:
 			continue
 		_auto_engage(body)
 		return
+	if stance != Stance.STAND_GROUND:
+		var nearby: Node = _nearest_visible_enemy(ACQUIRE_RADIUS)
+		if nearby != null:
+			_auto_engage(nearby)
+
+## IDLE combat units hunt on their own: throttled sweep of the units group for
+## the closest hostile within ACQUIRE_RADIUS. Stances rule as everywhere else
+## (PASSIVE vetoes in _auto_engage, DEFENSIVE keeps its leash); STAND_GROUND
+## acquires only what it can already strike — it never walks.
+func _tick_idle_acquire(delta: float) -> void:
+	if not is_combat_unit():
+		return
+	_acquire_timer += delta
+	if _acquire_timer < ACQUIRE_INTERVAL:
+		return
+	_acquire_timer = 0.0
+	if stance == Stance.PASSIVE:
+		return
+	var target: Node = _nearest_visible_enemy(ACQUIRE_RADIUS)
+	if target == null:
+		return
+	if stance == Stance.STAND_GROUND \
+			and global_position.distance_to((target as Node2D).global_position) \
+				> _attack_reach_to(target):
+		return
+	_auto_engage(target)
+
+## Closest living hostile UNIT within radius (buildings and animals are never
+## hunted on the unit's own initiative — same rule as the range-entry path).
+func _nearest_visible_enemy(radius: float) -> Node:
+	var best: Node = null
+	var best_d: float = radius * radius
+	for body: Node in get_tree().get_nodes_in_group("units"):
+		if body == self or not is_instance_valid(body):
+			continue
+		var pid: Variant = body.get("player_id")
+		if pid == null or GameManager.are_allied(pid as int, player_id):
+			continue
+		if body.get("unit_data") == null:
+			continue
+		var st: Variant = body.get("current_state")
+		if st != null and (st as int) == UnitState.DEAD:
+			continue
+		if body.get("is_cloaked") == true:
+			continue
+		var d: float = global_position.distance_squared_to((body as Node2D).global_position)
+		if d < best_d:
+			best_d = d
+			best = body
+	return best
 
 # ── Combat machine hooks (override points for leaf classes) ────────────────
 

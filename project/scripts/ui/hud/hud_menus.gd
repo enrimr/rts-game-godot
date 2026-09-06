@@ -419,6 +419,10 @@ func _open_ingame_settings() -> void:
 		_style_toggle_btn(fps_row, GameSettings.show_fps)
 	)
 
+	# Live re-dress: the GameSettings setter signal re-styles every unit in
+	# the match on the spot, no reload needed.
+	_make_unit_style_row(vbox)
+
 	vbox.add_child(HSeparator.new())
 
 	var close_btn: Button = Button.new()
@@ -434,6 +438,35 @@ func _open_ingame_settings() -> void:
 		GameSettings.save_settings()
 		overlay.queue_free()
 	)
+
+const UNIT_STYLE_KEYS: Array[String] = [
+	"UNIT_STYLE_CLASSIC", "UNIT_STYLE_ENHANCED", "UNIT_STYLE_REDESIGNED",
+]
+
+## 3-way unit style selector: the button cycles Classic → Enhanced → Redesigned.
+func _make_unit_style_row(parent: VBoxContainer) -> Button:
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	var lbl: Label = Label.new()
+	lbl.text = tr("SETTINGS_UNIT_STYLE")
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
+	row.add_child(lbl)
+	var btn: Button = Button.new()
+	btn.custom_minimum_size = Vector2(160, 32)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 16)
+	btn.add_theme_stylebox_override("normal", HudStyle.panel(Color(0.20, 0.32, 0.50, 0.95), 4))
+	btn.add_theme_stylebox_override("hover", HudStyle.panel(Color(0.28, 0.44, 0.66, 0.95), 4))
+	btn.text = tr(UNIT_STYLE_KEYS[GameSettings.unit_style])
+	row.add_child(btn)
+	btn.pressed.connect(func() -> void:
+		GameSettings.unit_style = (GameSettings.unit_style + 1) % UNIT_STYLE_KEYS.size()
+		btn.text = tr(UNIT_STYLE_KEYS[GameSettings.unit_style])
+	)
+	return btn
 
 func _make_toggle_row(parent: VBoxContainer, label_text: String, initial: bool) -> Button:
 	var row: HBoxContainer = HBoxContainer.new()
@@ -490,7 +523,13 @@ func _on_surrender() -> void:
 		# The host's surrender must reach the chat too before the match ends.
 		NetworkSession.announce("resigned",
 			NetworkSession.display_name_of(NetworkSession.local_player_id))
-		await get_tree().create_timer(WorldVictory.RESIGN_END_DELAY).timeout
+	# Route through the resignation machinery: with hostile sides still
+	# standing the match plays on and we spectate; otherwise it ends there.
+	var world: Node = get_tree().get_first_node_in_group("world")
+	if world != null and world.has_method("_on_player_resigned"):
+		world.call("_on_player_resigned", NetworkSession.local_player_id)
+		return
+	await get_tree().create_timer(WorldVictory.RESIGN_END_DELAY).timeout
 	GameManager.declare_winner(1)
 
 func _make_pause_btn(label_text: String, normal_col: Color, hover_col: Color) -> Button:
