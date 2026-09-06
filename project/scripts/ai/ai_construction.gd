@@ -77,7 +77,10 @@ func _load_building_costs() -> void:
 		var res: BuildingResource = load(res_path) as BuildingResource
 		if res == null:
 			continue
-		_building_costs[building_id] = res.get_cost_dict()
+		# This AI's own price sheet: civ discounts (Mahos timber) pre-applied —
+		# affordability checks and the command's charge then agree.
+		_building_costs[building_id] = CivBonusManager.get_building_costs(
+			_ai.player_id, res.get_cost_dict())
 
 func update_cooldowns(delta: float) -> void:
 	for key: String in _build_cooldowns.keys():
@@ -160,6 +163,12 @@ func manage_defensive_towers(age: int) -> void:
 
 func manage_advanced_buildings() -> void:
 	var age: int = AgeManager.get_age(_ai.player_id)
+	# Fenicios open their market in the Dark Age — trade is their identity.
+	if age < GameManager.Age.FEUDAL \
+			and CivBonusManager.has_bonus(_ai.player_id, "market_available_dark_age") \
+			and _built.get("market", 0) as int == 0 \
+			and ResourceManager.can_afford(_ai.player_id, _building_costs["market"]):
+		_build("market")
 	if age < GameManager.Age.FEUDAL:
 		return
 	var barracks_count: int = _built.get("barracks", 0) as int
@@ -260,16 +269,87 @@ func _build_near_resource(building_id: String, rtype: ResourceNode.ResourceType)
 	_ai.debug_log("BUILD %s near resource at (%.0f,%.0f)" % [building_id, pos.x, pos.y])
 	_ai._economy.redirect_villagers_to_drop_off(b as Node2D, rtype)
 
-## Places one AI building through the CommandBus (instant construction) and
-## keeps the local built-count in step. Returns the node, or null.
+## Places one AI building through the CommandBus and sends a villager to raise
+## it — the same construction phase and build time the player pays (the old
+## instant completion was an AI-only cheat). Refuses to place with nobody to
+## build; manage_unfinished re-crews a site whose builder died. Returns the
+## node, or null.
 func _place(building_id: String, pos: Vector2) -> Node:
+	var builder: Node = _nearest_builder(pos)
+	if builder == null:
+		return null
 	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.make(_ai.player_id, building_id,
-		[pos] as Array[Vector2], 0.0, [] as Array[int], true)
+		[pos] as Array[Vector2], 0.0,
+		[EntityRegistry.id_of(builder)] as Array[int], false)
 	CommandBus.submit(cmd)
 	if cmd.last_placed.is_empty():
 		return null
 	_built[building_id] = (_built.get(building_id, 0) as int) + 1
 	return cmd.last_placed[0]
+
+## Nearest own villager free to build: idle ones first, then whoever is
+## closest that is not already raising another site.
+func _nearest_builder(pos: Vector2) -> Node:
+	var best: Node = null
+	var best_d: float = INF
+	var best_idle: Node = null
+	var best_idle_d: float = INF
+	for u: Node in _ai.world.own_units(_ai.player_id):
+		if not (u is Villager):
+			continue
+		var st: int = u.get("current_state") as int
+		if st == UnitBase.UnitState.DEAD or st == UnitBase.UnitState.BUILDING:
+			continue
+		# Already en route to a site (two placements in one tick must not
+		# fight over the same builder).
+		if is_instance_valid(u.get("build_target") as Node):
+			continue
+		var d: float = pos.distance_squared_to((u as Node2D).global_position)
+		if st == UnitBase.UnitState.IDLE and d < best_idle_d:
+			best_idle_d = d
+			best_idle = u
+		if d < best_d:
+			best_d = d
+			best = u
+	return best_idle if best_idle != null else best
+
+## Re-crews abandoned construction sites (builder died or was pulled away):
+## fish traps get the nearest own fishing boat, everything else a villager.
+func manage_unfinished() -> void:
+	for building: Node in _ai.world.own_buildings(_ai.player_id):
+		var st: Variant = building.get("state")
+		if st == null or (st as int) != BuildingBase.BuildingState.UNDER_CONSTRUCTION:
+			continue
+		if _has_crew_en_route(building):
+			continue
+		var site: Vector2 = (building as Node2D).global_position
+		var crew: Node = _nearest_boat(site) if building is FishTrap else _nearest_builder(site)
+		if crew == null:
+			return
+		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "build",
+			[EntityRegistry.id_of(crew)] as Array[int], EntityRegistry.id_of(building)))
+		_ai.debug_log("RECREW %s" % building.name)
+
+func _has_crew_en_route(building: Node) -> bool:
+	for u: Node in _ai.world.own_units(_ai.player_id):
+		if u.get("build_target") == building:
+			return true
+	return false
+
+func _nearest_boat(pos: Vector2) -> Node:
+	var best: Node = null
+	var best_d: float = INF
+	for u: Node in _ai.world.own_units(_ai.player_id):
+		if not (u is FishingBoat):
+			continue
+		var st: int = u.get("current_state") as int
+		if st == UnitBase.UnitState.DEAD or st == UnitBase.UnitState.BUILDING:
+			continue
+		var d: float = pos.distance_squared_to((u as Node2D).global_position)
+		if d < best_d:
+			best_d = d
+			best = u
+	return best
 
 ## Snaps a world position to the nearest GRID_STEP cell relative to TC origin.
 func _snap_to_grid(pos: Vector2, tc_origin: Vector2) -> Vector2:

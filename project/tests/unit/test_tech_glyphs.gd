@@ -20,7 +20,7 @@ func _shipped_tech_ids() -> Array[String]:
 
 func test_every_shipped_tech_has_a_dedicated_glyph() -> void:
 	var ids: Array[String] = _shipped_tech_ids()
-	assert_eq(ids.size(), 23, "23 technologies shipped")
+	assert_eq(ids.size(), 32, "32 technologies shipped")
 	for id: String in ids:
 		assert_true(id in UiIcons.TECH_GLYPHS,
 			"tech '%s' must have a dedicated glyph id" % id)

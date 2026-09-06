@@ -50,8 +50,6 @@ func launch_attack() -> void:
 	var min_units: int = GameSettings.get_ai_min_attack_units()
 	if _aggression == AggressionLevel.AGGRESSIVE:
 		min_units = maxi(min_units - 1, 1)
-	if mcount < min_units:
-		return
 
 	var targets: Array[Node] = _find_enemy_building_targets(3)
 	var etc: Node2D = get_primary_enemy_tc()
@@ -63,6 +61,13 @@ func launch_attack() -> void:
 		if fallback == null:
 			return
 		targets.append(fallback)
+		# Mop-up: nothing left to siege — hunt the last sighted units with
+		# whatever army stands, instead of waiting for a full wave that no
+		# longer has a reason to exist.
+		min_units = 1
+
+	if mcount < min_units:
+		return
 
 	if _has_human_ally():
 		NetworkSession.ai_ping(_ai.player_id, (targets[0] as Node2D).global_position)
@@ -323,6 +328,9 @@ func _research_building_type(building: Node) -> int:
 	if building is Barracks:      return TechnologyResource.ResearchBuilding.BARRACKS
 	if building is ArcheryRange:  return TechnologyResource.ResearchBuilding.BARRACKS
 	if building is Stable:        return TechnologyResource.ResearchBuilding.STABLE
+	if building is LumberCamp:    return TechnologyResource.ResearchBuilding.LUMBER_CAMP
+	if building is MiningCamp:    return TechnologyResource.ResearchBuilding.MINING_CAMP
+	if building is Mill:          return TechnologyResource.ResearchBuilding.MILL
 	return -1
 
 func _pick_research(available: Array[TechnologyResource]) -> TechnologyResource:
@@ -513,7 +521,8 @@ func _can_train(unit_id: String) -> bool:
 	match unit_id:
 		"militia":          return true
 		"archer":           return age >= GameManager.Age.FEUDAL
-		"pikeman":          return age >= GameManager.Age.CASTLE
+		"pikeman":          return age >= GameManager.Age.CASTLE \
+			or CivBonusManager.has_bonus(_ai.player_id, "spear_available_dark_age")
 		"menceyes_guard":   return age >= GameManager.Age.CASTLE and ai_civ == "guanches"
 		"ravine_archer":    return age >= GameManager.Age.CASTLE and ai_civ == "canarii"
 		"longbowman":       return age >= GameManager.Age.CASTLE and ai_civ == "britons"

@@ -354,7 +354,9 @@ func _confirm_placement(raw_world_pos: Vector2) -> void:
 	var world_pos: Vector2 = _snap_placement(raw_world_pos)
 	if _placement_overlaps(world_pos):
 		return
-	if not ResourceManager.can_afford(NetworkSession.local_player_id, WorldPlacement.building_costs(_placing_id)):
+	if not ResourceManager.can_afford(NetworkSession.local_player_id,
+			CivBonusManager.get_building_costs(NetworkSession.local_player_id,
+				WorldPlacement.building_costs(_placing_id))):
 		_cancel_placement()
 		return
 

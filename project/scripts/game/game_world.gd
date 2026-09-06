@@ -38,6 +38,15 @@ var _selected_buildings: Array[Node] = []
 var _cursor_timer: float = 0.0
 const CURSOR_UPDATE_INTERVAL: float = 0.1
 
+# The local player resigned or was conquered while the match plays on:
+# camera and selection stay live (spectating) but every order is refused.
+var local_player_defeated: bool = false
+
+## Camera and selection stay live, every simulation order is refused: the
+## spectator after a defeat, and any REPLAY (recorded history takes no orders).
+func _orders_locked() -> bool:
+	return local_player_defeated or MatchConfig.is_replay()
+
 var _victory: WorldVictory = null
 var _camera_ctl: WorldCamera = null
 var _placement: WorldPlacement = null
@@ -161,7 +170,8 @@ func _ready() -> void:
 	EventBus.wonder_destroyed.connect(_on_wonder_destroyed)
 	EventBus.minimap_move_order.connect(func(p: Vector2) -> void:
 		_camera_ctl.cancel_follow()
-		_commands._order_move_all(p)
+		if not _orders_locked():
+			_commands._order_move_all(p)
 	)
 	# HUD-side camera controls (minimap click, dpad) emit this so their pans
 	# are not undone by the per-frame follow re-centre. Re-entrant no-op when
@@ -174,6 +184,9 @@ func _ready() -> void:
 	SelectionManager.selection_changed.connect(_on_selection_manager_changed)
 	EventBus.tutorial_spawn_enemy_scout.connect(_on_tutorial_spawn_enemy_scout)
 	EventBus.tutorial_highlight_unit.connect(_on_tutorial_highlight_unit)
+	EventBus.tutorial_grant_resources.connect(
+		func(pid: int, res: String, amount: int) -> void:
+			ResourceManager.add_resource(pid, res, amount))
 	EventBus.tutorial_reset_camera_flag.connect(func() -> void: _camera_ctl.reset_moved_flag())
 
 	_fog = FogOfWar.new()
@@ -317,6 +330,10 @@ func _on_unit_died_check_victory(unit: Node, owner_id: int) -> void:
 	_victory._on_unit_died_check_victory(unit, owner_id)
 
 func _on_player_eliminated(eliminated_id: int) -> void:
+	if eliminated_id == NetworkSession.local_player_id:
+		local_player_defeated = true
+		_placement._cancel_placement()
+		_commands._pending_action = ""
 	_victory._on_player_eliminated(eliminated_id)
 
 func _on_building_construction_complete(building: Node) -> void:
@@ -541,21 +558,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _is_mouse_over_hud():
 			return
 
-		if _placement.handle_placement_mouse(mb):
-			return
+		if not _orders_locked():
+			if _placement.handle_placement_mouse(mb):
+				return
 
-		if not _commands._pending_action.is_empty():
-			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
-				_commands._execute_pending_action(get_global_mouse_position())
-				get_viewport().set_input_as_handled()
-			elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
-				hud.cancel_pending()
-				get_viewport().set_input_as_handled()
-			return
+			if not _commands._pending_action.is_empty():
+				if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+					_commands._execute_pending_action(get_global_mouse_position())
+					get_viewport().set_input_as_handled()
+				elif mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
+					hud.cancel_pending()
+					get_viewport().set_input_as_handled()
+				return
 
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			_selection.handle_left_mouse(mb.pressed)
-		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed \
+				and not _orders_locked():
 			_commands._handle_right_click(get_global_mouse_position())
 
 func get_zoom() -> float:
@@ -587,6 +606,8 @@ func _request_nav_rebake() -> void:
 # --- HUD action buttons (implementation in WorldCommands) ---
 
 func _on_action_requested(action_id: String) -> void:
+	if _orders_locked():
+		return
 	_commands._on_action_requested(action_id)
 
 func _on_unit_spawned(unit: Node, _player: int) -> void:

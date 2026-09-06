@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_bowsaw"]
+
+[resource]
+script = ExtResource("1_bowsaw")
+id = "bow_saw"
+display_name = "Bow Saw"
+description = "Villagers chop wood another 15% faster and carry 10% more per trip."
+required_age = 2
+research_building = 7
+research_time = 40.0
+cost_food = 150
+cost_wood = 100
+cost_gold = 0
+effects = {"villager_wood_gather_rate": 1.15, "villager_wood_carry": 1.10}
+prerequisites = ["double_bit_axe"]

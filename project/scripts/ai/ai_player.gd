@@ -151,6 +151,7 @@ func _physics_process(delta: float) -> void:
 
 func _run_tick() -> void:
 	_construction.sync_built_counts()
+	_construction.manage_unfinished()
 	_construction.manage_population()
 	_economy.manage_villagers()
 	_construction.manage_economy_buildings()

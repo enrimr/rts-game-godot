@@ -45,6 +45,9 @@ const TECH_GLYPHS: Array[String] = [
 	"upgrade_man_at_arms", "upgrade_long_swordsman",
 	"upgrade_heavy_scout", "upgrade_knight",
 	"carreta_canaria", "carreton_isleno",
+	"double_bit_axe", "bow_saw", "two_man_saw",
+	"reinforced_picks", "shaft_mining", "deep_galleries",
+	"horse_collar", "heavy_plow", "crop_rotation",
 ]
 
 # ── Palette (flat fills; outlines derive as darkened shades) ──────────────────
@@ -927,6 +930,122 @@ static func _build_tech(id: String, root: Node2D) -> void:
 			_circle(root, Vector2(38, 13), 7.0, C_SAND)
 			_cart_wheel(root, Vector2(20, 46), 10.0, C_STEEL_DARK)
 			_cart_wheel(root, Vector2(44, 46), 10.0, C_STEEL_DARK)
+		"double_bit_axe":
+			# Twin-bladed axe on a vertical haft.
+			_bar(root, Vector2(32, 58), Vector2(32, 12), 4.5, C_WOOD)
+			_poly(root, PackedVector2Array([Vector2(28, 10), Vector2(14, 6),
+				Vector2(8, 17), Vector2(14, 28), Vector2(28, 24)]), C_STEEL)
+			_poly(root, PackedVector2Array([Vector2(36, 10), Vector2(50, 6),
+				Vector2(56, 17), Vector2(50, 28), Vector2(36, 24)]), C_STEEL)
+			_stroke(root, PackedVector2Array([Vector2(11, 10), Vector2(9, 17),
+				Vector2(11, 24)]), C_PALE, 2.2)
+			_stroke(root, PackedVector2Array([Vector2(53, 10), Vector2(55, 17),
+				Vector2(53, 24)]), C_PALE, 2.2)
+		"bow_saw":
+			# D-frame bow saw over a half-cut log.
+			_rect(root, 8.0, 44.0, 48.0, 14.0, C_LOG)
+			_circle(root, Vector2(56, 51), 7.0, C_LOG_END)
+			_stroke(root, PackedVector2Array([Vector2(32, 58), Vector2(32, 46)]),
+				C_DARK, 2.5)
+			var bow: PackedVector2Array = PackedVector2Array()
+			for i: int in range(11):
+				var a: float = deg_to_rad(180.0 + 180.0 * float(i) / 10.0)
+				bow.append(Vector2(32, 40) + Vector2(cos(a) * 22.0, sin(a) * 32.0))
+			_stroke(root, bow, C_WOOD, 5.0)
+			_bar(root, Vector2(10, 40), Vector2(54, 40), 3.0, C_STEEL)
+			for k: int in range(6):
+				_poly(root, PackedVector2Array([Vector2(12.0 + k * 7.0, 41.0),
+					Vector2(15.0 + k * 7.0, 41.0), Vector2(13.5 + k * 7.0, 45.0)]),
+					C_STEEL_DARK)
+		"two_man_saw":
+			# Long crosscut blade, one upright handle at each end.
+			_bar(root, Vector2(10, 22), Vector2(10, 36), 5.0, C_WOOD_DARK)
+			_bar(root, Vector2(54, 22), Vector2(54, 36), 5.0, C_WOOD_DARK)
+			_poly(root, PackedVector2Array([Vector2(8, 34), Vector2(56, 34),
+				Vector2(56, 42), Vector2(8, 42)]), C_STEEL)
+			for k: int in range(8):
+				_poly(root, PackedVector2Array([Vector2(9.0 + k * 6.0, 42.0),
+					Vector2(14.0 + k * 6.0, 42.0), Vector2(11.5 + k * 6.0, 47.0)]),
+					C_STEEL_DARK)
+			_rect(root, 16.0, 50.0, 32.0, 8.0, C_LOG)
+			_circle(root, Vector2(48, 54), 4.0, C_LOG_END)
+		"reinforced_picks":
+			# Pickaxe striking a gold nugget.
+			_bar(root, Vector2(36, 12), Vector2(20, 50), 4.5, C_WOOD)
+			var pick: PackedVector2Array = PackedVector2Array()
+			for i: int in range(9):
+				var a: float = deg_to_rad(-35.0 + 90.0 * float(i) / 8.0)
+				pick.append(Vector2(28, 34) + Vector2(cos(a), sin(a)) * 26.0)
+			_stroke(root, pick, C_STEEL, 6.0)
+			_poly(root, PackedVector2Array([Vector2(38, 44), Vector2(54, 40),
+				Vector2(60, 50), Vector2(52, 58), Vector2(40, 56)]), C_GOLD)
+			_poly(root, PackedVector2Array([Vector2(42, 46), Vector2(52, 44),
+				Vector2(48, 52)]), C_GOLD.lightened(0.35))
+		"shaft_mining":
+			# Timbered mine portal, rails running into the dark.
+			_rect(root, 12.0, 18.0, 40.0, 36.0, C_STONE)
+			_rect(root, 20.0, 26.0, 24.0, 28.0, C_DARK)
+			_rect(root, 14.0, 20.0, 6.0, 34.0, C_WOOD)
+			_rect(root, 44.0, 20.0, 6.0, 34.0, C_WOOD)
+			_rect(root, 10.0, 14.0, 44.0, 8.0, C_WOOD_DARK)
+			_stroke(root, PackedVector2Array([Vector2(24, 54), Vector2(30, 38)]),
+				C_STEEL_DARK, 2.2)
+			_stroke(root, PackedVector2Array([Vector2(40, 54), Vector2(34, 38)]),
+				C_STEEL_DARK, 2.2)
+			_circle(root, Vector2(32, 32), 2.4, C_GOLD)
+		"deep_galleries":
+			# Rock cross-section: a shaft feeding two galleries, gold seams below.
+			_rect(root, 8.0, 10.0, 48.0, 46.0, C_STONE)
+			_rect(root, 29.0, 10.0, 7.0, 22.0, C_DARK)
+			_rect(root, 16.0, 28.0, 33.0, 7.0, C_DARK)
+			_rect(root, 22.0, 44.0, 26.0, 7.0, C_DARK)
+			_rect(root, 29.0, 32.0, 7.0, 14.0, C_DARK)
+			for p: Vector2 in [Vector2(20, 31), Vector2(44, 48), Vector2(27, 48)]:
+				_circle(root, p, 2.4, C_GOLD)
+			_stroke(root, PackedVector2Array([Vector2(12, 20), Vector2(24, 14)]),
+				C_STONE.darkened(0.25), 2.0)
+			_stroke(root, PackedVector2Array([Vector2(40, 16), Vector2(52, 22)]),
+				C_STONE.darkened(0.25), 2.0)
+		"horse_collar":
+			# The plough horse in its padded leather collar.
+			_horse_head(root)
+			var collar: PackedVector2Array = PackedVector2Array()
+			for i: int in range(9):
+				var a: float = deg_to_rad(-60.0 + 160.0 * float(i) / 8.0)
+				collar.append(Vector2(36, 36) + Vector2(cos(a) * 16.0, sin(a) * 20.0))
+			_stroke(root, collar, C_WOOD, 7.0)
+			for i: int in [1, 4, 7]:
+				_circle(root, collar[i], 2.0, C_GOLD)
+		"heavy_plow":
+			# Wooden beam and steel share carving a furrow.
+			_bar(root, Vector2(6, 52), Vector2(58, 52), 5.0, C_WOOD_DARK)
+			_poly(root, PackedVector2Array([Vector2(4, 58), Vector2(16, 46),
+				Vector2(24, 52), Vector2(14, 58)]), C_SAND)
+			_stroke(root, PackedVector2Array([Vector2(52, 12), Vector2(34, 26),
+				Vector2(26, 42)]), C_WOOD, 5.0)
+			_stroke(root, PackedVector2Array([Vector2(52, 12), Vector2(58, 20)]),
+				C_WOOD, 4.0)
+			_poly(root, PackedVector2Array([Vector2(22, 38), Vector2(34, 44),
+				Vector2(30, 54), Vector2(16, 52)]), C_STEEL)
+		"crop_rotation":
+			# Wheat ear inside the cycle arrows.
+			for arc_start: float in [20.0, 200.0]:
+				var arrow: PackedVector2Array = PackedVector2Array()
+				for i: int in range(9):
+					var a: float = deg_to_rad(arc_start + 120.0 * float(i) / 8.0)
+					arrow.append(Vector2(32, 32) + Vector2(cos(a), sin(a)) * 24.0)
+				_stroke(root, arrow, C_GREEN, 4.0)
+				var tip: float = deg_to_rad(arc_start + 120.0)
+				var tp: Vector2 = Vector2(32, 32) + Vector2(cos(tip), sin(tip)) * 24.0
+				var tangent: Vector2 = Vector2(-sin(tip), cos(tip))
+				var out: Vector2 = Vector2(cos(tip), sin(tip))
+				_poly(root, PackedVector2Array([tp + tangent * 9.0,
+					tp + out * 7.0, tp - out * 7.0]), C_GREEN)
+			_bar(root, Vector2(32, 46), Vector2(32, 24), 3.0,
+				Color(0.80, 0.63, 0.24))
+			_poly(root, _ellipse_pts(Vector2(26, 32), 4.5, 7.0, -35.0), C_GOLD)
+			_poly(root, _ellipse_pts(Vector2(38, 32), 4.5, 7.0, 35.0), C_GOLD)
+			_poly(root, _ellipse_pts(Vector2(32, 20), 4.2, 6.5, 0.0), C_GOLD)
 		_:
 			_rect(root, 14.0, 14.0, 36.0, 40.0, C_PARCH)
 			_rect(root, 10.0, 10.0, 36.0, 40.0, C_PARCH.lightened(0.08))

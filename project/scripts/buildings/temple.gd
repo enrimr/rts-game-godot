@@ -90,6 +90,14 @@ func order_cancel_train(index: int) -> void:
 		_train_timer = 0.0
 	EventBus.train_queue_changed.emit(self, _train_queue.duplicate(), MAX_QUEUE)
 
+func get_available_units() -> Array[Dictionary]:
+	var current_age: int = AgeManager.get_age(player_id)
+	var result: Array[Dictionary] = []
+	for def: Dictionary in UNIT_DEFS:
+		if (def["age"] as int) <= current_age:
+			result.append(def)
+	return result
+
 func get_queue() -> Array:
 	return _train_queue.duplicate()
 

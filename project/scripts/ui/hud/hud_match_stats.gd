@@ -59,6 +59,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	GameManager.game_started.connect(_on_game_started)
 	GameManager.game_over.connect(_on_game_over)
+	EventBus.player_eliminated.connect(_on_player_eliminated_maybe_local)
 	EventBus.unit_spawned.connect(_on_stat_unit_spawned)
 	EventBus.building_construction_complete.connect(_on_stat_building_complete)
 	EventBus.unit_died.connect(_on_stat_unit_died)
@@ -215,9 +216,32 @@ func _on_stat_resources_updated(player_id: int, resources: Dictionary) -> void:
 
 # --- Game over screen ---
 
+# Overlay pieces of the current result panel (defeat-while-spectating or
+# final): freed and rebuilt when the definitive game-over arrives.
+var _result_nodes: Array[Node] = []
+var _local_defeat_shown: bool = false
+
+## The local player fell (resigned or conquered) while hostile sides keep
+## fighting: show the defeat panel now — the match plays on and "view map"
+## turns into spectating. The definitive game_over rebuilds the panel later.
+func _on_player_eliminated_maybe_local(pid: int) -> void:
+	if pid != local_player_id or _local_defeat_shown:
+		return
+	if GameManager.state == GameManager.GameState.GAME_OVER:
+		return
+	_local_defeat_shown = true
+	_show_result_panel(-1, false)
+
 func _on_game_over(winner_player_id: int) -> void:
 	_clock_running = false
 	_take_snapshot()
+	_show_result_panel(winner_player_id, true)
+
+func _show_result_panel(winner_player_id: int, final: bool) -> void:
+	for stale: Node in _result_nodes:
+		if is_instance_valid(stale):
+			stale.queue_free()
+	_result_nodes.clear()
 
 	var root: Node = _hud_root
 	if root == null:
@@ -229,12 +253,14 @@ func _on_game_over(winner_player_id: int) -> void:
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_PASS
 	root.add_child(overlay)
+	_result_nodes.append(overlay)
 
 	# Centred panel
 	var center: CenterContainer = CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_PASS
 	root.add_child(center)
+	_result_nodes.append(center)
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", HudStyle.panel(Color(0.08, 0.08, 0.10, 0.97)))
@@ -260,6 +286,14 @@ func _on_game_over(winner_player_id: int) -> void:
 	var title_col: Color = Color(0.25, 1.0, 0.35) if winner_player_id >= 0 and GameManager.are_allied(winner_player_id, local_player_id) else Color(1.0, 0.25, 0.25)
 	title.add_theme_color_override("font_color", title_col)
 	vbox.add_child(title)
+
+	if not final:
+		var hint: Label = Label.new()
+		hint.text = tr("GAMEOVER_SPECTATE_HINT")
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hint.add_theme_font_size_override("font_size", 17)
+		hint.add_theme_color_override("font_color", Color(0.80, 0.75, 0.55))
+		vbox.add_child(hint)
 
 	# Separator
 	var sep: HSeparator = HSeparator.new()
@@ -427,8 +461,9 @@ func _on_game_over(winner_player_id: int) -> void:
 	map_btn.add_theme_stylebox_override("hover",  HudStyle.panel(Color(0.25, 0.45, 0.70, 0.95)))
 
 	# The natural next click after a match: watch it back. Only when this
-	# match actually recorded itself (never inside a replay of a replay).
-	if not MatchConfig.is_replay() and not ReplayFile.last_recorded_path.is_empty():
+	# match actually recorded itself (never inside a replay of a replay) and
+	# only once it is truly over — while spectating it is still recording.
+	if final and not MatchConfig.is_replay() and not ReplayFile.last_recorded_path.is_empty():
 		var replay_btn: Button = Button.new()
 		replay_btn.text = tr("GAMEOVER_WATCH_REPLAY")
 		replay_btn.custom_minimum_size = Vector2(180.0, 36.0)
@@ -456,6 +491,7 @@ func _on_game_over(winner_player_id: int) -> void:
 	exit_btn.pressed.connect(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/game/main_menu.tscn")
 	)
+	_result_nodes.append(exit_btn)
 
 	map_btn.pressed.connect(func() -> void:
 		overlay.queue_free()

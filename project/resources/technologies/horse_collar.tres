@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_collar"]
+
+[resource]
+script = ExtResource("1_collar")
+id = "horse_collar"
+display_name = "Horse Collar"
+description = "Villagers gather food 15% faster and carry 10% more per trip."
+required_age = 1
+research_building = 9
+research_time = 25.0
+cost_food = 75
+cost_wood = 75
+cost_gold = 0
+effects = {"villager_food_gather_rate": 1.15, "villager_food_carry": 1.10}
+prerequisites = []

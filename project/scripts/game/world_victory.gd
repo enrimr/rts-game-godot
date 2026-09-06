@@ -64,10 +64,12 @@ func _on_unit_died_check_victory(_unit: Node, owner_id: int) -> void:
 	if MatchConfig.victory_mode == MatchConfig.VictoryMode.CONQUEST:
 		_check_defeat_for.call_deferred(owner_id)
 
-## A human player resigned or dropped mid-match (host side, any victory
-## mode): eliminate them and end the match if nobody is left to fight.
+## A human player resigned or dropped mid-match (authority side, any victory
+## mode): eliminate them and end the match if nobody is left to fight. When
+## hostile sides remain the match plays on — the resigned local player stays
+## as a spectator (HudMatchStats shows their defeat, GameWorld locks orders).
 func handle_resignation(pid: int) -> void:
-	if NetworkSession.is_client() or pid == 0 or _resigned.has(pid):
+	if NetworkSession.is_client() or _resigned.has(pid):
 		return
 	if GameManager.state != GameManager.GameState.PLAYING \
 			and GameManager.state != GameManager.GameState.PAUSED:
@@ -96,8 +98,12 @@ func _check_defeat_for(pid: int) -> void:
 		return
 	if GameManager.state != GameManager.GameState.PLAYING:
 		return
+	if _resigned.has(pid):
+		return   # already out — don't re-announce the elimination
 	if _has_any_units(pid) or _has_any_buildings(pid):
 		return
+	# Out for good — stray building kills must not re-emit the elimination.
+	_resigned[pid] = true
 	# Notify AI coordinator so it can clean up.
 	EventBus.player_eliminated.emit(pid)
 	_declare_if_one_side_left(pid)
@@ -194,8 +200,10 @@ func _on_game_over(_winner: int) -> void:
 	_world.set_process(false)
 	_world.set_physics_process(false)
 	_world.set_process_unhandled_input(false)
-	# Freeze units and buildings without pausing the whole tree
-	# (pausing the tree stops building production queues too)
+	# Freeze units and buildings without pausing the whole tree. Buildings
+	# tick in _physics_process too (production, tower volleys) and the AI
+	# brains are direct world children — leaving any of them running kept
+	# spawning live units into a "frozen" battlefield.
 	for unit: Node in _world.units_layer.get_children():
 		if is_instance_valid(unit):
 			(unit as Node).set_process(false)
@@ -203,7 +211,15 @@ func _on_game_over(_winner: int) -> void:
 	for building: Node in _world.buildings_layer.get_children():
 		if is_instance_valid(building):
 			(building as Node).set_process(false)
+			(building as Node).set_physics_process(false)
+	for child: Node in _world.get_children():
+		var script: Script = child.get_script() as Script
+		if script != null and script.resource_path.contains("ai_player"):
+			child.set_process(false)
+			child.set_physics_process(false)
 	if is_instance_valid(_world.drop_off):
 		_world.drop_off.set_process(false)
+		_world.drop_off.set_physics_process(false)
 	if is_instance_valid(_world._ai_town_center):
 		_world._ai_town_center.set_process(false)
+		_world._ai_town_center.set_physics_process(false)

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_croprot"]
+
+[resource]
+script = ExtResource("1_croprot")
+id = "crop_rotation"
+display_name = "Crop Rotation"
+description = "Villagers gather food another 15% faster and carry 10% more per trip."
+required_age = 3
+research_building = 9
+research_time = 60.0
+cost_food = 250
+cost_wood = 250
+cost_gold = 0
+effects = {"villager_food_gather_rate": 1.15, "villager_food_carry": 1.10}
+prerequisites = ["heavy_plow"]

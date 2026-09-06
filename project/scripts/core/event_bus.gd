@@ -70,6 +70,9 @@ signal camera_moved()
 signal tutorial_spawn_enemy_scout(near_pos: Vector2)
 signal tutorial_highlight_unit(unit_type: String)  # "hero" or "scout"
 signal tutorial_reset_camera_flag()
+## Tutorial top-ups so a lesson step is always affordable: the HUD emits, the
+## world applies — UI never mutates a stockpile directly.
+signal tutorial_grant_resources(player_id: int, resource: String, amount: int)
 signal enemy_unit_spotted(unit: Node)
 signal map_explored(cells_revealed: int)
 signal player_eliminated(player_id: int)

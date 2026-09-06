@@ -27,6 +27,24 @@ func get_weather_resistance(player_id: int, weather_id: String) -> float:
 		return 1.0
 	return (aff as Dictionary).get(weather_id, 1.0) as float
 
+## True when the player's civ DECLARES the key at all. Boolean-style bonuses
+## ship as {key: 1.0}, indistinguishable from the 1.0 default through
+## get_multiplier — presence in the civ's table is the signal.
+func has_bonus(player_id: int, key: String) -> bool:
+	var player_mults: Variant = _multipliers.get(player_id)
+	return player_mults != null and (player_mults as Dictionary).has(key)
+
+## Mahos build with less timber: applies the civ's wood multiplier to a cost
+## dict (every charge and every affordability check must go through this so
+## the button, the AI and the command all speak the same price).
+func get_building_costs(player_id: int, base: Dictionary) -> Dictionary:
+	var mult: float = get_multiplier(player_id, "building_wood_cost")
+	if mult == 1.0 or not base.has("wood"):
+		return base
+	var out: Dictionary = base.duplicate()
+	out["wood"] = int(ceil((base["wood"] as float) * mult))
+	return out
+
 func get_multiplier(player_id: int, key: String) -> float:
 	var player_mults: Variant = _multipliers.get(player_id)
 	if player_mults == null:
@@ -150,8 +168,12 @@ func get_unit_armor_bonus(player_id: int, unit_id: String = "") -> float:
 	return 0.0
 
 ## Canarian Cart / Island Handcart: how much more a villager carries per trip.
-func get_carry_capacity_multiplier(player_id: int) -> float:
-	return get_multiplier(player_id, "villager_carry_capacity")
+## The camp economy techs stack a per-resource bonus on top (villager_<res>_carry).
+func get_carry_capacity_multiplier(player_id: int, resource: String = "") -> float:
+	var mult: float = get_multiplier(player_id, "villager_carry_capacity")
+	if not resource.is_empty():
+		mult *= get_multiplier(player_id, "villager_%s_carry" % resource)
+	return mult
 
 func get_attack_speed_multiplier(player_id: int, unit_id: String) -> float:
 	# Generic key composes with the category-specific ones (same pattern as

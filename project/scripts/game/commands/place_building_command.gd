@@ -7,9 +7,11 @@ class_name PlaceBuildingCommand extends GameCommand
 ## submission site where the ghost preview / AI position search lives; the
 ## command re-validates affordability because it spends.
 ##
-## The AI places through the same command with `instant = true` (its buildings
-## complete immediately via add_construction). Player and AI pay the same
-## price: WorldPlacement.building_costs, the single table loaded from the
+## The AI places through the same command with a real builder: a villager (or
+## fishing boat) raises the site over the same construction time the player
+## pays. `instant = true` survives as a privileged local-only flag (tools and
+## tests; refused from the wire like the EXTRA_SCENES). Player and AI pay the
+## same price: WorldPlacement.building_costs, the single table loaded from the
 ## BuildingResource .tres files — costs resolve at execute time and are never
 ## part of the payload, so a remote command cannot name its own price.
 
@@ -81,7 +83,9 @@ func execute(world: Node2D) -> void:
 	var scene: PackedScene = load(scene_path) as PackedScene
 	if scene == null:
 		return
-	var costs: Dictionary = _costs()
+	# Per-civ discounts (Mahos timber) resolve at execute time, same as the
+	# base price — the wire can never name its own cost.
+	var costs: Dictionary = CivBonusManager.get_building_costs(player_id, _costs())
 	var builders: Array[Node] = _own_entities(builder_ids)
 	var buildings_layer: Node = world.get("buildings_layer") as Node
 	for pos: Vector2 in positions:

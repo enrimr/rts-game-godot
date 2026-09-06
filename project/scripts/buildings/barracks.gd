@@ -172,7 +172,12 @@ func get_available_units() -> Array[Dictionary]:
 	var player_civ: String = MatchConfig.player_civ_id if player_id == 0 else MatchConfig.get_rival_civ_id(player_id)
 	var result: Array[Dictionary] = []
 	for def: Dictionary in UNIT_DEFS:
-		if (def["age"] as int) > current_age:
+		var min_age: int = def["age"] as int
+		# Guanches raise their banot spearmen from the Dark Age (civ bonus).
+		if (def["id"] as String) == "pikeman" \
+				and CivBonusManager.has_bonus(player_id, "spear_available_dark_age"):
+			min_age = 0
+		if min_age > current_age:
 			continue
 		if def.get("upgrade_only", false) as bool:
 			continue

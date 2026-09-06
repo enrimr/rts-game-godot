@@ -310,19 +310,30 @@ func _host_snapshot() -> void:
 	for node: Node in _units_layer.get_children():
 		if not is_instance_valid(node) or not (node is Node2D):
 			continue
+		# Only sim entities ride the stream. Tower/archer arrows fly INSIDE
+		# these layers (get_parent().add_child) — id_of would REGISTER each
+		# one and ship a junk spawn/remove record per shot (projectiles have
+		# their own echo channel via EventBus.projectile_spawned).
+		if node.get("health") == null:
+			continue
 		var id: int = EntityRegistry.id_of(node)
 		if not _announced.has(id):
 			_announced[id] = true
 			spawns.append(_spawn_record(node, id, "u"))
 		var st: int = node.get("current_state") as int if node.get("current_state") != null else 0
 		units.append([id, (node as Node2D).global_position.x, (node as Node2D).global_position.y,
-			st, node.get("health") as float if node.get("health") != null else 0.0])
+			st, node.get("health") as float])
 	var bld_nodes: Array = _buildings_layer.get_children()
 	var drop_off: Variant = _world.get("drop_off")
 	if drop_off is Node and is_instance_valid(drop_off as Node):
 		bld_nodes.append(drop_off)
 	for node: Variant in bld_nodes:
 		if not is_instance_valid(node) or not (node is Node2D):
+			continue
+		# Same guard as the unit loop: a tower volley's arrows live in the
+		# buildings layer mid-flight — casting their null "health" crashed
+		# every snapshot tick during combat.
+		if (node as Node).get("health") == null:
 			continue
 		var id: int = EntityRegistry.id_of(node as Node)
 		if not _announced.has(id):

@@ -122,6 +122,14 @@ func launch_naval_assault() -> void:
 		if enemy_ship != null:
 			CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "attack",
 				[EntityRegistry.id_of(wg)] as Array[int], EntityRegistry.id_of(enemy_ship)))
+			continue
+		# No fleet to fight: burn the enemy's waterline instead — docks and
+		# fish traps are reachable from the sea. Without this, two AIs on
+		# separate islands coexisted forever (galleys only ever hunted ships).
+		var coastal: Node = _find_coastal_target(wg.global_position)
+		if coastal != null and wg.current_state == UnitBase.UnitState.IDLE:
+			CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "attack",
+				[EntityRegistry.id_of(wg)] as Array[int], EntityRegistry.id_of(coastal)))
 		elif wg.current_state == UnitBase.UnitState.IDLE:
 			var toward: Vector2 = etc.global_position
 			var jitter: Vector2 = Vector2(MatchRng.randf_range(-200.0, 200.0), MatchRng.randf_range(-200.0, 200.0))
@@ -130,7 +138,9 @@ func launch_naval_assault() -> void:
 				_move_unit(wg, dest)
 
 	var military: int = _ai._military.count_military()
-	if military < 3:
+	# 2, not 3: island economies grow land military slowly and the old bar
+	# kept the transport parked for the first ten minutes of an AI-vs-AI war.
+	if military < 2:
 		return
 
 	if not is_instance_valid(_naval_transport):
@@ -254,8 +264,13 @@ func _build_dock_on_shore() -> void:
 	var pos: Vector2 = _find_shore_position()
 	if pos == Vector2.ZERO:
 		return
+	# A villager raises the dock from the shore, same as the player's.
+	var builder: Node = _ai._construction._nearest_builder(pos)
+	if builder == null:
+		return
 	var cmd: PlaceBuildingCommand = PlaceBuildingCommand.make(_ai.player_id, "dock",
-		[pos] as Array[Vector2], 0.0, [] as Array[int], true)
+		[pos] as Array[Vector2], 0.0,
+		[EntityRegistry.id_of(builder)] as Array[int], false)
 	CommandBus.submit(cmd)
 	if not cmd.last_placed.is_empty():
 		_ai._construction._built["dock"] = 1
@@ -264,8 +279,9 @@ func _build_fish_trap(boat: FishingBoat, dock: Node) -> void:
 	var pos: Vector2 = _find_ocean_build_pos((dock as Node2D).global_position, 80.0, 200.0)
 	if pos == Vector2.ZERO:
 		return
+	# The boat builds the trap over time, same as the player's.
 	CommandBus.submit(PlaceBuildingCommand.make(_ai.player_id, "fish_trap",
-		[pos] as Array[Vector2], 0.0, [EntityRegistry.id_of(boat)] as Array[int], true))
+		[pos] as Array[Vector2], 0.0, [EntityRegistry.id_of(boat)] as Array[int], false))
 
 func _count_naval(type_name: String) -> int:
 	var count: int = 0
@@ -308,6 +324,20 @@ func _retreat_galley(wg: WarGalley) -> void:
 
 ## Fog-honest patrol targeting: only enemy ships an own unit/building can
 ## actually see are engaged.
+## Nearest KNOWN enemy building a warship can actually reach from the water
+## (docks and fish traps sit on the waterline). Fog-honest: only scouted ones.
+func _find_coastal_target(from: Vector2) -> Node:
+	var best: Node = null
+	var best_d: float = INF
+	for b: Node in _ai.world.known_enemy_buildings(_ai.player_id):
+		if not (b is Dock or b is FishTrap):
+			continue
+		var d: float = from.distance_squared_to((b as Node2D).global_position)
+		if d < best_d:
+			best_d = d
+			best = b
+	return best
+
 func _find_nearest_enemy_ship(from: Vector2) -> Node:
 	var best: Node = null
 	var best_dist: float = 800.0

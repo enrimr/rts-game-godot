@@ -256,7 +256,8 @@ func _vision_radius_cells(entity: Node2D, is_building: bool) -> int:
 		if udata is UnitResource:
 			los = (udata as UnitResource).line_of_sight
 	var mult: float = WeatherManager.get_vision_multiplier(entity.global_position, local_player_id) \
-		* _coastal_vision_mult(entity.global_position)
+		* _coastal_vision_mult(entity.global_position) \
+		* _dune_vision_mult(entity.global_position)
 	# Terrain factor: laurisilva canopy shortens LOS. Buildings skip this —
 	# laurisilva is not buildable, so their factor is always 1.0.
 	if not is_building:
@@ -291,6 +292,17 @@ func _unstamp(cell: Vector2i, r: int) -> void:
 ## applies inside the same band sea fog uses (COASTAL_ZONE_DEPTH), so the Atlantes
 ## see 50 % further exactly where the fog hides things. The fast path keeps the
 ## coast query out of the way for the civs without the bonus.
+## Mahos desert sight: the "dune_vision" civ multiplier widens line of sight
+## while the watcher stands ON dune terrain — the desert is theirs to read.
+## Fast path mirrors _coastal_vision_mult for every civ without the key.
+func _dune_vision_mult(world_pos: Vector2) -> float:
+	var mult: float = CivBonusManager.get_multiplier(local_player_id, "dune_vision")
+	if is_equal_approx(mult, 1.0):
+		return 1.0
+	if TerrainManager.get_terrain(world_pos) != TerrainManager.TerrainType.DUNE:
+		return 1.0
+	return mult
+
 func _coastal_vision_mult(world_pos: Vector2) -> float:
 	var mult: float = CivBonusManager.get_multiplier(local_player_id, "coastal_vision")
 	if is_equal_approx(mult, 1.0):

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_galleries"]
+
+[resource]
+script = ExtResource("1_galleries")
+id = "deep_galleries"
+display_name = "Deep Galleries"
+description = "Villagers mine gold and stone another 15% faster and carry 10% more per trip."
+required_age = 3
+research_building = 8
+research_time = 60.0
+cost_food = 300
+cost_wood = 150
+cost_gold = 0
+effects = {"villager_gold_gather_rate": 1.15, "villager_stone_gather_rate": 1.15, "villager_gold_carry": 1.10, "villager_stone_carry": 1.10}
+prerequisites = ["shaft_mining"]

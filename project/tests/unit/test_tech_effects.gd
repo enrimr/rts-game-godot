@@ -60,6 +60,22 @@ func _probe(key: String) -> float:
 			return _spawn("militia.tscn").call("_nav_speed") as float
 		"villager_carry_capacity":
 			return _spawn("villager.tscn").call("_effective_capacity") as float
+		"villager_food_gather_rate":
+			return CivBonusManager.get_gather_rate_multiplier(PID, "food")
+		"villager_wood_gather_rate":
+			return CivBonusManager.get_gather_rate_multiplier(PID, "wood")
+		"villager_gold_gather_rate":
+			return CivBonusManager.get_gather_rate_multiplier(PID, "gold")
+		"villager_stone_gather_rate":
+			return CivBonusManager.get_gather_rate_multiplier(PID, "stone")
+		"villager_food_carry", "villager_wood_carry", \
+		"villager_gold_carry", "villager_stone_carry":
+			# Measured through the villager's own capacity while hauling THAT
+			# resource — the camp techs must never widen the other baskets.
+			var hauler: CharacterBody2D = _spawn("villager.tscn")
+			hauler.set("carried_resource",
+				key.trim_prefix("villager_").trim_suffix("_carry"))
+			return hauler.call("_effective_capacity") as float
 	return -INF   # unknown key: no probe — the audit must fail loudly
 
 func _live_max_hp(scene: String) -> float:
@@ -111,6 +127,37 @@ func test_hp_tech_applies_to_living_units_keeping_damage_ratio() -> void:
 	assert_gt(new_max, base_max, "Loom must reach villagers already alive")
 	assert_almost_eq(villager.get("health") as float, new_max * 0.5, 1.0,
 		"the health RATIO survives the rescale — no free full heal")
+
+func test_camp_techs_scope_to_their_resource() -> void:
+	TechManager.grant_tech(PID, "double_bit_axe")
+	var wood_hauler: CharacterBody2D = _spawn("villager.tscn")
+	wood_hauler.set("carried_resource", "wood")
+	var food_hauler: CharacterBody2D = _spawn("villager.tscn")
+	food_hauler.set("carried_resource", "food")
+	assert_gt(wood_hauler.call("_effective_capacity") as float,
+		food_hauler.call("_effective_capacity") as float,
+		"the axe widens the WOOD basket only")
+	assert_gt(CivBonusManager.get_gather_rate_multiplier(PID, "wood"),
+		CivBonusManager.get_gather_rate_multiplier(PID, "gold"),
+		"the axe speeds up WOOD chopping only")
+
+func test_camp_economy_lines_gate_by_age_and_prerequisite() -> void:
+	ResourceManager.init_player(PID,
+		{"food": 9999, "wood": 9999, "gold": 9999, "stone": 9999})
+	AgeManager.init_player(PID, GameManager.Age.DARK)
+	assert_false(TechManager.can_research(PID, "double_bit_axe"),
+		"camp lines open in the Feudal Age, not the Dark Age")
+	AgeManager.init_player(PID, GameManager.Age.CASTLE)
+	assert_true(TechManager.can_research(PID, "double_bit_axe"))
+	assert_false(TechManager.can_research(PID, "bow_saw"),
+		"each step needs the previous one researched")
+	TechManager.grant_tech(PID, "double_bit_axe")
+	assert_true(TechManager.can_research(PID, "bow_saw"))
+	TechManager.grant_tech(PID, "bow_saw")
+	assert_false(TechManager.can_research(PID, "two_man_saw"),
+		"the last step is Imperial")
+	AgeManager.init_player(PID, GameManager.Age.IMPERIAL)
+	assert_true(TechManager.can_research(PID, "two_man_saw"))
 
 func test_bardings_never_armor_a_villager() -> void:
 	TechManager.grant_tech(PID, "scale_barding")

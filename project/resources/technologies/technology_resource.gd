@@ -4,7 +4,7 @@ class_name TechnologyResource
 
 ## Defines a researchable technology and its effects.
 
-enum ResearchBuilding { BLACKSMITH, UNIVERSITY, MONASTERY, TOWN_CENTER, MARKET, BARRACKS, STABLE }
+enum ResearchBuilding { BLACKSMITH, UNIVERSITY, MONASTERY, TOWN_CENTER, MARKET, BARRACKS, STABLE, LUMBER_CAMP, MINING_CAMP, MILL }
 
 @export var id: String = ""
 @export var display_name: String = ""

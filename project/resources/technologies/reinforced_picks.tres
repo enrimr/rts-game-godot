@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_picks"]
+
+[resource]
+script = ExtResource("1_picks")
+id = "reinforced_picks"
+display_name = "Reinforced Picks"
+description = "Villagers mine gold and stone 15% faster and carry 10% more per trip."
+required_age = 1
+research_building = 8
+research_time = 25.0
+cost_food = 100
+cost_wood = 75
+cost_gold = 0
+effects = {"villager_gold_gather_rate": 1.15, "villager_stone_gather_rate": 1.15, "villager_gold_carry": 1.10, "villager_stone_carry": 1.10}
+prerequisites = []

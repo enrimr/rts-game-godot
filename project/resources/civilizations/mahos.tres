@@ -6,11 +6,11 @@
 script = ExtResource("1_mahos")
 id = "mahos"
 display_name = "Mahos"
-description = "Swift desert warriors. Buildings cost less wood and scouts move faster across arid terrain."
+description = "Swift desert warriors. Buildings cost less wood, scouts move faster across arid terrain, and their eyes reach far across the dunes."
 unique_unit_ids = ["sand_raider"]
 unique_technology_ids = []
 starting_bonuses = {}
-stat_multipliers = {"building_wood_cost": 0.70, "scout_speed": 1.25, "light_cavalry_speed": 1.25}
+stat_multipliers = {"building_wood_cost": 0.70, "scout_speed": 1.25, "light_cavalry_speed": 1.25, "dune_vision": 1.40}
 weather_affinity = {"calima": 0.5}
 missing_units = ["heavy_cavalry_upgrades"]
 missing_technologies = []

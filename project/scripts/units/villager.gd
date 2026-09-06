@@ -22,7 +22,7 @@ var carried_amount: float = 0.0
 ## Carry techs (Canarian Cart line) scale how much fits in one trip. Farms
 ## are unaffected by design: they deposit instantly (see the farm branch).
 func _effective_capacity() -> float:
-	return carry_capacity * CivBonusManager.get_carry_capacity_multiplier(player_id)
+	return carry_capacity * CivBonusManager.get_carry_capacity_multiplier(player_id, carried_resource)
 var drop_off_target: Node = null
 var build_target: Node = null
 

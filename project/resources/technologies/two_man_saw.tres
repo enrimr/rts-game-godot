@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TechnologyResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/technologies/technology_resource.gd" id="1_tmsaw"]
+
+[resource]
+script = ExtResource("1_tmsaw")
+id = "two_man_saw"
+display_name = "Two-Man Saw"
+description = "Villagers chop wood another 15% faster and carry 10% more per trip."
+required_age = 3
+research_building = 7
+research_time = 60.0
+cost_food = 300
+cost_wood = 200
+cost_gold = 0
+effects = {"villager_wood_gather_rate": 1.15, "villager_wood_carry": 1.10}
+prerequisites = ["bow_saw"]

@@ -227,7 +227,7 @@ CIV_GUANCHES_DESC,Masters of volcanic terrain. Stone buildings are tougher and s
 CIV_CANARII_NAME,Canarii,Canarii
 CIV_CANARII_DESC,Powerful economy and cheap archers. Villagers gather food faster and houses serve as drop-off points.,Economía potente y arqueros baratos. Los aldeanos recolectan comida más rápido y las casas sirven como puntos de entrega.
 CIV_MAHOS_NAME,Mahos,Mahos
-CIV_MAHOS_DESC,Swift desert warriors. Buildings cost less wood and scouts move faster across arid terrain.,Guerreros del desierto veloces. Los edificios cuestan menos madera y los exploradores se mueven más rápido en terreno árido.
+CIV_MAHOS_DESC,Swift desert warriors. Buildings cost less wood; scouts move faster across arid terrain and their eyes reach far across the dunes.,Guerreros del desierto veloces. Los edificios cuestan menos madera; los exploradores se mueven más rápido en terreno árido y su vista llega lejos sobre las dunas.
 CIV_FRANKS_NAME,Francos,Francos
 CIV_FRANKS_DESC,Fast advancing cavalry nation. Age advancement costs less and cavalry is stronger from Feudal Age.,Nación de caballería con avance rápido. Avanzar de edad cuesta menos y la caballería es más fuerte desde la Edad Feudal.
 CIV_BRITONS_NAME,Britanos,Britanos
@@ -237,7 +237,7 @@ CIV_CASTELLANOS_DESC,Late-game powerhouse. Each age advance unlocks a free techn
 CIV_ATLANTES_NAME,Atlantes,Atlantes
 CIV_ATLANTES_DESC,"Mysterious seafarers. Build on ocean tiles, move freely through shallow water and dominate the coast.","Navegantes misteriosos. Construyen sobre el océano, se mueven libremente por aguas poco profundas y dominan la costa."
 CIV_FENICIOS_NAME,Fenicios,Fenicios
-CIV_FENICIOS_DESC,Ancient traders. Market available from the start and merchant ships generate passive gold.,Comerciantes ancestrales. El mercado está disponible desde el inicio y los barcos mercantes generan oro pasivo.
+CIV_FENICIOS_DESC,Ancient traders. Market available from the start; triremes trickle passive gold; ships cost 15% less and mercenaries are hired at a discount.,Comerciantes ancestrales. Mercado disponible desde el inicio; los trirremes generan oro pasivo; los barcos cuestan un 15% menos y los mercenarios se contratan con descuento.
 CIV_GUANCHES_UNIQUE_UNIT,Menceyes Guard,Guardia Menceyes
 CIV_CANARII_UNIQUE_UNIT,Ravine Archer,Arquero de Barranco
 CIV_MAHOS_UNIQUE_UNIT,Sand Raider,Corsario de Arena
@@ -560,3 +560,29 @@ REPLAY_MARK_B,Mark clip end here,Marca aquí el final del clip
 REPLAY_EXPORT_CLIP,Export clip,Exportar clip
 REPLAYS_EXPORT_MINIMAP,Include minimap in videos,Incluir minimapa en los vídeos
 REPLAY_RENDERING_TITLE,Calima — Rendering video… do not close,Calima — Renderizando vídeo… no cerrar
+GAMEOVER_SPECTATE_HINT,The battle rages on — you can keep watching,La batalla continúa — puedes seguir viéndola
+TECH_DOUBLE_BIT_AXE,Double-Bit Axe,Hacha de doble filo
+TECH_DOUBLE_BIT_AXE_DESC,Villagers chop wood 15% faster and carry 10% more per trip.,Los aldeanos cortan madera un 15% más rápido y cargan un 10% más por viaje.
+TECH_BOW_SAW,Bow Saw,Sierra de arco
+TECH_BOW_SAW_DESC,Villagers chop wood another 15% faster and carry 10% more per trip.,Los aldeanos cortan madera un 15% adicional más rápido y cargan un 10% más por viaje.
+TECH_TWO_MAN_SAW,Two-Man Saw,Sierra de dos hombres
+TECH_TWO_MAN_SAW_DESC,Villagers chop wood another 15% faster and carry 10% more per trip.,Los aldeanos cortan madera un 15% adicional más rápido y cargan un 10% más por viaje.
+TECH_REINFORCED_PICKS,Reinforced Picks,Picos reforzados
+TECH_REINFORCED_PICKS_DESC,Villagers mine gold and stone 15% faster and carry 10% more per trip.,Los aldeanos extraen oro y piedra un 15% más rápido y cargan un 10% más por viaje.
+TECH_SHAFT_MINING,Shaft Mining,Minería de pozo
+TECH_SHAFT_MINING_DESC,Villagers mine gold and stone another 15% faster and carry 10% more per trip.,Los aldeanos extraen oro y piedra un 15% adicional más rápido y cargan un 10% más por viaje.
+TECH_DEEP_GALLERIES,Deep Galleries,Galerías profundas
+TECH_DEEP_GALLERIES_DESC,Villagers mine gold and stone another 15% faster and carry 10% more per trip.,Los aldeanos extraen oro y piedra un 15% adicional más rápido y cargan un 10% más por viaje.
+TECH_HORSE_COLLAR,Horse Collar,Collera de tiro
+TECH_HORSE_COLLAR_DESC,Villagers gather food 15% faster and carry 10% more per trip.,Los aldeanos recolectan comida un 15% más rápido y cargan un 10% más por viaje.
+TECH_HEAVY_PLOW,Heavy Plow,Arado pesado
+TECH_HEAVY_PLOW_DESC,Villagers gather food another 15% faster and carry 10% more per trip.,Los aldeanos recolectan comida un 15% adicional más rápido y cargan un 10% más por viaje.
+TECH_CROP_ROTATION,Crop Rotation,Rotación de cultivos
+TECH_CROP_ROTATION_DESC,Villagers gather food another 15% faster and carry 10% more per trip.,Los aldeanos recolectan comida un 15% adicional más rápido y cargan un 10% más por viaje.
+NOTIF_ACTION_GO,Go to location,Ir al lugar
+NOTIF_ACTION_BUILD_HOUSE,Build a house,Construir una casa
+SETTINGS_ENHANCED_UNITS,Enhanced unit detail,Detalle de unidades mejorado
+SETTINGS_UNIT_STYLE,Unit style,Estilo de unidades
+UNIT_STYLE_CLASSIC,Classic,Clásico
+UNIT_STYLE_ENHANCED,Enhanced,Mejorado
+UNIT_STYLE_REDESIGNED,Redesigned,Rediseñado

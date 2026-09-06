@@ -10,7 +10,7 @@ enum TerrainType {
 	LAURISILVA  = 3,   # dense laurel forest — slow all, high wood
 	RISCO       = 4,   # cliff edge — impassable, range bonus nearby
 	OCEAN       = 5,   # water — land units blocked, Atlantes immune
-	CALDERA     = 6,   # volcanic crater — impassable, +stone for controller
+	CALDERA     = 6,   # volcanic crater — impassable; a Mining Camp built nearby trickles stone (MiningCamp caldera claim)
 }
 
 # Canonical display colours — index matches TerrainType int.
