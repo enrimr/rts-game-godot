@@ -160,7 +160,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 | **Hero** | Bencomo |
 | **Ability** | *Menceyes Charge* — Rallies nearby allied units, granting +30% attack speed for 10 s · Cooldown 50 s |
 | **Unique Unit** | **Menceyes Guard** — 95 HP · 65f+25g · Age 2 · *Rage Aura*: when HP<50%, pulses +3 attack to allies in 80 px every 2 s |
-| **Bonuses** | Stone building HP ×1.20 · Spears available in Dark Age · Can traverse malpais terrain |
+| **Bonuses** | Stone building HP ×1.20 · Pikemen available from the Dark Age · Can traverse malpais terrain · Immune to Calima, half Volcanic Ash penalty |
 | **Restrictions** | No cavalry · No gunpowder |
 
 **Strategy:** Defensive fortress with resilient infantry. Strong on volcanic maps.
@@ -173,7 +173,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 | **Hero** | Doramas |
 | **Ability** | *Challenge* — Taunts the nearest enemy unit, forcing it to attack Doramas for 6 s · Cooldown 45 s |
 | **Unique Unit** | **Ravine Archer** — 45 HP · 40w+55g · Age 2 · *Ambush Shot*: stationary ≥1.5 s → ×2 first shot |
-| **Bonuses** | Villagers gather food ×1.15 · Archer food cost ×0.80 |
+| **Bonuses** | Villagers gather food ×1.15 · Archer food cost ×0.80 · Houses act as drop-off points |
 | **Restrictions** | No heavy cavalry |
 
 **Strategy:** Superior food economy + cheap archers. Great for early archer rushes.
@@ -186,7 +186,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 | **Hero** | Guadarfía |
 | **Ability** | *Ambush* — Nearly invisible for 8 s; enemies cannot auto-attack Guadarfía while cloaked · Cooldown 45 s |
 | **Unique Unit** | **Sand Raider** — 70 HP · 60f+40g · Age 1 · *Hit & Run*: retreats 90 px after each attack then re-engages |
-| **Bonuses** | Building wood cost ×0.70 · Scout / light cavalry speed ×1.25 · Can traverse dunes |
+| **Bonuses** | Building wood cost ×0.70 · Scout / light cavalry speed ×1.25 · Can traverse dunes · Vision ×1.40 while standing on dunes |
 | **Restrictions** | No heavy cavalry upgrades |
 
 **Strategy:** Fast cheap expansion + light cavalry raids. Excellent on arid maps.
@@ -251,7 +251,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 | **Hero** | Hannón el Navegante |
 | **Ability** | *Trade Route* — Generates 50 gold over 30 s · Cooldown 50 s |
 | **Unique Unit** | **Trireme** — 160 HP · 100w+50g · Age 1 · *Ram*: ×2 damage vs ships + pushes target 40 px away · pop 2 |
-| **Bonuses** | Market available from Dark Age · Merchant ships generate passive gold |
+| **Bonuses** | Market available from the Dark Age · Ships cost 15% less · Triremes trickle passive gold (5 per 30 s) · Mercenaries cost 25% less · Half Atlantic Storm penalty |
 | **Restrictions** | No knights · No castle infantry |
 
 **Strategy:** Superior gold economy from minute one. Ideal for funding expensive technologies and units.

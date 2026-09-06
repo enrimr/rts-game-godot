@@ -46,9 +46,13 @@ instantly, which unbalanced the early game), gather assignments with pinned
 drop-offs,
 training, research, age advance, batched attack orders (one command per
 target), naval patrol moves, transport loading (`board_instant`) and all
-building placement (`PlaceBuildingCommand` with `instant` + `costs_override`;
-the rebuilt TC uses `EXTRA_SCENES["town_center_ai"]` and reads its node back
-from `last_placed`). AI decision-making, cooldowns and built-count bookkeeping
+building placement. **AI buildings are villager-built**: `AIConstruction._place`
+sends the nearest free villager to raise every site over the same construction
+time the player pays (`manage_unfinished` re-crews sites whose builder died;
+fish traps are raised by a fishing boat) — the old `instant` completion was an
+AI-only cheat and is now a privileged tools/tests-only flag. The rebuilt TC
+uses `EXTRA_SCENES["town_center_ai"]` and reads its node back from
+`last_placed`. AI decision-making, cooldowns and built-count bookkeeping
 stay in the AI modules — only mutations cross the bus.
 
 **MatchRng** (autoload, `scripts/core/match_rng.gd`) is the single seeded
@@ -348,6 +352,13 @@ breaks off instead of chasing; DEFENSIVE chases up to `DEFENSIVE_LEASH`
 (200 px) from its anchor — the latest ordered position — then walks home and
 refuses new fights until it is back inside the leash.
 
+**Idle acquisition.** An IDLE combat unit sweeps `ACQUIRE_RADIUS` (240 px)
+every 0.6 s (`_tick_idle_acquire`) and hunts the nearest hostile unit on its
+own, through the same `_auto_engage` stance gate. Units used to engage only
+what physically touched their attack-range Area2D, so idle armies stood beside
+enemy villagers forever. STAND_GROUND only takes what it can already strike,
+and the post-kill re-scan chains onto survivors within the same radius.
+
 **Formations.** `UnitPointCommand` carries the formation each group move was
 issued with (`line` / `box` / `spread` / `rings`; the HUD buttons only set
 WorldCommands' local choice for the NEXT move). Line/box/spread are rank-
@@ -612,7 +623,7 @@ once their cell is EXPLORED (AoE2-style memory).
 
 ## Tech Tree System
 
-Technologies are defined as `TechnologyResource` `.tres` files under `resources/technologies/`. Twenty-three technologies are currently implemented:
+Technologies are defined as `TechnologyResource` `.tres` files under `resources/technologies/` — `TechManager` loads the whole directory, so the roster is the file list. Thirty-two technologies are currently implemented:
 
 | Technology | Researched at | Effect |
 |---|---|---|
@@ -639,6 +650,21 @@ Technologies are defined as `TechnologyResource` `.tres` files under `resources/
 | `upgrade_long_swordsman` | Barracks | Man-at-Arms → Long Swordsman |
 | `upgrade_heavy_scout` | Stable | Scout → Heavy Scout |
 | `upgrade_knight` | Stable | Heavy Scout → Knight |
+| `double_bit_axe` | Lumber Camp | Wood gather rate ×1.15, wood carry ×1.10 |
+| `bow_saw` | Lumber Camp | Wood gather rate ×1.15, wood carry ×1.10 (requires `double_bit_axe`) |
+| `two_man_saw` | Lumber Camp | Wood gather rate ×1.15, wood carry ×1.10 (requires `bow_saw`) |
+| `reinforced_picks` | Mining Camp | Gold+stone gather rate ×1.15, carry ×1.10 |
+| `shaft_mining` | Mining Camp | Gold+stone gather rate ×1.15, carry ×1.10 (requires `reinforced_picks`) |
+| `deep_galleries` | Mining Camp | Gold+stone gather rate ×1.15, carry ×1.10 (requires `shaft_mining`) |
+| `horse_collar` | Mill | Food gather rate ×1.15, food carry ×1.10 |
+| `heavy_plow` | Mill | Food gather rate ×1.15, food carry ×1.10 (requires `horse_collar`) |
+| `crop_rotation` | Mill | Food gather rate ×1.15, food carry ×1.10 (requires `heavy_plow`) |
+
+The nine camp techs use per-resource effect keys (`villager_<res>_gather_rate`,
+`villager_<res>_carry`) handled by `CivBonusManager` as per-resource carry
+baskets stacked on the global `villager_carry_capacity` carts. They are
+researched at the drop-off camps themselves (`research_building`: Lumber Camp,
+Mining Camp, Mill), one tech per age from Feudal, chained by prerequisites.
 
 `TechManager` (autoload) owns per-building research: one active tech plus an AoE2-training-queue-style waiting list, capped at `MAX_RESEARCH_QUEUE` (5) techs in flight per building. Queued techs are paid at enqueue time, refunded slot by slot on cancel (`cancel_queued_research(building, index)`; `cancel_research` refunds the active one in full), and promoted automatically the moment the active slot frees up. A queued prerequisite counts as met, so chains queue naturally; if the lab is destroyed, everything still waiting in its queue is refunded. Effects are applied when research completes. `CivBonusManager` (autoload) stores per-player multipliers derived from civilization bonuses and applied techs.
 
@@ -677,10 +703,20 @@ The HUD is a `CanvasLayer` scene at `scenes/ui/hud/hud.tscn`, instanced as a chi
 | `HudWeather` | `scripts/ui/hud/hud_weather.gd` | Weather announcement banner + countdown pill; self-wires to `WeatherManager` |
 | `HudMatchStats` | `scripts/ui/hud/hud_match_stats.gd` | Match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays |
 | `HudMenus` | `scripts/ui/hud/hud_menus.gd` | Pause menu, settings, save-slot picker, surrender (tutorial/dpad hooks injected as callables) |
-| `HudControls` | `scripts/ui/hud/hud_controls.gd` | Game-speed buttons, camera dpad + panning, idle-villager/idle-military cycle buttons |
+| `HudControls` | `scripts/ui/hud/hud_controls.gd` | Game-speed buttons, camera dpad + panning, idle-villager/idle-military cycle buttons, locate-hero button |
 | `HudStyle` | `scripts/ui/hud/hud_style.gd` | Shared `StyleBoxFlat` panel/button factory |
+| `HudActionMenu` | `scripts/ui/hud/hud_action_menu.gd` | The command grid: button rendering + paging, press routing, pending map-click actions, stance/formation highlights, hotkeys, every per-selection layout (one `_populate_production` panel serves all train/research buildings); refuses every action during replay playback |
+| `HudActionDefs` | `scripts/ui/hud/hud_action_defs.gd` | Static action tables + pure builders — costs always resolved from the same `.tres` data the simulation charges (`test_hud_panels.gd` audits every button) |
+| `HudTutorial` | `scripts/ui/hud/hud_tutorial.gd` | Tutorial lesson driver: overlay, per-step signal listeners, build gates; resource top-ups emitted via `EventBus.tutorial_grant_resources` and applied by the world |
+| `HudHeroWidget` | `scripts/ui/hud/hud_hero_widget.gd` | Persistent hero portrait + HP card in Regicide |
+| `HudControlGroups` | `scripts/ui/hud/hud_control_groups.gd` | Clickable control-group chips |
+| `HudChat` | `scripts/ui/hud/hud_chat.gd` | In-match multiplayer chat overlay |
+| `HudPlayersPanel` | `scripts/ui/hud/hud_players_panel.gd` | Players/score overlay docked on the minimap |
+| `HudReplayBar` | `scripts/ui/hud/hud_replay_bar.gd` | Replay spectator controls (timeline, speeds, reveal-all, cinematic, A/B clip markers) |
+| `HudFpsCounter` | `scripts/ui/hud/hud_fps.gd` | Optional FPS readout (settings toggle) |
+| `NotificationDisplay` | `scripts/ui/notification_display.gd` | Stacking toasts with optional shortcut action buttons |
 
-The components self-wire to their own signals; `hud_manager` does not relay events to them. The split was incremental and behaviour-preserving — `hud_manager.gd` went from ~3300 to ~1900 lines. A headless load harness lives at `project/tools/check_hud.gd` (`godot --headless -s tools/check_hud.gd`).
+The components self-wire to their own signals; `hud_manager` does not relay events to them. The split was incremental and behaviour-preserving — `hud_manager.gd` is down to ~940 lines (from a ~3300-line god object) and now keeps only the selection info panel, queue/research row, detail-panel bars and component composition. A headless load harness lives at `project/tools/check_hud.gd` (`godot --headless -s tools/check_hud.gd`).
 
 **EventBus wiring** (`hud_manager._ready` connects the core panels; components connect their own):
 
@@ -739,7 +775,7 @@ the grid); gated by `tests/unit/test_ship_dress.gd`.
 | Unit | Script | Age | Cost | Notes |
 |---|---|---|---|---|
 | Fishing Boat | `scripts/units/fishing_boat.gd` | Dark | 75W | Gathers `FOOD_FISH` from ocean nodes; returns food to nearest friendly Dock |
-| Transport Ship | `scripts/units/transport_ship.gd` | Feudal | 125W | No combat; capacity 8; boards military units (Militia, Archer, Pikeman, Scout, Hero) — Villagers cannot board; unloads units at nearest passable shore position via `TerrainManager.nearest_passable` |
+| Transport Ship | `scripts/units/transport_ship.gd` | Feudal | 125W | No combat; capacity 8; boards any land unit (villagers included) — ships and fishing boats may not; unloads units at the nearest passable **land** position via `TerrainManager.nearest_passable` |
 | War Galley | `scripts/units/war_galley.gd` | Feudal | 75W + 35G | Ranged naval combat: 6 attack, 5.5 range, 120 HP |
 
 ### Dock building
@@ -1004,3 +1040,80 @@ All weather types also blend a full-screen color overlay that fades in/out with 
 ### Conquest victory condition
 
 Conquest mode (the default) no longer ends on Town Center destruction alone. A player is defeated only when they have **zero units AND zero buildings** remaining. When the AI's TC is destroyed, `AIPlayer` attempts to rebuild it using the safest available villager; if it has no villagers, no buildings, and no units it emits `EventBus.player_eliminated` and the match checks for an overall winner.
+
+### Defeat → spectate
+
+`WorldVictory.handle_resignation` accepts the local player too (surrender, or
+loss of everything): the player is marked resigned and `EventBus.player_eliminated`
+fires, but while **hostile sides remain** the match plays on. `HudMatchStats`
+shows the defeat panel with a "keep watching" hint and a **View map** button;
+`GameWorld.local_player_defeated` locks every order path (right-click, minimap,
+placement, the action menu) while camera and selection stay live. When the war
+actually ends, the definitive `game_over` rebuilds the panel with the final
+result. Pinned by `tests/unit/test_resignation_spectate.gd`.
+
+## Replays & Creator Kit
+
+`ReplayFile` (`scripts/multiplayer/replay_file.gd`) writes the authoritative
+snapshot stream `StateReplicator` already produces for multiplayer clients to
+disk instead of (or besides) the wire: a zstd-compressed sequence of
+`store_var` records — the header (match config with the RESOLVED seed) followed
+by `{t, k, d}` packets on the simulated match clock. Faithful by construction:
+playback never re-simulates, so physics nondeterminism cannot rewrite history.
+
+- **Recording** (`GameSettings.record_replays`, default on): every
+  authoritative match (single-player, and the host online) records itself to
+  `user://replays/*.calrep`; the game-over screen offers "Watch replay".
+- **Playback**: `MatchConfig.replay_path` makes `GameWorld` boot the identical
+  world from the header's seed and run `StateReplicator.setup_playback` — the
+  client puppet path minus the network. The whole stream loads into memory,
+  which buys the timeline its duration and makes seeking an index jump.
+  Forward seeks fast-forward in chunks (`SEEK_CHUNK`, never a frozen frame);
+  backward seeks reboot the mirror world and fast-forward from zero.
+- **The bar** (`HudReplayBar`): pause/play, seekable timeline, speeds, clock,
+  reveal-all (lifts the spectator fog), cinematic mode (**C** — hides the HUD,
+  optional floating minimap) and A/B clip markers. `HudActionMenu.populate`
+  refuses every action in replay mode and `GameWorld._orders_locked` blocks the
+  order paths — recorded history takes no orders.
+- **Video export**: the Replays browser (main menu) spawns a background
+  headless-window render process that plays the replay (whole, or the A/B
+  clip) in cinematic mode at a fixed 30 FPS step and writes a video file; the
+  replay bar and HUD never enter the frame, the minimap is included by default
+  (`GameSettings.export_minimap`).
+
+## Campaign
+
+`CampaignData` (`scripts/campaign/campaign_data.gd`) is a const table: a
+tutorial prologue plus four Canarii missions (*The Flames of Tamarán*), each a
+deterministic world (fixed seed + MatchConfig fields) plus a script — side
+objectives (`train` / `build` / `destroy` / `herd`), scripted attack waves, a
+victory kind (`conquest` / `regicide` / `survive`) and per-mission AI
+difficulty caps (`ai_military_cap`, `ai_tick_scale`). `CampaignManager`
+(autoload) persists progress (`user://campaign.cfg`, chain-unlock) and launches
+missions by writing the whole MatchConfig; `MissionDirector` is mounted by
+GameWorld when `campaign_mission >= 0` and drives objective checkmarks
+(EventBus), wave spawns at the enemy TC (attack-move, no AI brain) and the
+survive countdown. Gate: `tools/check_campaign.tscn`.
+
+## Unit visual styles
+
+`GameSettings.unit_style` (`UnitStyle`: CLASSIC / ENHANCED / REDESIGNED,
+default CLASSIC) selects one of three unit looks, switchable live — the
+`unit_style_changed` signal re-dresses every unit on screen:
+
+- **ENHANCED** (`UnitEnhancer`, `scripts/utils/unit_enhancer.gd`): a fully
+  reversible layer over the classic rig — ink outline (grown dark polygon
+  copies behind the figure), per-polygon volume shading via `vertex_colors`
+  (never touching `Polygon2D.color`, so the TeamDress contract holds) and an
+  `animate_extras` post-step (idle breathing, walk lean/bounce, attack snap).
+  Contract: `tests/unit/test_unit_enhancer.gd`.
+- **REDESIGNED** (`UnitRedesign`, `scripts/utils/unit_redesign.gd`): lore-driven
+  from-scratch Polygon2D rigs built at runtime as a `RedesignBody` sibling of
+  the hidden (never freed) classic Body, with a full state-machine animation of
+  its own — when active, `UnitBase._process` calls `UnitRedesign.animate()`
+  instead of `_animate_body`. Team colour painted from `PlayerColors` at build
+  time. Contract: `tests/unit/test_unit_redesign.gd`; review via
+  `tools/check_redesigned_units.tscn`.
+
+Both are idempotent and strip cleanly back to CLASSIC. Legacy configs carrying
+the old `enhanced_units` bool migrate on load.

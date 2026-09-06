@@ -1,186 +1,148 @@
 # Calima: Flames of the Atlantic
 
-A historically-inspired real-time strategy game set in the Canary Islands and Atlantic trade routes, built with [Godot 4](https://godotengine.org). Experience the clash of indigenous Atlantic civilizations with European colonial powers through fast-paced skirmish battles.
+A real-time strategy game in the spirit of Age of Empires II, set in the Canary Islands at the crossroads of native kingdoms, ancient seafarers and European invaders. Built entirely with [Godot 4](https://godotengine.org) and GDScript — every sprite, sound and voice in the game is generated procedurally, with zero external art or audio assets.
 
 Created by **Enrique Ismael Mendoza Robaina** ([@enrimr](https://github.com/enrimr)).
 
----
-
-## Status
-
-**Production-ready** — Core gameplay loop complete with 8 playable civilizations, 28 unit types, 21 technologies, and full AI opponent. Recent work focused on polish and bug fixes.
+Current version: **0.9.8-beta** (see [CHANGELOG.md](CHANGELOG.md)).
 
 ---
 
 ## Key Features
 
-### Civilizations
-8 unique factions with distinct playstyles:
-- **Guanches** (Tenerife) — Fortress infantry, stone building bonus, malpaís traversal
-- **Canarii** (Gran Canaria) — Superior food economy, cheap archer rushes
-- **Mahos** (Fuerteventura) — Fast expansion, light cavalry raids, dune traversal
-- **Franks** (Norman Conquerors) — Rapid age advancement, powerful cavalry
-- **Britons** (English Privateers) — Long-range archers, naval dominance
-- **Castellanos** (Castilian Conquistadors) — Free Blacksmith tech/age, balanced army
-- **Atlantes** (Mythical Sea People) — Amphibious warfare, ship attack speed
-- **Fenicios** (Phoenician Traders) — Naval economy, ramming war galleys
+### Content
+- **8 civilizations** across three historical layers (native islanders, ancient seafarers, European invaders), each with unique bonuses, a unique military unit and two named heroes
+- **26 unit types** — villagers, a priestess-healer, a herding dog, three infantry lines, cavalry, siege engines (with a deploy/undeploy trebuchet), ships, and 8 civilization-unique units
+- **16 named heroes** (one male + one female per civilization), each with a distinct active ability; hero gender selectable in the lobby
+- **20 building types** — economy, military production, research, defense, and the Wonder
+- **32 technologies** — Blacksmith weapon/armour lines, University siege science, Temple rites, four unit upgrades, and three-step economy lines at the Lumber Camp, Mining Camp and Mill
+- **Campaign**: *The Flames of Tamarán* — a tutorial prologue plus four scripted missions of the Canarii resistance against the Atlante invasion
+- **3 victory conditions**: Conquest, Regicide (protect your hero), Wonder (build and hold)
+- **5 procedural map types** (Plains, Standard, Volcanic Coast, Desert Coast, Islands) in three sizes, with 4 starting-resource modes
 
-Each civilization includes:
-- 1 unique hero unit with special ability
-- 1 unique military unit with distinctive mechanics
-- Civilization-specific stat bonuses
-- Historical flavor and strategic identity
+### Systems
+- **Dynamic weather** — 5 event types (Calima dust, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash) with real stat effects, a forecast warning, per-civilization resistances and sea-fog cloaking
+- **Terrain that matters** — malpaís lava fields, dunes, cliff vantage points, laurisilva forests and calderas, each with movement/vision/combat effects and per-civ traversal bonuses
+- **AoE2-style combat controls** — stances, group formations, attack-move, patrol, shift-queued waypoints, control groups, garrison with building volleys, town bell
+- **Naval and amphibious warfare** — fishing economy, war galleys, troop transports, and the Atlantes Tidecaller that wades into the sea
+- **Full AI opponents** — economy (including herding dogs and livestock), construction with real builder villagers, fog-honest military targeting, naval assaults, allied-AI teamwork, and three difficulty levels
+- **Save/Load** — 99 slots, complete game state including in-flight research, garrisons and live weather
+- **Fog of war** — three states with AoE2-style building memory on map and minimap
 
-### Gameplay Systems
-- **4 Ages**: Dark → Feudal → Castle → Imperial
-- **4 Resources**: Food, Wood, Gold, Stone
-- **28 Unit Types**: Villagers, infantry, cavalry, archers, siege, naval
-- **22 Building Types**: Economy, military production, research, defense
-- **21 Technologies**: Weapon/armour upgrades, unit improvements, economic bonuses
-- **3 Victory Conditions**: Conquest (elimination), Regicide (kill enemy hero), Wonder (build + hold)
-- **5 Map Types**: Plains, Standard, Volcanic Coast, Desert Coast, Islands
-- **Dynamic Weather**: Calima dust storms, Atlantic storms, sea fog, trade winds, volcanic ash (affects vision, movement, combat)
+### Multiplayer
+- **LAN and Internet** (UPnP) multiplayer for up to 4 players, host-authoritative with client mirror worlds interpolated at 15 Hz
+- **Teams and alliances** (2v2, 2v1, ...) across skirmish and multiplayer, with allied AI teammates
+- Unified lobby with per-player colours, civs and teams, open/AI/closed seats, chat, kick, and a version handshake
+- **Mid-match reconnection** (reserved seats + full resync) and **multiplayer save/resume** with the original players
+- **Steam transport prototype** (lobbies, invites, Valve relay — test AppID)
 
-### Combat & Strategy
-- **Ranged Combat**: Attack-ground, cover fire, minimum range mechanics
-- **Siege Warfare**: Deploy/undeploy trebuchets, AoE splash damage
-- **Naval Gameplay**: Fishing boats, war galleys, troop transports, amphibious assaults
-- **Hero Abilities**: 16 legendary heroes (one male + one female per civilization), each with a unique power; gender selectable in the lobby
-- **Unit Special Abilities**: Hit-and-run cavalry, ambush shots, lance charges, salvo fire
+### Replays & creator kit
+- Every match records itself (`user://replays/`); watch from the **Replays** menu with a seekable timeline, pause, playback speeds and a reveal-map toggle
+- **Cinematic mode** (UI-free), optional floating minimap, and **video export** — render a whole replay or an A/B-marked clip to a 30 FPS video in the background
+- **Spectator mode** — defeated or surrendered while others still fight? "View map" keeps you watching the live battle (orders locked)
 
-### Visual Presentation
-- **Readable procedural art**: Hand-built vector figures for every unit, building and animal (no external textures)
-- **Random unit gender**: Every human unit is randomly male or female (cosmetic); distinct heroine sprites
-- **Team-colour identification**: Buildings carry their owner's colour on roofs, flags, banners and sails
-- **Living world**: Animated water with coastal foam, pulsing caldera lava, walking animals, ground shadows, ambient lighting
+### Presentation
+- 100 % procedural vector art with three selectable unit styles — **Classic**, **Enhanced** (ink outline + shading + extra animation) and **Redesigned** (lore-driven rigs) — switchable live in settings
+- Team colours on units and buildings, per-civ architecture and ship dress, hero auras, progressive fire/smoke on damaged buildings
+- Fully synthesized audio: per-civilization gibberish voice "languages" (formant synthesis), spatial sound effects and procedural music
+- English and Spanish localization
 
-### Technical Highlights
-- **Procedural Map Generation**: Random terrain, resources, starting positions
-- **Fog of War**: 3-state visibility system (unexplored/explored/visible)
-- **AI Opponent**: Economic management, military production, naval operations, age advancement, aggression escalation
-- **Save/Load System**: 99 save slots with complete game state serialization
-- **Weather System**: Procedural events with real-time stat modifiers and visual effects
-- **Spatial Audio**: Distance-based sound attenuation for combat and building
-- **Optimized Performance**: Area2D range detection, cached physics queries, outward spiral spawn positioning
+---
+
+## Civilizations
+
+| Civilization | Layer | Identity |
+|---|---|---|
+| **Guanches** (Tenerife) | Native | Stone buildings +20% HP, malpaís traversal, early spearmen — Menceyes Guard |
+| **Canarii** (Gran Canaria) | Native | +15% food gathering, cheap archers — Ravine Archer (cliff range bonus) |
+| **Mahos** (Lanzarote/Fuerteventura) | Native | −30% building wood cost, fast light cavalry, dune traversal — Sand Raider |
+| **Francos** (Norman conquerors) | Invader | −15% age-advance cost, +15% cavalry HP — Chevalier Normand |
+| **Britanos** (English privateers) | Invader | Archer range +1 per age, faster warships — Longbowman |
+| **Castellanos** (Castilian crown) | Invader | Free Blacksmith tech per age, tough swordsmen — Conquistador |
+| **Atlantes** (the drowned empire) | Ancient | Coastal vision +50%, sea-fog stealth, faster ships — amphibious Tidecaller |
+| **Fenicios** (Phoenician traders) | Ancient | Market from the Dark Age, mercenary hiring — ramming Trireme |
+
+Full details: [docs/design/civilizations_en.md](docs/design/civilizations_en.md) · [player's guide](docs/guide_en.md).
 
 ---
 
 ## Screenshots
 
-*(Coming soon — procedural weather effects, naval battles, siege warfare, hero abilities)*
+Unit-style galleries (captured by the review harnesses) live in the repo:
+
+- [Redesigned unit rigs](docs/design/unit-redesign-gallery/a_2_redesigned_grid.png) — and [in motion](docs/design/unit-redesign-gallery/a_6_redesigned_attack.png)
+- [Enhanced style](docs/design/unit-enhanced-gallery/enhanced_grid.png) vs [Classic](docs/design/unit-enhanced-gallery/classic_grid.png)
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+### Play
 
-- [Godot 4.3](https://godotengine.org/download) or later (standard build, no C# required)
-- Git
-
-### Installation
+- [Godot 4.6](https://godotengine.org/download) or later (standard build, no C#)
 
 ```bash
 git clone https://github.com/enrimr/age-of-empires-clone-godot.git
 cd age-of-empires-clone-godot
 ```
 
-Open **Godot → Import** and select `project/project.godot`.
+Open **Godot → Import** and select `project/project.godot`, then press **F5**.
 
-Press **F5** (or the play button) to launch the game.
+### Learn to play
 
-### Controls
+- **[GAMEPLAY.md](GAMEPLAY.md)** — controls and hotkeys quick reference
+- **[Player's Guide (EN)](docs/guide_en.md)** / **[Guía del Jugador (ES)](docs/guide_es.md)** — the full manual: civilizations, economy, tech tree, combat, multiplayer, replays, campaign
 
-See **[GAMEPLAY.md](GAMEPLAY.md)** for complete controls, unit stats, building costs, and strategy tips.
+### Run the tests
 
-**Quick reference:**
-- **Left-click**: Select units/buildings
-- **Right-click**: Move / Attack / Gather
-- **Ctrl + 1-9**: Create control groups
-- **1-9**: Recall control groups
-- **A**: Attack-move
-- **S**: Stop
-- **H**: Hold position
-- **P**: Patrol
-- **Delete**: Delete selected units/buildings
-- **Space**: Jump to alert location
-- **Escape**: Pause menu
+```bash
+GODOT=/path/to/godot ./run_tests.sh                # whole GUT suite (unit + integration)
+GODOT=/path/to/godot ./run_tests.sh res://tests/unit/test_world_query.gd   # one script
+```
+
+Standalone headless/renderer harnesses live under `project/tools/` — the full catalog is in [docs/testing/harnesses.md](docs/testing/harnesses.md).
 
 ---
 
 ## Architecture
 
-### Project Structure
-
 ```
-project/          ← Open this folder in Godot (contains project.godot)
-  assets/         ← Art, audio, fonts, shaders
+project/          ← Open this in Godot (contains project.godot)
+  assets/         ← Fonts, shaders, translations (art & audio are procedural)
   scenes/         ← .tscn scene files
   scripts/
-    core/         ← Autoloads: GameManager, EventBus, ResourceManager, etc.
-    units/        ← UnitBase + 28 unit classes
-    buildings/    ← BuildingBase + 22 building classes
-    economy/      ← ResourceNode, drop-off logic
-    map/          ← MapGenerator, FogOfWar, TerrainManager
-    combat/       ← Projectiles, damage calculation
-    ai/           ← AIPlayer coordinator + 4 specialist modules
-    ui/           ← HUD, minimap, menus
-  resources/      ← .tres data files (units, buildings, techs, civs)
-tests/            ← GUT unit and integration tests
-docs/             ← Architecture and design documentation
+    core/         ← Autoload singletons (GameManager, EventBus, CommandBus, ...)
+    units/        ← UnitBase + 26 unit classes
+    buildings/    ← BuildingBase + building classes
+    game/         ← GameWorld scene root + world controllers + GameCommand layer
+    campaign/     ← CampaignData, CampaignManager, MissionDirector
+    map/          ← Map generation pipeline, FogOfWar, terrain
+    ai/           ← AIPlayer coordinator + economy/construction/military/naval modules
+    multiplayer/  ← NetworkSession, StateReplicator, ReplayFile
+    ui/           ← HUD components, menus, minimap, lobby
+  resources/      ← .tres data (units, buildings, technologies, civilizations)
+  tests/          ← GUT unit and integration tests
+docs/             ← Architecture, design and player documentation
 ```
 
-### Design Principles
+### Design principles
 
-- **EventBus pattern**: All cross-system communication via signals
-- **Data-driven**: Stats live in `Resource` files, not hardcoded
-- **Type safety**: Full type hints on all functions
-- **Autoload singletons**: 14 global managers for game systems
-- **Performance-first**: Area2D range detection, cached queries, spiral spawning
+- **Command pattern** — every simulation-mutating order (player and AI) is a serializable `GameCommand` through `CommandBus`; the tick-stamped log is the backbone of replays and multiplayer
+- **EventBus pattern** — all cross-system communication via signals
+- **Data-driven** — stats live in `Resource` files, never hardcoded; UI buttons read prices from the same data the simulation charges
+- **Host-authoritative multiplayer** — clients puppet interpolated mirror worlds; the wire never gains privileges
+- **Deterministic simulation randomness** — one seeded `MatchRng` stream per match
+- **Type safety** — full type hints on all functions
 
-Full architecture notes: [CLAUDE.md](CLAUDE.md) · [docs/architecture/overview.md](docs/architecture/overview.md)
-
----
-
-## Testing
-
-Uses [GUT](https://github.com/bitwes/Gut) addon for unit and integration tests.
-
-Install GUT, then open the GUT panel inside Godot and click **Run All**.
-
-Tests live in `tests/unit/` and `tests/integration/`.
-
----
-
-## Roadmap
-
-| Milestone | Description | Status |
-|---|---|---|
-| M1 | Villagers gather resources, basic map | ✅ Done |
-| M2 | Town Center, Barracks, military, fog of war | ✅ Done |
-| M3 | Age progression, new units (Archer, Pikeman) | ✅ Done |
-| M4 | Naval gameplay, tech tree, 8 civs, weather system | ✅ Done |
-| M5 | All unique units/heroes polished, balance pass | ✅ Done |
-| M6 | Custom terrain tiles (malpaís, dune, risco, laurisilva) | 🚧 In progress |
-| M7 | Multiplayer (LAN) | 📋 Planned |
-| M8 | Campaign mode with story missions | 📋 Planned |
+Full notes: [docs/architecture/overview.md](docs/architecture/overview.md) · [docs/architecture/systems.md](docs/architecture/systems.md) · [CLAUDE.md](CLAUDE.md)
 
 ---
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/development/getting-started.md](docs/development/getting-started.md). The project is developed with 5 specialized AI sub-agents (developer, code-reviewer, tester, docs-keeper, performance-checker) — see [CLAUDE.md](CLAUDE.md).
 
-### Development Workflow
-
-The project uses 5 specialized sub-agents for development:
-1. `developer` — Implements features and fixes bugs
-2. `code-reviewer` — Reviews changes before merging
-3. `tester` — Writes/updates GUT tests
-4. `docs-keeper` — Keeps documentation synchronized
-5. `performance-checker` — Profiles and optimizes hot paths
-
-See [CLAUDE.md](CLAUDE.md) for sub-agent details.
+Releases are tagged only via `scripts/release_tag.sh` (it bumps the project version — which the multiplayer handshake checks — commits, tags and pushes in one step).
 
 ---
 
@@ -194,17 +156,18 @@ Copyright © 2026 Enrique Ismael Mendoza Robaina.
 
 ## Acknowledgments
 
-Inspired by Age of Empires II and the rich history of the Canary Islands.
+Inspired by Age of Empires II and the history of the Canary Islands.
 
-Built with [Godot Engine](https://godotengine.org) — open source game engine.
-
-Testing powered by [GUT](https://github.com/bitwes/Gut) — Godot Unit Testing framework.
+Built with [Godot Engine](https://godotengine.org). Testing powered by [GUT](https://github.com/bitwes/Gut). Steam networking via [GodotSteam](https://godotsteam.com).
 
 ---
 
 ## Links
 
-- [Gameplay Guide](GAMEPLAY.md) — Complete how-to-play with unit stats and costs
-- [Architecture Documentation](docs/architecture/overview.md) — System design and patterns
-- [Civilization Reference](docs/design/civilizations_en.md) — All 8 civs with bonuses and unique units
-- [Developer Guide](CLAUDE.md) — Codebase structure and conventions
+- [Gameplay quick reference](GAMEPLAY.md) — controls and hotkeys
+- [Player's Guide](docs/guide_en.md) / [Guía del Jugador](docs/guide_es.md) — the full manual
+- [Architecture overview](docs/architecture/overview.md) · [System design details](docs/architecture/systems.md)
+- [Game design document](docs/design/game-design-document.md)
+- [Civilization reference](docs/design/civilizations_en.md)
+- [Harness catalog](docs/testing/harnesses.md)
+- [Developer guide](CLAUDE.md)

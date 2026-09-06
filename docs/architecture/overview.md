@@ -17,15 +17,20 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | AgeManager | `scripts/core/age_manager.gd` | Per-player Age tracking (Dark/Feudal/Castle/Imperial), age-advance timers |
 | PopulationManager | `scripts/core/population_manager.gd` | Per-player population current/cap tracking |
 | CivBonusManager | `scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats (HP, attack, speed, armor), gather rates, age-up costs, attack speed, archer range bonuses per age |
-| TechManager | `scripts/core/tech_manager.gd` | Research queue (up to 5 in flight per building, paid at enqueue, refunded on cancel), applies 23 technology effects, instant tech grants (civ bonuses) |
+| TechManager | `scripts/core/tech_manager.gd` | Research queue (up to 5 in flight per building, paid at enqueue, refunded on cancel), applies 32 technology effects (loaded from `resources/technologies/`), instant tech grants (civ bonuses) |
 | TerrainManager | `scripts/core/terrain_manager.gd` | Impassability queries, nearest-passable search, coastal zone detection |
 | WeatherManager | `scripts/core/weather_manager.gd` | Procedural weather state machine (5 types); stat-modifier query API (vision, speed, gather, drift, damage) |
 | AudioManager | `scripts/core/audio_manager.gd` | Spatial audio playback with distance attenuation; ALL audio (sfx, per-civ formant voices, music) is procedurally synthesized — see [audio_synthesis.md](audio_synthesis.md) |
 | SaveManager | `scripts/core/save_manager.gd` | Complete game save/load, 99 JSON slots with metadata UI; schema v2 (read-enforced: newer refused, older defaulted) persists in-flight research, garrisons, unit stances and weather |
 | GameSettings | `scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
-| MatchConfig | `scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
+| MatchConfig | `scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency, teams, hero gender, campaign mission, replay path) |
+| EntityRegistry | `scripts/core/entity_registry.gd` | Stable per-match numeric IDs for units/buildings/resource nodes (`id_of`/`resolve`) |
+| CommandBus | `scripts/core/command_bus.gd` | Single entry point for simulation-mutating intents; tick-stamped command log (replay/multiplayer foundation) |
+| MatchRng | `scripts/core/match_rng.gd` | The single seeded RNG stream for all simulation randomness |
+| NetworkSession | `scripts/multiplayer/network_session.gd` | Host-authoritative LAN/Internet session (ENet + Steam prototype): lobby roster, command pipe, reconnection, save/resume |
+| CampaignManager | `scripts/campaign/campaign_manager.gd` | Campaign progress (chain-unlock, `user://campaign.cfg`), mission launch |
 
-### Unit Classes (30 total)
+### Unit Classes (26 playable types + animals)
 
 | Unit | Script | Notes |
 |---|---|---|
@@ -33,7 +38,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | Villager | `scripts/units/villager.gd` | Gather, build, repair; work/walk animation differentiation |
 | Harimaguada | `scripts/units/healer_unit.gd` | Priestess-healer trained at the Temple (Castle Age, 85F+25G); always female; never fights; follow-and-mend (5 HP/s) + idle auto-triage |
 | PresaCanario | `scripts/units/presa_canario.gd` | Herding dog trained at the Mill (Dark Age, 30F+10G); `order_herd` fetches an animal and leads it to the nearest own drop-off (sheep convert on contact); each trip pays food for the net approach; guard dog (attack 3, DEFENSIVE) that never abandons a trip on its own |
-| HeroUnit | `scripts/units/hero_unit.gd` | 8 unique hero abilities (extends Militia) |
+| HeroUnit | `scripts/units/hero_unit.gd` | The hero class (extends Militia); 16 named heroes (2 per civ, `hero_*.tres`), each with a unique ability |
 | Militia | `scripts/units/militia.gd` | Dark Age infantry |
 | ManAtArms | `scripts/units/man_at_arms.gd` | Feudal Age infantry upgrade |
 | LongSwordsman | `scripts/units/long_swordsman.gd` | Castle Age infantry upgrade |
@@ -46,7 +51,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | Mangonel | `scripts/units/mangonel.gd` | Castle Age AoE siege; 72 px splash, minimum range |
 | Trebuchet | `scripts/units/trebuchet.gd` | Imperial Age long-range siege; 48 px splash, deploy/undeploy (3 s) |
 | FishingBoat | `scripts/units/fishing_boat.gd` | Naval food gatherer |
-| TransportShip | `scripts/units/transport_ship.gd` | Naval troop transport (10 garrison) |
+| TransportShip | `scripts/units/transport_ship.gd` | Naval troop transport (capacity 8, villagers may board) |
 | WarGalley | `scripts/units/war_galley.gd` | Feudal Age combat ship |
 | MenceyesGuard | `scripts/units/menceyes_guard.gd` | Guanches infantry: Rage Aura at HP < 50% |
 | RavineArcher | `scripts/units/ravine_archer.gd` | Canarii archer: Ambush Shot (×2 first shot when stationary ≥1.5 s) |
@@ -60,7 +65,7 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | Sheep | `scripts/units/sheep.gd` | Convertible livestock |
 | ShipBase | `scripts/units/ship_base.gd` | Base class for naval units; ocean passability via `is_amphibious()`, hull painted per civ by `ShipDress` |
 
-### Building Classes (23 total)
+### Building Classes (20 building types)
 
 | Building | Script | Notes |
 |---|---|---|
@@ -83,9 +88,9 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | House | `scripts/buildings/house.gd` | +5 population cap (25 wood) |
 | Farm | `scripts/buildings/farm.gd` | Renewable food source (60 wood) |
 | FishTrap | `scripts/buildings/fish_trap.gd` | Naval renewable food source (75 wood) |
-| LumberCamp | `scripts/buildings/lumber_camp.gd` | Wood drop-off (100 wood) |
-| MiningCamp | `scripts/buildings/mining_camp.gd` | Gold/stone drop-off (100 wood) |
-| Mill | `scripts/buildings/mill.gd` | Food drop-off (100 wood, 600 HP); trains Presa Canario (queue cap 5) |
+| LumberCamp | `scripts/buildings/lumber_camp.gd` | Wood drop-off (100 wood); researches the wood tech line (Double-Bit Axe → Bow Saw → Two-Man Saw) |
+| MiningCamp | `scripts/buildings/mining_camp.gd` | Gold/stone drop-off (100 wood); researches the mining tech line (Reinforced Picks → Shaft Mining → Deep Galleries) |
+| Mill | `scripts/buildings/mill.gd` | Food drop-off (100 wood, 600 HP); trains Presa Canario (queue cap 5); researches the food tech line (Horse Collar → Heavy Plow → Crop Rotation) |
 
 ### AI Systems
 
@@ -107,25 +112,53 @@ Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 
 | UnitPortrait | `scripts/ui/unit_portrait.gd` | PanelContainer showing unit name + HP bar in selection grid |
 | WeatherOverlay | `scripts/ui/weather_overlay.gd` | Screen-space visual effects (rain, dust, ash, fog) driven by WeatherManager |
 | Minimap | `scripts/ui/minimap.gd` | Minimap with right-click move orders, resource/unit/building icons; entity content redraws on a 5 Hz tick, overlay (camera rect/flashes) only while changing |
+| NotificationDisplay | `scripts/ui/notification_display.gd` | Stacking toasts with shortcut action buttons (jump to event, build house on pop-cap, locate hero) |
+| HudActionMenu | `scripts/ui/hud/hud_action_menu.gd` | The command grid: per-selection button layouts, paging, stance/formation highlights; refuses orders in replays |
+| HudActionDefs | `scripts/ui/hud/hud_action_defs.gd` | Static action tables + pure builders; costs always resolved from `.tres` data |
+| HudTutorial | `scripts/ui/hud/hud_tutorial.gd` | Tutorial lesson driver; resource grants via `EventBus.tutorial_grant_resources` |
+| HudReplayBar | `scripts/ui/hud/hud_replay_bar.gd` | Replay spectator controls: seekable timeline, speeds, reveal-all, cinematic mode, A/B clip markers |
+| HudPlayersPanel | `scripts/ui/hud/hud_players_panel.gd` | AoE2-style players/score overlay docked on the minimap |
+| CampaignScreen | `scripts/ui/campaign_screen.gd` | Mission selector + briefing panel |
+
+### Multiplayer & Replay
+
+| System | Script | Responsibility |
+|---|---|---|
+| NetworkSession | `scripts/multiplayer/network_session.gd` | Autoload — see the singleton table above |
+| StateReplicator | `scripts/multiplayer/state_replicator.gd` | Host→client state replication at 15 Hz (puppet mirror worlds, interpolation); also the replay recorder and playback engine (`setup_playback`, `seek`); the sampler skips nodes without a `health` property (arrows fly inside the entity layers) |
+| ReplayFile | `scripts/multiplayer/replay_file.gd` | Replay container: zstd-compressed snapshot stream (header + `{t, k, d}` packets), `user://replays/*.calrep` |
+
+### Campaign
+
+| System | Script | Responsibility |
+|---|---|---|
+| CampaignData | `scripts/campaign/campaign_data.gd` | Const mission table: tutorial prologue + 4 missions (seed, MatchConfig fields, objectives, waves, victory kind) |
+| CampaignManager | `scripts/campaign/campaign_manager.gd` | Autoload — progress persistence, chain unlock, mission launch |
+| MissionDirector | `scripts/campaign/mission_director.gd` | In-match objective tracking, scripted wave spawns, survive countdown, completion |
 
 ## Autoloads Registration
 
-The following 14 nodes are registered as autoloads in `project.godot`:
+The following 19 nodes are registered as autoloads in `project.godot` (in registration order):
 
-- `GameManager` → `scripts/core/game_manager.gd`
 - `EventBus` → `scripts/core/event_bus.gd`
+- `EntityRegistry` → `scripts/core/entity_registry.gd`
+- `CommandBus` → `scripts/core/command_bus.gd`
+- `MatchRng` → `scripts/core/match_rng.gd`
+- `NetworkSession` → `scripts/multiplayer/network_session.gd`
+- `GameManager` → `scripts/core/game_manager.gd`
 - `ResourceManager` → `scripts/core/resource_manager.gd`
 - `SelectionManager` → `scripts/core/selection_manager.gd`
-- `AgeManager` → `scripts/core/age_manager.gd`
 - `PopulationManager` → `scripts/core/population_manager.gd`
-- `CivBonusManager` → `scripts/core/civ_bonus_manager.gd`
-- `TechManager` → `scripts/core/tech_manager.gd`
-- `TerrainManager` → `scripts/map/terrain_manager.gd`
-- `WeatherManager` → `scripts/core/weather_manager.gd`
+- `AgeManager` → `scripts/core/age_manager.gd`
 - `AudioManager` → `scripts/core/audio_manager.gd`
-- `SaveManager` → `scripts/core/save_manager.gd`
 - `GameSettings` → `scripts/core/game_settings.gd`
 - `MatchConfig` → `scripts/core/match_config.gd`
+- `TerrainManager` → `scripts/core/terrain_manager.gd`
+- `CivBonusManager` → `scripts/core/civ_bonus_manager.gd`
+- `TechManager` → `scripts/core/tech_manager.gd`
+- `SaveManager` → `scripts/core/save_manager.gd`
+- `WeatherManager` → `scripts/core/weather_manager.gd`
+- `CampaignManager` → `scripts/campaign/campaign_manager.gd`
 
 ## Data Layer
 

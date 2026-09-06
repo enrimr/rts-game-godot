@@ -4,7 +4,7 @@
 
 A real-time strategy game inspired by Age of Empires II, set in the Atlantic archipelago of the Canary Islands across the 15th and 16th centuries. The player commands one of eight civilizations — from ancient seafarers and native islanders to European conquerors — across volcanic islands, ocean straits, and desert coasts.
 
-Single-player skirmish against AI is the initial scope. LAN multiplayer is planned for a later milestone.
+The shipped scope covers single-player skirmish against up to 3 AI rivals (with teams), a four-mission campaign with a tutorial prologue (*The Flames of Tamarán*), LAN/Internet multiplayer for up to 4 players (host-authoritative, with reconnection and save/resume), and a replay system with video export.
 
 ---
 
@@ -49,7 +49,7 @@ The game draws from three historical and mythological layers:
 | Age | Name | Unlocks |
 |---|---|---|
 | 0 | **Dark Age** | Town Center, Houses, basic economy |
-| 1 | **Feudal Age** | Barracks, Archery Range, Blacksmith, Stable (HeavyScout), Market |
+| 1 | **Feudal Age** | Barracks, Archery Range, Blacksmith, Stable (HeavyScout), Market (Fenicios: from Dark Age) |
 | 2 | **Castle Age** | Castle, University, Siege Workshop, Stable (Knight), additional Town Center (buildable), unique units, advanced tech |
 | 3 | **Imperial Age** | Full tech tree, elite unique units |
 
@@ -59,7 +59,7 @@ Advancing requires spending Food and Gold at the Town Center. Each civ may have 
 
 ## Civilizations
 
-Eight civilizations across three historical layers. See `civilizations.md` for full details.
+Eight civilizations across three historical layers. See `civilizations_en.md` / `civilizations_es.md` for full details.
 
 | Layer | Civilization | Identity |
 |---|---|---|
@@ -76,13 +76,13 @@ Eight civilizations across three historical layers. See `civilizations.md` for f
 
 ## Heroes
 
-Each civilization has one named hero unit. Heroes are unique — they spawn once at game start, cannot be retrained, and carry a special ability. See `civilizations.md` for each hero's name and ability.
+Each civilization has a **hero pair** — one male and one female named hero (16 total), selected in the lobby (`MatchConfig.hero_gender`: Random / Male / Female). Heroes are unique — they spawn once at game start and carry a special ability. See `civilizations_en.md` and `heroines-design.md` for each hero's name and ability.
 
 Hero rules:
-- Spawn near Town Center at Dark Age
-- Cannot be trained or rebuilt if lost
+- Spawn near the Town Center at match start
+- Cannot be trained; if killed, the hero respawns at the Town Center after 120 s (`HERO_RESPAWN_TIME`) — except in Regicide, where hero death is immediate defeat
 - Stats equivalent to a Castle Age unique unit
-- One special ability with 45–60s cooldown
+- One special ability with a 45–120 s cooldown (audited: `tests/unit/test_hero_abilities.gd` casts all 16)
 
 ---
 
@@ -90,6 +90,7 @@ Hero rules:
 
 | Map | Description | Strategic focus |
 |---|---|---|
+| **Plains** | Flat land, no special terrain | Beginner-friendly |
 | **Standard** | Land map with varied terrain | General play |
 | **Volcanic Coast** | Coastal land with impassable caldera at center | Two land corridors, Guanches advantaged |
 | **Desert Coast** | Arid Lanzarote-style map, ocean to the west | Wood-scarce, Mahos advantaged |
@@ -103,19 +104,19 @@ Hero rules:
 |---|---|---|---|
 | Grass | Normal | Yes | — |
 | Sand / Dune | -20% infantry (heavy) | Yes | Mahos immune to penalty |
-| Malpaís (volcanic rock) | -50% | No | Guanches immune; not buildable |
+| Malpaís (volcanic rock) | Impassable (carved out of the navmesh) | No | Guanches traverse it via the layer-8 malpaís mesh |
 | Lava-cooled black sand | Normal | No | Coastal/decorative |
 | Laurisilva (dense forest) | -35% | No | High wood yield (dense 260-wood forests), vision −30% under the canopy |
 | Risco (cliff edge) | No passage | No | Ranged units within 48 px of the cliff edge: +2 attack range |
 | Shallow water (ocean ≤120 px from coast) | Land units blocked; amphibious full speed | No | Only the Atlantes Tidecaller wades — the rest of their army stays dry |
 | Ocean | Land units blocked | No | Ships and amphibious units; the Tidecaller swims at 60% speed (`deep_water_speed`); fishing available |
-| Caldera (active) | Impassable | No | Control adjacent zone → +stone/min |
+| Caldera (active) | Impassable | No | Volcanic Ash weather strikes within caldera radius + 800 px |
 
 ### Impassability enforcement
 
 `TerrainManager.is_impassable_for(world_pos, civ_id, amphibious)` is the runtime gate. All unit movement orders resolve the final destination through `TerrainManager.nearest_passable` before assigning a nav agent target. If a requested position is inside an impassable zone the unit is redirected to the nearest reachable tile via a 30-ring radial search (24 px per ring). The `amphibious` argument comes from the unit itself (`UnitBase.is_amphibious()`), so water is opened per unit and not per civilization: an Atlantes militia is refused the sea, its Tidecaller is not.
 
-NavMesh carving (`NavMeshBuilder.build`) backs this up at the mesh level: malpaís, risco, and caldera zones become `NavigationObstacle2D` nodes, and on Islands maps the nav polygon is replaced with per-island land polygons so the baked mesh never extends over ocean. Amphibious units walk a third, uncarved mesh that spans land and water (navigation layer 4).
+NavMesh carving (`NavMeshBuilder.build`) backs this up at the mesh level: malpaís, risco, and caldera zones are carved out of the baked meshes (`zone_obstructions`), so paths route around them; a fourth mesh (layer 8) leaves malpaís walkable for traversal civs. On Islands maps the nav polygon is replaced with per-island land polygons so the baked mesh never extends over ocean. Amphibious units walk the layer-4 mesh that spans land and water.
 
 ---
 
@@ -141,7 +142,7 @@ The Dock is the sole production building for naval units. Fishing Boats automati
 | Unit | Age | Cost | HP | Attack | Range | Role |
 |---|---|---|---|---|---|---|
 | **Fishing Boat** | Dark | 75W | — | — | — | Gathers FOOD_FISH from ocean nodes; returns food to Dock; can build Fish Traps |
-| **Transport Ship** | Feudal | 125W | — | — | — | Boards military units (Militia, Archer, Pikeman, Scout, Hero); Villagers blocked |
+| **Transport Ship** | Feudal | 125W | — | — | — | Carries up to 8 land units (villagers included); ships and fishing boats may not board; unloads on dry land |
 | **War Galley** | Feudal | 75W + 35G | 120 | 6 | 5.5 | Ranged naval combat |
 
 ## Siege Units
@@ -158,7 +159,7 @@ Produced at the **Siege Workshop** (Castle Age, 200 Wood).
 
 ## Technology Tree
 
-23 technologies across 4 research buildings. Technologies provide permanent stat bonuses to units/buildings. Each research building runs one active tech plus a waiting queue — up to 5 techs in flight per building, paid at enqueue and fully refunded on cancel.
+32 technologies across 8 research buildings (Blacksmith, University, Temple, Barracks, Stable, Lumber Camp, Mining Camp, Mill). Technologies provide permanent stat bonuses to units/buildings. Each research building runs one active tech plus a waiting queue — up to 5 techs in flight per building, paid at enqueue and fully refunded on cancel.
 
 ### Blacksmith (13 technologies)
 
@@ -197,6 +198,16 @@ Castle Age building (175 wood). Researches morale and HP buffs. The Temple is al
 | **Fervor** | Castle | 150g | 50s | Unit move speed ×1.10 |
 | **Sanctity** | Castle | 100f | 40s | Swordsman HP ×1.15 |
 | **Atonement** | Imperial | 150f+100g | 55s | Cavalry HP ×1.20 (requires Sanctity) |
+
+### Camp economy lines (9 technologies)
+
+Each drop-off camp researches its own three-step line — one tech per age from Feudal, chained prerequisites. Every step multiplies that resource's villager gather rate by 1.15 and its carry basket by 1.10 (effect keys `villager_<res>_gather_rate` / `villager_<res>_carry`, stacked on the Blacksmith carts).
+
+| Building (resource) | Feudal | Castle | Imperial |
+|---|---|---|---|
+| **Lumber Camp** (wood) | Double-Bit Axe — 100f+50w, 25s | Bow Saw — 150f+100w, 40s | Two-Man Saw — 300f+200w, 60s |
+| **Mining Camp** (gold + stone) | Reinforced Picks — 100f+75w, 25s | Shaft Mining — 175f+100w, 40s | Deep Galleries — 300f+150w, 60s |
+| **Mill** (food) | Horse Collar — 75f+75w, 25s | Heavy Plow — 125f+125w, 40s | Crop Rotation — 250f+250w, 60s |
 
 ### Unit Upgrade Technologies (4)
 
@@ -259,11 +270,11 @@ Each weather event has 3 phases:
 
 Three victory modes are implemented, selectable in the lobby:
 
-- **Conquest**: Destroy all enemy Town Centers and military production buildings. Last player standing wins.
-- **Regicide**: Each player starts with a Hero unit. Kill the enemy Hero to eliminate that player. Heroes cannot be retrained if lost.
-- **Wonder**: Build a Wonder (Imperial Age, costs 2500 wood + 2500 food + 2500 stone + 5000 gold) and defend it for 200 in-game years. First player to hold a Wonder for the full duration wins.
+- **Conquest**: A player is out when they have zero units and zero production buildings; the last mutually allied side standing wins.
+- **Regicide**: Each player starts with a Hero. Hero death eliminates that player instantly (no respawn in this mode).
+- **Wonder**: Build a Wonder (Imperial Age, costs 2500 wood + 2500 food + 2500 stone + 5000 gold) and defend it for `WONDER_COUNTDOWN_SEC` (240 s = 4 minutes). Destroying the Wonder cancels its countdown; the match continues.
 
-**Elimination logic**: A player is eliminated when they have no Town Center and no remaining resources to rebuild one. On elimination, all their units/buildings are destroyed.
+**Elimination and spectating**: elimination emits `EventBus.player_eliminated`. If the local player is eliminated (or surrenders) while hostile sides remain, the match plays on — the defeat panel offers "View map" and the player spectates with orders locked (`GameWorld.local_player_defeated`); the definitive game-over rebuilds the panel. Teams: `GameManager.are_allied` is the single choke point for the win check.
 
 ---
 
@@ -277,12 +288,14 @@ Players configure a skirmish before starting:
 | Map Type | Plains / Standard / Volcanic Coast / Desert Coast / Islands |
 | Starting Resources | Scarce / Normal / Abundant / Full Combat (all 9999) / Tutorial (320 wood only) |
 | Player Civilization | Choose from 8 civs (Guanches, Canarii, Mahos, Franks, Britons, Castellanos, Atlantes, Fenicios) |
-| Rival Count | 1-3 AI opponents |
+| Rival Count | 1-3 AI opponents (multiplayer: up to 4 players total, remaining seats Open / AI / Closed) |
 | Rival Civilizations | Choose civ for each AI |
+| Teams | Players and rivals assignable to teams 1-4 (`MatchConfig.player_teams`) |
 | Starting Age | Dark / Feudal / Castle / Imperial |
 | Victory Condition | Conquest / Regicide / Wonder |
 | Weather Enabled | On / Off |
 | Weather Frequency | Off / Normal / Frequent / Extreme |
+| Hero Gender | Random / Male / Female |
 
 ---
 
@@ -294,39 +307,20 @@ Players configure a skirmish before starting:
 | M2 | Town Center, Barracks, walls, basic military, fog of war | ✅ Done |
 | M3 | Age progression (4 ages), tech tree (8 techs), new units (Archer, Pikeman) | ✅ Done |
 | M4 | Naval gameplay (Dock, ships, Islands map, AI naval assault) | ✅ Done |
-| M5 | **Production-ready**: 8 civs with unique units/heroes, 21 technologies, weather system, save/load, 3 victory conditions, polish & bug fixes | ✅ Done |
+| M5 | **Production-ready single-player**: 8 civs with unique units/heroes, weather system, save/load, 3 victory conditions, polish & bug fixes | ✅ Done |
 | M6 | Custom terrain (malpaís, dune, risco, laurisilva) with civ traversal bonuses and gameplay effects (laurisilva vision/wood, risco vantage, shallow water) | ✅ Done |
-| M7 | Multiplayer (LAN) | 📋 Planned |
-| M8 | Campaign mode with story missions | 📋 Planned |
+| M7 | Multiplayer: LAN/Internet host-authoritative sessions, unified lobby, state replication, robustness, chat, teams, reconnection, save/resume, Steam transport prototype | ✅ Done |
+| M8 | Campaign mode: *The Flames of Tamarán* — tutorial prologue + 4 scripted missions | ✅ Done |
+| M9 | Replays & creator kit: match recording, timeline playback, cinematic mode, video/clip export | ✅ Done |
+| M10 | Lockstep determinism (movement off Godot physics), live Steam AppID test, balance pass | 📋 Planned |
 
-### M5 Feature Breakdown (Production-Ready)
+### Current content totals
 
-**Core Systems:**
-- 8 civilizations (Guanches, Canarii, Mahos, Franks, Britons, Castellanos, Atlantes, Fenicios)
-- 8 hero units with unique abilities
-- 8 unique units with special mechanics
-- 28 total unit types
-- 22 building types
-- 21 technologies (Blacksmith 9, University 3, Temple 3, Unit Upgrades 4, Civ instant grants 2)
-- 3 victory conditions (Conquest, Regicide, Wonder)
-- Dynamic weather system (5 types: Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash)
-- Save/Load system (99 JSON slots)
-- Population cap system (5 per House)
+Verified against `project/resources/` and `project/scenes/` (2026-09-06):
 
-**Polish:**
-- Procedural body animation for all units
-- Flying arrow projectiles
-- Polygon2D silhouettes (replaced ColorRect placeholders)
-- Tall stone tower visual for Watch Tower
-- Spatial audio with distance attenuation
-- Weather visual effects overlay
-- Area2D range detection (performance optimization)
-- Outward spiral spawn positioning (no unit overlap)
-
-**Bug Fixes:**
-- 14 critical fixes (see CHANGELOG.md for details)
-- Conquest/Regicide victory logic
-- Minimap resource reveal
-- Weather HUD centering
-- Cover Fire action registration
-- Nav mesh obstacles per civ
+- 8 civilizations (`resources/civilizations/*.tres`)
+- 26 playable unit types (25 regular — 8 of them civ-unique — plus the hero class) and 16 named heroes (2 per civ, `resources/units/hero_*.tres`); 2 animal types
+- 20 building types (`resources/buildings/*.tres`)
+- 32 technologies (`resources/technologies/*.tres`; TechManager loads the directory)
+- 5 map types, 3 sizes, 4 resource modes, 3 victory conditions, 5 weather types, 99 save slots
+- Campaign: tutorial prologue + 4 missions (`CampaignData.MISSIONS`)

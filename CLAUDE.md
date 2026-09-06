@@ -4,10 +4,10 @@
 
 An Age of Empires II inspired 2D real-time strategy game built in **Godot 4** with GDScript.
 
-- **Engine**: Godot 4.3+
+- **Engine**: Godot 4.6+
 - **Language**: GDScript (no C#)
 - **Genre**: 2D real-time strategy (top-down isometric-style)
-- **Scope**: Single-player skirmish vs AI, 8 civilizations, multiplayer planned later
+- **Scope**: Single-player skirmish vs AI + campaign, 8 civilizations, LAN/Internet multiplayer (host-authoritative), replays
 
 ## Repository Layout
 
@@ -27,7 +27,7 @@ project/          ← Open this in Godot editor (contains project.godot)
     ai/           ← AIPlayer coordinator + AIConstruction, AIEconomy, AIMilitary, AINaval modules
     research/     ← TechTree, ResearchQueue
     ui/           ← HUD, menus, minimap
-    multiplayer/  ← Networking (future)
+    multiplayer/  ← NetworkSession, StateReplicator, ReplayFile
     utils/        ← Shared helpers
   resources/      ← .tres/.res data files (CivilizationResource, UnitResource, etc.)
 tests/            ← GUT unit and integration tests
@@ -38,7 +38,7 @@ docs/             ← Architecture and design documentation
 
 1. **EventBus pattern** — cross-system communication happens exclusively through signals on `EventBus` (autoload). Never call methods across system boundaries directly.
 2. **Data-driven resources** — all tuneable values live in `Resource` subclasses under `resources/`. Scripts read from resources; they do not hardcode stats.
-3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `EntityRegistry`, `CommandBus`, `MatchRng`, `NetworkSession`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager`, `WeatherManager`, `AgeManager`, `AudioManager`, `TerrainManager`, `PopulationManager`, `SaveManager`, `GameSettings`, `CampaignManager` — access these by name anywhere.
+3. **Autoloads (singletons)**: `GameManager`, `EventBus`, `EntityRegistry`, `CommandBus`, `MatchRng`, `NetworkSession`, `ResourceManager`, `SelectionManager`, `CivBonusManager`, `TechManager`, `WeatherManager`, `AgeManager`, `AudioManager`, `TerrainManager`, `PopulationManager`, `SaveManager`, `GameSettings`, `MatchConfig`, `CampaignManager` — access these by name anywhere.
 4. **Type hints everywhere** — every GDScript function must declare parameter types and return type.
 5. **Area2D for range detection** — attack ranges use Area2D nodes that monitor for enemies entering/leaving range, avoiding per-frame physics queries.
 6. **Outward spiral spawn positioning** — units spawn at free positions found via outward spiral physics query, preventing overlap.
@@ -57,31 +57,31 @@ docs/             ← Architecture and design documentation
 | `project/scripts/core/resource_manager.gd` | Per-player food/wood/gold/stone stockpiles, spatial resource cache |
 | `project/scripts/core/selection_manager.gd` | Unit selection, control groups |
 | `project/scripts/core/age_manager.gd` | Per-player Age tracking, age advance timer, cost multipliers |
-| `project/scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, age-up costs, move speed, attack speed; archer range bonuses per age; per-civ weather resistance |
-| `project/scripts/core/tech_manager.gd` | Research per building (one active + AoE2-style queue, `MAX_RESEARCH_QUEUE` 5 in flight per building, paid at enqueue, promoted automatically), applies technology effects, 23 technologies total; start/finish/cancel emit research_state_changed (HUD queue slot), cancel_research and cancel_queued_research refund in full; a destroyed lab refunds its whole queue; `collect_state`/`restore_state` persist in-flight research across save/load (re-armed WITHOUT re-charging — keyed by the building's index in the saved array), `reset_match_state` drops stale cross-match research at match start without refund (called by `WorldSetup`) |
+| `project/scripts/core/civ_bonus_manager.gd` | Per-player multipliers for unit stats, gather rates, age-up costs, move speed, attack speed; archer range bonuses per age; per-civ weather resistance; per-resource carry baskets (`villager_<res>_carry`, stacked on `villager_carry_capacity`) |
+| `project/scripts/core/tech_manager.gd` | Research per building (one active + AoE2-style queue, `MAX_RESEARCH_QUEUE` 5 in flight per building, paid at enqueue, promoted automatically), applies technology effects, 32 technologies total; start/finish/cancel emit research_state_changed (HUD queue slot), cancel_research and cancel_queued_research refund in full; a destroyed lab refunds its whole queue; `collect_state`/`restore_state` persist in-flight research across save/load (re-armed WITHOUT re-charging — keyed by the building's index in the saved array), `reset_match_state` drops stale cross-match research at match start without refund (called by `WorldSetup`) |
 | `project/scripts/core/weather_manager.gd` | Procedural weather state machine (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash); stat-modifier query API; `collect_state`/`apply_saved_state` persist the live state machine across save/load (phase, timers, wind — a forecast in progress re-warns on restore) |
 | `project/scripts/core/population_manager.gd` | Per-player population current/cap tracking |
 | `project/scripts/core/save_manager.gd` | Complete game save/load system, JSON-based, 99 save slots; `SCHEMA_VERSION` 2 read-enforced (saves NEWER than the build are refused with a reason, older ones load with defaults for new keys); v2 persists in-flight research (active + queues, keyed by building index in the saved array, re-armed without re-charging), garrisons (occupants nested under their building/transport record, restored back INSIDE), unit stances and the weather state machine; multiplayer saves add a roster sheet (`multiplayer` key: names/Steam IDs/civs/colours/teams per seat) and per-player explored fog (`fog_by_player`, gathered from clients via `NetworkSession.collect_client_fogs` — `save_game` is a coroutine, await it); `resume_sheet`/`resume_fog_b64` feed the resume lobby and resync, `cancel_pending` backs out of an abandoned resume |
 | `project/scripts/core/match_config.gd` | Lobby settings (map size, resources, civs, victory mode, weather frequency) |
 | `project/scripts/core/terrain_manager.gd` | Terrain type detection, coastal zone queries, terrain gameplay effects (laurisilva vision mult, risco vantage, shallow water); `get_speed_mult`/`is_impassable_for`/`nearest_passable` take an `amphibious` flag (ocean is opened by the unit, never by the civ), `deep_water_speed(civ_id)` reads the civ's `deep_water_speed` multiplier (default 0.60); `distance_to_coast` is analytic + memoized per 24 px cell (the weather/fog hot path — invalidate via `reset`/`add_zone`/`set_land_polys` only) |
 | `project/scripts/core/audio_manager.gd` | Spatial audio playback, distance attenuation; ALL sfx/music are procedurally baked at startup (zero audio assets). Voices are formant-synthesized gibberish (glottal sawtooth → 3 two-pole vowel resonators + noise consonants): each CIV speaks its own deterministic "language" (`VOICE_CIV_POOLS` syllables + `VOICE_CIV_PITCH` accent) across class prosodies (`VOICE_KINDS`: selections ask, `ack_move`/`ack_attack` order confirmations affirm), per gender. `play_voice(id, female, civ_id)` resolves civ→gender→default with anti-repeat; siege stays mechanical. The ~460-clip cast bakes in parallel via `WorkerThreadPool.add_group_task` (skipped entirely in headless — `ensure_voices_ready()` bakes synchronously for tools/tests). Combat/gather sounds carry several takes via `_register_multi` (pool round-robin rotates them). Audition via `tools/check_voice_gallery.tscn` (env `CALIMA_CIVS`); full synthesis reference in `docs/architecture/audio_synthesis.md` |
-| `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings |
+| `project/scripts/core/game_settings.gd` | Difficulty, master volume, persisted settings; `unit_style` enum (`UnitStyle` CLASSIC 0 / ENHANCED 1 / REDESIGNED 2, default CLASSIC) with `unit_style_changed` signal for the live re-dress; legacy `enhanced_units` bool kept as an alias (maps to ENHANCED, old configs migrate on load) and `enhanced_units_changed` still fires; env overrides `CALIMA_UNIT_STYLE=0|1|2` (takes precedence) and `CALIMA_ENHANCED_UNITS=1` for tooling/perf runs |
 | `project/scripts/core/command_bus.gd` | `CommandBus` autoload — single entry point for player intents: tick-stamped command log (replay/LAN foundation), `submit`/`command_from_dict`/`save_log`; bound per match via `start_match(world)` |
 | `project/scripts/core/entity_registry.gd` | `EntityRegistry` autoload — stable per-match numeric IDs for units/buildings/resource nodes (tree-order rescan + spawn-signal registration), `id_of`/`resolve` |
 | `project/scripts/core/match_rng.gd` | `MatchRng` autoload — the single seeded RNG stream for all simulation randomness; seeded per match by `GameWorld._ready`, mid-match state persisted by `SaveManager` (as String — 64-bit vs JSON doubles), global `randf()` reserved for local audio/visual noise |
 | `project/scripts/multiplayer/network_session.gd` | `NetworkSession` autoload — host-authoritative LAN/Internet session over ENet: host/join/leave, peer→player map, lobby handshake (`snapshot_config`/`apply_config` + shared `MatchConfig.forced_seed` → identical worlds and entity IDs on every machine), client→host command pipe (`CommandBus.submit` redirects on clients; the host stamps the SENDER's player_id — the wire never decides identity — and brands the command `remote_origin` in `_rx_command`: privileged local-only verbs refuse wire-borne commands — AI `instant` placement, `EXTRA_SCENES`, `board_instant` — and every remote placement is re-validated host-side via `WorldPlacement.placement_legal`). Lobby roster (names/colours/civs) is host-authoritative; `lobby_slots` (Open/AI/Closed) + `open_seats_left()` gate joins; `start_match` derives `rival_civ_ids` (human civs then AI slots) and ships a `humans` list → `match_human_ids`/`is_human_player`. Human rivals get starting assets but no AI brain; AI-slot brains run ONLY on the host (`WorldSetup` gate). Version guard: `_tx_profile` carries `game_version()` (from `project.godot` `application/config/version`) and the host refuses mismatched builds with a reasoned dialog (`join_refused`). Tag releases ONLY with `scripts/release_tag.sh` — it bumps that setting, commits, tags and pushes in one step (auto-increments the patch keeping the suffix; `--dry-run`, `--skip-tests`, or an explicit version arg). Resume: `begin_resume(slot)` freezes the lobby onto a multiplayer save (seats reserved in `_vacant_seats`, claimed via the rejoin matcher; picks locked), `_start_resumed_match` ships the saved config with `resumed: true` — the match may start with absent players (their seat runs the rejoin grace) |
-| `project/scripts/multiplayer/state_replicator.gd` | `StateReplicator` — phase-2 replication node (GameWorld adds it when online): host samples the sim at 15 Hz and streams unit pos/state/HP + building HP/state by entity id (spawns/removals/game-over reliable); clients puppet their mirror world (physics off, `_process` on) and interpolate, adopting host ids via `EntityRegistry.register_as`; stockpiles/pop/ages land through the managers' `apply_remote`. Resumed matches: the client boots the map but ZERO entities (`GameWorld._clear_generated_entities` — a restored host world shares no spawn baseline with a fresh one; only the scene TC survives, id 1 on both ends via the rescan) and `full_resync_to` ships everything as spawn records (kind `"r"` recreates resource nodes programmatically) plus that seat's saved fog (`"fog"`, zstd) |
+| `project/scripts/multiplayer/state_replicator.gd` | `StateReplicator` — phase-2 replication node (GameWorld adds it when online): host samples the sim at 15 Hz and streams unit pos/state/HP + building HP/state by entity id (spawns/removals/game-over reliable); the sampler streams only sim entities — nodes without a `health` property are skipped, because tower/archer arrows fly INSIDE the unit/building layers and used to crash the snapshot (null→float cast) and mint junk entity ids/spawn records (locked by `test_state_replicator_snapshot.gd`); clients puppet their mirror world (physics off, `_process` on) and interpolate, adopting host ids via `EntityRegistry.register_as`; stockpiles/pop/ages land through the managers' `apply_remote`. Resumed matches: the client boots the map but ZERO entities (`GameWorld._clear_generated_entities` — a restored host world shares no spawn baseline with a fresh one; only the scene TC survives, id 1 on both ends via the rescan) and `full_resync_to` ships everything as spawn records (kind `"r"` recreates resource nodes programmatically) plus that seat's saved fog (`"fog"`, zstd) |
 | **Campaign** ||
 | `project/scripts/campaign/campaign_data.gd` | `CampaignData` — the four Canarii missions as a const table: fixed seed + MatchConfig fields, victory kind (`conquest`/`regicide`/`survive`), side objectives (`train`/`build`/`destroy`/`herd` — herd counts `EventBus.animal_herded` dog trips completed home; mission 1 teaches Mill + herding), scripted waves |
 | `project/scripts/campaign/campaign_manager.gd` | `CampaignManager` autoload — progress (user://campaign.cfg, chain-unlock), `launch_mission` writes the whole MatchConfig + `campaign_mission`; skirmish/MP starts reset the flag |
 | `project/scripts/campaign/mission_director.gd` | `MissionDirector` — mounted by GameWorld when `campaign_mission >= 0` (single-player only): EventBus-driven objective checkmarks (HUD panel top-left), scripted wave spawns at the enemy TC (attack-move, no AI brain), survive countdown → `declare_winner(0)`, completion → CampaignManager |
 | `project/scripts/ui/campaign_screen.gd` | `CampaignScreen` — mission selector (locked/playable/completed) + briefing panel; opened from the main menu Campaña button |
 | **Unit Classes** ||
-| `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation; RVO tuned in _tune_avoidance (max_speed from move_speed ×1.6 — the engine default 100 capped fast units; neighbor_distance 80, dynamic avoidance_priority: movers 0.7, idle 0.4 so crowds part); AoE2 combat stances (`Stance` enum + `set_stance`; every auto-acquisition funnels through `_auto_engage` so PASSIVE vetoes, STAND_GROUND never chases and DEFENSIVE chases up to `DEFENSIVE_LEASH` from its anchor — explicit orders always chase); `is_amphibious()` decides water permission per unit (false here — the ship/Tidecaller overrides open the sea) and feeds every `TerrainManager` query; `_step_enters_sea()` (`COAST_GUARD_DIST` 64 px gate via memoized `distance_to_coast`) vetoes any step that would ENTER ocean at the two off-mesh movement paths — RVO safe_velocity in `_on_velocity_computed` and the combat last-gap closer in `_handle_attacking` — so land units can never wade into the sea |
+| `project/scripts/units/unit_base.gd` | Base class for all units; canonical combat state machine (order_move/order_attack, chase, strike, target re-scan) with ~16 override hooks (`_strike_damage`, `_combat_reposition`, `_combat_side_tick`, `_after_strike`, …) — leaf units override hooks, never copy the machine; Area2D range detection, attack-move, stuck detection, body animation; RVO tuned in _tune_avoidance (max_speed from move_speed ×1.6 — the engine default 100 capped fast units; neighbor_distance 80, dynamic avoidance_priority: movers 0.7, idle 0.4 so crowds part); AoE2 combat stances (`Stance` enum + `set_stance`; every auto-acquisition funnels through `_auto_engage` so PASSIVE vetoes, STAND_GROUND never chases and DEFENSIVE chases up to `DEFENSIVE_LEASH` from its anchor — explicit orders always chase); idle acquisition (`_tick_idle_acquire`: IDLE combat units sweep `ACQUIRE_RADIUS` 240 px every 0.6 s and hunt the nearest hostile unit on their own — they used to engage only what physically touched their attack-range Area2D, so idle armies stood beside enemy villagers forever; STAND_GROUND only takes what it can already strike, and the post-kill re-scan chains onto survivors within the same radius); `is_amphibious()` decides water permission per unit (false here — the ship/Tidecaller overrides open the sea) and feeds every `TerrainManager` query; `_step_enters_sea()` (`COAST_GUARD_DIST` 64 px gate via memoized `distance_to_coast`) vetoes any step that would ENTER ocean at the two off-mesh movement paths — RVO safe_velocity in `_on_velocity_computed` and the combat last-gap closer in `_handle_attacking` — so land units can never wade into the sea |
 | `project/scripts/units/villager.gd` | Gathering and building logic, work/walk animation differentiation |
 | `project/scripts/units/healer_unit.gd` | Harimaguada — Canarii-lore priestess-healer trained at the Temple (85F/25G, Castle Age); ALWAYS female (`is_female = true` before `super._ready()`); never fights (attack 0, PASSIVE, `_auto_engage` no-op); follow-and-mend machine (`order_heal`, 5 HP/s at 42 px) plus idle triage auto-scan (most wounded ally within 260 px); custom `_animate_body` (walk sway, nursing lean) |
 | `project/scripts/units/presa_canario.gd` | Presa Canario — herding dog trained at the Mill (30F/10G, Dark Age); guard dog when pressed (attack 3, 30 HP, DEFENSIVE default) but herding is sacred: `_auto_engage` is vetoed mid-trip, only an explicit attack order drops the flock (releasing the animal and paying the approach so far); fetch-and-lead machine (`order_herd`: FETCH the animal, take it in tow via `Animal.start_following`, LEAD it to the nearest own drop-off and release) — sheep convert on contact and land OWNED, wild game's wander origin moves to the release point; shepherd's yield: each trip pays 1 food / `HERD_FOOD_PX` (40 px) of NET approach toward home (circles pay nothing) and completion emits `EventBus.animal_herded`; quadruped plinth/shadow + trot `_animate_body`; "select_dog" growl-bark voice |
-| `project/scripts/units/hero_unit.gd` | Hero units with 8 unique abilities (extends Militia) |
+| `project/scripts/units/hero_unit.gd` | Hero units — 16 named heroes (2 per civ, `hero_*.tres`), each with a unique ability (extends Militia) |
 | `project/scripts/units/militia.gd` | Dark Age infantry |
 | `project/scripts/units/man_at_arms.gd` | Feudal Age infantry upgrade |
 | `project/scripts/units/long_swordsman.gd` | Castle Age infantry upgrade |
@@ -94,7 +94,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/mangonel.gd` | Castle Age AoE siege; 72 px splash, minimum range |
 | `project/scripts/units/trebuchet.gd` | Imperial Age long-range siege; 48 px splash, deploy/undeploy mechanic |
 | `project/scripts/units/fishing_boat.gd` | Naval food gatherer |
-| `project/scripts/units/transport_ship.gd` | Naval troop transport, garrison 10 units; `_disembark_position()` always lands passengers on dry ground, even amphibious ones |
+| `project/scripts/units/transport_ship.gd` | Naval troop transport, `CAPACITY` 8 land units (villagers may board); `_disembark_position()` always lands passengers on dry ground, even amphibious ones |
 | `project/scripts/units/war_galley.gd` | Feudal Age combat ship |
 | **Unique Units (8 civs)** ||
 | `project/scripts/units/menceyes_guard.gd` | Guanches infantry: Rage Aura at HP < 50% |
@@ -126,17 +126,17 @@ docs/             ← Architecture and design documentation
 | `project/scripts/buildings/house.gd` | +5 population cap |
 | `project/scripts/buildings/farm.gd` | Renewable food source |
 | `project/scripts/buildings/fish_trap.gd` | Naval renewable food source |
-| `project/scripts/buildings/lumber_camp.gd` | Wood drop-off |
-| `project/scripts/buildings/mining_camp.gd` | Gold/stone drop-off |
-| `project/scripts/buildings/mill.gd` | `Mill` — food drop-off (100W/600HP, Dark Age, `DropOffBuilding` child like the camps) + trains the Presa Canario herding dog (queue cap 5); HUD build key M, train key P; camp/mill massing recipes reviewed via `tools/check_camps_look.tscn` |
+| `project/scripts/buildings/lumber_camp.gd` | Wood drop-off; researches the wood economy line (Double-Bit Axe → Bow Saw → Two-Man Saw) |
+| `project/scripts/buildings/mining_camp.gd` | Gold/stone drop-off; researches the mining economy line (Reinforced Picks → Shaft Mining → Deep Galleries) |
+| `project/scripts/buildings/mill.gd` | `Mill` — food drop-off (100W/600HP, Dark Age, `DropOffBuilding` child like the camps) + trains the Presa Canario herding dog (queue cap 5) + researches the food economy line (Horse Collar → Heavy Plow → Crop Rotation); HUD build key M, train key P; camp/mill massing recipes reviewed via `tools/check_camps_look.tscn` |
 | **Game World (scene root + controllers)** ||
 | `project/scripts/game/game_world.gd` | Scene root and thin dispatcher (~385 lines): scene node refs, shared match state (`drop_off`, `_selected_units`, `_ai_town_centers`, `_fog`, saved-game fields), `_ready` wiring, `_process`/`_unhandled_input` routing into the controllers below, and the stable external surface (`jump_camera_to`, `get_zoom`/`set_zoom`, `_start_placement`, `live_selection()` — the prune-on-read barrier every controller must use instead of `_selected_units`, …) |
 | `project/scripts/game/world_setup.gd` | `WorldSetup` — match bootstrap: civs, player/AI town centers, hero spawn, tutorial spawns, ambient lighting, AI debug overlay |
-| `project/scripts/game/world_victory.gd` | `WorldVictory` — victory/defeat/elimination checks, Wonder countdown, game-over flow |
+| `project/scripts/game/world_victory.gd` | `WorldVictory` — victory/defeat/elimination checks, Wonder countdown, game-over flow; resignation → spectate: `handle_resignation` accepts the local player too — with hostile sides still standing the match plays on (defeat panel via `EventBus.player_eliminated`, orders locked by `GameWorld.local_player_defeated`, camera/selection stay live), otherwise the remaining side wins after `RESIGN_END_DELAY`; the end-of-game freeze stops building `_physics_process` and the AI brains too (they used to keep spawning live units into a "frozen" battlefield) |
 | `project/scripts/game/world_camera.gd` | `WorldCamera` — pan/zoom/edge-scroll, camera follow, alert ring + SPACE jump |
 | `project/scripts/game/world_selection.gd` | `WorldSelection` — click/drag/double-click selection, control-group hotkeys |
 | `project/scripts/game/world_commands.gd` | `WorldCommands` — the player's intent layer: right-click resolution (incl. garrisoning military into own TC/towers), target pickers (visible-facade building hit-test), pending actions, HUD action router, dogs-ONLY selections herd a right-clicked animal (`_selection_all_dogs`) while any other selection slaughters it, current formation choice (`_formation`, local UI state — each move command carries it; picking a formation immediately reforms the selection in place around its centroid via `_reform_selection`); every simulation mutation is packaged as a `GameCommand` and submitted through `CommandBus`, UI feedback (flashes, sounds) stays here |
-| `project/scripts/game/commands/game_command.gd` | `GameCommand` — command-pattern base: serializable payload (`to_dict`/`read`), execute-time ownership validation (`_own_entities`), `remote_origin` flag (set only by `NetworkSession._rx_command`, never serialized — wire-borne commands lose local privileges); 10 leaf commands in the same dir (`UnitPointCommand` move/attack-move/attack-ground + formation, `UnitTargetCommand` attack/gather (`drop_id`)/build/drop-off/board/board_instant/set_drop_off/heal/herd (herd: only dogs answer, any animal targetable), `UnitActionCommand`, `TransportCommand`, `ProductionCommand`, `BuildingActionCommand`, `MarketCommand` incl. mercenary spawn, `PlaceBuildingCommand` incl. wall runs + AI `instant`/`last_placed`, `AdvanceAgeCommand`); the AI queues its villagers at its TC via `ProductionCommand` — same cost and train time as the player |
+| `project/scripts/game/commands/game_command.gd` | `GameCommand` — command-pattern base: serializable payload (`to_dict`/`read`), execute-time ownership validation (`_own_entities`), `remote_origin` flag (set only by `NetworkSession._rx_command`, never serialized — wire-borne commands lose local privileges); 9 leaf commands in the same dir (`UnitPointCommand` move/attack-move/attack-ground + formation, `UnitTargetCommand` attack/gather (`drop_id`)/build/drop-off/board/board_instant/set_drop_off/heal/herd (herd: only dogs answer, any animal targetable), `UnitActionCommand`, `TransportCommand`, `ProductionCommand`, `BuildingActionCommand`, `MarketCommand` incl. mercenary spawn, `PlaceBuildingCommand` incl. wall runs + `last_placed` (`instant` is a privileged tools/tests-only flag now — AI buildings are villager-built), `AdvanceAgeCommand`); the AI queues its villagers at its TC via `ProductionCommand` — same cost and train time as the player |
 | `project/scripts/game/world_placement.gd` | `WorldPlacement` — building placement ghost/grid-snap, wall drag, coastal/ocean checks, navmesh rebake; `building_costs()` is the single .tres-backed cost table player and AI both pay; static `placement_legal`/`placement_shape_size` re-run the ghost's rules host-side (terrain class — land / coastal dock / fully-ocean fish trap — + physics overlap; shape sizes read once per type from the scene's collision rect) for every wire-borne placement |
 | **Map Generation (pipeline + modules)** ||
 | `project/scripts/map/map_generator.gd` | `MapGenerator` — thin pipeline (~150 lines): reads `MatchConfig`, sequences painter → placer → nav builder per map type, returns `{tc_positions}`. Owns the shared `RandomNumberGenerator`, the land-polygon array and `_island_layout()` (solves island radius + ring distance so islands never overlap at any player count / map size) |
@@ -150,14 +150,17 @@ docs/             ← Architecture and design documentation
 | `project/scripts/ai/world_query.gd` | `WorldQuery` — read-only query service over the unit/building layers (own/enemy/all, of_type/in_state/nearest_to); the AI queries it instead of walking the scene tree. Fog-honest sighting layer: `refresh_sightings` (throttled flat-array sweep, ~1.7/s per AI; LOS from the entity's .tres × 64 px, FogOfWar's scale) feeds `sighted_enemy_units` (targetable only while seen NOW) and `known_enemy_buildings` (seen now OR remembered at last position — AoE2 semantics). Exposed lazily as `AIPlayer.world` |
 | `project/scripts/ai/ai_player.gd` | AI coordinator: EventBus wiring, TC rebuild, elimination logic; owns the `world: WorldQuery` getter |
 | `project/scripts/ai/ai_economy.gd` | Villager spawning/assignment, resource targets per age, age-advance trigger; pastoral economy: `manage_dogs` (up to `MAX_AI_DOGS` 2 Presa Canarios trained at a complete Mill, idle dogs sent at the nearest unclaimed animal via the CommandBus "herd" verb) + `manage_flock` (single-in-flight slaughter of an own sheep near the TC while the food-gatherer share is under target) |
-| `project/scripts/ai/ai_construction.gd` | Building placement, placement-failure cooldowns, population-house management; builds a Mill early (food drop-off by the TC) and Watch Towers from the Feudal Age (`tower_target_for_age`: 1 Feudal, 2 Castle+) |
+| `project/scripts/ai/ai_construction.gd` | Building placement, placement-failure cooldowns, population-house management; builds a Mill early (food drop-off by the TC) and Watch Towers from the Feudal Age (`tower_target_for_age`: 1 Feudal, 2 Castle+); every placement is raised by a real villager over the same construction time the player pays (`_place` picks the nearest free villager, `manage_unfinished` re-crews sites whose builder died — the old instant completion was an AI-only cheat) |
 | `project/scripts/ai/ai_military.gd` | Military training, research priority, combat targeting, base defense, aggression escalation; targeting is fog-honest (`sighted_enemy_units`/`known_enemy_buildings` — the primary enemy TC stays map knowledge so the AI still leaves home) |
-| `project/scripts/ai/ai_naval.gd` | Naval training, galley patrol/retreat, transport assault, fish-trap construction; patrols engage only sighted enemy ships |
+| `project/scripts/ai/ai_naval.gd` | Naval training, galley patrol/retreat, transport assault (from 2 land military — the old bar of 3 parked the transport for the opening ten minutes of an island AI-vs-AI war), fish-trap construction; galleys hunt sighted enemy ships first and otherwise burn the enemy's KNOWN waterline (`_find_coastal_target`: docks/fish traps) — without that, two AIs on separate islands coexisted forever; the dock is villager-built on the shore and fish traps are raised by the fishing boat over time (no instant construction); AI-vs-AI hostility measured by `tools/check_ai_vs_ai.tscn` (env CALIMA_MAP/WIPE_AT/SURVIVORS/TICKS — wipes the player and times the first cross-AI attack command and casualty) |
 | **UI Systems** ||
-| `project/scripts/ui/hud_manager.gd` | CanvasLayer controller: action menu, selection panel, timer bars, tutorial; composes the HUD child components below |
+| `project/scripts/ui/hud_manager.gd` | CanvasLayer coordinator (~940 lines, was a 2,300-line god object): selection info panel (name/HP/status/portraits/stat chips), train-queue + research-slot row, detail-panel progress bars (age/hero/research), composition of every HUD child component. The command grid lives in `HudActionMenu`, the tutorial in `HudTutorial`, action tables in `HudActionDefs` |
+| `project/scripts/ui/hud/hud_action_defs.gd` | `HudActionDefs` — static action tables (unit/build/stance/gate/mercenary layouts, glyph + hotkey maps) and pure builders: `train_action` (cost from the unit's .tres), `build_action` (cost from `WorldPlacement.building_costs`), `tech_action` (localized name/desc) — NO hardcoded prices anywhere, a rebalance can't make a button lie (`test_hud_panels.gd` audits every button against the data) |
+| `project/scripts/ui/hud/hud_action_menu.gd` | `HudActionMenu` — the command grid: button rendering + paging, press routing into the HUD signals, pending map-click actions, stance/formation highlights, hotkeys, and every per-selection layout; ONE `_populate_production` panel serves all train/research buildings via their `get_available_units()` + TechManager (replaced eight near-identical populate functions); reaches back through `_hud` like the world controllers reach GameWorld; in a REPLAY `populate()` refuses every action (info panel yes, buttons/hotkeys no — recorded history takes no orders; `GameWorld._orders_locked` blocks the right-click/minimap/placement paths for both replays and defeated spectators) |
+| `project/scripts/ui/hud/hud_tutorial.gd` | `HudTutorial` — tutorial lesson driver: owns the TutorialOverlay, per-step gameplay-signal listeners, build/villager gates (`gates_active`/`step`/`unlocked_build_ids`); lesson resource top-ups are EMITTED via `EventBus.tutorial_grant_resources` and applied by game_world — the HUD never mutates a stockpile |
 | `project/scripts/ui/hud/hud_resource_bar.gd` | `HudResourceBar` — top-bar resource counters + gatherer counts, population label, age label (self-wires to EventBus) |
 | `project/scripts/ui/hud/hud_weather.gd` | `HudWeather` — weather announcement banner + countdown pill (self-wires to WeatherManager) |
-| `project/scripts/ui/hud/hud_match_stats.gd` | `HudMatchStats` — match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays |
+| `project/scripts/ui/hud/hud_match_stats.gd` | `HudMatchStats` — match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays; the result panel also appears on local elimination while the match plays on (spectate: hint line, no replay button, rebuilt when the definitive game_over lands) |
 | `project/scripts/ui/hud/hud_menus.gd` | `HudMenus` — in-game pause menu, settings panel, save-slot picker, surrender flow |
 | `project/scripts/ui/hud/hud_controls.gd` | `HudControls` — game-speed buttons, camera dpad (with panning), idle-villager/idle-military cycle buttons, locate-hero button (selects + centres camera; greyed while respawning) |
 | `project/scripts/ui/hud/hud_style.gd` | `HudStyle` — shared StyleBoxFlat panel/button factory, bold font + text outline helpers |
@@ -174,8 +177,10 @@ docs/             ← Architecture and design documentation
 | `project/scripts/utils/civ_style.gd` | `CivStyle` — per-civ visual identity (wall/roof silhouette/trim/headgear, plus the `NAVAL` hull/deck/sail/accent/motif palettes) |
 | `project/scripts/utils/unit_dress.gd` | `UnitDress` — per-civ headgear/sash decoration of shared unit rigs |
 | `project/scripts/utils/team_dress.gd` | `TeamDress` — AoE2-style team colours on unit rigs: cloth (tunic/hood/cap/sleeves/legs, knight caparison+plume) is repainted to the OWNER's colour keeping each polygon's brightness (shading survives); steel (saturation gate), leather/skin/wood and natural brown horses (hue-band gate on horse nodes) never change. Applied from `UnitBase._apply_team_dress`; review via `tools/check_team_colors.tscn` screenshots; contract locked by `test_team_dress.gd` |
+| `project/scripts/utils/unit_enhancer.gd` | `UnitEnhancer` — OPTIONAL enhanced unit look (`GameSettings.enhanced_units`, settings toggle, default off): fully reversible layer applied by `UnitBase` as the LAST paint step and stripped live on toggle. Ink outline (grown dark polygon copies as CHILDREN at relative z -1 — they merge into one contour behind the figure and follow Head/Tool pivots), volume shading (per-polygon vertical `vertex_colors` gradient baked from the current colour — `Polygon2D.color` is NEVER touched, so the TeamDress contract holds), and `animate_extras` post-step over `_animate_body` (idle breathing, walk lean + squash&stretch, attack anticipation snap; only rigs with a Head — ships/siege get outline+shading only). Everything added/shaded is meta-marked for `strip`; contract locked by `test_unit_enhancer.gd`, review via `tools/check_enhanced_units.tscn` |
+| `project/scripts/utils/unit_redesign.gd` | `UnitRedesign` — the third unit style (`GameSettings.UnitStyle.REDESIGNED`): lore-driven from-scratch Polygon2D rigs for every unit (villager m/f tamarco+multi-tool, Militia→Long Swordsman gear progression, banot pikeman, archer with working bow draw, Harimaguada white gown, cavalry with decoupled horse/rider gallop, Presa Canario brindle trot, siege with rolling wheels/pendulum log/snapping arms + trebuchet pack/deploy poses, side-profile ships in the `CivStyle.NAVAL` palette with rowing oars, all 8 civ-unique units, heroes = base rig + circlet/cape/+12%). `apply()` builds a `RedesignBody` sibling and HIDES the classic Body (never freed); `strip()` restores it exactly; both idempotent. When active, `UnitBase._process` calls `UnitRedesign.animate()` INSTEAD of `_animate_body` — full state-machine animation (2-phase walk cycle with arm counter-swing/bounce/lean, wind-up→snap→recover strikes per weapon kind slash/thrust/bow/gun/heal/tool, chop/mine/forage/build villager work, idle breathing + weight shift). Team colour painted directly from `PlayerColors` at build (hue/sat owner, brightness modelling); units without a rig yet keep the classic look. Contract locked by `test_unit_redesign.gd`, review via `tools/check_redesigned_units.tscn` |
 | `project/scripts/utils/ship_dress.gd` | `ShipDress` — per-civ hull/deck/sail repaint + prow ornament of the shared hulls (Atlantes bronze fin, Fenicios eye); civ-unique hulls stamp `META_APPLIED` to opt out |
-| `project/scripts/utils/entity_names.gd` | `EntityNames` — localized unit/building display names with fallback |
+| `project/scripts/utils/entity_names.gd` | `EntityNames` — localized unit/building/technology display names (`tech_name`/`tech_description`, keys `TECH_<ID>`/`TECH_<ID>_DESC`) with fallback |
 | `project/scripts/utils/alert_ring.gd` | `AlertRing` — ring buffer of attack-alert positions for the SPACE jump |
 | `project/scripts/utils/hero_aura.gd` | `HeroAura` — animated Dragon Ball-style golden flame aura behind the hero (3 additive layers, upright billboard space, inserted before Body so the figure reads on top); replaced the static gold ground ring |
 | `project/scripts/utils/visual_fx.gd` | `VisualFx` — ground shadows, selection plinths, nameplate visibility |
@@ -222,6 +227,13 @@ the CI script-count guard counts both) or
 editor. There are also standalone headless harnesses under `project/tools/`
 (`check_*.gd`) for things GUT can't easily reach (HUD scene load, WorldQuery,
 PlacementGrid).
+
+**The complete harness catalog — all 56 `check_*` tools with purpose and env
+vars — lives in `docs/testing/harnesses.md`** (generated from each harness's
+header comment; regenerate with `python3 docs/testing/regen_harness_catalog.py`
+after adding or changing one). The block below is only the curated CI-gate
+subset. Screenshot galleries from design reviews are archived under
+`docs/design/` (unit-redesign-gallery, unit-enhanced-gallery).
 
 `project/tools/check_map_gen.tscn` is the map-generation regression gate: it
 prints a deterministic census (TC positions, zone checksum, per-type resource
@@ -271,6 +283,17 @@ CALIMA_SHOT_DIR=/tmp/calima-fx $GODOT --path project --resolution 1400x900 \
 # full grid + two close-ups — cloth must follow the row, materials must not
 CALIMA_SHOT_DIR=/tmp/calima-teams $GODOT --path project --resolution 1500x900 \
   res://tools/check_team_colors.tscn
+# Enhanced unit look (real renderer): the same unit grid shot classic, then re-shot
+# after flipping GameSettings.enhanced_units live (outline/shading/extra animation
+# must appear, strip must restore the classic rig)
+CALIMA_SHOT_DIR=/tmp/calima-enhanced $GODOT --path project --resolution 1500x900 \
+  res://tools/check_enhanced_units.tscn
+# Redesigned unit style (real renderer): per-batch grid shot classic, re-shot after
+# switching GameSettings.unit_style to REDESIGNED live, plus close-ups and frozen
+# walk/attack/gather poses (CALIMA_BATCH=a..f: a infantry+villager, b cavalry+healer+dog,
+# c siege, d ships, e civ-uniques, f heroes)
+CALIMA_SHOT_DIR=/tmp/calima-redesign CALIMA_BATCH=a $GODOT --path project \
+  --resolution 1500x900 res://tools/check_redesigned_units.tscn
 # Building/unit look reviews (real renderer, screenshots): the Temple almogarén in a
 # lineup, the Lumber/Mining Camp + Mill yards, and the Harimaguada priestess rig
 CALIMA_SHOT_DIR=/tmp/calima-temple $GODOT --path project res://tools/check_temple_look.tscn
@@ -288,6 +311,15 @@ CALIMA_SHOT_DIR=/tmp/calima-voices $GODOT --headless --path project res://tools/
 # Vsync is disabled by the probe; trust the "wall ms/frame + ticks/frame" line
 # (the TIME_PROCESS monitor is unreliable, and fps overstates when the sim dilates).
 $GODOT --path project --resolution 1280x720 res://tools/check_perf_probe.tscn
+# Replay browser panel (real renderer): seeds fake replay headers (one with a
+# long roster — must ellipsize, never push the buttons out) and screenshots it
+CALIMA_SHOT_DIR=/tmp/calima-replays $GODOT --path project --resolution 1600x900 \
+  res://tools/check_replays_panel.tscn
+# HUD action panels (real renderer): selects camps/mill/temple/barracks/TC in
+# the real HUD and screenshots each button layout (headless twin: the
+# tests/unit/test_hud_panels.gd contract, which also audits button prices)
+CALIMA_SHOT_DIR=/tmp/calima-camp-research $GODOT --path project --resolution 1500x900 \
+  res://tools/check_camp_research.tscn
 # Campaign gate (headless): mission 1 boots deterministically, the director
 # mounts, the first scripted wave spawns, victory records progress (progress
 # file is backed up/restored). UI review: check_campaign_screen.tscn (renderer).
@@ -324,41 +356,42 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Procedural map generation with 5 map types (Plains, Standard, Volcanic Coast, Desert Coast, Islands)
 - 4 resource modes (Scarce, Normal, Abundant, Full Combat)
 
-**Units (30 total):**
+**Units (26 playable types — 25 regular incl. 8 civ-uniques, plus the hero class — and 2 animal types):**
 - Villagers (gather, build, repair)
 - Support: Harimaguada healer (Temple, Castle Age, always female, auto-triage), Presa Canario herding dog (Mill, Dark Age, leads animals to the nearest own drop-off — enemy sheep convert on the way; each trip pays food for the net approach; guard-dog bite when idle, never abandons a trip on its own)
 - Infantry: Militia → Man-at-Arms → Long Swordsman, Pikeman, Archer
 - Cavalry: Scout → Heavy Scout → Knight
 - Siege: Battering Ram, Mangonel, Trebuchet (deploy mechanic)
-- Naval: Fishing Boat, Transport Ship (garrison 10), War Galley
+- Naval: Fishing Boat, Transport Ship (capacity 8), War Galley
 - Animals: Sheep (convertible), generic Animal; wild sheep flocks graze the open map away from every TC — contested herding targets both the player's and the AI's dogs race for
-- 8 Hero units (one per civ) with unique abilities
+- 16 named Heroes (2 per civ, lobby gender pick) with unique abilities
 - 8 Unique units (one per civ) with special mechanics
 
-**Buildings (23 total):**
-- Economy: Town Center, House, Lumber Camp, Mining Camp, Mill (food drop-off + trains Presa Canario), Farm, Fish Trap
+**Buildings (20 types):**
+- Economy: Town Center, House, Lumber Camp (researches the wood line), Mining Camp (researches the gold/stone line), Mill (food drop-off + trains Presa Canario + researches the food line), Farm, Fish Trap
 - Military: Barracks, Archery Range, Stable, Siege Workshop, Dock
 - Research: Blacksmith, University, Temple (also field hospital: garrisoned units heal 4 HP/s, heroes half rate; trains Harimaguada), Market
 - Defense: Wall Segment, Gate, Watch Tower
 - Special: Wonder (victory condition)
 
-**Technologies (23 total):**
+**Technologies (32 total):**
 - Blacksmith (13): Loom, Forging, Iron Casting, Blast Furnace, Scale/Chain/Plate Barding, Padded Archer Armour, Fletching, Bodkin Arrow, Shipwright, Canarian Cart / Island Handcart (villager carry capacity +25% each, farms unaffected)
 - University (3): Ballistics, Chemistry, Siege Engineering
 - Temple (3): Fervor, Sanctity, Atonement
+- Camp economy (9, AoE2-style — one per age from Feudal, chained prerequisites; each step: that resource's gather rate ×1.15 and its carry basket ×1.10 via `villager_<res>_gather_rate` / `villager_<res>_carry`): Lumber Camp — Double-Bit Axe → Bow Saw → Two-Man Saw (wood); Mining Camp — Reinforced Picks → Shaft Mining → Deep Galleries (gold+stone); Mill — Horse Collar → Heavy Plow → Crop Rotation (food)
 - Unit Upgrades (4): Man-at-Arms, Long Swordsman, Heavy Scout, Knight
 - Instant civ bonus: Castellanos free Blacksmith tech per age
 - Research queue: up to 5 techs in flight per building (active + queued), paid at enqueue, full refund on cancel, promoted automatically
 
 **Civilizations (8 total):**
-- Guanches: Stone building HP bonus, infantry-focused, malpaís traversal
-- Canarii: Food gather bonus, cheap archers, no heavy cavalry
-- Mahos: Cheap buildings, fast cavalry, dune traversal
+- Guanches: Stone building HP bonus, Pikemen from the Dark Age, infantry-focused, malpaís traversal
+- Canarii: Food gather bonus, cheap archers, houses double as drop-off points, no heavy cavalry
+- Mahos: Cheaper timber (building wood cost ×0.70 — applied at button/AI/command alike via `CivBonusManager.get_building_costs`), fast cavalry, dune traversal, vision ×1.40 while standing on dunes (`dune_vision`, read by `FogOfWar._dune_vision_mult`)
 - Franks: Cheaper age advance, cavalry HP bonus, fast farms
 - Britons: Archer range +1/age, warship attack speed bonus
 - Castellanos: Free Blacksmith tech/age, balanced roster
 - Atlantes: Ship attack speed bonus, distinct sea-stone/bronze fleet (`CivStyle.NAVAL`), amphibious unique unit (Tidecaller wades shallows at full speed, swims deep water at `deep_water_speed` 0.60), harder to spot in Sea Fog (`fog_stealth` 0.5), +50 % vision within 400 px of a shore (`coastal_vision` 1.50, read by `FogOfWar._coastal_vision_mult`)
-- Fenicios: Ship cost reduction, ramming naval unique unit
+- Fenicios: Market from the Dark Age, ship cost ×0.85, trireme passive gold, mercenary discount, ramming naval unique unit
 
 **Weather System:**
 - 5 procedural weather types (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash)
@@ -386,17 +419,18 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 
 **AI:**
 - Economic AI: villager spawning/assignment, resource balancing, age advancement; pastoral economy (builds a Mill, trains up to 2 herding dogs, races the player for unclaimed/wild animals, slaughters one own sheep at a time when food is wanted)
-- Construction AI: building placement with cooldowns, population management, Mill early + Watch Towers from Feudal
-- Military AI: training queues, research priorities, aggression escalation; fog-honest targeting via the WorldQuery sighting layer (units targetable only while seen, buildings remembered once scouted, primary enemy TC stays map knowledge)
-- Naval AI: ship training, galley patrols (sighted ships only), transport assaults, fish-trap construction
+- Construction AI: building placement with cooldowns, population management, Mill early + Watch Towers from Feudal; buildings are raised by real villagers with the player's construction time (docks included; fish traps by fishing boat) and abandoned sites get re-crewed
+- Military AI: training queues, research priorities, aggression escalation; fog-honest targeting via the WorldQuery sighting layer (units targetable only while seen, buildings remembered once scouted, primary enemy TC stays map knowledge); mop-up mode — with no enemy buildings left to siege, the minimum-army gate drops to 1 and any standing military hunts the last sighted units
+- Naval AI: ship training, galley patrols (enemy ships first, then known enemy docks/fish traps), transport assaults from 2 land military, fish-trap construction
 - Defensive AI: base defense, TC rebuild, idle unit redeployment
 
 **UI/UX:**
 - HUD: resource display, population counter, age indicator, unit selection grid (40 max)
+- Notification toasts with shortcut action buttons (`NotificationDisplay.push` accepts an `{icon, tooltip, callback}` action): attack/loss/built/destroyed toasts jump the camera to the spot (whole toast clickable + visible button), pop-cap offers one-click house placement, hero-low-HP locates the hero; the toast zone anchors above the REAL command-bar height at runtime (review via `tools/check_notifications.tscn`)
 - Minimap with right-click move orders, resource/unit/building icons; enemy buildings remembered at last known position under fog (AoE2-style), forgotten only when re-scouted and gone
 - Weather banner and countdown pill
 - In-game pause menu (Resume, Settings, Surrender, Exit)
-- Game-over screen with victory/defeat message
+- Game-over screen with victory/defeat message; surrendering (or losing everything) while hostile sides remain shows the defeat panel but the match plays on — "Ver mapa" spectates the live battle (orders locked), the final result rebuilds the panel
 - Match lobby with civ selection, map type, resource mode, victory mode, weather settings
 - LAN lobby reuses the SAME lobby screen (`LobbyScreen.lan_mode`): live players panel (host + per-seat rows: joined human with colour/name/civ/kick, or host-configured Open/AI/Closed slot), per-player name+colour+civ picks, host-edited settings with live read-only summary on clients
 - Tooltips for all buttons (buildings, units, technologies)
@@ -423,6 +457,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Health bars for units/buildings (hidden when full HP); BuildingBase creates the building bar at runtime — most building scenes ship without a HealthBar node, and before this nothing ever showed building HP (damage LOOKED like it wasn't applied)
 - Progressive damage fire/smoke on buildings (smoke from the FIRST point of damage, flames <50%, heavy fire <25%; repair clears it)
 - Sound effects: select, attack, build, gather, hit (with spatial attenuation)
+- 3-way "Unit style" video setting (Classic / Enhanced / Redesigned, default Classic, cycled live from both settings panels): ENHANCED is the reversible `UnitEnhancer` layer (ink contour, vertical volume shading, extra procedural animation — idle breathing, walk lean/bounce, attack snap); REDESIGNED swaps in the lore-driven from-scratch `UnitRedesign` rigs (tamarco villagers, magado warrior line, banot pikeman, working bow draws, decoupled horse/rider gallop, brindle Presa trot, pendulum ram log / snapping mangonel arm / pack-deploy trebuchet beam, side-profile lateen/cog/galley hulls with rowing oars, all 8 civ-uniques, circlet-and-cape heroes) with its own full state-machine animation
 
 ### Recent Bug Fixes (Production-Ready Milestone)
 
@@ -444,9 +479,8 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 ### Known Limitations (Planned for Future Milestones)
 
 - Multiplayer: phases 1–2 shipped (LAN host-authoritative session + unified lobby + client→host command pipe + host→client state replication at 15 Hz with puppet mirror worlds and interpolation via `StateReplicator`); queue/research/market/weather/arrow+boulder mirroring, robustness (drop/surrender→resignation, host-left dialog, replicated pause, delta+keyframe stream under the ENet MTU), chat (lobby+in-game, system lines), in-lobby rename Internet hosting via UPnP, and a Steam transport prototype (GodotSteam GDExtension, lobbies+invites+Valve relay on test AppID 480), mid-match reconnection (reserved seats + full resync, `check_net_rejoin` gate), multiplayer save/resume (host saves roster + per-player fog, resume lobby reserves the original seats, absent players may join mid-match; `check_net_resume` gate) and a version-check handshake shipped; LAN/Internet split menu entries; pending: live Steam test
-- Tutorial mode exists but incomplete
-- Some unique unit abilities partially implemented
-- Mercenary system exists but UI incomplete
+- Lockstep simulation still open: requires deterministic, physics-free unit movement (command wire format is already shared)
+- Balance tuning from real playtesting pending
 
 ## Sub-agents
 

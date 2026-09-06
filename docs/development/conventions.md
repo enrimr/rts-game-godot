@@ -20,6 +20,12 @@
 - Local events (within a scene tree subtree) may use direct `connect()`
 - Never call methods across system boundaries — emit a signal instead
 
+## Simulation Discipline
+
+- Every simulation-mutating intent (player AND AI) is a serializable `GameCommand` submitted through `CommandBus.submit()` — UI feedback stays at the submission site
+- Simulation randomness draws from the `MatchRng` autoload; the global `randf()`/`randi()` are reserved for local-only audio/visual noise
+- UI never hardcodes prices: buttons resolve costs from the same `.tres` data the simulation charges
+
 ## Resource Naming
 
 - Resource files: `snake_case.tres` (e.g., `villager.tres`)
@@ -30,3 +36,4 @@
 - Branch naming: `feat/short-description`, `fix/short-description`
 - Commit messages: imperative mood, ≤72 chars subject
 - One logical change per commit
+- Release tags only via `scripts/release_tag.sh` (bumps the version the multiplayer handshake checks)

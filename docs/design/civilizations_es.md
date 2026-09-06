@@ -151,7 +151,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 | **Héroe** | Bencomo |
 | **Habilidad** | *Carga de Menceyes* — Galvaniza unidades aliadas cercanas con +30% de velocidad de ataque durante 10 s · Recarga 50 s |
 | **Unidad única** | **Guardia Menceyes** — 95 PV · 65c+25o · Edad 2 · *Aura de Furia*: PV<50% → +3 ataque a aliados en 80 px |
-| **Bonificadores** | HP edificios de piedra ×1.20 · Lanzas disponibles desde Edad Oscura · Pueden atravesar terreno de malpais |
+| **Bonificadores** | HP edificios de piedra ×1.20 · Piqueros disponibles desde la Edad Oscura · Pueden atravesar terreno de malpais · Inmunes a la Calima, media penalización de Ceniza Volcánica |
 | **Restricciones** | Sin caballería · Sin pólvora |
 
 **Estrategia:** Fortaleza defensiva con infantería resistente. Muy fuerte en mapas volcánicos.
@@ -164,7 +164,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 | **Héroe** | Doramas |
 | **Habilidad** | *Desafío* — Provoca a la unidad enemiga más cercana para que ataque a Doramas durante 6 s · Recarga 45 s |
 | **Unidad única** | **Arquero de Barranco** — 45 PV · 40m+55o · Edad 2 · *Disparo en Emboscada*: quieto ≥1,5 s → ×2 primer disparo |
-| **Bonificadores** | Aldeanos recolectan comida ×1.15 · Coste comida arqueros ×0.80 |
+| **Bonificadores** | Aldeanos recolectan comida ×1.15 · Coste comida arqueros ×0.80 · Las casas sirven como punto de entrega |
 | **Restricciones** | Sin caballería pesada |
 
 **Estrategia:** Economía de comida superior + arqueros baratos. Ideal para rush de arqueros temprano.
@@ -177,7 +177,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 | **Héroe** | Guadarfía |
 | **Habilidad** | *Emboscada* — Casi invisible durante 8 s; los enemigos no pueden atacarle automáticamente · Recarga 45 s |
 | **Unidad única** | **Saquador de Dunas** — 70 PV · 60c+40o · Edad 1 · *Golpe y Retirada*: retrocede 90 px tras cada ataque y vuelve a cargar |
-| **Bonificadores** | Coste madera edificios ×0.70 · Vel. Scout / caballería ligera ×1.25 · Pueden atravesar dunas |
+| **Bonificadores** | Coste madera edificios ×0.70 · Vel. Scout / caballería ligera ×1.25 · Pueden atravesar dunas · Visión ×1.40 sobre las dunas |
 | **Restricciones** | Sin mejoras de caballería pesada |
 
 **Estrategia:** Expansión rápida y barata + raids de caballería ligera. Excelente en mapas áridos.
@@ -242,7 +242,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 | **Héroe** | Hannón el Navegante |
 | **Habilidad** | *Ruta Comercial* — Genera 50 de oro a lo largo de 30 s · Recarga 50 s |
 | **Unidad única** | **Trirreme** — 160 PV · 100m+50o · Edad 1 · *Espolón*: ×2 daño vs barcos + empuja 40 px · pob 2 |
-| **Bonificadores** | Mercado disponible desde Edad Oscura · Los barcos mercantes generan oro pasivo |
+| **Bonificadores** | Mercado disponible desde la Edad Oscura · Los barcos cuestan un 15 % menos · Los Trirremes generan oro pasivo (5 cada 30 s) · Los mercenarios cuestan un 25 % menos · Media penalización de la Tormenta Atlántica |
 | **Restricciones** | Sin caballeros · Sin infantería de castillo |
 
 **Estrategia:** Economía de oro superior desde el primer minuto. Ideal para financiar tecnologías y unidades caras.

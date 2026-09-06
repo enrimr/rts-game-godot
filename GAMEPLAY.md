@@ -1,213 +1,97 @@
-# Calima: Flames of the Atlantic — Gameplay Guide
+# Calima: Flames of the Atlantic — Quick Reference
 
-A quick reference for controls, units, buildings, and strategy tips.
+Controls and hotkeys at a glance. For the full manual — civilizations, economy, the 32-tech tree, combat, weather, multiplayer, replays and the campaign — read the **[Player's Guide (EN)](docs/guide_en.md)** / **[Guía del Jugador (ES)](docs/guide_es.md)**.
+
+Every button in the game shows its hotkey on a badge and its full description (with the real cost, read from the game data) in a tooltip.
 
 ---
 
-## Controls
+## The core loop
 
-### Camera
+1. Gather **Food, Wood, Gold, Stone** with villagers (build drop-off camps near the nodes).
+2. Build Houses (+5 population each) and a base; train an army.
+3. Research technologies and advance **Dark → Feudal → Castle → Imperial Age** at the Town Center.
+4. Win by **Conquest** (eliminate all hostile sides), **Regicide** (kill the enemy heroes, protect yours) or **Wonder** (build it and hold it for 4 minutes).
+
+---
+
+## Camera
 
 | Action | Input |
 |---|---|
-| Pan camera | W / A / S / D  or  Arrow keys |
-| Edge-scroll | Move mouse to screen edge |
-| Middle-click drag | Pan freely |
-| Scroll wheel | Zoom in / out |
-| Follow selected units | Click **Follow** button (bottom panel) |
+| Pan | W / A / S / D (remappable in Settings) or Arrow keys |
+| Edge-scroll | Move mouse to a screen edge (toggle in Settings) |
+| Free pan | Middle-click drag |
+| Zoom | Mouse wheel |
+| Jump to last attack alert | **Space** (5-alert memory; attack toasts are also clickable) |
+| Follow selection | Follow button in the bottom panel |
+| On-screen d-pad | Optional, enable in Settings |
 
-### Selection
-
-| Action | Input |
-|---|---|
-| Select unit or building | Left-click |
-| Box-select multiple units | Left-click drag |
-| Select up to 40 units at once | Drag over them |
-
-### Orders
+## Selection
 
 | Action | Input |
 |---|---|
-| Move selected units | Right-click on empty ground |
-| Attack enemy unit or building | Right-click on enemy |
-| Gather resource | Right-click on resource node |
-| Move to minimap position | Right-click on minimap |
-| Stop | X (while units selected) |
-| Destroy selected unit/building | Delete |
+| Select unit / building | Left-click |
+| Box-select (up to 40 units) | Left-click drag |
+| Select all of the same type | Double-click a unit, or a building (buildings share rally point and training) |
+| Assign control group | Ctrl/Cmd + 1–9 |
+| Recall control group | 1–9 (HUD chips are clickable; double-click centers the camera) |
 
-### Building placement
+## Orders
+
+Right-click is contextual: move, attack an enemy, gather a resource, build/repair an own building (villagers), garrison military into an own TC/tower, herd an animal (dog-only selections).
+
+| Action | Key |
+|---|---|
+| Move to | M |
+| Attack-move | Z |
+| Patrol (bounces between two points) | R |
+| Queue waypoints | Shift + right-click |
+| Stop | X |
+| Garrison (pending click on your building) | E |
+| Cover fire (ranged/siege: walk into range, then attack ground) | C |
+| Show path | P |
+| Delete selected unit/building | Delete (Backspace on macOS; >5 buildings asks to confirm) |
+
+**Stances** (military, buttons on the panel): Aggressive / Defensive (chases on a leash, returns) / Stand Ground / No Attack. Idle units automatically engage hostiles within sight (~240 px) according to their stance.
+
+**Formations** (group moves): Line (melee front, ranged behind) / Box / Spread / Rings — picking one reforms the selection immediately.
+
+## Villagers & building
+
+| Action | Key |
+|---|---|
+| Build menu | B |
+| Gather wood / gold / stone / food | C / G / T / H |
+| Rotate placement ghost | R |
+| Free placement (skip the 16 px grid snap) | Hold Alt |
+| Chain-place the same building | Hold Shift while clicking |
+| Cancel placement | Right-click or Esc |
+
+Build-menu keys: House **H**, Barracks **B**, Archery Range **A**, Blacksmith **K**, Stable **J**, Lumber Camp **L**, Mining Camp **N**, Farm **F**, Mill **M**, Wall **Q** (drag for a run), Gate **G**, Watch Tower **O**, Dock **C**, Market **R**, University **U**, Temple **T**, Siege Workshop **I**, Town Center **Y**, Wonder **V**.
+
+Common train keys: Villager **V**, Militia **M**, Archer **R**, Pikeman **P**, Heavy Scout **H**, Knight **K**, civ-unique unit **U**, Presa Canario **P** (Mill), Harimaguada **H** (Temple).
+
+**Town Bell** (Town Center, **G**): shelters every villager in the nearest TC/tower with room; ring again to eject all garrisons. Gates lock/unlock with **O**.
+
+## Interface
 
 | Action | Input |
 |---|---|
-| Rotate ghost 90° | R |
-| Place building | Left-click on valid spot |
-| Cancel placement | Right-click or Escape |
+| Pause menu (Resume / Settings / Save / Surrender / Exit) | Esc |
+| Chat (multiplayer) | Enter to open/send, Esc to close |
+| Minimap move order | Right-click the minimap |
+| Minimap ping (allies, multiplayer) | Alt + click the minimap |
+| Players/score overlay | Button docked on the minimap |
+| Game speed | Buttons in the bottom bar (single-player) |
+| Idle villager / idle military / locate hero | Cycle buttons in the bottom bar |
 
-### Action shortcuts (bottom panel)
+Notification toasts (attacks, buildings finished/lost, pop cap, hero in danger) carry a shortcut button — jump to the event, place a House one click after a pop-cap warning, or locate your hero.
 
-Shortcut keys are shown in brackets on each button, e.g. **[V] Villager**.
+## Replays
 
-| Building selected | Available shortcuts |
-|---|---|
-| Town Center | V — train Villager, A — Advance Age |
-| Barracks | M — Militia, A — Archer (Feudal+), P — Pikeman (Castle+) |
-| Villager selected | B — Build menu, C — Gather Wood, G — Gather Gold, T — Gather Stone, H — Gather Food, X — Stop |
+Every match is recorded (toggle in Settings). Watch from the main menu **Replays** browser: pause, seek anywhere on the timeline, change speed, reveal the whole map, **C** for cinematic mode (UI-free, optional floating minimap), and export the replay — or an A/B-marked clip — to a video file. Replays take no orders: they are recorded history.
 
-### Pause menu
+## Settings
 
-Press **Escape** or click the **☰** button (top-right corner) to open the pause menu.
-
-| Option | Action |
-|---|---|
-| Resume | Close the menu and continue playing |
-| Settings | Adjust music volume, SFX volume, and language |
-| Surrender | Concede the match |
-| Exit | Return to the main menu |
-
----
-
-## Resources
-
-| Resource | Source | Used for |
-|---|---|---|
-| **Food** | Sheep, deer, berries, farms | Train units, advance Age |
-| **Wood** | Trees (Lumber Camp) | Build almost everything |
-| **Gold** | Gold mines (Mining Camp) | Advanced units, Age advance |
-| **Stone** | Stone quarries (Mining Camp) | Walls, gates |
-
-Starting stockpile: 200 Food · 75 Wood · 50 Gold · 0 Stone — enough for one House and a few units.
-
----
-
-## Age Progression
-
-Advance your Age at the **Town Center** (press **A** or click the Advance button).  
-Advancing takes time; a gold progress bar appears while researching.
-
-| Age | Unlock | Cost | Time |
-|---|---|---|---|
-| Dark Age | Starting age | — | — |
-| Feudal Age | Archer in Barracks | 500 Food | ~2 min |
-| Castle Age | Pikeman in Barracks | 800 Food · 200 Gold | ~2:40 min |
-| Imperial Age | (future techs) | 1000 Food · 800 Gold | ~3:10 min |
-
----
-
-## Units
-
-### Villager
-
-- **Role:** economy — gathers resources and constructs buildings
-- **Cost:** 50 Food · 30 s train time
-- **Tip:** assign them immediately; idle villagers waste time
-
-### Militia
-
-- **Role:** cheap early melee fighter
-- **Cost:** 60 Food · 20 Wood · 21 s
-- **Available:** Dark Age
-
-### Scout
-
-- **Role:** fast exploration; low attack
-- **Cost:** 80 Food · 25 s (spawns free at game start)
-- **Tip:** run it around the map early to reveal resources and the enemy base
-
-### Archer *(Feudal Age)*
-
-- **Role:** ranged attacker; backs away when enemies get too close
-- **Cost:** 25 Wood · 45 Gold · 35 s
-- **Tip:** keep them behind Militia; they lose badly in melee
-
-### Pikeman *(Castle Age)*
-
-- **Role:** heavy melee; bonus armour
-- **Cost:** 60 Food · 30 Gold · 28 s
-- **Tip:** pairs well with Archers — Pikemen absorb hits while Archers deal damage
-
-### Sheep
-
-- **Role:** food source via conversion
-- Walks toward the nearest unit and joins their team
-- Very fragile (8 HP) — protect them if you want the food
-
----
-
-## Buildings
-
-| Building | Cost | Purpose |
-|---|---|---|
-| **House** | 25 Wood | +5 population cap each |
-| **Town Center** | — (starts built) | Trains Villagers, Age advancement |
-| **Barracks** | 175 Wood | Trains military units |
-| **Lumber Camp** | 100 Wood | Drop-off point for wood; place near trees |
-| **Mining Camp** | 100 Wood | Drop-off for Gold and Stone |
-| **Farm** | 60 Wood | Renewable Food source; place villager on it |
-| **Wall Segment** | 5 Stone | Defensive barrier |
-| **Gate** | 30 Wood | Passable wall opening; lock with O |
-
-### Building a structure
-
-1. Select one or more Villagers.
-2. Press **B** → choose a building from the menu (shortcut in brackets).
-3. Move the ghost to a valid position (white = OK, red = blocked).
-4. Left-click to place. Shift+click to keep placing the same type.
-5. The Villager(s) walk over and construct it automatically.
-
----
-
-## Fog of War
-
-| Colour | Meaning |
-|---|---|
-| Black | Never explored — unknown |
-| Dark grey | Explored but not currently visible — last known state shown |
-| Clear | Within a unit's line of sight — live updates |
-
-Enemy units are only visible when inside your line of sight (clear cells).  
-Enemy buildings appear in explored cells but do not update — scout to confirm they're still there.
-
----
-
-## Economy tips
-
-- Build a **Lumber Camp** next to the nearest tree cluster immediately.
-- Send 3–4 villagers to wood, 2 to food (sheep or hunt), 1 to gold.
-- Queue a **House** early — hitting the population cap halts training.
-- Farms are slow but renewable; hunt and sheep run out eventually.
-- Drop-off buildings (Lumber Camp, Mining Camp, Town Center) must be within walking distance — villagers waste time on long trips.
-
----
-
-## Victory and defeat
-
-- **You win** — destroy the enemy Town Center.
-- **You lose** — your Town Center is destroyed.
-- A game-over screen appears with the result and a **Return to menu** button.
-
----
-
-## Match setup
-
-Before starting a skirmish you choose:
-
-- **Map size** — Small, Medium, or Large
-- **Map type** — Standard / Volcanic Coast / Desert Coast / Islands
-- **Starting resources** — Scarce / Normal / Abundant / **Full Combat** (all resources 9999 — skips the economy phase entirely)
-- **Civilization** — one of the eight
-- **Starting Age** — Dark, Feudal, Castle, or Imperial
-
----
-
-## AI behaviour
-
-The enemy AI:
-
-- Gathers resources and builds a Barracks, Lumber Camp, Mining Camp, and Farms automatically.
-- Builds multiple Barracks as the economy scales.
-- Trains units and launches attacks every 30 seconds (faster when aggressive).
-- Advances Ages as soon as it can afford to.
-- **Escalates aggression** if you attack its units or enter its base — interval drops to ~10 s and it rallies all soldiers to defend.
-- Upgrades its military as Ages unlock new units (Archer in Feudal, Pikeman in Castle).
-- Attacks the **nearest enemy building**, not always the Town Center.
-- On **Islands** maps: builds a Dock, trains Fishing Boats and War Galleys, then loads military units onto a Transport Ship for a naval assault on the enemy shore.
+Music/SFX volume, language (EN/ES), AI difficulty, fullscreen, VSync, FPS counter, **unit style** (Classic / Enhanced / Redesigned — switches live), camera pan keys, edge scroll, on-screen d-pad, replay recording, and minimap in exported videos. Accessible from the main menu and the in-game pause menu.
