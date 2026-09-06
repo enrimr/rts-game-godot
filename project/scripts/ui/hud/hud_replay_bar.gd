@@ -283,14 +283,21 @@ func _build_watermark() -> void:
 func _show_intro_card() -> void:
 	var header: Dictionary = ReplayFile.active_header
 	var cfg: Dictionary = header.get("config", {}) as Dictionary
+	# A full-rect CenterContainer does the centring: anchoring the card itself
+	# at CENTER pinned its (0,0)-sized top-left corner to the screen centre and
+	# the content then grew down-right — the logo showed off-centre.
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var card: VBoxContainer = VBoxContainer.new()
-	card.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	card.add_theme_constant_override("separation", 10)
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var logo: TextureRect = TextureRect.new()
 	logo.texture = load("res://assets/backgrounds/calima-fota-logo.png") as Texture2D
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+	# _CENTERED, or the aspect-fitted image hugs the LEFT of its rect when the
+	# matchup line makes the card wider than the logo.
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	logo.custom_minimum_size = Vector2(420, 190)
 	card.add_child(logo)
 	var rivals: Array = cfg.get("rival_civ_ids", []) as Array
@@ -305,11 +312,12 @@ func _show_intro_card() -> void:
 	line.add_theme_font_override("font", HudStyle.bold_font())
 	HudStyle.add_text_outline(line)
 	card.add_child(line)
-	_hud_root.add_child(card)
+	center.add_child(card)
+	_hud_root.add_child(center)
 	var tween: Tween = create_tween()
 	tween.tween_interval(3.2)
-	tween.tween_property(card, "modulate:a", 0.0, 0.8)
-	tween.tween_callback(card.queue_free)
+	tween.tween_property(center, "modulate:a", 0.0, 0.8)
+	tween.tween_callback(center.queue_free)
 
 func _process(delta: float) -> void:
 	if _replicator == null or not is_instance_valid(_replicator):
