@@ -104,7 +104,7 @@ The Guanches of Tenerife lived on the slopes of the Teide volcano — *Echeyde* 
 - Stone buildings +20% HP
 - Immune to the Calima; half penalty from Volcanic Ash
 
-**Unique unit:** *Mencey's Guard* — heavy infantry trained at the Barracks (Castle Age, 65 Food + 25 Gold); enters a Rage Aura below half HP
+**Unique unit:** *Menceyes Guard* — heavy infantry trained at the Barracks (Castle Age, 65 Food + 25 Gold); enters a Rage Aura below half HP
 
 **Hero: Bencomo** — the real Mencey of Taoro who crushed the Castilian army at the first Battle of Acentejo (1494). His ability *Mencey's Charge* rallies nearby allied units: +30% attack speed for 10 seconds. Use it at the moment of contact, not before.
 
@@ -175,7 +175,6 @@ Jean de Béthencourt was not a conqueror in the traditional sense — he was a N
 **Passive bonuses:**
 - Age advancement costs 15% less
 - Cavalry units +15% HP
-- Farms constructed 20% faster
 
 **Unique unit:** *Chevalier Normand* — heavy cavalry trained at the Stable (Castle Age, 75 Food + 65 Gold); Lance Charge deals ×2.5 damage after 80 px of unbroken approach
 
@@ -213,15 +212,14 @@ The English presence in the Canaries was never about colonization. It was about 
 
 The Crown of Castile funded the final and complete conquest of the archipelago. Alonso Fernández de Lugo took Tenerife in two campaigns — losing the first catastrophically at Acentejo in 1494 to Bencomo, returning in 1496 with a reinforced army to win the second. He founded La Laguna, still the historic capital of Tenerife, and completed the pacification of all seven islands.
 
-**How they play:** Castellanos are slow to start and expensive to maintain, but their late-game power is unmatched. Every age advance unlocks a free Blacksmith technology. Their swordsmen are among the hardiest in the game. Their towers have extended range. If you let Castellanos reach Imperial Age comfortably, they are very difficult to defeat.
+**How they play:** Castellanos are slow to start and expensive to maintain, but their late-game power is unmatched. Every age advance unlocks a free Blacksmith technology. Their swordsmen are among the hardiest in the game. If you let Castellanos reach Imperial Age comfortably, they are very difficult to defeat.
 
-**Strengths:** Best late-game military, superior fortifications, free technologies
+**Strengths:** Best late-game military, hardy infantry, free technologies
 **Weaknesses:** Slow early economy; most powerful units require Castle or Imperial Age
 
 **Passive bonuses:**
 - Advancing to a new Age unlocks one free Blacksmith technology
 - Swordsman line +15% HP
-- Towers +10% attack range
 - Half penalty from the Calima
 
 **Unique unit:** *Conquistador* — armored infantry trained at the Barracks (Castle Age, 60 Food + 60 Gold); Salvo Fire unleashes 3 rapid shots on a 12 s cooldown
@@ -383,17 +381,17 @@ Thirty-two technologies across eight buildings. Each building researches one tec
 |---|---|---|---|
 | **Loom** | Dark | 50 Food | Villager HP +15% |
 | **Forging** | Feudal | 75 Food | All unit attack +15% |
-| **Scale Barding** | Feudal | 100 Food + 50 Gold | Melee armour +1 |
+| **Scale Barding** | Feudal | 100 Food + 50 Gold | Cavalry melee armour +1 |
 | **Fletching** | Feudal | 100 Gold | Archer attack +20% |
 | **Padded Archer Armour** | Feudal | 100 Food | Archer pierce armour +1 |
 | **Shipwright** | Feudal | 200 Wood + 60 Gold | Ship HP +15%; ship cost −15% |
 | **Canarian Cart** | Feudal | 150 Food + 75 Wood | Villager carry capacity +25% (farms unaffected) |
 | **Iron Casting** | Castle | 150 Gold | All unit attack +20% (requires Forging) |
-| **Chain Barding** | Castle | 200 Food + 100 Gold | Melee armour +1 (requires Scale Barding) |
+| **Chain Barding** | Castle | 200 Food + 100 Gold | Cavalry melee armour +1 (requires Scale Barding) |
 | **Bodkin Arrow** | Castle | 100 Food + 150 Gold | Archer attack +20%, range +10% (requires Fletching) |
 | **Island Handcart** | Castle | 200 Food + 125 Wood | Carry capacity +25% again (requires Canarian Cart) |
 | **Blast Furnace** | Imperial | 275 Food + 225 Gold | All unit attack +15% |
-| **Plate Barding** | Imperial | 300 Food + 200 Gold | Melee armour +1 (requires Chain Barding) |
+| **Plate Barding** | Imperial | 300 Food + 200 Gold | Cavalry melee armour +1 (requires Chain Barding) |
 
 ### University
 

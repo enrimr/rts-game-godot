@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calima: Flames of the Atlantic — Documentation</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #1a1108; --panel: #241a0c; --border: #3d2e18;
+    --gold: #c8a84b; --gold-dim: #8c7232; --gold-bright: #f0cc6a;
+    --text: #d8c9a3; --text-dim: #8a7a55; --link: #d9a44a;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 15px; line-height: 1.55; min-height: 100vh;
+  }
+  .page { max-width: 1060px; margin: 0 auto; padding: 40px 22px 60px; }
+  h1 {
+    color: var(--gold); font-variant: small-caps; letter-spacing: 0.1em;
+    font-size: 1.8rem; text-align: center;
+    text-shadow: 0 0 22px rgba(200,168,75,0.4);
+  }
+  .tagline { text-align: center; color: var(--text-dim); font-size: 0.9rem; margin: 6px 0 30px; }
+  h2 {
+    color: var(--gold); font-variant: small-caps; letter-spacing: 0.08em;
+    font-size: 1.1rem; margin: 30px 0 12px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; }
+  a.card {
+    display: block; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 15px; text-decoration: none; color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  a.card:hover { border-color: var(--gold-dim); box-shadow: 0 0 12px rgba(200,168,75,0.25); }
+  .card .t { color: var(--gold-bright); font-weight: 600; }
+  .card .d { color: var(--text-dim); font-size: 0.83rem; margin-top: 2px; }
+  .badge {
+    display: inline-block; border: 1px solid var(--gold-dim); border-radius: 10px;
+    color: var(--gold); font-size: 0.68rem; padding: 0 7px; margin-left: 6px;
+    vertical-align: 2px; letter-spacing: 0.04em;
+  }
+  footer { margin-top: 40px; text-align: center; color: var(--text-dim); font-size: 0.78rem; line-height: 1.6; }
+  footer code { background: rgba(0,0,0,0.35); border-radius: 3px; padding: 1px 5px; font-size: 0.74rem; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>Calima: Flames of the Atlantic</h1>
+<p class="tagline">Documentation portal · a real-time strategy game set in the 15th–16th century Canary Islands · Godot 4</p>
+
+<h2>For players · Para jugadores</h2>
+<div class="grid">
+  <a class="card" href="manual/manual_es.html">
+    <span class="t">Manual del jugador</span><span class="badge">ES</span>
+    <div class="d">La guía completa en HTML: civilizaciones, unidades, edificios, tecnologías, clima, campaña y multijugador. Imprimible.</div>
+  </a>
+  <a class="card" href="manual/manual_en.html">
+    <span class="t">Player's Manual</span><span class="badge">EN</span>
+    <div class="d">The full guide as a single HTML page: civs, units, buildings, techs, weather, campaign and multiplayer. Printable.</div>
+  </a>
+  <a class="card" href="design/tech_tree.html">
+    <span class="t">Tech Tree Reference</span><span class="badge">EN·ES</span>
+    <div class="d">All 32 technologies across the 8 research buildings, generated from the game data (.tres) — costs, times, effects, prerequisite chains.</div>
+  </a>
+  <a class="card" href="guia-visual/guia-visual.html">
+    <span class="t">Guía visual</span><span class="badge">ES</span>
+    <div class="d">El juego en capturas: economía, victoria, las 8 civilizaciones, los tres estilos de unidad, terreno, clima y una partida a 4.</div>
+  </a>
+  <a class="card" href="analysis/civ-gallery/galeria-civilizaciones.html">
+    <span class="t">Galería de civilizaciones</span><span class="badge">ES</span>
+    <div class="d">La identidad visual de cada civilización — edificios y roster — con sus bonificaciones verificadas contra el código.</div>
+  </a>
+  <a class="card" href="../GAMEPLAY.md">
+    <span class="t">GAMEPLAY.md</span><span class="badge">MD</span>
+    <div class="d">Complete hotkey and controls reference.</div>
+  </a>
+</div>
+
+<h2>Design</h2>
+<div class="grid">
+  <a class="card" href="design/game-design-document.md">
+    <span class="t">Game Design Document</span><span class="badge">MD</span>
+    <div class="d">Vision, systems, milestones and feature status.</div>
+  </a>
+  <a class="card" href="design/civilizations_en.md">
+    <span class="t">Civilizations (design)</span><span class="badge">MD · EN/ES</span>
+    <div class="d">Per-civ stats, uniques and data tables (<code>civilizations_es.md</code> for Spanish).</div>
+  </a>
+  <a class="card" href="design/campaign_story.md">
+    <span class="t">Campaign story</span><span class="badge">MD</span>
+    <div class="d">The Flames of Tamarán — mission narrative and structure.</div>
+  </a>
+  <a class="card" href="lore/heroes-and-heroines.md">
+    <span class="t">Heroes &amp; heroines</span><span class="badge">MD</span>
+    <div class="d">The 16 legendary leaders and their abilities; see also <code>lore/harimaguada.md</code>.</div>
+  </a>
+  <a class="card" href="guide_en.md">
+    <span class="t">Player's guide (source)</span><span class="badge">MD · EN/ES</span>
+    <div class="d">Markdown source of the manuals (<code>guide_es.md</code> for Spanish).</div>
+  </a>
+</div>
+
+<h2>Architecture &amp; development</h2>
+<div class="grid">
+  <a class="card" href="architecture/overview.md">
+    <span class="t">Architecture overview</span><span class="badge">MD</span>
+    <div class="d">Autoloads, EventBus signal flow, system map.</div>
+  </a>
+  <a class="card" href="architecture/systems.md">
+    <span class="t">Systems design</span><span class="badge">MD</span>
+    <div class="d">Per-system design notes; see also <code>map_generation.md</code>, <code>resource_system.md</code> and <code>audio_synthesis.md</code>.</div>
+  </a>
+  <a class="card" href="development/getting-started.md">
+    <span class="t">Getting started</span><span class="badge">MD</span>
+    <div class="d">Building and running the project; conventions in <code>development/conventions.md</code>.</div>
+  </a>
+  <a class="card" href="testing/harnesses.md">
+    <span class="t">Test harness catalog</span><span class="badge">MD</span>
+    <div class="d">Every headless <code>check_*</code> harness and CI gate, with commands.</div>
+  </a>
+</div>
+
+<h2>Analysis</h2>
+<div class="grid">
+  <a class="card" href="analysis/analysis-2026-09-05-0340.html">
+    <span class="t">Latest review report</span><span class="badge">2026-09-05</span>
+    <div class="d">Most recent magazine-style critical review; earlier reports are archived alongside it in <code>docs/analysis/</code>.</div>
+  </a>
+  <a class="card" href="analysis/iso-refactor/informe-refactor-isometrico-2026-08-26.html">
+    <span class="t">Isometric refactor report</span><span class="badge">2026-08-26</span>
+    <div class="d">Before/after of the isometric projection refactor, with blind-critic verdicts.</div>
+  </a>
+</div>
+
+<footer>
+  Generated on 2026-09-06 · Player-facing pages are verified against the game data
+  (<code>project/resources/</code>) and code (<code>project/scripts/</code>).<br>
+  Markdown links open as raw files unless your viewer renders Markdown.
+</footer>
+</div>
+</body>
+</html>

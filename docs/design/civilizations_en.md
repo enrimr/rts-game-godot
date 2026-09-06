@@ -199,7 +199,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 | **Hero** | Jean de Béthencourt |
 | **Ability** | *Forced Diplomacy* — Converts the nearest enemy unit for 12 s · Cooldown 60 s |
 | **Unique Unit** | **Chevalier Normand** — 130 HP · 75f+65g · Age 2 · *Lance Charge*: first attack after ≥80 px movement deals ×2.5 damage |
-| **Bonuses** | Age advance cost ×0.85 · Cavalry HP ×1.15 · Farm build speed ×1.20 |
+| **Bonuses** | Age advance cost ×0.85 · Cavalry HP ×1.15 · Farm build speed ×1.20 *(declared in the .tres, not yet wired in code)* |
 | **Restrictions** | No full archery · No late naval |
 
 **Strategy:** Fast age advancement + powerful cavalry. Strong pressure in Castle Age.
@@ -225,7 +225,7 @@ Unit upgrade technologies transform all existing units of the source type immedi
 | **Hero** | Don Quijote |
 | **Ability** | *Knight Errant Charge* — Charges forward in a straight line, dealing heavy damage to all units in the path · Cooldown 55 s |
 | **Unique Unit** | **Conquistador** — 80 HP · 60f+60g · Age 2 · *Salvo Fire* (CD 12 s): 3 rapid shots of 6 dmg each, ignores armour |
-| **Bonuses** | Swordsman HP ×1.15 · Tower / castle range ×1.10 · Free Blacksmith technology per age advance |
+| **Bonuses** | Swordsman HP ×1.15 · Tower / castle range ×1.10 *(declared in the .tres, not yet wired in code)* · Free Blacksmith technology per age advance |
 | **Restrictions** | None |
 
 **Strategy:** Well-rounded civilisation with no restrictions. Snowballs hard in late game with free technologies.

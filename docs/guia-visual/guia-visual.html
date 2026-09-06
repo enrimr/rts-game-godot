@@ -52,10 +52,10 @@ code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padd
 <header>
   <button id="theme-toggle">☾</button>
   <h1>Calima: Flames of the Atlantic — Guía visual</h1>
-  <div class="meta">Estrategia en tiempo real · Godot 4 · las Islas Canarias de los siglos XV–XVI · arte procedural original · 26-08-2026</div>
+  <div class="meta">Estrategia en tiempo real · Godot 4 · las Islas Canarias de los siglos XV–XVI · arte procedural original · actualizado 06-09-2026</div>
   <nav>
     <a href="#juego">El juego</a><a href="#economia">Economía y edades</a><a href="#victoria">Victoria</a>
-    <a href="#civs">Las 8 civilizaciones</a><a href="#terreno">Terreno y clima</a><a href="#mapas">Mapas</a><a href="#partida">Una partida a 4</a>
+    <a href="#civs">Las 8 civilizaciones</a><a href="#estilos">Estilos de unidad</a><a href="#terreno">Terreno y clima</a><a href="#mapas">Mapas</a><a href="#partida">Una partida a 4</a>
   </nav>
 </header>
 
@@ -75,11 +75,11 @@ oculta lo no explorado y recuerda en penumbra lo ya visto.</figcaption></figure>
 <tr><td>🍖 Comida</td><td>Granjas, caza, pesca, bayas, ovejas</td><td>Aldeanos, tropa, avance de edad</td></tr>
 <tr><td>🪵 Madera</td><td>Árboles (la laurisilva es el bosque rico: árboles de 260)</td><td>Edificios, arqueros, barcos</td></tr>
 <tr><td>🪙 Oro</td><td>Minas de oro</td><td>Unidades avanzadas, tecnología, mercado</td></tr>
-<tr><td>🪨 Piedra</td><td>Canteras (y controlar una caldera da piedra pasiva)</td><td>Torres, murallas, castillos</td></tr>
+<tr><td>🪨 Piedra</td><td>Canteras (y un Campamento Minero junto a una caldera genera un goteo de piedra)</td><td>Torres de Vigilancia y murallas</td></tr>
 </table>
 <p>La población empieza en 15 y cada <b>Casa</b> suma +5. Se avanza por cuatro edades —
-<b>Oscura → Feudal → Castillos → Imperial</b> — pagando recursos y esperando un temporizador; cada edad
-desbloquea unidades, edificios y tecnologías (21 en total entre Herrería, Universidad y Templo).</p>
+<b>Oscura → Feudal → Castillo → Imperial</b> — pagando recursos y esperando un temporizador; cada edad
+desbloquea unidades, edificios y tecnologías (32 en total, repartidas entre ocho edificios: Herrería, Universidad, Templo, Cuartel, Establo, Molino y los dos campamentos de recolección).</p>
 
 <h2 id="victoria">Condiciones de victoria</h2>
 <table>
@@ -99,7 +99,7 @@ y un héroe con habilidad propia.</p>
 <p class="tagline">Defensivos · terreno volcánico · infantería</p>
 <ul class="bonos">
 <li>Atraviesan el malpaís sin penalización (los demás van a rastras)</li>
-<li>Edificios de piedra +20% de vida · lanceros desde la Edad Oscura</li>
+<li>Edificios de piedra +20% de vida · piqueros desde la Edad Oscura</li>
 <li>Inmunes a la Calima; media penalización de ceniza volcánica</li>
 </ul>
 <p class="uu"><b>Única:</b> Guardia del Mencey (infantería pesada anticaballería) · <b>Héroe:</b> Bencomo (+30% velocidad de ataque en área)</p>
@@ -130,12 +130,12 @@ y un héroe con habilidad propia.</p>
 <ul class="bonos">
 <li>Edificios -30% de madera (piedra seca)</li>
 <li>Exploradores y caballería ligera +25% de velocidad</li>
-<li>Visión extendida en dunas · media penalización de Calima</li>
+<li>+40% de visión en las dunas · las cruzan sin frenarse · media penalización de Calima</li>
 </ul>
-<p class="uu"><b>Única:</b> Razziador de Arenas (caballería de saqueo con velocidad pasiva) · <b>Héroe:</b> Guadarfía</p>
+<p class="uu"><b>Única:</b> Saqueador de Dunas (caballería ligera de golpea-y-huye) · <b>Héroe:</b> Guadarfía</p>
 <div class="pair">
 <figure><img src="../analysis/civ-gallery/img/mahos_buildings.jpg" alt="Edificios mahos"><figcaption>Adobe arena con cúpulas</figcaption></figure>
-<figure><img src="../analysis/civ-gallery/img/mahos_units.jpg" alt="Unidades mahos"><figcaption>Turbante con cola rojiza + Razziador</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/mahos_units.jpg" alt="Unidades mahos"><figcaption>Turbante con cola rojiza + Saqueador de Dunas</figcaption></figure>
 </div>
 </div>
 
@@ -144,7 +144,7 @@ y un héroe con habilidad propia.</p>
 <p class="tagline">Caballería · granjas · edades baratas</p>
 <ul class="bonos">
 <li>Avanzar de edad cuesta -15%</li>
-<li>Caballería +15% de vida · granjas un 20% más rápidas de construir</li>
+<li>Caballería +15% de vida desde la Edad Feudal</li>
 </ul>
 <p class="uu"><b>Única:</b> Chevalier Normand (caballería media, carga con daño extra) · <b>Héroe:</b> Jean de Béthencourt</p>
 <div class="pair">
@@ -161,7 +161,7 @@ y un héroe con habilidad propia.</p>
 <li>Barcos de guerra atacan +20% más rápido</li>
 <li>Media penalización de tormenta atlántica</li>
 </ul>
-<p class="uu"><b>Única:</b> Arquero de Arco Largo (alcance excepcional) · <b>Héroe:</b> Francis Drake</p>
+<p class="uu"><b>Única:</b> Arquero de Tiro Largo (alcance excepcional, +4 contra caballería) · <b>Héroe:</b> Francis Drake</p>
 <div class="pair">
 <figure><img src="../analysis/civ-gallery/img/britons_buildings.jpg" alt="Edificios británicos"><figcaption>Sillería gris, tejados carbón casi negros</figcaption></figure>
 <figure><img src="../analysis/civ-gallery/img/britons_units.jpg" alt="Unidades británicas"><figcaption>Capucha + Longbowman</figcaption></figure>
@@ -173,10 +173,10 @@ y un héroe con habilidad propia.</p>
 <p class="tagline">Juego largo · tecnología gratis · roster completo</p>
 <ul class="bonos">
 <li>Cada avance de edad desbloquea una tecnología de Herrería gratuita</li>
-<li>Espadachines +15% de vida · torres y castillos con más alcance</li>
+<li>Espadachines +15% de vida</li>
 <li>Media penalización de Calima</li>
 </ul>
-<p class="uu"><b>Única:</b> Conquistador (híbrido acorazado con Salvo Fire) · <b>Héroe:</b> Don Quijote de la Mancha</p>
+<p class="uu"><b>Única:</b> Conquistador (infantería acorazada con Fuego en Salva: 3 disparos rápidos) · <b>Héroe:</b> Don Quijote de la Mancha</p>
 <div class="pair">
 <figure><img src="../analysis/civ-gallery/img/castellanos_buildings.jpg" alt="Edificios castellanos"><figcaption>Estuco crema, cuatro aguas terracota</figcaption></figure>
 <figure><img src="../analysis/civ-gallery/img/castellanos_units.jpg" alt="Unidades castellanas"><figcaption>Cresta de casco + Conquistador</figcaption></figure>
@@ -187,14 +187,14 @@ y un héroe con habilidad propia.</p>
 <h3>Atlantes — los anfibios legendarios</h3>
 <p class="tagline">Costa · barcos rápidos · anfibio</p>
 <ul class="bonos">
-<li>Visión extendida en costa y agua · barcos atacan más rápido</li>
-<li>Sus unidades vadean el agua somera a velocidad completa y nadan el océano</li>
-<li>Inmunes a la tormenta atlántica; media penalización de niebla marina</li>
+<li>+50% de visión a menos de 400 px de una costa · barcos atacan un 20% más rápido</li>
+<li>Su Invocador de Mareas vadea el agua somera a velocidad completa y nada en mar abierto (al 60%)</li>
+<li>Inmunes a la Tormenta Atlántica; en Niebla Marina son el doble de difíciles de detectar</li>
 </ul>
-<p class="uu"><b>Única:</b> Tidecaller (infantería a distancia anfibia, pulso de marea) · <b>Héroe:</b> Artaxerax</p>
+<p class="uu"><b>Única:</b> Invocador de Mareas (infantería anfibia con Pulso de Marea en área) · <b>Héroe:</b> Artaxerax</p>
 <div class="pair">
 <figure><img src="../analysis/civ-gallery/img/atlantes_buildings.jpg" alt="Edificios atlantes"><figcaption>Piedra clara verdosa, tejados escalonados bronce</figcaption></figure>
-<figure><img src="../analysis/civ-gallery/img/atlantes_units.jpg" alt="Unidades atlantes"><figcaption>Diadema de bronce + Tidecaller</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/atlantes_units.jpg" alt="Unidades atlantes"><figcaption>Diadema de bronce + Invocador de Mareas</figcaption></figure>
 </div>
 </div>
 
@@ -202,11 +202,11 @@ y un héroe con habilidad propia.</p>
 <h3>Fenicios — los mercaderes del mar</h3>
 <p class="tagline">Comercio · flota barata · movilidad naval</p>
 <ul class="bonos">
-<li>Mercado desde la Edad Oscura · oro pasivo con mercantes atracados</li>
-<li>Barcos más baratos · pueden reclutar unidades de otras civs en el Mercado</li>
+<li>Mercado desde la Edad Oscura · los Trirremes generan oro pasivo (5 de oro cada 30 s)</li>
+<li>Barcos −15% de coste · los mercenarios del Mercado les cuestan un 25% menos</li>
 <li>Media penalización de tormenta atlántica</li>
 </ul>
-<p class="uu"><b>Única:</b> Trirreme (galera de embestida, rápida) · <b>Héroe:</b> Hannón el Navegante</p>
+<p class="uu"><b>Única:</b> Trirreme (galera de embestida: ×2 contra barcos + empuje) · <b>Héroe:</b> Hannón el Navegante</p>
 <div class="pair">
 <figure><img src="../analysis/civ-gallery/img/fenicios_buildings.jpg" alt="Edificios fenicios"><figcaption>Arenisca, tejados planos con lavado púrpura</figcaption></figure>
 <figure><img src="../analysis/civ-gallery/img/fenicios_units.jpg" alt="Unidades fenicias"><figcaption>Pañuelo con cola púrpura + Trirreme</figcaption></figure>
@@ -216,22 +216,39 @@ y un héroe con habilidad propia.</p>
 <h2 id="terreno">Terreno y clima</h2>
 <table>
 <tr><th>Terreno</th><th>Efecto</th></tr>
-<tr><td>Malpaís (lava)</td><td>-50% velocidad, no edificable — los Guanches lo cruzan gratis</td></tr>
-<tr><td>Duna</td><td>Penaliza infantería pesada — los Mahos, inmunes</td></tr>
+<tr><td>Malpaís (lava)</td><td>Intransitable, no edificable — solo los Guanches lo cruzan</td></tr>
+<tr><td>Duna</td><td>Infantería pesada −20% de velocidad — los Mahos la cruzan sin penalización y ven más lejos</td></tr>
 <tr><td>Laurisilva</td><td>-35% velocidad, visión -30% bajo el dosel, bosques de madera rica</td></tr>
-<tr><td>Risco</td><td>Impasable; unidades a distancia junto al borde: +2 de alcance</td></tr>
-<tr><td>Agua somera</td><td>Franja costera; los anfibios la vadean a velocidad completa</td></tr>
-<tr><td>Caldera</td><td>Impasable; controlar su entorno da piedra pasiva</td></tr>
+<tr><td>Risco</td><td>Intransitable; unidades a distancia junto al borde: +2 de alcance</td></tr>
+<tr><td>Agua somera</td><td>Bloquea a las unidades terrestres; los anfibios la vadean a velocidad completa</td></tr>
+<tr><td>Caldera</td><td>Intransitable; un Campamento Minero a su sombra genera un goteo de piedra</td></tr>
 </table>
 <p>El clima es procedural y se anuncia con antelación: <b>Calima</b> (visión y recolección),
 <b>Tormenta Atlántica</b> (naval y pesca), <b>Niebla Marina</b> (ocultación costera), <b>Alisios</b>
 (velocidad naval según rumbo, deriva de proyectiles) y <b>Ceniza Volcánica</b> (daño a edificios cerca de
 calderas, solo en Costa Volcánica). Cada civilización resiste mejor el clima de su tierra.</p>
 
+<h2 id="estilos">Tres estilos de unidad</h2>
+<p>Desde <b>Ajustes → Vídeo</b> se elige el estilo visual de todas las unidades; el cambio se aplica
+al instante, en plena partida. <b>Clásico</b> son las figuras vectoriales planas originales,
+<b>Mejorado</b> añade contornos, sombreado y animación extra, y <b>Rediseñado</b> remodela cada
+figura fiel al lore canario.</p>
+<div class="pair">
+<figure><img src="../design/unit-enhanced-gallery/classic_close.png" alt="Estilo Clásico"><figcaption><b>Clásico</b> — aldeano, hombre de armas, arquero y piquero en figuras planas</figcaption></figure>
+<figure><img src="../design/unit-enhanced-gallery/enhanced_close.png" alt="Estilo Mejorado"><figcaption><b>Mejorado</b> — las mismas unidades con contorno y sombreado</figcaption></figure>
+</div>
+<div class="pair">
+<figure><img src="../design/unit-redesign-gallery/a_4_redesigned_close_right.png" alt="Estilo Rediseñado"><figcaption><b>Rediseñado</b> — figuras remodeladas: proporciones nuevas, armas y vestuario leíbles</figcaption></figure>
+<figure><img src="../design/unit-redesign-gallery/crop_female.png" alt="Aldeana rediseñada"><figcaption><b>Rediseñado, de cerca</b> — aldeana con hacha; el género visual de cada unidad es aleatorio</figcaption></figure>
+</div>
+<p class="meta">Más capturas en las galerías: <a href="../design/unit-redesign-gallery/">unit-redesign-gallery</a> ·
+<a href="../design/unit-enhanced-gallery/">unit-enhanced-gallery</a>.</p>
+
 <h2 id="mapas">Mapas y configuración</h2>
 <p><b>5 tipos de mapa</b> (Llanuras, Estándar, Costa Volcánica, Costa Desértica, Islas — este último exige
 armada y transportes), <b>4 modos de recursos</b> (Escaso→Combate Total), 3 modos de victoria, frecuencia
-de clima configurable y elección de civilización y género del héroe en el lobby. Partidas guardables en 99 huecos.</p>
+de clima configurable, equipos 1–4 y elección de civilización y género del héroe en el lobby. Partidas guardables en 99 huecos.</p>
+<p>Más allá de la escaramuza: <b>campaña</b> de la invasión atlante (prólogo + 4 misiones), <b>multijugador</b> LAN/Internet de hasta 4 jugadores con guardado y reanudación online, y <b>repeticiones</b> de cada partida, exportables a vídeo con modo cine.</p>
 
 <h2 id="partida">Una partida a 4 jugadores</h2>
 <figure class="solo"><img src="img/partida4_mapa.jpg" alt="Mapa completo a 4 jugadores">
@@ -247,14 +264,17 @@ Atlantes (púrpura, este), con la niebla revelada. Cada base se reconoce por su 
 <h2>Para seguir leyendo</h2>
 <div class="links">
 <ul>
-<li>📖 <a href="../guide_es.md">Guía completa del jugador</a> — lore, héroes, consejos navales, árbol tecnológico (markdown)</li>
+<li>📕 <a href="../manual/manual_es.html">Manual del jugador (HTML)</a> — la guía completa, lista para leer o imprimir</li>
+<li>🌳 <a href="../design/tech_tree.html">Árbol tecnológico</a> — las 32 tecnologías generadas desde los datos del juego</li>
+<li>📖 <a href="../guide_es.md">Guía completa del jugador</a> — lore, héroes, consejos navales (markdown)</li>
 <li>🏛️ <a href="../analysis/civ-gallery/galeria-civilizaciones.html">Galería de civilizaciones</a> — los 20 edificios y el roster de cada civ</li>
 <li>📐 <a href="../analysis/iso-refactor/informe-refactor-isometrico-2026-08-26.html">Informe del refactor isométrico</a> — el antes/después con veredictos de crítica ciega</li>
+<li>🗂️ <a href="../index.html">Portal de documentación</a> — todos los documentos del proyecto</li>
 </ul>
 Capturas regenerables con <code>tools/screenshot_runner.tscn</code> (<code>CALIMA_CIV</code>, <code>CALIMA_RIVAL_CIV="a,b,c"</code>, <code>CALIMA_MAP</code>, <code>CALIMA_PREVIEW=1</code>).
 </div>
 
-<p class="meta" style="margin-top:32px">Guía visual generada el 26-08-2026 · todo el arte es Polygon2D procedural, original del proyecto.</p>
+<p class="meta" style="margin-top:32px">Guía visual generada el 26-08-2026, actualizada el 06-09-2026 al estado real del juego · todo el arte es Polygon2D procedural, original del proyecto.</p>
 </div>
 
 <script>

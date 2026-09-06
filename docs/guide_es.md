@@ -150,7 +150,7 @@ Lanzarote y Fuerteventura son las islas más antiguas y secas — llanas, azotad
 - Exploradores y caballería ligera +25 % de velocidad de movimiento
 - Cruzan libremente las dunas; media penalización de la Calima
 
-**Unidad única:** *Saqueador de Dunas* — caballería ligera rápida entrenada en la Caballeriza (Edad Feudal, 60 Comida + 40 Oro). Golpea y huye: se retira automáticamente tras cada ataque. Excelente para saquear líneas de aldeanos y escapar antes de que el enemigo pueda responder.
+**Unidad única:** *Saqueador de Dunas* — caballería ligera rápida entrenada en el Establo (Edad Feudal, 60 Comida + 40 Oro). Golpea y huye: se retira automáticamente tras cada ataque. Excelente para saquear líneas de aldeanos y escapar antes de que el enemigo pueda responder.
 
 **Héroe: Guadarfía** — el rey maho que sobrevivió a la conquista siendo demasiado útil para eliminarlo. Su habilidad *Emboscada* lo vuelve casi invisible durante 8 segundos — los enemigos no pueden atacarle automáticamente mientras está oculto. Combínalo con Saqueadores de Dunas para una emboscada maho clásica.
 
@@ -175,9 +175,8 @@ Jean de Béthencourt no era un conquistador en el sentido tradicional — era un
 **Bonificaciones pasivas:**
 - Avanzar de edad cuesta un 15 % menos
 - Unidades de caballería +15 % de puntos de vida
-- Las granjas se construyen un 20 % más rápido
 
-**Unidad única:** *Chevalier Normando* — caballería pesada entrenada en la Caballeriza (Edad del Castillo, 75 Comida + 65 Oro); su Carga de Lanza causa daño ×2.5 tras 80 px de aproximación ininterrumpida
+**Unidad única:** *Chevalier Normando* — caballería pesada entrenada en el Establo (Edad del Castillo, 75 Comida + 65 Oro); su Carga de Lanza causa daño ×2.5 tras 80 px de aproximación ininterrumpida
 
 **Héroe: Jean de Béthencourt** — el señor normando que plantó por primera vez una bandera europea en el archipiélago. Su habilidad *Diplomacia Forzada* convierte a la unidad enemiga más cercana a tu bando durante 12 segundos — una referencia directa a su estrategia histórica de convertir a los líderes nativos en colaboradores.
 
@@ -213,15 +212,14 @@ La presencia inglesa en Canarias nunca tuvo que ver con la colonización. Era di
 
 La Corona de Castilla financió la conquista final y completa del archipiélago. Alonso Fernández de Lugo tomó Tenerife en dos campañas — perdiendo la primera de forma catastrófica en Acentejo en 1494 ante Bencomo, regresando en 1496 con un ejército reforzado para ganar la segunda. Fundó La Laguna, todavía la capital histórica de Tenerife, y completó la pacificación de las siete islas.
 
-**Cómo se juega:** Los Castellanos son lentos al inicio y caros de mantener, pero su poder en el juego tardío no tiene rival. Cada avance de edad desbloquea una tecnología de Herrería gratuita. Sus espadachines son de los más resistentes del juego. Sus torres tienen alcance extendido. Si dejas que los Castellanos lleguen cómodamente a la Era Imperial, son muy difíciles de vencer.
+**Cómo se juega:** Los Castellanos son lentos al inicio y caros de mantener, pero su poder en el juego tardío no tiene rival. Cada avance de edad desbloquea una tecnología de Herrería gratuita. Sus espadachines son de los más resistentes del juego. Si dejas que los Castellanos lleguen cómodamente a la Era Imperial, son muy difíciles de vencer.
 
-**Puntos fuertes:** Mejor ejército en el juego tardío, fortificaciones superiores, tecnologías gratuitas
+**Puntos fuertes:** Mejor ejército en el juego tardío, infantería resistente, tecnologías gratuitas
 **Puntos débiles:** Economía temprana lenta; las unidades más potentes requieren Era Castillo o Imperial
 
 **Bonificaciones pasivas:**
 - Avanzar de edad desbloquea una tecnología de Herrería gratuita
 - La línea de espadachines +15 % de puntos de vida
-- Torres +10 % de alcance de ataque
 - Media penalización de la Calima
 
 **Unidad única:** *Conquistador* — infantería acorazada entrenada en el Cuartel (Edad del Castillo, 60 Comida + 60 Oro); su Fuego en Salva descarga 3 disparos rápidos con 12 s de enfriamiento
@@ -259,7 +257,7 @@ Cuatro recursos impulsan todo en *Calima*. Empiezas con 200 de Comida, 75 de Mad
 
 | Recurso | Cómo recolectarlo |
 |---|---|
-| **Comida** | Envía Aldeanos a arbustos de bayas, caza animales o construye Granjas. El **Molino** es el punto de entrega de comida; entrena perros **Presa Canario**, que llevan animales (incluidas ovejas enemigas, que se convierten por el camino) hasta tu base — cada viaje además paga comida según lo que el perro acercó al animal a casa. Rebaños salvajes de ovejas pastan por el mapa, y la IA cría sus propios perros: los rebaños sin dueño son una carrera. En mapas con agua, las Barcas Pesqueras extraen comida de los bancos de peces y las Trampas de Pesca dan un flujo pasivo. |
+| **Comida** | Envía Aldeanos a arbustos de bayas, caza animales o construye Granjas. El **Molino** es el punto de entrega de comida; entrena perros **Presa Canario**, que llevan animales (incluidas ovejas enemigas, que se convierten por el camino) hasta tu base — cada viaje además paga comida según lo que el perro acercó al animal a casa. Rebaños salvajes de ovejas pastan por el mapa, y la IA cría sus propios perros: los rebaños sin dueño son una carrera. En mapas con agua, los Barcos Pesqueros extraen comida de los bancos de peces y las Trampas para Peces dan un flujo pasivo. |
 | **Madera** | Ordena a los Aldeanos talar árboles. Construye un Campamento Maderero junto al bosque — es el punto de entrega. |
 | **Oro** | Extrae depósitos de oro. Construye un Campamento Minero cerca. El Mercado también convierte otros recursos en oro. |
 | **Piedra** | Extrae canteras de piedra. Misma lógica de entrega que el oro: Campamento Minero. Se usa para muros y Torres de Vigilancia. |
@@ -282,8 +280,8 @@ Avanzar de edad es la columna vertebral del juego. Cada Era desbloquea nuevas un
 
 | Edad | Coste de avance | Tiempo | Qué se desbloquea |
 |---|---|---|---|
-| **Edad Oscura** | — (edad inicial) | — | Aldeano, Milicia, Explorador, Presa Canario, edificios básicos, Muelle, Barca Pesquera |
-| **Edad Feudal** | 500 Comida | ~2 min 10 s | Arquero, Explorador Pesado, Galería de Tiro, Herrería, Caballeriza, Mercado, Torre de Vigilancia, Galera de Guerra, Barco de Transporte, Trirreme, Saqueador de Dunas |
+| **Edad Oscura** | — (edad inicial) | — | Aldeano, Milicia, Explorador, Presa Canario, edificios básicos, Muelle, Barco Pesquero |
+| **Edad Feudal** | 500 Comida | ~2 min 10 s | Arquero, Explorador Pesado, Galería de Tiro, Herrería, Establo, Mercado, Torre de Vigilancia, Galera de Guerra, Barco de Transporte, Trirreme, Saqueador de Dunas |
 | **Edad del Castillo** | 800 Comida + 200 Oro | ~2 min 40 s | Piquero, Caballero, Universidad, Templo, Taller de Asedio, Centros Urbanos adicionales, la mayoría de unidades únicas, Harimaguada |
 | **Edad Imperial** | 1000 Comida + 800 Oro | ~3 min 10 s | Maravilla, Trabuquete, la cima de todas las líneas tecnológicas |
 
@@ -306,13 +304,13 @@ Los **Francos** avanzan un 15 % más barato. Los **Castellanos** reciben una tec
 | Unidad | Edad | Edificio | Coste | Función |
 |---|---|---|---|---|
 | **Milicia** | Oscura | Cuartel | 60 Comida + 20 Madera | Infantería melé básica |
-| **Explorador** | Oscura | Caballeriza (uno gratis al inicio) | 80 Comida | Explorador rápido con modo de exploración automática; débil en combate |
+| **Explorador** | Oscura | Establo (uno gratis al inicio) | 80 Comida | Explorador rápido con modo de exploración automática; débil en combate |
 | **Arquero** | Feudal | Cuartel / Galería de Tiro | 25 Madera + 45 Oro | A distancia; frágil de cerca; ataque a zona y fuego de cobertura |
 | **Hombre de Armas** | Feudal | mejora de la Milicia | tec.: 100 Comida + 40 Oro | Línea de infantería mejorada |
-| **Explorador Pesado** | Feudal | Caballeriza (mejora del Explorador) | 80 Comida + 30 Oro | Caballería rápida de saqueo |
+| **Explorador Pesado** | Feudal | Establo (mejora del Explorador) | 80 Comida + 30 Oro | Caballería rápida de saqueo |
 | **Piquero** | Castillo | Cuartel | 60 Comida + 30 Oro | Lancero anticaballería |
 | **Espadachín** | Castillo | mejora del Hombre de Armas | tec.: 200 Comida + 60 Oro | Cima de la línea de infantería |
-| **Caballero** | Castillo | Caballeriza | 60 Comida + 75 Oro | Caballería pesada; la unidad terrestre dominante de la Era Castillo |
+| **Caballero** | Castillo | Establo | 60 Comida + 75 Oro | Caballería pesada; la unidad terrestre dominante de la Era Castillo |
 | **Ariete** | Castillo | Taller de Asedio | 160 Madera | Daño ×3 a edificios, casi inofensivo contra unidades |
 | **Manganela** | Castillo | Taller de Asedio | 160 Madera + 135 Oro | Daño en área (72 px); alcance mínimo |
 | **Trabuquete** | Imperial | Taller de Asedio | 200 Madera + 200 Oro | El mayor alcance del juego; debe desplegarse para disparar |
@@ -333,9 +331,9 @@ Los héroes no se entrenan — cada jugador empieza con uno. Si muere, reaparece
 | **Centro Urbano** | edificio inicial (adicionales: 275 Madera, Edad del Castillo) | Entrena Aldeanos; avance de edad; guarnece 10 (dispara flechas mientras está guarnecido); Campana del Pueblo |
 | **Cuartel** | 175 Madera | Entrena Milicia, Arquero, Piquero y varias unidades únicas; investiga las mejoras de infantería |
 | **Galería de Tiro** | 175 Madera (Feudal) | Entrena Arquero, Arquero del Barranco, Arquero de Tiro Largo |
-| **Caballeriza** | 175 Madera (Feudal) | Entrena la línea de Exploradores, Caballero, Saqueador de Dunas, Chevalier Normando; investiga las mejoras de caballería |
+| **Establo** | 175 Madera (Feudal) | Entrena la línea de Exploradores, Caballero, Saqueador de Dunas, Chevalier Normando; investiga las mejoras de caballería |
 | **Taller de Asedio** | 200 Madera (Castillo) | Entrena Ariete, Manganela, Trabuquete |
-| **Muelle** | 150 Madera | Colocación costera; entrena Barca Pesquera, Barco de Transporte, Galera de Guerra, Trirreme |
+| **Muelle** | 150 Madera | Colocación costera; entrena Barco Pesquero, Barco de Transporte, Galera de Guerra, Trirreme |
 
 ### Economía
 
@@ -345,7 +343,7 @@ Los héroes no se entrenan — cada jugador empieza con uno. Si muere, reaparece
 | **Campamento Minero** | 100 Madera | Entrega de oro y piedra; investiga la línea de minería |
 | **Molino** | 100 Madera | Entrega de comida; entrena al Presa Canario; investiga la línea agrícola |
 | **Granja** | 60 Madera | Fuente de comida continua; la trabaja un Aldeano |
-| **Trampa de Pesca** | 75 Madera | Construida en el océano por Barcas Pesqueras; comida pasiva |
+| **Trampa para Peces** | 75 Madera | Construida en el océano por Barcos Pesqueros; comida pasiva |
 | **Mercado** | 175 Madera (Feudal) | Comercia recursos por oro; contrata mercenarios |
 
 ### Investigación
@@ -361,7 +359,7 @@ Los héroes no se entrenan — cada jugador empieza con uno. Si muere, reaparece
 | Edificio | Coste | Notas |
 |---|---|---|
 | **Casa** | 25 Madera | +5 al límite de población al completarse |
-| **Muro** | 5 Piedra por segmento | Arrastra para colocar un tramo entero |
+| **Muralla** | 5 Piedra por segmento | Arrastra para colocar un tramo entero |
 | **Puerta** | 30 Madera | Se abre para los aliados; bloquear/desbloquear con O |
 | **Torre de Vigilancia** | 125 Piedra (Feudal) | Dispara flechas al enemigo más cercano; guarnece 5 — cada ocupante añade una flecha a la descarga |
 
@@ -383,17 +381,17 @@ Treinta y dos tecnologías repartidas en ocho edificios. Cada edificio investiga
 |---|---|---|---|
 | **Telar** | Oscura | 50 Comida | PV del Aldeano +15 % |
 | **Forja** | Feudal | 75 Comida | Ataque de todas las unidades +15 % |
-| **Armadura de Escamas** | Feudal | 100 Comida + 50 Oro | Armadura cuerpo a cuerpo +1 |
+| **Armadura de Escamas** | Feudal | 100 Comida + 50 Oro | Armadura cuerpo a cuerpo de la caballería +1 |
 | **Flechado** | Feudal | 100 Oro | Ataque del Arquero +20 % |
 | **Armadura Acolchada** | Feudal | 100 Comida | Armadura perforante del Arquero +1 |
 | **Maestro Carpintero Naval** | Feudal | 200 Madera + 60 Oro | PV de los barcos +15 %; coste de barcos −15 % |
 | **Carreta Canaria** | Feudal | 150 Comida + 75 Madera | Capacidad de carga del Aldeano +25 % (granjas no afectadas) |
 | **Fundición de Hierro** | Castillo | 150 Oro | Ataque de todas las unidades +20 % (requiere Forja) |
-| **Armadura de Mallas** | Castillo | 200 Comida + 100 Oro | Armadura cuerpo a cuerpo +1 (requiere Armadura de Escamas) |
+| **Armadura de Mallas** | Castillo | 200 Comida + 100 Oro | Armadura cuerpo a cuerpo de la caballería +1 (requiere Armadura de Escamas) |
 | **Flecha Bodkin** | Castillo | 100 Comida + 150 Oro | Ataque del Arquero +20 %, alcance +10 % (requiere Flechado) |
 | **Carretón Isleño** | Castillo | 200 Comida + 125 Madera | Carga +25 % adicional (requiere Carreta Canaria) |
 | **Alto Horno** | Imperial | 275 Comida + 225 Oro | Ataque de todas las unidades +15 % |
-| **Armadura de Placas** | Imperial | 300 Comida + 200 Oro | Armadura cuerpo a cuerpo +1 (requiere Armadura de Mallas) |
+| **Armadura de Placas** | Imperial | 300 Comida + 200 Oro | Armadura cuerpo a cuerpo de la caballería +1 (requiere Armadura de Mallas) |
 
 ### Universidad
 
@@ -429,8 +427,8 @@ Se investigan en el edificio que entrena la unidad; todas las unidades vivas del
 |---|---|---|---|---|
 | **Hombre de Armas** | Cuartel | Feudal | 100 Comida + 40 Oro | Milicia → Hombre de Armas |
 | **Espadachín** | Cuartel | Castillo | 200 Comida + 60 Oro | Hombre de Armas → Espadachín |
-| **Explorador Pesado** | Caballeriza | Feudal | 150 Comida + 75 Oro | Explorador → Explorador Pesado |
-| **Caballero** | Caballeriza | Castillo | 200 Comida + 100 Oro | Explorador Pesado → Caballero |
+| **Explorador Pesado** | Establo | Feudal | 150 Comida + 75 Oro | Explorador → Explorador Pesado |
+| **Caballero** | Establo | Castillo | 200 Comida + 100 Oro | Explorador Pesado → Caballero |
 
 ---
 
@@ -507,7 +505,7 @@ En los mapas de **Islas** el océano es el teatro principal; las costas de los m
 
 | Unidad | Edad | Coste | Función |
 |---|---|---|---|
-| **Barca Pesquera** | Oscura | 75 Madera | Recoge peces de los bancos oceánicos y los entrega en el Muelle; construye Trampas de Pesca |
+| **Barco Pesquero** | Oscura | 75 Madera | Recoge peces de los bancos oceánicos y los entrega en el Muelle; construye Trampas para Peces |
 | **Barco de Transporte** | Feudal | 125 Madera | Lleva hasta **8 unidades terrestres**; desembarca en tierra firme |
 | **Galera de Guerra** | Feudal | 75 Madera + 35 Oro | Barco de guerra a distancia |
 | **Trirreme** (Fenicios) | Feudal | 100 Madera + 50 Oro | Embestida rápida: ×2 contra barcos + empuje; goteo pasivo de oro |
@@ -515,7 +513,7 @@ En los mapas de **Islas** el océano es el teatro principal; las costas de los m
 Consejos navales:
 
 - Construye el Muelle antes de la Edad Feudal en mapas de Islas. Una Galera que el rival no puede responder gana el estrecho.
-- Las Barcas Pesqueras no combaten — escóltalas.
+- Los Barcos Pesqueros no combaten — escóltalas.
 - Embarca un ejército en Barcos de Transporte, clic derecho en la otra orilla, y desembarcan automáticamente. Los aldeanos también pueden embarcar — una expansión insular necesita constructores.
 - **Atlantes** y **Britanos** dominan el mar abierto si nadie los frena; la IA también patrulla y lanza asaltos anfibios.
 

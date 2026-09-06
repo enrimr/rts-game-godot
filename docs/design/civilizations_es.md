@@ -64,7 +64,7 @@
 ### Naval (Muelle)
 | Unidad | Edad | Coste | Tiempo | HP | Vel. | Ataque | Rango |
 |---|---|---|---|---|---|---|---|
-| Barca pesquera | 0 | 75m | 25 s | 45 | 90 | 0 | — |
+| Barco Pesquero | 0 | 75m | 25 s | 45 | 90 | 0 | — |
 | Barco transporte | 1 | 125m | 45 s | 150 | 80 | 0 | — |
 | Galera de guerra | 1 | 75m + 35o | 35 s | 120 | 85 | 6 | 5.5 |
 
@@ -190,7 +190,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 | **Héroe** | Jean de Béthencourt |
 | **Habilidad** | *Diplomacia Forzada* — Convierte la unidad enemiga más cercana durante 12 s · Recarga 60 s |
 | **Unidad única** | **Caballero Normando** — 130 PV · 75c+65o · Edad 2 · *Carga de Lanza*: primer ataque tras ≥80 px hace ×2,5 daño |
-| **Bonificadores** | Coste avance de edad ×0.85 · HP caballería ×1.15 · Vel. construcción granjas ×1.20 |
+| **Bonificadores** | Coste avance de edad ×0.85 · HP caballería ×1.15 · Vel. construcción granjas ×1.20 *(declarado en el .tres, aún sin efecto en el código)* |
 | **Restricciones** | Sin arquería completa · Sin armada tardía |
 
 **Estrategia:** Avance rápido de edad + caballería potente. Presión constante en Edad de Castillo.
@@ -216,7 +216,7 @@ Las tecnologías de mejora de unidades transforman inmediatamente todas las unid
 | **Héroe** | Don Quijote |
 | **Habilidad** | *Carga del Caballero Errante* — Carga en línea recta causando gran daño a todo lo que encuentre · Recarga 55 s |
 | **Unidad única** | **Conquistador** — 80 PV · 60c+60o · Edad 2 · *Salva* (CD 12 s): 3 disparos de 6 daño c/u, ignora armadura |
-| **Bonificadores** | HP espadachín ×1.15 · Rango torres/castillos ×1.10 · Tecnología gratis en Herrería por avance de edad |
+| **Bonificadores** | HP espadachín ×1.15 · Rango torres/castillos ×1.10 *(declarado en el .tres, aún sin efecto en el código)* · Tecnología gratis en Herrería por avance de edad |
 | **Restricciones** | Ninguna |
 
 **Estrategia:** Civilización completa sin restricciones. Muy poderosa en partidas largas gracias a las tecnologías gratuitas.
