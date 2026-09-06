@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Design Document — Calima: Flames of the Atlantic · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="game-design-document-calima-flames-of-the-atlantic">Game Design Document — Calima: Flames of the Atlantic</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#vision">Vision</a></li>
+<li><a href="#setting">Setting</a></li>
+<li><a href="#core-loop">Core Loop</a></li>
+<li><a href="#resources">Resources</a></li>
+<li><a href="#age-progression">Age Progression</a></li>
+<li><a href="#civilizations">Civilizations</a></li>
+<li><a href="#heroes">Heroes</a></li>
+<li><a href="#map-types">Map Types</a></li>
+<li><a href="#terrain-tiles">Terrain Tiles</a><ul>
+<li><a href="#impassability-enforcement">Impassability enforcement</a></li>
+</ul>
+</li>
+<li><a href="#naval-units">Naval Units</a><ul>
+<li><a href="#dock">Dock</a></li>
+<li><a href="#naval-unit-roster">Naval unit roster</a></li>
+</ul>
+</li>
+<li><a href="#siege-units">Siege Units</a></li>
+<li><a href="#technology-tree">Technology Tree</a><ul>
+<li><a href="#blacksmith-13-technologies">Blacksmith (13 technologies)</a></li>
+<li><a href="#university-3-technologies">University (3 technologies)</a></li>
+<li><a href="#temple-3-technologies">Temple (3 technologies)</a></li>
+<li><a href="#camp-economy-lines-9-technologies">Camp economy lines (9 technologies)</a></li>
+<li><a href="#unit-upgrade-technologies-4">Unit Upgrade Technologies (4)</a></li>
+<li><a href="#civilization-instant-tech-grants">Civilization Instant Tech Grants</a></li>
+</ul>
+</li>
+<li><a href="#weather-system">Weather System</a><ul>
+<li><a href="#weather-types">Weather Types</a></li>
+<li><a href="#weather-phases">Weather Phases</a></li>
+<li><a href="#weather-frequency-settings">Weather Frequency Settings</a></li>
+<li><a href="#visual-effects">Visual Effects</a></li>
+</ul>
+</li>
+<li><a href="#victory-conditions">Victory Conditions</a></li>
+<li><a href="#match-configuration-lobby">Match Configuration (Lobby)</a></li>
+<li><a href="#milestones">Milestones</a><ul>
+<li><a href="#current-content-totals">Current content totals</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+<h2 id="vision">Vision</h2>
+<p>A real-time strategy game inspired by Age of Empires II, set in the Atlantic archipelago of the Canary Islands across the 15th and 16th centuries. The player commands one of eight civilizations — from ancient seafarers and native islanders to European conquerors — across volcanic islands, ocean straits, and desert coasts.</p>
+<p>The shipped scope covers single-player skirmish against up to 3 AI rivals (with teams), a four-mission campaign with a tutorial prologue (<em>The Flames of Tamarán</em>), LAN/Internet multiplayer for up to 4 players (host-authoritative, with reconnection and save/resume), and a replay system with video export.</p>
+<hr />
+<h2 id="setting">Setting</h2>
+<p>The Canary Islands (Islas Canarias) sit in the eastern Atlantic, 100 km off the coast of northwest Africa. They were the first Atlantic archipelago to be contested between European powers and indigenous populations, making them a natural crossroads for the age of exploration.</p>
+<p>The game draws from three historical and mythological layers:</p>
+<ul>
+<li><strong>Ancient</strong> — Phoenician and Carthaginian expeditions documented the islands centuries before the medieval conquest. The Atlantis myth, placed by Greek writers near the Pillars of Hercules, gives license for one fantastical civilization.</li>
+<li><strong>Native</strong> — Three distinct native civilizations (Guanches, Canarii, Mahos) inhabited different islands, each with unique terrain advantages and cultures.</li>
+<li><strong>European</strong> — Three invading powers (Francos, Britanos, Castellanos) arrived at different moments with different motivations: colonization, piracy, and conquest.</li>
+</ul>
+<hr />
+<h2 id="core-loop">Core Loop</h2>
+<ol>
+<li>Gather resources (Food, Wood, Gold, Stone)</li>
+<li>Build a base and train an army</li>
+<li>Research technologies to upgrade units</li>
+<li>Advance through the Ages</li>
+<li>Defeat the enemy</li>
+</ol>
+<hr />
+<h2 id="resources">Resources</h2>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Sources</th>
+<th>Primary use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Food</strong></td>
+<td>Farms, hunting, fishing (ocean), foraging, herded livestock (a Presa Canario dog, trained at the Mill, leads animals to the nearest own drop-off — enemy sheep convert on the way)</td>
+<td>Unit training</td>
+</tr>
+<tr>
+<td><strong>Food (Fish)</strong></td>
+<td>Ocean fish nodes (<code>FOOD_FISH</code>); gathered by Fishing Boats</td>
+<td>Unit training — same stockpile as Food</td>
+</tr>
+<tr>
+<td><strong>Wood</strong></td>
+<td>Trees, Laurisilva forest</td>
+<td>Buildings, ships, archers</td>
+</tr>
+<tr>
+<td><strong>Gold</strong></td>
+<td>Gold mines, trade, hero abilities</td>
+<td>Military upgrades, mercenaries</td>
+</tr>
+<tr>
+<td><strong>Stone</strong></td>
+<td>Quarries, volcanic deposits near calderas</td>
+<td>Castles, towers, walls</td>
+</tr>
+</tbody>
+</table>
+<p><code>FOOD_FISH</code> is a distinct <code>ResourceNode.ResourceType</code> enum value. Fish nodes spawn in the ocean between the two islands on Islands-type maps. Fishing Boats are the only unit that can gather from them.</p>
+<hr />
+<h2 id="age-progression">Age Progression</h2>
+<table>
+<thead>
+<tr>
+<th>Age</th>
+<th>Name</th>
+<th>Unlocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><strong>Dark Age</strong></td>
+<td>Town Center, Houses, basic economy</td>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>Feudal Age</strong></td>
+<td>Barracks, Archery Range, Blacksmith, Stable (HeavyScout), Market (Fenicios: from Dark Age)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Castle Age</strong></td>
+<td>Castle, University, Siege Workshop, Stable (Knight), additional Town Center (buildable), unique units, advanced tech</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Imperial Age</strong></td>
+<td>Full tech tree, elite unique units</td>
+</tr>
+</tbody>
+</table>
+<p>Advancing requires spending Food and Gold at the Town Center. Each civ may have bonuses that alter advancement cost or speed.</p>
+<hr />
+<h2 id="civilizations">Civilizations</h2>
+<p>Eight civilizations across three historical layers. See <code>civilizations_en.md</code> / <code>civilizations_es.md</code> for full details.</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Civilization</th>
+<th>Identity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ancient</td>
+<td><strong>Atlantes</strong></td>
+<td>Naval masters, coastal builders, fog of war (+50 % vision along their shores, harder to spot in Sea Fog), amphibious Tidecaller that walks into the sea</td>
+</tr>
+<tr>
+<td>Ancient</td>
+<td><strong>Fenicios</strong></td>
+<td>Commerce, mercenaries, trade routes</td>
+</tr>
+<tr>
+<td>Native</td>
+<td><strong>Guanches</strong></td>
+<td>Volcanic terrain, durable infantry, stone fortresses</td>
+</tr>
+<tr>
+<td>Native</td>
+<td><strong>Canarii</strong></td>
+<td>Economy, balanced archers, elevated terrain bonus</td>
+</tr>
+<tr>
+<td>Native</td>
+<td><strong>Mahos</strong></td>
+<td>Speed, desert terrain, minimal wood dependency</td>
+</tr>
+<tr>
+<td>Invader</td>
+<td><strong>Francos</strong></td>
+<td>Fast advancement, organized cavalry, early pressure</td>
+</tr>
+<tr>
+<td>Invader</td>
+<td><strong>Britanos</strong></td>
+<td>Naval power, long-range archers, raiding economy</td>
+</tr>
+<tr>
+<td>Invader</td>
+<td><strong>Castellanos</strong></td>
+<td>Superior late-game technology, heavy infantry, towers</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="heroes">Heroes</h2>
+<p>Each civilization has a <strong>hero pair</strong> — one male and one female named hero (16 total), selected in the lobby (<code>MatchConfig.hero_gender</code>: Random / Male / Female). Heroes are unique — they spawn once at game start and carry a special ability. See <code>civilizations_en.md</code> and <code>heroines-design.md</code> for each hero's name and ability.</p>
+<p>Hero rules:
+- Spawn near the Town Center at match start
+- Cannot be trained; if killed, the hero respawns at the Town Center after 120 s (<code>HERO_RESPAWN_TIME</code>) — except in Regicide, where hero death is immediate defeat
+- Stats equivalent to a Castle Age unique unit
+- One special ability with a 45–120 s cooldown (audited: <code>tests/unit/test_hero_abilities.gd</code> casts all 16)</p>
+<hr />
+<h2 id="map-types">Map Types</h2>
+<table>
+<thead>
+<tr>
+<th>Map</th>
+<th>Description</th>
+<th>Strategic focus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Plains</strong></td>
+<td>Flat land, no special terrain</td>
+<td>Beginner-friendly</td>
+</tr>
+<tr>
+<td><strong>Standard</strong></td>
+<td>Land map with varied terrain</td>
+<td>General play</td>
+</tr>
+<tr>
+<td><strong>Volcanic Coast</strong></td>
+<td>Coastal land with impassable caldera at center</td>
+<td>Two land corridors, Guanches advantaged</td>
+</tr>
+<tr>
+<td><strong>Desert Coast</strong></td>
+<td>Arid Lanzarote-style map, ocean to the west</td>
+<td>Wood-scarce, Mahos advantaged</td>
+</tr>
+<tr>
+<td><strong>Islands</strong></td>
+<td>Two islands separated by ocean</td>
+<td>Naval required; Dock, Fishing Boats, Transport Ships, War Galleys essential</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="terrain-tiles">Terrain Tiles</h2>
+<table>
+<thead>
+<tr>
+<th>Tile</th>
+<th>Movement</th>
+<th>Buildable</th>
+<th>Special effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grass</td>
+<td>Normal</td>
+<td>Yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Sand / Dune</td>
+<td>-20% infantry (heavy)</td>
+<td>Yes</td>
+<td>Mahos immune to penalty</td>
+</tr>
+<tr>
+<td>Malpaís (volcanic rock)</td>
+<td>Impassable (carved out of the navmesh)</td>
+<td>No</td>
+<td>Guanches traverse it via the layer-8 malpaís mesh</td>
+</tr>
+<tr>
+<td>Lava-cooled black sand</td>
+<td>Normal</td>
+<td>No</td>
+<td>Coastal/decorative</td>
+</tr>
+<tr>
+<td>Laurisilva (dense forest)</td>
+<td>-35%</td>
+<td>No</td>
+<td>High wood yield (dense 260-wood forests), vision −30% under the canopy</td>
+</tr>
+<tr>
+<td>Risco (cliff edge)</td>
+<td>No passage</td>
+<td>No</td>
+<td>Ranged units within 48 px of the cliff edge: +2 attack range</td>
+</tr>
+<tr>
+<td>Shallow water (ocean ≤120 px from coast)</td>
+<td>Land units blocked; amphibious full speed</td>
+<td>No</td>
+<td>Only the Atlantes Tidecaller wades — the rest of their army stays dry</td>
+</tr>
+<tr>
+<td>Ocean</td>
+<td>Land units blocked</td>
+<td>No</td>
+<td>Ships and amphibious units; the Tidecaller swims at 60% speed (<code>deep_water_speed</code>); fishing available</td>
+</tr>
+<tr>
+<td>Caldera (active)</td>
+<td>Impassable</td>
+<td>No</td>
+<td>Volcanic Ash weather strikes within caldera radius + 800 px</td>
+</tr>
+</tbody>
+</table>
+<h3 id="impassability-enforcement">Impassability enforcement</h3>
+<p><code>TerrainManager.is_impassable_for(world_pos, civ_id, amphibious)</code> is the runtime gate. All unit movement orders resolve the final destination through <code>TerrainManager.nearest_passable</code> before assigning a nav agent target. If a requested position is inside an impassable zone the unit is redirected to the nearest reachable tile via a 30-ring radial search (24 px per ring). The <code>amphibious</code> argument comes from the unit itself (<code>UnitBase.is_amphibious()</code>), so water is opened per unit and not per civilization: an Atlantes militia is refused the sea, its Tidecaller is not.</p>
+<p>NavMesh carving (<code>NavMeshBuilder.build</code>) backs this up at the mesh level: malpaís, risco, and caldera zones are carved out of the baked meshes (<code>zone_obstructions</code>), so paths route around them; a fourth mesh (layer 8) leaves malpaís walkable for traversal civs. On Islands maps the nav polygon is replaced with per-island land polygons so the baked mesh never extends over ocean. Amphibious units walk the layer-4 mesh that spans land and water.</p>
+<hr />
+<h2 id="naval-units">Naval Units</h2>
+<p>Naval units extend <code>ShipBase</code>, which extends <code>UnitBase</code>. Ocean terrain is passable for all ships.</p>
+<h3 id="dock">Dock</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cost</td>
+<td>150 Wood</td>
+</tr>
+<tr>
+<td>HP</td>
+<td>1,800</td>
+</tr>
+<tr>
+<td>Build time</td>
+<td>45 s</td>
+</tr>
+<tr>
+<td>Train queue cap</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Placement constraint</td>
+<td>Must be adjacent to water (coastal placement only)</td>
+</tr>
+<tr>
+<td>HUD key</td>
+<td>D</td>
+</tr>
+</tbody>
+</table>
+<p>The Dock is the sole production building for naval units. Fishing Boats automatically drop off fish resources at the nearest friendly Dock.</p>
+<h3 id="naval-unit-roster">Naval unit roster</h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Age</th>
+<th>Cost</th>
+<th>HP</th>
+<th>Attack</th>
+<th>Range</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Fishing Boat</strong></td>
+<td>Dark</td>
+<td>75W</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Gathers FOOD_FISH from ocean nodes; returns food to Dock; can build Fish Traps</td>
+</tr>
+<tr>
+<td><strong>Transport Ship</strong></td>
+<td>Feudal</td>
+<td>125W</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Carries up to 8 land units (villagers included); ships and fishing boats may not board; unloads on dry land</td>
+</tr>
+<tr>
+<td><strong>War Galley</strong></td>
+<td>Feudal</td>
+<td>75W + 35G</td>
+<td>120</td>
+<td>6</td>
+<td>5.5</td>
+<td>Ranged naval combat</td>
+</tr>
+</tbody>
+</table>
+<h2 id="siege-units">Siege Units</h2>
+<p>Produced at the <strong>Siege Workshop</strong> (Castle Age, 200 Wood).</p>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Age</th>
+<th>Cost</th>
+<th>HP</th>
+<th>Attack</th>
+<th>Range</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Battering Ram</strong></td>
+<td>Castle</td>
+<td>160W</td>
+<td>180</td>
+<td>40 (x3 vs buildings)</td>
+<td>Melee</td>
+<td>Auto-attacks buildings only; 0.2x damage vs units</td>
+</tr>
+<tr>
+<td><strong>Mangonel</strong></td>
+<td>Castle</td>
+<td>160W + 135G</td>
+<td>90</td>
+<td>35</td>
+<td>7</td>
+<td>AoE 72 px splash; minimum range (35 % of max)</td>
+</tr>
+<tr>
+<td><strong>Trebuchet</strong></td>
+<td>Imperial</td>
+<td>200W + 200G</td>
+<td>70</td>
+<td>200</td>
+<td>12</td>
+<td>AoE 48 px splash; must deploy (3 s) before firing; auto-undeploys on move orders; minimum range (40 % of max)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="technology-tree">Technology Tree</h2>
+<p>32 technologies across 8 research buildings (Blacksmith, University, Temple, Barracks, Stable, Lumber Camp, Mining Camp, Mill). Technologies provide permanent stat bonuses to units/buildings. Each research building runs one active tech plus a waiting queue — up to 5 techs in flight per building, paid at enqueue and fully refunded on cancel.</p>
+<h3 id="blacksmith-13-technologies">Blacksmith (13 technologies)</h3>
+<table>
+<thead>
+<tr>
+<th>Tech</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Loom</strong></td>
+<td>Dark</td>
+<td>50f</td>
+<td>25s</td>
+<td>Villager HP ×1.15</td>
+</tr>
+<tr>
+<td><strong>Forging</strong></td>
+<td>Feudal</td>
+<td>75f</td>
+<td>40s</td>
+<td>Unit attack ×1.15</td>
+</tr>
+<tr>
+<td><strong>Scale Barding</strong></td>
+<td>Feudal</td>
+<td>100f+50g</td>
+<td>40s</td>
+<td>Unit melee armour +1</td>
+</tr>
+<tr>
+<td><strong>Padded Archer Armour</strong></td>
+<td>Feudal</td>
+<td>100f</td>
+<td>35s</td>
+<td>Archer pierce armour +1</td>
+</tr>
+<tr>
+<td><strong>Fletching</strong></td>
+<td>Feudal</td>
+<td>100g</td>
+<td>35s</td>
+<td>Archer attack ×1.20</td>
+</tr>
+<tr>
+<td><strong>Shipwright</strong></td>
+<td>Feudal</td>
+<td>200w+60g</td>
+<td>40s</td>
+<td>Ship HP ×1.15, cost −15%</td>
+</tr>
+<tr>
+<td><strong>Canarian Cart</strong> (<code>carreta_canaria</code>)</td>
+<td>Feudal</td>
+<td>150f+75w</td>
+<td>40s</td>
+<td>Villager carry capacity +25% (farms deposit instantly, unaffected)</td>
+</tr>
+<tr>
+<td><strong>Iron Casting</strong></td>
+<td>Castle</td>
+<td>150g</td>
+<td>55s</td>
+<td>Unit attack ×1.20 (requires Forging)</td>
+</tr>
+<tr>
+<td><strong>Island Handcart</strong> (<code>carreton_isleno</code>)</td>
+<td>Castle</td>
+<td>200f+125w</td>
+<td>55s</td>
+<td>Villager carry capacity +25% again (requires Canarian Cart)</td>
+</tr>
+<tr>
+<td><strong>Chain Barding</strong></td>
+<td>Castle</td>
+<td>200f+100g</td>
+<td>45s</td>
+<td>Unit melee armour +1 (requires Scale Barding)</td>
+</tr>
+<tr>
+<td><strong>Bodkin Arrow</strong></td>
+<td>Castle</td>
+<td>100f+150g</td>
+<td>35s</td>
+<td>Archer attack ×1.20, range ×1.10 (requires Fletching)</td>
+</tr>
+<tr>
+<td><strong>Blast Furnace</strong></td>
+<td>Imperial</td>
+<td>275f+225g</td>
+<td>50s</td>
+<td>Unit attack ×1.15</td>
+</tr>
+<tr>
+<td><strong>Plate Barding</strong></td>
+<td>Imperial</td>
+<td>300f+200g</td>
+<td>60s</td>
+<td>Unit melee armour +1 (requires Chain Barding)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="university-3-technologies">University (3 technologies)</h3>
+<p>Castle Age building (200 wood). Researches advanced military upgrades.</p>
+<table>
+<thead>
+<tr>
+<th>Tech</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Siege Engineering</strong></td>
+<td>Castle</td>
+<td>200g</td>
+<td>60s</td>
+<td>Damage vs buildings ×1.20</td>
+</tr>
+<tr>
+<td><strong>Ballistics</strong></td>
+<td>Castle</td>
+<td>175g</td>
+<td>50s</td>
+<td>Archer attack speed ×1.20 (requires Fletching)</td>
+</tr>
+<tr>
+<td><strong>Chemistry</strong></td>
+<td>Imperial</td>
+<td>300g</td>
+<td>70s</td>
+<td>Archer attack ×1.15 (requires Ballistics)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="temple-3-technologies">Temple (3 technologies)</h3>
+<p>Castle Age building (175 wood). Researches morale and HP buffs. The Temple is also the field hospital — garrisoned units (capacity 5) heal 4 HP/s, heroes at half rate — and trains the <strong>Harimaguada</strong> priestess-healer (85 Food + 25 Gold, Castle Age): always female, never fights, mends allies at 5 HP/s in touch range and auto-triages nearby wounded while idle.</p>
+<table>
+<thead>
+<tr>
+<th>Tech</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Fervor</strong></td>
+<td>Castle</td>
+<td>150g</td>
+<td>50s</td>
+<td>Unit move speed ×1.10</td>
+</tr>
+<tr>
+<td><strong>Sanctity</strong></td>
+<td>Castle</td>
+<td>100f</td>
+<td>40s</td>
+<td>Swordsman HP ×1.15</td>
+</tr>
+<tr>
+<td><strong>Atonement</strong></td>
+<td>Imperial</td>
+<td>150f+100g</td>
+<td>55s</td>
+<td>Cavalry HP ×1.20 (requires Sanctity)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="camp-economy-lines-9-technologies">Camp economy lines (9 technologies)</h3>
+<p>Each drop-off camp researches its own three-step line — one tech per age from Feudal, chained prerequisites. Every step multiplies that resource's villager gather rate by 1.15 and its carry basket by 1.10 (effect keys <code>villager_&lt;res&gt;_gather_rate</code> / <code>villager_&lt;res&gt;_carry</code>, stacked on the Blacksmith carts).</p>
+<table>
+<thead>
+<tr>
+<th>Building (resource)</th>
+<th>Feudal</th>
+<th>Castle</th>
+<th>Imperial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Lumber Camp</strong> (wood)</td>
+<td>Double-Bit Axe — 100f+50w, 25s</td>
+<td>Bow Saw — 150f+100w, 40s</td>
+<td>Two-Man Saw — 300f+200w, 60s</td>
+</tr>
+<tr>
+<td><strong>Mining Camp</strong> (gold + stone)</td>
+<td>Reinforced Picks — 100f+75w, 25s</td>
+<td>Shaft Mining — 175f+100w, 40s</td>
+<td>Deep Galleries — 300f+150w, 60s</td>
+</tr>
+<tr>
+<td><strong>Mill</strong> (food)</td>
+<td>Horse Collar — 75f+75w, 25s</td>
+<td>Heavy Plow — 125f+125w, 40s</td>
+<td>Crop Rotation — 250f+250w, 60s</td>
+</tr>
+</tbody>
+</table>
+<h3 id="unit-upgrade-technologies-4">Unit Upgrade Technologies (4)</h3>
+<p>Researched at the building that trains the unit. Transforms all existing units of that type immediately (HP scaled proportionally), and the building trains the new unit going forward.</p>
+<table>
+<thead>
+<tr>
+<th>Tech</th>
+<th>Building</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>Transforms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Man-at-Arms</strong></td>
+<td>Barracks</td>
+<td>Feudal</td>
+<td>100f+40g</td>
+<td>45s</td>
+<td>Militia → Man-at-Arms</td>
+</tr>
+<tr>
+<td><strong>Long Swordsman</strong></td>
+<td>Barracks</td>
+<td>Castle</td>
+<td>200f+60g</td>
+<td>45s</td>
+<td>Man-at-Arms → Long Swordsman</td>
+</tr>
+<tr>
+<td><strong>Heavy Scout</strong></td>
+<td>Stable</td>
+<td>Feudal</td>
+<td>150f+75g</td>
+<td>45s</td>
+<td>Scout → Heavy Scout</td>
+</tr>
+<tr>
+<td><strong>Knight</strong></td>
+<td>Stable</td>
+<td>Castle</td>
+<td>200f+100g</td>
+<td>45s</td>
+<td>Heavy Scout → Knight</td>
+</tr>
+</tbody>
+</table>
+<h3 id="civilization-instant-tech-grants">Civilization Instant Tech Grants</h3>
+<p><strong>Castellanos</strong>: Receive one free Blacksmith technology each time they advance an Age. The game automatically grants the oldest unresearched Blacksmith tech available at the new Age (respecting prerequisites). Example: advancing to Feudal grants Loom or Forging for free.</p>
+<hr />
+<h2 id="weather-system">Weather System</h2>
+<p>Procedural weather events affect gameplay with stat modifiers and visual effects. Enabled/disabled and frequency configurable in lobby.</p>
+<h3 id="weather-types">Weather Types</h3>
+<table>
+<thead>
+<tr>
+<th>Weather</th>
+<th>Map Restriction</th>
+<th>Duration (peak)</th>
+<th>Effects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calima</strong> (Saharan dust)</td>
+<td>All maps</td>
+<td>70-130s</td>
+<td>Vision −40%, gather −20% (wood/food), move speed −15%</td>
+</tr>
+<tr>
+<td><strong>Atlantic Storm</strong></td>
+<td>All maps</td>
+<td>40-90s</td>
+<td>Naval speed −30%, fishing −50%, projectile drift (30 px cross-wind)</td>
+</tr>
+<tr>
+<td><strong>Sea Fog</strong></td>
+<td>Coastal maps only</td>
+<td>60-120s</td>
+<td>Coastal vision −60%, unit cloaking when in coastal zone (intensity ≥0.5) — broken at close range (180 px, 90 px for Atlantes) or by attacking (3 s)</td>
+</tr>
+<tr>
+<td><strong>Trade Winds</strong></td>
+<td>All maps</td>
+<td>100-160s</td>
+<td>Naval speed ±20% (alignment with wind), projectile drift (40 px with wind)</td>
+</tr>
+<tr>
+<td><strong>Volcanic Ash</strong></td>
+<td>Volcanic Coast</td>
+<td>40-80s</td>
+<td>Vision −50%, gather −30%, building HP drain (2/s), around calderas (caldera radius + 800 px)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="weather-phases">Weather Phases</h3>
+<p>Each weather event has 3 phases:
+1. <strong>Ramp-in</strong> (10 s): intensity 0.0 → 1.0
+2. <strong>Peak</strong> (duration above): intensity = 1.0
+3. <strong>Ramp-out</strong> (10 s): intensity 1.0 → 0.0
+4. <strong>Clear</strong> (60-120 s): no weather, intensity = 0.0</p>
+<h3 id="weather-frequency-settings">Weather Frequency Settings</h3>
+<ul>
+<li><strong>Off</strong>: No weather events</li>
+<li><strong>Normal</strong>: Clear duration 60-120 s (baseline)</li>
+<li><strong>Frequent</strong>: Clear duration ×0.6 (36-72 s)</li>
+<li><strong>Extreme</strong>: Clear duration ×0.3 (18-36 s)</li>
+</ul>
+<h3 id="visual-effects">Visual Effects</h3>
+<p><code>WeatherOverlay</code> renders screen-space effects:
+- <strong>Rain</strong> (Atlantic Storm): falling particles
+- <strong>Dust</strong> (Calima): horizontal particles
+- <strong>Ash</strong> (Volcanic Ash): falling grey particles
+- <strong>Wind</strong> (Trade Winds): horizontal particles
+- <strong>Fog vignette</strong> (Sea Fog): screen-edge darkening</p>
+<hr />
+<h2 id="victory-conditions">Victory Conditions</h2>
+<p>Three victory modes are implemented, selectable in the lobby:</p>
+<ul>
+<li><strong>Conquest</strong>: A player is out when they have zero units and zero production buildings; the last mutually allied side standing wins.</li>
+<li><strong>Regicide</strong>: Each player starts with a Hero. Hero death eliminates that player instantly (no respawn in this mode).</li>
+<li><strong>Wonder</strong>: Build a Wonder (Imperial Age, costs 2500 wood + 2500 food + 2500 stone + 5000 gold) and defend it for <code>WONDER_COUNTDOWN_SEC</code> (240 s = 4 minutes). Destroying the Wonder cancels its countdown; the match continues.</li>
+</ul>
+<p><strong>Elimination and spectating</strong>: elimination emits <code>EventBus.player_eliminated</code>. If the local player is eliminated (or surrenders) while hostile sides remain, the match plays on — the defeat panel offers "View map" and the player spectates with orders locked (<code>GameWorld.local_player_defeated</code>); the definitive game-over rebuilds the panel. Teams: <code>GameManager.are_allied</code> is the single choke point for the win check.</p>
+<hr />
+<h2 id="match-configuration-lobby">Match Configuration (Lobby)</h2>
+<p>Players configure a skirmish before starting:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Map Size</td>
+<td>Small / Medium / Large</td>
+</tr>
+<tr>
+<td>Map Type</td>
+<td>Plains / Standard / Volcanic Coast / Desert Coast / Islands</td>
+</tr>
+<tr>
+<td>Starting Resources</td>
+<td>Scarce / Normal / Abundant / Full Combat (all 9999) / Tutorial (320 wood only)</td>
+</tr>
+<tr>
+<td>Player Civilization</td>
+<td>Choose from 8 civs (Guanches, Canarii, Mahos, Franks, Britons, Castellanos, Atlantes, Fenicios)</td>
+</tr>
+<tr>
+<td>Rival Count</td>
+<td>1-3 AI opponents (multiplayer: up to 4 players total, remaining seats Open / AI / Closed)</td>
+</tr>
+<tr>
+<td>Rival Civilizations</td>
+<td>Choose civ for each AI</td>
+</tr>
+<tr>
+<td>Teams</td>
+<td>Players and rivals assignable to teams 1-4 (<code>MatchConfig.player_teams</code>)</td>
+</tr>
+<tr>
+<td>Starting Age</td>
+<td>Dark / Feudal / Castle / Imperial</td>
+</tr>
+<tr>
+<td>Victory Condition</td>
+<td>Conquest / Regicide / Wonder</td>
+</tr>
+<tr>
+<td>Weather Enabled</td>
+<td>On / Off</td>
+</tr>
+<tr>
+<td>Weather Frequency</td>
+<td>Off / Normal / Frequent / Extreme</td>
+</tr>
+<tr>
+<td>Hero Gender</td>
+<td>Random / Male / Female</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="milestones">Milestones</h2>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Description</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>Playable map with villagers gathering resources</td>
+<td>✅ Done</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Town Center, Barracks, walls, basic military, fog of war</td>
+<td>✅ Done</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Age progression (4 ages), tech tree (8 techs), new units (Archer, Pikeman)</td>
+<td>✅ Done</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>Naval gameplay (Dock, ships, Islands map, AI naval assault)</td>
+<td>✅ Done</td>
+</tr>
+<tr>
+<td>M5</td>
+<td><strong>Production-ready single-player</strong>: 8 civs with unique units/heroes, weather system, save/load, 3 victory conditions, polish &amp; bug fixes</td>
+<td>✅ Done</td>
+</tr>
+<tr>
+<td>M6</td>
+<td>Custom terrain (malpaís, dune, risco, laurisilva) with civ traversal bonuses and gameplay effects (laurisilva vision/wood, risco vantage, shallow water)</td>
+<td>✅ Done</td>
+</tr>
+<tr>
+<td>M7</td>
+<td>Multiplayer: LAN/Internet host-authoritative sessions, unified lobby, state replication, robustness, chat, teams, reconnection, save/resume, Steam transport prototype</td>
+<td>✅ Done</td>
+</tr>
+<tr>
+<td>M8</td>
+<td>Campaign mode: <em>The Flames of Tamarán</em> — tutorial prologue + 4 scripted missions</td>
+<td>✅ Done</td>
+</tr>
+<tr>
+<td>M9</td>
+<td>Replays &amp; creator kit: match recording, timeline playback, cinematic mode, video/clip export</td>
+<td>✅ Done</td>
+</tr>
+<tr>
+<td>M10</td>
+<td>Lockstep determinism (movement off Godot physics), live Steam AppID test, balance pass</td>
+<td>📋 Planned</td>
+</tr>
+</tbody>
+</table>
+<h3 id="current-content-totals">Current content totals</h3>
+<p>Verified against <code>project/resources/</code> and <code>project/scenes/</code> (2026-09-06):</p>
+<ul>
+<li>8 civilizations (<code>resources/civilizations/*.tres</code>)</li>
+<li>26 playable unit types (25 regular — 8 of them civ-unique — plus the hero class) and 16 named heroes (2 per civ, <code>resources/units/hero_*.tres</code>); 2 animal types</li>
+<li>20 building types (<code>resources/buildings/*.tres</code>)</li>
+<li>32 technologies (<code>resources/technologies/*.tres</code>; TechManager loads the directory)</li>
+<li>5 map types, 3 sizes, 4 resource modes, 3 victory conditions, 5 weather types, 99 save slots</li>
+<li>Campaign: tutorial prologue + 4 missions (<code>CampaignData.MISSIONS</code>)</li>
+</ul>
+<footer class="site">Generated from <code>docs/design/game-design-document.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

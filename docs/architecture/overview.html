@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture Overview · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="architecture-overview">Architecture Overview</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#high-level-design">High-Level Design</a></li>
+<li><a href="#core-systems">Core Systems</a><ul>
+<li><a href="#autoload-singletons">Autoload Singletons</a></li>
+<li><a href="#unit-classes-26-playable-types-animals">Unit Classes (26 playable types + animals)</a></li>
+<li><a href="#building-classes-20-building-types">Building Classes (20 building types)</a></li>
+<li><a href="#ai-systems">AI Systems</a></li>
+<li><a href="#ui-systems">UI Systems</a></li>
+<li><a href="#multiplayer-replay">Multiplayer &amp; Replay</a></li>
+<li><a href="#campaign">Campaign</a></li>
+</ul>
+</li>
+<li><a href="#autoloads-registration">Autoloads Registration</a></li>
+<li><a href="#data-layer">Data Layer</a></li>
+<li><a href="#signal-flow">Signal Flow</a></li>
+</ul>
+</div>
+</nav>
+<h2 id="high-level-design">High-Level Design</h2>
+<p>Calima: Flames of the Atlantic is a 2D real-time strategy game built in Godot 4 inspired by Age of Empires II. It follows a data-driven, signal-based architecture to keep systems loosely coupled.</p>
+<h2 id="core-systems">Core Systems</h2>
+<h3 id="autoload-singletons">Autoload Singletons</h3>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Script</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GameManager</td>
+<td><code>scripts/core/game_manager.gd</code></td>
+<td>Global game state, pause, game-over, victory conditions (Conquest/Regicide/Wonder)</td>
+</tr>
+<tr>
+<td>EventBus</td>
+<td><code>scripts/core/event_bus.gd</code></td>
+<td>Decoupled signal dispatch for all cross-system communication</td>
+</tr>
+<tr>
+<td>ResourceManager</td>
+<td><code>scripts/core/resource_manager.gd</code></td>
+<td>Per-player resource stockpiles (food/wood/gold/stone), spatial resource cache</td>
+</tr>
+<tr>
+<td>SelectionManager</td>
+<td><code>scripts/core/selection_manager.gd</code></td>
+<td>Unit/building selection (40 max), control groups (1-9)</td>
+</tr>
+<tr>
+<td>AgeManager</td>
+<td><code>scripts/core/age_manager.gd</code></td>
+<td>Per-player Age tracking (Dark/Feudal/Castle/Imperial), age-advance timers</td>
+</tr>
+<tr>
+<td>PopulationManager</td>
+<td><code>scripts/core/population_manager.gd</code></td>
+<td>Per-player population current/cap tracking</td>
+</tr>
+<tr>
+<td>CivBonusManager</td>
+<td><code>scripts/core/civ_bonus_manager.gd</code></td>
+<td>Per-player multipliers for unit stats (HP, attack, speed, armor), gather rates, age-up costs, attack speed, archer range bonuses per age</td>
+</tr>
+<tr>
+<td>TechManager</td>
+<td><code>scripts/core/tech_manager.gd</code></td>
+<td>Research queue (up to 5 in flight per building, paid at enqueue, refunded on cancel), applies 32 technology effects (loaded from <code>resources/technologies/</code>), instant tech grants (civ bonuses)</td>
+</tr>
+<tr>
+<td>TerrainManager</td>
+<td><code>scripts/core/terrain_manager.gd</code></td>
+<td>Impassability queries, nearest-passable search, coastal zone detection</td>
+</tr>
+<tr>
+<td>WeatherManager</td>
+<td><code>scripts/core/weather_manager.gd</code></td>
+<td>Procedural weather state machine (5 types); stat-modifier query API (vision, speed, gather, drift, damage)</td>
+</tr>
+<tr>
+<td>AudioManager</td>
+<td><code>scripts/core/audio_manager.gd</code></td>
+<td>Spatial audio playback with distance attenuation; ALL audio (sfx, per-civ formant voices, music) is procedurally synthesized — see <a href="audio_synthesis.html">audio_synthesis.md</a></td>
+</tr>
+<tr>
+<td>SaveManager</td>
+<td><code>scripts/core/save_manager.gd</code></td>
+<td>Complete game save/load, 99 JSON slots with metadata UI; schema v2 (read-enforced: newer refused, older defaulted) persists in-flight research, garrisons, unit stances and weather</td>
+</tr>
+<tr>
+<td>GameSettings</td>
+<td><code>scripts/core/game_settings.gd</code></td>
+<td>Difficulty, master volume, persisted settings</td>
+</tr>
+<tr>
+<td>MatchConfig</td>
+<td><code>scripts/core/match_config.gd</code></td>
+<td>Lobby settings (map size, resources, civs, victory mode, weather frequency, teams, hero gender, campaign mission, replay path)</td>
+</tr>
+<tr>
+<td>EntityRegistry</td>
+<td><code>scripts/core/entity_registry.gd</code></td>
+<td>Stable per-match numeric IDs for units/buildings/resource nodes (<code>id_of</code>/<code>resolve</code>)</td>
+</tr>
+<tr>
+<td>CommandBus</td>
+<td><code>scripts/core/command_bus.gd</code></td>
+<td>Single entry point for simulation-mutating intents; tick-stamped command log (replay/multiplayer foundation)</td>
+</tr>
+<tr>
+<td>MatchRng</td>
+<td><code>scripts/core/match_rng.gd</code></td>
+<td>The single seeded RNG stream for all simulation randomness</td>
+</tr>
+<tr>
+<td>NetworkSession</td>
+<td><code>scripts/multiplayer/network_session.gd</code></td>
+<td>Host-authoritative LAN/Internet session (ENet + Steam prototype): lobby roster, command pipe, reconnection, save/resume</td>
+</tr>
+<tr>
+<td>CampaignManager</td>
+<td><code>scripts/campaign/campaign_manager.gd</code></td>
+<td>Campaign progress (chain-unlock, <code>user://campaign.cfg</code>), mission launch</td>
+</tr>
+</tbody>
+</table>
+<h3 id="unit-classes-26-playable-types-animals">Unit Classes (26 playable types + animals)</h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Script</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UnitBase</td>
+<td><code>scripts/units/unit_base.gd</code></td>
+<td>Base class: Area2D range detection, attack-move, stuck detection, body animation; <code>_step_enters_sea()</code> vetoes steps entering ocean at the off-mesh movement paths (RVO safe_velocity, combat gap-closer)</td>
+</tr>
+<tr>
+<td>Villager</td>
+<td><code>scripts/units/villager.gd</code></td>
+<td>Gather, build, repair; work/walk animation differentiation</td>
+</tr>
+<tr>
+<td>Harimaguada</td>
+<td><code>scripts/units/healer_unit.gd</code></td>
+<td>Priestess-healer trained at the Temple (Castle Age, 85F+25G); always female; never fights; follow-and-mend (5 HP/s) + idle auto-triage</td>
+</tr>
+<tr>
+<td>PresaCanario</td>
+<td><code>scripts/units/presa_canario.gd</code></td>
+<td>Herding dog trained at the Mill (Dark Age, 30F+10G); <code>order_herd</code> fetches an animal and leads it to the nearest own drop-off (sheep convert on contact); each trip pays food for the net approach; guard dog (attack 3, DEFENSIVE) that never abandons a trip on its own</td>
+</tr>
+<tr>
+<td>HeroUnit</td>
+<td><code>scripts/units/hero_unit.gd</code></td>
+<td>The hero class (extends Militia); 16 named heroes (2 per civ, <code>hero_*.tres</code>), each with a unique ability</td>
+</tr>
+<tr>
+<td>Militia</td>
+<td><code>scripts/units/militia.gd</code></td>
+<td>Dark Age infantry</td>
+</tr>
+<tr>
+<td>ManAtArms</td>
+<td><code>scripts/units/man_at_arms.gd</code></td>
+<td>Feudal Age infantry upgrade</td>
+</tr>
+<tr>
+<td>LongSwordsman</td>
+<td><code>scripts/units/long_swordsman.gd</code></td>
+<td>Castle Age infantry upgrade</td>
+</tr>
+<tr>
+<td>Pikeman</td>
+<td><code>scripts/units/pikeman.gd</code></td>
+<td>Castle Age anti-cavalry spearman</td>
+</tr>
+<tr>
+<td>Archer</td>
+<td><code>scripts/units/archer.gd</code></td>
+<td>Feudal Age ranged infantry; attack-ground, cover fire</td>
+</tr>
+<tr>
+<td>Scout</td>
+<td><code>scripts/units/scout.gd</code></td>
+<td>Dark Age exploration cavalry; auto-explore ability (60 s)</td>
+</tr>
+<tr>
+<td>HeavyScout</td>
+<td><code>scripts/units/heavy_scout.gd</code></td>
+<td>Feudal Age cavalry upgrade</td>
+</tr>
+<tr>
+<td>Knight</td>
+<td><code>scripts/units/knight.gd</code></td>
+<td>Castle Age heavy cavalry</td>
+</tr>
+<tr>
+<td>BatteringRam</td>
+<td><code>scripts/units/battering_ram.gd</code></td>
+<td>Castle Age melee siege; ×3 vs buildings, 0.2× vs units</td>
+</tr>
+<tr>
+<td>Mangonel</td>
+<td><code>scripts/units/mangonel.gd</code></td>
+<td>Castle Age AoE siege; 72 px splash, minimum range</td>
+</tr>
+<tr>
+<td>Trebuchet</td>
+<td><code>scripts/units/trebuchet.gd</code></td>
+<td>Imperial Age long-range siege; 48 px splash, deploy/undeploy (3 s)</td>
+</tr>
+<tr>
+<td>FishingBoat</td>
+<td><code>scripts/units/fishing_boat.gd</code></td>
+<td>Naval food gatherer</td>
+</tr>
+<tr>
+<td>TransportShip</td>
+<td><code>scripts/units/transport_ship.gd</code></td>
+<td>Naval troop transport (capacity 8, villagers may board)</td>
+</tr>
+<tr>
+<td>WarGalley</td>
+<td><code>scripts/units/war_galley.gd</code></td>
+<td>Feudal Age combat ship</td>
+</tr>
+<tr>
+<td>MenceyesGuard</td>
+<td><code>scripts/units/menceyes_guard.gd</code></td>
+<td>Guanches infantry: Rage Aura at HP &lt; 50%</td>
+</tr>
+<tr>
+<td>RavineArcher</td>
+<td><code>scripts/units/ravine_archer.gd</code></td>
+<td>Canarii archer: Ambush Shot (×2 first shot when stationary ≥1.5 s)</td>
+</tr>
+<tr>
+<td>SandRaider</td>
+<td><code>scripts/units/sand_raider.gd</code></td>
+<td>Mahos cavalry: Hit &amp; Run (retreat 90 px after attack)</td>
+</tr>
+<tr>
+<td>ChevalierNormand</td>
+<td><code>scripts/units/chevalier_normand.gd</code></td>
+<td>Franks cavalry: Lance Charge (×2.5 after 80 px movement)</td>
+</tr>
+<tr>
+<td>Longbowman</td>
+<td><code>scripts/units/longbowman.gd</code></td>
+<td>Britons archer: Armour Piercing (+4 vs cavalry), kiting AI</td>
+</tr>
+<tr>
+<td>Conquistador</td>
+<td><code>scripts/units/conquistador.gd</code></td>
+<td>Castellanos infantry: Salvo Fire (3 rapid shots, 12 s CD)</td>
+</tr>
+<tr>
+<td>Tidecaller</td>
+<td><code>scripts/units/tidecaller.gd</code></td>
+<td>Atlantes amphibious: Tidal Pulse (2 splash damage, 65 px); walks into the sea on navigation layer 4</td>
+</tr>
+<tr>
+<td>Trireme</td>
+<td><code>scripts/units/trireme.gd</code></td>
+<td>Fenicios ship: Ram (×2 vs ships, 40 px knockback), passive gold income</td>
+</tr>
+<tr>
+<td>Animal</td>
+<td><code>scripts/units/animal.gd</code></td>
+<td>Wildlife (deer, boar)</td>
+</tr>
+<tr>
+<td>Sheep</td>
+<td><code>scripts/units/sheep.gd</code></td>
+<td>Convertible livestock</td>
+</tr>
+<tr>
+<td>ShipBase</td>
+<td><code>scripts/units/ship_base.gd</code></td>
+<td>Base class for naval units; ocean passability via <code>is_amphibious()</code>, hull painted per civ by <code>ShipDress</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="building-classes-20-building-types">Building Classes (20 building types)</h3>
+<table>
+<thead>
+<tr>
+<th>Building</th>
+<th>Script</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BuildingBase</td>
+<td><code>scripts/buildings/building_base.gd</code></td>
+<td>Base class: outward spiral spawn, rally points, construction system</td>
+</tr>
+<tr>
+<td>TownCenter</td>
+<td><code>scripts/buildings/town_center.gd</code></td>
+<td>Main TC: trains villagers (50 food), hero respawn, drop-off</td>
+</tr>
+<tr>
+<td>TownCenterBuildable</td>
+<td><code>scripts/buildings/town_center_buildable.gd</code></td>
+<td>Castle Age player-built TC (275 wood)</td>
+</tr>
+<tr>
+<td>Barracks</td>
+<td><code>scripts/buildings/barracks.gd</code></td>
+<td>Infantry (Militia/Archer/Man-at-Arms/Pikeman/Long Swordsman/unique)</td>
+</tr>
+<tr>
+<td>ArcheryRange</td>
+<td><code>scripts/buildings/archery_range.gd</code></td>
+<td>Feudal Age: trains Archer</td>
+</tr>
+<tr>
+<td>Stable</td>
+<td><code>scripts/buildings/stable.gd</code></td>
+<td>Cavalry (Scout/Heavy Scout/Knight/unique cavalry)</td>
+</tr>
+<tr>
+<td>SiegeWorkshop</td>
+<td><code>scripts/buildings/siege_workshop.gd</code></td>
+<td>Castle Age: siege (BatteringRam/Mangonel/Trebuchet)</td>
+</tr>
+<tr>
+<td>Dock</td>
+<td><code>scripts/buildings/dock.gd</code></td>
+<td>Naval: ships (FishingBoat/TransportShip/WarGalley/Trireme), fish drop-off</td>
+</tr>
+<tr>
+<td>Blacksmith</td>
+<td><code>scripts/buildings/blacksmith.gd</code></td>
+<td>9 weapon/armour technologies</td>
+</tr>
+<tr>
+<td>University</td>
+<td><code>scripts/buildings/university.gd</code></td>
+<td>Castle Age: 3 advanced techs (Ballistics/Chemistry/Siege Engineering)</td>
+</tr>
+<tr>
+<td>Temple</td>
+<td><code>scripts/buildings/temple.gd</code></td>
+<td>Castle Age: 3 morale/HP buffs (Fervor/Sanctity/Atonement); field hospital (garrisoned units heal 4 HP/s, heroes half rate); trains Harimaguada</td>
+</tr>
+<tr>
+<td>Market</td>
+<td><code>scripts/buildings/market.gd</code></td>
+<td>Resource trading (dynamic rates), mercenary hiring</td>
+</tr>
+<tr>
+<td>Wonder</td>
+<td><code>scripts/buildings/wonder.gd</code></td>
+<td>Imperial Age: Wonder victory condition</td>
+</tr>
+<tr>
+<td>WatchTower</td>
+<td><code>scripts/buildings/watch_tower.gd</code></td>
+<td>Defensive tower with auto-attack, tall stone visual</td>
+</tr>
+<tr>
+<td>WallSegment</td>
+<td><code>scripts/buildings/wall_segment.gd</code></td>
+<td>Defensive wall (5 stone)</td>
+</tr>
+<tr>
+<td>Gate</td>
+<td><code>scripts/buildings/gate.gd</code></td>
+<td>Wall gate (opens for allies, 30 wood)</td>
+</tr>
+<tr>
+<td>House</td>
+<td><code>scripts/buildings/house.gd</code></td>
+<td>+5 population cap (25 wood)</td>
+</tr>
+<tr>
+<td>Farm</td>
+<td><code>scripts/buildings/farm.gd</code></td>
+<td>Renewable food source (60 wood)</td>
+</tr>
+<tr>
+<td>FishTrap</td>
+<td><code>scripts/buildings/fish_trap.gd</code></td>
+<td>Naval renewable food source (75 wood)</td>
+</tr>
+<tr>
+<td>LumberCamp</td>
+<td><code>scripts/buildings/lumber_camp.gd</code></td>
+<td>Wood drop-off (100 wood); researches the wood tech line (Double-Bit Axe → Bow Saw → Two-Man Saw)</td>
+</tr>
+<tr>
+<td>MiningCamp</td>
+<td><code>scripts/buildings/mining_camp.gd</code></td>
+<td>Gold/stone drop-off (100 wood); researches the mining tech line (Reinforced Picks → Shaft Mining → Deep Galleries)</td>
+</tr>
+<tr>
+<td>Mill</td>
+<td><code>scripts/buildings/mill.gd</code></td>
+<td>Food drop-off (100 wood, 600 HP); trains Presa Canario (queue cap 5); researches the food tech line (Horse Collar → Heavy Plow → Crop Rotation)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai-systems">AI Systems</h3>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Script</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AIPlayer</td>
+<td><code>scripts/ai/ai_player.gd</code></td>
+<td>AI coordinator: EventBus wiring, TC rebuild, elimination logic</td>
+</tr>
+<tr>
+<td>WorldQuery</td>
+<td><code>scripts/ai/world_query.gd</code></td>
+<td>Read-only query service over the unit/building layers; fog-honest sighting layer (<code>sighted_enemy_units</code> = seen now, <code>known_enemy_buildings</code> = seen or remembered, LOS from .tres × 64 px, throttled refresh)</td>
+</tr>
+<tr>
+<td>AIEconomy</td>
+<td><code>scripts/ai/ai_economy.gd</code></td>
+<td>Villager spawning/assignment, resource targets per age, age-advance trigger; herding-dog management (up to 2 dogs) + single-in-flight sheep slaughter</td>
+</tr>
+<tr>
+<td>AIConstruction</td>
+<td><code>scripts/ai/ai_construction.gd</code></td>
+<td>Building placement, placement-failure cooldowns, population management; Mill early, Watch Towers from Feudal</td>
+</tr>
+<tr>
+<td>AIMilitary</td>
+<td><code>scripts/ai/ai_military.gd</code></td>
+<td>Military training, research priority, fog-honest combat targeting (sighted/known queries), base defense, aggression escalation</td>
+</tr>
+<tr>
+<td>AINaval</td>
+<td><code>scripts/ai/ai_naval.gd</code></td>
+<td>Naval training, galley patrol/retreat (sighted ships only), transport assault, fish-trap construction</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ui-systems">UI Systems</h3>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Script</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HUDManager</td>
+<td><code>scripts/ui/hud_manager.gd</code></td>
+<td>CanvasLayer controller: drives all HUD child nodes</td>
+</tr>
+<tr>
+<td>ResourceDisplay</td>
+<td><code>scripts/ui/resource_display.gd</code></td>
+<td>HBoxContainer showing one resource icon + amount</td>
+</tr>
+<tr>
+<td>UnitPortrait</td>
+<td><code>scripts/ui/unit_portrait.gd</code></td>
+<td>PanelContainer showing unit name + HP bar in selection grid</td>
+</tr>
+<tr>
+<td>WeatherOverlay</td>
+<td><code>scripts/ui/weather_overlay.gd</code></td>
+<td>Screen-space visual effects (rain, dust, ash, fog) driven by WeatherManager</td>
+</tr>
+<tr>
+<td>Minimap</td>
+<td><code>scripts/ui/minimap.gd</code></td>
+<td>Minimap with right-click move orders, resource/unit/building icons; entity content redraws on a 5 Hz tick, overlay (camera rect/flashes) only while changing</td>
+</tr>
+<tr>
+<td>NotificationDisplay</td>
+<td><code>scripts/ui/notification_display.gd</code></td>
+<td>Stacking toasts with shortcut action buttons (jump to event, build house on pop-cap, locate hero)</td>
+</tr>
+<tr>
+<td>HudActionMenu</td>
+<td><code>scripts/ui/hud/hud_action_menu.gd</code></td>
+<td>The command grid: per-selection button layouts, paging, stance/formation highlights; refuses orders in replays</td>
+</tr>
+<tr>
+<td>HudActionDefs</td>
+<td><code>scripts/ui/hud/hud_action_defs.gd</code></td>
+<td>Static action tables + pure builders; costs always resolved from <code>.tres</code> data</td>
+</tr>
+<tr>
+<td>HudTutorial</td>
+<td><code>scripts/ui/hud/hud_tutorial.gd</code></td>
+<td>Tutorial lesson driver; resource grants via <code>EventBus.tutorial_grant_resources</code></td>
+</tr>
+<tr>
+<td>HudReplayBar</td>
+<td><code>scripts/ui/hud/hud_replay_bar.gd</code></td>
+<td>Replay spectator controls: seekable timeline, speeds, reveal-all, cinematic mode, A/B clip markers</td>
+</tr>
+<tr>
+<td>HudPlayersPanel</td>
+<td><code>scripts/ui/hud/hud_players_panel.gd</code></td>
+<td>AoE2-style players/score overlay docked on the minimap</td>
+</tr>
+<tr>
+<td>CampaignScreen</td>
+<td><code>scripts/ui/campaign_screen.gd</code></td>
+<td>Mission selector + briefing panel</td>
+</tr>
+</tbody>
+</table>
+<h3 id="multiplayer-replay">Multiplayer &amp; Replay</h3>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Script</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NetworkSession</td>
+<td><code>scripts/multiplayer/network_session.gd</code></td>
+<td>Autoload — see the singleton table above</td>
+</tr>
+<tr>
+<td>StateReplicator</td>
+<td><code>scripts/multiplayer/state_replicator.gd</code></td>
+<td>Host→client state replication at 15 Hz (puppet mirror worlds, interpolation); also the replay recorder and playback engine (<code>setup_playback</code>, <code>seek</code>); the sampler skips nodes without a <code>health</code> property (arrows fly inside the entity layers)</td>
+</tr>
+<tr>
+<td>ReplayFile</td>
+<td><code>scripts/multiplayer/replay_file.gd</code></td>
+<td>Replay container: zstd-compressed snapshot stream (header + <code>{t, k, d}</code> packets), <code>user://replays/*.calrep</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="campaign">Campaign</h3>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Script</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CampaignData</td>
+<td><code>scripts/campaign/campaign_data.gd</code></td>
+<td>Const mission table: tutorial prologue + 4 missions (seed, MatchConfig fields, objectives, waves, victory kind)</td>
+</tr>
+<tr>
+<td>CampaignManager</td>
+<td><code>scripts/campaign/campaign_manager.gd</code></td>
+<td>Autoload — progress persistence, chain unlock, mission launch</td>
+</tr>
+<tr>
+<td>MissionDirector</td>
+<td><code>scripts/campaign/mission_director.gd</code></td>
+<td>In-match objective tracking, scripted wave spawns, survive countdown, completion</td>
+</tr>
+</tbody>
+</table>
+<h2 id="autoloads-registration">Autoloads Registration</h2>
+<p>The following 19 nodes are registered as autoloads in <code>project.godot</code> (in registration order):</p>
+<ul>
+<li><code>EventBus</code> → <code>scripts/core/event_bus.gd</code></li>
+<li><code>EntityRegistry</code> → <code>scripts/core/entity_registry.gd</code></li>
+<li><code>CommandBus</code> → <code>scripts/core/command_bus.gd</code></li>
+<li><code>MatchRng</code> → <code>scripts/core/match_rng.gd</code></li>
+<li><code>NetworkSession</code> → <code>scripts/multiplayer/network_session.gd</code></li>
+<li><code>GameManager</code> → <code>scripts/core/game_manager.gd</code></li>
+<li><code>ResourceManager</code> → <code>scripts/core/resource_manager.gd</code></li>
+<li><code>SelectionManager</code> → <code>scripts/core/selection_manager.gd</code></li>
+<li><code>PopulationManager</code> → <code>scripts/core/population_manager.gd</code></li>
+<li><code>AgeManager</code> → <code>scripts/core/age_manager.gd</code></li>
+<li><code>AudioManager</code> → <code>scripts/core/audio_manager.gd</code></li>
+<li><code>GameSettings</code> → <code>scripts/core/game_settings.gd</code></li>
+<li><code>MatchConfig</code> → <code>scripts/core/match_config.gd</code></li>
+<li><code>TerrainManager</code> → <code>scripts/core/terrain_manager.gd</code></li>
+<li><code>CivBonusManager</code> → <code>scripts/core/civ_bonus_manager.gd</code></li>
+<li><code>TechManager</code> → <code>scripts/core/tech_manager.gd</code></li>
+<li><code>SaveManager</code> → <code>scripts/core/save_manager.gd</code></li>
+<li><code>WeatherManager</code> → <code>scripts/core/weather_manager.gd</code></li>
+<li><code>CampaignManager</code> → <code>scripts/campaign/campaign_manager.gd</code></li>
+</ul>
+<h2 id="data-layer">Data Layer</h2>
+<p>Game entities are defined as <code>Resource</code> subclasses under <code>resources/</code>:</p>
+<ul>
+<li><code>CivilizationResource</code> — civ bonuses and unique units</li>
+<li><code>UnitResource</code> — unit stats (shared across all instances)</li>
+<li><code>BuildingResource</code> — building stats</li>
+<li><code>TechnologyResource</code> — tech effects and prerequisites</li>
+</ul>
+<h2 id="signal-flow">Signal Flow</h2>
+<pre><code>User Input → SelectionManager / InputHandler
+           → EventBus signals
+           → Unit / Building / Economy handlers
+           → HUD updates
+</code></pre>
+<footer class="site">Generated from <code>docs/architecture/overview.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

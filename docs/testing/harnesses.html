@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Headless &amp; Renderer Harness Catalog · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="headless-renderer-harness-catalog">Headless &amp; Renderer Harness Catalog</h1>
+<p>Every standalone harness under <code>project/tools/</code> (things GUT cannot easily reach:
+scene loads, real-renderer screenshots, multi-process networking, long simulations).
+This file is GENERATED from each harness's header comment — keep those comments
+accurate and regenerate with the snippet at the bottom.</p>
+<p>Run pattern (from the repo root):</p>
+<pre><code class="language-sh">GODOT=/Applications/Godot.app/Contents/MacOS/Godot
+# headless harnesses:
+$GODOT --headless --path project res://tools/&lt;name&gt;.tscn
+# renderer harnesses (screenshots — need a display):
+CALIMA_SHOT_DIR=/tmp/&lt;dir&gt; $GODOT --path project --resolution 1500x900 res://tools/&lt;name&gt;.tscn
+</code></pre>
+<p>The curated CI-gate subset (the ones that MUST pass before a merge) lives in
+CLAUDE.md &gt; Testing. Screenshot galleries from past reviews are kept under
+<code>docs/design/</code> (unit-redesign-gallery, unit-enhanced-gallery).</p>
+<table>
+<thead>
+<tr>
+<th>Harness</th>
+<th>Purpose</th>
+<th>Env vars</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>check_ai_pastoral</code></td>
+<td>AI pastoral-economy gate: boots a fixed-seed skirmish and verifies the AI actually LIVES the new pastoral loop end-to-end — 1. builds a Mill, 2. trains a Presa Canario at it, 3. sends the dog herding (a "herd" UnitTargetCommand in the match log). Also reports (informational, not gating) watch towers built and slaugh...</td>
+<td><code>CALIMA_FULL</code> <code>CALIMA_SEED</code> <code>CALIMA_TICKS</code></td>
+</tr>
+<tr>
+<td><code>check_ai_vs_ai</code></td>
+<td>AI-vs-AI hostility gate: with the human player GONE (all their entities removed at match start — the spectator scenario), two mutually hostile AIs must find each other and fight. PASS requires, within the tick window: 1. an AI "attack" command whose TARGET belongs to the other AI, and 2. at least one unit/building c...</td>
+<td><code>CALIMA_MAP</code> <code>CALIMA_SEED</code> <code>CALIMA_SURVIVORS</code> <code>CALIMA_TICKS</code> <code>CALIMA_WIPE_AT</code></td>
+</tr>
+<tr>
+<td><code>check_ally_ai</code></td>
+<td>Gate: an AI allied with the player must send an assist squad (attack-move + team ping + "assist" ally_message) when the player is raided at home.</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>check_amphibious</code></td>
+<td>Regression harness for the Atlantes amphibious identity (GDD M6). Three things have to hold in a real match, and none of them can be checked from a unit test because they all depend on the baked navigation meshes: 1. A Tidecaller ordered into open water actually swims: it gets a path on the amphibious mesh and leave...</td>
+<td><code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_building_gallery</code></td>
+<td>Visual check: renders every building scene under the isometric camera in a grid — top row force-completed, bottom row mid-construction (scaffold) — and saves one PNG per zoom level for review. Run (real renderer, not --headless): CALIMA_SHOT_DIR=/tmp/calima-gallery $GODOT --path project \ --resolution 1600x900 res:/...</td>
+<td><code>CALIMA_CIV</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_camp_research</code></td>
+<td>Visual review of the camp economy research buttons (real renderer): boots the HUD, selects a Lumber Camp / Mining Camp / Mill at the Imperial Age and screenshots the action panel — the three-step lines must show their glyphs. CALIMA_SHOT_DIR=/tmp/calima-camp-research (default)</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_campaign</code></td>
+<td>Campaign mission gate (headless): launches mission 1 for real — the deterministic world boots, the MissionDirector mounts with its objective panel, the first scripted wave spawns and marches, and a player victory marks the mission completed (unlocking mission 2). Progress on disk is backed up and restored, so the ga...</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>check_campaign_screen</code></td>
+<td>Visual review of the campaign selector + briefing (real renderer): screenshots to CALIMA_SHOT_DIR (default /tmp/calima-campaign).</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_camps_look</code></td>
+<td>Visual review of the resource-camp looks: Lumber Camp, Mining Camp and the Mill lined up against a House and Barracks for silhouette contrast (a camp must NOT read as a house), plus the Presa Canario next to a Sheep for scale. CALIMA_SHOT_DIR=/tmp/calima-camps $GODOT --path project \ --resolution 1600x900 res://tool...</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_command_bus</code></td>
+<td>End-to-end gate for the command pattern layer: boots a real match and drives it exclusively through CommandBus — a move order, a Town Center train, a building placement — then checks the simulation reacted and the tick-stamped log holds every submitted command. Run: $GODOT --headless --path project res://tools/check...</td>
+<td><code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_cursor_bake</code></td>
+<td>Visual check: dumps every baked contextual mouse cursor as a PNG so the 32 px glyph, dark outline backing and downscale quality can be reviewed 1:1. Run (real renderer): CALIMA_SHOT_DIR=/tmp/calima-cursors $GODOT --path project \ --resolution 400x300 res://tools/check_cursor_bake.tscn</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_cursor_cycle</code></td>
+<td>Repro harness: prebakes every contextual cursor and cycles each one through Input.set_custom_mouse_cursor — the macOS DisplayServer rejects invalid cursor images with 'Parameter "imgrep" is null', so any bad bake shows up here deterministically. Run: $GODOT --path project --resolution 640x480 res://tools/check_curso...</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_damage_fx</code></td>
+<td>Visual review of the building damage fire/smoke stages and the watch tower's arrow attack. Needs the real renderer (not --headless). Spawns four barracks at 100 / 70 / 45 / 15 % HP plus a tower shooting a target dummy, waits for the particles to develop and screenshots. CALIMA_SHOT_DIR=/tmp/calima-fx $GODOT --path p...</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_enhanced_units</code></td>
+<td>Visual review of the optional enhanced unit look (real renderer): a grid of representative units for two players, shot in CLASSIC mode, then re-shot after toggling GameSettings.enhanced_units live (exercising the same signal path the settings panel uses), plus close-ups and an attack-pose close-up. CALIMA_SHOT_DIR=/...</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_harimaguada_look</code></td>
+<td>Visual review of the Harimaguada priestess-healer (real renderer): close-up of her rig in idle / walking / tending poses, plus a lineup next to a female villager and a heroine — she must read as a priestess, distinct from both. A second row shows her in other player colours (team readability). CALIMA_SHOT_DIR=/tmp/c...</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_hero_attack</code></td>
+<td>Repro: can melee units (hero included) damage buildings after the combat machine refactor? Boots a real match, teleports the hero and a militia-line unit next to the enemy TC, issues order_attack and reports health deltas. Run: $GODOT --path project res://tools/check_hero_attack.tscn</td>
+<td><code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_hero_aura</code></td>
+<td>Visual review of the hero energy aura (real renderer, not headless): a hero and a heroine next to a plain militia for contrast, captured twice (the aura animates) at two zoom levels. CALIMA_SHOT_DIR=/tmp/calima-aura $GODOT --path project --resolution 1000x700 \ res://tools/check_hero_aura.tscn</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_hero_gallery</code></td>
+<td>Visual review of the 16 hero signature dresses (real renderer): one row per civ — a plain civ-dressed militia for contrast, then the male and female hero — with name labels. Every hero must read apart from the militia and from every other hero at gameplay zoom. CALIMA_SHOT_DIR=/tmp/calima-heroes $GODOT --path projec...</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_hud</code></td>
+<td>Headless validation harness for the HUD refactor. Loads hud.tscn, instantiates it under the tree (so _ready runs and all %unique nodes + child controllers resolve), then quits. Any parse error, missing-node error, or _ready crash surfaces in stderr. Run: godot --headless -s tools/check_hud.gd</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>check_icon_bake</code></td>
+<td>Visual check: dumps IconBaker textures for a set of entities as PNGs so the icon framing (centering, fill) can be reviewed at 1:1. Run (real renderer): CALIMA_SHOT_DIR=/tmp/calima-icons CALIMA_CIV=mahos $GODOT --path project \ --resolution 400x300 res://tools/check_icon_bake.tscn</td>
+<td><code>CALIMA_CIV</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_icon_gallery</code></td>
+<td>Icon-bake gallery: runs IconBaker over EVERY unit and building scene the HUD can put on a button and saves each result to CALIMA_SHOT_DIR, flagging any icon that still equals the placeholder (the "rombo" bug) after the bake settles. Real renderer required. CALIMA_SHOT_DIR=/tmp/calima-icons $GODOT --path project --re...</td>
+<td><code>CALIMA_ICONS_MATCH</code> <code>CALIMA_SEED</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_islands_layout</code></td>
+<td>Regression harness for the Islands map layout and its two navigation meshes. Three failure modes this catches: 1. Islands overlapping each other (they visually merge and land units get a route between players) or spilling past the map boundary. 2. An invalid ocean NavigationPolygon — overlapping hole outlines make G...</td>
+<td><code>CALIMA_MAP_SIZE</code> <code>CALIMA_RIVALS</code> <code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_iso_render</code></td>
+<td>Diagnostic: measures where billboarded visuals actually land on screen relative to their unit anchor under the isometric camera. Run: $GODOT --path project res://tools/check_iso_render.tscn</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>check_lobby</code></td>
+<td>Visual check: renders the match-creation lobby and saves a PNG so layout fixes can be reviewed at any window size. Run (real renderer): CALIMA_SHOT_DIR=/tmp/calima-lobby $GODOT --path project \ --resolution 1280x720 res://tools/check_lobby.tscn</td>
+<td><code>CALIMA_LOBBY_CIV</code> <code>CALIMA_RIVALS</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_map_gen</code></td>
+<td>Deterministic map-generation census: runs MapGenerator.generate() for every map type with a fixed seed and prints a stable fingerprint of the result (TC positions, terrain zones, resource nodes, animals, nav meshes, scene node counts). Same seed must always produce the same output, so the census doubles as the regre...</td>
+<td><code>CALIMA_MAPS</code> <code>CALIMA_RIVALS</code> <code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_match_sim</code></td>
+<td>Headed match simulator: boots a full game like screenshot_runner, fast- forwards CALIMA_WARMUP seconds of gameplay at CALIMA_TIMESCALE, then prints per-player development stats (age, population, unit/building census, stockpiles) at regular intervals so AI stalls and combat anomalies show up as numbers instead of nee...</td>
+<td><code>CALIMA_CIV</code> <code>CALIMA_MAP</code> <code>CALIMA_RIVALS</code> <code>CALIMA_RIVAL_CIV</code> <code>CALIMA_SEED</code> <code>CALIMA_TIMESCALE</code> <code>CALIMA_WARMUP</code></td>
+</tr>
+<tr>
+<td><code>check_nav_bake_diag</code></td>
+<td>Regression harness for the runtime navmesh rebake against diagonal footprints. Two buildings placed diagonally on the 16 px grid can leave a 20 px carved gap on both axes; inflated by the 10 px agent radius the two holes meet at exactly one point, Godot's convex partition fails and the bake returns an EMPTY mesh for...</td>
+<td><code>CALIMA_MAP</code> <code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_nav_islands</code></td>
+<td>Regression harness for the runtime navmesh rebake (<code>WorldPlacement</code>). The rebake that runs ~1 s into a match re-bakes the <em>land</em> region from scratch. If it uses the full-map rect as walkable surface it silently erases the island carving of an Islands map and land units get a walking route across open sea (transports...</td>
+<td><code>CALIMA_MAP</code> <code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_net_fog</code></td>
+<td>Two-process fog-of-war probe for LAN clients. Reproduces "the client sees an all-black map": after the match starts on both sides, the CLIENT prints its FogOfWar perspective (local_player_id) and how many cells its own units actually revealed. Run like check_net_smoke: CALIMA_NET_ROLE=host   $GODOT --headless --path...</td>
+<td><code>CALIMA_NET_PORT</code> <code>CALIMA_NET_ROLE</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_net_fog_real</code></td>
+<td>Like check_net_fog but through the REAL match-start path: default lobby settings (weather on), auto_change_scene = true so the client swaps to game_world.tscn exactly like a player does. Watcher timers parented to root survive the scene change (the probe scene itself is freed by it, so nothing may reference <code>self</code> a...</td>
+<td><code>CALIMA_MAP</code> <code>CALIMA_MAP_SIZE</code> <code>CALIMA_NET_PORT</code> <code>CALIMA_NET_ROLE</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_net_rejoin</code></td>
+<td>Three-process reconnection gate: host    — starts a match with one human rival, survives its drop (seat held), accepts the SAME name back mid-match and resyncs it. drop    — first client: joins, moves its scout, then quits abruptly. return  — second client (same name, launched within the grace window): rejoins, must...</td>
+<td><code>CALIMA_NET_PORT</code> <code>CALIMA_REJOIN_ROLE</code></td>
+</tr>
+<tr>
+<td><code>check_net_resume</code></td>
+<td>Two-phase, four-process gate for resuming a multiplayer save. Phase 1 — create the save: host_save   — hosts, starts the match, waits for the client's move, saves to SLOT (multiplayer sheet + per-player fog). client_save — joins, moves its scout so the save has proof of life, stays connected until the host saved (fo...</td>
+<td><code>CALIMA_NET_PORT</code> <code>CALIMA_RESUME_ROLE</code></td>
+</tr>
+<tr>
+<td><code>check_net_robustness</code></td>
+<td>Two-process robustness gate (CALIMA_ROB_CASE = drop | resign | hostleft): drop — the client quits abruptly; the host must end the match (winner 0). resign — the client surrenders; local defeat + host ends the match. hostleft — the host quits; the client must get connection_lost + dialog. Run host first (background...</td>
+<td><code>CALIMA_NET_PORT</code> <code>CALIMA_NET_ROLE</code> <code>CALIMA_ROB_CASE</code></td>
+</tr>
+<tr>
+<td><code>check_net_smoke</code></td>
+<td>Two-process smoke gate for the multiplayer command pipe. Run one instance as host and one as client (same machine, localhost): CALIMA_NET_ROLE=host   $GODOT --headless --path project res://tools/check_net_smoke.tscn CALIMA_NET_ROLE=client $GODOT --headless --path project res://tools/check_net_smoke.tscn The host ope...</td>
+<td><code>CALIMA_NET_PORT</code> <code>CALIMA_NET_ROLE</code></td>
+</tr>
+<tr>
+<td><code>check_notifications</code></td>
+<td>Visual review of notification toasts + their shortcut action buttons (real renderer): pushes one of each actionable kind and screenshots. CALIMA_SHOT_DIR=/tmp/calima-notifs (default)</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_perf_gate</code></td>
+<td>Headless simulation-budget gate: boots a real match, spawns a 100v100 battle, and measures how fast the simulation actually advances against wall-clock time. Fails when the sim can no longer hold at least MIN_TICK_RATE physics ticks per wall second — the symptom every past regression shared (per-resource RVO obstacl...</td>
+<td><code>CALIMA_PERF_MIN_TICKS</code></td>
+</tr>
+<tr>
+<td><code>check_perf_probe</code></td>
+<td>Frame-time probe: boots a real match (fixed seed), optionally fast-forwards it so the AIs develop, optionally spawns two synthetic armies and sends them at each other, then samples per-frame main-loop and physics times and prints one summary row. Parameters via env: CALIMA_PERF_LABEL      row label (default "probe")...</td>
+<td><code>CALIMA_PERF_ARMY</code> <code>CALIMA_PERF_DEVELOP</code> <code>CALIMA_PERF_DISABLE</code> <code>CALIMA_PERF_LABEL</code> <code>CALIMA_PERF_MAP</code> <code>CALIMA_PERF_MAP_SIZE</code> <code>CALIMA_PERF_RESOURCES</code> <code>CALIMA_PERF_RIVALS</code> <code>CALIMA_PERF_WINDOW</code></td>
+</tr>
+<tr>
+<td><code>check_placement_grid</code></td>
+<td>Locally-runnable validation of PlacementGrid (GUT isn't vendored locally). Also re-derives the CURRENT game_world wall formula inline and asserts PlacementGrid.segment_positions matches it exactly, so the grid helper is a faithful stand-in for the wall behaviour before Option B wires it in. Run: godot --headless -s ...</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>check_placement_preview</code></td>
+<td>Visual check for the building-placement preview: boots a real match, enters placement mode for a house and a dock, warps the mouse near the player TC, and saves PNGs showing the ghost + ground footprint diamond + snap lattice. Run (real renderer, not --headless): CALIMA_SHOT_DIR=/tmp/calima-placement CALIMA_SEED=42 ...</td>
+<td><code>CALIMA_SEED</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_players_panel</code></td>
+<td>Players-panel review harness (real renderer): boots a 3-player match, opens the minimap players overlay and screenshots it. CALIMA_SHOT_DIR=/tmp/calima-players $GODOT --path project \ --resolution 1600x900 res://tools/check_players_panel.tscn</td>
+<td><code>CALIMA_SEED</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_redesigned_units</code></td>
+<td>Visual review of the REDESIGNED unit style (real renderer): a grid of the chosen batch for two players shot in CLASSIC, re-shot after switching GameSettings.unit_style to REDESIGNED live (the same signal path the settings selector uses), plus close-ups and frozen walk/attack/work poses. CALIMA_SHOT_DIR=/tmp/calima-r...</td>
+<td><code>CALIMA_BATCH</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_replay</code></td>
+<td>Replay round-trip gate: phase 1 plays a short SP match with recording on (a scout is ordered across the map so the stream has real movement) and finalizes the file by tearing the world down; phase 2 boots the replay — same seed, replay_mode puppets — and pumps it to the end, asserting the mirror world exists, the pa...</td>
+<td><code>CALIMA_FORCE_REPLAY_RECORD</code> <code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_replay_intro</code></td>
+<td>Visual review of the replay intro card (real renderer): boots the newest recorded replay via ReplayFile.launch; a ROOT-parented watcher survives the scene swap and screenshots the title card (~1.4 s) plus a later frame with an own building selected — info panel yes, action grid EMPTY (recorded history). CALIMA_SHOT_...</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_replays_panel</code></td>
+<td>Visual review of the main-menu replay browser (real renderer): seeds fake replay headers — one with an absurdly long roster — boots the real menu, opens the panel and screenshots it to CALIMA_SHOT_DIR (default /tmp/calima-replays). The seeded files are deleted before quitting.</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_sea_containment</code></td>
+<td>Sea-containment chaos probe: boots a real Islands match, then actively tries to shove land units into the ocean the way real matches do — cross-water attack-moves at the enemy island, straight move orders into deep sea, villagers sent at fish nodes, and a shoreline melee where RVO pushes bodies around — while auditi...</td>
+<td><code>CALIMA_MAP</code> <code>CALIMA_RIVALS</code> <code>CALIMA_SEED</code> <code>CALIMA_TICKS</code></td>
+</tr>
+<tr>
+<td><code>check_ship_gallery</code></td>
+<td>Visual check: renders every shared hull dressed for every civilization, one civ per row, so the naval identity pass (ShipDress + CivStyle.NAVAL) can be reviewed at a glance — Atlantes must read as the naval civ from across the board. The Fenicios row ends with their unique Trireme, which opts out of the dress pass a...</td>
+<td><code>CALIMA_CIVS</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_shove</code></td>
+<td>Behavioural gate for collision phase B: a single-width corridor between two walls, packed with idle friendly militia, must always be traversable. Empirically the phase-A RVO tuning (movers priority 0.7 vs idle 0.4, no unit-vs-unit physics) lets the mover through on its own; when it ever does stall &gt;0.45 s, the idle-...</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>check_sim_fingerprint</code></td>
+<td>Determinism probe: boots a match at a fixed seed, runs an exact number of PHYSICS TICKS (never wall-clock time) and prints a canonical fingerprint — every entity's class/owner/position/health, the per-player stockpiles and the full CommandBus log. Run it twice and diff the output: identical means the simulation repl...</td>
+<td><code>CALIMA_MAP</code> <code>CALIMA_SEED</code> <code>CALIMA_TICKS</code></td>
+</tr>
+<tr>
+<td><code>check_sp_saveload</code></td>
+<td>Single-player save/load round-trip in a REAL match (the user-testing gate for savegame v2): boots a match, puts live PAID state everywhere — a blacksmith mid-research with a queued tech behind it, a militia garrisoned in the TC, a stand-ground stance, an owned sheep — saves, tears the world down, reloads, and assert...</td>
+<td><code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_team_colors</code></td>
+<td>Visual review of the team-colour dress (real renderer): a grid of unit types (columns) for four player colours (rows) on a flat backdrop. The cloth must read as the row's player colour at a glance; steel, leather, skin and natural horses must NOT change between rows. CALIMA_SHOT_DIR=/tmp/calima-teams $GODOT --path p...</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_tech_glyphs</code></td>
+<td>Visual review of the technology research glyphs (real renderer): every tech id from TECH_GLYPHS plus the unknown-id fallback, each rendered at 32 px and 24 px over the HUD button backdrop, labeled with its id. CALIMA_SHOT_DIR=/tmp/calima-glyphs $GODOT --path project \ --resolution 1400x900 res://tools/check_tech_gly...</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_temple_look</code></td>
+<td>Visual review of the Temple (almogarén) look: the temple alone close-up plus a lineup next to Barracks, Blacksmith, University and House for silhouette contrast at gameplay zoom. CALIMA_SHOT_DIR=/tmp/calima-temple $GODOT --path project \ --resolution 1600x900 res://tools/check_temple_look.tscn</td>
+<td><code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_unit_gallery</code></td>
+<td>Visual check: renders the shared unit roster (plus the civ's unique unit) under the isometric camera in a grid and saves one PNG per zoom level. Honors CALIMA_CIV so each civilization's dress pass can be reviewed. Run (real renderer, not --headless): CALIMA_SHOT_DIR=/tmp/calima-ugallery CALIMA_CIV=mahos $GODOT --pat...</td>
+<td><code>CALIMA_CIV</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_voice_gallery</code></td>
+<td>Voice-bank audition gate: verifies EVERY baked voice clip (selection + order acknowledgments, all civs and genders) is real audio, prints a per-bank census, and exports a listenable subset to WAV files (CALIMA_SHOT_DIR, default /tmp/calima-voices). CALIMA_CIVS narrows the export (comma list; default "default,guanche...</td>
+<td><code>CALIMA_CIVS</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
+<td><code>check_volcanic_nav</code></td>
+<td>Regression gate for pathfinding around impassable terrain zones: on a Volcanic Coast map, a land unit ordered to the far side of a caldera must walk AROUND it and arrive. Before the zones were carved into the navmesh they were RVO-only obstacles, so paths crossed the lava and units ground to a halt against the rim (...</td>
+<td><code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>check_world_query</code></td>
+<td>Locally-runnable validation of WorldQuery (the project has no local GUT addon). Mirrors tests/unit/test_world_query.gd against a synthetic node tree. Run: godot --headless -s tools/check_world_query.gd</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="regenerating-this-catalog">Regenerating this catalog</h2>
+<p>The table above is scraped from the <code>##</code> header block of every <code>tools/check_*.gd</code>.
+After adding or changing a harness, re-run the generator snippet kept in
+<code>docs/testing/regen_harness_catalog.py</code> (python3, from the repo root).</p>
+<footer class="site">Generated from <code>docs/testing/harnesses.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

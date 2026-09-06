@@ -1,276 +1,1031 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calima: Flames of the Atlantic — Guía del Jugador</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calima: Flames of the Atlantic — Guía del Jugador · Calima: Flames of the Atlantic</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #1a1108; --panel: #241a0c; --border: #3d2e18;
-    --gold: #c8a84b; --gold-dim: #8c7232; --gold-bright: #f0cc6a;
-    --text: #d8c9a3; --text-dim: #8a7a55; --link: #d9a44a;
-  }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 16px; line-height: 1.65;
-  }
-  .page { max-width: 900px; margin: 0 auto; padding: 36px 22px 80px; }
-  h1 {
-    color: var(--gold); font-variant: small-caps; letter-spacing: 0.08em;
-    font-size: 1.9rem; line-height: 1.25; margin: 6px 0 4px;
-    text-shadow: 0 0 22px rgba(200,168,75,0.4);
-  }
-  h2 {
-    color: var(--gold); font-variant: small-caps; letter-spacing: 0.07em;
-    font-size: 1.35rem; margin: 40px 0 10px; padding-top: 14px;
-    border-top: 1px solid var(--border);
-  }
-  h3 { color: var(--gold-bright); font-size: 1.08rem; margin: 26px 0 8px; }
-  h4 { color: var(--gold-bright); font-size: 1.0rem; margin: 24px 0 6px;
-       border-left: 3px solid var(--gold-dim); padding-left: 10px; }
-  p { margin: 10px 0; }
-  ul { margin: 10px 0 10px 24px; }
-  li { margin: 4px 0; }
-  em { color: var(--text); }
-  strong { color: var(--gold-bright); }
-  a { color: var(--link); }
-  hr { border: none; border-top: 1px solid var(--border); margin: 26px 0; }
-  code {
-    background: rgba(0,0,0,0.35); border: 1px solid var(--border);
-    border-radius: 4px; padding: 1px 6px; font-size: 0.85em;
-  }
-  table {
-    border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem;
-  }
-  th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
-  th { background: var(--panel); color: var(--gold); font-variant: small-caps; letter-spacing: 0.05em; }
-  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
-  .lang-bar {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;
-  }
-  .lang-bar a { text-decoration: none; border: 1px solid var(--border);
-    border-radius: 6px; padding: 3px 10px; }
-  .lang-bar a:hover { border-color: var(--gold-dim); }
-  .toc {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-    padding: 16px 20px; margin: 20px 0 8px; columns: 2; column-gap: 30px;
-  }
-  .toc-title { font-variant: small-caps; letter-spacing: 0.08em; color: var(--gold);
-    margin-bottom: 8px; column-span: all; }
-  .toc a { display: block; padding: 2px 0; text-decoration: none; font-size: 0.92rem; }
-  .toc a:hover { color: var(--gold-bright); }
-  footer { margin-top: 46px; border-top: 1px solid var(--border);
-    padding-top: 12px; color: var(--text-dim); font-size: 0.8rem; line-height: 1.6; }
-  @media (max-width: 620px) { .toc { columns: 1; } }
-  @media print {
-    body { background: #fff; color: #1a1a1a; }
-    :root { --panel: #f4f0e6; --border: #ccc; --gold: #5a4310; --gold-bright: #5a4310;
-            --gold-dim: #8a6a20; --text: #1a1a1a; --text-dim: #555; --link: #5a4310; }
-    h1 { text-shadow: none; }
-    .lang-bar { display: none; }
-    .page { max-width: none; padding: 0; }
-  }
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
 </style>
 </head>
 <body>
-<div class="page">
-<div class="lang-bar"><a href="../index.html">← Portal de documentación</a><a href="manual_en.html">English version →</a></div>
-<h1>Calima: Flames of the Atlantic — Guía del Jugador</h1>
-<nav class="toc"><div class="toc-title">Índice</div><a href="#el-mundo">El mundo</a><a href="#controles-e-interfaz">Controles e interfaz</a><a href="#civilizaciones">Civilizaciones</a><a href="#terreno">Terreno</a><a href="#recursos-y-economia">Recursos y economía</a><a href="#progresion-de-edades">Progresión de edades</a><a href="#unidades">Unidades</a><a href="#edificios">Edificios</a><a href="#investigacion-arbol-tecnologico">Investigación (árbol tecnológico)</a><a href="#combate">Combate</a><a href="#clima">Clima</a><a href="#condiciones-de-victoria">Condiciones de victoria</a><a href="#guerra-naval">Guerra naval</a><a href="#mapas">Mapas</a><a href="#configuracion-de-partida-escaramuza">Configuración de partida (escaramuza)</a><a href="#campana-las-llamas-de-tamaran">Campaña — Las Llamas de Tamarán</a><a href="#multijugador">Multijugador</a><a href="#repeticiones">Repeticiones</a><a href="#ajustes">Ajustes</a><a href="#conoce-a-tu-enemigo-comportamiento-de-la-ia">Conoce a tu enemigo (comportamiento de la IA)</a><a href="#consejos">Consejos</a><a href="#presentacion-visual">Presentación visual</a></nav>
-<hr>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="manual_es.html">Manual (ES)</a>
+  <a href="manual_en.html">Manual (EN)</a>
+  <a href="manual_en.html">English version</a>
+</header>
+<h1 id="calima-flames-of-the-atlantic-guia-del-jugador">Calima: Flames of the Atlantic — Guía del Jugador</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#el-mundo">El mundo</a></li>
+<li><a href="#controles-e-interfaz">Controles e interfaz</a></li>
+<li><a href="#civilizaciones">Civilizaciones</a><ul>
+<li><a href="#quienes-son">¿Quiénes son?</a></li>
+<li><a href="#civilizaciones-antiguas">Civilizaciones Antiguas</a></li>
+<li><a href="#civilizaciones-nativas">Civilizaciones Nativas</a></li>
+<li><a href="#invasores-europeos">Invasores Europeos</a></li>
+</ul>
+</li>
+<li><a href="#terreno">Terreno</a></li>
+<li><a href="#recursos-y-economia">Recursos y economía</a><ul>
+<li><a href="#los-cuatro-recursos">Los cuatro recursos</a></li>
+<li><a href="#poblacion">Población</a></li>
+<li><a href="#comercio-en-el-mercado">Comercio en el Mercado</a></li>
+</ul>
+</li>
+<li><a href="#progresion-de-edades">Progresión de edades</a></li>
+<li><a href="#unidades">Unidades</a><ul>
+<li><a href="#economia-y-apoyo">Economía y apoyo</a></li>
+<li><a href="#militares">Militares</a></li>
+</ul>
+</li>
+<li><a href="#edificios">Edificios</a><ul>
+<li><a href="#produccion">Producción</a></li>
+<li><a href="#economia">Economía</a></li>
+<li><a href="#investigacion">Investigación</a></li>
+<li><a href="#defensa">Defensa</a></li>
+<li><a href="#especial">Especial</a></li>
+</ul>
+</li>
+<li><a href="#investigacion-arbol-tecnologico">Investigación (árbol tecnológico)</a><ul>
+<li><a href="#herreria">Herrería</a></li>
+<li><a href="#universidad">Universidad</a></li>
+<li><a href="#templo">Templo</a></li>
+<li><a href="#lineas-economicas-de-los-campamentos">Líneas económicas de los campamentos</a></li>
+<li><a href="#mejoras-de-unidad">Mejoras de unidad</a></li>
+</ul>
+</li>
+<li><a href="#combate">Combate</a><ul>
+<li><a href="#el-triangulo-de-contraataques">El triángulo de contraataques</a></li>
+<li><a href="#actitudes">Actitudes</a></li>
+<li><a href="#formaciones">Formaciones</a></li>
+<li><a href="#guarnicion">Guarnición</a></li>
+<li><a href="#curacion">Curación</a></li>
+<li><a href="#asedio">Asedio</a></li>
+</ul>
+</li>
+<li><a href="#clima">Clima</a></li>
+<li><a href="#condiciones-de-victoria">Condiciones de victoria</a><ul>
+<li><a href="#conquista">Conquista</a></li>
+<li><a href="#regicidio">Regicidio</a></li>
+<li><a href="#maravilla">Maravilla</a></li>
+<li><a href="#la-derrota-y-lo-que-viene-despues">La derrota — y lo que viene después</a></li>
+</ul>
+</li>
+<li><a href="#guerra-naval">Guerra naval</a></li>
+<li><a href="#mapas">Mapas</a></li>
+<li><a href="#configuracion-de-partida-escaramuza">Configuración de partida (escaramuza)</a></li>
+<li><a href="#campana-las-llamas-de-tamaran">Campaña — Las Llamas de Tamarán</a></li>
+<li><a href="#multijugador">Multijugador</a></li>
+<li><a href="#repeticiones">Repeticiones</a></li>
+<li><a href="#ajustes">Ajustes</a></li>
+<li><a href="#conoce-a-tu-enemigo-comportamiento-de-la-ia">Conoce a tu enemigo (comportamiento de la IA)</a></li>
+<li><a href="#consejos">Consejos</a></li>
+<li><a href="#presentacion-visual">Presentación visual</a></li>
+</ul>
+</div>
+</nav>
+<hr />
 <h2 id="el-mundo">El mundo</h2>
 <p>Las Islas Canarias. Océano Atlántico oriental, a 100 km de la costa noroeste de África.</p>
 <p>Para los habitantes nativos eran simplemente su hogar — montañas volcánicas, bosques de laurisilva, playas de arena negra y llanuras desérticas repartidas en siete islas. Para los europeos que llegaron en el siglo XV eran una puerta: la última escala antes del océano abierto, el primer premio de la Era de los Descubrimientos.</p>
 <p><em>Calima</em> te pone al mando de una de ocho civilizaciones que luchan por el control de este archipiélago. La calima — el cálido viento sahariano que envuelve las islas en polvo y silencio — da nombre al juego. La guerra aquí no se libra en llanuras. Se libra en campos de lava, riscos, estrechos oceánicos y cruces de dunas.</p>
-<hr>
+<hr />
 <h2 id="controles-e-interfaz">Controles e interfaz</h2>
-<p>Cada botón del juego muestra su tecla en una insignia y su descripción completa — con el coste real — en un tooltip. La lista completa de teclas está en <a href="../../GAMEPLAY.md">GAMEPLAY.md</a>; lo esencial:</p>
-<ul><li><strong>Clic izquierdo / arrastrar</strong> selecciona (hasta 40 unidades); <strong>doble clic</strong> selecciona todas las unidades o edificios del mismo tipo. <strong>Ctrl/Cmd+1–9</strong> asigna un grupo de control, <strong>1–9</strong> lo recupera (fichas clicables en el HUD).</li><li><strong>Clic derecho</strong> es contextual: mover, atacar, recolectar, construir/reparar, guarnecer militares en tu Centro Urbano o torres, pastorear animales (selecciones de solo perros). <strong>Mayús+clic derecho</strong> encadena puntos de ruta.</li><li>Teclas de orden: <strong>Z</strong> ataque en movimiento, <strong>R</strong> patrullar, <strong>X</strong> parar, <strong>E</strong> guarnecer, <strong>C</strong> fuego de cobertura (a distancia/asedio), <strong>B</strong> menú de construcción (aldeanos).</li><li><strong>Espacio</strong> salta la cámara a la última alerta de ataque. La cámara se mueve con <strong>WASD</strong> (reasignable), las flechas, el borde de la pantalla o arrastrando con el botón central; zoom con la rueda.</li><li>Las notificaciones llevan <strong>botones de acceso directo</strong>: saltar al evento, colocar una Casa con un clic tras el aviso de límite de población, o localizar a tu héroe cuando está en peligro.</li><li>Un botón junto al minimapa abre el <strong>panel de jugadores</strong> — color, nombre, civilización, Edad y puntuación en vivo de cada jugador.</li><li><strong>Esc</strong> abre el menú de pausa (Reanudar / Ajustes / Guardar / Rendirse / Salir). En multijugador, <strong>Intro</strong> abre el chat.</li></ul>
-<hr>
+<p>Cada botón del juego muestra su tecla en una insignia y su descripción completa — con el coste real — en un tooltip. La lista completa de teclas está en <a href="../gameplay.html">GAMEPLAY.md</a>; lo esencial:</p>
+<ul>
+<li><strong>Clic izquierdo / arrastrar</strong> selecciona (hasta 40 unidades); <strong>doble clic</strong> selecciona todas las unidades o edificios del mismo tipo. <strong>Ctrl/Cmd+1–9</strong> asigna un grupo de control, <strong>1–9</strong> lo recupera (fichas clicables en el HUD).</li>
+<li><strong>Clic derecho</strong> es contextual: mover, atacar, recolectar, construir/reparar, guarnecer militares en tu Centro Urbano o torres, pastorear animales (selecciones de solo perros). <strong>Mayús+clic derecho</strong> encadena puntos de ruta.</li>
+<li>Teclas de orden: <strong>Z</strong> ataque en movimiento, <strong>R</strong> patrullar, <strong>X</strong> parar, <strong>E</strong> guarnecer, <strong>C</strong> fuego de cobertura (a distancia/asedio), <strong>B</strong> menú de construcción (aldeanos).</li>
+<li><strong>Espacio</strong> salta la cámara a la última alerta de ataque. La cámara se mueve con <strong>WASD</strong> (reasignable), las flechas, el borde de la pantalla o arrastrando con el botón central; zoom con la rueda.</li>
+<li>Las notificaciones llevan <strong>botones de acceso directo</strong>: saltar al evento, colocar una Casa con un clic tras el aviso de límite de población, o localizar a tu héroe cuando está en peligro.</li>
+<li>Un botón junto al minimapa abre el <strong>panel de jugadores</strong> — color, nombre, civilización, Edad y puntuación en vivo de cada jugador.</li>
+<li><strong>Esc</strong> abre el menú de pausa (Reanudar / Ajustes / Guardar / Rendirse / Salir). En multijugador, <strong>Intro</strong> abre el chat.</li>
+</ul>
+<hr />
 <h2 id="civilizaciones">Civilizaciones</h2>
 <h3 id="quienes-son">¿Quiénes son?</h3>
 <p>Ocho civilizaciones distribuidas en tres capas históricas. Tu elección determina tu estilo de juego, tus bonificaciones y tu pareja de héroes — cada civilización tiene un héroe y una heroína legendarios; en el lobby eliges quién te lidera (Aleatorio / Masculino / Femenino).</p>
-<hr>
+<hr />
 <h3 id="civilizaciones-antiguas">Civilizaciones Antiguas</h3>
 <p>Estas civilizaciones son anteriores al conflicto medieval. Sus ruinas salpican el archipiélago. Jugar con ellas supone estar fuera del tiempo — tecnológicamente distintas, estratégicamente aisladas, pero capaces de cosas que nadie más puede hacer.</p>
 <h4 id="atlantes">Atlantes</h4>
 <p><em>"El mar no es una barrera. Es un camino."</em></p>
 <p>La civilización perdida del mito. Escritores griegos — Platón, Plinio, Herodoto — situaron la Atlántida más allá de las Columnas de Hércules, en el mismo océano que estas islas ocupan. En <em>Calima</em>, los Atlantes no son una leyenda. Son un imperio en declive con el conocimiento náutico más avanzado del mundo, y ruinas por todas partes.</p>
 <p><strong>Cómo se juega:</strong> Los Atlantes controlan el agua. Sus Invocadores de Mareas son las únicas tropas terrestres del juego que entran en el mar — vadean los bajíos a velocidad completa y nadan en mar abierto —, así que ninguna orilla detiene un ataque atlante. Su línea de visión en cualquier costa es mayor que la de cualquier otra civilización. Su flota es inconfundible: cascos de piedra marina clara con herrajes de bronce, una aleta de bronce en cada proa y velas turquesa.</p>
-<p><strong>Puntos fuertes:</strong> Dominio naval, expansión costera, control estratégico del mapa <strong>Puntos débiles:</strong> Sin caballería pesada; sin taller de asedio; pierden en mapas de tierra pura</p>
-<p><strong>Bonificaciones pasivas:</strong></p>
-<ul><li>+50 % de visión para unidades y edificios a menos de 400 px de una costa</li><li>Más difíciles de detectar en la Niebla Marina (los enemigos los descubren a 90 px en vez de 180 px)</li><li>Velocidad de ataque de barcos ×1.20; la Tormenta Atlántica nunca frena su flota</li><li>Invocador de Mareas anfibio: velocidad completa en aguas someras, 60 % en mar abierto</li></ul>
+<p><strong>Puntos fuertes:</strong> Dominio naval, expansión costera, control estratégico del mapa
+<strong>Puntos débiles:</strong> Sin caballería pesada; sin taller de asedio; pierden en mapas de tierra pura</p>
+<p><strong>Bonificaciones pasivas:</strong>
+- +50 % de visión para unidades y edificios a menos de 400 px de una costa
+- Más difíciles de detectar en la Niebla Marina (los enemigos los descubren a 90 px en vez de 180 px)
+- Velocidad de ataque de barcos ×1.20; la Tormenta Atlántica nunca frena su flota
+- Invocador de Mareas anfibio: velocidad completa en aguas someras, 60 % en mar abierto</p>
 <p><strong>Unidad única:</strong> <em>Invocador de Mareas</em> — infantería anfibia entrenada en el Cuartel (Edad del Castillo, 50 Comida + 70 Oro) con un ataque de Pulso de Marea en área; la única unidad terrestre que nada</p>
 <p><strong>Héroe: Artaxerax</strong> — una figura mitologizada, mitad almirante, mitad profeta. Su habilidad <em>Calima</em> envuelve a las unidades aliadas cercanas en un velo de calima durante 12 segundos — las unidades ocultas no pueden ser objetivo del enemigo.</p>
 <p><strong>Heroína: Cleito</strong> — la reina a quien el agua se lo quitó todo. Su <em>Marea Creciente</em> lanza una ola de 250 px: los aliados curan 60 PV y ganan +30 % de velocidad durante 8 segundos; los enemigos reciben 20 de daño y pierden un 20 % de velocidad.</p>
-<hr>
+<hr />
 <h4 id="fenicios">Fenicios</h4>
 <p><em>"No necesitamos conquistar lo que simplemente podemos comprar."</em></p>
 <p>Marineros cartagineses y fenicios documentaron las Islas Canarias siglos antes de que la Europa medieval supiera que existían. Los registros de expedición de Hannón el Navegante describen islas de fuego y bosques. No dejaron asentamientos. Dejaron rutas comerciales, mapas y conocimiento.</p>
 <p><strong>Cómo se juega:</strong> Los Fenicios viven del Mercado — el suyo abre en la Edad Oscura, antes de que nadie más pueda comerciar. Contratan mercenarios más baratos que nadie, sus barcos cuestan un 15 % menos y sus Trirremes generan un goteo pasivo de oro mientras navegan. No tanto luchan con su propio ejército como compran el de los demás.</p>
-<p><strong>Puntos fuertes:</strong> Economía y generación de oro, flexibilidad mediante mercenarios, comercio temprano <strong>Puntos débiles:</strong> Sin caballeros; sin infantería de nivel Castillo propia; vulnerables a la agresión temprana</p>
-<p><strong>Bonificaciones pasivas:</strong></p>
-<ul><li>Los Trirremes generan oro pasivo (5 de oro cada 30 s)</li><li>Los mercenarios del Mercado cuestan un 25 % menos</li><li>Media penalización de la Tormenta Atlántica</li></ul>
+<p><strong>Puntos fuertes:</strong> Economía y generación de oro, flexibilidad mediante mercenarios, comercio temprano
+<strong>Puntos débiles:</strong> Sin caballeros; sin infantería de nivel Castillo propia; vulnerables a la agresión temprana</p>
+<p><strong>Bonificaciones pasivas:</strong>
+- Los Trirremes generan oro pasivo (5 de oro cada 30 s)
+- Los mercenarios del Mercado cuestan un 25 % menos
+- Media penalización de la Tormenta Atlántica</p>
 <p><strong>Unidad única:</strong> <em>Trirreme</em> — galera de embestida rápida construida en el Muelle (Edad Feudal, 100 Madera + 50 Oro): daño ×2 contra barcos con empuje de 40 px</p>
 <p><strong>Héroe: Hannón el Navegante</strong> — basado en el explorador cartaginés real que documentó la costa atlántica africana. Su habilidad <em>Ruta Comercial</em> establece una ruta que genera 50 de oro a lo largo de 30 segundos.</p>
 <p><strong>Heroína: Elissa</strong> — la reina fundadora de los mercaderes. Su <em>Pacto Mercenario</em> gasta 400 de oro para convertir permanentemente a una unidad enemiga (no héroes ni edificios) a menos de 200 px.</p>
-<hr>
+<hr />
 <h3 id="civilizaciones-nativas">Civilizaciones Nativas</h3>
 <p>Los que ya estaban aquí. Cada civilización nativa ocupa un entorno insular específico y está optimizada para él. Conocen el terreno. No necesitan caminos para moverse rápido ni muros para defenderse bien.</p>
 <h4 id="guanches">Guanches</h4>
 <p><em>"Echeyde no es una montaña. Es una puerta. Y es nuestra."</em></p>
 <p>Los Guanches de Tenerife vivían en las laderas del volcán Teide — <em>Echeyde</em> en su lengua, la sagrada puerta al inframundo. Estaban organizados en siete reinos (menceyatos), cada uno liderado por un mencey. Cuando los castellanos invadieron, seis menceyes se rindieron. Uno no.</p>
 <p><strong>Cómo se juega:</strong> Los Guanches son una civilización defensiva construida en torno al terreno volcánico. Las casillas de malpaís — la roca de lava negra y dentada que cubre gran parte del paisaje canario — son intransitables para cualquier otra civilización. Los Guanches las atraviesan libremente. Sus edificios de piedra son más difíciles de destruir que los de cualquier otro, levantan piqueros de banot desde la Edad Oscura — la respuesta anticaballería más temprana del juego — y los vientos del desierto apenas los tocan.</p>
-<p><strong>Puntos fuertes:</strong> Dominio del terreno volcánico, edificios duraderos, resistencia al clima <strong>Puntos débiles:</strong> Sin caballería; sin pólvora; débiles en el mar</p>
-<p><strong>Bonificaciones pasivas:</strong></p>
-<ul><li>Cruzan libremente el malpaís (roca volcánica)</li><li>Edificios de piedra +20 % de puntos de vida</li><li>Inmunes a la Calima; media penalización de la Ceniza Volcánica</li></ul>
+<p><strong>Puntos fuertes:</strong> Dominio del terreno volcánico, edificios duraderos, resistencia al clima
+<strong>Puntos débiles:</strong> Sin caballería; sin pólvora; débiles en el mar</p>
+<p><strong>Bonificaciones pasivas:</strong>
+- Cruzan libremente el malpaís (roca volcánica)
+- Edificios de piedra +20 % de puntos de vida
+- Inmunes a la Calima; media penalización de la Ceniza Volcánica</p>
 <p><strong>Unidad única:</strong> <em>Guardia del Mencey</em> — infantería pesada entrenada en el Cuartel (Edad del Castillo, 65 Comida + 25 Oro); entra en un Aura de Furia por debajo de la mitad de vida</p>
 <p><strong>Héroe: Bencomo</strong> — el verdadero Mencey de Taoro que aplastó al ejército castellano en la primera batalla de Acentejo (1494). Su habilidad <em>Ímpetu del Mencey</em> enardece a las unidades aliadas cercanas: +30 % de velocidad de ataque durante 10 segundos. Úsala en el momento del contacto, no antes.</p>
 <p><strong>Heroína: Dácil</strong> — la princesa que leyó a los invasores antes que nadie. Su <em>Voz de la Montaña</em> otorga a los aliados cercanos +2 de armadura y +50 % de velocidad de curación durante 12 segundos.</p>
-<hr>
+<hr />
 <h4 id="canarii">Canarii</h4>
 <p><em>"El barranco no es un problema. Es un muro que se construye solo."</em></p>
 <p>El pueblo nativo de Gran Canaria era el más complejo políticamente del archipiélago — gobernado por un consejo de jefes, con una cultura guerrera centrada en el combate individual. La geografía de su isla era su fortaleza: barrancos profundos, mesetas elevadas, acantilados costeros.</p>
 <p><strong>Cómo se juega:</strong> Los Canarii tienen la economía más potente del nivel nativo. Sus aldeanos recolectan comida más rápido, sus casas sirven como punto de entrega (los aldeanos descargan allí donde crece el poblado) y sus arqueros son suficientemente baratos como para desplegarlos en masa desde temprano. En terreno elevado — los riscos — su unidad única gana alcance adicional. Son además los protagonistas de la campaña.</p>
-<p><strong>Puntos fuertes:</strong> Volumen económico, presión arquera temprana, ventaja en terreno elevado <strong>Puntos débiles:</strong> Unidades pesadas limitadas; sin fuerza naval; sufren en mapas llanos y abiertos</p>
-<p><strong>Bonificaciones pasivas:</strong></p>
-<ul><li>Los aldeanos recolectan Comida un +15 % más rápido</li><li>Los arqueros cuestan un 20 % menos de Comida</li><li>Media penalización de la Niebla Marina y los Vientos Alisios</li></ul>
+<p><strong>Puntos fuertes:</strong> Volumen económico, presión arquera temprana, ventaja en terreno elevado
+<strong>Puntos débiles:</strong> Unidades pesadas limitadas; sin fuerza naval; sufren en mapas llanos y abiertos</p>
+<p><strong>Bonificaciones pasivas:</strong>
+- Los aldeanos recolectan Comida un +15 % más rápido
+- Los arqueros cuestan un 20 % menos de Comida
+- Media penalización de la Niebla Marina y los Vientos Alisios</p>
 <p><strong>Unidad única:</strong> <em>Arquero del Barranco</em> — arquero ligero entrenado en la Galería de Tiro (Edad del Castillo, 40 Madera + 55 Oro); su Disparo de Emboscada duplica el primer disparo hecho quieto, y los riscos amplían su alcance</p>
 <p><strong>Héroe: Doramas</strong> — el legendario campeón de Gran Canaria, que solo pudo ser vencido mediante traición. Su habilidad <em>Desafío</em> provoca a la unidad enemiga más cercana para que le ataque solo a él durante 6 segundos — sacándola de la formación, aislándola para tus arqueros.</p>
 <p><strong>Heroína: Guayarmina</strong> — la última princesa de Gáldar. Su <em>Flecha del Destino</em> es un disparo imbloqueable de 80 de daño que ignora la armadura; si el objetivo muere, el enfriamiento se reduce a la mitad.</p>
-<hr>
+<hr />
 <h4 id="mahos">Mahos</h4>
 <p><em>"El desierto no te mata. Tus prisas sí."</em></p>
 <p>Lanzarote y Fuerteventura son las islas más antiguas y secas — llanas, azotadas por el viento, casi sin árboles. Los Mahos construyeron su mundo con piedra volcánica porque no había otra cosa. Su rey Guadarfía es uno de los personajes más fascinantes de la conquista: un hombre que sobrevivió siendo indispensable para todos.</p>
 <p><strong>Cómo se juega:</strong> Los Mahos construyen barato porque sustituyen la madera por piedra. Sus exploradores y caballería ligera se mueven más rápido que los equivalentes de cualquier otra civilización, y las dunas nunca los frenan — desde lo alto de una duna además ven un 40 % más lejos: el propio desierto es su atalaya. Son una civilización de hostigamiento temprano — rápida, impredecible, difícil de atrapar.</p>
-<p><strong>Puntos fuertes:</strong> Velocidad, dominio del terreno desértico, edificios baratos, exploración excelente <strong>Puntos débiles:</strong> Juego tardío débil; sin profundidad en arquería; mala naval</p>
-<p><strong>Bonificaciones pasivas:</strong></p>
-<ul><li>Los edificios cuestan un 30 % menos de Madera (construcción de piedra seca)</li><li>Exploradores y caballería ligera +25 % de velocidad de movimiento</li><li>Cruzan libremente las dunas; media penalización de la Calima</li></ul>
+<p><strong>Puntos fuertes:</strong> Velocidad, dominio del terreno desértico, edificios baratos, exploración excelente
+<strong>Puntos débiles:</strong> Juego tardío débil; sin profundidad en arquería; mala naval</p>
+<p><strong>Bonificaciones pasivas:</strong>
+- Los edificios cuestan un 30 % menos de Madera (construcción de piedra seca)
+- Exploradores y caballería ligera +25 % de velocidad de movimiento
+- Cruzan libremente las dunas; media penalización de la Calima</p>
 <p><strong>Unidad única:</strong> <em>Saqueador de Dunas</em> — caballería ligera rápida entrenada en el Establo (Edad Feudal, 60 Comida + 40 Oro). Golpea y huye: se retira automáticamente tras cada ataque. Excelente para saquear líneas de aldeanos y escapar antes de que el enemigo pueda responder.</p>
 <p><strong>Héroe: Guadarfía</strong> — el rey maho que sobrevivió a la conquista siendo demasiado útil para eliminarlo. Su habilidad <em>Emboscada</em> lo vuelve casi invisible durante 8 segundos — los enemigos no pueden atacarle automáticamente mientras está oculto. Combínalo con Saqueadores de Dunas para una emboscada maho clásica.</p>
 <p><strong>Heroína: Tibiabin</strong> — la vidente de Fuerteventura. Su <em>Tormenta de Arena</em> levanta una tormenta de 200 px durante 10 segundos: 3 de daño por segundo, −40 % de velocidad y −50 % de precisión de proyectiles para los enemigos dentro.</p>
-<hr>
+<hr />
 <h3 id="invasores-europeos">Invasores Europeos</h3>
 <p>No conocían el terreno. Conocían otra cosa: organización, hierro y la paciencia de los imperios. Cada civilización europea tiene un motivo diferente para estar en el archipiélago — y una forma diferente de combatir.</p>
 <h4 id="francos">Francos</h4>
 <p><em>"El contrato estaba firmado. Las islas ya eran nuestras en papel."</em></p>
 <p>Jean de Béthencourt no era un conquistador en el sentido tradicional — era un señor normando al servicio de la corona castellana, y su conquista de Lanzarote y Fuerteventura en 1402 fue administrativa antes que militar. Explotó las divisiones internas de los Mahos y se alió con Guadarfía. Fue el primer punto de apoyo europeo en el Atlántico.</p>
 <p><strong>Cómo se juega:</strong> Los Francos avanzan de edad más rápido y más barato que casi cualquier otra civilización. Su caballería es fuerte desde la Edad Feudal. Se expanden pronto, presionan al enemigo antes de que esté preparado, y ganan por inercia. Son la civilización del "ataque de timing" por excelencia.</p>
-<p><strong>Puntos fuertes:</strong> Avance de edad más rápido, caballería potente, expansión temprana <strong>Puntos débiles:</strong> Arquería débil; naval limitada en el juego tardío</p>
-<p><strong>Bonificaciones pasivas:</strong></p>
-<ul><li>Avanzar de edad cuesta un 15 % menos</li><li>Unidades de caballería +15 % de puntos de vida</li></ul>
+<p><strong>Puntos fuertes:</strong> Avance de edad más rápido, caballería potente, expansión temprana
+<strong>Puntos débiles:</strong> Arquería débil; naval limitada en el juego tardío</p>
+<p><strong>Bonificaciones pasivas:</strong>
+- Avanzar de edad cuesta un 15 % menos
+- Unidades de caballería +15 % de puntos de vida</p>
 <p><strong>Unidad única:</strong> <em>Chevalier Normando</em> — caballería pesada entrenada en el Establo (Edad del Castillo, 75 Comida + 65 Oro); su Carga de Lanza causa daño ×2.5 tras 80 px de aproximación ininterrumpida</p>
 <p><strong>Héroe: Jean de Béthencourt</strong> — el señor normando que plantó por primera vez una bandera europea en el archipiélago. Su habilidad <em>Diplomacia Forzada</em> convierte a la unidad enemiga más cercana a tu bando durante 12 segundos — una referencia directa a su estrategia histórica de convertir a los líderes nativos en colaboradores.</p>
 <p><strong>Heroína: Catalina de Béthencourt</strong> — la duelista de la casa. Su <em>Duelo de Honor</em> desafía a un héroe o unidad única enemiga: ambos se hacen +100 % de daño entre sí y −50 % al resto durante 15 segundos; si Catalina vence, recupera la mitad de su vida.</p>
-<hr>
+<hr />
 <h4 id="britanos">Britanos</h4>
 <p><em>"No hemos venido a quedarnos. Hemos venido a irnos con más de lo que trajimos."</em></p>
 <p>La presencia inglesa en Canarias nunca tuvo que ver con la colonización. Era disrupción. El saqueo de Las Palmas de Gran Canaria por Francis Drake en 1595 fue el momento más dramático de una relación construida sobre la piratería y la competencia comercial con Castilla. Los ingleses llegaban rápido, golpeaban fuerte y se iban.</p>
 <p><strong>Cómo se juega:</strong> Los Britanos tienen los mejores barcos de guerra del juego y los arqueros de mayor alcance de cualquier civilización. Su economía de saqueo — el <em>Saqueo</em> de Drake — hace que el juego agresivo pueda pagarse solo. Premian la agresividad en el mar y a distancia.</p>
-<p><strong>Puntos fuertes:</strong> Supremacía naval, arquería de largo alcance, economía de saqueo <strong>Puntos débiles:</strong> Mejoras de caballería pesada débiles; edificios defensivos ligeros</p>
-<p><strong>Bonificaciones pasivas:</strong></p>
-<ul><li>Los arqueros de a pie ganan +1 de alcance por Edad (desde Feudal)</li><li>Los barcos de guerra atacan un 20 % más rápido</li><li>Media penalización de la Tormenta Atlántica</li></ul>
+<p><strong>Puntos fuertes:</strong> Supremacía naval, arquería de largo alcance, economía de saqueo
+<strong>Puntos débiles:</strong> Mejoras de caballería pesada débiles; edificios defensivos ligeros</p>
+<p><strong>Bonificaciones pasivas:</strong>
+- Los arqueros de a pie ganan +1 de alcance por Edad (desde Feudal)
+- Los barcos de guerra atacan un 20 % más rápido
+- Media penalización de la Tormenta Atlántica</p>
 <p><strong>Unidad única:</strong> <em>Arquero de Tiro Largo</em> — arquero de a pie entrenado en la Galería de Tiro (Edad del Castillo, 30 Madera + 60 Oro) con alcance excepcional y flechas perforantes (+4 contra caballería)</p>
 <p><strong>Héroe: Francis Drake</strong> — el corsario que saqueó Las Palmas en 1595 y aun así fue repelido por la milicia de la ciudad. Su habilidad <em>Saqueo</em> dura 20 segundos — cada unidad enemiga eliminada en su radio paga 15 de oro. Mándalo a un combate denso, activa <em>Saqueo</em> y observa cómo cambia la economía.</p>
 <p><strong>Heroína: Grace O'Malley</strong> — la reina pirata de Irlanda. Su <em>Abordaje</em> la lanza 200 px en línea recta, causando 30 de daño y aturdiendo a los enemigos 2 segundos — y 100 de daño a los edificios.</p>
-<hr>
+<hr />
 <h4 id="castellanos">Castellanos</h4>
 <p><em>"No somos los primeros. Seremos los últimos."</em></p>
 <p>La Corona de Castilla financió la conquista final y completa del archipiélago. Alonso Fernández de Lugo tomó Tenerife en dos campañas — perdiendo la primera de forma catastrófica en Acentejo en 1494 ante Bencomo, regresando en 1496 con un ejército reforzado para ganar la segunda. Fundó La Laguna, todavía la capital histórica de Tenerife, y completó la pacificación de las siete islas.</p>
 <p><strong>Cómo se juega:</strong> Los Castellanos son lentos al inicio y caros de mantener, pero su poder en el juego tardío no tiene rival. Cada avance de edad desbloquea una tecnología de Herrería gratuita. Sus espadachines son de los más resistentes del juego. Si dejas que los Castellanos lleguen cómodamente a la Era Imperial, son muy difíciles de vencer.</p>
-<p><strong>Puntos fuertes:</strong> Mejor ejército en el juego tardío, infantería resistente, tecnologías gratuitas <strong>Puntos débiles:</strong> Economía temprana lenta; las unidades más potentes requieren Era Castillo o Imperial</p>
-<p><strong>Bonificaciones pasivas:</strong></p>
-<ul><li>Avanzar de edad desbloquea una tecnología de Herrería gratuita</li><li>La línea de espadachines +15 % de puntos de vida</li><li>Media penalización de la Calima</li></ul>
+<p><strong>Puntos fuertes:</strong> Mejor ejército en el juego tardío, infantería resistente, tecnologías gratuitas
+<strong>Puntos débiles:</strong> Economía temprana lenta; las unidades más potentes requieren Era Castillo o Imperial</p>
+<p><strong>Bonificaciones pasivas:</strong>
+- Avanzar de edad desbloquea una tecnología de Herrería gratuita
+- La línea de espadachines +15 % de puntos de vida
+- Media penalización de la Calima</p>
 <p><strong>Unidad única:</strong> <em>Conquistador</em> — infantería acorazada entrenada en el Cuartel (Edad del Castillo, 60 Comida + 60 Oro); su Fuego en Salva descarga 3 disparos rápidos con 12 s de enfriamiento</p>
 <p><strong>Héroe: Don Quijote de la Mancha</strong> — un caballero andante de La Mancha que llega a las islas convencido de que está en una cruzada sagrada. Cervantes escribió su historia en 1605, justo después de que terminara la conquista canaria, como sátira de exactamente estos hombres: idealistas, implacables, no del todo seguros de contra qué luchan. ¿Los molinos de viento contra los que arremete? En Lanzarote y Fuerteventura — las primeras islas que pisaron los Castellanos — hay molinos históricos reales.</p>
 <p>Su habilidad activa <em>Acometida del Caballero Errante</em> lo lanza al galope en línea recta, dañando todo lo que encuentra a su paso — amigo o enemigo. Apunta bien. Su pasiva <em>Rocinante</em> le da velocidad extra en todo momento, pero sus ataques llegan con un ligero retardo, como si siempre llegara un paso detrás de la realidad. Es el héroe con mayor daño de carga bruta — y el más propenso a atropellar a tus propias unidades si lo usas sin cuidado.</p>
 <p><strong>Heroína: Dulcinea del Toboso</strong> — la idea por la que se lucha, hecha real. Su <em>Llamada a las Armas</em> invoca 3 Milicias temporales (+20 % de vida y ataque) durante 40 segundos; no cuentan como bajas al desvanecerse.</p>
-<hr>
+<hr />
 <h2 id="terreno">Terreno</h2>
 <p>El archipiélago no es llano. Cada tipo de casilla cambia cómo se mueven y combaten las unidades.</p>
-<table><thead><tr><th>Terreno</th><th>Efecto</th><th>Notas</th></tr></thead><tbody><tr><td>Hierba</td><td>Movimiento normal</td><td>Tierra edificable estándar</td></tr><tr><td>Arena / Duna</td><td>Infantería pesada −20 % velocidad</td><td>Los Mahos las cruzan libremente</td></tr><tr><td>Malpaís (roca volcánica)</td><td>Intransitable</td><td>No edificable; los Guanches lo cruzan libremente</td></tr><tr><td>Laurisilva (bosque denso)</td><td>Todas las unidades −35 % velocidad; visión −30 % bajo el dosel</td><td>Muy alto rendimiento de madera</td></tr><tr><td>Risco (borde del acantilado)</td><td>Intransitable</td><td>Las unidades a distancia al borde ganan +2 de alcance</td></tr><tr><td>Agua poco profunda</td><td>Unidades terrestres bloqueadas</td><td>Solo la vadean las unidades anfibias — el Invocador de Mareas, a velocidad completa</td></tr><tr><td>Océano</td><td>Unidades terrestres bloqueadas</td><td>Barcos, y el Invocador de Mareas nadando al 60 %; pesca disponible</td></tr><tr><td>Caldera (cráter volcánico)</td><td>Intransitable</td><td>Los eventos de Ceniza Volcánica golpean alrededor de las calderas; un Campamento Minero levantado a la sombra de una caldera genera un goteo de piedra para su dueño</td></tr></tbody></table>
-<hr>
+<table>
+<thead>
+<tr>
+<th>Terreno</th>
+<th>Efecto</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hierba</td>
+<td>Movimiento normal</td>
+<td>Tierra edificable estándar</td>
+</tr>
+<tr>
+<td>Arena / Duna</td>
+<td>Infantería pesada −20 % velocidad</td>
+<td>Los Mahos las cruzan libremente</td>
+</tr>
+<tr>
+<td>Malpaís (roca volcánica)</td>
+<td>Intransitable</td>
+<td>No edificable; los Guanches lo cruzan libremente</td>
+</tr>
+<tr>
+<td>Laurisilva (bosque denso)</td>
+<td>Todas las unidades −35 % velocidad; visión −30 % bajo el dosel</td>
+<td>Muy alto rendimiento de madera</td>
+</tr>
+<tr>
+<td>Risco (borde del acantilado)</td>
+<td>Intransitable</td>
+<td>Las unidades a distancia al borde ganan +2 de alcance</td>
+</tr>
+<tr>
+<td>Agua poco profunda</td>
+<td>Unidades terrestres bloqueadas</td>
+<td>Solo la vadean las unidades anfibias — el Invocador de Mareas, a velocidad completa</td>
+</tr>
+<tr>
+<td>Océano</td>
+<td>Unidades terrestres bloqueadas</td>
+<td>Barcos, y el Invocador de Mareas nadando al 60 %; pesca disponible</td>
+</tr>
+<tr>
+<td>Caldera (cráter volcánico)</td>
+<td>Intransitable</td>
+<td>Los eventos de Ceniza Volcánica golpean alrededor de las calderas; un Campamento Minero levantado a la sombra de una caldera genera un goteo de piedra para su dueño</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="recursos-y-economia">Recursos y economía</h2>
 <p>Cuatro recursos impulsan todo en <em>Calima</em>. Empiezas con 200 de Comida, 75 de Madera y 50 de Oro (la Piedra comienza en 0). El modo Normal usa estos valores; Escasos y Abundantes escalan los depósitos del mapa; Combate Total pone los cuatro almacenes a 9999.</p>
 <h3 id="los-cuatro-recursos">Los cuatro recursos</h3>
-<table><thead><tr><th>Recurso</th><th>Cómo recolectarlo</th></tr></thead><tbody><tr><td><strong>Comida</strong></td><td>Envía Aldeanos a arbustos de bayas, caza animales o construye Granjas. El <strong>Molino</strong> es el punto de entrega de comida; entrena perros <strong>Presa Canario</strong>, que llevan animales (incluidas ovejas enemigas, que se convierten por el camino) hasta tu base — cada viaje además paga comida según lo que el perro acercó al animal a casa. Rebaños salvajes de ovejas pastan por el mapa, y la IA cría sus propios perros: los rebaños sin dueño son una carrera. En mapas con agua, los Barcos Pesqueros extraen comida de los bancos de peces y las Trampas para Peces dan un flujo pasivo.</td></tr><tr><td><strong>Madera</strong></td><td>Ordena a los Aldeanos talar árboles. Construye un Campamento Maderero junto al bosque — es el punto de entrega.</td></tr><tr><td><strong>Oro</strong></td><td>Extrae depósitos de oro. Construye un Campamento Minero cerca. El Mercado también convierte otros recursos en oro.</td></tr><tr><td><strong>Piedra</strong></td><td>Extrae canteras de piedra. Misma lógica de entrega que el oro: Campamento Minero. Se usa para muros y Torres de Vigilancia.</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Recurso</th>
+<th>Cómo recolectarlo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Comida</strong></td>
+<td>Envía Aldeanos a arbustos de bayas, caza animales o construye Granjas. El <strong>Molino</strong> es el punto de entrega de comida; entrena perros <strong>Presa Canario</strong>, que llevan animales (incluidas ovejas enemigas, que se convierten por el camino) hasta tu base — cada viaje además paga comida según lo que el perro acercó al animal a casa. Rebaños salvajes de ovejas pastan por el mapa, y la IA cría sus propios perros: los rebaños sin dueño son una carrera. En mapas con agua, los Barcos Pesqueros extraen comida de los bancos de peces y las Trampas para Peces dan un flujo pasivo.</td>
+</tr>
+<tr>
+<td><strong>Madera</strong></td>
+<td>Ordena a los Aldeanos talar árboles. Construye un Campamento Maderero junto al bosque — es el punto de entrega.</td>
+</tr>
+<tr>
+<td><strong>Oro</strong></td>
+<td>Extrae depósitos de oro. Construye un Campamento Minero cerca. El Mercado también convierte otros recursos en oro.</td>
+</tr>
+<tr>
+<td><strong>Piedra</strong></td>
+<td>Extrae canteras de piedra. Misma lógica de entrega que el oro: Campamento Minero. Se usa para muros y Torres de Vigilancia.</td>
+</tr>
+</tbody>
+</table>
 <p>Los Aldeanos transportan hasta <strong>10 unidades</strong> de recurso por viaje. Dos tecnologías de Herrería amplían la carga para todo (+25 % cada una: <strong>Carreta Canaria</strong> y <strong>Carretón Isleño</strong>), y la línea propia de cada campamento (ver árbol tecnológico) añade +10 % de carga y +15 % de velocidad de recolección por paso para su recurso. Construye los puntos de entrega cerca de los nodos — el desplazamiento es el coste real.</p>
 <h3 id="poblacion">Población</h3>
 <p>Comienzas con un límite de <strong>15</strong>. Cada <strong>Casa</strong> completada lo sube en <strong>5</strong>. Si alcanzas el tope, el entrenamiento se detiene — el HUD parpadea y una notificación te ofrece colocar una Casa con un clic.</p>
 <h3 id="comercio-en-el-mercado">Comercio en el Mercado</h3>
 <p>El Mercado vende comida, madera o piedra a cambio de oro y las recompra, con tasas por jugador que se degradan con el uso y se recuperan con el tiempo. Constrúyelo desde la Edad Feudal (Fenicios: desde la Edad Oscura). Todas las civilizaciones pueden además <strong>contratar mercenarios</strong> — unidades de otras civilizaciones, pagadas en oro con un enfriamiento (los Fenicios pagan un 25 % menos).</p>
-<hr>
+<hr />
 <h2 id="progresion-de-edades">Progresión de edades</h2>
 <p>Avanzar de edad es la columna vertebral del juego. Cada Era desbloquea nuevas unidades, edificios y tecnologías. Avanzas desde el Centro Urbano cuando puedes pagar el coste.</p>
-<table><thead><tr><th>Edad</th><th>Coste de avance</th><th>Tiempo</th><th>Qué se desbloquea</th></tr></thead><tbody><tr><td><strong>Edad Oscura</strong></td><td>— (edad inicial)</td><td>—</td><td>Aldeano, Milicia, Explorador, Presa Canario, edificios básicos, Muelle, Barco Pesquero</td></tr><tr><td><strong>Edad Feudal</strong></td><td>500 Comida</td><td>~2 min 10 s</td><td>Arquero, Explorador Pesado, Galería de Tiro, Herrería, Establo, Mercado, Torre de Vigilancia, Galera de Guerra, Barco de Transporte, Trirreme, Saqueador de Dunas</td></tr><tr><td><strong>Edad del Castillo</strong></td><td>800 Comida + 200 Oro</td><td>~2 min 40 s</td><td>Piquero, Caballero, Universidad, Templo, Taller de Asedio, Centros Urbanos adicionales, la mayoría de unidades únicas, Harimaguada</td></tr><tr><td><strong>Edad Imperial</strong></td><td>1000 Comida + 800 Oro</td><td>~3 min 10 s</td><td>Maravilla, Trabuquete, la cima de todas las líneas tecnológicas</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Edad</th>
+<th>Coste de avance</th>
+<th>Tiempo</th>
+<th>Qué se desbloquea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Edad Oscura</strong></td>
+<td>— (edad inicial)</td>
+<td>—</td>
+<td>Aldeano, Milicia, Explorador, Presa Canario, edificios básicos, Muelle, Barco Pesquero</td>
+</tr>
+<tr>
+<td><strong>Edad Feudal</strong></td>
+<td>500 Comida</td>
+<td>~2 min 10 s</td>
+<td>Arquero, Explorador Pesado, Galería de Tiro, Herrería, Establo, Mercado, Torre de Vigilancia, Galera de Guerra, Barco de Transporte, Trirreme, Saqueador de Dunas</td>
+</tr>
+<tr>
+<td><strong>Edad del Castillo</strong></td>
+<td>800 Comida + 200 Oro</td>
+<td>~2 min 40 s</td>
+<td>Piquero, Caballero, Universidad, Templo, Taller de Asedio, Centros Urbanos adicionales, la mayoría de unidades únicas, Harimaguada</td>
+</tr>
+<tr>
+<td><strong>Edad Imperial</strong></td>
+<td>1000 Comida + 800 Oro</td>
+<td>~3 min 10 s</td>
+<td>Maravilla, Trabuquete, la cima de todas las líneas tecnológicas</td>
+</tr>
+</tbody>
+</table>
 <p>Los <strong>Francos</strong> avanzan un 15 % más barato. Los <strong>Castellanos</strong> reciben una tecnología de Herrería gratuita cada vez que avanzan.</p>
-<hr>
+<hr />
 <h2 id="unidades">Unidades</h2>
 <h3 id="economia-y-apoyo">Economía y apoyo</h3>
-<table><thead><tr><th>Unidad</th><th>Edad</th><th>Edificio</th><th>Coste</th><th>Función</th></tr></thead><tbody><tr><td><strong>Aldeano</strong></td><td>Oscura</td><td>Centro Urbano</td><td>50 Comida</td><td>Recolecta los cuatro recursos; construye y repara</td></tr><tr><td><strong>Presa Canario</strong></td><td>Oscura</td><td>Molino</td><td>30 Comida + 10 Oro</td><td>Perro pastor: busca animales y los lleva a casa (cobrando comida por el viaje); muerde si lo presionan pero nunca abandona un pastoreo por su cuenta</td></tr><tr><td><strong>Harimaguada</strong></td><td>Castillo</td><td>Templo</td><td>85 Comida + 25 Oro</td><td>Sacerdotisa sanadora (siempre mujer): cura 5 PV/s a corta distancia y atiende sola a los heridos cercanos; nunca combate</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Edad</th>
+<th>Edificio</th>
+<th>Coste</th>
+<th>Función</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Aldeano</strong></td>
+<td>Oscura</td>
+<td>Centro Urbano</td>
+<td>50 Comida</td>
+<td>Recolecta los cuatro recursos; construye y repara</td>
+</tr>
+<tr>
+<td><strong>Presa Canario</strong></td>
+<td>Oscura</td>
+<td>Molino</td>
+<td>30 Comida + 10 Oro</td>
+<td>Perro pastor: busca animales y los lleva a casa (cobrando comida por el viaje); muerde si lo presionan pero nunca abandona un pastoreo por su cuenta</td>
+</tr>
+<tr>
+<td><strong>Harimaguada</strong></td>
+<td>Castillo</td>
+<td>Templo</td>
+<td>85 Comida + 25 Oro</td>
+<td>Sacerdotisa sanadora (siempre mujer): cura 5 PV/s a corta distancia y atiende sola a los heridos cercanos; nunca combate</td>
+</tr>
+</tbody>
+</table>
 <h3 id="militares">Militares</h3>
-<table><thead><tr><th>Unidad</th><th>Edad</th><th>Edificio</th><th>Coste</th><th>Función</th></tr></thead><tbody><tr><td><strong>Milicia</strong></td><td>Oscura</td><td>Cuartel</td><td>60 Comida + 20 Madera</td><td>Infantería melé básica</td></tr><tr><td><strong>Explorador</strong></td><td>Oscura</td><td>Establo (uno gratis al inicio)</td><td>80 Comida</td><td>Explorador rápido con modo de exploración automática; débil en combate</td></tr><tr><td><strong>Arquero</strong></td><td>Feudal</td><td>Cuartel / Galería de Tiro</td><td>25 Madera + 45 Oro</td><td>A distancia; frágil de cerca; ataque a zona y fuego de cobertura</td></tr><tr><td><strong>Hombre de Armas</strong></td><td>Feudal</td><td>mejora de la Milicia</td><td>tec.: 100 Comida + 40 Oro</td><td>Línea de infantería mejorada</td></tr><tr><td><strong>Explorador Pesado</strong></td><td>Feudal</td><td>Establo (mejora del Explorador)</td><td>80 Comida + 30 Oro</td><td>Caballería rápida de saqueo</td></tr><tr><td><strong>Piquero</strong></td><td>Castillo</td><td>Cuartel</td><td>60 Comida + 30 Oro</td><td>Lancero anticaballería</td></tr><tr><td><strong>Espadachín</strong></td><td>Castillo</td><td>mejora del Hombre de Armas</td><td>tec.: 200 Comida + 60 Oro</td><td>Cima de la línea de infantería</td></tr><tr><td><strong>Caballero</strong></td><td>Castillo</td><td>Establo</td><td>60 Comida + 75 Oro</td><td>Caballería pesada; la unidad terrestre dominante de la Era Castillo</td></tr><tr><td><strong>Ariete</strong></td><td>Castillo</td><td>Taller de Asedio</td><td>160 Madera</td><td>Daño ×3 a edificios, casi inofensivo contra unidades</td></tr><tr><td><strong>Manganela</strong></td><td>Castillo</td><td>Taller de Asedio</td><td>160 Madera + 135 Oro</td><td>Daño en área (72 px); alcance mínimo</td></tr><tr><td><strong>Trabuquete</strong></td><td>Imperial</td><td>Taller de Asedio</td><td>200 Madera + 200 Oro</td><td>El mayor alcance del juego; debe desplegarse para disparar</td></tr><tr><td><strong>Héroe</strong></td><td>Oscura (gratis)</td><td>reaparece en el Centro Urbano</td><td>Gratis</td><td>Uno por jugador, elegido de la pareja de héroes de tu civilización; habilidad única</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Edad</th>
+<th>Edificio</th>
+<th>Coste</th>
+<th>Función</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Milicia</strong></td>
+<td>Oscura</td>
+<td>Cuartel</td>
+<td>60 Comida + 20 Madera</td>
+<td>Infantería melé básica</td>
+</tr>
+<tr>
+<td><strong>Explorador</strong></td>
+<td>Oscura</td>
+<td>Establo (uno gratis al inicio)</td>
+<td>80 Comida</td>
+<td>Explorador rápido con modo de exploración automática; débil en combate</td>
+</tr>
+<tr>
+<td><strong>Arquero</strong></td>
+<td>Feudal</td>
+<td>Cuartel / Galería de Tiro</td>
+<td>25 Madera + 45 Oro</td>
+<td>A distancia; frágil de cerca; ataque a zona y fuego de cobertura</td>
+</tr>
+<tr>
+<td><strong>Hombre de Armas</strong></td>
+<td>Feudal</td>
+<td>mejora de la Milicia</td>
+<td>tec.: 100 Comida + 40 Oro</td>
+<td>Línea de infantería mejorada</td>
+</tr>
+<tr>
+<td><strong>Explorador Pesado</strong></td>
+<td>Feudal</td>
+<td>Establo (mejora del Explorador)</td>
+<td>80 Comida + 30 Oro</td>
+<td>Caballería rápida de saqueo</td>
+</tr>
+<tr>
+<td><strong>Piquero</strong></td>
+<td>Castillo</td>
+<td>Cuartel</td>
+<td>60 Comida + 30 Oro</td>
+<td>Lancero anticaballería</td>
+</tr>
+<tr>
+<td><strong>Espadachín</strong></td>
+<td>Castillo</td>
+<td>mejora del Hombre de Armas</td>
+<td>tec.: 200 Comida + 60 Oro</td>
+<td>Cima de la línea de infantería</td>
+</tr>
+<tr>
+<td><strong>Caballero</strong></td>
+<td>Castillo</td>
+<td>Establo</td>
+<td>60 Comida + 75 Oro</td>
+<td>Caballería pesada; la unidad terrestre dominante de la Era Castillo</td>
+</tr>
+<tr>
+<td><strong>Ariete</strong></td>
+<td>Castillo</td>
+<td>Taller de Asedio</td>
+<td>160 Madera</td>
+<td>Daño ×3 a edificios, casi inofensivo contra unidades</td>
+</tr>
+<tr>
+<td><strong>Manganela</strong></td>
+<td>Castillo</td>
+<td>Taller de Asedio</td>
+<td>160 Madera + 135 Oro</td>
+<td>Daño en área (72 px); alcance mínimo</td>
+</tr>
+<tr>
+<td><strong>Trabuquete</strong></td>
+<td>Imperial</td>
+<td>Taller de Asedio</td>
+<td>200 Madera + 200 Oro</td>
+<td>El mayor alcance del juego; debe desplegarse para disparar</td>
+</tr>
+<tr>
+<td><strong>Héroe</strong></td>
+<td>Oscura (gratis)</td>
+<td>reaparece en el Centro Urbano</td>
+<td>Gratis</td>
+<td>Uno por jugador, elegido de la pareja de héroes de tu civilización; habilidad única</td>
+</tr>
+</tbody>
+</table>
 <p>Cada civilización despliega además su <strong>unidad única</strong> — edificio, edad y coste en las secciones de civilización.</p>
 <p>Los héroes no se entrenan — cada jugador empieza con uno. Si muere, reaparece en el Centro Urbano tras <strong>2 minutos</strong> — salvo en <strong>Regicidio</strong>, donde su muerte es la derrota inmediata. En Regicidio un widget del héroe permanece en pantalla, y un botón del HUD lo localiza en cualquier momento.</p>
-<hr>
+<hr />
 <h2 id="edificios">Edificios</h2>
 <h3 id="produccion">Producción</h3>
-<table><thead><tr><th>Edificio</th><th>Coste</th><th>Notas</th></tr></thead><tbody><tr><td><strong>Centro Urbano</strong></td><td>edificio inicial (adicionales: 275 Madera, Edad del Castillo)</td><td>Entrena Aldeanos; avance de edad; guarnece 10 (dispara flechas mientras está guarnecido); Campana del Pueblo</td></tr><tr><td><strong>Cuartel</strong></td><td>175 Madera</td><td>Entrena Milicia, Arquero, Piquero y varias unidades únicas; investiga las mejoras de infantería</td></tr><tr><td><strong>Galería de Tiro</strong></td><td>175 Madera (Feudal)</td><td>Entrena Arquero, Arquero del Barranco, Arquero de Tiro Largo</td></tr><tr><td><strong>Establo</strong></td><td>175 Madera (Feudal)</td><td>Entrena la línea de Exploradores, Caballero, Saqueador de Dunas, Chevalier Normando; investiga las mejoras de caballería</td></tr><tr><td><strong>Taller de Asedio</strong></td><td>200 Madera (Castillo)</td><td>Entrena Ariete, Manganela, Trabuquete</td></tr><tr><td><strong>Muelle</strong></td><td>150 Madera</td><td>Colocación costera; entrena Barco Pesquero, Barco de Transporte, Galera de Guerra, Trirreme</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Edificio</th>
+<th>Coste</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Centro Urbano</strong></td>
+<td>edificio inicial (adicionales: 275 Madera, Edad del Castillo)</td>
+<td>Entrena Aldeanos; avance de edad; guarnece 10 (dispara flechas mientras está guarnecido); Campana del Pueblo</td>
+</tr>
+<tr>
+<td><strong>Cuartel</strong></td>
+<td>175 Madera</td>
+<td>Entrena Milicia, Arquero, Piquero y varias unidades únicas; investiga las mejoras de infantería</td>
+</tr>
+<tr>
+<td><strong>Galería de Tiro</strong></td>
+<td>175 Madera (Feudal)</td>
+<td>Entrena Arquero, Arquero del Barranco, Arquero de Tiro Largo</td>
+</tr>
+<tr>
+<td><strong>Establo</strong></td>
+<td>175 Madera (Feudal)</td>
+<td>Entrena la línea de Exploradores, Caballero, Saqueador de Dunas, Chevalier Normando; investiga las mejoras de caballería</td>
+</tr>
+<tr>
+<td><strong>Taller de Asedio</strong></td>
+<td>200 Madera (Castillo)</td>
+<td>Entrena Ariete, Manganela, Trabuquete</td>
+</tr>
+<tr>
+<td><strong>Muelle</strong></td>
+<td>150 Madera</td>
+<td>Colocación costera; entrena Barco Pesquero, Barco de Transporte, Galera de Guerra, Trirreme</td>
+</tr>
+</tbody>
+</table>
 <h3 id="economia">Economía</h3>
-<table><thead><tr><th>Edificio</th><th>Coste</th><th>Notas</th></tr></thead><tbody><tr><td><strong>Campamento Maderero</strong></td><td>100 Madera</td><td>Entrega de madera; investiga la línea tecnológica de la madera</td></tr><tr><td><strong>Campamento Minero</strong></td><td>100 Madera</td><td>Entrega de oro y piedra; investiga la línea de minería</td></tr><tr><td><strong>Molino</strong></td><td>100 Madera</td><td>Entrega de comida; entrena al Presa Canario; investiga la línea agrícola</td></tr><tr><td><strong>Granja</strong></td><td>60 Madera</td><td>Fuente de comida continua; la trabaja un Aldeano</td></tr><tr><td><strong>Trampa para Peces</strong></td><td>75 Madera</td><td>Construida en el océano por Barcos Pesqueros; comida pasiva</td></tr><tr><td><strong>Mercado</strong></td><td>175 Madera (Feudal)</td><td>Comercia recursos por oro; contrata mercenarios</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Edificio</th>
+<th>Coste</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Campamento Maderero</strong></td>
+<td>100 Madera</td>
+<td>Entrega de madera; investiga la línea tecnológica de la madera</td>
+</tr>
+<tr>
+<td><strong>Campamento Minero</strong></td>
+<td>100 Madera</td>
+<td>Entrega de oro y piedra; investiga la línea de minería</td>
+</tr>
+<tr>
+<td><strong>Molino</strong></td>
+<td>100 Madera</td>
+<td>Entrega de comida; entrena al Presa Canario; investiga la línea agrícola</td>
+</tr>
+<tr>
+<td><strong>Granja</strong></td>
+<td>60 Madera</td>
+<td>Fuente de comida continua; la trabaja un Aldeano</td>
+</tr>
+<tr>
+<td><strong>Trampa para Peces</strong></td>
+<td>75 Madera</td>
+<td>Construida en el océano por Barcos Pesqueros; comida pasiva</td>
+</tr>
+<tr>
+<td><strong>Mercado</strong></td>
+<td>175 Madera (Feudal)</td>
+<td>Comercia recursos por oro; contrata mercenarios</td>
+</tr>
+</tbody>
+</table>
 <h3 id="investigacion">Investigación</h3>
-<table><thead><tr><th>Edificio</th><th>Coste</th><th>Notas</th></tr></thead><tbody><tr><td><strong>Herrería</strong></td><td>150 Madera (Feudal)</td><td>Tecnologías de armas, armaduras y carretas</td></tr><tr><td><strong>Universidad</strong></td><td>200 Madera (Castillo)</td><td>Balística, Química, Ingeniería de Asedio</td></tr><tr><td><strong>Templo</strong></td><td>175 Madera (Castillo)</td><td>Fervor, Santidad, Expiación; entrena a la Harimaguada; hospital de campaña — las unidades guarnecidas (5) curan 4 PV/s, los héroes a la mitad</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Edificio</th>
+<th>Coste</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Herrería</strong></td>
+<td>150 Madera (Feudal)</td>
+<td>Tecnologías de armas, armaduras y carretas</td>
+</tr>
+<tr>
+<td><strong>Universidad</strong></td>
+<td>200 Madera (Castillo)</td>
+<td>Balística, Química, Ingeniería de Asedio</td>
+</tr>
+<tr>
+<td><strong>Templo</strong></td>
+<td>175 Madera (Castillo)</td>
+<td>Fervor, Santidad, Expiación; entrena a la Harimaguada; hospital de campaña — las unidades guarnecidas (5) curan 4 PV/s, los héroes a la mitad</td>
+</tr>
+</tbody>
+</table>
 <h3 id="defensa">Defensa</h3>
-<table><thead><tr><th>Edificio</th><th>Coste</th><th>Notas</th></tr></thead><tbody><tr><td><strong>Casa</strong></td><td>25 Madera</td><td>+5 al límite de población al completarse</td></tr><tr><td><strong>Muralla</strong></td><td>5 Piedra por segmento</td><td>Arrastra para colocar un tramo entero</td></tr><tr><td><strong>Puerta</strong></td><td>30 Madera</td><td>Se abre para los aliados; bloquear/desbloquear con O</td></tr><tr><td><strong>Torre de Vigilancia</strong></td><td>125 Piedra (Feudal)</td><td>Dispara flechas al enemigo más cercano; guarnece 5 — cada ocupante añade una flecha a la descarga</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Edificio</th>
+<th>Coste</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Casa</strong></td>
+<td>25 Madera</td>
+<td>+5 al límite de población al completarse</td>
+</tr>
+<tr>
+<td><strong>Muralla</strong></td>
+<td>5 Piedra por segmento</td>
+<td>Arrastra para colocar un tramo entero</td>
+</tr>
+<tr>
+<td><strong>Puerta</strong></td>
+<td>30 Madera</td>
+<td>Se abre para los aliados; bloquear/desbloquear con O</td>
+</tr>
+<tr>
+<td><strong>Torre de Vigilancia</strong></td>
+<td>125 Piedra (Feudal)</td>
+<td>Dispara flechas al enemigo más cercano; guarnece 5 — cada ocupante añade una flecha a la descarga</td>
+</tr>
+</tbody>
+</table>
 <h3 id="especial">Especial</h3>
-<table><thead><tr><th>Edificio</th><th>Coste</th><th>Notas</th></tr></thead><tbody><tr><td><strong>Maravilla</strong></td><td>2500 Comida + 2500 Madera + 2500 Piedra + 5000 Oro</td><td>Solo Edad Imperial; activa la cuenta atrás de victoria de 4 minutos en modo Maravilla</td></tr></tbody></table>
-<hr>
+<table>
+<thead>
+<tr>
+<th>Edificio</th>
+<th>Coste</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Maravilla</strong></td>
+<td>2500 Comida + 2500 Madera + 2500 Piedra + 5000 Oro</td>
+<td>Solo Edad Imperial; activa la cuenta atrás de victoria de 4 minutos en modo Maravilla</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="investigacion-arbol-tecnologico">Investigación (árbol tecnológico)</h2>
 <p>Treinta y dos tecnologías repartidas en ocho edificios. Cada edificio investiga una a la vez pero encola hasta <strong>5 en curso</strong> — las tecnologías en cola se pagan al encolarlas y se reembolsan íntegras si las cancelas. Los requisitos encadenan de forma natural: puedes encolar una línea entera de golpe.</p>
 <h3 id="herreria">Herrería</h3>
-<table><thead><tr><th>Tecnología</th><th>Edad</th><th>Coste</th><th>Efecto</th></tr></thead><tbody><tr><td><strong>Telar</strong></td><td>Oscura</td><td>50 Comida</td><td>PV del Aldeano +15 %</td></tr><tr><td><strong>Forja</strong></td><td>Feudal</td><td>75 Comida</td><td>Ataque de todas las unidades +15 %</td></tr><tr><td><strong>Armadura de Escamas</strong></td><td>Feudal</td><td>100 Comida + 50 Oro</td><td>Armadura cuerpo a cuerpo de la caballería +1</td></tr><tr><td><strong>Flechado</strong></td><td>Feudal</td><td>100 Oro</td><td>Ataque del Arquero +20 %</td></tr><tr><td><strong>Armadura Acolchada</strong></td><td>Feudal</td><td>100 Comida</td><td>Armadura perforante del Arquero +1</td></tr><tr><td><strong>Maestro Carpintero Naval</strong></td><td>Feudal</td><td>200 Madera + 60 Oro</td><td>PV de los barcos +15 %; coste de barcos −15 %</td></tr><tr><td><strong>Carreta Canaria</strong></td><td>Feudal</td><td>150 Comida + 75 Madera</td><td>Capacidad de carga del Aldeano +25 % (granjas no afectadas)</td></tr><tr><td><strong>Fundición de Hierro</strong></td><td>Castillo</td><td>150 Oro</td><td>Ataque de todas las unidades +20 % (requiere Forja)</td></tr><tr><td><strong>Armadura de Mallas</strong></td><td>Castillo</td><td>200 Comida + 100 Oro</td><td>Armadura cuerpo a cuerpo de la caballería +1 (requiere Armadura de Escamas)</td></tr><tr><td><strong>Flecha Bodkin</strong></td><td>Castillo</td><td>100 Comida + 150 Oro</td><td>Ataque del Arquero +20 %, alcance +10 % (requiere Flechado)</td></tr><tr><td><strong>Carretón Isleño</strong></td><td>Castillo</td><td>200 Comida + 125 Madera</td><td>Carga +25 % adicional (requiere Carreta Canaria)</td></tr><tr><td><strong>Alto Horno</strong></td><td>Imperial</td><td>275 Comida + 225 Oro</td><td>Ataque de todas las unidades +15 %</td></tr><tr><td><strong>Armadura de Placas</strong></td><td>Imperial</td><td>300 Comida + 200 Oro</td><td>Armadura cuerpo a cuerpo de la caballería +1 (requiere Armadura de Mallas)</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Telar</strong></td>
+<td>Oscura</td>
+<td>50 Comida</td>
+<td>PV del Aldeano +15 %</td>
+</tr>
+<tr>
+<td><strong>Forja</strong></td>
+<td>Feudal</td>
+<td>75 Comida</td>
+<td>Ataque de todas las unidades +15 %</td>
+</tr>
+<tr>
+<td><strong>Armadura de Escamas</strong></td>
+<td>Feudal</td>
+<td>100 Comida + 50 Oro</td>
+<td>Armadura cuerpo a cuerpo de la caballería +1</td>
+</tr>
+<tr>
+<td><strong>Flechado</strong></td>
+<td>Feudal</td>
+<td>100 Oro</td>
+<td>Ataque del Arquero +20 %</td>
+</tr>
+<tr>
+<td><strong>Armadura Acolchada</strong></td>
+<td>Feudal</td>
+<td>100 Comida</td>
+<td>Armadura perforante del Arquero +1</td>
+</tr>
+<tr>
+<td><strong>Maestro Carpintero Naval</strong></td>
+<td>Feudal</td>
+<td>200 Madera + 60 Oro</td>
+<td>PV de los barcos +15 %; coste de barcos −15 %</td>
+</tr>
+<tr>
+<td><strong>Carreta Canaria</strong></td>
+<td>Feudal</td>
+<td>150 Comida + 75 Madera</td>
+<td>Capacidad de carga del Aldeano +25 % (granjas no afectadas)</td>
+</tr>
+<tr>
+<td><strong>Fundición de Hierro</strong></td>
+<td>Castillo</td>
+<td>150 Oro</td>
+<td>Ataque de todas las unidades +20 % (requiere Forja)</td>
+</tr>
+<tr>
+<td><strong>Armadura de Mallas</strong></td>
+<td>Castillo</td>
+<td>200 Comida + 100 Oro</td>
+<td>Armadura cuerpo a cuerpo de la caballería +1 (requiere Armadura de Escamas)</td>
+</tr>
+<tr>
+<td><strong>Flecha Bodkin</strong></td>
+<td>Castillo</td>
+<td>100 Comida + 150 Oro</td>
+<td>Ataque del Arquero +20 %, alcance +10 % (requiere Flechado)</td>
+</tr>
+<tr>
+<td><strong>Carretón Isleño</strong></td>
+<td>Castillo</td>
+<td>200 Comida + 125 Madera</td>
+<td>Carga +25 % adicional (requiere Carreta Canaria)</td>
+</tr>
+<tr>
+<td><strong>Alto Horno</strong></td>
+<td>Imperial</td>
+<td>275 Comida + 225 Oro</td>
+<td>Ataque de todas las unidades +15 %</td>
+</tr>
+<tr>
+<td><strong>Armadura de Placas</strong></td>
+<td>Imperial</td>
+<td>300 Comida + 200 Oro</td>
+<td>Armadura cuerpo a cuerpo de la caballería +1 (requiere Armadura de Mallas)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="universidad">Universidad</h3>
-<table><thead><tr><th>Tecnología</th><th>Edad</th><th>Coste</th><th>Efecto</th></tr></thead><tbody><tr><td><strong>Balística</strong></td><td>Castillo</td><td>175 Oro</td><td>Velocidad de ataque del Arquero +20 % (requiere Flechado)</td></tr><tr><td><strong>Ingeniería de Asedio</strong></td><td>Castillo</td><td>200 Oro</td><td>Todas las unidades causan +20 % de daño a edificios</td></tr><tr><td><strong>Química</strong></td><td>Imperial</td><td>300 Oro</td><td>Ataque del Arquero +15 % (requiere Balística)</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Balística</strong></td>
+<td>Castillo</td>
+<td>175 Oro</td>
+<td>Velocidad de ataque del Arquero +20 % (requiere Flechado)</td>
+</tr>
+<tr>
+<td><strong>Ingeniería de Asedio</strong></td>
+<td>Castillo</td>
+<td>200 Oro</td>
+<td>Todas las unidades causan +20 % de daño a edificios</td>
+</tr>
+<tr>
+<td><strong>Química</strong></td>
+<td>Imperial</td>
+<td>300 Oro</td>
+<td>Ataque del Arquero +15 % (requiere Balística)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="templo">Templo</h3>
-<table><thead><tr><th>Tecnología</th><th>Edad</th><th>Coste</th><th>Efecto</th></tr></thead><tbody><tr><td><strong>Santidad</strong></td><td>Castillo</td><td>100 Comida</td><td>PV del Espadachín +15 %</td></tr><tr><td><strong>Fervor</strong></td><td>Castillo</td><td>150 Oro</td><td>Velocidad de movimiento de todas las unidades +10 %</td></tr><tr><td><strong>Expiación</strong></td><td>Imperial</td><td>150 Comida + 100 Oro</td><td>PV de la Caballería +20 % (requiere Santidad)</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Santidad</strong></td>
+<td>Castillo</td>
+<td>100 Comida</td>
+<td>PV del Espadachín +15 %</td>
+</tr>
+<tr>
+<td><strong>Fervor</strong></td>
+<td>Castillo</td>
+<td>150 Oro</td>
+<td>Velocidad de movimiento de todas las unidades +10 %</td>
+</tr>
+<tr>
+<td><strong>Expiación</strong></td>
+<td>Imperial</td>
+<td>150 Comida + 100 Oro</td>
+<td>PV de la Caballería +20 % (requiere Santidad)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="lineas-economicas-de-los-campamentos">Líneas económicas de los campamentos</h3>
 <p>Cada campamento investiga su propia línea de tres pasos — uno por edad desde Feudal, y cada paso da <strong>+15 % de velocidad de recolección y +10 % de carga</strong> para su recurso:</p>
-<table><thead><tr><th>Edificio</th><th>Feudal</th><th>Castillo</th><th>Imperial</th></tr></thead><tbody><tr><td><strong>Campamento Maderero</strong> (madera)</td><td>Hacha de doble filo — 100 Comida + 50 Madera</td><td>Sierra de arco — 150 Comida + 100 Madera</td><td>Sierra de dos hombres — 300 Comida + 200 Madera</td></tr><tr><td><strong>Campamento Minero</strong> (oro + piedra)</td><td>Picos reforzados — 100 Comida + 75 Madera</td><td>Minería de pozo — 175 Comida + 100 Madera</td><td>Galerías profundas — 300 Comida + 150 Madera</td></tr><tr><td><strong>Molino</strong> (comida)</td><td>Collera de tiro — 75 Comida + 75 Madera</td><td>Arado pesado — 125 Comida + 125 Madera</td><td>Rotación de cultivos — 250 Comida + 250 Madera</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Edificio</th>
+<th>Feudal</th>
+<th>Castillo</th>
+<th>Imperial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Campamento Maderero</strong> (madera)</td>
+<td>Hacha de doble filo — 100 Comida + 50 Madera</td>
+<td>Sierra de arco — 150 Comida + 100 Madera</td>
+<td>Sierra de dos hombres — 300 Comida + 200 Madera</td>
+</tr>
+<tr>
+<td><strong>Campamento Minero</strong> (oro + piedra)</td>
+<td>Picos reforzados — 100 Comida + 75 Madera</td>
+<td>Minería de pozo — 175 Comida + 100 Madera</td>
+<td>Galerías profundas — 300 Comida + 150 Madera</td>
+</tr>
+<tr>
+<td><strong>Molino</strong> (comida)</td>
+<td>Collera de tiro — 75 Comida + 75 Madera</td>
+<td>Arado pesado — 125 Comida + 125 Madera</td>
+<td>Rotación de cultivos — 250 Comida + 250 Madera</td>
+</tr>
+</tbody>
+</table>
 <h3 id="mejoras-de-unidad">Mejoras de unidad</h3>
 <p>Se investigan en el edificio que entrena la unidad; todas las unidades vivas del tipo antiguo se transforman al instante.</p>
-<table><thead><tr><th>Tecnología</th><th>Edificio</th><th>Edad</th><th>Coste</th><th>Transforma</th></tr></thead><tbody><tr><td><strong>Hombre de Armas</strong></td><td>Cuartel</td><td>Feudal</td><td>100 Comida + 40 Oro</td><td>Milicia → Hombre de Armas</td></tr><tr><td><strong>Espadachín</strong></td><td>Cuartel</td><td>Castillo</td><td>200 Comida + 60 Oro</td><td>Hombre de Armas → Espadachín</td></tr><tr><td><strong>Explorador Pesado</strong></td><td>Establo</td><td>Feudal</td><td>150 Comida + 75 Oro</td><td>Explorador → Explorador Pesado</td></tr><tr><td><strong>Caballero</strong></td><td>Establo</td><td>Castillo</td><td>200 Comida + 100 Oro</td><td>Explorador Pesado → Caballero</td></tr></tbody></table>
-<hr>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edificio</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Transforma</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hombre de Armas</strong></td>
+<td>Cuartel</td>
+<td>Feudal</td>
+<td>100 Comida + 40 Oro</td>
+<td>Milicia → Hombre de Armas</td>
+</tr>
+<tr>
+<td><strong>Espadachín</strong></td>
+<td>Cuartel</td>
+<td>Castillo</td>
+<td>200 Comida + 60 Oro</td>
+<td>Hombre de Armas → Espadachín</td>
+</tr>
+<tr>
+<td><strong>Explorador Pesado</strong></td>
+<td>Establo</td>
+<td>Feudal</td>
+<td>150 Comida + 75 Oro</td>
+<td>Explorador → Explorador Pesado</td>
+</tr>
+<tr>
+<td><strong>Caballero</strong></td>
+<td>Establo</td>
+<td>Castillo</td>
+<td>200 Comida + 100 Oro</td>
+<td>Explorador Pesado → Caballero</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="combate">Combate</h2>
-<h3 id="triangulo">El triángulo de contraataques</h3>
+<h3 id="el-triangulo-de-contraataques">El triángulo de contraataques</h3>
 <p>Cada ataque lleva un <strong>bonus de clase</strong> plano contra ciertas clases de objetivo, leído de los datos de la unidad — la composición del ejército importa tanto como su tamaño:</p>
-<table><thead><tr><th>Atacante</th><th>Bonus</th><th>Contra</th></tr></thead><tbody>
-<tr><td>Piquero</td><td>+12</td><td>Caballería</td></tr>
-<tr><td>Caballero, Explorador Pesado, Saqueador de Dunas, Chevalier Normand</td><td>+4</td><td>Arqueros</td></tr>
-<tr><td>Explorador</td><td>+3</td><td>Arqueros</td></tr>
-<tr><td>Arquero, Arquero del Barranco, Conquistador</td><td>+3</td><td>Lanceros</td></tr>
-<tr><td>Arquero de Tiro Largo (Perfora Armaduras)</td><td>+4 / +3</td><td>Caballería / Lanceros</td></tr>
-</tbody></table>
-<p>El ciclo se cierra: <strong>las picas castigan a la caballería, la caballería come líneas de arqueros, los arqueros abaten lanceros</strong>. La IA lee lo que despliegas y entrena los contraataques, así que un ejército mixto vence al spam de una sola unidad.</p>
+<table>
+<thead>
+<tr>
+<th>Atacante</th>
+<th>Bonus</th>
+<th>Contra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Piquero</td>
+<td>+12</td>
+<td>Caballería</td>
+</tr>
+<tr>
+<td>Caballero, Explorador Pesado, Saqueador de Dunas, Chevalier Normand</td>
+<td>+4</td>
+<td>Arqueros</td>
+</tr>
+<tr>
+<td>Explorador</td>
+<td>+3</td>
+<td>Arqueros</td>
+</tr>
+<tr>
+<td>Arquero, Arquero del Barranco, Conquistador</td>
+<td>+3</td>
+<td>Lanceros</td>
+</tr>
+<tr>
+<td>Arquero de Tiro Largo (Perfora Armaduras)</td>
+<td>+4 / +3</td>
+<td>Caballería / Lanceros</td>
+</tr>
+</tbody>
+</table>
+<p>El ciclo se cierra: <strong>las picas castigan a la caballería, la caballería come líneas de arqueros, los arqueros abaten lanceros</strong>. Una carga de caballeros muere contra un muro de picas; unos piqueros desnudos se derriten bajo flechas en masa. La IA lee lo que despliegas y entrena los contraataques, así que un ejército mixto vence al spam de una sola unidad.</p>
 <h3 id="actitudes">Actitudes</h3>
 <p>Toda unidad militar lleva una de cuatro actitudes (botones en el panel de selección). La actitud gobierna lo que la unidad hace <strong>por su cuenta</strong> — una orden explícita de ataque siempre persigue:</p>
-<ul><li><strong>Agresivo</strong> (por defecto) — persigue a cualquier enemigo que detecte</li><li><strong>Defensivo</strong> — contraataca pero vuelve a su puesto; nunca persigue lejos</li><li><strong>Mantener posición</strong> — ataca lo que tenga a su alcance sin moverse</li><li><strong>No atacar</strong> — nunca combate por su cuenta</li></ul>
+<ul>
+<li><strong>Agresivo</strong> (por defecto) — persigue a cualquier enemigo que detecte</li>
+<li><strong>Defensivo</strong> — contraataca pero vuelve a su puesto; nunca persigue lejos</li>
+<li><strong>Mantener posición</strong> — ataca lo que tenga a su alcance sin moverse</li>
+<li><strong>No atacar</strong> — nunca combate por su cuenta</li>
+</ul>
 <p>Las unidades ociosas detectan hostiles a la vista (~240 px) y actúan según su actitud — un ejército parado no verá pasar a los aldeanos enemigos sin reaccionar.</p>
 <h3 id="formaciones">Formaciones</h3>
 <p>Las órdenes de movimiento en grupo usan la formación elegida: <strong>Línea</strong> (melé delante, a distancia detrás, asedio al fondo), <strong>Cuadro</strong>, <strong>Dispersa</strong> (contra daño en área) o <strong>Anillos</strong>. Elegir una formación reordena la selección al instante.</p>
 <h3 id="guarnicion">Guarnición</h3>
-<ul><li>El <strong>Centro Urbano</strong> aloja 10 unidades, las <strong>Torres de Vigilancia</strong> 5, los <strong>Barcos de Transporte</strong> llevan 8.</li><li>Cada soldado guarnecido añade una flecha a la descarga del edificio (el Centro Urbano solo dispara mientras está guarnecido).</li><li>El clic derecho sobre tu Centro Urbano o torre guarnece a los <strong>militares</strong>. Los aldeanos usan su botón de <strong>Guarnecer</strong>, o la <strong>Campana del Pueblo</strong> del Centro Urbano — un toque refugia a todos los aldeanos en el edificio más cercano con sitio; un segundo toque expulsa a todos.</li><li>Las unidades guarnecidas mueren si el edificio cae. Elige entre muros o piernas.</li></ul>
+<ul>
+<li>El <strong>Centro Urbano</strong> aloja 10 unidades, las <strong>Torres de Vigilancia</strong> 5, los <strong>Barcos de Transporte</strong> llevan 8.</li>
+<li>Cada soldado guarnecido añade una flecha a la descarga del edificio (el Centro Urbano solo dispara mientras está guarnecido).</li>
+<li>El clic derecho sobre tu Centro Urbano o torre guarnece a los <strong>militares</strong>. Los aldeanos usan su botón de <strong>Guarnecer</strong>, o la <strong>Campana del Pueblo</strong> del Centro Urbano — un toque refugia a todos los aldeanos en el edificio más cercano con sitio; un segundo toque expulsa a todos.</li>
+<li>Las unidades guarnecidas mueren si el edificio cae. Elige entre muros o piernas.</li>
+</ul>
 <h3 id="curacion">Curación</h3>
 <p>La <strong>Harimaguada</strong> cura 5 PV/s a corta distancia y atiende sola al aliado más herido cercano mientras está ociosa. El <strong>Templo</strong> cura a su guarnición a 4 PV/s (los héroes a la mitad — un rey inmortal dentro de un Templo no eterniza un Regicidio).</p>
 <h3 id="asedio">Asedio</h3>
 <p>Los arietes apenas rascan a las unidades pero demuelen edificios. Las manganelas hacen daño en área pero no pueden disparar a bocajarro. Los trabuquetes superan en alcance a todo, se despliegan para disparar y se pliegan para moverse. Las unidades a distancia y el asedio pueden <strong>atacar una zona</strong> y usar el <strong>fuego de cobertura</strong> (acercarse hasta el alcance y bombardear).</p>
-<hr>
+<hr />
 <h2 id="clima">Clima</h2>
 <p>Los eventos meteorológicos llegan de forma procedural (frecuencia en el lobby: Desactivado / Normal / Frecuente / Extremo). Un <strong>aviso de pronóstico</strong> te alerta segundos antes de que golpee, y una píldora de cuenta atrás lo sigue. Los efectos entran y salen suavemente — y cada civilización resiste algún clima (ver secciones de civilización).</p>
-<table><thead><tr><th>Clima</th><th>Efectos</th></tr></thead><tbody><tr><td><strong>Calima</strong> (polvo sahariano)</td><td>Visión −40 %, recolección de comida/madera −20 %, velocidad terrestre −15 %</td></tr><tr><td><strong>Tormenta Atlántica</strong></td><td>Velocidad naval −30 %, pesca −50 %, las flechas derivan con el viento cruzado</td></tr><tr><td><strong>Niebla Marina</strong></td><td>Visión costera −60 %; las unidades cerca de la costa quedan <strong>ocultas</strong> — solo se detectan de cerca (180 px; 90 px para los Atlantes) o durante 3 s tras atacar</td></tr><tr><td><strong>Vientos Alisios</strong></td><td>Barcos ±20 % de velocidad según rumbo; los proyectiles derivan con el viento</td></tr><tr><td><strong>Ceniza Volcánica</strong></td><td>Solo cerca de calderas en Costa Volcánica: visión −50 %, recolección −30 %, los edificios sufren daño con el tiempo</td></tr></tbody></table>
-<hr>
+<table>
+<thead>
+<tr>
+<th>Clima</th>
+<th>Efectos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calima</strong> (polvo sahariano)</td>
+<td>Visión −40 %, recolección de comida/madera −20 %, velocidad terrestre −15 %</td>
+</tr>
+<tr>
+<td><strong>Tormenta Atlántica</strong></td>
+<td>Velocidad naval −30 %, pesca −50 %, las flechas derivan con el viento cruzado</td>
+</tr>
+<tr>
+<td><strong>Niebla Marina</strong></td>
+<td>Visión costera −60 %; las unidades cerca de la costa quedan <strong>ocultas</strong> — solo se detectan de cerca (180 px; 90 px para los Atlantes) o durante 3 s tras atacar</td>
+</tr>
+<tr>
+<td><strong>Vientos Alisios</strong></td>
+<td>Barcos ±20 % de velocidad según rumbo; los proyectiles derivan con el viento</td>
+</tr>
+<tr>
+<td><strong>Ceniza Volcánica</strong></td>
+<td>Solo cerca de calderas en Costa Volcánica: visión −50 %, recolección −30 %, los edificios sufren daño con el tiempo</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="condiciones-de-victoria">Condiciones de victoria</h2>
 <p>Tres modos, elegidos en el lobby. Con <strong>equipos</strong>, un bando gana cuando solo quedan jugadores aliados entre sí.</p>
 <h3 id="conquista">Conquista</h3>
@@ -281,47 +1036,203 @@
 <p>Construye la <strong>Maravilla</strong> (Edad Imperial; 2500 Comida + 2500 Madera + 2500 Piedra + 5000 Oro). Al completarse comienza una <strong>cuenta atrás de 4 minutos</strong> — si sobrevive, ganas. Los demás tienen exactamente cuatro minutos para derribarla (destruirla cancela la cuenta atrás; la partida continúa).</p>
 <h3 id="la-derrota-y-lo-que-viene-despues">La derrota — y lo que viene después</h3>
 <p>Rendirse (Esc → Rendirse), o perderlo todo, muestra tu panel de derrota — pero si quedan bandos hostiles en pie, la partida continúa. Pulsa <strong>Ver mapa</strong> para seguir viendo la batalla en directo como espectador (órdenes bloqueadas). El resultado definitivo llega cuando la guerra termina de verdad.</p>
-<hr>
+<hr />
 <h2 id="guerra-naval">Guerra naval</h2>
 <p>En los mapas de <strong>Islas</strong> el océano es el teatro principal; las costas de los mapas Volcánico y Desértico también se disputan. Construye un <strong>Muelle</strong> (150 Madera, en la orilla) para pescar y combatir.</p>
-<table><thead><tr><th>Unidad</th><th>Edad</th><th>Coste</th><th>Función</th></tr></thead><tbody><tr><td><strong>Barco Pesquero</strong></td><td>Oscura</td><td>75 Madera</td><td>Recoge peces de los bancos oceánicos y los entrega en el Muelle; construye Trampas para Peces</td></tr><tr><td><strong>Barco de Transporte</strong></td><td>Feudal</td><td>125 Madera</td><td>Lleva hasta <strong>8 unidades terrestres</strong>; desembarca en tierra firme</td></tr><tr><td><strong>Galera de Guerra</strong></td><td>Feudal</td><td>75 Madera + 35 Oro</td><td>Barco de guerra a distancia</td></tr><tr><td><strong>Trirreme</strong> (Fenicios)</td><td>Feudal</td><td>100 Madera + 50 Oro</td><td>Embestida rápida: ×2 contra barcos + empuje; goteo pasivo de oro</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Función</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Barco Pesquero</strong></td>
+<td>Oscura</td>
+<td>75 Madera</td>
+<td>Recoge peces de los bancos oceánicos y los entrega en el Muelle; construye Trampas para Peces</td>
+</tr>
+<tr>
+<td><strong>Barco de Transporte</strong></td>
+<td>Feudal</td>
+<td>125 Madera</td>
+<td>Lleva hasta <strong>8 unidades terrestres</strong>; desembarca en tierra firme</td>
+</tr>
+<tr>
+<td><strong>Galera de Guerra</strong></td>
+<td>Feudal</td>
+<td>75 Madera + 35 Oro</td>
+<td>Barco de guerra a distancia</td>
+</tr>
+<tr>
+<td><strong>Trirreme</strong> (Fenicios)</td>
+<td>Feudal</td>
+<td>100 Madera + 50 Oro</td>
+<td>Embestida rápida: ×2 contra barcos + empuje; goteo pasivo de oro</td>
+</tr>
+</tbody>
+</table>
 <p>Consejos navales:</p>
-<ul><li>Construye el Muelle antes de la Edad Feudal en mapas de Islas. Una Galera que el rival no puede responder gana el estrecho.</li><li>Los Barcos Pesqueros no combaten — escóltalas.</li><li>Embarca un ejército en Barcos de Transporte, clic derecho en la otra orilla, y desembarcan automáticamente. Los aldeanos también pueden embarcar — una expansión insular necesita constructores.</li><li><strong>Atlantes</strong> y <strong>Britanos</strong> dominan el mar abierto si nadie los frena; la IA también patrulla y lanza asaltos anfibios.</li></ul>
-<hr>
+<ul>
+<li>Construye el Muelle antes de la Edad Feudal en mapas de Islas. Una Galera que el rival no puede responder gana el estrecho.</li>
+<li>Los Barcos Pesqueros no combaten — escóltalas.</li>
+<li>Embarca un ejército en Barcos de Transporte, clic derecho en la otra orilla, y desembarcan automáticamente. Los aldeanos también pueden embarcar — una expansión insular necesita constructores.</li>
+<li><strong>Atlantes</strong> y <strong>Britanos</strong> dominan el mar abierto si nadie los frena; la IA también patrulla y lanza asaltos anfibios.</li>
+</ul>
+<hr />
 <h2 id="mapas">Mapas</h2>
-<table><thead><tr><th>Mapa</th><th>Descripción</th><th>Nota estratégica</th></tr></thead><tbody><tr><td><strong>Llanuras</strong></td><td>Tierra llana, sin terreno especial</td><td>Ideal para principiantes; sin penalizaciones</td></tr><tr><td><strong>Estándar</strong></td><td>Terreno variado en tierra</td><td>Juego general</td></tr><tr><td><strong>Costa Volcánica</strong></td><td>Franja costera con caldera intransitable</td><td>Combates de corredor; Guanches con ventaja; clima de Ceniza Volcánica</td></tr><tr><td><strong>Costa Desértica</strong></td><td>Árido, escaso en madera, océano al oeste</td><td>Mahos con ventaja; disciplina con la madera</td></tr><tr><td><strong>Islas</strong></td><td>Islas separadas por océano</td><td>Naval imprescindible — controlar el estrecho es ganar</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Mapa</th>
+<th>Descripción</th>
+<th>Nota estratégica</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Llanuras</strong></td>
+<td>Tierra llana, sin terreno especial</td>
+<td>Ideal para principiantes; sin penalizaciones</td>
+</tr>
+<tr>
+<td><strong>Estándar</strong></td>
+<td>Terreno variado en tierra</td>
+<td>Juego general</td>
+</tr>
+<tr>
+<td><strong>Costa Volcánica</strong></td>
+<td>Franja costera con caldera intransitable</td>
+<td>Combates de corredor; Guanches con ventaja; clima de Ceniza Volcánica</td>
+</tr>
+<tr>
+<td><strong>Costa Desértica</strong></td>
+<td>Árido, escaso en madera, océano al oeste</td>
+<td>Mahos con ventaja; disciplina con la madera</td>
+</tr>
+<tr>
+<td><strong>Islas</strong></td>
+<td>Islas separadas por océano</td>
+<td>Naval imprescindible — controlar el estrecho es ganar</td>
+</tr>
+</tbody>
+</table>
 <p>Tres tamaños de mapa (Pequeño / Mediano / Grande), generados proceduralmente en cada partida.</p>
-<hr>
+<hr />
 <h2 id="configuracion-de-partida-escaramuza">Configuración de partida (escaramuza)</h2>
-<ul><li><strong>Tipo y tamaño de mapa</strong>, <strong>recursos iniciales</strong> (Escasos / Normales / Abundantes / Combate Total — todos los almacenes a 9999)</li><li><strong>Civilización</strong> propia y de cada rival; <strong>1 a 3 rivales IA</strong></li><li><strong>Equipos</strong> — asigna jugadores a los equipos 1–4 para 2v2, 2v1 o todos contra todos; las IA aliadas comparten visión, te defienden y anuncian sus ataques</li><li><strong>Edad inicial</strong>, <strong>condición de victoria</strong>, <strong>frecuencia del clima</strong></li><li><strong>Género del héroe</strong> — Aleatorio / Masculino / Femenino (cada civilización tiene uno de cada)</li><li>La <strong>dificultad de la IA</strong> se elige en Ajustes (Fácil / Normal / Difícil)</li></ul>
-<hr>
+<ul>
+<li><strong>Tipo y tamaño de mapa</strong>, <strong>recursos iniciales</strong> (Escasos / Normales / Abundantes / Combate Total — todos los almacenes a 9999)</li>
+<li><strong>Civilización</strong> propia y de cada rival; <strong>1 a 3 rivales IA</strong></li>
+<li><strong>Equipos</strong> — asigna jugadores a los equipos 1–4 para 2v2, 2v1 o todos contra todos; las IA aliadas comparten visión, te defienden y anuncian sus ataques</li>
+<li><strong>Edad inicial</strong>, <strong>condición de victoria</strong>, <strong>frecuencia del clima</strong></li>
+<li><strong>Género del héroe</strong> — Aleatorio / Masculino / Femenino (cada civilización tiene uno de cada)</li>
+<li>La <strong>dificultad de la IA</strong> se elige en Ajustes (Fácil / Normal / Difícil)</li>
+</ul>
+<hr />
 <h2 id="campana-las-llamas-de-tamaran">Campaña — Las Llamas de Tamarán</h2>
 <p>Juega la invasión atlante desde el lado canario, desde el botón <strong>Campaña</strong> del menú principal. Las misiones se desbloquean en orden; el progreso se guarda.</p>
-<table><thead><tr><th>Misión</th><th>Qué te espera</th></tr></thead><tbody><tr><td><strong>Prólogo: El Primer Asentamiento</strong></td><td>Un primer asentamiento guiado — el tutorial, ahora parte de la historia. Opcional.</td></tr><tr><td><strong>1. La Vanguardia</strong></td><td>Rechaza la cabeza de playa atlante: levanta un ejército y un Molino, y haz que un Presa Canario traiga ovejas a casa mientras las incursiones programadas te presionan.</td></tr><tr><td><strong>2. Tierra de Fuego</strong></td><td>Defiende la montaña sagrada entre la ceniza: sobrevive 12 minutos de oleadas crecientes; las torres son tus amigas.</td></tr><tr><td><strong>3. El Estrecho</strong></td><td>Lleva la guerra al agua: construye un Muelle, hunde el suyo y cruza el estrecho para rematar.</td></tr><tr><td><strong>4. La Última Montaña</strong></td><td>La batalla final contra dos huestes atlantes — mata a sus líderes (Regicidio) manteniendo vivo al tuyo.</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Misión</th>
+<th>Qué te espera</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Prólogo: El Primer Asentamiento</strong></td>
+<td>Un primer asentamiento guiado — el tutorial, ahora parte de la historia. Opcional.</td>
+</tr>
+<tr>
+<td><strong>1. La Vanguardia</strong></td>
+<td>Rechaza la cabeza de playa atlante: levanta un ejército y un Molino, y haz que un Presa Canario traiga ovejas a casa mientras las incursiones programadas te presionan.</td>
+</tr>
+<tr>
+<td><strong>2. Tierra de Fuego</strong></td>
+<td>Defiende la montaña sagrada entre la ceniza: sobrevive 12 minutos de oleadas crecientes; las torres son tus amigas.</td>
+</tr>
+<tr>
+<td><strong>3. El Estrecho</strong></td>
+<td>Lleva la guerra al agua: construye un Muelle, hunde el suyo y cruza el estrecho para rematar.</td>
+</tr>
+<tr>
+<td><strong>4. La Última Montaña</strong></td>
+<td>La batalla final contra dos huestes atlantes — mata a sus líderes (Regicidio) manteniendo vivo al tuyo.</td>
+</tr>
+</tbody>
+</table>
 <p>Las misiones tienen objetivos secundarios (panel arriba a la izquierda), mapas fijos, e introducciones y epílogos de historia.</p>
-<hr>
+<hr />
 <h2 id="multijugador">Multijugador</h2>
 <p>Hasta <strong>4 jugadores</strong> por LAN o Internet, con equipos y asientos rellenables con IA.</p>
-<ul><li><strong>LAN</strong>: un jugador hospeda y el resto se une desde el menú LAN (la dirección del anfitrión aparece en la cabecera del lobby).</li><li><strong>Internet</strong>: el anfitrión pulsa el botón de Internet — el juego abre el puerto automáticamente por UPnP y muestra la dirección pública (redirección manual de puertos como alternativa). Existe además un prototipo de <strong>Steam</strong> (lobbies + invitaciones a amigos).</li><li><strong>El lobby</strong> es el mismo de escaramuza: cada jugador elige nombre, color, civilización y equipo; el anfitrión configura la partida, los asientos restantes (Abierto / IA / Cerrado) y puede expulsar. Hay chat en el lobby y chat en partida con Intro.</li><li><strong>Control de versión</strong>: el anfitrión rechaza clientes con una versión distinta, con un mensaje claro.</li><li><strong>Reconexión</strong>: si un jugador se cae, su asiento se reserva 90 segundos — al reconectar, el juego lo devuelve al punto exacto.</li><li><strong>Guardar y reanudar</strong>: el anfitrión puede guardar una partida online; al reanudarla, el lobby reserva el asiento de cada jugador original. La partida puede empezar aunque falte alguien — su asiento espera bajo las mismas reglas de gracia.</li><li>La pausa es del anfitrión; un jugador que se rinde o se desconecta cuenta como rendición (y puede quedarse mirando como espectador).</li></ul>
-<hr>
+<ul>
+<li><strong>LAN</strong>: un jugador hospeda y el resto se une desde el menú LAN (la dirección del anfitrión aparece en la cabecera del lobby).</li>
+<li><strong>Internet</strong>: el anfitrión pulsa el botón de Internet — el juego abre el puerto automáticamente por UPnP y muestra la dirección pública (redirección manual de puertos como alternativa). Existe además un prototipo de <strong>Steam</strong> (lobbies + invitaciones a amigos).</li>
+<li><strong>El lobby</strong> es el mismo de escaramuza: cada jugador elige nombre, color, civilización y equipo; el anfitrión configura la partida, los asientos restantes (Abierto / IA / Cerrado) y puede expulsar. Hay chat en el lobby y chat en partida con Intro.</li>
+<li><strong>Control de versión</strong>: el anfitrión rechaza clientes con una versión distinta, con un mensaje claro.</li>
+<li><strong>Reconexión</strong>: si un jugador se cae, su asiento se reserva 90 segundos — al reconectar, el juego lo devuelve al punto exacto.</li>
+<li><strong>Guardar y reanudar</strong>: el anfitrión puede guardar una partida online; al reanudarla, el lobby reserva el asiento de cada jugador original. La partida puede empezar aunque falte alguien — su asiento espera bajo las mismas reglas de gracia.</li>
+<li>La pausa es del anfitrión; un jugador que se rinde o se desconecta cuenta como rendición (y puede quedarse mirando como espectador).</li>
+</ul>
+<hr />
 <h2 id="repeticiones">Repeticiones</h2>
 <p>Cada partida se graba sola (interruptor en Ajustes). Desde el navegador de <strong>Repeticiones</strong> del menú principal puedes verlas, borrarlas o exportarlas.</p>
-<ul><li><strong>Reproducción</strong>: pausa, salta a cualquier punto de la línea de tiempo (también hacia atrás), cambia la velocidad y <strong>revela todo el mapa</strong>. Una repetición es historia grabada — no admite órdenes.</li><li><strong>Modo cine</strong> (<strong>C</strong>): oculta toda la interfaz; opcionalmente mantiene un minimapa flotante.</li><li><strong>Exportar a vídeo</strong>: renderiza la repetición a un vídeo a 30 FPS en segundo plano mientras sigues jugando. Marca puntos <strong>A/B</strong> en la línea de tiempo para exportar solo el momento estelar — la barra de repetición nunca aparece en el metraje.</li><li>Tras una partida, la pantalla de fin ofrece <strong>Ver repetición</strong> directamente.</li></ul>
-<hr>
+<ul>
+<li><strong>Reproducción</strong>: pausa, salta a cualquier punto de la línea de tiempo (también hacia atrás), cambia la velocidad y <strong>revela todo el mapa</strong>. Una repetición es historia grabada — no admite órdenes.</li>
+<li><strong>Modo cine</strong> (<strong>C</strong>): oculta toda la interfaz; opcionalmente mantiene un minimapa flotante.</li>
+<li><strong>Exportar a vídeo</strong>: renderiza la repetición a un vídeo a 30 FPS en segundo plano mientras sigues jugando. Marca puntos <strong>A/B</strong> en la línea de tiempo para exportar solo el momento estelar — la barra de repetición nunca aparece en el metraje.</li>
+<li>Tras una partida, la pantalla de fin ofrece <strong>Ver repetición</strong> directamente.</li>
+</ul>
+<hr />
 <h2 id="ajustes">Ajustes</h2>
 <p>Disponibles desde el menú principal y el menú de pausa:</p>
-<ul><li><strong>Audio</strong>: volumen de música y efectos (todo el audio es sintetizado — cada civilización habla su propio idioma inventado)</li><li><strong>Juego</strong>: idioma (English / Español), dificultad de la IA, grabación de repeticiones</li><li><strong>Vídeo</strong>: pantalla completa, VSync, contador de FPS, <strong>Estilo de unidades</strong> — <em>Clásico</em> (figuras vectoriales planas), <em>Mejorado</em> (contornos, sombreado y animación extra) o <em>Rediseñado</em> (figuras remodeladas fieles al lore); el cambio se aplica al instante a todas las unidades en pantalla</li><li><strong>Controles</strong>: teclas de cámara reasignables (las flechas siempre funcionan), desplazamiento por borde, cruceta en pantalla</li><li><strong>Vídeos</strong>: incluir el minimapa en los vídeos exportados</li></ul>
-<hr>
+<ul>
+<li><strong>Audio</strong>: volumen de música y efectos (todo el audio es sintetizado — cada civilización habla su propio idioma inventado)</li>
+<li><strong>Juego</strong>: idioma (English / Español), dificultad de la IA, grabación de repeticiones</li>
+<li><strong>Vídeo</strong>: pantalla completa, VSync, contador de FPS, <strong>Estilo de unidades</strong> — <em>Clásico</em> (figuras vectoriales planas), <em>Mejorado</em> (contornos, sombreado y animación extra) o <em>Rediseñado</em> (figuras remodeladas fieles al lore); el cambio se aplica al instante a todas las unidades en pantalla</li>
+<li><strong>Controles</strong>: teclas de cámara reasignables (las flechas siempre funcionan), desplazamiento por borde, cruceta en pantalla</li>
+<li><strong>Vídeos</strong>: incluir el minimapa en los vídeos exportados</li>
+</ul>
+<hr />
 <h2 id="conoce-a-tu-enemigo-comportamiento-de-la-ia">Conoce a tu enemigo (comportamiento de la IA)</h2>
-<ul><li>La IA juega tu misma economía: recolecta, construye con <strong>aldeanos reales</strong> (vigila sus obras — se pueden asaltar), cultiva, pastorea con sus propios perros, pesca y avanza de edad.</li><li>Explora y recuerda: las IA enemigas solo atacan lo que han <strong>visto</strong> — los edificios se recuerdan una vez explorados, las unidades solo mientras son visibles.</li><li>Defiende su base, escala cuando la atacan, y sus ofensivas crecen con su economía y la dificultad.</li><li>En mapas con agua pesca, patrulla con galeras, quema tu costa (muelles y trampas de pesca son objetivos prioritarios) y desembarca asaltos.</li><li>Las IA también luchan <strong>entre sí</strong> — en partidas de todos contra todos habrá guerras a tres bandas de verdad; cuando un enemigo queda reducido a sus últimas unidades, la IA caza a los supervivientes.</li><li>Las unidades ociosas — tuyas y suyas — atacan a los hostiles que entran en su campo de visión, según su actitud.</li></ul>
-<hr>
+<ul>
+<li>La IA juega tu misma economía: recolecta, construye con <strong>aldeanos reales</strong> (vigila sus obras — se pueden asaltar), cultiva, pastorea con sus propios perros, pesca y avanza de edad.</li>
+<li>Explora y recuerda: las IA enemigas solo atacan lo que han <strong>visto</strong> — los edificios se recuerdan una vez explorados, las unidades solo mientras son visibles.</li>
+<li>Defiende su base, escala cuando la atacan, y sus ofensivas crecen con su economía y la dificultad.</li>
+<li>En mapas con agua pesca, patrulla con galeras, quema tu costa (muelles y trampas de pesca son objetivos prioritarios) y desembarca asaltos.</li>
+<li>Las IA también luchan <strong>entre sí</strong> — en partidas de todos contra todos habrá guerras a tres bandas de verdad; cuando un enemigo queda reducido a sus últimas unidades, la IA caza a los supervivientes.</li>
+<li>Las unidades ociosas — tuyas y suyas — atacan a los hostiles que entran en su campo de visión, según su actitud.</li>
+</ul>
+<hr />
 <h2 id="consejos">Consejos</h2>
-<ul><li><strong>Explora pronto</strong> — la caldera, la laurisilva, el oro, los rebaños salvajes: saber dónde está cada cosa es tu primera ventaja.</li><li><strong>Los héroes reaparecen — salvo en Regicidio.</strong> Dos minutos en tu Centro Urbano. En Regicidio la muerte es definitiva: héroe en casa.</li><li><strong>El terreno es un arma</strong> — los Guanches se retiran por un malpaís donde nadie puede entrar; los Mahos dejan atrás a todos en las dunas; un Arquero del Barranco en un risco supera en alcance a los de su clase.</li><li><strong>Investiga al avanzar</strong> — una Herrería vacía es una Herrería perdedora, y las líneas de los campamentos se amortizan rápido. Encola líneas enteras: la investigación se paga por adelantado y se reembolsa al cancelar.</li><li><strong>Pastorea los rebaños salvajes</strong> — un Presa Canario cobra comida solo por traer ovejas a casa, y cada oveja que convierte es una que el perro enemigo no consigue.</li><li><strong>Usa las notificaciones</strong> — ¿aviso de población? Un clic coloca la Casa. ¿Alerta de ataque? Espacio te lleva allí.</li><li><strong>El modo Maravilla es una carrera</strong> — si vas por delante, corre a Imperial y constrúyela; si el rival la levanta primero, tienes exactamente 4 minutos. Déjalo todo.</li><li><strong>En partidas por equipos, habla</strong> — las IA aliadas marcan sus objetivos y acuden cuando te asaltan; haz lo mismo por ellas.</li></ul>
-<hr>
+<ul>
+<li><strong>Explora pronto</strong> — la caldera, la laurisilva, el oro, los rebaños salvajes: saber dónde está cada cosa es tu primera ventaja.</li>
+<li><strong>Los héroes reaparecen — salvo en Regicidio.</strong> Dos minutos en tu Centro Urbano. En Regicidio la muerte es definitiva: héroe en casa.</li>
+<li><strong>El terreno es un arma</strong> — los Guanches se retiran por un malpaís donde nadie puede entrar; los Mahos dejan atrás a todos en las dunas; un Arquero del Barranco en un risco supera en alcance a los de su clase.</li>
+<li><strong>Investiga al avanzar</strong> — una Herrería vacía es una Herrería perdedora, y las líneas de los campamentos se amortizan rápido. Encola líneas enteras: la investigación se paga por adelantado y se reembolsa al cancelar.</li>
+<li><strong>Pastorea los rebaños salvajes</strong> — un Presa Canario cobra comida solo por traer ovejas a casa, y cada oveja que convierte es una que el perro enemigo no consigue.</li>
+<li><strong>Usa las notificaciones</strong> — ¿aviso de población? Un clic coloca la Casa. ¿Alerta de ataque? Espacio te lleva allí.</li>
+<li><strong>El modo Maravilla es una carrera</strong> — si vas por delante, corre a Imperial y constrúyela; si el rival la levanta primero, tienes exactamente 4 minutos. Déjalo todo.</li>
+<li><strong>En partidas por equipos, habla</strong> — las IA aliadas marcan sus objetivos y acuden cuando te asaltan; haz lo mismo por ellas.</li>
+</ul>
+<hr />
 <h2 id="presentacion-visual">Presentación visual</h2>
 <p>Todo el arte del juego es vectorial y procedural (sin texturas externas), diseñado para que cada elemento se lea de un vistazo:</p>
-<ul><li><strong>Tres estilos de unidades</strong> — Clásico, Mejorado y Rediseñado — seleccionables en vivo desde Ajustes.</li><li><strong>Unidades legibles</strong> — cada unidad es una figura clara según su rol; las unidades únicas y los 16 héroes tienen rasgos propios.</li><li><strong>Género visual aleatorio</strong> — las unidades humanas son hombre o mujer al azar (solo estético; la Harimaguada es siempre mujer, por el lore).</li><li><strong>Colores de equipo</strong> — las unidades visten el color de su dueño; los edificios lo lucen en tejados, banderas, estandartes y velas.</li><li><strong>Hitos fieles al lore</strong> — el Templo es un almogarén (santuario canario de piedra seca a cielo abierto), el Molino una torre de piedra con aspas de lona.</li><li><strong>Un mundo vivo</strong> — agua con oleaje y espuma costera, lava de caldera que late, animales que trotan, sombras, auras de héroe, fuego y humo progresivos en los edificios dañados.</li><li><strong>Audio sintetizado</strong> — todos los sonidos son generados: cada civilización habla su propio idioma inventado, con voces distintas por clase de unidad y género.</li></ul>
-<footer>Manual del jugador generado el 2026-09-06 a partir de <code>docs/guide_es.md</code>, verificado contra los datos del juego (<code>project/resources/</code>). Calima: Flames of the Atlantic — arte y audio 100% procedurales.</footer>
+<ul>
+<li><strong>Tres estilos de unidades</strong> — Clásico, Mejorado y Rediseñado — seleccionables en vivo desde Ajustes.</li>
+<li><strong>Unidades legibles</strong> — cada unidad es una figura clara según su rol; las unidades únicas y los 16 héroes tienen rasgos propios.</li>
+<li><strong>Género visual aleatorio</strong> — las unidades humanas son hombre o mujer al azar (solo estético; la Harimaguada es siempre mujer, por el lore).</li>
+<li><strong>Colores de equipo</strong> — las unidades visten el color de su dueño; los edificios lo lucen en tejados, banderas, estandartes y velas.</li>
+<li><strong>Hitos fieles al lore</strong> — el Templo es un almogarén (santuario canario de piedra seca a cielo abierto), el Molino una torre de piedra con aspas de lona.</li>
+<li><strong>Un mundo vivo</strong> — agua con oleaje y espuma costera, lava de caldera que late, animales que trotan, sombras, auras de héroe, fuego y humo progresivos en los edificios dañados.</li>
+<li><strong>Audio sintetizado</strong> — todos los sonidos son generados: cada civilización habla su propio idioma inventado, con voces distintas por clase de unidad y género.</li>
+</ul>
+<footer class="site">Generated from <code>docs/guide_es.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
 </div>
 </body>
 </html>

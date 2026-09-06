@@ -228,6 +228,13 @@ editor. There are also standalone headless harnesses under `project/tools/`
 (`check_*.gd`) for things GUT can't easily reach (HUD scene load, WorldQuery,
 PlacementGrid).
 
+**The documentation site**: `docs/` is a publishable static site (GitHub
+Pages-ready). `python3 docs/build_site.py` regenerates every HTML page from
+its Markdown source (22 pages incl. the player manuals from guide_es/en.md)
+with .md links rewritten and a site-wide theme — edit the Markdown, never the
+generated HTML; hand-crafted pages (index.html, tech_tree.html, guia-visual,
+civ gallery) are not touched by the generator.
+
 **The complete harness catalog — all 56 `check_*` tools with purpose and env
 vars — lives in `docs/testing/harnesses.md`** (generated from each harness's
 header comment; regenerate with `python3 docs/testing/regen_harness_catalog.py`

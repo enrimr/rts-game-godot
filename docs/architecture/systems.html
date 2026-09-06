@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System Design Details · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="system-design-details">System Design Details</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#command-pattern-player-orders">Command Pattern (player orders)</a></li>
+<li><a href="#multiplayer-host-authoritative">Multiplayer (host-authoritative)</a></li>
+<li><a href="#save-load-schema-v2">Save / Load (schema v2)</a></li>
+<li><a href="#economy-system">Economy System</a></li>
+<li><a href="#combat-system">Combat System</a></li>
+<li><a href="#pathfinding">Pathfinding</a></li>
+<li><a href="#amphibious-movement">Amphibious Movement</a><ul>
+<li><a href="#sea-containment-the-step-veto">Sea containment (the step veto)</a></li>
+</ul>
+</li>
+<li><a href="#terrain-impassability">Terrain Impassability</a></li>
+<li><a href="#navmesh-carving">NavMesh Carving</a><ul>
+<li><a href="#the-half-pixel-bake-nudge">The half-pixel bake nudge</a></li>
+</ul>
+</li>
+<li><a href="#fog-of-war">Fog of War</a></li>
+<li><a href="#tech-tree-system">Tech Tree System</a></li>
+<li><a href="#ai-system">AI System</a><ul>
+<li><a href="#fog-honest-sighting-layer-worldquery">Fog-honest sighting layer (WorldQuery)</a></li>
+<li><a href="#pastoral-economy-dogs-and-mutton">Pastoral economy (dogs and mutton)</a></li>
+</ul>
+</li>
+<li><a href="#ui-hud-system">UI / HUD System</a></li>
+<li><a href="#naval-units">Naval Units</a><ul>
+<li><a href="#naval-civ-identity">Naval civ identity</a></li>
+<li><a href="#unit-classes">Unit classes</a></li>
+<li><a href="#dock-building">Dock building</a></li>
+</ul>
+</li>
+<li><a href="#production-buildings">Production Buildings</a><ul>
+<li><a href="#towncenterbuildable">TownCenterBuildable</a></li>
+<li><a href="#stable">Stable</a></li>
+<li><a href="#research-only-buildings">Research-only buildings</a></li>
+<li><a href="#temple-research-field-hospital-and-harimaguada-training">Temple — research, field hospital, and Harimaguada training</a></li>
+<li><a href="#mill-food-drop-off-and-the-presa-canario">Mill — food drop-off and the Presa Canario</a></li>
+<li><a href="#market">Market</a></li>
+</ul>
+</li>
+<li><a href="#cavalry-units">Cavalry Units</a></li>
+<li><a href="#siege-units">Siege Units</a><ul>
+<li><a href="#siegeworkshop">SiegeWorkshop</a></li>
+<li><a href="#batteringram">BatteringRam</a></li>
+<li><a href="#mangonel-and-aoe-splash">Mangonel and AoE splash</a></li>
+<li><a href="#trebuchet-deployundeploy-mechanic">Trebuchet — deploy/undeploy mechanic</a></li>
+</ul>
+</li>
+<li><a href="#civbonusmanager-extended-api">CivBonusManager — Extended API</a></li>
+<li><a href="#age-advancement">Age Advancement</a></li>
+<li><a href="#weather-system">Weather System</a><ul>
+<li><a href="#weather-types">Weather types</a></li>
+<li><a href="#sea-fog-cloak-rules">Sea-fog cloak rules</a></li>
+<li><a href="#phase-state-machine">Phase state machine</a></li>
+<li><a href="#stat-modifier-query-api">Stat-modifier query API</a></li>
+<li><a href="#visual-overlay">Visual overlay</a></li>
+<li><a href="#hud-notification">HUD notification</a></li>
+<li><a href="#conquest-victory-condition">Conquest victory condition</a></li>
+<li><a href="#defeat-spectate">Defeat → spectate</a></li>
+</ul>
+</li>
+<li><a href="#replays-creator-kit">Replays &amp; Creator Kit</a></li>
+<li><a href="#campaign">Campaign</a></li>
+<li><a href="#unit-visual-styles">Unit visual styles</a></li>
+</ul>
+</div>
+</nav>
+<h2 id="command-pattern-player-orders">Command Pattern (player orders)</h2>
+<p>Every simulation-mutating player intent is a <code>GameCommand</code>
+(<code>scripts/game/commands/game_command.gd</code>) submitted through the <code>CommandBus</code>
+autoload (<code>scripts/core/command_bus.gd</code>) — input/UI code decides <em>what</em> the
+player meant, the command <em>does</em> it. Commands carry only serializable data:
+entity IDs from the <code>EntityRegistry</code> autoload (<code>scripts/core/entity_registry.gd</code>),
+positions and type strings, never node pointers. <code>CommandBus.submit()</code>
+tick-stamps each command into the match log and executes it; the log is the
+foundation replays build on and the exact payload a LAN lockstep session will
+exchange (<code>save_log()</code> writes it as JSON lines, <code>command_from_dict()</code> rebuilds
+any entry).</p>
+<p>The nine command classes live in <code>scripts/game/commands/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>kind</th>
+<th>Verbs / payload</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UnitPointCommand</code></td>
+<td><code>unit_point</code></td>
+<td>move / attack_move (formation ring fan-out) / attack_ground; unit IDs + point</td>
+</tr>
+<tr>
+<td><code>UnitTargetCommand</code></td>
+<td><code>unit_target</code></td>
+<td>attack / gather (restores depleted farms &amp; fish traps, routes fishing boats to their dock; optional <code>drop_id</code> pins the drop-off, used by the AI) / build / drop_off / board (walk-then-board poll) / board_instant (the AI's distance-free garrison) / set_drop_off / heal (Harimaguada) / herd (only units with <code>order_herd</code> answer — the Presa Canario; any animal targetable); unit IDs + target ID</td>
+</tr>
+<tr>
+<td><code>UnitActionCommand</code></td>
+<td><code>unit_action</code></td>
+<td>stop / delete / hero_ability / trebuchet_toggle / scout_explore(_stop); unit IDs</td>
+</tr>
+<tr>
+<td><code>TransportCommand</code></td>
+<td><code>transport</code></td>
+<td>unload_all / unload_one(index) / move_unload(pos); transport ID</td>
+</tr>
+<tr>
+<td><code>ProductionCommand</code></td>
+<td><code>production</code></td>
+<td>train(unit_id — empty = the TC's no-arg signature) / cancel_train(index) / research(tech_id) / cancel_research (full refund); building ID</td>
+</tr>
+<tr>
+<td><code>BuildingActionCommand</code></td>
+<td><code>building_action</code></td>
+<td>set_rally(pos) / gate_lock / delete (routes through take_damage); building ID</td>
+</tr>
+<tr>
+<td><code>MarketCommand</code></td>
+<td><code>market</code></td>
+<td>buy / sell / hire (spawns the Fenicios mercenary at the rally point); building ID + item</td>
+</tr>
+<tr>
+<td><code>PlaceBuildingCommand</code></td>
+<td><code>place_building</code></td>
+<td>building type + positions (a wall drag is ONE command with the whole run) + rotation + builder IDs; pays per site, stops when the stockpile runs out. <code>instant</code> completes construction immediately (the AI); <code>EXTRA_SCENES</code> maps the AI-only <code>town_center_ai</code>; <code>last_placed</code> hands the created nodes back to the submission site (runtime only, never serialized). Costs resolve at execute time from <code>WorldPlacement.building_costs</code> — the single .tres-backed table player and AI both pay (the old hand-written player table missed university/market/temple, so the player built them for free) — and are never part of the payload, so a remote command cannot name its own price</td>
+</tr>
+<tr>
+<td><code>AdvanceAgeCommand</code></td>
+<td><code>advance_age</code></td>
+<td>player only</td>
+</tr>
+</tbody>
+</table>
+<p>Ownership is validated at execute time (<code>GameCommand._own_entities</code> keeps only
+entities whose <code>player_id</code> matches the command's), so a hostile or replayed
+payload cannot order another player's units. Deeper validation (costs, rosters,
+queue caps) lives where it always did — <code>order_train</code>, <code>AgeManager</code>,
+<code>TechManager</code>, <code>Market</code> — so the commands stay thin.</p>
+<p><code>EntityRegistry</code> assigns sequential IDs: <code>CommandBus.start_match(world)</code> (the
+last line of <code>GameWorld._ready</code>) rescans the world in tree order and the
+<code>unit_spawned</code> / <code>building_placed</code> signals register everything created after
+that, so identical simulations hand out identical IDs. <code>id_of()</code> lazily
+registers stragglers no signal covers.</p>
+<p><strong>The AI submits through the bus too</strong>, with its own <code>player_id</code>: villager
+production queued at its Town Center (<code>ProductionCommand</code> — the SAME queue,
+cost and train time the player pays; the AI used to spawn villagers
+instantly, which unbalanced the early game), gather assignments with pinned
+drop-offs,
+training, research, age advance, batched attack orders (one command per
+target), naval patrol moves, transport loading (<code>board_instant</code>) and all
+building placement. <strong>AI buildings are villager-built</strong>: <code>AIConstruction._place</code>
+sends the nearest free villager to raise every site over the same construction
+time the player pays (<code>manage_unfinished</code> re-crews sites whose builder died;
+fish traps are raised by a fishing boat) — the old <code>instant</code> completion was an
+AI-only cheat and is now a privileged tools/tests-only flag. The rebuilt TC
+uses <code>EXTRA_SCENES["town_center_ai"]</code> and reads its node back from
+<code>last_placed</code>. AI decision-making, cooldowns and built-count bookkeeping
+stay in the AI modules — only mutations cross the bus.</p>
+<p><strong>MatchRng</strong> (autoload, <code>scripts/core/match_rng.gd</code>) is the single seeded
+stream for all simulation randomness — unit spawn jitter, gender roll, animal
+wander, scout waypoints, transport unload angles, hero summon offsets, the
+whole weather state machine and projectile drift, and every AI position
+search. <code>GameWorld._ready</code> seeds it with the match seed (same one the save
+stores), and <code>SaveManager</code> persists the mid-match generator state (as a String
+— the state is 64-bit and JSON numbers are doubles), so a loaded game
+continues the exact draw sequence. Audio noise buffers keep using the global
+RNG on purpose: local-only, never feeds back into state.</p>
+<p><strong>Decision timers tick on physics frames.</strong> <code>AIPlayer</code>, <code>WeatherManager</code>,
+<code>AgeManager</code> and <code>TechManager</code> accumulate <code>_physics_process</code> deltas (a fixed
+step = a deterministic tick count), and the simulation <code>SceneTreeTimer</code>s (AI
+TC-rebuild retries, the board poll) use <code>process_in_physics</code>. Measured with
+<code>tools/check_sim_fingerprint.tscn</code> (fixed seed, exact physics-tick window,
+canonical census + full command log): over a 60 sim-second window two runs
+produce <strong>identical command logs</strong> — the whole decision layer replays — while
+entity positions diverge, because movement rides Godot physics + RVO
+avoidance. That position drift is the remaining non-determinism: it leaks
+into draw counts (wander/jitter draw at arrival times) and eventually into
+position-dependent decisions.</p>
+<p>What does <strong>not</strong> go through the bus: selection, control groups, camera, HUD
+state, the placement ghost, <code>show_path</code> (debug visual) and all click feedback
+(flashes, order sounds) — local-only concerns that must not replay or cross
+the network. Remaining work before lockstep/replays, in dependency order:
+deterministic movement (fixed-step, physics-free unit motion — the big one),
+production-building/arrow/<code>unit_base</code> <code>_process</code> logic onto physics ticks,
+the async navmesh rebake's completion frame, fog visibility timing, and
+execute-side placement validation.</p>
+<p>Migrating cover fire surfaced a real bug, now fixed: <code>_order_attack_ground_all</code>
+used to emit <code>minimap_move_order</code>, whose handler synchronously issued
+<code>_order_move_all</code> — the move overrode the just-issued attack-ground order, so
+cover fire cancelled itself.</p>
+<p>Gated by <code>tests/unit/test_command_bus.gd</code> (registry determinism, serialization
+round-trips for all ten kinds, ownership filtering, log stamping, formation
+determinism, replayed-entry equivalence), <code>tests/unit/test_match_rng.gd</code>
+(seed-replay property) and <code>tools/check_command_bus.tscn</code> (a real match driven
+exclusively through the bus: move + train + place, then a wait that asserts
+the rival AI's commands land in the same log, all entries rebuildable).</p>
+<h2 id="multiplayer-host-authoritative">Multiplayer (host-authoritative)</h2>
+<p><code>NetworkSession</code> (autoload, <code>scripts/multiplayer/network_session.gd</code>) runs a
+host-authoritative session over ENet, designed LAN-first but Internet-capable
+(the transport is identical; Internet later adds UPnP connectivity and the
+phase-2 interpolation buffer absorbs latency).</p>
+<ul>
+<li><strong>The host is the single simulation authority.</strong> On a client,
+  <code>CommandBus.submit</code> redirects every command over the wire instead of
+  executing; the host receives it, REPLACES its <code>player_id</code> with the sender's
+  assigned player (identity comes from the connection, never the payload — a
+  hostile client cannot order another player's units), and runs it through
+  <code>CommandBus.submit_remote</code>.</li>
+<li><strong>Wire hardening (shipped)</strong>: <code>_rx_command</code> also brands every deserialized
+  command <code>remote_origin = true</code> (a <code>GameCommand</code> field, never serialized).
+  With that brand, privileged local-only verbs refuse the command at execute
+  time: <code>PlaceBuildingCommand</code> rejects <code>instant</code> (the host AI's path) and any
+  building type outside the player build menu (<code>EXTRA_SCENES</code>), and
+  <code>UnitTargetCommand</code> rejects <code>board_instant</code> (a distance-free teleport off
+  the wire). Every remote placement is additionally re-validated host-side
+  via the static <code>WorldPlacement.placement_legal</code> — terrain class (land /
+  coastal dock / fully-ocean fish trap) plus physics overlap, the same rules
+  the client's ghost preview runs and a modified client can skip
+  (<code>placement_shape_size</code> caches each type's collision rect). The host's own
+  paths keep every privilege and an honest client loses nothing. Pinned by
+  <code>tests/unit/test_wire_hardening.gd</code>.</li>
+<li><strong>Match start</strong>: the host freezes a <code>snapshot_config()</code> of MatchConfig plus
+  a shared seed (<code>MatchConfig.forced_seed</code>, read by <code>GameWorld._ready</code> ahead
+  of the CALIMA_SEED env) and broadcasts it; every machine loads game_world
+  with identical settings, so map generation and <code>EntityRegistry</code> hand out
+  IDENTICAL entity IDs on all sides — command payloads reference entities by
+  those IDs across the wire.</li>
+<li><strong>Mixed rivals</strong>: the start config carries a <code>humans</code> list
+  (<code>NetworkSession.match_human_ids</code>, default <code>[0]</code> offline). <code>WorldSetup</code>
+  spawns every rival's starting assets (TC, villagers, scout, hero) but
+  creates the <code>AIPlayer</code> brain only on the simulation authority
+  (<code>not is_client()</code>) and only for non-human rivals
+  (<code>not is_human_player(rival_id)</code>) — a client-side brain would submit
+  through the redirected CommandBus stamped with the client's identity.</li>
+<li><strong>Lobby</strong> (<code>LanLobby</code>, <code>scripts/ui/lan_lobby.gd</code> → <code>LobbyScreen</code> with
+  <code>lan_mode = true</code>): the entry card only picks a name and hosts/joins; once
+  the session is up it swaps to the SAME <code>LobbyScreen</code> the skirmish uses.
+  In <code>lan_mode</code> the rival count/civ rows are replaced by a players panel:
+  the host row, then one row per lobby seat — a connected human (colour
+  swatch, name, civ, host-only Kick) or a host-configurable slot
+  (Open / AI with civ dropdown / Closed, <code>NetworkSession.lobby_slots</code>).
+  <code>open_seats_left()</code> refuses connections when no open slot remains. Every
+  human picks their own colour (host validates — taken colours rejected and
+  greyed) and civilization (<code>request_civ</code>, validated against the civ .tres)
+  via the right-hand civ grid; both live in the host-authoritative roster and
+  replicate via <code>roster_changed</code>. The host edits the match settings in place
+  and <code>broadcast_lobby()</code> pushes them (config snapshot + slots) so clients
+  render a live read-only summary. On start the host derives
+  <code>rival_civ_ids</code> = human civs (roster order) + AI-slot civs, sets
+  <code>rival_count</code>, and the colour picks install <code>PlayerColors</code> overrides on
+  every machine.</li>
+<li><strong>Phase 2 (shipped, first cut)</strong>: <code>StateReplicator</code>
+  (<code>scripts/multiplayer/state_replicator.gd</code>, added by <code>GameWorld</code> when
+  online). The host samples the simulation every 4 physics ticks (15 Hz)
+  and streams unit position/state/HP and building HP/state by entity id
+  (unreliable-ordered RPC via <code>NetworkSession.send_state</code>); spawns,
+  removals and the match outcome go reliable (<code>send_events</code>). A client
+  puppets its mirror world — physics processing OFF (no local simulation,
+  no local damage; <code>_process</code> stays on for animation/depth) — and
+  interpolates between snapshots, deriving <code>velocity</code>/<code>current_state</code> so
+  walk/attack animations read. Host-spawned entities materialize from
+  spawn records (scene/script/unit_data/civ/gender) and adopt the host's
+  id via <code>EntityRegistry.register_as</code>. Stockpiles/population/ages ride the
+  snapshot into the managers' <code>apply_remote</code> (emit-on-change → client HUD
+  live). The <code>local_player_id</code> sweep landed with it: command submit sites,
+  selection filters, fog perspective, minimap, alerts and the game-over
+  title all follow <code>NetworkSession.local_player_id</code> (0 offline), and
+  victory is decided only by the authority.</li>
+<li><strong>Phase 2 polish (shipped)</strong>: building rows carry extras — production
+  queue + train timer (puppets mirror them and never advance training
+  locally; <code>train_queue_changed</code> re-emits on composition change), active
+  research (<code>TechManager.apply_remote_research</code>/<code>clear_remote_research</code>)
+  and market offsets; researched-tech lists and resource-node amounts ride
+  a slow ~1 Hz channel; weather replicates verbatim
+  (<code>WeatherManager.apply_remote</code>, client state machine gated off — the
+  MatchRng streams diverge once the host consumes AI draws); arrows echo
+  as visual-only projectiles (<code>EventBus.projectile_spawned</code> → client
+  spawns <code>Arrow</code> with <code>echo = true</code>); <code>take_damage</code> is a no-op on puppets;
+  game-speed buttons hidden on clients.</li>
+<li><strong>Robustness (shipped)</strong>: a client dropping or surrendering mid-match
+  becomes a resignation (<code>NetworkSession.player_resigned</code> →
+  <code>WorldVictory.handle_resignation</code>, any victory mode — the match ends when
+  nobody is left to fight); a vanished host raises <code>connection_lost</code> on
+  clients (dialog → menu); the host's pause replicates
+  (<code>NetworkSession.notify_pause</code> → client freezes with a banner) while a
+  client's ESC menu never pauses the authoritative sim. The stream is
+  delta-based: unreliable deltas carry only changed rows, a reliable
+  keyframe every 15th snapshot heals losses, meta ships on change, and
+  oversized deltas (&gt;1300 B) route reliably — nothing exceeds the ENet MTU.
+  Gate: <code>tools/check_net_robustness.tscn</code> (CALIMA_ROB_CASE =
+  drop | resign | hostleft, two processes).</li>
+<li><strong>Chat (shipped)</strong>: <code>NetworkSession.send_chat</code> → host validates the
+  sender and rebroadcasts <code>chat_received</code> (120-char cap, trimmed). The LAN
+  lobby shows a colour-coded log + input under the players panel; in match
+  the <code>HudChat</code> component (online only) opens with Enter, swallows keys
+  while typing (hotkeys listen in <code>_unhandled_input</code>), and fades lines
+  above the command bar.</li>
+<li><strong>Siege echo (shipped)</strong>: <code>SiegeFx.launch_boulder</code> is the shared arcing
+  stone (host visual + client echo; the Mangonel finally shows a projectile
+  — damage timing untouched); the fx stream carries a kind (arrow|boulder).</li>
+<li><strong>Internet hosting (shipped, UPnP)</strong>: the lobby's "Internet…" button runs
+  <code>NetworkSession.setup_internet</code> on a thread (UPnP discover → UDP port
+  mapping → external address). Success swaps the header address for
+  "Internet: <ip> (port)"; failure instructs manual port forwarding. The
+  mapping is removed on leave. Clients join by typing the public IP.</li>
+<li><strong>Steam transport (prototype, AppID 480)</strong>: GodotSteam 4.22 GDExtension
+  vendored (<code>addons/godotsteam</code>, macOS/win64/linux64). <code>ensure_steam()</code>
+  boots the API lazily; <code>host_steam()</code> = public lobby tagged
+  <code>game=calima_fota</code> + native <code>SteamMultiplayerPeer.host_with_lobby</code>;
+  clients browse tag-filtered lobbies or accept friend invites
+  (<code>join_requested</code> → <code>connect_to_lobby</code>). Everything above
+  <code>multiplayer_peer</code> (seats, commands, replication, chat) is untouched.
+  Missing Steam client degrades to a notice; <code>steam_appid.txt</code> (480) must
+  ship next to exported executables; swap the real AppID in
+  <code>NetworkSession.STEAM_APP_ID</code> once Steamworks registration lands.</li>
+<li><strong>Reconnection (shipped)</strong>: a dropped human's seat is reserved for
+  <code>rejoin_grace_sec</code> (90 s; env <code>CALIMA_REJOIN_GRACE</code>) — "disconnected,
+  holding their seat" in chat, match keeps running; grace expiry becomes
+  the old resignation. A mid-match connection is parked until its profile
+  claims a vacant seat (roster-name match, or the single vacancy), gets its
+  OLD player id back, the frozen match config (<code>in_progress</code> flag) and —
+  once its seed-identical world boots (<code>notify_resync_ready</code>) — a one-shot
+  full resync (<code>StateReplicator.full_resync_to</code>): removals of dead initial
+  entities, spawn records for everything born since, full keyframe. The
+  connection-lost dialog offers "Reconectar" (<code>rejoin_last</code>: last IP or
+  Steam lobby). Gate: <code>tools/check_net_rejoin.tscn</code> (three processes).</li>
+<li><strong>Menu split</strong>: "Multijugador LAN" vs "Multijugador Internet"
+  (<code>LanLobby.internet_mode</code> — Steam-only card); Steam sessions pin roster
+  names to the Steam persona (rename hidden + <code>_apply_rename</code> refuses).</li>
+<li><strong>Teams (shipped)</strong>: <code>MatchConfig.player_teams</code> + <code>GameManager.are_allied</code>
+  choke point (auto-acquisition, WorldQuery, towers, gates, fog shared
+  vision, team victory in conquest/regicide/resignation, HUD winner-side).
+  Team pickers in both lobbies (<code>request_team</code> over the wire, AI-slot
+  teams); persisted in saves.</li>
+<li><strong>Waypoints + patrol (shipped)</strong>: Shift+right-click queues movement legs
+  (<code>UnitBase._waypoints</code>, command-layer clearing), Patrol [R] bounces
+  attack-move legs between two points; both ride <code>UnitPointCommand</code>
+  (<code>queued</code> flag / <code>patrol</code> verb).</li>
+<li><strong>Steam social (shipped)</strong>: roster carries steam ids → real avatars in
+  the players panel; rich presence set/cleared with the session; Alt+click
+  minimap pings (host-validated, ally-filtered display, SPACE-ring memory).</li>
+<li><strong>Allied AI (shipped)</strong>: an AI team-mate sends assist squads when an ally
+  is raided (attack-move, team ping, ally-only toast; 30 s cooldown, spare
+  army required) and announces its offensives with a target ping
+  (<code>ally_message</code> on the bus, replicated; gate <code>tools/check_ally_ai.tscn</code>).</li>
+<li><strong>Mercenaries finished</strong>: every civ hires at the Market (age-gated,
+  localized labels/tooltips, unit miniatures, cooldown badges); Fenicios
+  pay 25% less (<code>Market.get_mercenary_cost</code>).</li>
+<li><strong>Hero abilities audited</strong>: <code>tests/unit/test_hero_abilities.gd</code> casts all
+  16; fixed instant-ability cooldown skip (+fizzle/kill-refund flags), the
+  Mercenary Pact crash, the mouse-dependent Boarding dash, missing team
+  awareness and the Calima cloud parenting.</li>
+<li><strong>Phase 2 still pending</strong>: live Steam-lobby manual test. Migration to lockstep stays open: the command wire format is
+  shared, only the return channel changes — it requires the
+  simulation-determinism milestone (movement off Godot physics).</li>
+</ul>
+<p>Gated by <code>tests/unit/test_network_session.gd</code> (config snapshot round-trip,
+JSON-serializable, offline defaults, open-seat accounting, civ-pick
+validation, humans-list install/reset) and the two-process
+<code>tools/check_net_smoke.tscn</code>: a real client joins a real host, picks a civ,
+receives the config (seed + assigned player 1 + civs + humans), boots the
+mirror world (asserting it runs ZERO AI brains and that mirror entities are
+puppets), sends a move command for its scout by entity ID, and the host —
+running a mixed human + AI-slot match — asserts the AI brain exists only for
+the AI rival, the command arrived stamped as player 1, and the scout
+physically moved in its simulation; the client then asserts the movement
+came BACK through the replication stream and its own mirror scout moved.</p>
+<h2 id="save-load-schema-v2">Save / Load (schema v2)</h2>
+<p><code>SaveManager</code> (autoload, <code>scripts/core/save_manager.gd</code>) writes JSON saves to
+<code>user://saves/</code> (99 slots). <code>SCHEMA_VERSION</code> is 2 and is <strong>read-enforced</strong>:
+a save newer than the build is refused with a reason; an older one loads with
+defaults for every key it lacks (a minimal v1-shaped save runs the full
+restore path — pinned by <code>tests/unit/test_save_state_v2.gd</code>).</p>
+<p>Beyond the v1 baseline (entities, stockpiles, ages, fog, MatchRng state,
+resource nodes), schema 2 persists everything the player already paid for:</p>
+<ul>
+<li><strong>In-flight research</strong> — <code>TechManager.collect_state</code>/<code>restore_state</code>.
+  Research is paid at enqueue, so it must survive the round-trip without
+  re-charging. TechManager keys research by building instance id, which does
+  not survive a load: SaveManager maps each researching building to its
+  <strong>index in the saved buildings array</strong> (<code>"tc"</code> for the scene Town Center)
+  and the restore rebuilds the same array in the same order. Related fix:
+  <code>TechManager.reset_match_state</code> (called from <code>WorldSetup</code>) drops in-flight
+  research from a PREVIOUS match cold at match start — left in place, its
+  refund sweep credited stale spend into the new match's stockpile; a loaded
+  game restores its research AFTER that reset.</li>
+<li><strong>Garrisons</strong> — occupants of a building or transport are saved as records
+  <strong>nested</strong> under their holder (<code>_collect_garrison</code>; the free-unit sweep
+  skips them via <code>_garrisoned_unit_ids</code>) and restored back INSIDE via
+  <code>garrison_unit</code>/<code>board</code> — they used to duplicate as free-standing units at
+  their pre-boarding spot.</li>
+<li><strong>Unit stances</strong> — each unit record carries its <code>stance</code>.</li>
+<li><strong>Weather</strong> — <code>WeatherManager.collect_state</code>/<code>apply_saved_state</code> snapshot
+  the live state machine (phase, timers, pending event, wind); on restore the
+  machine re-emits the signals it would have, so a forecast in progress
+  re-warns and an active event picks its overlay back up.</li>
+</ul>
+<p>Multiplayer saves additionally carry the roster sheet and per-player fog (see
+the resume flow in the Multiplayer section).</p>
+<h2 id="economy-system">Economy System</h2>
+<p>Resources: Food, Wood, Gold, Stone (matching AoE2 exactly).</p>
+<p>Villagers gather from <code>ResourceNode</code> objects on the map. Each villager carries up to 10 units and returns to a drop-off building. <code>ResourceManager</code> is the single source of truth for stockpiles.</p>
+<h2 id="combat-system">Combat System</h2>
+<p>All damage flows through <code>unit.take_damage(amount, source)</code>. Armor reduces incoming damage. Range is checked via <code>attack_range</code> on <code>UnitResource</code>. Combat uses the AoE2 damage formula:</p>
+<pre><code>damage = max(1, attacker.attack - target.armor_melee)
+</code></pre>
+<p><strong>Melee attackers never park out of reach.</strong> Two systemic bugs made whole
+armies look unable to damage buildings: (1) <code>NavigationAgent2D</code> declares
+arrival <code>target_desired_distance</code> (24 px) short of the approach point, so a
+short-reach unit could freeze 3 px outside its strike range forever — the
+chase branch now closes that last gap on a straight line WITHOUT avoidance
+(RVO crushes a push toward a wall flanked by parked allies; the building's
+collision is the real stop); (2) a blocked building-attacker used to exhaust
+<code>MAX_STUCK_RETRIES</code> and go permanently idle — it now walks <code>APPROACH_STEPS</code>
+(alternating ±45°…180° around the footprint, held until a strike lands or the
+steps run out) before giving up, so crowds spread around the building instead
+of quitting on the jammed face.</p>
+<p><strong>Watch towers auto-attack with visible arrows.</strong> <code>WatchTower._physics_process</code>
+picks the nearest enemy in the <code>"units"</code> group within <code>ATTACK_RANGE</code> (220 px)
+and launches the Archer's <code>Arrow</code> (damage and <code>unit_attacked</code> applied on
+impact) from the tower top. That group is load-bearing and joined by
+<code>UnitBase._ready</code> — no scene declares it, so before that line it was empty and
+tower targeting, the Menceyes Guard aura and several hero abilities that scan
+it silently did nothing. Arrow spawns call <code>reset_physics_interpolation()</code> or
+the spawn teleport ghosts across the screen for a frame.</p>
+<p><strong>Combat stances (AoE2).</strong> Every unit carries <code>UnitBase.Stance</code>
+(AGGRESSIVE default / DEFENSIVE / STAND_GROUND / PASSIVE), set through the
+<code>UnitActionCommand</code> <code>stance_*</code> verbs. Stances govern AUTONOMOUS behaviour
+only — an explicit attack order always chases. All four auto-acquisition
+paths (range Area2D, retaliation, guard response, post-kill rescan) funnel
+through <code>_auto_engage</code>, which the stance can veto and which marks the
+engagement as auto: PASSIVE never engages; STAND_GROUND strikes in reach but
+breaks off instead of chasing; DEFENSIVE chases up to <code>DEFENSIVE_LEASH</code>
+(200 px) from its anchor — the latest ordered position — then walks home and
+refuses new fights until it is back inside the leash.</p>
+<p><strong>Idle acquisition.</strong> An IDLE combat unit sweeps <code>ACQUIRE_RADIUS</code> (240 px)
+every 0.6 s (<code>_tick_idle_acquire</code>) and hunts the nearest hostile unit on its
+own, through the same <code>_auto_engage</code> stance gate. Units used to engage only
+what physically touched their attack-range Area2D, so idle armies stood beside
+enemy villagers forever. STAND_GROUND only takes what it can already strike,
+and the post-kill re-scan chains onto survivors within the same radius.</p>
+<p><strong>Formations.</strong> <code>UnitPointCommand</code> carries the formation each group move was
+issued with (<code>line</code> / <code>box</code> / <code>spread</code> / <code>rings</code>; the HUD buttons only set
+WorldCommands' local choice for the NEXT move). Line/box/spread are rank-
+ordered grids facing the approach direction — melee front, ranged (attack
+range &gt; 2 tiles) behind, unarmed next, siege rear — computed deterministically
+by the same static helpers the tests exercise.</p>
+<p><strong>Garrison.</strong> <code>BuildingBase</code> owns the garrison API (<code>garrison_capacity</code>,
+<code>can_garrison_unit</code>, <code>garrison_unit</code>, <code>ungarrison_all</code>): land units only —
+never ships or siege — and only into COMPLETE buildings; occupants are hidden
+and paused, ejected via the spawn spiral, and DIE if the building is destroyed
+(the AoE2 rule). WatchTower holds 5, the player's TC 10. Right-clicking an own
+TC/tower garrisons MILITARY only (<code>WorldCommands.garrisons_by_right_click</code> —
+Villager inherits <code>is_combat_unit() == true</code>, so without the explicit
+exclusion villagers entered buildings they were sent to repair). Villagers
+shelter through two explicit controls: the Garrison button on their panel
+(a pending map-click action — click one of your buildings) and the Town Bell
+on the TC (one ring shelters every villager in its nearest TC/tower with
+room via the pure <code>bell_assignments</code> — overflow spills to the next building;
+ringing while anyone is sheltered ejects every garrison). The shared building
+volley (<code>_ranged_attack_arrows()</code>) adds one arrow per occupant — the TC only
+shoots while garrisoned.</p>
+<p><strong>Damaged buildings burn progressively</strong> (<code>BuildingDamageFx</code>, attached by
+<code>BuildingBase</code> and <code>TownCenterBuilding</code>): smoke from the FIRST point of damage, flame tongues
+join below 50 %, heavy fire and dark smoke below 25 %; repairs walk the stages
+back down, and construction sites/rubble never burn (only <code>COMPLETE</code> state).
+Purely visual — CPUParticles2D in the upright billboard space, render-side
+randomness, never MatchRng. Reviewed via <code>tools/check_damage_fx.tscn</code>
+(real-renderer screenshot of the four stages plus a tower firing).</p>
+<h2 id="pathfinding">Pathfinding</h2>
+<p>Uses Godot's built-in <code>NavigationAgent2D</code> on each unit. Navigation regions are updated when buildings are placed or destroyed.</p>
+<p><strong>RVO avoidance is tuned programmatically</strong> (<code>UnitBase._tune_avoidance</code>, one
+source — the scenes stay at engine defaults, which are wrong for an RTS):
+<code>max_speed</code> = the unit's <code>move_speed</code> × 1.6 (the default 100 CLAMPS the
+avoidance-safe velocity — the 180 px/s Scout moved at 55 % of design speed),
+<code>neighbor_distance</code> 80 px (default 500 made armies brake for units half a map
+away — the molasses jams), <code>max_neighbors</code> 7, <code>time_horizon_agents</code> 0.7, and
+the agent radius mirrors the physics footprint (<code>_collision_radius</code>, capsule/
+circle/rect aware). <code>avoidance_priority</code> is dynamic: 0.7 while moving, 0.4
+idle — parked units yield to marching ones instead of both bowing to each
+other. Gated by <code>tests/unit/test_avoidance_tuning.gd</code>.</p>
+<p><strong>Buildings have NO RVO avoidance obstacle.</strong> They used to carry one at
+collision + 16 px per side — larger than the navmesh carve margin (6 px +
+agent radius) — so two grid-adjacent buildings sealed the very corridor the
+mesh had opened between them: the path threaded the gap, the physics gap fit
+the unit, and the RVO solver returned a safe velocity of exactly ZERO forever
+(the frozen-villager playtest bug). The navmesh is the single static
+authority; physics collision is the hard backstop. Resource nodes keep their
+small RVO obstacle: its margin (±20) sits INSIDE their mesh carve (±24.5), so
+it smooths steering without ever contradicting the path.</p>
+<p>Three <code>NavigationRegion2D</code> nodes live in <code>game_world.tscn</code>, distinguished by their
+<code>navigation_layers</code> bit; every agent picks exactly one of them:</p>
+<table>
+<thead>
+<tr>
+<th>Region</th>
+<th>Layer</th>
+<th>Agents</th>
+<th>Surface</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NavigationRegion2D</code></td>
+<td>1</td>
+<td>Land units</td>
+<td>Land only (ocean excluded on Islands maps)</td>
+</tr>
+<tr>
+<td><code>OceanNavigationRegion2D</code></td>
+<td>2</td>
+<td>Ships</td>
+<td>Ocean only (islands are obstructions)</td>
+</tr>
+<tr>
+<td><code>AmphibiousNavigationRegion2D</code></td>
+<td>4 (<code>NavMeshBuilder.AMPHIBIOUS_LAYER</code>)</td>
+<td>Amphibious land units (Tidecaller)</td>
+<td>The whole board, land and water alike</td>
+</tr>
+</tbody>
+</table>
+<p>The amphibious mesh exists because a unit cannot simply be given layers 1 <strong>and</strong>
+2: both meshes are baked with an <code>agent_radius</code> of 10 px, so each one stops ~10 px
+short of the shoreline and the two never share an edge. An agent on both layers
+would still be trapped on its island. One continuous mesh is the only way across.</p>
+<p><code>WorldPlacement._do_nav_rebake()</code> rebakes the land <strong>and</strong> amphibious regions after
+every building placement or demolition (<code>_rebake_region()</code>, one async bake per
+region, with the callback bound to its region). Without the second bake a
+Tidecaller would path straight through buildings the land mesh already routes
+around.</p>
+<h2 id="amphibious-movement">Amphibious Movement</h2>
+<p>Water permission is a <strong>unit</strong> capability, not a civ flag:</p>
+<pre><code class="language-gdscript"># UnitBase — land units stay on land no matter which civ owns them
+func is_amphibious() -&gt; bool:
+    return false
+</code></pre>
+<p><code>ShipBase</code> returns <code>true</code>. <code>Tidecaller</code> returns
+<code>TerrainManager.civ_can_traverse_ocean(civ_id)</code>, so a future amphibious unit only
+needs <code>can_traverse_ocean = true</code> in its civilization resource. The flag is passed
+straight into the terrain queries (<code>get_speed_mult</code>, <code>is_impassable_for</code>,
+<code>nearest_passable</code>) through <code>UnitBase._safe_destination()</code> and <code>_nav_velocity()</code>.</p>
+<p>Two consequences that used to be bugs:</p>
+<ul>
+<li>An Atlantes <strong>land</strong> unit is refused a water destination. Previously permission
+  came from the civ, so any Atlantes unit could be sent to sea, land on the
+  ocean-free land mesh, and freeze (an off-mesh <code>target_position</code> makes
+  <code>is_navigation_finished()</code> return true immediately).</li>
+<li><code>TransportShip._disembark_position()</code> deliberately asks for a <em>land</em> tile even
+  for an amphibious passenger, so troops land on the beach instead of being
+  dropped into the surf off the land mesh.</li>
+</ul>
+<p>Speeds in the water come from civ data rather than a hardcoded constant:
+<code>TerrainManager.deep_water_speed(civ_id)</code> reads <code>stat_multipliers.deep_water_speed</code>
+and falls back to <code>DEEP_WATER_SPEED</code> (0.60). Shallow water (ocean within
+<code>SHALLOW_WATER_DEPTH</code> of the coast) is waded at full speed. Gated by
+<code>tests/unit/test_shallow_water.gd</code> and the <code>tools/check_amphibious.tscn</code> harness.</p>
+<h3 id="sea-containment-the-step-veto">Sea containment (the step veto)</h3>
+<p>Water has no physics body, so nothing but the navmesh keeps land units ashore —
+and two movement paths bypass the mesh: RVO's <code>safe_velocity</code> (a shove near the
+shoreline, applied in <code>_on_velocity_computed</code>) and the straight-line combat
+last-gap closer in <code>_handle_attacking</code>, which pushes directly at the target on
+the theory that the target's collision stops the unit ("the sea doesn't"). The
+old containment teleport healed the position ~0.8 s later, so units oscillated:
+wade in, snap out, wade back — some fighting in the water for seconds.</p>
+<p><code>UnitBase._step_enters_sea(next_pos)</code> vetoes any step that would <strong>enter</strong> ocean
+terrain at both leak sites (the velocity is zeroed for that tick). Cheap by
+construction: amphibians and units farther than <code>COAST_GUARD_DIST</code> (64 px) from
+the coast (memoized <code>distance_to_coast</code> cell lookup) exit before the precise
+terrain test, and a unit already overboard is left to the containment teleport,
+so a mesh/polygon sliver at the waterline can never freeze anyone.</p>
+<p>Gated by <code>tools/check_sea_containment.tscn</code> — a chaos probe that boots a real
+Islands match, actively tries every entry vector a live game produces
+(cross-water attack-moves, move orders into deep ocean, villagers sent at fish
+nodes, a shoreline brawl) and audits every land unit every sampled tick. It runs
+in CI with <code>CALIMA_TICKS=2400</code>.</p>
+<h2 id="terrain-impassability">Terrain Impassability</h2>
+<p><code>TerrainManager</code> (autoload) is the single authority on whether a world position is passable for a given actor.</p>
+<p><strong>Key API:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Signature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>is_impassable_for</code></td>
+<td><code>(world_pos: Vector2, civ_id: String, amphibious: bool = false) -&gt; bool</code></td>
+<td>Returns <code>true</code> if the tile at <code>world_pos</code> is impassable for the given civilization; ocean is passable only for amphibious actors</td>
+</tr>
+<tr>
+<td><code>nearest_passable</code></td>
+<td><code>(world_pos: Vector2, civ_id: String, amphibious: bool = false) -&gt; Vector2</code></td>
+<td>Radial search (30 rings × 24 px step) returning the closest passable position</td>
+</tr>
+<tr>
+<td><code>get_speed_mult</code></td>
+<td><code>(world_pos: Vector2, civ_id: String, amphibious: bool = false) -&gt; float</code></td>
+<td>Terrain speed multiplier; <code>0.0</code> means blocked. Amphibious actors get <code>1.0</code> in shallow water and <code>deep_water_speed(civ_id)</code> beyond it</td>
+</tr>
+<tr>
+<td><code>deep_water_speed</code></td>
+<td><code>(civ_id: String) -&gt; float</code></td>
+<td><code>stat_multipliers.deep_water_speed</code> from the civ resource, default <code>DEEP_WATER_SPEED</code> (0.60)</td>
+</tr>
+<tr>
+<td><code>civ_can_traverse_ocean</code></td>
+<td><code>(civ_id: String) -&gt; bool</code></td>
+<td>The <code>can_traverse_ocean</code> civ flag — the gate for amphibious <em>land</em> units</td>
+</tr>
+<tr>
+<td><code>nearest_ocean</code></td>
+<td><code>(world_pos: Vector2) -&gt; Vector2</code></td>
+<td>Spiral search returning the closest ocean tile — used to guarantee ship spawns land in water</td>
+</tr>
+<tr>
+<td><code>distance_to_coast</code></td>
+<td><code>(world_pos: Vector2) -&gt; float</code></td>
+<td>Distance to the nearest land/ocean boundary, <code>INF</code> on a landlocked map</td>
+</tr>
+<tr>
+<td><code>bake_minimap_texture</code></td>
+<td><code>() -&gt; ImageTexture</code></td>
+<td>Generates a 256×256 terrain texture used by the minimap renderer</td>
+</tr>
+</tbody>
+</table>
+<p><code>distance_to_coast</code> is analytic — the closest point on every land outline segment
+and on every OCEAN zone circle — and memoized per <code>COAST_CACHE_CELL</code> (24 px)
+grid cell, evaluated at the <strong>cell centre</strong> so the answer never depends on which
+query filled the cell first. The cache is dropped by <code>reset()</code>, <code>add_zone()</code> and
+<code>set_land_polys()</code>; those three are therefore the only legal ways to mutate
+terrain. The previous implementation was an outward ring search costing ~1.8 ms
+per call: sea fog asks for the coastal distance once per unit and building
+several times a second, which by itself exceeded the whole frame budget and made
+the game crawl whenever Sea Fog rolled in. <code>_point_in_any_land</code> also
+bounding-box rejects (<code>_land_bounds</code>) before running the polygon test.
+Gated by <code>tests/unit/test_coast_distance.gd</code>.</p>
+<p><strong>Integration points:</strong></p>
+<ul>
+<li><code>UnitBase</code> carries a <code>civ_id: String = ""</code> property. Its <code>_safe_destination(destination: Vector2) -&gt; Vector2</code> helper calls <code>TerrainManager.nearest_passable(destination, civ_id, is_amphibious())</code> before any nav agent assignment.</li>
+<li><code>ShipBase</code> overrides <code>_safe_destination</code> to snap to <code>nearest_ocean</code> instead: ships
+  are amphibious, so <code>nearest_passable</code> considers land passable and would leave a
+  nav target on the shore — off the ocean navmesh, where the agent reports
+  "navigation finished" immediately and the ship never moves.</li>
+<li>All unit <code>order_move</code> implementations (<code>Militia</code>, <code>Archer</code>, <code>Pikeman</code>, <code>Scout</code>, <code>HeavyScout</code>, <code>Knight</code>) and <code>Villager._start_move_to</code> call <code>_safe_destination</code> before setting <code>nav_agent.target_position</code>.</li>
+<li><code>Animal</code> nodes call <code>TerrainManager.nearest_passable(pos, "")</code> in <code>order_move</code>, <code>_pick_wander_target</code>, and <code>_start_flee</code> so fauna never path onto water or other impassable terrain.</li>
+</ul>
+<h2 id="navmesh-carving">NavMesh Carving</h2>
+<p><code>NavMeshBuilder.build(parent, map_half, land_polys)</code> runs at map generation time
+(called from <code>MapGenerator._run</code>):</p>
+<ul>
+<li><strong>Carves impassable terrain zones into the meshes</strong> (<code>zone_obstructions</code>):
+  risco and caldera always, malpaís on every mesh except the layer-8 one.
+  This is what makes paths route AROUND lava: the old approach parented
+  <code>NavigationObstacle2D</code> nodes (RVO-only — they never touched the baked
+  mesh), so paths crossed the zones and units ground to a halt against the
+  rim where the speed multiplier hits 0. The runtime rebake in WorldPlacement
+  re-injects the same zone obstructions, or the first building placed would
+  erase the carve.</li>
+<li>Bakes the land mesh (layer 1) on every map type: the board (or the islands)
+  minus all impassable zones.</li>
+<li>Bakes the malpaís-traversal mesh (layer 8, <code>MALPAIS_LAYER</code>): identical to
+  land but with malpaís left walkable. Land units of a civ with
+  <code>can_traverse_malpais</code> switch to this layer in <code>UnitBase._ready</code>, so the
+  Guanches bonus survives the carving.</li>
+<li>Bakes the amphibious mesh (layer 4) as the full playable square minus the
+  impassable zones — its point is spanning land AND water, never split by the
+  shoreline agent-radius insets.</li>
+<li>On <strong>Islands</strong> maps the land/malpaís meshes use the per-island land polygons
+  as the walkable surface, and the ocean mesh is baked as the board minus
+  those islands.</li>
+</ul>
+<p>This means ships navigate their own layer, amphibious units navigate the
+continuous layer, traversal civs cross malpaís on layer 8, and plain land
+units are blocked by the land mesh boundaries. Gated by
+<code>tools/check_volcanic_nav.tscn</code>: a militia ordered to the far side of a
+caldera on a Volcanic Coast map must arrive AND never enter the zone.</p>
+<h3 id="the-half-pixel-bake-nudge">The half-pixel bake nudge</h3>
+<p>Every bake — the generation-time one in <code>NavMeshBuilder._bake</code> and the debounced
+runtime rebake in <code>WorldPlacement._rebake_region</code> — inflates the region's agent
+radius by <code>NavMeshBuilder.RADIUS_NUDGE</code> (0.5 px).</p>
+<p>The reason is a hard failure mode of Godot's 2D navmesh baker. Player buildings
+snap to a 16 px grid and carve with a 6 px margin
+(<code>BuildingBase._nav_bake_half_extents</code>), so two buildings placed <em>diagonally</em> can
+leave a 20 px carved gap on both axes — and once each footprint is inflated by the
+10 px agent radius, the two holes meet at exactly one point. The convex partition
+fails on that pinch and returns an <strong>empty polygon for the whole board</strong>, not just
+that corner: <code>NavigationPolygon polygon convex partition failed</code>. The rebake then
+keeps the previous (uncarved) mesh, so the failure shows up as buildings that
+units path straight through plus an error every debounce tick.</p>
+<p>Baking half a pixel wider makes the two holes overlap by 1 px, Clipper merges
+them, and the partition succeeds. In fuzzing (1500 dense grid-snapped layouts)
+the nominal radius failed on 5.5 % of them and the nudged radius on none.
+<code>NavMeshBuilder.RADIUS_FALLBACKS</code> supplies three further sub-pixel offsets, tried
+in order when a bake still comes back empty; <code>WorldPlacement._on_nav_bake_done</code>
+walks that ladder and only then keeps the previous mesh, warning once per region
+instead of re-requesting the bake forever on identical geometry.</p>
+<p>Gated by <code>tests/unit/test_nav_bake_nudge.gd</code> (the minimised two-footprint case)
+and <code>tools/check_nav_bake_diag.tscn</code> (two real houses placed diagonally in a live
+match; fails on pre-nudge code).</p>
+<h2 id="fog-of-war">Fog of War</h2>
+<p><code>FogOfWar</code> (<code>scripts/map/fog_of_war.gd</code>) keeps one byte grid for the human player,
+sized at <code>_ready()</code> from <code>MatchConfig.get_map_half()</code> plus <code>GRID_MARGIN</code> (200 px)
+at <code>CELL_SIZE</code> = 50 px per cell — 56×56 on SMALL, 80×80 on MEDIUM, 112×112 on
+LARGE (<code>grid_w</code>/<code>grid_h</code>/<code>map_origin</code>). It used to be a fixed 80×80 rect over
+±2000 px, which left a 600 px ring of a LARGE map permanently unfogged: islands
+at the margins showed on the minimap without ever being scouted. Three states per
+cell: <code>STATE_UNEXPLORED</code> / <code>STATE_EXPLORED</code> / <code>STATE_VISIBLE</code>. Every
+<code>UPDATE_INTERVAL</code> (0.12 s) <code>_tick()</code> demotes VISIBLE → EXPLORED, re-reveals from the
+player's units and buildings, repaints only the dirty cells into the shroud texture,
+and then applies entity visibility.</p>
+<p>Reveal radius per watcher is <code>line_of_sight × 64 px</code> multiplied by three factors:</p>
+<table>
+<thead>
+<tr>
+<th>Factor</th>
+<th>Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Weather</td>
+<td><code>WeatherManager.get_vision_multiplier(pos, 0)</code></td>
+<td>Calima / Sea Fog / Volcanic Ash, already scaled by civ weather affinity</td>
+</tr>
+<tr>
+<td>Terrain</td>
+<td><code>TerrainManager.get_vision_mult(pos)</code></td>
+<td>Laurisilva canopy −30%; buildings skip it (laurisilva is not buildable)</td>
+</tr>
+<tr>
+<td>Coast</td>
+<td><code>FogOfWar._coastal_vision_mult(pos)</code></td>
+<td>Civ <code>coastal_vision</code> multiplier, applied only inside <code>WeatherManager.COASTAL_ZONE_DEPTH</code> (400 px) of a shore</td>
+</tr>
+</tbody>
+</table>
+<p><code>_coastal_vision_mult</code> is the only reader of the <code>coastal_vision</code> civ multiplier:
+the Atlantes carry 1.50, so their units and buildings see 50 % further along any
+shore — the same band sea fog operates in — and exactly 1.0 inland. The
+<code>is_equal_approx(mult, 1.0)</code> fast path keeps the coast query out of the hot loop
+for the other seven civs. Gated by <code>tests/unit/test_coastal_vision.gd</code>.</p>
+<p>Visibility of entities is applied in <code>_apply_visibility()</code>: enemy units need a
+VISIBLE cell and must not be fog-cloaked (see the sea-fog cloak rules under
+<a href="#weather-system">Weather System</a>), enemy buildings and resource nodes stay drawn
+once their cell is EXPLORED (AoE2-style memory).</p>
+<h2 id="tech-tree-system">Tech Tree System</h2>
+<p>Technologies are defined as <code>TechnologyResource</code> <code>.tres</code> files under <code>resources/technologies/</code> — <code>TechManager</code> loads the whole directory, so the roster is the file list. Thirty-two technologies are currently implemented:</p>
+<table>
+<thead>
+<tr>
+<th>Technology</th>
+<th>Researched at</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>loom</code></td>
+<td>Blacksmith</td>
+<td>Villager HP ×1.15</td>
+</tr>
+<tr>
+<td><code>forging</code></td>
+<td>Blacksmith</td>
+<td>Unit attack ×1.15</td>
+</tr>
+<tr>
+<td><code>iron_casting</code></td>
+<td>Blacksmith</td>
+<td>Unit attack ×1.20</td>
+</tr>
+<tr>
+<td><code>blast_furnace</code></td>
+<td>Blacksmith</td>
+<td>Unit attack ×1.15</td>
+</tr>
+<tr>
+<td><code>fletching</code></td>
+<td>Blacksmith</td>
+<td>Archer attack ×1.20</td>
+</tr>
+<tr>
+<td><code>bodkin_arrow</code></td>
+<td>Blacksmith</td>
+<td>Archer attack ×1.20, range ×1.10</td>
+</tr>
+<tr>
+<td><code>scale_barding</code></td>
+<td>Blacksmith</td>
+<td>Melee armour +1</td>
+</tr>
+<tr>
+<td><code>chain_barding</code></td>
+<td>Blacksmith</td>
+<td>Melee armour +1</td>
+</tr>
+<tr>
+<td><code>plate_barding</code></td>
+<td>Blacksmith</td>
+<td>Melee armour +1</td>
+</tr>
+<tr>
+<td><code>padded_archer_armor</code></td>
+<td>Blacksmith</td>
+<td>Archer pierce armour +1</td>
+</tr>
+<tr>
+<td><code>shipwright</code></td>
+<td>Blacksmith</td>
+<td>Ship HP ×1.15, ship cost ×0.85</td>
+</tr>
+<tr>
+<td><code>carreta_canaria</code></td>
+<td>Blacksmith</td>
+<td>Villager carry capacity ×1.25 (farms deposit instantly, unaffected)</td>
+</tr>
+<tr>
+<td><code>carreton_isleno</code></td>
+<td>Blacksmith</td>
+<td>Villager carry capacity ×1.25 again (requires <code>carreta_canaria</code>)</td>
+</tr>
+<tr>
+<td><code>siege_engineering</code></td>
+<td>University</td>
+<td>Siege damage vs buildings ×1.20</td>
+</tr>
+<tr>
+<td><code>ballistics</code></td>
+<td>University</td>
+<td>Archer attack speed ×1.20</td>
+</tr>
+<tr>
+<td><code>chemistry</code></td>
+<td>University</td>
+<td>Archer attack ×1.15</td>
+</tr>
+<tr>
+<td><code>sanctity</code></td>
+<td>Temple</td>
+<td>Swordsman HP ×1.15</td>
+</tr>
+<tr>
+<td><code>fervor</code></td>
+<td>Temple</td>
+<td>Unit move speed ×1.10</td>
+</tr>
+<tr>
+<td><code>atonement</code></td>
+<td>Temple</td>
+<td>Cavalry HP ×1.20</td>
+</tr>
+<tr>
+<td><code>upgrade_man_at_arms</code></td>
+<td>Barracks</td>
+<td>Militia → Man-at-Arms</td>
+</tr>
+<tr>
+<td><code>upgrade_long_swordsman</code></td>
+<td>Barracks</td>
+<td>Man-at-Arms → Long Swordsman</td>
+</tr>
+<tr>
+<td><code>upgrade_heavy_scout</code></td>
+<td>Stable</td>
+<td>Scout → Heavy Scout</td>
+</tr>
+<tr>
+<td><code>upgrade_knight</code></td>
+<td>Stable</td>
+<td>Heavy Scout → Knight</td>
+</tr>
+<tr>
+<td><code>double_bit_axe</code></td>
+<td>Lumber Camp</td>
+<td>Wood gather rate ×1.15, wood carry ×1.10</td>
+</tr>
+<tr>
+<td><code>bow_saw</code></td>
+<td>Lumber Camp</td>
+<td>Wood gather rate ×1.15, wood carry ×1.10 (requires <code>double_bit_axe</code>)</td>
+</tr>
+<tr>
+<td><code>two_man_saw</code></td>
+<td>Lumber Camp</td>
+<td>Wood gather rate ×1.15, wood carry ×1.10 (requires <code>bow_saw</code>)</td>
+</tr>
+<tr>
+<td><code>reinforced_picks</code></td>
+<td>Mining Camp</td>
+<td>Gold+stone gather rate ×1.15, carry ×1.10</td>
+</tr>
+<tr>
+<td><code>shaft_mining</code></td>
+<td>Mining Camp</td>
+<td>Gold+stone gather rate ×1.15, carry ×1.10 (requires <code>reinforced_picks</code>)</td>
+</tr>
+<tr>
+<td><code>deep_galleries</code></td>
+<td>Mining Camp</td>
+<td>Gold+stone gather rate ×1.15, carry ×1.10 (requires <code>shaft_mining</code>)</td>
+</tr>
+<tr>
+<td><code>horse_collar</code></td>
+<td>Mill</td>
+<td>Food gather rate ×1.15, food carry ×1.10</td>
+</tr>
+<tr>
+<td><code>heavy_plow</code></td>
+<td>Mill</td>
+<td>Food gather rate ×1.15, food carry ×1.10 (requires <code>horse_collar</code>)</td>
+</tr>
+<tr>
+<td><code>crop_rotation</code></td>
+<td>Mill</td>
+<td>Food gather rate ×1.15, food carry ×1.10 (requires <code>heavy_plow</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>The nine camp techs use per-resource effect keys (<code>villager_&lt;res&gt;_gather_rate</code>,
+<code>villager_&lt;res&gt;_carry</code>) handled by <code>CivBonusManager</code> as per-resource carry
+baskets stacked on the global <code>villager_carry_capacity</code> carts. They are
+researched at the drop-off camps themselves (<code>research_building</code>: Lumber Camp,
+Mining Camp, Mill), one tech per age from Feudal, chained by prerequisites.</p>
+<p><code>TechManager</code> (autoload) owns per-building research: one active tech plus an AoE2-training-queue-style waiting list, capped at <code>MAX_RESEARCH_QUEUE</code> (5) techs in flight per building. Queued techs are paid at enqueue time, refunded slot by slot on cancel (<code>cancel_queued_research(building, index)</code>; <code>cancel_research</code> refunds the active one in full), and promoted automatically the moment the active slot frees up. A queued prerequisite counts as met, so chains queue naturally; if the lab is destroyed, everything still waiting in its queue is refunded. Effects are applied when research completes. <code>CivBonusManager</code> (autoload) stores per-player multipliers derived from civilization bonuses and applied techs.</p>
+<p>When a <code>TechnologyResource</code> has non-empty <code>upgrade_from_unit_id</code> and <code>upgrade_to_unit_id</code> fields, <code>TechManager</code> treats it as a unit upgrade: on completion it immediately replaces all live units of type <code>upgrade_from_unit_id</code> with instances of <code>upgrade_to_unit_id</code> (HP scaled proportionally), and the source building switches its training queue to produce the new type going forward. Upgrade techs are researched at the same building that trains the unit (Barracks for infantry upgrades, Stable for cavalry upgrades).</p>
+<h2 id="ai-system">AI System</h2>
+<p><code>AIPlayer</code> (<code>scripts/ai/ai_player.gd</code>, <code>extends Node</code>) is the coordinator. It owns <code>BUILDING_SCENES</code> and <code>VILLAGER_SCENE</code> constants, wires <code>EventBus</code> signals, and runs on a 2-second <code>TICK_INTERVAL</code> tick (plus a 3-second <code>THREAT_CHECK_INTERVAL</code> scan). All substantive logic is delegated to four <code>RefCounted</code> modules that are instantiated in <code>_ready()</code> via <code>ModuleClass.new()</code> then <code>.setup(self)</code>. Each module holds a typed back-reference <code>var _ai: AIPlayer</code> and accesses sibling modules through <code>_ai._module.method()</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Class</th>
+<th>File</th>
+<th>Responsibilities</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_construction</code></td>
+<td><code>AIConstruction</code></td>
+<td><code>scripts/ai/ai_construction.gd</code></td>
+<td>Building placement; placement-failure cooldowns (<code>_build_fail_counts</code>, <code>_build_cooldowns</code>); population-house management; loads all building costs at startup via <code>BuildingResource.get_cost_dict()</code>; builds a Mill early (food drop-off near the TC) and Watch Towers on the base perimeter from the Feudal Age (<code>tower_target_for_age</code>: 0 Dark, 1 Feudal, 2 Castle+)</td>
+</tr>
+<tr>
+<td><code>_economy</code></td>
+<td><code>AIEconomy</code></td>
+<td><code>scripts/ai/ai_economy.gd</code></td>
+<td>Villager spawning and idle-villager assignment; per-age resource-type target fractions (<code>_target_fractions_for_age</code>); age-advance trigger; <code>find_nearest_resource</code> / <code>find_nearest_drop_off</code> helpers (hunt/berry food prefers the Mill); pastoral economy — <code>manage_dogs</code> and <code>manage_flock</code> (see below)</td>
+</tr>
+<tr>
+<td><code>_military</code></td>
+<td><code>AIMilitary</code></td>
+<td><code>scripts/ai/ai_military.gd</code></td>
+<td><code>AggressionLevel</code> enum (PASSIVE / ALERTED / AGGRESSIVE) with decay timer; Barracks, Stable, and SiegeWorkshop training; tech research priority queue (<code>_TECH_PRIORITY</code>); multi-target attack dispatch; control-zone threat detection and base defense — threat scans, attack-target picks and base defense all run on the fog-honest sighted/known queries</td>
+</tr>
+<tr>
+<td><code>_naval</code></td>
+<td><code>AINaval</code></td>
+<td><code>scripts/ai/ai_naval.gd</code></td>
+<td>Naval unit training; galley patrol and HP-based retreat (<code>GALLEY_RETREAT_HP_RATIO = 0.30</code>) — patrols engage only sighted enemy ships; transport boarding and <code>order_move_then_unload</code> assault sequence; fish-trap construction; idle land-unit attack once units have crossed to the enemy island</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fog-honest-sighting-layer-worldquery">Fog-honest sighting layer (WorldQuery)</h3>
+<p>The AI is no longer omniscient. <code>WorldQuery</code> (<code>scripts/ai/world_query.gd</code>) carries a sighting layer: an enemy entity is <strong>sighted</strong> while inside the line-of-sight radius of any own unit or building (LOS read from the entity's <code>.tres</code>, converted at FogOfWar's 64 px per LOS unit), and once seen a <strong>building</strong> is remembered at its last position while a <strong>unit</strong> fades back into the fog — the same AoE2 semantics the minimap already gives the human. The refresh (<code>refresh_sightings</code>) is a throttled flat-array sweep (<code>SIGHT_REFRESH_TICKS</code> 36 physics frames, ~1.7×/s per AI) so query volume never multiplies the cost. Query surface: <code>sighted_enemy_units</code> (seen now, cloak-honest), <code>known_enemy_buildings</code> (seen now or remembered), <code>enemies_sighted</code> / <code>nearest_sighted_enemy</code> / <code>is_sighted</code> / <code>remembered_enemy_positions</code>. The primary enemy TC (<code>get_primary_enemy_tc</code>) deliberately stays map knowledge — starting positions are scouting-free information, and without a destination the AI would never leave home. Semantics pinned by <code>tests/unit/test_world_query.gd</code>.</p>
+<h3 id="pastoral-economy-dogs-and-mutton">Pastoral economy (dogs and mutton)</h3>
+<p><code>AIEconomy.manage_dogs</code> trains up to <code>MAX_AI_DOGS</code> (2) Presa Canarios at a complete Mill (<code>DOG_COST</code> 30F/10G, capped counting the Mill's queue) and sends each <strong>idle</strong> dog at the nearest unclaimed live animal within <code>DOG_HERD_RADIUS</code> — wild flocks and enemy sheep included, never its own or an ally's — via the same CommandBus <code>"herd"</code> verb the player uses; a herding trip rides the ATTACKING state, so idleness is the whole anti-spam throttle. <code>manage_flock</code> eats the herd: while food income is wanted (<code>_wants_food</code>, the same per-age target fraction <code>_assign_villager</code> uses) and no slaughter is already in flight, one hunting villager is sent to kill one own OWNED sheep within <code>SLAUGHTER_RADIUS</code> of the TC — the carcass becomes a normal FOOD_HUNT node the hunters gather. Behavioural probe: <code>tools/check_ai_pastoral.tscn</code> (real match at 8×: mill built, dog trained, herd command issued); unit tests in <code>tests/unit/test_ai_full_game.gd</code>.</p>
+<p><code>AIPlayer</code> also contains TC-loss handling: on <code>EventBus.building_destroyed</code>, if the destroyed building is the AI's Town Center, a 0.5 s deferred call to <code>_attempt_tc_rebuild</code> finds the safest villager (maximally distant from the enemy center-of-mass) and places a new TC. If the AI has no units and no buildings it emits <code>EventBus.player_eliminated</code>.</p>
+<p>On <strong>Islands</strong> maps (<code>MatchConfig.map_type == ISLANDS</code>) the <code>_run_tick</code> call also invokes all four naval methods; land-only maps skip the naval module entirely.</p>
+<h2 id="ui-hud-system">UI / HUD System</h2>
+<p>The HUD is a <code>CanvasLayer</code> scene at <code>scenes/ui/hud/hud.tscn</code>, instanced as a child of <code>GameWorld</code> in <code>scenes/game/game_world.tscn</code>. The root node carries <code>hud_manager.gd</code>, which retains the core in-game UI (action menu, selection panel, timer bars, tutorial) and <strong>composes</strong> a set of focused child components, each a plain <code>Node</code> added in <code>_ready</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Component (<code>class_name</code>)</th>
+<th>File</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HudResourceBar</code></td>
+<td><code>scripts/ui/hud/hud_resource_bar.gd</code></td>
+<td>Top-bar resource counters + gatherer counts, population label (at-cap flash), age label; self-wires to EventBus</td>
+</tr>
+<tr>
+<td><code>HudWeather</code></td>
+<td><code>scripts/ui/hud/hud_weather.gd</code></td>
+<td>Weather announcement banner + countdown pill; self-wires to <code>WeatherManager</code></td>
+</tr>
+<tr>
+<td><code>HudMatchStats</code></td>
+<td><code>scripts/ui/hud/hud_match_stats.gd</code></td>
+<td>Match clock, per-player/rival stat counters, timeline snapshots, game-over + charts overlays</td>
+</tr>
+<tr>
+<td><code>HudMenus</code></td>
+<td><code>scripts/ui/hud/hud_menus.gd</code></td>
+<td>Pause menu, settings, save-slot picker, surrender (tutorial/dpad hooks injected as callables)</td>
+</tr>
+<tr>
+<td><code>HudControls</code></td>
+<td><code>scripts/ui/hud/hud_controls.gd</code></td>
+<td>Game-speed buttons, camera dpad + panning, idle-villager/idle-military cycle buttons, locate-hero button</td>
+</tr>
+<tr>
+<td><code>HudStyle</code></td>
+<td><code>scripts/ui/hud/hud_style.gd</code></td>
+<td>Shared <code>StyleBoxFlat</code> panel/button factory</td>
+</tr>
+<tr>
+<td><code>HudActionMenu</code></td>
+<td><code>scripts/ui/hud/hud_action_menu.gd</code></td>
+<td>The command grid: button rendering + paging, press routing, pending map-click actions, stance/formation highlights, hotkeys, every per-selection layout (one <code>_populate_production</code> panel serves all train/research buildings); refuses every action during replay playback</td>
+</tr>
+<tr>
+<td><code>HudActionDefs</code></td>
+<td><code>scripts/ui/hud/hud_action_defs.gd</code></td>
+<td>Static action tables + pure builders — costs always resolved from the same <code>.tres</code> data the simulation charges (<code>test_hud_panels.gd</code> audits every button)</td>
+</tr>
+<tr>
+<td><code>HudTutorial</code></td>
+<td><code>scripts/ui/hud/hud_tutorial.gd</code></td>
+<td>Tutorial lesson driver: overlay, per-step signal listeners, build gates; resource top-ups emitted via <code>EventBus.tutorial_grant_resources</code> and applied by the world</td>
+</tr>
+<tr>
+<td><code>HudHeroWidget</code></td>
+<td><code>scripts/ui/hud/hud_hero_widget.gd</code></td>
+<td>Persistent hero portrait + HP card in Regicide</td>
+</tr>
+<tr>
+<td><code>HudControlGroups</code></td>
+<td><code>scripts/ui/hud/hud_control_groups.gd</code></td>
+<td>Clickable control-group chips</td>
+</tr>
+<tr>
+<td><code>HudChat</code></td>
+<td><code>scripts/ui/hud/hud_chat.gd</code></td>
+<td>In-match multiplayer chat overlay</td>
+</tr>
+<tr>
+<td><code>HudPlayersPanel</code></td>
+<td><code>scripts/ui/hud/hud_players_panel.gd</code></td>
+<td>Players/score overlay docked on the minimap</td>
+</tr>
+<tr>
+<td><code>HudReplayBar</code></td>
+<td><code>scripts/ui/hud/hud_replay_bar.gd</code></td>
+<td>Replay spectator controls (timeline, speeds, reveal-all, cinematic, A/B clip markers)</td>
+</tr>
+<tr>
+<td><code>HudFpsCounter</code></td>
+<td><code>scripts/ui/hud/hud_fps.gd</code></td>
+<td>Optional FPS readout (settings toggle)</td>
+</tr>
+<tr>
+<td><code>NotificationDisplay</code></td>
+<td><code>scripts/ui/notification_display.gd</code></td>
+<td>Stacking toasts with optional shortcut action buttons</td>
+</tr>
+</tbody>
+</table>
+<p>The components self-wire to their own signals; <code>hud_manager</code> does not relay events to them. The split was incremental and behaviour-preserving — <code>hud_manager.gd</code> is down to ~940 lines (from a ~3300-line god object) and now keeps only the selection info panel, queue/research row, detail-panel bars and component composition. A headless load harness lives at <code>project/tools/check_hud.gd</code> (<code>godot --headless -s tools/check_hud.gd</code>).</p>
+<p><strong>EventBus wiring</strong> (<code>hud_manager._ready</code> connects the core panels; components connect their own):</p>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Handler</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EventBus.resource_changed</code></td>
+<td><code>_on_resource_changed</code></td>
+<td>Updates the matching <code>ResourceDisplay</code> for the local player</td>
+</tr>
+<tr>
+<td><code>EventBus.unit_selected</code></td>
+<td><code>_on_unit_selected</code></td>
+<td>Rebuilds the unit portraits grid and detail panel</td>
+</tr>
+<tr>
+<td><code>EventBus.age_advance_complete</code></td>
+<td><code>_on_age_advance_complete</code></td>
+<td>Updates the age label for the local player</td>
+</tr>
+<tr>
+<td><code>EventBus.market_rate_changed</code></td>
+<td><code>_on_market_rate_changed</code></td>
+<td>Refreshes the Market action panel with live rates if the changed market is currently selected</td>
+</tr>
+<tr>
+<td><code>GameManager.game_started</code></td>
+<td><code>_on_game_started</code></td>
+<td>Resets game speed and refreshes age/resources (the clock is started by <code>HudMatchStats</code>)</td>
+</tr>
+<tr>
+<td><code>GameManager.game_paused</code></td>
+<td><code>toggle_pause</code></td>
+<td>Shows/hides the full-screen pause overlay</td>
+</tr>
+<tr>
+<td><code>GameManager.game_over</code></td>
+<td><code>HudMatchStats._on_game_over</code></td>
+<td>Stops the clock and builds the end-of-match summary + charts</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Component breakdown</strong>:</p>
+<ul>
+<li><strong>TopBar</strong> (<code>PanelContainer</code>, anchored top): four <code>ResourceDisplay</code> nodes (Food, Wood, Gold, Stone), a population <code>Label</code>, an age <code>Label</code>, and a game-clock <code>Label</code>.</li>
+<li><strong>ResourceDisplay</strong> (<code>class_name ResourceDisplay extends HBoxContainer</code>): two <code>Label</code> children — <code>IconLabel</code> for the resource name and <code>AmountLabel</code> for the count. Updated via <code>set_amount(value: int)</code>.</li>
+<li><strong>BottomBar</strong> (<code>PanelContainer</code>, anchored bottom): a selection panel and a minimap panel.</li>
+<li><strong>UnitPortraitsGrid</strong> (<code>GridContainer</code>, 10 columns, max 40 portraits): populated dynamically by <code>HudManager.update_selection</code>. Each cell is a <code>UnitPortrait</code> instance.</li>
+<li><strong>UnitDetailPanel</strong>: shows the first selected unit's display name and HP bar.</li>
+<li><strong>ActionButtonsGrid</strong>: <code>GridContainer</code> with <code>ACTION_COLS = 5</code> columns and <code>ACTION_ROWS = 2</code> rows (10 slots per page). When the active action list exceeds 10 entries, the last two slots on the bottom row become ◀/▶ pagination buttons. <code>_render_action_page()</code> rebuilds the grid for the current <code>_action_page</code>.</li>
+<li><strong>MinimapPanel</strong>: hosts <code>MinimapRenderer</code> (<code>scripts/ui/minimap.gd</code>). Rendering is split across two child layers so the widget is not rebuilt every frame: <strong>ContentLayer</strong> (terrain texture, fog cells, resources, buildings, units — the expensive entity iteration) redraws on a decoupled tick every <code>CONTENT_REDRAW_INTERVAL</code> (0.2 s), while <strong>OverlayLayer</strong> (camera viewport rect, event flashes, border) is marked dirty only when the camera view actually changes or a flash is animating; an idle minimap issues no draw calls. Enemy buildings seen at least once are remembered at their last known position (<code>_known_enemy_buildings</code>, updated on the content tick) and drawn dimmed while their fog cell is EXPLORED — even if destroyed under fog, AoE2-style; a ghost is only forgotten when the player re-observes the spot and the building is gone.</li>
+<li><strong>PauseOverlay</strong> (<code>ColorRect</code>, full-screen, 50 % black): visible only when the game is paused.</li>
+</ul>
+<p><strong>UnitPortrait</strong> (<code>class_name UnitPortrait extends PanelContainer</code>): built entirely in code (<code>_ready</code>). Displays a 6-character name abbreviation and a color-coded HP bar (green &gt; 50 %, yellow &gt; 25 %, red ≤ 25 %). Created and discarded each time the selection changes; no scene file.</p>
+<p><strong>Building selection behaviour</strong>:</p>
+<ul>
+<li>When a building with <code>state != BuildingState.COMPLETE</code> is selected, the HUD shows only the Destroy action button regardless of building type.</li>
+<li>When construction completes, <code>EventBus.building_construction_complete</code> fires <code>_on_building_construction_complete</code>, which re-calls <code>_on_building_selected</code> on the same building if it is still selected, replacing the Destroy-only panel with the building's full action set.</li>
+<li>Buildings that implement <code>is_respawning_hero()</code> (or are an instance of <code>TownCenterBuildable</code>) are treated as Town Centers: the HUD shows the Town Center action set and wires the training queue.</li>
+</ul>
+<p><strong>Player filtering</strong>: <code>HudManager.local_player_id</code> (default <code>0</code>) gates all resource and age callbacks so that only data belonging to the local player is displayed.</p>
+<h2 id="naval-units">Naval Units</h2>
+<p>All naval units extend <code>ShipBase</code> (<code>scripts/units/ship_base.gd</code>), which itself extends <code>UnitBase</code>. <code>ShipBase</code> returns <code>true</code> from <code>is_amphibious()</code>, which is what makes ocean terrain passable for every ship regardless of the owning player's civilization. It used to force <code>civ_id = "atlantes"</code> for that same purpose; the hull now inherits the owner's civilization instead (<code>CivStyle.civ_id_for_player</code>), which is what the naval dress pass paints.</p>
+<h3 id="naval-civ-identity">Naval civ identity</h3>
+<p><code>ShipDress</code> (<code>scripts/utils/ship_dress.gd</code>) is the naval counterpart of <code>UnitDress</code>:
+a ship has no head to hang headgear on, so the hull planking carries the civ
+material and the sail carries the civ colour, both read from <code>CivStyle.NAVAL</code>
+(<code>hull</code> / <code>deck</code> / <code>sail</code> / <code>accent</code> / <code>motif</code>).</p>
+<ul>
+<li>Recolours the <code>Hull</code>, <code>HullShadow</code>, <code>Deck</code>, <code>Cabin</code>, <code>Ram</code>, gunwale/plank/bulwark/bench and <code>OarBlade*</code> polygons; retints an existing <code>SailStripe</code> or adds a <code>CivSailBand</code> when the sail is plain.</li>
+<li>Adds a prow ornament for the two civs whose identity <em>is</em> the sea: the Atlantes bronze dorsal fin plus a bronze waterline stripe (<code>motif: "fin"</code>), and the Fenicios painted eye (<code>motif: "eye"</code>). Other civs get a short cutwater (<code>"beak"</code>) or nothing.</li>
+<li>Applied deferred from <code>ShipBase._ready</code>, guarded by <code>META_APPLIED</code>, so it is idempotent and so HUD icons (<code>IconBaker</code> waits four frames) show the dressed hull.</li>
+<li>Civ-unique hulls opt out by stamping <code>META_APPLIED</code> in their own <code>_ready</code> — the Trireme already carries Fenicios art.</li>
+</ul>
+<p>Reviewed with <code>tools/check_ship_gallery.tscn</code> (one civ per row, <code>CALIMA_CIVS</code> narrows
+the grid); gated by <code>tests/unit/test_ship_dress.gd</code>.</p>
+<h3 id="unit-classes">Unit classes</h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Script</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fishing Boat</td>
+<td><code>scripts/units/fishing_boat.gd</code></td>
+<td>Dark</td>
+<td>75W</td>
+<td>Gathers <code>FOOD_FISH</code> from ocean nodes; returns food to nearest friendly Dock</td>
+</tr>
+<tr>
+<td>Transport Ship</td>
+<td><code>scripts/units/transport_ship.gd</code></td>
+<td>Feudal</td>
+<td>125W</td>
+<td>No combat; capacity 8; boards any land unit (villagers included) — ships and fishing boats may not; unloads units at the nearest passable <strong>land</strong> position via <code>TerrainManager.nearest_passable</code></td>
+</tr>
+<tr>
+<td>War Galley</td>
+<td><code>scripts/units/war_galley.gd</code></td>
+<td>Feudal</td>
+<td>75W + 35G</td>
+<td>Ranged naval combat: 6 attack, 5.5 range, 120 HP</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dock-building">Dock building</h3>
+<p><code>scripts/buildings/dock.gd</code> / <code>scenes/buildings/dock.tscn</code> / <code>resources/buildings/dock.tres</code></p>
+<ul>
+<li>Cost: 150 Wood — HP: 1,800 — Build time: 45 s</li>
+<li>Placement is validated by <code>_is_coastal()</code> in <code>game_world.gd</code>; the building can only be placed on land tiles directly adjacent to water.</li>
+<li>Trains the three naval units above with a queue cap of 5.</li>
+<li>HUD hotkey: <strong>D</strong> in the build menu.</li>
+</ul>
+<p>Fishing boats automatically return food to the nearest friendly Dock. Right-clicking a Dock while carrying fish triggers the drop-off.</p>
+<p><code>Dock.water_access_point()</code> is the dock's berth: the first hull-clear open-water
+position off its seaward side (<code>WATER_CLEARANCE</code> = 56 px, direction averaged from
+16 ocean probes), falling back to <code>TerrainManager.nearest_ocean</code>. It is resolved
+once and cached — neither the dock nor the coastline moves, and returning boats ask
+for it every physics frame. Everything that navigates <em>to</em> a dock must aim at the
+berth rather than at the dock node: the dock's own origin sits on the shoreline,
+normally on land and always off the ocean navmesh, so a boat sent there stalled with
+a full hold forever. <code>FishingBoat._drop_off_position()</code> returns the berth (or the
+drop-off node's origin for buildings without the method) and the <code>DROP_OFF_RANGE</code>
+check measures against whichever of the two is nearer. New ships spawn at the berth
+too, spiralled aside by <code>_free_water_near</code> so a training queue doesn't stack on one
+pixel. Gated by <code>tests/unit/test_dock_ship_spawn.gd</code> and
+<code>tests/unit/test_fishing_boat_drop_off.gd</code>.</p>
+<p>Fishing boats can also construct a <strong>Fish Trap</strong> on ocean tiles. Fish Traps are ocean buildings that regenerate food over time, providing a passive food source that does not require the boat to travel to a resource node.</p>
+<p>Map boundary walls (invisible <code>NavigationObstacle2D</code> nodes along the map edges) prevent ships from sailing outside the playable area.</p>
+<h2 id="production-buildings">Production Buildings</h2>
+<h3 id="towncenterbuildable">TownCenterBuildable</h3>
+<p><code>scripts/buildings/town_center_buildable.gd</code> (<code>class_name TownCenterBuildable</code>) extends <code>BuildingBase</code>. Requires Castle Age (age 2). Cost: 275 Wood (defined in <code>resources/buildings/town_center.tres</code>; 2400 HP). Scene: <code>scenes/buildings/town_center.tscn</code> (80×80 collision).</p>
+<p>The building goes through the standard <code>BuildingBase</code> construction state machine while villagers build it. Once <code>state == COMPLETE</code> it activates two subsystems:</p>
+<p><strong>Villager training</strong> — queue cap 5 (<code>MAX_QUEUE</code>), cost 50 food (<code>VILLAGER_COSTS</code>). Public API mirrors the Stable/Barracks pattern:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>order_train() -&gt; bool</code></td>
+<td>Enqueues a villager; deducts food; emits <code>EventBus.train_queue_changed</code></td>
+</tr>
+<tr>
+<td><code>order_cancel_train(index: int)</code></td>
+<td>Refunds food; removes entry; emits <code>EventBus.train_queue_changed</code></td>
+</tr>
+<tr>
+<td><code>get_queue() -&gt; Array</code></td>
+<td>Returns a duplicate of the current training queue</td>
+</tr>
+<tr>
+<td><code>get_max_queue() -&gt; int</code></td>
+<td>Returns <code>MAX_QUEUE</code> (5)</td>
+</tr>
+<tr>
+<td><code>get_train_progress() -&gt; float</code></td>
+<td>Fraction 0–1 of current training progress</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Hero respawn</strong> — listens to <code>EventBus.hero_died</code>. If the signal fires for the same <code>player_id</code>, the TC starts a 120-second (<code>HERO_RESPAWN_TIME</code>) countdown and re-spawns the hero on expiry via <code>_do_respawn_hero</code>. The respawn logic is designed so only one TC handles a given death event (the main TC connects first in scene order).</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>is_respawning_hero() -&gt; bool</code></td>
+<td><code>true</code> while a hero respawn countdown is active</td>
+</tr>
+<tr>
+<td><code>get_hero_respawn_fraction() -&gt; float</code></td>
+<td>Progress 0–1 of the respawn timer</td>
+</tr>
+<tr>
+<td><code>get_hero_respawn_remaining() -&gt; int</code></td>
+<td>Seconds remaining, ceiled</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Drop-off</strong> — a <code>DropOffBuilding</code> child node named <code>DropOff</code> is included in the scene. On <code>_ready</code>, <code>player_id</code> is propagated to it via <code>call_deferred("_sync_drop_off_player_id")</code> so villagers can return resources to this TC.</p>
+<p><strong>HUD integration</strong> — <code>HudManager._on_building_selected</code> detects <code>is_respawning_hero()</code> or <code>building is TownCenterBuildable</code> and renders the standard Town Center action panel (train villager, age-advance, hero-respawn bar). HUD build key: <strong>Y</strong> (<code>min_age: 2</code>).</p>
+<h3 id="stable">Stable</h3>
+<p><code>scripts/buildings/stable.gd</code> (<code>class_name Stable</code>) extends <code>BuildingBase</code>. Trains cavalry units with a queue cap of 5 (<code>MAX_QUEUE</code>). Available units are gated by <code>AgeManager.get_age(player_id)</code> and civ-gated via the unit's civilization field:</p>
+<table>
+<thead>
+<tr>
+<th>Unit ID</th>
+<th>Class</th>
+<th>Age requirement</th>
+<th>Cost source</th>
+<th>Civ restriction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>heavy_scout</code></td>
+<td><code>HeavyScout</code></td>
+<td>Feudal (1)</td>
+<td><code>resources/units/heavy_scout_data.tres</code></td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>knight</code></td>
+<td><code>Knight</code></td>
+<td>Castle (2)</td>
+<td><code>resources/units/knight_data.tres</code></td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>sand_raider</code></td>
+<td><code>SandRaider</code></td>
+<td>Feudal (1)</td>
+<td><code>resources/units/sand_raider_data.tres</code></td>
+<td>Mahos only</td>
+</tr>
+<tr>
+<td><code>chevalier_normand</code></td>
+<td><code>ChevalierNormand</code></td>
+<td>Castle (2)</td>
+<td><code>resources/units/chevalier_normand_data.tres</code></td>
+<td>Franks only</td>
+</tr>
+</tbody>
+</table>
+<p>Training cost is read from <code>UnitResource</code> fields (<code>cost_food</code>, <code>cost_wood</code>, <code>cost_gold</code>) and modified by <code>CivBonusManager.get_unit_cost_multiplier</code>. Resources are refunded on <code>order_cancel_train</code>. The <code>EventBus.train_queue_changed</code> signal is emitted after every queue mutation. On spawn, <code>PopulationManager.add_unit</code> is called and <code>EventBus.unit_spawned</code> is emitted.</p>
+<h3 id="research-only-buildings">Research-only buildings</h3>
+<p><code>Blacksmith</code> and <code>University</code> extend <code>BuildingBase</code> and add no new API beyond the base class. They exist as production-building nodes so that <code>TechManager</code> can gate technology research by building type.</p>
+<h3 id="temple-research-field-hospital-and-harimaguada-training">Temple — research, field hospital, and Harimaguada training</h3>
+<p><code>Temple</code> (<code>scripts/buildings/temple.gd</code>) hosts its three research techs (Fervor/Sanctity/Atonement) and adds two subsystems on top of <code>BuildingBase</code>:</p>
+<ul>
+<li><strong>Field hospital</strong> — garrisoned units (capacity 5, from <code>temple.tres</code>) heal <code>HEAL_RATE</code> (4) HP/s, channelled by the building (<code>_heal_ward</code> in <code>_process</code>; occupants have processing off). Heroes heal at <code>HERO_HEAL_MULT</code> (0.5) so an immortal king parked inside a Temple never turns Regicide into a waiting game. Skipped on replication puppets.</li>
+<li><strong>Harimaguada training</strong> — the standard producer contract (<code>order_train</code> / <code>order_cancel_train</code> / <code>get_queue</code> / <code>get_max_queue</code>, queue cap 5, pay-at-enqueue with full refund on cancel). The Harimaguada (<code>scripts/units/healer_unit.gd</code>, <code>harimaguada_data.tres</code>: 85 Food + 25 Gold, 24 s, Castle Age) is the priestess-healer: always female (<code>is_female = true</code> set before <code>super._ready()</code>), attack 0, stance locked PASSIVE with a no-op <code>_auto_engage</code>. Her machine is follow-and-mend: <code>order_heal</code> (the <code>UnitTargetCommand</code> "heal" verb) walks her within <code>HEAL_RANGE</code> (42 px) and channels <code>HEAL_RATE</code> (5) HP/s through <code>UnitBase.heal()</code>; when idle she auto-triages the most wounded ally within <code>AUTO_SCAN_RADIUS</code> (260 px) every 0.6 s. Visual review harness: <code>tools/check_harimaguada_look.tscn</code>.</li>
+</ul>
+<p>The Temple's visual identity is the <strong>almogarén</strong> — an open dry-stone Canarian shrine (ring wall, stone cairn ward, leaning monolith with the only CivStyle trim band, offering fire) — authored twice, as the <code>_temple()</code> massing recipe in <code>iso_building_massing.gd</code> and as the scene facade in <code>temple.tscn</code>; ownership reads from a single team pennant. Review harness: <code>tools/check_temple_look.tscn</code>.</p>
+<h3 id="mill-food-drop-off-and-the-presa-canario">Mill — food drop-off and the Presa Canario</h3>
+<p><code>Mill</code> (<code>scripts/buildings/mill.gd</code>, <code>class_name Mill</code>, <code>mill.tres</code>: 100 Wood, 600 HP, Dark Age) completes the drop-off set: a <code>DropOffBuilding</code> child is registered on construction complete, exactly like the Lumber/Mining Camps, so villagers deposit food there. It also trains the <strong>Presa Canario</strong> (<code>scripts/units/presa_canario.gd</code>, <code>presa_canario_data.tres</code>: 30 Food + 10 Gold, 18 s) with the same producer contract (queue cap 5, pay-at-enqueue, refund on cancel). HUD: build key <strong>M</strong>, train key <strong>P</strong>.</p>
+<p>The dog is a <strong>guard dog when pressed</strong> (attack 3, 30 HP, DEFENSIVE by default) but herding comes first: while a trip is underway <code>_auto_engage</code> is vetoed entirely, and only an explicit attack order makes him drop the flock (the animal is released where it stands and the approach earned so far is paid out). His machine is <strong>fetch-and-lead</strong> (<code>order_herd</code>, the <code>UnitTargetCommand</code> "herd" verb — only units with <code>order_herd</code> answer, any <code>Animal</code> is targetable): FETCH walks to the animal (<code>HERD_REACH</code> 44 px), takes it in tow via <code>Animal.start_following</code>, then LEAD returns to the nearest own drop-off resolved at order time (<code>_resolve_home</code>) and releases within <code>RELEASE_REACH</code> (90 px), pausing whenever the animal lags more than <code>HERD_LAG_LIMIT</code> (150 px). Every completed trip pays the <strong>shepherd's yield</strong> — 1 food per <code>HERD_FOOD_PX</code> (40 px) of NET approach toward home (shuttling in circles pays nothing) — and emits <code>EventBus.animal_herded</code> (campaign herd objectives listen). In <code>world_commands.gd</code> a right-clicked animal is herded only by a dogs-ONLY selection (<code>_selection_all_dogs</code>); any mixed selection slaughters it as before. The AI plays the same game: <code>AIEconomy.manage_dogs</code> trains dogs at its Mill and races for unclaimed animals through the same command verb (see the AI System section). Wild sheep flocks (<code>EntityPlacer.spawn_animals</code>: 2 + map_half/900 clusters, always &gt;520 px from every TC, own seeded RNG stream) give both sides something to race for.</p>
+<p>Animal-side, <code>Animal</code> gained a <code>HERDED</code> state (<code>start_following</code> / <code>stop_following</code> / <code>_handle_herded</code>): the animal follows at <code>HERD_FOLLOW_SPEED</code>, frees itself the moment its dog leaves the job (reassignment, death, release — checked herd-side every tick), breaks tow if wounded, and its wander <code>_origin</code> moves to the release point so wild game settles near the player's base. A sheep converting mid-trip (the dog carries <code>player_id</code> into the ConvertArea) stays in tow and lands OWNED on release. Contract pinned by <code>tests/unit/test_herding.gd</code>.</p>
+<p>The Lumber Camp, Mining Camp, and Mill massing recipes replaced the shared house-shaped <code>_camp()</code> (logging yard / timber-framed adit / stone tower with canvas sails); review harness: <code>tools/check_camps_look.tscn</code>.</p>
+<h3 id="market">Market</h3>
+<p><code>scripts/buildings/market.gd</code> (<code>class_name Market</code>) extends <code>BuildingBase</code>.</p>
+<p>Exchange rates are <strong>dynamic per player per resource</strong> (all operations require <code>BuildingState.COMPLETE</code>). Base rates are <code>BASE_SELL_RATE = 15</code> (resources per 1 gold) and <code>BASE_BUY_RATE = 20</code> (resources per 1 gold spent). Each lot traded degrades the relevant rate by <code>DEGRADE_PER_LOT = 3</code> steps, bounded by <code>MAX_SELL_RATE = 30</code> and <code>MIN_BUY_RATE = 5</code>. Rates recover 1 step every <code>RECOVERY_INTERVAL = 30</code> seconds via <code>_process</code>. State is tracked in per-player, per-resource offset dictionaries (<code>_sell_offsets</code>, <code>_buy_offsets</code>, <code>_recovery_timers</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Direction</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_sell_rate(pid, resource) -&gt; int</code></td>
+<td>query</td>
+<td>Current sell rate (resources per 1 gold); increases with use</td>
+</tr>
+<tr>
+<td><code>get_buy_rate(pid, resource) -&gt; int</code></td>
+<td>query</td>
+<td>Current buy rate (resources per 1 gold spent); decreases with use</td>
+</tr>
+<tr>
+<td><code>sell_resource(player_id, resource)</code></td>
+<td>resource → gold</td>
+<td>Single-unit sell at current sell rate; degrades rate</td>
+</tr>
+<tr>
+<td><code>buy_resource(player_id, resource)</code></td>
+<td>gold → resource</td>
+<td>Single-unit buy at current buy rate; degrades rate</td>
+</tr>
+<tr>
+<td><code>sell_lot(player_id, resource)</code></td>
+<td>100 resource → gold</td>
+<td>Bulk sell: 100 / current sell rate gold received; degrades rate; emits <code>EventBus.market_rate_changed</code></td>
+</tr>
+<tr>
+<td><code>buy_lot(player_id, resource)</code></td>
+<td>5 gold → resource</td>
+<td>Bulk buy: 5 × current buy rate resources received; degrades rate; emits <code>EventBus.market_rate_changed</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="cavalry-units">Cavalry Units</h2>
+<p><code>HeavyScout</code> (<code>scripts/units/heavy_scout.gd</code>) and <code>Knight</code> (<code>scripts/units/knight.gd</code>) both extend <code>UnitBase</code>. Their movement and attack FSM pattern matches <code>Militia</code>: <code>MOVING</code> / <code>ATTACKING</code> states, <code>order_move</code> / <code>order_attack</code> entry points, avoidance via <code>NavigationAgent2D.velocity_computed</code>. Stats are defined entirely in their respective <code>UnitResource</code> <code>.tres</code> files.</p>
+<h2 id="siege-units">Siege Units</h2>
+<p>Three siege unit classes extend <code>UnitBase</code> and are produced by <code>SiegeWorkshop</code>.</p>
+<h3 id="siegeworkshop">SiegeWorkshop</h3>
+<p><code>scripts/buildings/siege_workshop.gd</code> (<code>class_name SiegeWorkshop</code>) extends <code>BuildingBase</code>. Requires Castle Age (age 2). Queue cap 5 (<code>MAX_QUEUE</code>). Units available are gated by <code>AgeManager.get_age(player_id)</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Unit ID</th>
+<th>Class</th>
+<th>Age requirement</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>battering_ram</code></td>
+<td><code>BatteringRam</code></td>
+<td>Castle (2)</td>
+<td>160W</td>
+</tr>
+<tr>
+<td><code>mangonel</code></td>
+<td><code>Mangonel</code></td>
+<td>Castle (2)</td>
+<td>160W + 135G</td>
+</tr>
+<tr>
+<td><code>trebuchet</code></td>
+<td><code>Trebuchet</code></td>
+<td>Imperial (3)</td>
+<td>200W + 200G</td>
+</tr>
+</tbody>
+</table>
+<p>Training cost is read from <code>UnitResource</code> fields and resources are refunded on <code>order_cancel_train</code>. <code>EventBus.train_queue_changed</code> is emitted after every queue mutation.</p>
+<h3 id="batteringram">BatteringRam</h3>
+<p><code>class_name BatteringRam</code>. Melee siege unit. Overrides <code>_on_enemy_entered_range</code> to skip auto-attack if the entering body does not have a <code>building_data</code> property — rams never chase units. <code>_get_effective_attack_vs</code> multiplies base attack by 3.0 against buildings (further scaled by <code>CivBonusManager.get_siege_attack_bonus</code>) and by 0.2 against units.</p>
+<h3 id="mangonel-and-aoe-splash">Mangonel and AoE splash</h3>
+<p><code>class_name Mangonel</code>. Ranged siege unit with <code>SPLASH_RADIUS = 72.0</code> px. On each attack tick, <code>_fire_at(target_pos)</code> creates a <code>PhysicsShapeQueryParameters2D</code> with a <code>CircleShape2D</code> of that radius, calls <code>PhysicsDirectSpaceState2D.intersect_shape(query, 32)</code> at the impact point, and applies damage to every resulting collider that belongs to an enemy. Armor is subtracted per-target with a floor of 1.</p>
+<p>Minimum range: <code>MIN_RANGE_RATIO = 0.35</code>. During <code>_handle_attacking</code>, if <code>dist &lt; reach * MIN_RANGE_RATIO</code> the unit actively moves away from the target by 120 px. During <code>_handle_movement</code> the transition to <code>ATTACKING</code> only triggers when the target is inside <code>[reach * MIN_RANGE_RATIO, reach]</code>.</p>
+<h3 id="trebuchet-deployundeploy-mechanic">Trebuchet — deploy/undeploy mechanic</h3>
+<p><code>class_name Trebuchet</code>. Same AoE splash implementation as Mangonel but with <code>SPLASH_RADIUS = 48.0</code> px and <code>MIN_RANGE_RATIO = 0.40</code>.</p>
+<p>Trebuchet adds a two-state deploy system on top of the base FSM:</p>
+<table>
+<thead>
+<tr>
+<th>Bool flag</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>is_deployed</code></td>
+<td>Unit is unpacked and can fire</td>
+</tr>
+<tr>
+<td><code>_deploying</code></td>
+<td>Transition to deployed in progress</td>
+</tr>
+<tr>
+<td><code>_undeploying</code></td>
+<td>Transition to packed in progress</td>
+</tr>
+</tbody>
+</table>
+<p><code>DEPLOY_TIME = 3.0</code> seconds. While either <code>_deploying</code> or <code>_undeploying</code> is true, <code>_physics_process</code> routes to <code>_handle_deploy_animation(delta)</code> instead of the normal FSM. On completion of undeploying, if an <code>attack_target</code> is still valid the unit resumes movement toward it automatically.</p>
+<p><code>order_move</code> and <code>order_attack</code> both call <code>_start_undeploy()</code> if <code>is_deployed</code> is true before issuing a nav target, ensuring the trebuchet never moves while packed. <code>_handle_movement</code> calls <code>_start_deploy()</code> when the target enters the valid firing band, replacing the direct <code>ATTACKING</code> state transition used by other ranged units.</p>
+<h2 id="civbonusmanager-extended-api">CivBonusManager — Extended API</h2>
+<p>Two query methods were added to <code>CivBonusManager</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Signature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_archer_armor_pierce_bonus</code></td>
+<td><code>(player_id: int) -&gt; float</code></td>
+<td>Returns additive pierce-armor bonus for archers; backed by <code>archer_armor_pierce</code> key in <code>_ADDITIVE_KEYS</code></td>
+</tr>
+<tr>
+<td><code>get_unit_move_speed_multiplier</code></td>
+<td><code>(player_id: int) -&gt; float</code></td>
+<td>Returns the <code>unit_move_speed</code> multiplier applied to every unit's nav velocity</td>
+</tr>
+</tbody>
+</table>
+<p><code>get_attack_speed_multiplier</code> handles <code>unit_id == "archer"</code> by returning the <code>archer_attack_speed</code> multiplier. <code>SandRaider</code> calls <code>CivBonusManager.get_attack_speed_multiplier(player_id, unit_data.id)</code> to scale its attack timer.</p>
+<p><code>get_unit_hp_multiplier</code>: <code>"sand_raider"</code> is included in the cavalry HP branch alongside <code>"scout"</code>, <code>"heavy_scout"</code>, and <code>"knight"</code>, so the <code>cavalry_hp</code> multiplier (e.g. Franks +15%) applies to Sand Raiders.</p>
+<p><code>get_unit_speed_multiplier</code>: <code>"sand_raider"</code> is included in the <code>scout_speed</code> branch, so the Mahos <code>scout_speed</code> bonus (+25%) applies to their unique unit.</p>
+<p><code>_ADDITIVE_KEYS</code> now includes <code>"archer_armor_pierce"</code> (alongside the existing <code>"unit_armor_melee"</code>). Additive keys accumulate flat points rather than multiplying.</p>
+<p><code>UnitBase._nav_velocity</code> multiplies movement speed by <code>CivBonusManager.get_unit_move_speed_multiplier(player_id)</code>. <code>Archer</code> attack speed is scaled by <code>CivBonusManager.get_attack_speed_multiplier(player_id, "archer")</code>.</p>
+<h2 id="age-advancement">Age Advancement</h2>
+<p>Ages: Dark (0) → Feudal (1) → Castle (2) → Imperial (3). Advancing costs resources and takes time. Certain units, buildings, and technologies are locked behind age requirements.</p>
+<h2 id="weather-system">Weather System</h2>
+<p><code>WeatherManager</code> (autoload, <code>scripts/core/weather_manager.gd</code>) drives a global procedural weather cycle. Weather affects all players equally and is controlled by two <code>MatchConfig</code> settings: <code>weather_enabled: bool</code> and <code>weather_frequency: int</code> (0=Off, 1=Normal, 2=Frequent, 3=Extreme). Both are exposed in the lobby as a single "Weather" option row.</p>
+<h3 id="weather-types">Weather types</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th><code>WeatherType</code></th>
+<th>Effect summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>calima</code></td>
+<td><code>CALIMA</code></td>
+<td>Saharan dust haze — land speed −15%, gather rate (food/wood) −20%, vision −40%</td>
+</tr>
+<tr>
+<td><code>atlantic_storm</code></td>
+<td><code>ATLANTIC_STORM</code></td>
+<td>Rain &amp; wind — naval speed −30%, fish gather −50%; projectile drift (crosswind)</td>
+</tr>
+<tr>
+<td><code>sea_fog</code></td>
+<td><code>SEA_FOG</code></td>
+<td>Coastal fog (≤400 px from coast) — vision −60%, enemy units cloaked when intensity ≥ 0.5 (see the cloak rules below)</td>
+</tr>
+<tr>
+<td><code>trade_winds</code></td>
+<td><code>TRADE_WINDS</code></td>
+<td>NE→SW wind — naval speed ±20% depending on heading; projectile drift along wind</td>
+</tr>
+<tr>
+<td><code>volcanic_ash</code></td>
+<td><code>VOLCANIC_ASH</code></td>
+<td>Caldera zones (caldera radius + 800 px) — gather −30%, vision −50%, buildings drain 2 HP/s</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sea-fog-cloak-rules">Sea-fog cloak rules</h3>
+<p><code>WeatherManager.is_unit_cloaked_by_weather(world_pos)</code> only answers the question
+"is this position inside an active fog bank?". Two things break the cloak, and
+<code>FogOfWar._apply_visibility</code> (the only caller with access to both sides) applies
+them through <code>_breaks_fog_cloak</code>:</p>
+<ol>
+<li><strong>Proximity.</strong> An enemy within <code>WeatherManager.fog_spot_range(owner_id)</code> of any
+   own unit or finished own building is visible anyway. The base range is
+   <code>FOG_SPOT_RANGE</code> = 180 px, scaled by the owner civ's <code>fog_stealth</code> multiplier —
+   the Atlantes ship 0.5, so they have to be found at 90 px.</li>
+<li><strong>Attacking.</strong> <code>UnitBase.is_revealed_by_combat()</code> stays true for
+   <code>COMBAT_REVEAL_TIME</code> (3 s) after the unit's last strike (<code>_last_strike_msec</code>,
+   stamped by the canonical machine in <code>_handle_attacking</code>). Firing gives your
+   position away.</li>
+</ol>
+<p>Without those rules the cloak hid <em>every</em> enemy inside the 400 px coastal band
+regardless of line of sight — and on an Islands map the entire playable area is
+inside that band, so whole armies became invisible while standing next to your
+own units. Gated by <code>tests/unit/test_fog_cloak_reveal.gd</code>.</p>
+<p>Map-type restrictions: <code>SEA_FOG</code> only spawns on ISLANDS / VOLCANIC_COAST / DESERT_COAST; <code>VOLCANIC_ASH</code> only on VOLCANIC_COAST (the only map type that generates calderas). <code>_in_volcanic_zone</code> checks the <code>TerrainManager</code> CALDERA zones; a map with no caldera (legacy save mid-event) falls back to whole-map coverage so an active event is never a no-op.</p>
+<h3 id="phase-state-machine">Phase state machine</h3>
+<pre><code>CLEAR ──(timer)──► RAMP_IN (10 s) ──► PEAK (variable) ──► RAMP_OUT (10 s) ──► CLEAR
+</code></pre>
+<p><code>intensity</code> is a 0..1 float that smoothly ramps in/out. All stat-modifier calls multiply by <code>intensity</code> so effects fade gracefully.</p>
+<h3 id="stat-modifier-query-api">Stat-modifier query API</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Consumers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_move_speed_multiplier(world_pos)</code></td>
+<td><code>UnitBase._nav_velocity</code></td>
+</tr>
+<tr>
+<td><code>get_naval_speed_multiplier(move_dir)</code></td>
+<td><code>ShipBase._nav_velocity</code></td>
+</tr>
+<tr>
+<td><code>get_gather_rate_multiplier(resource, world_pos)</code></td>
+<td><code>Villager</code> gather loop</td>
+</tr>
+<tr>
+<td><code>get_vision_multiplier(world_pos)</code></td>
+<td><code>FogOfWar._reveal_from_units/buildings</code></td>
+</tr>
+<tr>
+<td><code>get_projectile_drift() → Vector2</code></td>
+<td><code>Trebuchet._spawn_projectile</code>, <code>Mangonel._fire_at</code></td>
+</tr>
+<tr>
+<td><code>is_unit_cloaked_by_weather(world_pos) → bool</code></td>
+<td><code>FogOfWar._apply_visibility</code></td>
+</tr>
+<tr>
+<td><code>fog_spot_range(player_id) → float</code></td>
+<td><code>FogOfWar._breaks_fog_cloak</code></td>
+</tr>
+<tr>
+<td><code>get_building_damage_rate(world_pos) → float</code></td>
+<td><code>BuildingBase._process</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>COASTAL_ZONE_DEPTH</code> (400 px) is public on purpose: besides bounding the sea-fog
+effects it is also the band <code>FogOfWar._coastal_vision_mult</code> uses for the Atlantes
+<code>coastal_vision</code> bonus, so "the coast" means one distance everywhere in the game.</p>
+<h3 id="visual-overlay">Visual overlay</h3>
+<p><code>WeatherOverlay</code> (<code>scripts/ui/weather_overlay.gd</code>) is a <code>Node2D</code> child of <code>GameWorld</code> (z_index 15). It draws entirely in screen/viewport coordinates using <code>draw_set_transform_matrix(get_canvas_transform().affine_inverse())</code> at the start of <code>_draw()</code>, so the effect is camera-independent. Each weather type has dedicated particle arrays updated in <code>_process</code> and drawn in <code>_draw</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Weather</th>
+<th>Visual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ATLANTIC_STORM</td>
+<td>Falling rain lines (<code>_rain_particles</code>, 60)</td>
+</tr>
+<tr>
+<td>TRADE_WINDS</td>
+<td>Horizontal streak lines (<code>_wind_particles</code>, 30)</td>
+</tr>
+<tr>
+<td>CALIMA</td>
+<td>Drifting dust circles (<code>_dust_particles</code>, 80)</td>
+</tr>
+<tr>
+<td>VOLCANIC_ASH</td>
+<td>Falling ash circles (<code>_ash_particles</code>, 60)</td>
+</tr>
+<tr>
+<td>SEA_FOG</td>
+<td>Concentric vignette rects at screen edges</td>
+</tr>
+</tbody>
+</table>
+<p>All weather types also blend a full-screen color overlay that fades in/out with intensity.</p>
+<h3 id="hud-notification">HUD notification</h3>
+<p><code>GameWorld</code> listens to <code>WeatherManager.weather_changed</code> and <code>WeatherManager.weather_cleared</code> and calls <code>HudManager.show_weather(weather_id)</code> / <code>HudManager.hide_weather()</code>. The HUD creates a transient <code>Label</code> with the weather name that fades in over 0.8 s and fades out over 1.5 s.</p>
+<h3 id="conquest-victory-condition">Conquest victory condition</h3>
+<p>Conquest mode (the default) no longer ends on Town Center destruction alone. A player is defeated only when they have <strong>zero units AND zero buildings</strong> remaining. When the AI's TC is destroyed, <code>AIPlayer</code> attempts to rebuild it using the safest available villager; if it has no villagers, no buildings, and no units it emits <code>EventBus.player_eliminated</code> and the match checks for an overall winner.</p>
+<h3 id="defeat-spectate">Defeat → spectate</h3>
+<p><code>WorldVictory.handle_resignation</code> accepts the local player too (surrender, or
+loss of everything): the player is marked resigned and <code>EventBus.player_eliminated</code>
+fires, but while <strong>hostile sides remain</strong> the match plays on. <code>HudMatchStats</code>
+shows the defeat panel with a "keep watching" hint and a <strong>View map</strong> button;
+<code>GameWorld.local_player_defeated</code> locks every order path (right-click, minimap,
+placement, the action menu) while camera and selection stay live. When the war
+actually ends, the definitive <code>game_over</code> rebuilds the panel with the final
+result. Pinned by <code>tests/unit/test_resignation_spectate.gd</code>.</p>
+<h2 id="replays-creator-kit">Replays &amp; Creator Kit</h2>
+<p><code>ReplayFile</code> (<code>scripts/multiplayer/replay_file.gd</code>) writes the authoritative
+snapshot stream <code>StateReplicator</code> already produces for multiplayer clients to
+disk instead of (or besides) the wire: a zstd-compressed sequence of
+<code>store_var</code> records — the header (match config with the RESOLVED seed) followed
+by <code>{t, k, d}</code> packets on the simulated match clock. Faithful by construction:
+playback never re-simulates, so physics nondeterminism cannot rewrite history.</p>
+<ul>
+<li><strong>Recording</strong> (<code>GameSettings.record_replays</code>, default on): every
+  authoritative match (single-player, and the host online) records itself to
+  <code>user://replays/*.calrep</code>; the game-over screen offers "Watch replay".</li>
+<li><strong>Playback</strong>: <code>MatchConfig.replay_path</code> makes <code>GameWorld</code> boot the identical
+  world from the header's seed and run <code>StateReplicator.setup_playback</code> — the
+  client puppet path minus the network. The whole stream loads into memory,
+  which buys the timeline its duration and makes seeking an index jump.
+  Forward seeks fast-forward in chunks (<code>SEEK_CHUNK</code>, never a frozen frame);
+  backward seeks reboot the mirror world and fast-forward from zero.</li>
+<li><strong>The bar</strong> (<code>HudReplayBar</code>): pause/play, seekable timeline, speeds, clock,
+  reveal-all (lifts the spectator fog), cinematic mode (<strong>C</strong> — hides the HUD,
+  optional floating minimap) and A/B clip markers. <code>HudActionMenu.populate</code>
+  refuses every action in replay mode and <code>GameWorld._orders_locked</code> blocks the
+  order paths — recorded history takes no orders.</li>
+<li><strong>Video export</strong>: the Replays browser (main menu) spawns a background
+  headless-window render process that plays the replay (whole, or the A/B
+  clip) in cinematic mode at a fixed 30 FPS step and writes a video file; the
+  replay bar and HUD never enter the frame, the minimap is included by default
+  (<code>GameSettings.export_minimap</code>).</li>
+</ul>
+<h2 id="campaign">Campaign</h2>
+<p><code>CampaignData</code> (<code>scripts/campaign/campaign_data.gd</code>) is a const table: a
+tutorial prologue plus four Canarii missions (<em>The Flames of Tamarán</em>), each a
+deterministic world (fixed seed + MatchConfig fields) plus a script — side
+objectives (<code>train</code> / <code>build</code> / <code>destroy</code> / <code>herd</code>), scripted attack waves, a
+victory kind (<code>conquest</code> / <code>regicide</code> / <code>survive</code>) and per-mission AI
+difficulty caps (<code>ai_military_cap</code>, <code>ai_tick_scale</code>). <code>CampaignManager</code>
+(autoload) persists progress (<code>user://campaign.cfg</code>, chain-unlock) and launches
+missions by writing the whole MatchConfig; <code>MissionDirector</code> is mounted by
+GameWorld when <code>campaign_mission &gt;= 0</code> and drives objective checkmarks
+(EventBus), wave spawns at the enemy TC (attack-move, no AI brain) and the
+survive countdown. Gate: <code>tools/check_campaign.tscn</code>.</p>
+<h2 id="unit-visual-styles">Unit visual styles</h2>
+<p><code>GameSettings.unit_style</code> (<code>UnitStyle</code>: CLASSIC / ENHANCED / REDESIGNED,
+default CLASSIC) selects one of three unit looks, switchable live — the
+<code>unit_style_changed</code> signal re-dresses every unit on screen:</p>
+<ul>
+<li><strong>ENHANCED</strong> (<code>UnitEnhancer</code>, <code>scripts/utils/unit_enhancer.gd</code>): a fully
+  reversible layer over the classic rig — ink outline (grown dark polygon
+  copies behind the figure), per-polygon volume shading via <code>vertex_colors</code>
+  (never touching <code>Polygon2D.color</code>, so the TeamDress contract holds) and an
+  <code>animate_extras</code> post-step (idle breathing, walk lean/bounce, attack snap).
+  Contract: <code>tests/unit/test_unit_enhancer.gd</code>.</li>
+<li><strong>REDESIGNED</strong> (<code>UnitRedesign</code>, <code>scripts/utils/unit_redesign.gd</code>): lore-driven
+  from-scratch Polygon2D rigs built at runtime as a <code>RedesignBody</code> sibling of
+  the hidden (never freed) classic Body, with a full state-machine animation of
+  its own — when active, <code>UnitBase._process</code> calls <code>UnitRedesign.animate()</code>
+  instead of <code>_animate_body</code>. Team colour painted from <code>PlayerColors</code> at build
+  time. Contract: <code>tests/unit/test_unit_redesign.gd</code>; review via
+  <code>tools/check_redesigned_units.tscn</code>.</li>
+</ul>
+<p>Both are idempotent and strip cleanly back to CLASSIC. Legacy configs carrying
+the old <code>enhanced_units</code> bool migrate on load.</p>
+<footer class="site">Generated from <code>docs/architecture/systems.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

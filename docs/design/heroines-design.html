@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heroínas de Calima: Flames of the Atlantic · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="heroinas-de-calima-flames-of-the-atlantic">Heroínas de Calima: Flames of the Atlantic</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#concepto-general">Concepto General</a></li>
+<li><a href="#diseno-de-las-8-heroinas">Diseño de las 8 Heroínas</a><ul>
+<li><a href="#1-guanches-dacil-reina-del-valle">1. GUANCHES — Dácil, Reina del Valle 👑</a></li>
+<li><a href="#2-canarii-guayarmina-guardiana-de-tara">2. CANARII — Guayarmina, Guardiana de Tara 🏹</a></li>
+<li><a href="#3-mahos-tibiabin-jinete-de-las-dunas">3. MAHOS — Tibiabin, Jinete de las Dunas 🐪</a></li>
+<li><a href="#4-franks-catalina-de-bethencourt-condesa-conquistadora">4. FRANKS — Catalina de Béthencourt, Condesa Conquistadora ⚔️</a></li>
+<li><a href="#5-britons-grace-omalley-reina-pirata">5. BRITONS — Grace O'Malley, Reina Pirata 🏴‍☠️</a></li>
+<li><a href="#6-castellanos-dulcinea-dama-de-la-estrategia">6. CASTELLANOS — Dulcinea, Dama de la Estrategia 📜</a></li>
+<li><a href="#7-atlantes-cleito-maestra-de-las-mareas">7. ATLANTES — Cleito, Maestra de las Mareas 🌊</a></li>
+<li><a href="#8-fenicios-elissa-fundadora-de-cartago">8. FENICIOS — Elissa, Fundadora de Cartago 🏛️</a></li>
+</ul>
+</li>
+<li><a href="#implementacion-tecnica">Implementación Técnica</a><ul>
+<li><a href="#1-nueva-estructura-de-hero-maps-game_worldgd">1. Nueva Estructura de Hero Maps (game_world.gd)</a></li>
+<li><a href="#2-seleccion-aleatoria-al-spawn">2. Selección Aleatoria al Spawn</a></li>
+<li><a href="#3-nuevas-habilidades-en-herounitgd">3. Nuevas Habilidades en HeroUnit.gd</a></li>
+<li><a href="#4-archivos-a-crear">4. Archivos a Crear</a></li>
+<li><a href="#5-balance-considerations">5. Balance Considerations</a></li>
+</ul>
+</li>
+<li><a href="#ejemplos-de-uso-tactico">Ejemplos de Uso Táctico</a><ul>
+<li><a href="#dacil-guanches">Dácil (Guanches)</a></li>
+<li><a href="#guayarmina-canarii">Guayarmina (Canarii)</a></li>
+<li><a href="#tibiabin-mahos">Tibiabin (Mahos)</a></li>
+<li><a href="#catalina-franks">Catalina (Franks)</a></li>
+<li><a href="#grace-britons">Grace (Britons)</a></li>
+<li><a href="#dulcinea-castellanos">Dulcinea (Castellanos)</a></li>
+<li><a href="#cleito-atlantes">Cleito (Atlantes)</a></li>
+<li><a href="#elissa-fenicios">Elissa (Fenicios)</a></li>
+</ul>
+</li>
+<li><a href="#visual-design-placeholder">Visual Design (Placeholder)</a></li>
+<li><a href="#testing-checklist">Testing Checklist</a></li>
+<li><a href="#roadmap-de-implementacion">Roadmap de Implementación</a><ul>
+<li><a href="#phase-1-infrastructure-1-2-horas">Phase 1: Infrastructure (1-2 horas)</a></li>
+<li><a href="#phase-2-resources-2-3-horas">Phase 2: Resources (2-3 horas)</a></li>
+<li><a href="#phase-3-abilities-implementation-6-8-horas">Phase 3: Abilities Implementation (6-8 horas)</a></li>
+<li><a href="#phase-4-ui-integration-1-2-horas">Phase 4: UI Integration (1-2 horas)</a></li>
+<li><a href="#phase-5-testing-balance-3-4-horas">Phase 5: Testing &amp; Balance (3-4 horas)</a></li>
+</ul>
+</li>
+<li><a href="#estimacion-total-13-19-horas-de-desarrollo">Estimación Total: 13-19 horas de desarrollo</a></li>
+</ul>
+</div>
+</nav>
+<h2 id="concepto-general">Concepto General</h2>
+<p>Cada civilización tendrá <strong>2 héroes</strong>: uno masculino (ya implementado) y uno femenino (nuevo). Al iniciar una partida, se selecciona <strong>aleatoriamente</strong> uno de los dos (50/50). Ambos tienen habilidades únicas que reflejan la identidad de su civilización, pero con enfoques tácticos diferentes.</p>
+<hr />
+<h2 id="diseno-de-las-8-heroinas">Diseño de las 8 Heroínas</h2>
+<h3 id="1-guanches-dacil-reina-del-valle">1. <strong>GUANCHES</strong> — Dácil, Reina del Valle 👑</h3>
+<p><strong>Héroe masculino existente</strong>: Bencomo (Mencey Charge - buff de ataque)</p>
+<p><strong>Habilidad</strong>: <strong>"Voz de la Montaña" (Mountain Voice)</strong>
+- <strong>Tipo</strong>: Buff defensivo de área
+- <strong>Efecto</strong>: Todas las unidades aliadas en 300px reciben +2 armadura cuerpo a cuerpo y +50% velocidad de curación durante 12 segundos
+- <strong>Cooldown</strong>: 60 segundos
+- <strong>Táctica</strong>: Defensiva - sostiene líneas en combates prolongados
+- <strong>Lore</strong>: Dácil era una princesa guanche legendaria. Su habilidad representa la resiliencia del pueblo guanche</p>
+<p><strong>Stats base</strong>: Igual que Bencomo (infantería pesada)</p>
+<hr />
+<h3 id="2-canarii-guayarmina-guardiana-de-tara">2. <strong>CANARII</strong> — Guayarmina, Guardiana de Tara 🏹</h3>
+<p><strong>Héroe masculino existente</strong>: Doramas (Challenge - taunt forzado)</p>
+<p><strong>Habilidad</strong>: <strong>"Flecha del Destino" (Fate's Arrow)</strong>
+- <strong>Tipo</strong>: Ataque dirigido de largo alcance
+- <strong>Efecto</strong>: Dispara una flecha imparable que hace 80 de daño directo (ignora armadura) a un objetivo seleccionado hasta 600px de distancia. Si mata al objetivo, el cooldown se reduce a la mitad (30s en lugar de 60s)
+- <strong>Cooldown</strong>: 60 segundos (30s si mata)
+- <strong>Táctica</strong>: Ofensiva - elimina objetivos prioritarios (héroes enemigos, siege units)
+- <strong>Lore</strong>: Guayarmina era una princesa guerrera de Gran Canaria conocida por su puntería</p>
+<p><strong>Stats base</strong>: Arquera (menor HP que Doramas, mayor rango)
+- HP: 180 (vs 280 de Doramas)
+- Attack: 15
+- Range: 320px
+- Speed: 110 (más rápida)</p>
+<hr />
+<h3 id="3-mahos-tibiabin-jinete-de-las-dunas">3. <strong>MAHOS</strong> — Tibiabin, Jinete de las Dunas 🐪</h3>
+<p><strong>Héroe masculino existente</strong>: Guadarfía (Ambush - invisibilidad)</p>
+<p><strong>Habilidad</strong>: <strong>"Tormenta de Arena" (Sandstorm)</strong>
+- <strong>Tipo</strong>: Área de denegación (AoE DoT)
+- <strong>Efecto</strong>: Crea una tormenta de arena de 200px de radio en su posición actual durante 10 segundos. Enemigos dentro reciben 3 daño/segundo y tienen -40% velocidad de movimiento y -50% precisión de proyectiles
+- <strong>Cooldown</strong>: 70 segundos
+- <strong>Táctica</strong>: Control de zona - bloquea rutas, ralentiza ataques enemigos
+- <strong>Lore</strong>: Tibiabin era una reina majorera. Su habilidad evoca las tormentas del desierto</p>
+<p><strong>Stats base</strong>: Caballería ligera (como Guadarfía)</p>
+<hr />
+<h3 id="4-franks-catalina-de-bethencourt-condesa-conquistadora">4. <strong>FRANKS</strong> — Catalina de Béthencourt, Condesa Conquistadora ⚔️</h3>
+<p><strong>Héroe masculino existente</strong>: Jean de Béthencourt (Forced Diplomacy - conversión temporal)</p>
+<p><strong>Habilidad</strong>: <strong>"Duelo de Honor" (Honor Duel)</strong>
+- <strong>Tipo</strong>: Buff de combate 1v1
+- <strong>Efecto</strong>: Desafía a un héroe o unidad única enemiga dentro de 250px. Durante 15 segundos, ambos reciben +100% daño contra el otro, pero -50% daño contra otras unidades. Si Catalina mata al objetivo, recupera el 50% de su HP máximo
+- <strong>Cooldown</strong>: 80 segundos
+- <strong>Táctica</strong>: Cazadora de héroes - elimina al líder enemigo
+- <strong>Lore</strong>: Catalina representa el código de honor de los caballeros normandos</p>
+<p><strong>Stats base</strong>: Caballería pesada (infantry con mount visual)
+- HP: 320
+- Attack: 22
+- Speed: 95</p>
+<hr />
+<h3 id="5-britons-grace-omalley-reina-pirata">5. <strong>BRITONS</strong> — Grace O'Malley, Reina Pirata 🏴‍☠️</h3>
+<p><strong>Héroe masculino existente</strong>: Francis Drake (Plunder - bonus gold en kills)</p>
+<p><strong>Habilidad</strong>: <strong>"Abordaje" (Boarding Action)</strong>
+- <strong>Tipo</strong>: Dash + stun
+- <strong>Efecto</strong>: Se lanza 200px en línea recta hacia un punto seleccionado. Todas las unidades enemigas en la trayectoria reciben 30 de daño y quedan aturdidas durante 2 segundos. Si impacta un edificio, lo daña por 100
+- <strong>Cooldown</strong>: 50 segundos
+- <strong>Táctica</strong>: Iniciadora - rompe formaciones enemigas, interrumpe siege
+- <strong>Lore</strong>: Grace O'Malley era una pirata irlandesa legendaria que rivalizó con Drake</p>
+<p><strong>Stats base</strong>: Infantry con bonus naval
+- HP: 260
+- Attack: 18
+- Speed: 105
+- Bonus: +50% daño vs edificios</p>
+<hr />
+<h3 id="6-castellanos-dulcinea-dama-de-la-estrategia">6. <strong>CASTELLANOS</strong> — Dulcinea, Dama de la Estrategia 📜</h3>
+<p><strong>Héroe masculino existente</strong>: Don Quijote (Knight Errant Charge - carga en línea)</p>
+<p><strong>Habilidad</strong>: <strong>"Llamada a las Armas" (Call to Arms)</strong>
+- <strong>Tipo</strong>: Summon + buff
+- <strong>Efecto</strong>: Invoca instantáneamente 3 Militia temporales en su posición durante 40 segundos. Estos Militia tienen +20% HP y ataque. Cuando expiran o mueren, no cuentan como bajas para el jugador
+- <strong>Cooldown</strong>: 90 segundos
+- <strong>Táctica</strong>: Utilidad - refuerza defensas desesperadas o añade masa a ataques
+- <strong>Lore</strong>: Dulcinea representa la inspiración idealizada de Don Quijote convertida en líder real</p>
+<p><strong>Stats base</strong>: Soporte (infantry con menos daño pero más HP)
+- HP: 300
+- Attack: 12
+- Speed: 90</p>
+<hr />
+<h3 id="7-atlantes-cleito-maestra-de-las-mareas">7. <strong>ATLANTES</strong> — Cleito, Maestra de las Mareas 🌊</h3>
+<p><strong>Héroe masculino existente</strong>: Artaxerax (Calima - niebla artificial)</p>
+<p><strong>Habilidad</strong>: <strong>"Marea Creciente" (Rising Tide)</strong>
+- <strong>Tipo</strong>: Curación de área + movimiento
+- <strong>Efecto</strong>: Crea una ola de agua que se expande desde su posición a 250px de radio durante 3 segundos. Unidades aliadas tocadas por la ola se curan 60 HP y reciben +30% velocidad de movimiento durante 8 segundos. Unidades enemigas reciben 20 de daño y -20% velocidad durante 4 segundos
+- <strong>Cooldown</strong>: 65 segundos
+- <strong>Táctica</strong>: Híbrido - cura + reposicionamiento táctico
+- <strong>Lore</strong>: Cleito era la esposa mortal de Poseidón en la leyenda de la Atlántida</p>
+<p><strong>Stats base</strong>: Infantry anfibio
+- HP: 240
+- Attack: 16
+- Speed: 100 (120 en agua)</p>
+<hr />
+<h3 id="8-fenicios-elissa-fundadora-de-cartago">8. <strong>FENICIOS</strong> — Elissa, Fundadora de Cartago 🏛️</h3>
+<p><strong>Héroe masculino existente</strong>: Hannón (Trade Route - pasivo de oro)</p>
+<p><strong>Habilidad</strong>: <strong>"Pacto Mercenario" (Mercenary Pact)</strong>
+- <strong>Tipo</strong>: Conversión económica
+- <strong>Efecto</strong>: Gasta 400 de oro para convertir instantáneamente una unidad enemiga no-heroica dentro de 200px de forma <strong>permanente</strong>. La unidad convertida pasa a ser del jugador y mantiene toda su veteranía/upgrades. No funciona en héroes ni edificios
+- <strong>Cooldown</strong>: 120 segundos
+- <strong>Requisito</strong>: Requiere 400 gold en reserva
+- <strong>Táctica</strong>: Swing táctico - roba unidades caras (Knights, Trebuchets, unique units)
+- <strong>Lore</strong>: Elissa (Dido) fundó Cartago y era conocida por su astucia diplomática y comercial</p>
+<p><strong>Stats base</strong>: Infantry económica (débil en combate)
+- HP: 220
+- Attack: 10
+- Speed: 85
+- Bonus pasivo: +10% velocidad de recolección de oro para villagers en 400px</p>
+<hr />
+<h2 id="implementacion-tecnica">Implementación Técnica</h2>
+<h3 id="1-nueva-estructura-de-hero-maps-game_worldgd">1. <strong>Nueva Estructura de Hero Maps</strong> (game_world.gd)</h3>
+<pre><code class="language-gdscript">const HERO_MALE_MAP: Dictionary = {
+    &quot;guanches&quot;:    &quot;res://resources/units/hero_bencomo.tres&quot;,
+    &quot;canarii&quot;:     &quot;res://resources/units/hero_doramas.tres&quot;,
+    # ... resto existente
+}
+
+const HERO_FEMALE_MAP: Dictionary = {
+    &quot;guanches&quot;:    &quot;res://resources/units/hero_dacil.tres&quot;,
+    &quot;canarii&quot;:     &quot;res://resources/units/hero_guayarmina.tres&quot;,
+    &quot;mahos&quot;:       &quot;res://resources/units/hero_tibiabin.tres&quot;,
+    &quot;franks&quot;:      &quot;res://resources/units/hero_catalina.tres&quot;,
+    &quot;britons&quot;:     &quot;res://resources/units/hero_grace.tres&quot;,
+    &quot;castellanos&quot;: &quot;res://resources/units/hero_dulcinea.tres&quot;,
+    &quot;atlantes&quot;:    &quot;res://resources/units/hero_cleito.tres&quot;,
+    &quot;fenicios&quot;:    &quot;res://resources/units/hero_elissa.tres&quot;,
+}
+</code></pre>
+<h3 id="2-seleccion-aleatoria-al-spawn">2. <strong>Selección Aleatoria al Spawn</strong></h3>
+<pre><code class="language-gdscript">func _spawn_hero(player_id: int, civ_id: String, pos: Vector2) -&gt; Node:
+    var use_female: bool = randi() % 2 == 0  # 50/50
+    var hero_map: Dictionary = HERO_FEMALE_MAP if use_female else HERO_MALE_MAP
+    var data_path: String = hero_map.get(civ_id, &quot;&quot;)
+    # ... resto del código existente
+</code></pre>
+<h3 id="3-nuevas-habilidades-en-herounitgd">3. <strong>Nuevas Habilidades en HeroUnit.gd</strong></h3>
+<pre><code class="language-gdscript">enum Ability {
+    # ... existentes ...
+    # Heroínas
+    MOUNTAIN_VOICE,        # Dácil - Guanches
+    FATES_ARROW,           # Guayarmina - Canarii
+    SANDSTORM,             # Tibiabin - Mahos
+    HONOR_DUEL,            # Catalina - Franks
+    BOARDING_ACTION,       # Grace - Britons
+    CALL_TO_ARMS,          # Dulcinea - Castellanos
+    RISING_TIDE,           # Cleito - Atlantes
+    MERCENARY_PACT,        # Elissa - Fenicios
+}
+</code></pre>
+<h3 id="4-archivos-a-crear">4. <strong>Archivos a Crear</strong></h3>
+<p><strong>Resources</strong> (8 archivos <code>.tres</code>):
+- <code>project/resources/units/hero_dacil.tres</code>
+- <code>project/resources/units/hero_guayarmina.tres</code>
+- <code>project/resources/units/hero_tibiabin.tres</code>
+- <code>project/resources/units/hero_catalina.tres</code>
+- <code>project/resources/units/hero_grace.tres</code>
+- <code>project/resources/units/hero_dulcinea.tres</code>
+- <code>project/resources/units/hero_cleito.tres</code>
+- <code>project/resources/units/hero_elissa.tres</code></p>
+<p><strong>Scripts</strong> (ninguno - reusan <code>hero_unit.gd</code>):
+- Todas las heroínas comparten el script <code>HeroUnit</code>
+- Las habilidades se implementan en métodos específicos en <code>hero_unit.gd</code></p>
+<h3 id="5-balance-considerations">5. <strong>Balance Considerations</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Héroe/Heroína</th>
+<th>Rol</th>
+<th>Fuerza</th>
+<th>Debilidad</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bencomo vs Dácil</td>
+<td>Offense vs Defense</td>
+<td>Bencomo mejor en push agresivos</td>
+<td>Dácil mejor en defensas de base</td>
+</tr>
+<tr>
+<td>Doramas vs Guayarmina</td>
+<td>Tank vs Sniper</td>
+<td>Doramas soporta línea frontal</td>
+<td>Guayarmina es glass cannon</td>
+</tr>
+<tr>
+<td>Guadarfía vs Tibiabin</td>
+<td>Stealth vs Control</td>
+<td>Guadarfía gank individual</td>
+<td>Tibiabin control de grupo</td>
+</tr>
+<tr>
+<td>Béthencourt vs Catalina</td>
+<td>Utility vs Duelist</td>
+<td>Jean convierte unidades</td>
+<td>Catalina mata héroes</td>
+</tr>
+<tr>
+<td>Drake vs Grace</td>
+<td>Economic vs Combat</td>
+<td>Drake genera oro pasivo</td>
+<td>Grace aporta iniciación</td>
+</tr>
+<tr>
+<td>Quijote vs Dulcinea</td>
+<td>Dive vs Summon</td>
+<td>Quijote divide backline</td>
+<td>Dulcinea refuerza frontline</td>
+</tr>
+<tr>
+<td>Artaxerax vs Cleito</td>
+<td>Stealth vs Healing</td>
+<td>Artaxerax esconde army</td>
+<td>Cleito sustenta peleas</td>
+</tr>
+<tr>
+<td>Hannón vs Elissa</td>
+<td>Passive vs Active</td>
+<td>Hannón oro gratis long-game</td>
+<td>Elissa swing táctico instant</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="ejemplos-de-uso-tactico">Ejemplos de Uso Táctico</h2>
+<h3 id="dacil-guanches">Dácil (Guanches)</h3>
+<p><strong>Situación</strong>: Enemigo hace push con 10 Militia + 2 Archers contra tu base.
+<strong>Respuesta</strong>: Activa "Mountain Voice" → tus 5 Villagers + 3 Militia defienden efectivamente con +2 armor.</p>
+<h3 id="guayarmina-canarii">Guayarmina (Canarii)</h3>
+<p><strong>Situación</strong>: Enemigo tiene Trebuchet asediando tu TC a 500px.
+<strong>Respuesta</strong>: "Fate's Arrow" → mata el Trebuchet ignorando su armor → cooldown reducido a 30s.</p>
+<h3 id="tibiabin-mahos">Tibiabin (Mahos)</h3>
+<p><strong>Situación</strong>: Enemigo hace rush de Knights por un paso estrecho.
+<strong>Respuesta</strong>: "Sandstorm" en el cuello de botella → Knights ralentizados → tus Pikemen los alcanzan.</p>
+<h3 id="catalina-franks">Catalina (Franks)</h3>
+<p><strong>Situación</strong>: Partida en modo Regicide - necesitas matar al héroe enemigo.
+<strong>Respuesta</strong>: "Honor Duel" al héroe enemigo → ambos hacen x2 daño → ganas el 1v1 → curas 50%.</p>
+<h3 id="grace-britons">Grace (Britons)</h3>
+<p><strong>Situación</strong>: Enemigo tiene grupo de Archers detrás de Militia.
+<strong>Respuesta</strong>: "Boarding Action" atraviesa la línea → stunnea Archers → tus Militia los alcanzan.</p>
+<h3 id="dulcinea-castellanos">Dulcinea (Castellanos)</h3>
+<p><strong>Situación</strong>: Enemigo hace rush temprano con 8 Militia - solo tienes 2 Villagers y el TC.
+<strong>Respuesta</strong>: "Call to Arms" → 3 Militia temporales aparecen → defiendes hasta que lleguen refuerzos.</p>
+<h3 id="cleito-atlantes">Cleito (Atlantes)</h3>
+<p><strong>Situación</strong>: Tu army de 12 unidades está a 30% HP después de una batalla - enemigo contraataca.
+<strong>Respuesta</strong>: "Rising Tide" → cura 60 HP a todas + speed boost → te retiras mientras curas.</p>
+<h3 id="elissa-fenicios">Elissa (Fenicios)</h3>
+<p><strong>Situación</strong>: Enemigo tiene un Knight veterano (caro, upgraded) avanzando.
+<strong>Respuesta</strong>: "Mercenary Pact" → gastas 400g → el Knight ahora es tuyo permanentemente.</p>
+<hr />
+<h2 id="visual-design-placeholder">Visual Design (Placeholder)</h2>
+<p>Todas las heroínas usan el mismo sistema de Polygon2D que los héroes masculinos:
+- <strong>Color distintivo</strong>: Tono ligeramente más claro o diferente hue vs su contraparte masculina
+- <strong>Hero ring</strong>: Mismo anillo dorado (código existente)
+- <strong>Tamaño</strong>: Mismo que el héroe masculino de su civ
+- <strong>Animación</strong>: Reusan el body rotation procedural de <code>unit_base.gd</code></p>
+<hr />
+<h2 id="testing-checklist">Testing Checklist</h2>
+<ul>
+<li>[ ] Las 8 heroínas se seleccionan aleatoriamente (verificar 50/50 en 100 partidas)</li>
+<li>[ ] Cada habilidad funciona correctamente en isolation</li>
+<li>[ ] Habilidades no causan crashes si el héroe muere mid-cast</li>
+<li>[ ] Modo Regicide funciona con heroínas (muerte = derrota)</li>
+<li>[ ] Cooldowns se muestran correctamente en UI</li>
+<li>[ ] Efectos visuales de habilidades son visibles</li>
+<li>[ ] Audio feedback para cada habilidad (evento EventBus)</li>
+<li>[ ] SaveManager serializa/deserializa heroínas correctamente</li>
+<li>[ ] AI no crashea cuando enemigo tiene heroína</li>
+</ul>
+<hr />
+<h2 id="roadmap-de-implementacion">Roadmap de Implementación</h2>
+<h3 id="phase-1-infrastructure-1-2-horas">Phase 1: Infrastructure (1-2 horas)</h3>
+<ol>
+<li>Añadir <code>HERO_FEMALE_MAP</code> a <code>game_world.gd</code></li>
+<li>Modificar <code>_spawn_hero()</code> para selección aleatoria</li>
+<li>Añadir nuevos <code>Ability</code> enums a <code>hero_unit.gd</code></li>
+<li>Extender <code>ABILITY_MAP</code> con nuevos IDs</li>
+</ol>
+<h3 id="phase-2-resources-2-3-horas">Phase 2: Resources (2-3 horas)</h3>
+<ol start="5">
+<li>Crear 8 archivos <code>.tres</code> con stats base</li>
+<li>Configurar <code>hero_ability_id</code> para cada heroína</li>
+</ol>
+<h3 id="phase-3-abilities-implementation-6-8-horas">Phase 3: Abilities Implementation (6-8 horas)</h3>
+<ol start="7">
+<li>Implementar cada habilidad en <code>hero_unit.gd</code>:
+   - <code>_use_mountain_voice()</code>
+   - <code>_use_fates_arrow(target: Node)</code>
+   - <code>_use_sandstorm()</code>
+   - <code>_use_honor_duel(target: Node)</code>
+   - <code>_use_boarding_action(direction: Vector2)</code>
+   - <code>_use_call_to_arms()</code>
+   - <code>_use_rising_tide()</code>
+   - <code>_use_mercenary_pact(target: Node)</code></li>
+</ol>
+<h3 id="phase-4-ui-integration-1-2-horas">Phase 4: UI Integration (1-2 horas)</h3>
+<ol start="8">
+<li>Añadir tooltips para nuevas habilidades</li>
+<li>Actualizar <code>hud_manager.gd</code> para mostrar habilidades de heroínas</li>
+</ol>
+<h3 id="phase-5-testing-balance-3-4-horas">Phase 5: Testing &amp; Balance (3-4 horas)</h3>
+<ol start="10">
+<li>Playtest cada heroína en combate real</li>
+<li>Ajustar cooldowns/números si es necesario</li>
+<li>Verificar interacciones con weather/techs</li>
+</ol>
+<hr />
+<h2 id="estimacion-total-13-19-horas-de-desarrollo">Estimación Total: <strong>13-19 horas de desarrollo</strong></h2>
+<p><strong>Prioridad</strong>: Alta - añade variedad estratégica y rejugabilidad significativa.</p>
+<p><strong>Impacto en AAA Score</strong>: +0.5 puntos (de 7.5 a 8.0) - demuestra profundidad de contenido y diseño de personajes.</p>
+<footer class="site">Generated from <code>docs/design/heroines-design.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calima: Flames of the Atlantic · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index.html">CALIMA · DOCS</a>
+  <a href="index.html">Portal</a>
+  <a href="manual/manual_es.html">Manual (ES)</a>
+  <a href="manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="calima-flames-of-the-atlantic">Calima: Flames of the Atlantic</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#key-features">Key Features</a><ul>
+<li><a href="#content">Content</a></li>
+<li><a href="#systems">Systems</a></li>
+<li><a href="#multiplayer">Multiplayer</a></li>
+<li><a href="#replays-creator-kit">Replays &amp; creator kit</a></li>
+<li><a href="#presentation">Presentation</a></li>
+</ul>
+</li>
+<li><a href="#civilizations">Civilizations</a></li>
+<li><a href="#screenshots">Screenshots</a></li>
+<li><a href="#getting-started">Getting Started</a><ul>
+<li><a href="#play">Play</a></li>
+<li><a href="#learn-to-play">Learn to play</a></li>
+<li><a href="#run-the-tests">Run the tests</a></li>
+</ul>
+</li>
+<li><a href="#architecture">Architecture</a><ul>
+<li><a href="#design-principles">Design principles</a></li>
+</ul>
+</li>
+<li><a href="#contributing">Contributing</a></li>
+<li><a href="#license">License</a></li>
+<li><a href="#acknowledgments">Acknowledgments</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</nav>
+<p>A real-time strategy game in the spirit of Age of Empires II, set in the Canary Islands at the crossroads of native kingdoms, ancient seafarers and European invaders. Built entirely with <a href="https://godotengine.org">Godot 4</a> and GDScript — every sprite, sound and voice in the game is generated procedurally, with zero external art or audio assets.</p>
+<p>Created by <strong>Enrique Ismael Mendoza Robaina</strong> (<a href="https://github.com/enrimr">@enrimr</a>).</p>
+<p>Current version: <strong>0.9.8-beta</strong> (see <a href="changelog.html">CHANGELOG.md</a>).</p>
+<hr />
+<h2 id="key-features">Key Features</h2>
+<h3 id="content">Content</h3>
+<ul>
+<li><strong>8 civilizations</strong> across three historical layers (native islanders, ancient seafarers, European invaders), each with unique bonuses, a unique military unit and two named heroes</li>
+<li><strong>26 unit types</strong> — villagers, a priestess-healer, a herding dog, three infantry lines, cavalry, siege engines (with a deploy/undeploy trebuchet), ships, and 8 civilization-unique units</li>
+<li><strong>16 named heroes</strong> (one male + one female per civilization), each with a distinct active ability; hero gender selectable in the lobby</li>
+<li><strong>20 building types</strong> — economy, military production, research, defense, and the Wonder</li>
+<li><strong>32 technologies</strong> — Blacksmith weapon/armour lines, University siege science, Temple rites, four unit upgrades, and three-step economy lines at the Lumber Camp, Mining Camp and Mill</li>
+<li><strong>Campaign</strong>: <em>The Flames of Tamarán</em> — a tutorial prologue plus four scripted missions of the Canarii resistance against the Atlante invasion</li>
+<li><strong>3 victory conditions</strong>: Conquest, Regicide (protect your hero), Wonder (build and hold)</li>
+<li><strong>5 procedural map types</strong> (Plains, Standard, Volcanic Coast, Desert Coast, Islands) in three sizes, with 4 starting-resource modes</li>
+</ul>
+<h3 id="systems">Systems</h3>
+<ul>
+<li><strong>Dynamic weather</strong> — 5 event types (Calima dust, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash) with real stat effects, a forecast warning, per-civilization resistances and sea-fog cloaking</li>
+<li><strong>Terrain that matters</strong> — malpaís lava fields, dunes, cliff vantage points, laurisilva forests and calderas, each with movement/vision/combat effects and per-civ traversal bonuses</li>
+<li><strong>AoE2-style combat controls</strong> — stances, group formations, attack-move, patrol, shift-queued waypoints, control groups, garrison with building volleys, town bell</li>
+<li><strong>Naval and amphibious warfare</strong> — fishing economy, war galleys, troop transports, and the Atlantes Tidecaller that wades into the sea</li>
+<li><strong>Full AI opponents</strong> — economy (including herding dogs and livestock), construction with real builder villagers, fog-honest military targeting, naval assaults, allied-AI teamwork, and three difficulty levels</li>
+<li><strong>Save/Load</strong> — 99 slots, complete game state including in-flight research, garrisons and live weather</li>
+<li><strong>Fog of war</strong> — three states with AoE2-style building memory on map and minimap</li>
+</ul>
+<h3 id="multiplayer">Multiplayer</h3>
+<ul>
+<li><strong>LAN and Internet</strong> (UPnP) multiplayer for up to 4 players, host-authoritative with client mirror worlds interpolated at 15 Hz</li>
+<li><strong>Teams and alliances</strong> (2v2, 2v1, ...) across skirmish and multiplayer, with allied AI teammates</li>
+<li>Unified lobby with per-player colours, civs and teams, open/AI/closed seats, chat, kick, and a version handshake</li>
+<li><strong>Mid-match reconnection</strong> (reserved seats + full resync) and <strong>multiplayer save/resume</strong> with the original players</li>
+<li><strong>Steam transport prototype</strong> (lobbies, invites, Valve relay — test AppID)</li>
+</ul>
+<h3 id="replays-creator-kit">Replays &amp; creator kit</h3>
+<ul>
+<li>Every match records itself (<code>user://replays/</code>); watch from the <strong>Replays</strong> menu with a seekable timeline, pause, playback speeds and a reveal-map toggle</li>
+<li><strong>Cinematic mode</strong> (UI-free), optional floating minimap, and <strong>video export</strong> — render a whole replay or an A/B-marked clip to a 30 FPS video in the background</li>
+<li><strong>Spectator mode</strong> — defeated or surrendered while others still fight? "View map" keeps you watching the live battle (orders locked)</li>
+</ul>
+<h3 id="presentation">Presentation</h3>
+<ul>
+<li>100 % procedural vector art with three selectable unit styles — <strong>Classic</strong>, <strong>Enhanced</strong> (ink outline + shading + extra animation) and <strong>Redesigned</strong> (lore-driven rigs) — switchable live in settings</li>
+<li>Team colours on units and buildings, per-civ architecture and ship dress, hero auras, progressive fire/smoke on damaged buildings</li>
+<li>Fully synthesized audio: per-civilization gibberish voice "languages" (formant synthesis), spatial sound effects and procedural music</li>
+<li>English and Spanish localization</li>
+</ul>
+<hr />
+<h2 id="civilizations">Civilizations</h2>
+<table>
+<thead>
+<tr>
+<th>Civilization</th>
+<th>Layer</th>
+<th>Identity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Guanches</strong> (Tenerife)</td>
+<td>Native</td>
+<td>Stone buildings +20% HP, malpaís traversal, early spearmen — Menceyes Guard</td>
+</tr>
+<tr>
+<td><strong>Canarii</strong> (Gran Canaria)</td>
+<td>Native</td>
+<td>+15% food gathering, cheap archers — Ravine Archer (cliff range bonus)</td>
+</tr>
+<tr>
+<td><strong>Mahos</strong> (Lanzarote/Fuerteventura)</td>
+<td>Native</td>
+<td>−30% building wood cost, fast light cavalry, dune traversal — Sand Raider</td>
+</tr>
+<tr>
+<td><strong>Francos</strong> (Norman conquerors)</td>
+<td>Invader</td>
+<td>−15% age-advance cost, +15% cavalry HP — Chevalier Normand</td>
+</tr>
+<tr>
+<td><strong>Britanos</strong> (English privateers)</td>
+<td>Invader</td>
+<td>Archer range +1 per age, faster warships — Longbowman</td>
+</tr>
+<tr>
+<td><strong>Castellanos</strong> (Castilian crown)</td>
+<td>Invader</td>
+<td>Free Blacksmith tech per age, tough swordsmen — Conquistador</td>
+</tr>
+<tr>
+<td><strong>Atlantes</strong> (the drowned empire)</td>
+<td>Ancient</td>
+<td>Coastal vision +50%, sea-fog stealth, faster ships — amphibious Tidecaller</td>
+</tr>
+<tr>
+<td><strong>Fenicios</strong> (Phoenician traders)</td>
+<td>Ancient</td>
+<td>Market from the Dark Age, mercenary hiring — ramming Trireme</td>
+</tr>
+</tbody>
+</table>
+<p>Full details: <a href="design/civilizations_en.html">docs/design/civilizations_en.md</a> · <a href="manual/manual_en.html">player's guide</a>.</p>
+<hr />
+<h2 id="screenshots">Screenshots</h2>
+<p>Unit-style galleries (captured by the review harnesses) live in the repo:</p>
+<ul>
+<li><a href="design/unit-redesign-gallery/a_2_redesigned_grid.png">Redesigned unit rigs</a> — and <a href="design/unit-redesign-gallery/a_6_redesigned_attack.png">in motion</a></li>
+<li><a href="design/unit-enhanced-gallery/enhanced_grid.png">Enhanced style</a> vs <a href="design/unit-enhanced-gallery/classic_grid.png">Classic</a></li>
+</ul>
+<hr />
+<h2 id="getting-started">Getting Started</h2>
+<h3 id="play">Play</h3>
+<ul>
+<li><a href="https://godotengine.org/download">Godot 4.6</a> or later (standard build, no C#)</li>
+</ul>
+<pre><code class="language-bash">git clone https://github.com/enrimr/age-of-empires-clone-godot.git
+cd age-of-empires-clone-godot
+</code></pre>
+<p>Open <strong>Godot → Import</strong> and select <code>project/project.godot</code>, then press <strong>F5</strong>.</p>
+<h3 id="learn-to-play">Learn to play</h3>
+<ul>
+<li><strong><a href="gameplay.html">GAMEPLAY.md</a></strong> — controls and hotkeys quick reference</li>
+<li><strong><a href="manual/manual_en.html">Player's Guide (EN)</a></strong> / <strong><a href="manual/manual_es.html">Guía del Jugador (ES)</a></strong> — the full manual: civilizations, economy, tech tree, combat, multiplayer, replays, campaign</li>
+</ul>
+<h3 id="run-the-tests">Run the tests</h3>
+<pre><code class="language-bash">GODOT=/path/to/godot ./run_tests.sh                # whole GUT suite (unit + integration)
+GODOT=/path/to/godot ./run_tests.sh res://tests/unit/test_world_query.gd   # one script
+</code></pre>
+<p>Standalone headless/renderer harnesses live under <code>project/tools/</code> — the full catalog is in <a href="testing/harnesses.html">docs/testing/harnesses.md</a>.</p>
+<hr />
+<h2 id="architecture">Architecture</h2>
+<pre><code>project/          ← Open this in Godot (contains project.godot)
+  assets/         ← Fonts, shaders, translations (art &amp; audio are procedural)
+  scenes/         ← .tscn scene files
+  scripts/
+    core/         ← Autoload singletons (GameManager, EventBus, CommandBus, ...)
+    units/        ← UnitBase + 26 unit classes
+    buildings/    ← BuildingBase + building classes
+    game/         ← GameWorld scene root + world controllers + GameCommand layer
+    campaign/     ← CampaignData, CampaignManager, MissionDirector
+    map/          ← Map generation pipeline, FogOfWar, terrain
+    ai/           ← AIPlayer coordinator + economy/construction/military/naval modules
+    multiplayer/  ← NetworkSession, StateReplicator, ReplayFile
+    ui/           ← HUD components, menus, minimap, lobby
+  resources/      ← .tres data (units, buildings, technologies, civilizations)
+  tests/          ← GUT unit and integration tests
+docs/             ← Architecture, design and player documentation
+</code></pre>
+<h3 id="design-principles">Design principles</h3>
+<ul>
+<li><strong>Command pattern</strong> — every simulation-mutating order (player and AI) is a serializable <code>GameCommand</code> through <code>CommandBus</code>; the tick-stamped log is the backbone of replays and multiplayer</li>
+<li><strong>EventBus pattern</strong> — all cross-system communication via signals</li>
+<li><strong>Data-driven</strong> — stats live in <code>Resource</code> files, never hardcoded; UI buttons read prices from the same data the simulation charges</li>
+<li><strong>Host-authoritative multiplayer</strong> — clients puppet interpolated mirror worlds; the wire never gains privileges</li>
+<li><strong>Deterministic simulation randomness</strong> — one seeded <code>MatchRng</code> stream per match</li>
+<li><strong>Type safety</strong> — full type hints on all functions</li>
+</ul>
+<p>Full notes: <a href="architecture/overview.html">docs/architecture/overview.md</a> · <a href="architecture/systems.html">docs/architecture/systems.md</a> · <a href="https://github.com/enrimr/rts-game-godot/blob/main/CLAUDE.md">CLAUDE.md</a></p>
+<hr />
+<h2 id="contributing">Contributing</h2>
+<p>See <a href="development/contributing.html">CONTRIBUTING.md</a> and <a href="development/getting-started.html">docs/development/getting-started.md</a>. The project is developed with 5 specialized AI sub-agents (developer, code-reviewer, tester, docs-keeper, performance-checker) — see <a href="https://github.com/enrimr/rts-game-godot/blob/main/CLAUDE.md">CLAUDE.md</a>.</p>
+<p>Releases are tagged only via <code>scripts/release_tag.sh</code> (it bumps the project version — which the multiplayer handshake checks — commits, tags and pushes in one step).</p>
+<hr />
+<h2 id="license">License</h2>
+<p><a href="https://github.com/enrimr/rts-game-godot/blob/main/LICENSE">CC BY-NC 4.0</a> — Free to use and modify with attribution, no commercial use.</p>
+<p>Copyright © 2026 Enrique Ismael Mendoza Robaina.</p>
+<hr />
+<h2 id="acknowledgments">Acknowledgments</h2>
+<p>Inspired by Age of Empires II and the history of the Canary Islands.</p>
+<p>Built with <a href="https://godotengine.org">Godot Engine</a>. Testing powered by <a href="https://github.com/bitwes/Gut">GUT</a>. Steam networking via <a href="https://godotsteam.com">GodotSteam</a>.</p>
+<hr />
+<h2 id="links">Links</h2>
+<ul>
+<li><a href="gameplay.html">Gameplay quick reference</a> — controls and hotkeys</li>
+<li><a href="manual/manual_en.html">Player's Guide</a> / <a href="manual/manual_es.html">Guía del Jugador</a> — the full manual</li>
+<li><a href="architecture/overview.html">Architecture overview</a> · <a href="architecture/systems.html">System design details</a></li>
+<li><a href="design/game-design-document.html">Game design document</a></li>
+<li><a href="design/civilizations_en.html">Civilization reference</a></li>
+<li><a href="testing/harnesses.html">Harness catalog</a></li>
+<li><a href="https://github.com/enrimr/rts-game-godot/blob/main/CLAUDE.md">Developer guide</a></li>
+</ul>
+<footer class="site">Generated from <code>README.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resource System · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="resource-system">Resource System</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#storage-resourcemanager">Storage — ResourceManager</a><ul>
+<li><a href="#key-functions">Key functions</a></li>
+</ul>
+</li>
+<li><a href="#resource-nodes-resourcenode">Resource nodes — ResourceNode</a></li>
+<li><a href="#gathering-loop-villager">Gathering loop — Villager</a></li>
+<li><a href="#spending-resources">Spending resources</a><ul>
+<li><a href="#example-costs">Example costs</a></li>
+</ul>
+</li>
+<li><a href="#hud-display-hudmanager-resourcedisplay">HUD display — HudManager + ResourceDisplay</a></li>
+<li><a href="#full-data-flow">Full data flow</a></li>
+<li><a href="#related-files">Related files</a></li>
+</ul>
+</div>
+</nav>
+<p>Food, wood, gold, and stone flow through three layers: storage (<code>ResourceManager</code>), gathering (<code>Villager</code> + <code>ResourceNode</code>), and display (<code>HudManager</code> + <code>ResourceDisplay</code>).</p>
+<hr />
+<h2 id="storage-resourcemanager">Storage — <code>ResourceManager</code></h2>
+<p>Autoload singleton. Stores resources per player in a nested dictionary:</p>
+<pre><code class="language-gdscript">_player_resources[player_id] = { food: 200, wood: 75, gold: 50, stone: 0 }
+</code></pre>
+<p>Starting amounts when a match begins: <code>food=200, wood=75, gold=50, stone=0</code>.</p>
+<p>Values are stored as <code>float</code> to allow fractional accumulation (e.g. farms trickle-feed continuously).</p>
+<h3 id="key-functions">Key functions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>init_player(player_id, starting_resources)</code></td>
+<td>Initialise a player's stockpile</td>
+</tr>
+<tr>
+<td><code>add_resource(player_id, resource, amount)</code></td>
+<td>Add amount, emit signals</td>
+</tr>
+<tr>
+<td><code>spend_resource(player_id, costs)</code></td>
+<td>Deduct if affordable, return <code>bool</code></td>
+</tr>
+<tr>
+<td><code>can_afford(player_id, costs)</code></td>
+<td>Validate without deducting</td>
+</tr>
+<tr>
+<td><code>register_node(node)</code></td>
+<td>Add a <code>ResourceNode</code> to the spatial cache</td>
+</tr>
+<tr>
+<td><code>get_nearest_resource(resource_name, from, max_range, exclude)</code></td>
+<td>Pathfinding helper for villagers</td>
+</tr>
+</tbody>
+</table>
+<p>After every <code>add_resource</code> or <code>spend_resource</code> call two signals fire:
+1. <code>EventBus.resource_changed(player_id, resource, new_amount)</code>
+2. <code>ResourceManager.resources_updated(player_id, resources)</code> (full dict, used for stats)</p>
+<hr />
+<h2 id="resource-nodes-resourcenode">Resource nodes — <code>ResourceNode</code></h2>
+<p>Scene node placed on the map. Tracks how much is left and handles depletion.</p>
+<pre><code>ResourceType enum: WOOD | GOLD | STONE | FOOD_HUNT | FOOD_FISH | FOOD_BERRY | OLIVINA
+</code></pre>
+<p>All three food variants map to the <code>"food"</code> string for <code>ResourceManager</code>. <code>OLIVINA</code> is a game-specific resource.</p>
+<p><code>gather(amount) -&gt; float</code> — deducts from <code>remaining_amount</code>, emits <code>depleted</code> when empty and calls <code>queue_free()</code>.</p>
+<p>On <code>_ready</code> each node registers itself with <code>ResourceManager.register_node(self)</code>, so the spatial cache is always up to date. The <code>depleted</code> signal is connected to <code>ResourceManager._on_node_depleted()</code> which removes the node from the cache.</p>
+<hr />
+<h2 id="gathering-loop-villager">Gathering loop — <code>Villager</code></h2>
+<pre><code>Every gather_interval (default 1 s):
+  ResourceNode.gather(gather_rate)
+    → apply CivBonusManager multiplier
+    → apply WeatherManager multiplier
+    → accumulate carried_amount (cap: carry_capacity = 10
+      × CivBonusManager.get_carry_capacity_multiplier — the Blacksmith
+      carreta_canaria / carreton_isleno techs each add +25%)
+
+When carried_amount == carry_capacity (or node depleted):
+  order_drop_off() → move to nearest DropOffBuilding
+
+On arrival at drop-off:
+  ResourceManager.add_resource(player_id, carried_resource, carried_amount)
+  carried_amount = 0
+  resume gathering
+</code></pre>
+<p><strong>Range constants:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GATHER_RANGE</code></td>
+<td>48 px</td>
+</tr>
+<tr>
+<td><code>DROP_OFF_RANGE</code></td>
+<td>72 px</td>
+</tr>
+<tr>
+<td><code>FALLBACK_RESOURCE_RANGE</code></td>
+<td>400 px</td>
+</tr>
+<tr>
+<td><code>BLOCKED_RESOURCE_RANGE</code></td>
+<td>180 px</td>
+</tr>
+</tbody>
+</table>
+<p>If the gather target becomes invalid or unreachable (blocked 3 times), the villager searches for the nearest node of the same resource type within <code>FALLBACK_RESOURCE_RANGE</code>, then falls back to any resource within <code>BLOCKED_RESOURCE_RANGE</code>.</p>
+<p>Drop-off buildings are found via the <code>"drop_off_buildings"</code> group (town center, lumber camp, mining camp, mill, farm). The <code>DropOffBuilding</code> node in each scene adds itself to that group on <code>_ready</code> (the Mill registers its node programmatically on construction complete).</p>
+<hr />
+<h2 id="spending-resources">Spending resources</h2>
+<p>Any system that trains units or constructs buildings calls:</p>
+<pre><code class="language-gdscript">if ResourceManager.can_afford(player_id, costs):
+    ResourceManager.spend_resource(player_id, costs)
+</code></pre>
+<p><code>costs</code> is a plain dictionary, e.g. <code>{ "food": 60, "gold": 75 }</code>.</p>
+<h3 id="example-costs">Example costs</h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Train villager</td>
+<td><code>{ food: 50 }</code></td>
+</tr>
+<tr>
+<td>Build house</td>
+<td><code>{ wood: 25 }</code></td>
+</tr>
+<tr>
+<td>Build barracks</td>
+<td><code>{ wood: 175 }</code></td>
+</tr>
+<tr>
+<td>Train knight</td>
+<td><code>{ food: 60, gold: 75 }</code></td>
+</tr>
+<tr>
+<td>Train war galley</td>
+<td><code>{ wood: 75, gold: 35 }</code></td>
+</tr>
+<tr>
+<td>Build wonder</td>
+<td><code>{ wood: 2500, food: 2500, stone: 2500, gold: 5000 }</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="hud-display-hudmanager-resourcedisplay">HUD display — <code>HudManager</code> + <code>ResourceDisplay</code></h2>
+<p><code>HudManager</code> holds four <code>ResourceDisplay</code> child nodes (<code>%FoodDisplay</code>, <code>%WoodDisplay</code>, <code>%GoldDisplay</code>, <code>%StoneDisplay</code>), one per resource.</p>
+<p><code>ResourceDisplay</code> is a plain <code>HBoxContainer</code> with an icon label and an amount label. <code>set_amount(value: int)</code> is the only public method.</p>
+<p>On <code>_ready</code>, <code>HudManager</code> connects:</p>
+<pre><code class="language-gdscript">EventBus.resource_changed.connect(_on_resource_changed)
+</code></pre>
+<p>Handler (filtered to <code>local_player_id</code>):</p>
+<pre><code class="language-gdscript">func _on_resource_changed(player_id, resource, amount):
+    if player_id != local_player_id:
+        return
+    match resource:
+        &quot;food&quot;:  _food_display.set_amount(amount)
+        &quot;wood&quot;:  _wood_display.set_amount(amount)
+        &quot;gold&quot;:  _gold_display.set_amount(amount)
+        &quot;stone&quot;: _stone_display.set_amount(amount)
+    _refresh_button_states()  # enable/disable action buttons by affordability
+</code></pre>
+<p><code>_refresh_button_states()</code> re-checks every visible action button against <code>ResourceManager.can_afford()</code> so buttons grey out when funds are insufficient.</p>
+<hr />
+<h2 id="full-data-flow">Full data flow</h2>
+<pre><code>ResourceNode.gather(rate)
+  └─ Villager._handle_gathering()
+       accumulates carried_amount
+       when full → _handle_returning()
+         └─ ResourceManager.add_resource(player_id, resource, amount)
+              ├─ EventBus.resource_changed  →  HudManager._on_resource_changed()
+              │                                  └─ ResourceDisplay.set_amount()
+              └─ ResourceManager.resources_updated  →  stat tracking
+
+Training / construction
+  └─ ResourceManager.spend_resource(player_id, costs)
+       ├─ EventBus.resource_changed  →  HudManager (same path as above)
+       └─ _refresh_button_states()
+</code></pre>
+<hr />
+<h2 id="related-files">Related files</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project/scripts/core/resource_manager.gd</code></td>
+<td>Storage, spatial cache, signals</td>
+</tr>
+<tr>
+<td><code>project/scripts/economy/resource_node.gd</code></td>
+<td>Map resource node, depletion</td>
+</tr>
+<tr>
+<td><code>project/scripts/economy/drop_off_building.gd</code></td>
+<td>Drop-off point marker</td>
+</tr>
+<tr>
+<td><code>project/scripts/units/villager.gd</code></td>
+<td>Gathering and returning logic</td>
+</tr>
+<tr>
+<td><code>project/scripts/ui/hud_manager.gd</code></td>
+<td>Signal wiring, button state refresh</td>
+</tr>
+<tr>
+<td><code>project/scripts/ui/resource_display.gd</code></td>
+<td>Single-resource HUD widget</td>
+</tr>
+<tr>
+<td><code>project/scripts/core/event_bus.gd</code></td>
+<td><code>resource_changed</code>, <code>resource_depleted</code> signals</td>
+</tr>
+<tr>
+<td><code>project/scripts/core/civ_bonus_manager.gd</code></td>
+<td>Gather rate multipliers per civilisation</td>
+</tr>
+<tr>
+<td><code>project/scripts/core/weather_manager.gd</code></td>
+<td>Weather-based gather rate multipliers</td>
+</tr>
+</tbody>
+</table>
+<footer class="site">Generated from <code>docs/architecture/resource_system.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

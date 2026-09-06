@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Civilizaciones, Unidades y Árbol de Tecnologías · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  <a href="civilizations_en.html">English version</a>
+</header>
+<h1 id="civilizaciones-unidades-y-arbol-de-tecnologias">Civilizaciones, Unidades y Árbol de Tecnologías</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#edificios-comunes">Edificios comunes</a></li>
+<li><a href="#unidades-comunes">Unidades comunes</a><ul>
+<li><a href="#aldeanos-centro-urbano">Aldeanos (Centro urbano)</a></li>
+<li><a href="#infanteria-cuartel">Infantería (Cuartel)</a></li>
+<li><a href="#caballeria-establo">Caballería (Establo)</a></li>
+<li><a href="#asedio-taller-de-asedio">Asedio (Taller de asedio)</a></li>
+<li><a href="#naval-muelle">Naval (Muelle)</a></li>
+</ul>
+</li>
+<li><a href="#unidades-unicas">Unidades Únicas</a></li>
+<li><a href="#arbol-de-tecnologias">Árbol de tecnologías</a><ul>
+<li><a href="#herreria">Herrería</a></li>
+<li><a href="#universidad">Universidad</a></li>
+<li><a href="#templo-monasterio">Templo (Monasterio)</a></li>
+<li><a href="#mejoras-de-unidades">Mejoras de unidades</a></li>
+</ul>
+</li>
+<li><a href="#civilizaciones">Civilizaciones</a><ul>
+<li><a href="#guanches">Guanches</a></li>
+<li><a href="#canarii">Canarii</a></li>
+<li><a href="#mahos">Mahos</a></li>
+<li><a href="#francos">Francos</a></li>
+<li><a href="#britanos">Britanos</a></li>
+<li><a href="#castellanos">Castellanos</a></li>
+<li><a href="#atlantes">Atlantes</a></li>
+<li><a href="#fenicios">Fenicios</a></li>
+</ul>
+</li>
+<li><a href="#heroes-referencia-rapida">Héroes — Referencia rápida</a></li>
+</ul>
+</div>
+</nav>
+<blockquote>
+<p>Datos extraídos directamente de los recursos del proyecto (<code>resources/</code>).
+Edades: <strong>0</strong> Edad Oscura · <strong>1</strong> Edad Feudal · <strong>2</strong> Edad de Castillo · <strong>3</strong> Edad Imperial.</p>
+</blockquote>
+<hr />
+<h2 id="edificios-comunes">Edificios comunes</h2>
+<table>
+<thead>
+<tr>
+<th>Edificio</th>
+<th>Coste</th>
+<th>Edad mín.</th>
+<th>HP</th>
+<th>Función</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Centro urbano</td>
+<td>275 madera</td>
+<td>0</td>
+<td>2400</td>
+<td>Entrena aldeanos · drop-off · reaparición del héroe</td>
+</tr>
+<tr>
+<td>Casa</td>
+<td>25 madera</td>
+<td>0</td>
+<td>550</td>
+<td>+5 cap. de población</td>
+</tr>
+<tr>
+<td>Cuartel</td>
+<td>175 madera</td>
+<td>0</td>
+<td>1200</td>
+<td>Entrena infantería</td>
+</tr>
+<tr>
+<td>Establo</td>
+<td>175 madera</td>
+<td>0</td>
+<td>1100</td>
+<td>Entrena caballería</td>
+</tr>
+<tr>
+<td>Herrería</td>
+<td>150 madera</td>
+<td>1</td>
+<td>1000</td>
+<td>Investiga mejoras de armas y armaduras</td>
+</tr>
+<tr>
+<td>Mercado</td>
+<td>175 madera</td>
+<td>1</td>
+<td>900</td>
+<td>Comercio de recursos</td>
+</tr>
+<tr>
+<td>Aserradero</td>
+<td>100 madera</td>
+<td>0</td>
+<td>600</td>
+<td>Drop-off de madera</td>
+</tr>
+<tr>
+<td>Campamento minero</td>
+<td>100 madera</td>
+<td>0</td>
+<td>600</td>
+<td>Drop-off de oro / piedra</td>
+</tr>
+<tr>
+<td>Granja</td>
+<td>60 madera</td>
+<td>0</td>
+<td>300</td>
+<td>Fuente continua de comida</td>
+</tr>
+<tr>
+<td>Muelle</td>
+<td>150 madera</td>
+<td>0</td>
+<td>1800</td>
+<td>Entrena barcos</td>
+</tr>
+<tr>
+<td>Taller de asedio</td>
+<td>200 madera</td>
+<td>2</td>
+<td>1200</td>
+<td>Entrena unidades de asedio</td>
+</tr>
+<tr>
+<td>Universidad</td>
+<td>200 madera</td>
+<td>2</td>
+<td>1100</td>
+<td>Investigación avanzada</td>
+</tr>
+<tr>
+<td>Templo</td>
+<td>175 madera</td>
+<td>2</td>
+<td>900</td>
+<td>Tecnologías de moral y curación</td>
+</tr>
+<tr>
+<td>Segmento de muro</td>
+<td>5 piedra</td>
+<td>0</td>
+<td>700</td>
+<td>Barrera defensiva</td>
+</tr>
+<tr>
+<td>Puerta</td>
+<td>30 madera</td>
+<td>0</td>
+<td>500</td>
+<td>Paso para aliados</td>
+</tr>
+<tr>
+<td>Trampa de peces</td>
+<td>75 madera</td>
+<td>0</td>
+<td>600</td>
+<td>Fuente pasiva de comida (océano)</td>
+</tr>
+<tr>
+<td>Maravilla</td>
+<td>2500m+2500c+2500p+5000o</td>
+<td>3</td>
+<td>—</td>
+<td>Condición de victoria</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="unidades-comunes">Unidades comunes</h2>
+<h3 id="aldeanos-centro-urbano">Aldeanos (Centro urbano)</h3>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>HP</th>
+<th>Vel.</th>
+<th>Ataque</th>
+<th>Rango</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aldeano</td>
+<td>50 comida</td>
+<td>25 s</td>
+<td>25</td>
+<td>120</td>
+<td>3</td>
+<td>1.5</td>
+</tr>
+</tbody>
+</table>
+<h3 id="infanteria-cuartel">Infantería (Cuartel)</h3>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>HP</th>
+<th>Vel.</th>
+<th>Ataque</th>
+<th>Rango</th>
+<th>Armadura M/P</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Milicia</td>
+<td>0</td>
+<td>60c + 20m</td>
+<td>21 s</td>
+<td>40</td>
+<td>100</td>
+<td>4</td>
+<td>1.5</td>
+<td>0 / 0</td>
+</tr>
+<tr>
+<td>Arquero</td>
+<td>1</td>
+<td>25m + 45o</td>
+<td>35 s</td>
+<td>30</td>
+<td>110</td>
+<td>5</td>
+<td>4.0</td>
+<td>0 / 0</td>
+</tr>
+<tr>
+<td>Hombre de armas</td>
+<td>1</td>
+<td>60c + 20m</td>
+<td>21 s</td>
+<td>65</td>
+<td>100</td>
+<td>7</td>
+<td>1.5</td>
+<td>1 / 0</td>
+</tr>
+<tr>
+<td>Lancero</td>
+<td>2</td>
+<td>60c + 30o</td>
+<td>28 s</td>
+<td>65</td>
+<td>90</td>
+<td>7</td>
+<td>1.5</td>
+<td>1 / 0</td>
+</tr>
+<tr>
+<td>Espadachín largo</td>
+<td>2</td>
+<td>60c + 20m</td>
+<td>21 s</td>
+<td>85</td>
+<td>100</td>
+<td>9</td>
+<td>1.5</td>
+<td>2 / 1</td>
+</tr>
+</tbody>
+</table>
+<h3 id="caballeria-establo">Caballería (Establo)</h3>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>HP</th>
+<th>Vel.</th>
+<th>Ataque</th>
+<th>Rango</th>
+<th>Armadura M/P</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scout</td>
+<td>0</td>
+<td>80c</td>
+<td>30 s</td>
+<td>35</td>
+<td>180</td>
+<td>2</td>
+<td>0.8</td>
+<td>0 / 0</td>
+<td>Habilidad: Explorar 60 s</td>
+</tr>
+<tr>
+<td>Heavy Scout</td>
+<td>1</td>
+<td>80c + 30o</td>
+<td>30 s</td>
+<td>80</td>
+<td>130</td>
+<td>6</td>
+<td>1.5</td>
+<td>1 / 0</td>
+<td></td>
+</tr>
+<tr>
+<td>Caballero</td>
+<td>2</td>
+<td>60c + 75o</td>
+<td>45 s</td>
+<td>120</td>
+<td>115</td>
+<td>9</td>
+<td>1.5</td>
+<td>2 / 1</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Scout — Habilidad Explorar (tecla E):</strong> El Scout deambula autónomamente por el mapa durante <strong>60 segundos</strong>, eligiendo un nuevo destino aleatorio cada 3-7 s. Se puede cancelar con el mismo botón.</p>
+</blockquote>
+<h3 id="asedio-taller-de-asedio">Asedio (Taller de asedio)</h3>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>HP</th>
+<th>Vel.</th>
+<th>Ataque</th>
+<th>Rango</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ariete</td>
+<td>2</td>
+<td>160m</td>
+<td>60 s</td>
+<td>180</td>
+<td>55</td>
+<td>40</td>
+<td>1.0</td>
+<td>×3 daño vs edificios · pop 2</td>
+</tr>
+<tr>
+<td>Mangonela</td>
+<td>2</td>
+<td>160m + 135o</td>
+<td>60 s</td>
+<td>90</td>
+<td>60</td>
+<td>35</td>
+<td>7.0</td>
+<td>AoE 72 px · rango mínimo · pop 2</td>
+</tr>
+<tr>
+<td>Trebuchet</td>
+<td>3</td>
+<td>200m + 200o</td>
+<td>70 s</td>
+<td>70</td>
+<td>48</td>
+<td>200</td>
+<td>12.0</td>
+<td>Despliega en 3 s · se undeploy al moverse · pop 2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="naval-muelle">Naval (Muelle)</h3>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>HP</th>
+<th>Vel.</th>
+<th>Ataque</th>
+<th>Rango</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Barco Pesquero</td>
+<td>0</td>
+<td>75m</td>
+<td>25 s</td>
+<td>45</td>
+<td>90</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Barco transporte</td>
+<td>1</td>
+<td>125m</td>
+<td>45 s</td>
+<td>150</td>
+<td>80</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Galera de guerra</td>
+<td>1</td>
+<td>75m + 35o</td>
+<td>35 s</td>
+<td>120</td>
+<td>85</td>
+<td>6</td>
+<td>5.5</td>
+</tr>
+</tbody>
+</table>
+<p>Estos tres cascos son comunes a todas las civilizaciones, pero se pintan con los
+colores navales del propietario (<code>CivStyle.NAVAL</code>, aplicado por <code>ShipDress</code>):
+es puramente estético, no cambia ninguna estadística. Las dos civilizaciones
+marineras añaden además un adorno de proa: la flota atlante navega con cascos de
+piedra marina clara, herrajes de bronce, aleta dorsal de bronce y velas
+turquesa; los fenicios llevan el ojo pintado de sus trirremes.</p>
+<hr />
+<h2 id="unidades-unicas">Unidades Únicas</h2>
+<p>Cada civilización dispone de una unidad exclusiva entrenada en su edificio militar principal. Solo disponible al jugar con esa civilización.</p>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Civilización</th>
+<th>Edificio</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>HP</th>
+<th>Vel.</th>
+<th>Ataque</th>
+<th>Rango</th>
+<th>Arm. C/P</th>
+<th>Pob</th>
+<th>Habilidad especial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Guardia Menceyes</td>
+<td>Guanches</td>
+<td>Cuartel</td>
+<td>2</td>
+<td>65c + 25o</td>
+<td>32 s</td>
+<td>95</td>
+<td>85</td>
+<td>9</td>
+<td>1,5</td>
+<td>2/1</td>
+<td>1</td>
+<td><strong>Aura de Furia</strong> — PV&lt;50%: cada 2 s otorga +3 ataque a aliados en 80 px durante 3 s</td>
+</tr>
+<tr>
+<td>Arquero de Barranco</td>
+<td>Canarii</td>
+<td>Cuartel</td>
+<td>2</td>
+<td>40m + 55o</td>
+<td>35 s</td>
+<td>45</td>
+<td>105</td>
+<td>7</td>
+<td>5,0</td>
+<td>0/1</td>
+<td>1</td>
+<td><strong>Disparo en Emboscada</strong> — quieto ≥1,5 s → primer disparo hace ×2 daño</td>
+</tr>
+<tr>
+<td>Saquador de Dunas</td>
+<td>Mahos</td>
+<td>Establo</td>
+<td>1</td>
+<td>60c + 40o</td>
+<td>28 s</td>
+<td>70</td>
+<td>135</td>
+<td>8</td>
+<td>1,5</td>
+<td>0/0</td>
+<td>1</td>
+<td><strong>Golpe y Retirada</strong> — tras cada ataque retrocede 90 px y vuelve a cargar</td>
+</tr>
+<tr>
+<td>Caballero Normando</td>
+<td>Francos</td>
+<td>Establo</td>
+<td>2</td>
+<td>75c + 65o</td>
+<td>40 s</td>
+<td>130</td>
+<td>110</td>
+<td>10</td>
+<td>1,5</td>
+<td>2/1</td>
+<td>1</td>
+<td><strong>Carga de Lanza</strong> — primer ataque tras moverse ≥80 px hace ×2,5 daño</td>
+</tr>
+<tr>
+<td>Arquero de Longbow</td>
+<td>Britanos</td>
+<td>Cuartel</td>
+<td>2</td>
+<td>30m + 60o</td>
+<td>38 s</td>
+<td>40</td>
+<td>95</td>
+<td>6</td>
+<td>6,5</td>
+<td>0/1</td>
+<td>1</td>
+<td><strong>Perforación de Armadura</strong> — +4 daño extra contra caballería</td>
+</tr>
+<tr>
+<td>Conquistador</td>
+<td>Castellanos</td>
+<td>Cuartel</td>
+<td>2</td>
+<td>60c + 60o</td>
+<td>36 s</td>
+<td>80</td>
+<td>95</td>
+<td>8</td>
+<td>1,2</td>
+<td>1/1</td>
+<td>1</td>
+<td><strong>Salva</strong> (CD 12 s) — 3 disparos rápidos de 6 daño c/u, ignora armadura</td>
+</tr>
+<tr>
+<td>Invocador de Mareas</td>
+<td>Atlantes</td>
+<td>Cuartel</td>
+<td>2</td>
+<td>50c + 70o</td>
+<td>38 s</td>
+<td>75</td>
+<td>80</td>
+<td>7</td>
+<td>3,0</td>
+<td>1/2</td>
+<td>1</td>
+<td><strong>Pulso Mareal</strong> — cada ataque hace 2 daño en área a todos los enemigos en 65 px</td>
+</tr>
+<tr>
+<td>Trirreme</td>
+<td>Fenicios</td>
+<td>Puerto</td>
+<td>1</td>
+<td>100m + 50o</td>
+<td>50 s</td>
+<td>160</td>
+<td>90</td>
+<td>9</td>
+<td>3,0</td>
+<td>2/1</td>
+<td>2</td>
+<td><strong>Espolón</strong> — ×2 daño contra barcos + empuja al objetivo 40 px · pob 2</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="arbol-de-tecnologias">Árbol de tecnologías</h2>
+<h3 id="herreria">Herrería</h3>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>Prerrequisito</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Telares</td>
+<td>0</td>
+<td>50c</td>
+<td>25 s</td>
+<td>—</td>
+<td>HP aldeanos ×1.15</td>
+</tr>
+<tr>
+<td>Forja</td>
+<td>1</td>
+<td>75c</td>
+<td>40 s</td>
+<td>—</td>
+<td>Ataque unidades ×1.15</td>
+</tr>
+<tr>
+<td>Fundición de hierro</td>
+<td>2</td>
+<td>150o</td>
+<td>55 s</td>
+<td>Forja</td>
+<td>Ataque unidades ×1.20</td>
+</tr>
+<tr>
+<td>Alto horno</td>
+<td>3</td>
+<td>275c + 225o</td>
+<td>50 s</td>
+<td>—</td>
+<td>Ataque unidades ×1.15</td>
+</tr>
+<tr>
+<td>Armadura de escamas</td>
+<td>1</td>
+<td>100c + 50o</td>
+<td>40 s</td>
+<td>—</td>
+<td>Armadura cuerpo a cuerpo +1</td>
+</tr>
+<tr>
+<td>Armadura de cadenas</td>
+<td>2</td>
+<td>200c + 100o</td>
+<td>45 s</td>
+<td>Esc. de escamas</td>
+<td>Armadura cuerpo a cuerpo +1</td>
+</tr>
+<tr>
+<td>Armadura de placas</td>
+<td>3</td>
+<td>300c + 200o</td>
+<td>60 s</td>
+<td>Esc. de cadenas</td>
+<td>Armadura cuerpo a cuerpo +1</td>
+</tr>
+<tr>
+<td>Protección arquero</td>
+<td>1</td>
+<td>100c</td>
+<td>35 s</td>
+<td>—</td>
+<td>Armadura perforante arquero +1</td>
+</tr>
+<tr>
+<td>Flechado</td>
+<td>1</td>
+<td>100o</td>
+<td>35 s</td>
+<td>—</td>
+<td>Ataque arquero ×1.20</td>
+</tr>
+<tr>
+<td>Punta bodkin</td>
+<td>2</td>
+<td>100c + 150o</td>
+<td>35 s</td>
+<td>Flechado</td>
+<td>Ataque arquero ×1.20 · Rango ×1.10</td>
+</tr>
+<tr>
+<td>Astillero</td>
+<td>1</td>
+<td>200m + 60o</td>
+<td>40 s</td>
+<td>—</td>
+<td>HP barcos ×1.15 · Coste −15%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="universidad">Universidad</h3>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>Prerrequisito</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Balística</td>
+<td>2</td>
+<td>175o</td>
+<td>50 s</td>
+<td>Flechado</td>
+<td>Vel. ataque arquero ×1.20</td>
+</tr>
+<tr>
+<td>Química</td>
+<td>3</td>
+<td>300o</td>
+<td>70 s</td>
+<td>Balística</td>
+<td>Ataque arquero ×1.15</td>
+</tr>
+<tr>
+<td>Ingeniería de asedio</td>
+<td>2</td>
+<td>200o</td>
+<td>60 s</td>
+<td>—</td>
+<td>Daño a edificios ×1.20</td>
+</tr>
+</tbody>
+</table>
+<h3 id="templo-monasterio">Templo (Monasterio)</h3>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>Prerrequisito</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fervor</td>
+<td>2</td>
+<td>150o</td>
+<td>50 s</td>
+<td>—</td>
+<td>Vel. movimiento unidades ×1.10</td>
+</tr>
+<tr>
+<td>Santidad</td>
+<td>2</td>
+<td>100c</td>
+<td>40 s</td>
+<td>—</td>
+<td>HP espadachín ×1.15</td>
+</tr>
+<tr>
+<td>Expiación</td>
+<td>3</td>
+<td>150c + 100o</td>
+<td>55 s</td>
+<td>Santidad</td>
+<td>HP caballería ×1.20</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mejoras-de-unidades">Mejoras de unidades</h3>
+<p>Las tecnologías de mejora de unidades transforman inmediatamente todas las unidades existentes del tipo de origen (HP escalado proporcionalmente). A partir de ese momento, el edificio entrena el nuevo tipo. Se investigan en el mismo edificio que entrena la unidad.</p>
+<h4 id="cuartel">Cuartel</h4>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>Prerrequisito</th>
+<th>Transforma</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hombre de armas</td>
+<td>1</td>
+<td>100c + 40o</td>
+<td>45 s</td>
+<td>—</td>
+<td>Milicia → Hombre de armas</td>
+</tr>
+<tr>
+<td>Espadachín largo</td>
+<td>2</td>
+<td>200c + 60o</td>
+<td>45 s</td>
+<td>Hombre de armas</td>
+<td>Hombre de armas → Espadachín largo</td>
+</tr>
+</tbody>
+</table>
+<h4 id="establo">Establo</h4>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>Prerrequisito</th>
+<th>Transforma</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Heavy Scout</td>
+<td>1</td>
+<td>150c + 75o</td>
+<td>45 s</td>
+<td>—</td>
+<td>Scout → Heavy Scout</td>
+</tr>
+<tr>
+<td>Caballero</td>
+<td>2</td>
+<td>200c + 100o</td>
+<td>45 s</td>
+<td>Heavy Scout</td>
+<td>Heavy Scout → Caballero</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="civilizaciones">Civilizaciones</h2>
+<h3 id="guanches">Guanches</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Héroe</strong></td>
+<td>Bencomo</td>
+</tr>
+<tr>
+<td><strong>Habilidad</strong></td>
+<td><em>Carga de Menceyes</em> — Galvaniza unidades aliadas cercanas con +30% de velocidad de ataque durante 10 s · Recarga 50 s</td>
+</tr>
+<tr>
+<td><strong>Unidad única</strong></td>
+<td><strong>Guardia Menceyes</strong> — 95 PV · 65c+25o · Edad 2 · <em>Aura de Furia</em>: PV&lt;50% → +3 ataque a aliados en 80 px</td>
+</tr>
+<tr>
+<td><strong>Bonificadores</strong></td>
+<td>HP edificios de piedra ×1.20 · Piqueros disponibles desde la Edad Oscura · Pueden atravesar terreno de malpais · Inmunes a la Calima, media penalización de Ceniza Volcánica</td>
+</tr>
+<tr>
+<td><strong>Restricciones</strong></td>
+<td>Sin caballería · Sin pólvora</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estrategia:</strong> Fortaleza defensiva con infantería resistente. Muy fuerte en mapas volcánicos.</p>
+<hr />
+<h3 id="canarii">Canarii</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Héroe</strong></td>
+<td>Doramas</td>
+</tr>
+<tr>
+<td><strong>Habilidad</strong></td>
+<td><em>Desafío</em> — Provoca a la unidad enemiga más cercana para que ataque a Doramas durante 6 s · Recarga 45 s</td>
+</tr>
+<tr>
+<td><strong>Unidad única</strong></td>
+<td><strong>Arquero de Barranco</strong> — 45 PV · 40m+55o · Edad 2 · <em>Disparo en Emboscada</em>: quieto ≥1,5 s → ×2 primer disparo</td>
+</tr>
+<tr>
+<td><strong>Bonificadores</strong></td>
+<td>Aldeanos recolectan comida ×1.15 · Coste comida arqueros ×0.80 · Las casas sirven como punto de entrega</td>
+</tr>
+<tr>
+<td><strong>Restricciones</strong></td>
+<td>Sin caballería pesada</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estrategia:</strong> Economía de comida superior + arqueros baratos. Ideal para rush de arqueros temprano.</p>
+<hr />
+<h3 id="mahos">Mahos</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Héroe</strong></td>
+<td>Guadarfía</td>
+</tr>
+<tr>
+<td><strong>Habilidad</strong></td>
+<td><em>Emboscada</em> — Casi invisible durante 8 s; los enemigos no pueden atacarle automáticamente · Recarga 45 s</td>
+</tr>
+<tr>
+<td><strong>Unidad única</strong></td>
+<td><strong>Saquador de Dunas</strong> — 70 PV · 60c+40o · Edad 1 · <em>Golpe y Retirada</em>: retrocede 90 px tras cada ataque y vuelve a cargar</td>
+</tr>
+<tr>
+<td><strong>Bonificadores</strong></td>
+<td>Coste madera edificios ×0.70 · Vel. Scout / caballería ligera ×1.25 · Pueden atravesar dunas · Visión ×1.40 sobre las dunas</td>
+</tr>
+<tr>
+<td><strong>Restricciones</strong></td>
+<td>Sin mejoras de caballería pesada</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estrategia:</strong> Expansión rápida y barata + raids de caballería ligera. Excelente en mapas áridos.</p>
+<hr />
+<h3 id="francos">Francos</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Héroe</strong></td>
+<td>Jean de Béthencourt</td>
+</tr>
+<tr>
+<td><strong>Habilidad</strong></td>
+<td><em>Diplomacia Forzada</em> — Convierte la unidad enemiga más cercana durante 12 s · Recarga 60 s</td>
+</tr>
+<tr>
+<td><strong>Unidad única</strong></td>
+<td><strong>Caballero Normando</strong> — 130 PV · 75c+65o · Edad 2 · <em>Carga de Lanza</em>: primer ataque tras ≥80 px hace ×2,5 daño</td>
+</tr>
+<tr>
+<td><strong>Bonificadores</strong></td>
+<td>Coste avance de edad ×0.85 · HP caballería ×1.15 · Granjas construidas ×1.20 más rápido</td>
+</tr>
+<tr>
+<td><strong>Restricciones</strong></td>
+<td>Sin arquería completa · Sin armada tardía</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estrategia:</strong> Avance rápido de edad + caballería potente. Presión constante en Edad de Castillo.</p>
+<hr />
+<h3 id="britanos">Britanos</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Héroe</strong></td>
+<td>Francis Drake</td>
+</tr>
+<tr>
+<td><strong>Habilidad</strong></td>
+<td><em>Saqueo</em> — Genera 15 de oro por cada unidad enemiga eliminada en rango durante 20 s · Recarga 55 s</td>
+</tr>
+<tr>
+<td><strong>Unidad única</strong></td>
+<td><strong>Arquero de Longbow</strong> — 40 PV · 30m+60o · Edad 2 · <em>Perforación de Armadura</em>: +4 daño extra vs caballería</td>
+</tr>
+<tr>
+<td><strong>Bonificadores</strong></td>
+<td>Rango arqueros +1 por edad avanzada · Vel. ataque barcos de guerra ×1.20</td>
+</tr>
+<tr>
+<td><strong>Restricciones</strong></td>
+<td>Sin mejoras de caballería pesada</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estrategia:</strong> Dominio naval + arquería de largo alcance. Muy eficaz en mapas de islas.</p>
+<hr />
+<h3 id="castellanos">Castellanos</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Héroe</strong></td>
+<td>Don Quijote</td>
+</tr>
+<tr>
+<td><strong>Habilidad</strong></td>
+<td><em>Carga del Caballero Errante</em> — Carga en línea recta causando gran daño a todo lo que encuentre · Recarga 55 s</td>
+</tr>
+<tr>
+<td><strong>Unidad única</strong></td>
+<td><strong>Conquistador</strong> — 80 PV · 60c+60o · Edad 2 · <em>Salva</em> (CD 12 s): 3 disparos de 6 daño c/u, ignora armadura</td>
+</tr>
+<tr>
+<td><strong>Bonificadores</strong></td>
+<td>HP espadachín ×1.15 · Las andanadas defensivas (torres, CU guarnecido) alcanzan ×1.10 más lejos · Tecnología gratis en Herrería por avance de edad</td>
+</tr>
+<tr>
+<td><strong>Restricciones</strong></td>
+<td>Ninguna</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estrategia:</strong> Civilización completa sin restricciones. Muy poderosa en partidas largas gracias a las tecnologías gratuitas.</p>
+<hr />
+<h3 id="atlantes">Atlantes</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Héroe</strong></td>
+<td>Artaxerax</td>
+</tr>
+<tr>
+<td><strong>Habilidad</strong></td>
+<td><em>Calima</em> — Envuelve unidades aliadas cercanas en una niebla de calima durante 12 s; las unidades camufladas no pueden ser apuntadas por enemigos · Recarga 60 s</td>
+</tr>
+<tr>
+<td><strong>Unidad única</strong></td>
+<td><strong>Invocador de Mareas</strong> — 75 PV · 50c+70o · Edad 2 · <em>Pulso Mareal</em>: cada ataque hace 2 daño en área en 65 px</td>
+</tr>
+<tr>
+<td><strong>Bonificadores</strong></td>
+<td>Visión costera ×1.50 (unidades y edificios a menos de 400 px de la costa) · Vel. ataque barcos ×1.20 · Más difíciles de detectar en la Niebla Marina (se descubren a 90 px en vez de 180 px) · Invocador de Mareas anfibio: vadea aguas someras a velocidad completa y nada en mar abierto a ×0.60 (<code>deep_water_speed</code>)</td>
+</tr>
+<tr>
+<td><strong>Restricciones</strong></td>
+<td>Sin caballería pesada · Sin taller de asedio</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estrategia:</strong> Supremacía naval absoluta. Devastadores en mapas costeros y de islas.</p>
+<hr />
+<h3 id="fenicios">Fenicios</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Héroe</strong></td>
+<td>Hannón el Navegante</td>
+</tr>
+<tr>
+<td><strong>Habilidad</strong></td>
+<td><em>Ruta Comercial</em> — Genera 50 de oro a lo largo de 30 s · Recarga 50 s</td>
+</tr>
+<tr>
+<td><strong>Unidad única</strong></td>
+<td><strong>Trirreme</strong> — 160 PV · 100m+50o · Edad 1 · <em>Espolón</em>: ×2 daño vs barcos + empuja 40 px · pob 2</td>
+</tr>
+<tr>
+<td><strong>Bonificadores</strong></td>
+<td>Mercado disponible desde la Edad Oscura · Los barcos cuestan un 15 % menos · Los Trirremes generan oro pasivo (5 cada 30 s) · Los mercenarios cuestan un 25 % menos · Media penalización de la Tormenta Atlántica</td>
+</tr>
+<tr>
+<td><strong>Restricciones</strong></td>
+<td>Sin caballeros · Sin infantería de castillo</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estrategia:</strong> Economía de oro superior desde el primer minuto. Ideal para financiar tecnologías y unidades caras.</p>
+<hr />
+<h2 id="heroes-referencia-rapida">Héroes — Referencia rápida</h2>
+<table>
+<thead>
+<tr>
+<th>Héroe</th>
+<th>Civilización</th>
+<th>HP</th>
+<th>Vel.</th>
+<th>Ataque</th>
+<th>Rango</th>
+<th>Arm. M/P</th>
+<th>Habilidad</th>
+<th>Recarga</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bencomo</td>
+<td>Guanches</td>
+<td>180</td>
+<td>105</td>
+<td>14</td>
+<td>1.5</td>
+<td>3/1</td>
+<td>+30% vel. ataque aliados 10 s</td>
+<td>50 s</td>
+</tr>
+<tr>
+<td>Doramas</td>
+<td>Canarii</td>
+<td>160</td>
+<td>115</td>
+<td>12</td>
+<td>1.5</td>
+<td>2/2</td>
+<td>Taunt enemigo 6 s</td>
+<td>45 s</td>
+</tr>
+<tr>
+<td>Guadarfía</td>
+<td>Mahos</td>
+<td>140</td>
+<td>130</td>
+<td>11</td>
+<td>1.5</td>
+<td>1/2</td>
+<td>Invisibilidad 8 s</td>
+<td>45 s</td>
+</tr>
+<tr>
+<td>Jean de Béthencourt</td>
+<td>Francos</td>
+<td>150</td>
+<td>110</td>
+<td>11</td>
+<td>1.5</td>
+<td>3/2</td>
+<td>Conversión enemigo 12 s</td>
+<td>60 s</td>
+</tr>
+<tr>
+<td>Francis Drake</td>
+<td>Britanos</td>
+<td>145</td>
+<td>120</td>
+<td>10</td>
+<td>3.5</td>
+<td>1/3</td>
+<td>15 oro/baja durante 20 s</td>
+<td>55 s</td>
+</tr>
+<tr>
+<td>Don Quijote</td>
+<td>Castellanos</td>
+<td>170</td>
+<td>125</td>
+<td>16</td>
+<td>1.5</td>
+<td>4/1</td>
+<td>Carga en línea recta</td>
+<td>55 s</td>
+</tr>
+<tr>
+<td>Artaxerax</td>
+<td>Atlantes</td>
+<td>155</td>
+<td>110</td>
+<td>10</td>
+<td>4.0</td>
+<td>2/3</td>
+<td>Sigilo aliados 12 s</td>
+<td>60 s</td>
+</tr>
+<tr>
+<td>Hannón el Navegante</td>
+<td>Fenicios</td>
+<td>135</td>
+<td>105</td>
+<td>8</td>
+<td>3.5</td>
+<td>1/2</td>
+<td>50 oro en 30 s</td>
+<td>50 s</td>
+</tr>
+</tbody>
+</table>
+<footer class="site">Generated from <code>docs/design/civilizations_es.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

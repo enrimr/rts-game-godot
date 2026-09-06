@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Civilizations, Units and Technology Tree · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  <a href="civilizations_es.html">Versión en español</a>
+</header>
+<h1 id="civilizations-units-and-technology-tree">Civilizations, Units and Technology Tree</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#common-buildings">Common Buildings</a></li>
+<li><a href="#common-units">Common Units</a><ul>
+<li><a href="#villagers-town-center">Villagers (Town Center)</a></li>
+<li><a href="#support">Support</a></li>
+<li><a href="#infantry-barracks">Infantry (Barracks)</a></li>
+<li><a href="#cavalry-stable">Cavalry (Stable)</a></li>
+<li><a href="#siege-siege-workshop">Siege (Siege Workshop)</a></li>
+<li><a href="#naval-dock">Naval (Dock)</a></li>
+</ul>
+</li>
+<li><a href="#unique-units">Unique Units</a></li>
+<li><a href="#technology-tree">Technology Tree</a><ul>
+<li><a href="#blacksmith">Blacksmith</a></li>
+<li><a href="#university">University</a></li>
+<li><a href="#temple-monastery">Temple (Monastery)</a></li>
+<li><a href="#unit-upgrades">Unit Upgrades</a></li>
+</ul>
+</li>
+<li><a href="#civilizations">Civilizations</a><ul>
+<li><a href="#guanches">Guanches</a></li>
+<li><a href="#canarii">Canarii</a></li>
+<li><a href="#mahos">Mahos</a></li>
+<li><a href="#franks">Franks</a></li>
+<li><a href="#britons">Britons</a></li>
+<li><a href="#castellanos">Castellanos</a></li>
+<li><a href="#atlantes">Atlantes</a></li>
+<li><a href="#fenicios">Fenicios</a></li>
+</ul>
+</li>
+<li><a href="#heroes-quick-reference">Heroes — Quick Reference</a></li>
+</ul>
+</div>
+</nav>
+<blockquote>
+<p>Data extracted directly from project resources (<code>resources/</code>).
+Ages: <strong>0</strong> Dark Age · <strong>1</strong> Feudal Age · <strong>2</strong> Castle Age · <strong>3</strong> Imperial Age.</p>
+</blockquote>
+<hr />
+<h2 id="common-buildings">Common Buildings</h2>
+<table>
+<thead>
+<tr>
+<th>Building</th>
+<th>Cost</th>
+<th>Min Age</th>
+<th>HP</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Town Center</td>
+<td>275 wood</td>
+<td>0</td>
+<td>2400</td>
+<td>Trains villagers · drop-off · hero respawn</td>
+</tr>
+<tr>
+<td>House</td>
+<td>25 wood</td>
+<td>0</td>
+<td>550</td>
+<td>+5 population cap</td>
+</tr>
+<tr>
+<td>Barracks</td>
+<td>175 wood</td>
+<td>0</td>
+<td>1200</td>
+<td>Trains infantry</td>
+</tr>
+<tr>
+<td>Stable</td>
+<td>175 wood</td>
+<td>0</td>
+<td>1100</td>
+<td>Trains cavalry</td>
+</tr>
+<tr>
+<td>Blacksmith</td>
+<td>150 wood</td>
+<td>1</td>
+<td>1000</td>
+<td>Researches weapon and armour upgrades</td>
+</tr>
+<tr>
+<td>Market</td>
+<td>175 wood</td>
+<td>1</td>
+<td>900</td>
+<td>Resource trading</td>
+</tr>
+<tr>
+<td>Lumber Camp</td>
+<td>100 wood</td>
+<td>0</td>
+<td>600</td>
+<td>Wood drop-off</td>
+</tr>
+<tr>
+<td>Mining Camp</td>
+<td>100 wood</td>
+<td>0</td>
+<td>600</td>
+<td>Gold / stone drop-off</td>
+</tr>
+<tr>
+<td>Mill</td>
+<td>100 wood</td>
+<td>0</td>
+<td>600</td>
+<td>Food drop-off · trains Presa Canario herding dogs</td>
+</tr>
+<tr>
+<td>Farm</td>
+<td>60 wood</td>
+<td>0</td>
+<td>300</td>
+<td>Continuous food source</td>
+</tr>
+<tr>
+<td>Dock</td>
+<td>150 wood</td>
+<td>0</td>
+<td>1800</td>
+<td>Trains ships</td>
+</tr>
+<tr>
+<td>Siege Workshop</td>
+<td>200 wood</td>
+<td>2</td>
+<td>1200</td>
+<td>Trains siege units</td>
+</tr>
+<tr>
+<td>University</td>
+<td>200 wood</td>
+<td>2</td>
+<td>1100</td>
+<td>Advanced technology research</td>
+</tr>
+<tr>
+<td>Temple</td>
+<td>175 wood</td>
+<td>2</td>
+<td>900</td>
+<td>Morale and healing research · field hospital (garrisoned units heal 4 HP/s, heroes half rate) · trains Harimaguada</td>
+</tr>
+<tr>
+<td>Wall Segment</td>
+<td>5 stone</td>
+<td>0</td>
+<td>700</td>
+<td>Defensive barrier</td>
+</tr>
+<tr>
+<td>Gate</td>
+<td>30 wood</td>
+<td>0</td>
+<td>500</td>
+<td>Allied passage</td>
+</tr>
+<tr>
+<td>Fish Trap</td>
+<td>75 wood</td>
+<td>0</td>
+<td>600</td>
+<td>Passive food source (ocean)</td>
+</tr>
+<tr>
+<td>Wonder</td>
+<td>2500w+2500f+2500s+5000g</td>
+<td>3</td>
+<td>—</td>
+<td>Victory condition</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="common-units">Common Units</h2>
+<h3 id="villagers-town-center">Villagers (Town Center)</h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Cost</th>
+<th>Time</th>
+<th>HP</th>
+<th>Speed</th>
+<th>Attack</th>
+<th>Range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Villager</td>
+<td>50 food</td>
+<td>25 s</td>
+<td>25</td>
+<td>120</td>
+<td>3</td>
+<td>1.5</td>
+</tr>
+</tbody>
+</table>
+<h3 id="support">Support</h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Trained at</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>HP</th>
+<th>Speed</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Harimaguada</td>
+<td>Temple</td>
+<td>2</td>
+<td>85f + 25g</td>
+<td>24 s</td>
+<td>40</td>
+<td>118</td>
+<td>Priestess-healer (always female): heals allies 5 HP/s in touch range, auto-tends nearby wounded while idle; never fights</td>
+</tr>
+<tr>
+<td>Presa Canario</td>
+<td>Mill</td>
+<td>0</td>
+<td>30f + 10g</td>
+<td>18 s</td>
+<td>45</td>
+<td>145</td>
+<td>Herding dog: right-click an animal with a dogs-only selection to lead it to your nearest drop-off; sheep (even enemy ones) convert on the way; never fights</td>
+</tr>
+</tbody>
+</table>
+<h3 id="infantry-barracks">Infantry (Barracks)</h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>HP</th>
+<th>Speed</th>
+<th>Attack</th>
+<th>Range</th>
+<th>Armour M/P</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Militia</td>
+<td>0</td>
+<td>60f + 20w</td>
+<td>21 s</td>
+<td>40</td>
+<td>100</td>
+<td>4</td>
+<td>1.5</td>
+<td>0 / 0</td>
+</tr>
+<tr>
+<td>Archer</td>
+<td>1</td>
+<td>25w + 45g</td>
+<td>35 s</td>
+<td>30</td>
+<td>110</td>
+<td>5</td>
+<td>4.0</td>
+<td>0 / 0</td>
+</tr>
+<tr>
+<td>Man-at-Arms</td>
+<td>1</td>
+<td>60f + 20w</td>
+<td>21 s</td>
+<td>65</td>
+<td>100</td>
+<td>7</td>
+<td>1.5</td>
+<td>1 / 0</td>
+</tr>
+<tr>
+<td>Pikeman</td>
+<td>2</td>
+<td>60f + 30g</td>
+<td>28 s</td>
+<td>65</td>
+<td>90</td>
+<td>7</td>
+<td>1.5</td>
+<td>1 / 0</td>
+</tr>
+<tr>
+<td>Long Swordsman</td>
+<td>2</td>
+<td>60f + 20w</td>
+<td>21 s</td>
+<td>85</td>
+<td>100</td>
+<td>9</td>
+<td>1.5</td>
+<td>2 / 1</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cavalry-stable">Cavalry (Stable)</h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>HP</th>
+<th>Speed</th>
+<th>Attack</th>
+<th>Range</th>
+<th>Armour M/P</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scout</td>
+<td>0</td>
+<td>80f</td>
+<td>30 s</td>
+<td>35</td>
+<td>180</td>
+<td>2</td>
+<td>0.8</td>
+<td>0 / 0</td>
+<td>Explore ability (60 s)</td>
+</tr>
+<tr>
+<td>Heavy Scout</td>
+<td>1</td>
+<td>80f + 30g</td>
+<td>30 s</td>
+<td>80</td>
+<td>130</td>
+<td>6</td>
+<td>1.5</td>
+<td>1 / 0</td>
+<td></td>
+</tr>
+<tr>
+<td>Knight</td>
+<td>2</td>
+<td>60f + 75g</td>
+<td>45 s</td>
+<td>120</td>
+<td>115</td>
+<td>9</td>
+<td>1.5</td>
+<td>2 / 1</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Scout — Explore ability (key E):</strong> The Scout autonomously roams the map for <strong>60 seconds</strong>, picking a new random destination every 3–7 s. Can be cancelled with the same button.</p>
+</blockquote>
+<h3 id="siege-siege-workshop">Siege (Siege Workshop)</h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>HP</th>
+<th>Speed</th>
+<th>Attack</th>
+<th>Range</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Battering Ram</td>
+<td>2</td>
+<td>160w</td>
+<td>60 s</td>
+<td>180</td>
+<td>55</td>
+<td>40</td>
+<td>1.0</td>
+<td>×3 damage vs buildings · pop 2</td>
+</tr>
+<tr>
+<td>Mangonel</td>
+<td>2</td>
+<td>160w + 135g</td>
+<td>60 s</td>
+<td>90</td>
+<td>60</td>
+<td>35</td>
+<td>7.0</td>
+<td>AoE 72 px · minimum range · pop 2</td>
+</tr>
+<tr>
+<td>Trebuchet</td>
+<td>3</td>
+<td>200w + 200g</td>
+<td>70 s</td>
+<td>70</td>
+<td>48</td>
+<td>200</td>
+<td>12.0</td>
+<td>Deploys in 3 s · auto-undeploys on move · pop 2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="naval-dock">Naval (Dock)</h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>HP</th>
+<th>Speed</th>
+<th>Attack</th>
+<th>Range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fishing Boat</td>
+<td>0</td>
+<td>75w</td>
+<td>25 s</td>
+<td>45</td>
+<td>90</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Transport Ship</td>
+<td>1</td>
+<td>125w</td>
+<td>45 s</td>
+<td>150</td>
+<td>80</td>
+<td>0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>War Galley</td>
+<td>1</td>
+<td>75w + 35g</td>
+<td>35 s</td>
+<td>120</td>
+<td>85</td>
+<td>6</td>
+<td>5.5</td>
+</tr>
+</tbody>
+</table>
+<p>These three hulls are shared by every civilization, but they are painted in the
+owner's naval colours (<code>CivStyle.NAVAL</code> applied by <code>ShipDress</code>) — purely
+cosmetic, no stat difference. The two sea civs also get a prow ornament: the
+Atlantes fleet sails pale sea-stone hulls with bronze fittings, a bronze dorsal
+fin and teal sails; the Fenicios carry the painted eye of their triremes.</p>
+<hr />
+<h2 id="unique-units">Unique Units</h2>
+<p>Each civilization has one unique unit trained at their primary military building. Only available when playing that civilization.</p>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Civilization</th>
+<th>Trained at</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>HP</th>
+<th>Speed</th>
+<th>Attack</th>
+<th>Range</th>
+<th>Armour M/P</th>
+<th>Pop</th>
+<th>Special Ability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Menceyes Guard</td>
+<td>Guanches</td>
+<td>Barracks</td>
+<td>2</td>
+<td>65f + 25g</td>
+<td>32 s</td>
+<td>95</td>
+<td>85</td>
+<td>9</td>
+<td>1.5</td>
+<td>2/1</td>
+<td>1</td>
+<td><strong>Rage Aura</strong> — when HP &lt; 50%, pulses every 2 s granting +3 attack to allied units within 80 px for 3 s</td>
+</tr>
+<tr>
+<td>Ravine Archer</td>
+<td>Canarii</td>
+<td>Barracks</td>
+<td>2</td>
+<td>40w + 55g</td>
+<td>35 s</td>
+<td>45</td>
+<td>105</td>
+<td>7</td>
+<td>5.0</td>
+<td>0/1</td>
+<td>1</td>
+<td><strong>Ambush Shot</strong> — if stationary for ≥1.5 s, first shot deals ×2 damage</td>
+</tr>
+<tr>
+<td>Sand Raider</td>
+<td>Mahos</td>
+<td>Stable</td>
+<td>1</td>
+<td>60f + 40g</td>
+<td>28 s</td>
+<td>70</td>
+<td>135</td>
+<td>8</td>
+<td>1.5</td>
+<td>0/0</td>
+<td>1</td>
+<td><strong>Hit &amp; Run</strong> — after each attack retreats 90 px, then re-engages</td>
+</tr>
+<tr>
+<td>Chevalier Normand</td>
+<td>Franks</td>
+<td>Stable</td>
+<td>2</td>
+<td>75f + 65g</td>
+<td>40 s</td>
+<td>130</td>
+<td>110</td>
+<td>10</td>
+<td>1.5</td>
+<td>2/1</td>
+<td>1</td>
+<td><strong>Lance Charge</strong> — first attack after moving ≥80 px deals ×2.5 damage</td>
+</tr>
+<tr>
+<td>Longbowman</td>
+<td>Britons</td>
+<td>Barracks</td>
+<td>2</td>
+<td>30w + 60g</td>
+<td>38 s</td>
+<td>40</td>
+<td>95</td>
+<td>6</td>
+<td>6.5</td>
+<td>0/1</td>
+<td>1</td>
+<td><strong>Armour Piercing</strong> — +4 bonus damage vs cavalry units</td>
+</tr>
+<tr>
+<td>Conquistador</td>
+<td>Castellanos</td>
+<td>Barracks</td>
+<td>2</td>
+<td>60f + 60g</td>
+<td>36 s</td>
+<td>80</td>
+<td>95</td>
+<td>8</td>
+<td>1.2</td>
+<td>1/1</td>
+<td>1</td>
+<td><strong>Salvo Fire</strong> (12 s CD) — fires 3 rapid shots (6 dmg each, ignores armour, 0.3 s apart)</td>
+</tr>
+<tr>
+<td>Tidecaller</td>
+<td>Atlantes</td>
+<td>Barracks</td>
+<td>2</td>
+<td>50f + 70g</td>
+<td>38 s</td>
+<td>75</td>
+<td>80</td>
+<td>7</td>
+<td>3.0</td>
+<td>1/2</td>
+<td>1</td>
+<td><strong>Tidal Pulse</strong> — each attack deals 2 splash damage to all enemies within 65 px</td>
+</tr>
+<tr>
+<td>Trireme</td>
+<td>Fenicios</td>
+<td>Dock</td>
+<td>1</td>
+<td>100w + 50g</td>
+<td>50 s</td>
+<td>160</td>
+<td>90</td>
+<td>9</td>
+<td>3.0</td>
+<td>2/1</td>
+<td>2</td>
+<td><strong>Ram</strong> — ×2 damage vs ships + pushes target 40 px away</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="technology-tree">Technology Tree</h2>
+<h3 id="blacksmith">Blacksmith</h3>
+<table>
+<thead>
+<tr>
+<th>Technology</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>Prerequisite</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Loom</td>
+<td>0</td>
+<td>50f</td>
+<td>25 s</td>
+<td>—</td>
+<td>Villager HP ×1.15</td>
+</tr>
+<tr>
+<td>Forging</td>
+<td>1</td>
+<td>75f</td>
+<td>40 s</td>
+<td>—</td>
+<td>Unit attack ×1.15</td>
+</tr>
+<tr>
+<td>Iron Casting</td>
+<td>2</td>
+<td>150g</td>
+<td>55 s</td>
+<td>Forging</td>
+<td>Unit attack ×1.20</td>
+</tr>
+<tr>
+<td>Blast Furnace</td>
+<td>3</td>
+<td>275f + 225g</td>
+<td>50 s</td>
+<td>—</td>
+<td>Unit attack ×1.15</td>
+</tr>
+<tr>
+<td>Scale Barding</td>
+<td>1</td>
+<td>100f + 50g</td>
+<td>40 s</td>
+<td>—</td>
+<td>Unit melee armour +1</td>
+</tr>
+<tr>
+<td>Chain Barding</td>
+<td>2</td>
+<td>200f + 100g</td>
+<td>45 s</td>
+<td>Scale Barding</td>
+<td>Unit melee armour +1</td>
+</tr>
+<tr>
+<td>Plate Barding</td>
+<td>3</td>
+<td>300f + 200g</td>
+<td>60 s</td>
+<td>Chain Barding</td>
+<td>Unit melee armour +1</td>
+</tr>
+<tr>
+<td>Padded Archer Armour</td>
+<td>1</td>
+<td>100f</td>
+<td>35 s</td>
+<td>—</td>
+<td>Archer pierce armour +1</td>
+</tr>
+<tr>
+<td>Fletching</td>
+<td>1</td>
+<td>100g</td>
+<td>35 s</td>
+<td>—</td>
+<td>Archer attack ×1.20</td>
+</tr>
+<tr>
+<td>Bodkin Arrow</td>
+<td>2</td>
+<td>100f + 150g</td>
+<td>35 s</td>
+<td>Fletching</td>
+<td>Archer attack ×1.20 · Range ×1.10</td>
+</tr>
+<tr>
+<td>Shipwright</td>
+<td>1</td>
+<td>200w + 60g</td>
+<td>40 s</td>
+<td>—</td>
+<td>Ship HP ×1.15 · Cost −15%</td>
+</tr>
+<tr>
+<td>Canarian Cart</td>
+<td>1</td>
+<td>150f + 75w</td>
+<td>40 s</td>
+<td>—</td>
+<td>Villager carry capacity +25% (farms unaffected)</td>
+</tr>
+<tr>
+<td>Island Handcart</td>
+<td>2</td>
+<td>200f + 125w</td>
+<td>55 s</td>
+<td>Canarian Cart</td>
+<td>Villager carry capacity +25% again</td>
+</tr>
+</tbody>
+</table>
+<h3 id="university">University</h3>
+<table>
+<thead>
+<tr>
+<th>Technology</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>Prerequisite</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ballistics</td>
+<td>2</td>
+<td>175g</td>
+<td>50 s</td>
+<td>Fletching</td>
+<td>Archer attack speed ×1.20</td>
+</tr>
+<tr>
+<td>Chemistry</td>
+<td>3</td>
+<td>300g</td>
+<td>70 s</td>
+<td>Ballistics</td>
+<td>Archer attack ×1.15</td>
+</tr>
+<tr>
+<td>Siege Engineering</td>
+<td>2</td>
+<td>200g</td>
+<td>60 s</td>
+<td>—</td>
+<td>Damage vs buildings ×1.20</td>
+</tr>
+</tbody>
+</table>
+<h3 id="temple-monastery">Temple (Monastery)</h3>
+<table>
+<thead>
+<tr>
+<th>Technology</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>Prerequisite</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fervor</td>
+<td>2</td>
+<td>150g</td>
+<td>50 s</td>
+<td>—</td>
+<td>Unit move speed ×1.10</td>
+</tr>
+<tr>
+<td>Sanctity</td>
+<td>2</td>
+<td>100f</td>
+<td>40 s</td>
+<td>—</td>
+<td>Swordsman HP ×1.15</td>
+</tr>
+<tr>
+<td>Atonement</td>
+<td>3</td>
+<td>150f + 100g</td>
+<td>55 s</td>
+<td>Sanctity</td>
+<td>Cavalry HP ×1.20</td>
+</tr>
+</tbody>
+</table>
+<h3 id="unit-upgrades">Unit Upgrades</h3>
+<p>Unit upgrade technologies transform all existing units of the source type immediately (HP scaled proportionally). The building then trains the new unit type going forward. Researched at the same building that trains the unit.</p>
+<h4 id="barracks">Barracks</h4>
+<table>
+<thead>
+<tr>
+<th>Technology</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>Prerequisite</th>
+<th>Transforms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Man-at-Arms</td>
+<td>1</td>
+<td>100f + 40g</td>
+<td>45 s</td>
+<td>—</td>
+<td>Militia → Man-at-Arms</td>
+</tr>
+<tr>
+<td>Long Swordsman</td>
+<td>2</td>
+<td>200f + 60g</td>
+<td>45 s</td>
+<td>Man-at-Arms</td>
+<td>Man-at-Arms → Long Swordsman</td>
+</tr>
+</tbody>
+</table>
+<h4 id="stable">Stable</h4>
+<table>
+<thead>
+<tr>
+<th>Technology</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Time</th>
+<th>Prerequisite</th>
+<th>Transforms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Heavy Scout</td>
+<td>1</td>
+<td>150f + 75g</td>
+<td>45 s</td>
+<td>—</td>
+<td>Scout → Heavy Scout</td>
+</tr>
+<tr>
+<td>Knight</td>
+<td>2</td>
+<td>200f + 100g</td>
+<td>45 s</td>
+<td>Heavy Scout</td>
+<td>Heavy Scout → Knight</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="civilizations">Civilizations</h2>
+<h3 id="guanches">Guanches</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hero</strong></td>
+<td>Bencomo</td>
+</tr>
+<tr>
+<td><strong>Ability</strong></td>
+<td><em>Menceyes Charge</em> — Rallies nearby allied units, granting +30% attack speed for 10 s · Cooldown 50 s</td>
+</tr>
+<tr>
+<td><strong>Unique Unit</strong></td>
+<td><strong>Menceyes Guard</strong> — 95 HP · 65f+25g · Age 2 · <em>Rage Aura</em>: when HP&lt;50%, pulses +3 attack to allies in 80 px every 2 s</td>
+</tr>
+<tr>
+<td><strong>Bonuses</strong></td>
+<td>Stone building HP ×1.20 · Pikemen available from the Dark Age · Can traverse malpais terrain · Immune to Calima, half Volcanic Ash penalty</td>
+</tr>
+<tr>
+<td><strong>Restrictions</strong></td>
+<td>No cavalry · No gunpowder</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strategy:</strong> Defensive fortress with resilient infantry. Strong on volcanic maps.</p>
+<hr />
+<h3 id="canarii">Canarii</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hero</strong></td>
+<td>Doramas</td>
+</tr>
+<tr>
+<td><strong>Ability</strong></td>
+<td><em>Challenge</em> — Taunts the nearest enemy unit, forcing it to attack Doramas for 6 s · Cooldown 45 s</td>
+</tr>
+<tr>
+<td><strong>Unique Unit</strong></td>
+<td><strong>Ravine Archer</strong> — 45 HP · 40w+55g · Age 2 · <em>Ambush Shot</em>: stationary ≥1.5 s → ×2 first shot</td>
+</tr>
+<tr>
+<td><strong>Bonuses</strong></td>
+<td>Villagers gather food ×1.15 · Archer food cost ×0.80 · Houses act as drop-off points</td>
+</tr>
+<tr>
+<td><strong>Restrictions</strong></td>
+<td>No heavy cavalry</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strategy:</strong> Superior food economy + cheap archers. Great for early archer rushes.</p>
+<hr />
+<h3 id="mahos">Mahos</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hero</strong></td>
+<td>Guadarfía</td>
+</tr>
+<tr>
+<td><strong>Ability</strong></td>
+<td><em>Ambush</em> — Nearly invisible for 8 s; enemies cannot auto-attack Guadarfía while cloaked · Cooldown 45 s</td>
+</tr>
+<tr>
+<td><strong>Unique Unit</strong></td>
+<td><strong>Sand Raider</strong> — 70 HP · 60f+40g · Age 1 · <em>Hit &amp; Run</em>: retreats 90 px after each attack then re-engages</td>
+</tr>
+<tr>
+<td><strong>Bonuses</strong></td>
+<td>Building wood cost ×0.70 · Scout / light cavalry speed ×1.25 · Can traverse dunes · Vision ×1.40 while standing on dunes</td>
+</tr>
+<tr>
+<td><strong>Restrictions</strong></td>
+<td>No heavy cavalry upgrades</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strategy:</strong> Fast cheap expansion + light cavalry raids. Excellent on arid maps.</p>
+<hr />
+<h3 id="franks">Franks</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hero</strong></td>
+<td>Jean de Béthencourt</td>
+</tr>
+<tr>
+<td><strong>Ability</strong></td>
+<td><em>Forced Diplomacy</em> — Converts the nearest enemy unit for 12 s · Cooldown 60 s</td>
+</tr>
+<tr>
+<td><strong>Unique Unit</strong></td>
+<td><strong>Chevalier Normand</strong> — 130 HP · 75f+65g · Age 2 · <em>Lance Charge</em>: first attack after ≥80 px movement deals ×2.5 damage</td>
+</tr>
+<tr>
+<td><strong>Bonuses</strong></td>
+<td>Age advance cost ×0.85 · Cavalry HP ×1.15 · Farms built ×1.20 faster</td>
+</tr>
+<tr>
+<td><strong>Restrictions</strong></td>
+<td>No full archery · No late naval</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strategy:</strong> Fast age advancement + powerful cavalry. Strong pressure in Castle Age.</p>
+<hr />
+<h3 id="britons">Britons</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hero</strong></td>
+<td>Francis Drake</td>
+</tr>
+<tr>
+<td><strong>Ability</strong></td>
+<td><em>Plunder</em> — Earns 15 gold for each enemy unit killed within range for 20 s · Cooldown 55 s</td>
+</tr>
+<tr>
+<td><strong>Unique Unit</strong></td>
+<td><strong>Longbowman</strong> — 40 HP · 30w+60g · Age 2 · <em>Armour Piercing</em>: +4 bonus damage vs cavalry</td>
+</tr>
+<tr>
+<td><strong>Bonuses</strong></td>
+<td>Archer range +1 per age advanced · Warship attack speed ×1.20</td>
+</tr>
+<tr>
+<td><strong>Restrictions</strong></td>
+<td>No heavy cavalry upgrades</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strategy:</strong> Naval dominance + long-range archers. Very effective on Islands maps.</p>
+<hr />
+<h3 id="castellanos">Castellanos</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hero</strong></td>
+<td>Don Quijote</td>
+</tr>
+<tr>
+<td><strong>Ability</strong></td>
+<td><em>Knight Errant Charge</em> — Charges forward in a straight line, dealing heavy damage to all units in the path · Cooldown 55 s</td>
+</tr>
+<tr>
+<td><strong>Unique Unit</strong></td>
+<td><strong>Conquistador</strong> — 80 HP · 60f+60g · Age 2 · <em>Salvo Fire</em> (CD 12 s): 3 rapid shots of 6 dmg each, ignores armour</td>
+</tr>
+<tr>
+<td><strong>Bonuses</strong></td>
+<td>Swordsman HP ×1.15 · Defensive volleys (towers, garrisoned TC) reach ×1.10 further · Free Blacksmith technology per age advance</td>
+</tr>
+<tr>
+<td><strong>Restrictions</strong></td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strategy:</strong> Well-rounded civilisation with no restrictions. Snowballs hard in late game with free technologies.</p>
+<hr />
+<h3 id="atlantes">Atlantes</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hero</strong></td>
+<td>Artaxerax</td>
+</tr>
+<tr>
+<td><strong>Ability</strong></td>
+<td><em>Calima</em> — Shrouds nearby allied units in a calima veil for 12 s; cloaked units cannot be targeted by enemies · Cooldown 60 s</td>
+</tr>
+<tr>
+<td><strong>Unique Unit</strong></td>
+<td><strong>Tidecaller</strong> — 75 HP · 50f+70g · Age 2 · <em>Tidal Pulse</em>: each attack deals 2 AoE damage to all enemies within 65 px</td>
+</tr>
+<tr>
+<td><strong>Bonuses</strong></td>
+<td>Coastal vision ×1.50 (units and buildings within 400 px of a shore) · Ship attack speed ×1.20 · Harder to spot in Sea Fog (found at 90 px instead of 180 px) · Amphibious Tidecaller: wades shallow water at full speed and swims open ocean at ×0.60 (<code>deep_water_speed</code>)</td>
+</tr>
+<tr>
+<td><strong>Restrictions</strong></td>
+<td>No heavy cavalry · No siege workshop</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strategy:</strong> Absolute naval supremacy. Devastating on coastal and Islands maps.</p>
+<hr />
+<h3 id="fenicios">Fenicios</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hero</strong></td>
+<td>Hannón el Navegante</td>
+</tr>
+<tr>
+<td><strong>Ability</strong></td>
+<td><em>Trade Route</em> — Generates 50 gold over 30 s · Cooldown 50 s</td>
+</tr>
+<tr>
+<td><strong>Unique Unit</strong></td>
+<td><strong>Trireme</strong> — 160 HP · 100w+50g · Age 1 · <em>Ram</em>: ×2 damage vs ships + pushes target 40 px away · pop 2</td>
+</tr>
+<tr>
+<td><strong>Bonuses</strong></td>
+<td>Market available from the Dark Age · Ships cost 15% less · Triremes trickle passive gold (5 per 30 s) · Mercenaries cost 25% less · Half Atlantic Storm penalty</td>
+</tr>
+<tr>
+<td><strong>Restrictions</strong></td>
+<td>No knights · No castle infantry</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Strategy:</strong> Superior gold economy from minute one. Ideal for funding expensive technologies and units.</p>
+<hr />
+<h2 id="heroes-quick-reference">Heroes — Quick Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Hero</th>
+<th>Civilisation</th>
+<th>HP</th>
+<th>Speed</th>
+<th>Attack</th>
+<th>Range</th>
+<th>Armour M/P</th>
+<th>Ability</th>
+<th>Cooldown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bencomo</td>
+<td>Guanches</td>
+<td>180</td>
+<td>105</td>
+<td>14</td>
+<td>1.5</td>
+<td>3/1</td>
+<td>+30% attack speed allies 10 s</td>
+<td>50 s</td>
+</tr>
+<tr>
+<td>Doramas</td>
+<td>Canarii</td>
+<td>160</td>
+<td>115</td>
+<td>12</td>
+<td>1.5</td>
+<td>2/2</td>
+<td>Taunt enemy 6 s</td>
+<td>45 s</td>
+</tr>
+<tr>
+<td>Guadarfía</td>
+<td>Mahos</td>
+<td>140</td>
+<td>130</td>
+<td>11</td>
+<td>1.5</td>
+<td>1/2</td>
+<td>Cloak 8 s</td>
+<td>45 s</td>
+</tr>
+<tr>
+<td>Jean de Béthencourt</td>
+<td>Franks</td>
+<td>150</td>
+<td>110</td>
+<td>11</td>
+<td>1.5</td>
+<td>3/2</td>
+<td>Convert enemy 12 s</td>
+<td>60 s</td>
+</tr>
+<tr>
+<td>Francis Drake</td>
+<td>Britons</td>
+<td>145</td>
+<td>120</td>
+<td>10</td>
+<td>3.5</td>
+<td>1/3</td>
+<td>15 gold/kill for 20 s</td>
+<td>55 s</td>
+</tr>
+<tr>
+<td>Don Quijote</td>
+<td>Castellanos</td>
+<td>170</td>
+<td>125</td>
+<td>16</td>
+<td>1.5</td>
+<td>4/1</td>
+<td>Straight-line charge</td>
+<td>55 s</td>
+</tr>
+<tr>
+<td>Artaxerax</td>
+<td>Atlantes</td>
+<td>155</td>
+<td>110</td>
+<td>10</td>
+<td>4.0</td>
+<td>2/3</td>
+<td>Cloak allies 12 s</td>
+<td>60 s</td>
+</tr>
+<tr>
+<td>Hannón el Navegante</td>
+<td>Fenicios</td>
+<td>135</td>
+<td>105</td>
+<td>8</td>
+<td>3.5</td>
+<td>1/2</td>
+<td>50 gold over 30 s</td>
+<td>50 s</td>
+</tr>
+</tbody>
+</table>
+<footer class="site">Generated from <code>docs/design/civilizations_en.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

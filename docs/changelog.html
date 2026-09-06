@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index.html">CALIMA · DOCS</a>
+  <a href="index.html">Portal</a>
+  <a href="manual/manual_es.html">Manual (ES)</a>
+  <a href="manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="changelog">Changelog</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#unreleased">[Unreleased]</a><ul>
+<li><a href="#counter-triangle">Counter triangle</a></li>
+<li><a href="#civilization-bonuses-wired-for-real">Civilization bonuses wired for real</a></li>
+<li><a href="#replays-creator-kit">Replays &amp; creator kit</a></li>
+<li><a href="#campaign-the-flames-of-tamaran">Campaign — The Flames of Tamarán</a></li>
+<li><a href="#pastoral-economy">Pastoral economy</a></li>
+<li><a href="#camp-economy-technologies-tech-tree-grows-to-32">Camp economy technologies (tech tree grows to 32)</a></li>
+<li><a href="#unit-visual-styles">Unit visual styles</a></li>
+<li><a href="#spectator-mode-notifications">Spectator mode &amp; notifications</a></li>
+<li><a href="#ai-overhaul">AI overhaul</a></li>
+<li><a href="#under-the-hood">Under the hood</a></li>
+</ul>
+</li>
+<li><a href="#098-beta-2026-09-02-teams-steam-social-performance">[0.9.8-beta] - 2026-09-02 - Teams, Steam Social &amp; Performance</a><ul>
+<li><a href="#added">Added</a></li>
+<li><a href="#fixed">Fixed</a></li>
+<li><a href="#performance">Performance</a></li>
+</ul>
+</li>
+<li><a href="#096-beta-097-beta-2026-08-31-internet-steam-multiplayer">[0.9.6-beta / 0.9.7-beta] - 2026-08-31 - Internet &amp; Steam Multiplayer</a><ul>
+<li><a href="#added_1">Added</a></li>
+<li><a href="#fixed_1">Fixed</a></li>
+</ul>
+</li>
+<li><a href="#091-beta-095-beta-2026-08-27-2026-08-31-command-pattern-combat-controls-lan-multiplayer">[0.9.1-beta → 0.9.5-beta] - 2026-08-27 → 2026-08-31 - Command Pattern, Combat Controls &amp; LAN Multiplayer</a><ul>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#combat-controls">Combat &amp; controls</a></li>
+<li><a href="#multiplayer-phases-12">Multiplayer (phases 1–2)</a></li>
+<li><a href="#fixed_2">Fixed</a></li>
+</ul>
+</li>
+<li><a href="#090-beta-2026-08-26-isometric-view-civilization-identity">[0.9.0-beta] - 2026-08-26 - Isometric View &amp; Civilization Identity</a><ul>
+<li><a href="#added_2">Added</a></li>
+</ul>
+</li>
+<li><a href="#060-2026-06-08-visual-overhaul">[0.6.0] - 2026-06-08 - Visual Overhaul</a><ul>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#added_3">Added</a></li>
+<li><a href="#changed">Changed</a></li>
+<li><a href="#fixed_3">Fixed</a></li>
+</ul>
+</li>
+<li><a href="#051-2026-06-02-heroines">[0.5.1] - 2026-06-02 - Heroines</a><ul>
+<li><a href="#added_4">Added</a></li>
+</ul>
+</li>
+<li><a href="#050-2026-06-01-production-ready-milestone">[0.5.0] - 2026-06-01 - Production-Ready Milestone</a><ul>
+<li><a href="#summary_1">Summary</a></li>
+<li><a href="#added_5">Added</a></li>
+<li><a href="#fixed_4">Fixed</a></li>
+<li><a href="#changed_1">Changed</a></li>
+<li><a href="#performance_1">Performance</a></li>
+</ul>
+</li>
+<li><a href="#040-2026-05-15-naval-weather-update">[0.4.0] - 2026-05-15 - Naval &amp; Weather Update</a><ul>
+<li><a href="#added_6">Added</a></li>
+<li><a href="#changed_2">Changed</a></li>
+</ul>
+</li>
+<li><a href="#030-2026-04-20-age-progression-military-expansion">[0.3.0] - 2026-04-20 - Age Progression &amp; Military Expansion</a><ul>
+<li><a href="#added_7">Added</a></li>
+<li><a href="#changed_3">Changed</a></li>
+</ul>
+</li>
+<li><a href="#020-2026-03-10-military-combat">[0.2.0] - 2026-03-10 - Military &amp; Combat</a><ul>
+<li><a href="#added_8">Added</a></li>
+<li><a href="#changed_4">Changed</a></li>
+</ul>
+</li>
+<li><a href="#010-2026-02-01-foundation">[0.1.0] - 2026-02-01 - Foundation</a><ul>
+<li><a href="#added_9">Added</a></li>
+<li><a href="#infrastructure">Infrastructure</a></li>
+</ul>
+</li>
+<li><a href="#roadmap-next">Roadmap (next)</a></li>
+<li><a href="#version-history-summary">Version History Summary</a></li>
+</ul>
+</div>
+</nav>
+<p>All notable changes to <strong>Calima: Flames of the Atlantic</strong> are documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<hr />
+<h2 id="unreleased">[Unreleased]</h2>
+<h3 id="counter-triangle">Counter triangle</h3>
+<ul>
+<li>Class-based attack bonuses (<code>UnitResource.attack_bonuses</code>, read in <code>UnitBase._strike_damage</code>): pikemen +12 vs cavalry, cavalry +4 (scout +3) vs archers, archers +3 vs spearmen; the Longbowman's Armour Piercing migrated to data. Arrows inherit the bonus. Army composition now matters as much as size.</li>
+<li>The AI counters what it sights: <code>_counter_bias</code> shifts the barracks mix toward pikes/swords/archers based on the enemy composition it can actually see.</li>
+<li>Franks farms build 20% faster and Castellanos defensive volleys reach 10% further (the last two declared-but-unread civ keys, now wired); dead <code>castle_range</code> key dropped; lobby unique-unit names in translations.csv unified with the canonical UNIT_* rows.</li>
+</ul>
+<h3 id="civilization-bonuses-wired-for-real">Civilization bonuses wired for real</h3>
+<ul>
+<li>The four bonuses advertised in-game but never implemented now work: Fenicios build their Market from the Dark Age and their ships cost 15% less; Guanches train Pikemen from the Dark Age; Canarii houses double as drop-off points; Mahos building wood discount (×0.70) is now actually charged — button price, AI price sheet and the placement command all agree.</li>
+<li>New: caldera claim — a Mining Camp raised within a caldera's shadow trickles stone to its owner (Volcanic Coast).</li>
+<li>New: Mahos dune sight — vision ×1.40 while a Mahos unit stands on dune terrain (mirrors the Atlantes coastal vision).</li>
+<li>2026-09-02 → 2026-09-06</li>
+</ul>
+<p>Everything since the <code>v0.9.8-beta</code> tag, grouped by theme.</p>
+<h3 id="replays-creator-kit">Replays &amp; creator kit</h3>
+<ul>
+<li><strong>Every match records itself</strong> as a compressed snapshot stream (<code>user://replays/</code>, faithful by construction — no re-simulation), watchable from the new main-menu <strong>Replays</strong> browser</li>
+<li><strong>Replay playback v2</strong>: seekable timeline (backward seeks reboot and fast-forward), pause, playback speeds, reveal-map toggle, and a "watch replay" button on the game-over screen</li>
+<li><strong>Creator kit</strong>: cinematic mode (<strong>C</strong>, UI-free, optional floating minimap), centred title card, and background <strong>video export</strong> at a smooth 30 FPS — of the whole match or an <strong>A/B-marked clip</strong>; the replay bar never enters exported footage</li>
+<li>Replays take no orders: the action menu, hotkeys and right-click order paths are all locked during playback</li>
+</ul>
+<h3 id="campaign-the-flames-of-tamaran">Campaign — <em>The Flames of Tamarán</em></h3>
+<ul>
+<li>Four scripted Canarii missions against the Atlante invasion (fixed-seed deterministic worlds, side objectives, scripted attack waves, conquest/survive/regicide victory kinds) plus a tutorial prologue that now opens the same war</li>
+<li>Mission briefings, story outros, difficulty ramp (per-mission AI caps), chain unlocking, persistent progress; mission 1 teaches the Mill and the herding game</li>
+<li>Sixteen unique hero sprites — every hero recognizable from its lore (Don Quijote rides Rocinante)</li>
+</ul>
+<h3 id="pastoral-economy">Pastoral economy</h3>
+<ul>
+<li><strong>Mill</strong> (Dark Age food drop-off) trains the <strong>Presa Canario</strong> herding dog: fetch an animal, lead it home, get paid food for the net approach; enemy sheep convert on the way; guard-dog bite when idle, never abandons a trip on its own</li>
+<li><strong>Harimaguada</strong> priestess-healer trained at the Temple (always female, by lore): follow-and-mend healing plus idle auto-triage; the Temple doubles as a field hospital (garrisoned units heal, heroes at half rate) and now looks like an <strong>almogarén</strong> — an open dry-stone Canarian shrine</li>
+<li>Wild sheep flocks graze the open map — contested targets both the player's and the AI's dogs race for; the flock wears its owner's colour (team collars)</li>
+<li>The AI plays the same game: builds a Mill, raises dogs, herds unclaimed animals and slaughters its own sheep when food runs short</li>
+</ul>
+<h3 id="camp-economy-technologies-tech-tree-grows-to-32">Camp economy technologies (tech tree grows to 32)</h3>
+<ul>
+<li>Nine AoE2-style economy techs, one per age from Feudal, researched at the camps themselves: Lumber Camp — <em>Double-Bit Axe → Bow Saw → Two-Man Saw</em> (wood); Mining Camp — <em>Reinforced Picks → Shaft Mining → Deep Galleries</em> (gold + stone); Mill — <em>Horse Collar → Heavy Plow → Crop Rotation</em> (food). Each step: +15% gather rate and +10% carry for that resource</li>
+<li>Full tech-tree audit with real fixes, research <strong>queueing</strong> (up to 5 in flight per building, paid at enqueue, fully refunded on cancel) and an AoE2-style glyph for every technology</li>
+</ul>
+<h3 id="unit-visual-styles">Unit visual styles</h3>
+<ul>
+<li>New 3-way <strong>Unit style</strong> setting, switchable live: <strong>Classic</strong> (the flat default), <strong>Enhanced</strong> (reversible ink outline + volume shading + extra procedural animation), and <strong>Redesigned</strong> (lore-driven from-scratch rigs for every unit with a full animation state machine)</li>
+</ul>
+<h3 id="spectator-mode-notifications">Spectator mode &amp; notifications</h3>
+<ul>
+<li>Surrendering — or losing everything — while hostile sides remain no longer ends the match: the defeat panel offers <strong>View map</strong> and you keep watching the live battle with orders locked; the definitive result arrives when the war actually ends</li>
+<li>Notification toasts now carry <strong>shortcut action buttons</strong>: jump to the event, place a House one click after a pop-cap warning, locate the hero when he's in danger</li>
+</ul>
+<h3 id="ai-overhaul">AI overhaul</h3>
+<ul>
+<li><strong>The AI builds with real villagers</strong> — instant enemy buildings are gone; a builder walks to every site (docks included, fish traps raised by fishing boats) and abandoned sites are re-crewed</li>
+<li><strong>Idle acquisition</strong>: idle combat units (player and AI alike) now hunt hostiles within sight (~240 px) by their stance rules instead of waiting to be touched</li>
+<li><strong>AI-vs-AI wars actually happen</strong>, including naval ones — galleys burn known enemy docks and fish traps, transports sail with smaller armies</li>
+<li><strong>Mop-up</strong>: with nothing left to siege, the AI hunts the last sighted survivors instead of idling</li>
+</ul>
+<h3 id="under-the-hood">Under the hood</h3>
+<ul>
+<li><strong>Savegame schema v2</strong>: in-flight research, garrisons, unit stances and the live weather state machine survive the round-trip; newer schemas refused with a reason, older ones load with defaults</li>
+<li><strong>Wire hardening</strong>: the host re-validates every client placement and strips wire-borne commands of local-only privileges</li>
+<li>HUD decomposition continued: the command grid (<code>HudActionMenu</code>), tutorial driver (<code>HudTutorial</code>) and action tables (<code>HudActionDefs</code>) extracted; every button price now comes from the same <code>.tres</code> data the simulation charges</li>
+<li>Per-civilization synthesized voice "languages", order-acknowledgment voices and multi-take combat sounds; audio synthesis reference documented</li>
+<li>Land units can no longer wade into the sea (step veto at both off-mesh movement paths, CI chaos probe); animals included</li>
+<li>Main menu v2 (centred logo, gold play button), AoE2-style players/score overlay on the minimap, farmers stay on their farm, hero miniatures show the actual hero</li>
+</ul>
+<hr />
+<h2 id="098-beta-2026-09-02-teams-steam-social-performance">[0.9.8-beta] - 2026-09-02 - Teams, Steam Social &amp; Performance</h2>
+<h3 id="added">Added</h3>
+<ul>
+<li><strong>Teams and alliances</strong> (2v2, 2v1, ...) across skirmish and multiplayer: shared vision, team victory, ally-aware auto-attack, team pickers in both lobbies, persisted in saves</li>
+<li><strong>Allied AI teamwork</strong>: AI teammates send assist squads when you are raided and announce their offensives with a ping</li>
+<li><strong>Shift-queued waypoints and patrol</strong></li>
+<li><strong>Mercenary hiring finished</strong> at the Market — every civ, localized, with unit miniatures and cooldown badges; Fenicios pay 25% less</li>
+<li><strong>Multiplayer save/resume</strong>: the host saves the roster and per-player fog; the resume lobby reserves the original seats and the match can start with absent players (their seat holds through the rejoin grace)</li>
+<li><strong>Version handshake</strong>: the host refuses clients from a different build with a reasoned dialog; releases tagged via <code>scripts/release_tag.sh</code> only</li>
+<li><strong>Display settings and remappable camera keys</strong>; optional FPS counter</li>
+<li><strong>Steam polish</strong>: roster avatars, rich presence, allied minimap pings (Alt+click)</li>
+<li><strong>Formant-synthesized unit selection voices</strong> (AoE-style barks), baked on a worker thread</li>
+<li><strong>Stronger team colours on every unit</strong> — cloth repainted to the owner's colour with shading preserved</li>
+</ul>
+<h3 id="fixed">Fixed</h3>
+<ul>
+<li>Hero-ability audit: all 16 heroes' abilities verified, five real bugs fixed (instant-ability cooldowns, Mercenary Pact crash, Boarding dash, team awareness, Calima cloud parenting)</li>
+<li>Steam-ID rejoin authentication and a command-pipe rate limit</li>
+</ul>
+<h3 id="performance">Performance</h3>
+<ul>
+<li>Incremental fog-of-war reveal (stationary armies stop paying per tick)</li>
+<li>Physics catch-up capped at 2 steps/frame — 200v200 battles from 7.5 to 30 fps</li>
+<li>Per-resource RVO obstacles dropped; chase repath hysteresis; minimap draw rewrite; perf gates joined the test suite</li>
+</ul>
+<hr />
+<h2 id="096-beta-097-beta-2026-08-31-internet-steam-multiplayer">[0.9.6-beta / 0.9.7-beta] - 2026-08-31 - Internet &amp; Steam Multiplayer</h2>
+<h3 id="added_1">Added</h3>
+<ul>
+<li><strong>Internet hosting via UPnP</strong> from the lobby (automatic port mapping, public address in the header); LAN vs Internet split in the main menu</li>
+<li><strong>Steam transport prototype</strong> (GodotSteam GDExtension): public lobbies, friend invites (with an in-game picker when the overlay is unavailable), Valve relay networking — on the test AppID</li>
+<li><strong>Mid-match reconnection</strong>: a dropped player's seat is reserved (90 s grace), the rejoining client gets its old player id and a full state resync</li>
+<li><strong>Multiplayer chat</strong>: lobby panel and in-game overlay (Enter), colour-coded, with system lines; in-lobby rename (pinned to the Steam persona on Steam sessions)</li>
+<li>Siege boulder visuals with client echo — the Mangonel finally throws a visible stone</li>
+</ul>
+<h3 id="fixed_1">Fixed</h3>
+<ul>
+<li>Client-side placement validated against the client's own stockpile (clients could only place houses)</li>
+<li>Client HUD showed no actions on its own buildings (was gated on player 0)</li>
+</ul>
+<hr />
+<h2 id="091-beta-095-beta-2026-08-27-2026-08-31-command-pattern-combat-controls-lan-multiplayer">[0.9.1-beta → 0.9.5-beta] - 2026-08-27 → 2026-08-31 - Command Pattern, Combat Controls &amp; LAN Multiplayer</h2>
+<h3 id="architecture">Architecture</h3>
+<ul>
+<li><strong>Command pattern</strong>: every simulation-mutating order — player AND AI — is a serializable <code>GameCommand</code> through the <code>CommandBus</code>, tick-stamped into a match log (the foundation replays and multiplayer are built on)</li>
+<li><strong>MatchRng</strong>: a single seeded RNG stream for all simulation randomness; deterministic decision layer (identical command logs across runs at a fixed seed)</li>
+<li>God-object split: <code>game_world.gd</code> into six world controllers (setup/victory/camera/selection/commands/placement), <code>map_generator.gd</code> into six pipeline modules, HUD into self-wiring components</li>
+<li>Unified <code>.tres</code>-backed building cost table — player and AI pay the same prices (the old hand-written table let the player build some buildings for free)</li>
+</ul>
+<h3 id="combat-controls">Combat &amp; controls</h3>
+<ul>
+<li><strong>AoE2 combat stances</strong> (Aggressive / Defensive with leash / Stand Ground / No Attack), <strong>group formations</strong> (Line / Box / Spread / Rings) and <strong>building garrison</strong> (TC 10, towers 5, one extra arrow per occupant; villagers via Garrison button or the Town Bell)</li>
+<li>Canonical combat state machine in <code>UnitBase</code> — all 16 leaf units migrated onto override hooks</li>
+<li>Watch Towers shoot visible arrows; progressive fire/smoke on damaged buildings; universal building health bars (building damage used to be invisible)</li>
+<li>Double-click selects every building of a type (shared rally + training); per-unit-type queue badges; stance/formation glyphs with persistent active states; confirmation before demolishing &gt;5 buildings; Backspace aliases Delete on macOS</li>
+</ul>
+<h3 id="multiplayer-phases-12">Multiplayer (phases 1–2)</h3>
+<ul>
+<li><strong>LAN multiplayer</strong>: host-authoritative ENet session, unified lobby with player seats (Open/AI/Closed), per-player name/colour/civ, kick, host-edited settings with live client summary</li>
+<li><strong>Host→client state replication</strong> at 15 Hz with interpolated puppet mirror worlds; queues, research, market, weather and projectiles mirrored; delta stream with keyframes under the ENet MTU</li>
+<li><strong>Robustness</strong>: disconnects and surrenders become resignations, host-left dialog, replicated pause</li>
+</ul>
+<h3 id="fixed_2">Fixed</h3>
+<ul>
+<li>RVO avoidance retuned (fast units were speed-capped; crowds gridlocked); buildings' RVO obstacles removed (they sealed corridors the navmesh had opened)</li>
+<li>Impassable terrain carved into the navmesh — paths route around lava instead of freezing on the rim</li>
+<li>Fog-of-war grid sized to the actual map (large-map margins were permanently unfogged)</li>
+<li>Diagonal building placements no longer collapse the navmesh bake (half-pixel nudge + fallback ladder)</li>
+</ul>
+<hr />
+<h2 id="090-beta-2026-08-26-isometric-view-civilization-identity">[0.9.0-beta] - 2026-08-26 - Isometric View &amp; Civilization Identity</h2>
+<p>The first tagged beta: the isometric refactor merged after a month of UI/UX groundwork.</p>
+<h3 id="added_2">Added</h3>
+<ul>
+<li><strong>Isometric presentation</strong>: camera-level projection (<code>IsoProjection</code>), upright billboarded entities with depth sorting (<code>IsoBillboard</code>), building massings</li>
+<li><strong>Per-civilization visual identity</strong>: architecture styles (<code>CivStyle</code>), unit dress (headgear/sashes), per-civ ship hulls and sails (<code>ShipDress</code>)</li>
+<li><strong>Contextual cursors</strong> (the tabona pointer + context glyphs, macOS-safe baking)</li>
+<li><strong>Control groups</strong> (Ctrl/Cmd+1–9) with clickable HUD chips; SPACE jumps to the last attack alert; idle-villager/military cycle buttons with count badges; persistent hero widget in Regicide; camera follow</li>
+<li><strong>Localization pass</strong>: EN/ES for unit/building names, lobby, HUD; rich cost tooltips replacing the cost strip</li>
+<li>Hero energy aura; heroes spawn in front of the TC via spawn spiral</li>
+</ul>
+<hr />
+<h2 id="060-2026-06-08-visual-overhaul">[0.6.0] - 2026-06-08 - Visual Overhaul</h2>
+<h3 id="summary">Summary</h3>
+<p>A full art pass: every unit, building, animal and the terrain were redesigned from cryptic colored polygons into clearly readable figures, and all human units now have a random visual gender. No gameplay rules changed — this release is purely visual quality, identification and polish.</p>
+<h3 id="added_3">Added</h3>
+<ul>
+<li><strong>Random visual gender for all human units</strong> — every human unit (villager, infantry, cavalry, archers, unique units) is randomly male or female (50/50) when created, shown via long hair framing the head. Persisted across save/load. Ships, siege engines and animals are unaffected.</li>
+<li><strong>Distinct heroine sprites</strong> — female heroes now read as women: long hair, a golden circlet (they are queens/leaders) and a flared gown, while keeping their weapon and shield.</li>
+<li><strong>Team-colour building accents</strong> — buildings carry team-coloured detail (roofs, flags, banners, awnings, domes, sails) so each building's owner is identifiable at a glance.</li>
+<li><strong>Ground shadows</strong> under every unit and building, seating them on the terrain.</li>
+<li><strong>Animated water shader</strong> (layered swell, ripples, foam) for oceans and coasts.</li>
+<li><strong>Terrain detail shader</strong> (grain + tonal variation) so terrain isn't flat colour.</li>
+<li><strong>Animated lava</strong> (pulsing ember glow) on malpaís veins and caldera cracks/pools.</li>
+<li><strong>Coastal oceans</strong> with sandy, variable-width beaches and foam on Volcanic Coast and Desert Coast maps.</li>
+<li><strong>Ambient lighting + vignette</strong> per map type for atmosphere.</li>
+<li><strong>Walking gait for animals</strong> — deer and sheep legs swing in a trot while moving.</li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li><strong>All unit sprites redesigned</strong> into recognisable figures: villager (straw-hat peasant with a pick), militia/man-at-arms/long swordsman (helmeted swordsmen with shields), pikeman (pike), scout/heavy scout/knight and unique cavalry (riders on horseback), archers (drawing a bow), the 8 civ-unique units, and the siege engines and ships (with hull detail, oars, sails).</li>
+<li><strong>All building sprites upgraded</strong> with stonework shading, ashlar lines, crenellations and thematic detail (forge glow, market stalls, temple/university domes, etc.).</li>
+<li><strong>Animal sprites redesigned</strong> — deer (with antlers) and sheep (woolly), converted from flat rectangles to figures.</li>
+<li><strong>Unit &amp; animal orientation</strong> now follows the navigation destination, so units and animals face the way they travel (including on diagonal and near-vertical paths).</li>
+<li><strong>Terrain boundaries softened</strong> — zone edges fade into neighbours following the zone's real outline, and coastlines are rounded with naturally varying beach/foam width.</li>
+</ul>
+<h3 id="fixed_3">Fixed</h3>
+<ul>
+<li><strong>Jerky unit movement</strong> — enabled 2D physics interpolation (render ran faster than the 60 Hz physics step with interpolation off, so sprites snapped between ticks). Movement is now smooth.</li>
+</ul>
+<hr />
+<h2 id="051-2026-06-02-heroines">[0.5.1] - 2026-06-02 - Heroines</h2>
+<p><em>(Folded in from the former <code>HEROINES_CHANGELOG.md</code>.)</em></p>
+<h3 id="added_4">Added</h3>
+<ul>
+<li><strong>8 female heroes</strong> — one per civilization, doubling the hero roster to <strong>16</strong> (8 male + 8 female), each with a unique ability and its own <code>.tres</code> stats:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Civilization</th>
+<th>Heroine</th>
+<th>Ability</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Guanches</td>
+<td>Dácil</td>
+<td>Mountain Voice</td>
+<td>Defensive buffer</td>
+</tr>
+<tr>
+<td>Canarii</td>
+<td>Guayarmina</td>
+<td>Fate's Arrow</td>
+<td>Sniper assassin</td>
+</tr>
+<tr>
+<td>Mahos</td>
+<td>Tibiabin</td>
+<td>Sandstorm</td>
+<td>Area denial</td>
+</tr>
+<tr>
+<td>Francos</td>
+<td>Catalina de Béthencourt</td>
+<td>Honor Duel</td>
+<td>Hero hunter</td>
+</tr>
+<tr>
+<td>Britanos</td>
+<td>Grace O'Malley</td>
+<td>Boarding Action</td>
+<td>Initiator</td>
+</tr>
+<tr>
+<td>Castellanos</td>
+<td>Dulcinea del Toboso</td>
+<td>Call to Arms</td>
+<td>Force multiplier</td>
+</tr>
+<tr>
+<td>Atlantes</td>
+<td>Cleito</td>
+<td>Rising Tide</td>
+<td>Hybrid support</td>
+</tr>
+<tr>
+<td>Fenicios</td>
+<td>Elissa</td>
+<td>Mercenary Pact</td>
+<td>Economic conversion</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Hero gender selection</strong> in the lobby (Random / Male / Female) with dynamic hero info display</li>
+<li>Bilingual lore documentation (<code>docs/lore/heroes-and-heroines.md</code>, <code>docs/design/heroines-design.md</code>) and EN/ES translations</li>
+</ul>
+<hr />
+<h2 id="050-2026-06-01-production-ready-milestone">[0.5.0] - 2026-06-01 - Production-Ready Milestone</h2>
+<h3 id="summary_1">Summary</h3>
+<p>All core features implemented: 8 playable civilizations, the full unit roster and tech tree of the time, a complete AI opponent, save/load, dynamic weather, and 3 victory conditions. Work focused on polish and bug fixes to reach production-ready status.</p>
+<h3 id="added_5">Added</h3>
+<ul>
+<li><strong>Cover Fire command</strong> for archers and siege units (move into range then attack-ground)</li>
+<li><strong>Flying arrow projectiles</strong> with visual arc animation</li>
+<li><strong>Procedural body animation</strong> for all units (walk, attack, work)</li>
+<li><strong>Polygon2D silhouettes</strong> for all units and buildings (replaces ColorRect placeholders)</li>
+<li><strong>Tall stone tower visual</strong> for Watch Tower</li>
+<li><strong>Archery Range</strong> building (Feudal Age, trains Archer)</li>
+<li><strong>Attack-ground command</strong> for ranged and siege units</li>
+<li><strong>Outward spiral spawn positioning</strong> using physics queries to prevent unit overlap</li>
+<li><strong>Technology tree</strong> across Blacksmith, University, Temple, unit upgrades and Castellanos instant grants</li>
+<li><strong>8 Hero units</strong> with unique abilities (Menceyes Charge, Challenge, Ambush, Forced Diplomacy, Plunder, Knight Errant Charge, Calima, Trade Route)</li>
+<li><strong>8 Unique units</strong> with special mechanics (Menceyes Guard, Ravine Archer, Sand Raider, Chevalier Normand, Longbowman, Conquistador, Tidecaller, Trireme)</li>
+<li><strong>Dynamic weather system</strong> with 5 procedural event types (Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash)</li>
+<li><strong>Weather overlay</strong> with visual effects (rain, dust, ash, wind, fog vignette)</li>
+<li><strong>Market building</strong> with dynamic exchange rates (per-player, per-resource) and mercenary hiring</li>
+<li><strong>Naval gameplay</strong> on Islands maps (Dock, Fishing Boat, Transport Ship, War Galley, Fish Trap)</li>
+<li><strong>AI naval assault</strong> with transport ship boarding and amphibious landing</li>
+<li><strong>3 victory conditions</strong> (Conquest, Regicide, Wonder)</li>
+<li><strong>Save/Load system</strong> with 99 JSON slots and metadata UI</li>
+<li><strong>Population cap system</strong> (5 per House, starts at 15)</li>
+<li><strong>Spatial audio</strong> with distance attenuation</li>
+<li><strong>Control groups</strong> (Ctrl+1-9 to save, 1-9 to recall)</li>
+<li><strong>Camera follow</strong> for selected unit groups</li>
+<li><strong>Minimap</strong> with right-click move orders and resource/unit/building icons</li>
+</ul>
+<h3 id="fixed_4">Fixed</h3>
+<ol>
+<li><strong>Cover Fire</strong>: register as pending action, move into range before firing</li>
+<li><strong>Spawn positioning</strong>: outward spiral physics query prevents unit overlap</li>
+<li><strong>Minimap</strong>: fixed revealing entire resource clusters at once (reduced reveal radius to 30% of unit sight range)</li>
+<li><strong>Weather HUD</strong>: fixed banner and pill not centered at non-1920 resolutions</li>
+<li><strong>Villager</strong>: fixed <code>_animate_body</code> signature mismatch (delta parameter)</li>
+<li><strong>Town Center</strong>: fixed initial graphic rendering</li>
+<li><strong>WarGalley</strong>: fixed HP check using wrong property names</li>
+<li><strong>Conquest victory</strong>: fixed missing DEAD/DESTROYED node checks in elimination logic</li>
+<li><strong>Conquest defeat</strong>: fixed never triggering for human player</li>
+<li><strong>Regicide</strong>: fixed per-mode victory condition logic</li>
+<li><strong>Market</strong>: fixed page reset on cooldown refresh (increased mercenary cooldown to 2 min)</li>
+<li><strong>Volcanic Ash</strong>: fixed building damage application</li>
+<li><strong>Nav mesh obstacles</strong>: skip for terrain player civ can traverse</li>
+<li><strong>Release script</strong>: resolve game repo path correctly before cd</li>
+<li><strong>Minimap resource reveal</strong>: fix showing all resources in group when only one cell explored</li>
+</ol>
+<h3 id="changed_1">Changed</h3>
+<ul>
+<li><strong>Villager animation</strong>: differentiate walk vs work animations</li>
+<li><strong>Unit animation</strong>: all units now have procedural body animation (rotation during movement/attack)</li>
+<li><strong>Building visuals</strong>: replaced flat ColorRect placeholders with Polygon2D silhouettes</li>
+<li><strong>Watch Tower</strong>: redesigned with tall stone polygon silhouette</li>
+<li><strong>Arrow projectiles</strong>: archers now shoot visible flying arrows</li>
+<li><strong>Weather frequency</strong>: configurable in lobby (Off/Normal/Frequent/Extreme)</li>
+<li><strong>AI aggression</strong>: escalates when threatened (PASSIVE → ALERTED → AGGRESSIVE)</li>
+<li><strong>AI base defense</strong>: defends against enemies near any building, not just TC radius</li>
+</ul>
+<h3 id="performance_1">Performance</h3>
+<ul>
+<li><strong>Area2D range detection</strong>: attack ranges use Area2D monitoring, no per-frame physics queries</li>
+<li><strong>Cached physics queries</strong>: spatial queries cached and reused where possible</li>
+<li><strong>Outward spiral spawning</strong>: BuildingBase.find_spawn_pos() uses efficient ring search pattern</li>
+</ul>
+<hr />
+<h2 id="040-2026-05-15-naval-weather-update">[0.4.0] - 2026-05-15 - Naval &amp; Weather Update</h2>
+<h3 id="added_6">Added</h3>
+<ul>
+<li><strong>Naval gameplay</strong> on Islands map type</li>
+<li><strong>Dock building</strong> (150 wood, trains ships)</li>
+<li><strong>Fishing Boat</strong> (gathers FOOD_FISH from ocean)</li>
+<li><strong>Transport Ship</strong> (carries 10 military units)</li>
+<li><strong>War Galley</strong> (ranged naval combat)</li>
+<li><strong>Fish Trap</strong> (75 wood, passive food source in ocean)</li>
+<li><strong>Weather system</strong> with procedural events</li>
+<li><strong>5 weather types</strong>: Calima, Atlantic Storm, Sea Fog, Trade Winds, Volcanic Ash</li>
+<li><strong>Weather stat modifiers</strong>: vision, movement, gather rate, projectile drift, building damage</li>
+<li><strong>Weather visual effects</strong>: rain, dust, ash, wind, fog vignette</li>
+<li><strong>AI naval module</strong> (AINaval): ship training, galley patrols, transport assaults</li>
+<li><strong>Market building</strong> with resource trading</li>
+<li><strong>Blacksmith technologies</strong> (Loom, Forging, Iron Casting, etc.)</li>
+<li><strong>University building</strong> with advanced techs</li>
+<li><strong>Temple building</strong> with morale buffs</li>
+</ul>
+<h3 id="changed_2">Changed</h3>
+<ul>
+<li><strong>Map generation</strong>: added Islands map type with ocean zones</li>
+<li><strong>Terrain system</strong>: ocean tiles marked as impassable for land units</li>
+<li><strong>AI economy</strong>: resource targets adjusted per age</li>
+<li><strong>AI construction</strong>: added fish-trap construction logic</li>
+</ul>
+<hr />
+<h2 id="030-2026-04-20-age-progression-military-expansion">[0.3.0] - 2026-04-20 - Age Progression &amp; Military Expansion</h2>
+<h3 id="added_7">Added</h3>
+<ul>
+<li><strong>4 Ages</strong>: Dark → Feudal → Castle → Imperial</li>
+<li><strong>Age advancement system</strong> with costs and timers</li>
+<li><strong>Archer unit</strong> (Feudal Age, ranged infantry)</li>
+<li><strong>Pikeman unit</strong> (Castle Age, anti-cavalry)</li>
+<li><strong>Man-at-Arms</strong> (Feudal Age infantry upgrade)</li>
+<li><strong>Long Swordsman</strong> (Castle Age infantry upgrade)</li>
+<li><strong>Scout unit</strong> (exploration cavalry with auto-explore ability)</li>
+<li><strong>Heavy Scout</strong> (Feudal Age cavalry upgrade)</li>
+<li><strong>Knight</strong> (Castle Age heavy cavalry)</li>
+<li><strong>Stable building</strong> (trains cavalry)</li>
+<li><strong>Siege Workshop</strong> (Castle Age, trains siege units)</li>
+<li><strong>Battering Ram</strong> (melee siege, ×3 vs buildings)</li>
+<li><strong>Mangonel</strong> (AoE siege, 72 px splash, minimum range)</li>
+<li><strong>Trebuchet</strong> (Imperial Age long-range siege, deploy/undeploy)</li>
+<li><strong>Technology research</strong> at Barracks (8 techs)</li>
+<li><strong>AI age advancement</strong> logic</li>
+<li><strong>AI military module</strong> (training, research, combat)</li>
+</ul>
+<h3 id="changed_3">Changed</h3>
+<ul>
+<li><strong>Unit training</strong>: gated by Age requirements</li>
+<li><strong>Building availability</strong>: Age-locked structures (Stable, Siege Workshop, University)</li>
+<li><strong>AI behavior</strong>: adapts strategy per age</li>
+</ul>
+<hr />
+<h2 id="020-2026-03-10-military-combat">[0.2.0] - 2026-03-10 - Military &amp; Combat</h2>
+<h3 id="added_8">Added</h3>
+<ul>
+<li><strong>Barracks building</strong> (175 wood, trains infantry)</li>
+<li><strong>Militia unit</strong> (Dark Age infantry)</li>
+<li><strong>Melee combat system</strong> with damage calculation</li>
+<li><strong>Ranged combat system</strong> with projectiles</li>
+<li><strong>Armour types</strong> (melee/pierce)</li>
+<li><strong>Fog of War</strong> with 3 states (unexplored/explored/visible)</li>
+<li><strong>Minimap</strong> with unit/building/resource icons</li>
+<li><strong>AI opponent</strong> with basic economy and military</li>
+<li><strong>AI construction module</strong> (building placement)</li>
+<li><strong>AI economy module</strong> (villager management)</li>
+<li><strong>Selection grid</strong> showing up to 40 selected units</li>
+<li><strong>Health bars</strong> for units and buildings</li>
+<li><strong>Town Center</strong> as main base building</li>
+</ul>
+<h3 id="changed_4">Changed</h3>
+<ul>
+<li><strong>Villagers</strong>: can now build military structures</li>
+<li><strong>Resource gathering</strong>: drop-off at Town Center, Lumber Camp, Mining Camp</li>
+<li><strong>Map generation</strong>: added enemy starting position</li>
+</ul>
+<hr />
+<h2 id="010-2026-02-01-foundation">[0.1.0] - 2026-02-01 - Foundation</h2>
+<h3 id="added_9">Added</h3>
+<ul>
+<li><strong>Godot 4</strong> project setup</li>
+<li><strong>Villagers</strong> with gathering (food, wood, gold)</li>
+<li><strong>Resource nodes</strong> (trees, gold mines, berries, sheep)</li>
+<li><strong>Drop-off buildings</strong> (Town Center, Lumber Camp, Mining Camp)</li>
+<li><strong>Farm</strong> building (60 wood, renewable food)</li>
+<li><strong>House</strong> building (25 wood, +5 population cap)</li>
+<li><strong>Wall &amp; Gate</strong> buildings (defense structures)</li>
+<li><strong>Procedural map generation</strong> with random resources</li>
+<li><strong>Resource Manager</strong> (per-player stockpiles)</li>
+<li><strong>Selection Manager</strong> (unit selection, control groups)</li>
+<li><strong>EventBus</strong> architecture for decoupled signals</li>
+<li><strong>Data-driven design</strong> with Resource files</li>
+<li><strong>Navigation system</strong> with NavigationAgent2D</li>
+<li><strong>Basic HUD</strong> (resource display, population counter)</li>
+<li><strong>Match lobby</strong> with map settings</li>
+</ul>
+<h3 id="infrastructure">Infrastructure</h3>
+<ul>
+<li><strong>GUT testing framework</strong> integration</li>
+<li><strong>CI/CD pipeline</strong> with GitHub Actions</li>
+<li><strong>Documentation</strong> (CLAUDE.md, architecture docs)</li>
+<li><strong>Sub-agent system</strong> (developer, tester, code-reviewer, docs-keeper, performance-checker)</li>
+</ul>
+<hr />
+<h2 id="roadmap-next">Roadmap (next)</h2>
+<ul>
+<li>Live Steam-lobby test on a real AppID</li>
+<li>Lockstep simulation (requires deterministic, physics-free unit movement)</li>
+<li>Balance tuning from playtesting</li>
+<li>More campaign chapters</li>
+</ul>
+<hr />
+<h2 id="version-history-summary">Version History Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(unreleased)</td>
+<td>2026-09-06</td>
+<td>Replays &amp; creator kit, campaign, pastoral economy, camp techs, unit styles, spectator, AI overhaul</td>
+</tr>
+<tr>
+<td>0.9.8-beta</td>
+<td>2026-09-02</td>
+<td>Teams &amp; alliances, Steam social, mercenaries, hero audit, MP save/resume, performance</td>
+</tr>
+<tr>
+<td>0.9.6/0.9.7-beta</td>
+<td>2026-08-31</td>
+<td>Internet (UPnP) + Steam prototype, reconnection, chat</td>
+</tr>
+<tr>
+<td>0.9.1–0.9.5-beta</td>
+<td>2026-08-27→31</td>
+<td>Command pattern, stances/formations/garrison, LAN multiplayer phases 1–2</td>
+</tr>
+<tr>
+<td>0.9.0-beta</td>
+<td>2026-08-26</td>
+<td>Isometric view, per-civ visual identity, control groups, localization</td>
+</tr>
+<tr>
+<td>0.6.0</td>
+<td>2026-06-08</td>
+<td>Visual overhaul: readable figures, unit gender, living terrain</td>
+</tr>
+<tr>
+<td>0.5.1</td>
+<td>2026-06-02</td>
+<td>Heroines: 16-hero roster, lobby gender pick</td>
+</tr>
+<tr>
+<td>0.5.0</td>
+<td>2026-06-01</td>
+<td>Production-ready single-player: 8 civs, weather, save/load, polish</td>
+</tr>
+<tr>
+<td>0.4.0</td>
+<td>2026-05-15</td>
+<td>Naval gameplay, weather system, market, research buildings</td>
+</tr>
+<tr>
+<td>0.3.0</td>
+<td>2026-04-20</td>
+<td>Age progression, cavalry, siege, tech research</td>
+</tr>
+<tr>
+<td>0.2.0</td>
+<td>2026-03-10</td>
+<td>Military units, combat, fog of war, AI opponent</td>
+</tr>
+<tr>
+<td>0.1.0</td>
+<td>2026-02-01</td>
+<td>Foundation: villagers, resources, map generation</td>
+</tr>
+</tbody>
+</table>
+<footer class="site">Generated from <code>CHANGELOG.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

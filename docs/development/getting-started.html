@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting Started · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="getting-started">Getting Started</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#setup">Setup</a></li>
+<li><a href="#project-structure">Project Structure</a></li>
+<li><a href="#running-tests">Running Tests</a></li>
+<li><a href="#coding-conventions">Coding Conventions</a></li>
+<li><a href="#sub-agent-workflow">Sub-agent workflow</a></li>
+<li><a href="#releases">Releases</a></li>
+</ul>
+</div>
+</nav>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li><a href="https://godotengine.org/download">Godot 4.6</a> or later (standard build, no Mono/C# required)</li>
+<li>Git</li>
+<li>Python 3 (only for regenerating the harness catalog)</li>
+</ul>
+<h2 id="setup">Setup</h2>
+<pre><code class="language-bash">git clone https://github.com/enrimr/age-of-empires-clone-godot.git
+cd age-of-empires-clone-godot
+</code></pre>
+<p>Open Godot → <strong>Import</strong> → select <code>project/project.godot</code>, wait for the first import to finish, then press <strong>F5</strong> to run.</p>
+<p>There are no external art or audio assets — everything is generated procedurally at startup (the first launch bakes ~460 voice clips on a worker thread).</p>
+<h2 id="project-structure">Project Structure</h2>
+<pre><code>project/          # Godot project root (open this in the editor)
+  assets/         # Fonts, shaders, translations (translations.csv)
+  scenes/         # .tscn files
+  scripts/        # .gd files (core/, units/, buildings/, game/, ai/, map/,
+                  #            campaign/, multiplayer/, ui/, utils/)
+  resources/      # .tres data files (units, buildings, technologies, civs)
+  tests/          # GUT test suites (unit/ + integration/)
+  tools/          # Standalone check_* harnesses (headless + renderer)
+docs/             # Architecture, design, testing and player docs
+scripts/          # Repo-level shell scripts (release_tag.sh)
+</code></pre>
+<h2 id="running-tests">Running Tests</h2>
+<p>The <a href="https://github.com/bitwes/Gut">GUT</a> addon is vendored at <code>project/addons/gut</code> — nothing to install.</p>
+<pre><code class="language-bash">GODOT=/path/to/godot ./run_tests.sh                                  # whole suite (unit + integration)
+GODOT=/path/to/godot ./run_tests.sh res://tests/unit/test_herding.gd # one script
+</code></pre>
+<p>Notes:</p>
+<ul>
+<li>GUT silently <strong>skips</strong> a test script that fails to parse while still reporting "all passed" — always check the <code>Scripts</code> count in the summary, and run <code>$GODOT --headless --path project --import</code> after adding a new <code>class_name</code>.</li>
+<li>Standalone harnesses under <code>project/tools/</code> cover what GUT can't (scene loads, screenshots, multi-process networking, long simulations). The full catalog with env vars is <strong><a href="../testing/harnesses.html">docs/testing/harnesses.md</a></strong>; the curated CI-gate subset is in <a href="https://github.com/enrimr/rts-game-godot/blob/main/CLAUDE.md">CLAUDE.md</a> → Testing.</li>
+</ul>
+<h2 id="coding-conventions">Coding Conventions</h2>
+<p>See <a href="conventions.html">conventions.md</a>. The essentials:</p>
+<ul>
+<li>GDScript only (no C#); type-hint every parameter and return value</li>
+<li><code>snake_case</code> for variables/functions/files, <code>PascalCase</code> for classes/nodes</li>
+<li>All cross-system signals go through <code>EventBus</code>; every simulation-mutating order goes through <code>CommandBus</code> as a <code>GameCommand</code></li>
+<li>Stats live in <code>.tres</code> resources, never hardcoded; simulation randomness draws from <code>MatchRng</code></li>
+<li><code>@export</code> all designer-tunable values</li>
+</ul>
+<h2 id="sub-agent-workflow">Sub-agent workflow</h2>
+<p>The project is developed with five specialized AI agents defined in <code>.claude/agents/</code> (see <a href="https://github.com/enrimr/rts-game-godot/blob/main/CLAUDE.md">CLAUDE.md</a> → Sub-agents):</p>
+<pre><code>developer  →  code-reviewer  →  tester  →  docs-keeper
+</code></pre>
+<p><code>performance-checker</code> joins whenever a change touches <code>_process</code>/<code>_physics_process</code> or unit-heavy features.</p>
+<h2 id="releases">Releases</h2>
+<p>Tag releases <strong>only</strong> with <code>scripts/release_tag.sh</code> — it bumps <code>application/config/version</code> in <code>project.godot</code> (which the multiplayer version handshake checks), commits, tags and pushes in one step. It auto-increments the patch keeping the suffix; supports <code>--dry-run</code>, <code>--skip-tests</code>, or an explicit version argument.</p>
+<footer class="site">Generated from <code>docs/development/getting-started.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

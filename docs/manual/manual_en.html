@@ -1,276 +1,1031 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calima: Flames of the Atlantic — Player&#x27;s Guide</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calima: Flames of the Atlantic — Player's Guide · Calima: Flames of the Atlantic</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #1a1108; --panel: #241a0c; --border: #3d2e18;
-    --gold: #c8a84b; --gold-dim: #8c7232; --gold-bright: #f0cc6a;
-    --text: #d8c9a3; --text-dim: #8a7a55; --link: #d9a44a;
-  }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 16px; line-height: 1.65;
-  }
-  .page { max-width: 900px; margin: 0 auto; padding: 36px 22px 80px; }
-  h1 {
-    color: var(--gold); font-variant: small-caps; letter-spacing: 0.08em;
-    font-size: 1.9rem; line-height: 1.25; margin: 6px 0 4px;
-    text-shadow: 0 0 22px rgba(200,168,75,0.4);
-  }
-  h2 {
-    color: var(--gold); font-variant: small-caps; letter-spacing: 0.07em;
-    font-size: 1.35rem; margin: 40px 0 10px; padding-top: 14px;
-    border-top: 1px solid var(--border);
-  }
-  h3 { color: var(--gold-bright); font-size: 1.08rem; margin: 26px 0 8px; }
-  h4 { color: var(--gold-bright); font-size: 1.0rem; margin: 24px 0 6px;
-       border-left: 3px solid var(--gold-dim); padding-left: 10px; }
-  p { margin: 10px 0; }
-  ul { margin: 10px 0 10px 24px; }
-  li { margin: 4px 0; }
-  em { color: var(--text); }
-  strong { color: var(--gold-bright); }
-  a { color: var(--link); }
-  hr { border: none; border-top: 1px solid var(--border); margin: 26px 0; }
-  code {
-    background: rgba(0,0,0,0.35); border: 1px solid var(--border);
-    border-radius: 4px; padding: 1px 6px; font-size: 0.85em;
-  }
-  table {
-    border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem;
-  }
-  th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
-  th { background: var(--panel); color: var(--gold); font-variant: small-caps; letter-spacing: 0.05em; }
-  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
-  .lang-bar {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;
-  }
-  .lang-bar a { text-decoration: none; border: 1px solid var(--border);
-    border-radius: 6px; padding: 3px 10px; }
-  .lang-bar a:hover { border-color: var(--gold-dim); }
-  .toc {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-    padding: 16px 20px; margin: 20px 0 8px; columns: 2; column-gap: 30px;
-  }
-  .toc-title { font-variant: small-caps; letter-spacing: 0.08em; color: var(--gold);
-    margin-bottom: 8px; column-span: all; }
-  .toc a { display: block; padding: 2px 0; text-decoration: none; font-size: 0.92rem; }
-  .toc a:hover { color: var(--gold-bright); }
-  footer { margin-top: 46px; border-top: 1px solid var(--border);
-    padding-top: 12px; color: var(--text-dim); font-size: 0.8rem; line-height: 1.6; }
-  @media (max-width: 620px) { .toc { columns: 1; } }
-  @media print {
-    body { background: #fff; color: #1a1a1a; }
-    :root { --panel: #f4f0e6; --border: #ccc; --gold: #5a4310; --gold-bright: #5a4310;
-            --gold-dim: #8a6a20; --text: #1a1a1a; --text-dim: #555; --link: #5a4310; }
-    h1 { text-shadow: none; }
-    .lang-bar { display: none; }
-    .page { max-width: none; padding: 0; }
-  }
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
 </style>
 </head>
 <body>
-<div class="page">
-<div class="lang-bar"><a href="../index.html">← Documentation portal</a><a href="manual_es.html">Versión en español →</a></div>
-<h1>Calima: Flames of the Atlantic — Player's Guide</h1>
-<nav class="toc"><div class="toc-title">Contents</div><a href="#the-world">The World</a><a href="#controls-interface">Controls &amp; Interface</a><a href="#civilizations">Civilizations</a><a href="#terrain">Terrain</a><a href="#resources-economy">Resources &amp; Economy</a><a href="#age-progression">Age Progression</a><a href="#units">Units</a><a href="#buildings">Buildings</a><a href="#research-tech-tree">Research (Tech Tree)</a><a href="#combat">Combat</a><a href="#weather">Weather</a><a href="#victory-conditions">Victory Conditions</a><a href="#naval-warfare">Naval Warfare</a><a href="#maps">Maps</a><a href="#match-setup-skirmish">Match Setup (Skirmish)</a><a href="#campaign-the-flames-of-tamaran">Campaign — The Flames of Tamarán</a><a href="#multiplayer">Multiplayer</a><a href="#replays">Replays</a><a href="#settings">Settings</a><a href="#know-your-enemy-ai-behaviour">Know your enemy (AI behaviour)</a><a href="#tips">Tips</a><a href="#visual-presentation">Visual Presentation</a></nav>
-<hr>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="manual_es.html">Manual (ES)</a>
+  <a href="manual_en.html">Manual (EN)</a>
+  <a href="manual_es.html">Versión en español</a>
+</header>
+<h1 id="calima-flames-of-the-atlantic-players-guide">Calima: Flames of the Atlantic — Player's Guide</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#the-world">The World</a></li>
+<li><a href="#controls-interface">Controls &amp; Interface</a></li>
+<li><a href="#civilizations">Civilizations</a><ul>
+<li><a href="#who-are-they">Who are they?</a></li>
+<li><a href="#ancient-civilizations">Ancient Civilizations</a></li>
+<li><a href="#native-civilizations">Native Civilizations</a></li>
+<li><a href="#european-invaders">European Invaders</a></li>
+</ul>
+</li>
+<li><a href="#terrain">Terrain</a></li>
+<li><a href="#resources-economy">Resources &amp; Economy</a><ul>
+<li><a href="#the-four-resources">The four resources</a></li>
+<li><a href="#population">Population</a></li>
+<li><a href="#market-trading">Market trading</a></li>
+</ul>
+</li>
+<li><a href="#age-progression">Age Progression</a></li>
+<li><a href="#units">Units</a><ul>
+<li><a href="#economy-support">Economy &amp; support</a></li>
+<li><a href="#military">Military</a></li>
+</ul>
+</li>
+<li><a href="#buildings">Buildings</a><ul>
+<li><a href="#production">Production</a></li>
+<li><a href="#economy">Economy</a></li>
+<li><a href="#research">Research</a></li>
+<li><a href="#defense">Defense</a></li>
+<li><a href="#special">Special</a></li>
+</ul>
+</li>
+<li><a href="#research-tech-tree">Research (Tech Tree)</a><ul>
+<li><a href="#blacksmith">Blacksmith</a></li>
+<li><a href="#university">University</a></li>
+<li><a href="#temple">Temple</a></li>
+<li><a href="#camp-economy-lines">Camp economy lines</a></li>
+<li><a href="#unit-upgrades">Unit upgrades</a></li>
+</ul>
+</li>
+<li><a href="#combat">Combat</a><ul>
+<li><a href="#the-counter-triangle">The counter triangle</a></li>
+<li><a href="#stances">Stances</a></li>
+<li><a href="#formations">Formations</a></li>
+<li><a href="#garrison">Garrison</a></li>
+<li><a href="#healing">Healing</a></li>
+<li><a href="#siege">Siege</a></li>
+</ul>
+</li>
+<li><a href="#weather">Weather</a></li>
+<li><a href="#victory-conditions">Victory Conditions</a><ul>
+<li><a href="#conquest">Conquest</a></li>
+<li><a href="#regicide">Regicide</a></li>
+<li><a href="#wonder">Wonder</a></li>
+<li><a href="#defeat-and-what-happens-next">Defeat — and what happens next</a></li>
+</ul>
+</li>
+<li><a href="#naval-warfare">Naval Warfare</a></li>
+<li><a href="#maps">Maps</a></li>
+<li><a href="#match-setup-skirmish">Match Setup (Skirmish)</a></li>
+<li><a href="#campaign-the-flames-of-tamaran">Campaign — The Flames of Tamarán</a></li>
+<li><a href="#multiplayer">Multiplayer</a></li>
+<li><a href="#replays">Replays</a></li>
+<li><a href="#settings">Settings</a></li>
+<li><a href="#know-your-enemy-ai-behaviour">Know your enemy (AI behaviour)</a></li>
+<li><a href="#tips">Tips</a></li>
+<li><a href="#visual-presentation">Visual Presentation</a></li>
+</ul>
+</div>
+</nav>
+<hr />
 <h2 id="the-world">The World</h2>
 <p>The Canary Islands. Eastern Atlantic, 100 km off the coast of northwest Africa.</p>
 <p>For the native inhabitants these were simply home — volcanic mountains, laurel forests, black sand beaches and desert plains across seven islands. For the Europeans who arrived in the 15th century they were a gateway: the last stop before the open ocean, the first prize of the Age of Exploration.</p>
 <p><em>Calima</em> puts you in command of one of eight civilizations fighting for control of this archipelago. The calima — the warm Saharan wind that blankets the islands in dust and silence — gives the game its name. War here is not fought on plains. It is fought on lava fields, clifftops, ocean straits, and dune crossings.</p>
-<hr>
+<hr />
 <h2 id="controls-interface">Controls &amp; Interface</h2>
-<p>Every button in the game shows its hotkey on a badge and its full description — with the real cost — in a tooltip. The complete key list lives in <a href="../../GAMEPLAY.md">GAMEPLAY.md</a>; the essentials:</p>
-<ul><li><strong>Left-click / drag</strong> selects (up to 40 units); <strong>double-click</strong> selects every unit or building of the same type. <strong>Ctrl/Cmd+1–9</strong> assigns a control group, <strong>1–9</strong> recalls it (clickable chips in the HUD).</li><li><strong>Right-click</strong> is contextual: move, attack, gather, build/repair, garrison military into your TC/towers, herd animals (dog-only selections). <strong>Shift+right-click</strong> queues waypoints.</li><li>Command keys: <strong>Z</strong> attack-move, <strong>R</strong> patrol, <strong>X</strong> stop, <strong>E</strong> garrison, <strong>C</strong> cover fire (ranged/siege), <strong>B</strong> build menu (villagers).</li><li><strong>Space</strong> jumps the camera to the last attack alert. Camera pans with <strong>WASD</strong> (remappable) or the arrow keys, edge scrolling and middle-click drag; zoom with the wheel.</li><li>Notification toasts carry <strong>shortcut buttons</strong>: jump to the event, place a House one click after a pop-cap warning, locate your hero when he is in danger.</li><li>A button docked on the minimap opens the <strong>players overlay</strong> — every player's colour, name, civ, Age and a live score.</li><li><strong>Esc</strong> opens the pause menu (Resume / Settings / Save / Surrender / Exit). In multiplayer, <strong>Enter</strong> opens the chat.</li></ul>
-<hr>
+<p>Every button in the game shows its hotkey on a badge and its full description — with the real cost — in a tooltip. The complete key list lives in <a href="../gameplay.html">GAMEPLAY.md</a>; the essentials:</p>
+<ul>
+<li><strong>Left-click / drag</strong> selects (up to 40 units); <strong>double-click</strong> selects every unit or building of the same type. <strong>Ctrl/Cmd+1–9</strong> assigns a control group, <strong>1–9</strong> recalls it (clickable chips in the HUD).</li>
+<li><strong>Right-click</strong> is contextual: move, attack, gather, build/repair, garrison military into your TC/towers, herd animals (dog-only selections). <strong>Shift+right-click</strong> queues waypoints.</li>
+<li>Command keys: <strong>Z</strong> attack-move, <strong>R</strong> patrol, <strong>X</strong> stop, <strong>E</strong> garrison, <strong>C</strong> cover fire (ranged/siege), <strong>B</strong> build menu (villagers).</li>
+<li><strong>Space</strong> jumps the camera to the last attack alert. Camera pans with <strong>WASD</strong> (remappable) or the arrow keys, edge scrolling and middle-click drag; zoom with the wheel.</li>
+<li>Notification toasts carry <strong>shortcut buttons</strong>: jump to the event, place a House one click after a pop-cap warning, locate your hero when he is in danger.</li>
+<li>A button docked on the minimap opens the <strong>players overlay</strong> — every player's colour, name, civ, Age and a live score.</li>
+<li><strong>Esc</strong> opens the pause menu (Resume / Settings / Save / Surrender / Exit). In multiplayer, <strong>Enter</strong> opens the chat.</li>
+</ul>
+<hr />
 <h2 id="civilizations">Civilizations</h2>
 <h3 id="who-are-they">Who are they?</h3>
 <p>Eight civilizations drawn from three historical layers. Your choice determines your playstyle, your starting bonuses, and your hero pair — every civilization has one male and one female legendary hero; pick who leads you (Random / Male / Female) in the lobby.</p>
-<hr>
+<hr />
 <h3 id="ancient-civilizations">Ancient Civilizations</h3>
 <p>These civilizations predate the medieval conflict. Their ruins dot the archipelago. Playing them means being out of time — technologically different, strategically isolated, but capable of things no one else can do.</p>
 <h4 id="atlantes">Atlantes</h4>
 <p><em>"The sea is not a barrier. It is a road."</em></p>
 <p>The lost civilization of myth. Greek writers — Plato, Pliny, Herodotus — placed Atlantis beyond the Pillars of Hercules, in the very ocean these islands occupy. In <em>Calima</em>, the Atlantes are not a legend. They are a fading empire with the most advanced seafaring knowledge in the world, and ruins everywhere.</p>
 <p><strong>How they play:</strong> Atlantes control the water. Their Tidecallers are the only land troops in the game that walk into the sea — wading the shallows at full speed and swimming open water — so a shoreline never stops an Atlantes push. Their line of sight along any coast is greater than any other civ's. Their fleet is unmistakable: pale sea-stone hulls with bronze fittings, a bronze fin at every prow and teal sails.</p>
-<p><strong>Strengths:</strong> Naval dominance, coastal expansion, strategic map control <strong>Weaknesses:</strong> No heavy cavalry; no siege workshop; loses badly on pure land maps</p>
-<p><strong>Passive bonuses:</strong></p>
-<ul><li>+50% vision for units and buildings within 400 px of a shore</li><li>Harder to spot in Sea Fog (enemies find them at 90 px instead of 180 px)</li><li>Ship attack speed ×1.20; the Atlantic Storm never slows their fleet</li><li>Amphibious Tidecaller: full speed in shallow water, 60% speed in open ocean</li></ul>
+<p><strong>Strengths:</strong> Naval dominance, coastal expansion, strategic map control
+<strong>Weaknesses:</strong> No heavy cavalry; no siege workshop; loses badly on pure land maps</p>
+<p><strong>Passive bonuses:</strong>
+- +50% vision for units and buildings within 400 px of a shore
+- Harder to spot in Sea Fog (enemies find them at 90 px instead of 180 px)
+- Ship attack speed ×1.20; the Atlantic Storm never slows their fleet
+- Amphibious Tidecaller: full speed in shallow water, 60% speed in open ocean</p>
 <p><strong>Unique unit:</strong> <em>Tidecaller</em> — amphibious infantry trained at the Barracks (Castle Age, 50 Food + 70 Gold) with a Tidal Pulse splash attack; the only land unit that swims</p>
 <p><strong>Hero: Artaxerax</strong> — a mythologized figure, half admiral, half prophet. His ability <em>Calima</em> shrouds nearby allied units in a veil of calima for 12 seconds — cloaked units cannot be targeted by enemies.</p>
 <p><strong>Heroine: Cleito</strong> — the queen the water took everything from. Her <em>Rising Tide</em> sends out a 250 px wave: allies heal 60 HP and gain +30% speed for 8 seconds; enemies take 20 damage and lose 20% speed.</p>
-<hr>
+<hr />
 <h4 id="fenicios">Fenicios</h4>
 <p><em>"We do not need to conquer what we can simply buy."</em></p>
 <p>Carthaginian and Phoenician sailors documented the Canary Islands centuries before medieval Europe knew they existed. Hanno the Navigator's expedition logs describe islands of fire and forests. They left no settlements. They left trade routes, maps, and knowledge.</p>
 <p><strong>How they play:</strong> Fenicios live off the Market — theirs opens in the Dark Age, before anyone else can trade. They hire mercenaries cheaper than anyone else, their ships cost 15% less, and their Triremes trickle passive gold while they sail. They do not fight with their own army so much as buy everyone else's.</p>
-<p><strong>Strengths:</strong> Economy and gold generation, flexibility through mercenaries, early trade <strong>Weaknesses:</strong> No knights; no castle-tier infantry of their own; vulnerable to early aggression</p>
-<p><strong>Passive bonuses:</strong></p>
-<ul><li>Triremes generate a passive gold trickle (5 gold every 30 s)</li><li>Mercenaries at the Market cost 25% less</li><li>Half penalty from the Atlantic Storm</li></ul>
+<p><strong>Strengths:</strong> Economy and gold generation, flexibility through mercenaries, early trade
+<strong>Weaknesses:</strong> No knights; no castle-tier infantry of their own; vulnerable to early aggression</p>
+<p><strong>Passive bonuses:</strong>
+- Triremes generate a passive gold trickle (5 gold every 30 s)
+- Mercenaries at the Market cost 25% less
+- Half penalty from the Atlantic Storm</p>
 <p><strong>Unique unit:</strong> <em>Trireme</em> — a fast ramming warship built at the Dock (Feudal Age, 100 Wood + 50 Gold): ×2 damage against ships with a 40 px knockback ram</p>
 <p><strong>Hero: Hannón el Navegante</strong> — based on the real Carthaginian explorer who documented the African Atlantic coast. His ability <em>Trade Route</em> establishes a route that generates 50 gold over 30 seconds.</p>
 <p><strong>Heroine: Elissa</strong> — the founding queen of merchants. Her <em>Mercenary Pact</em> spends 400 gold to permanently convert one enemy unit (not heroes or buildings) within 200 px.</p>
-<hr>
+<hr />
 <h3 id="native-civilizations">Native Civilizations</h3>
 <p>The people who were already here. Each native civ occupies a specific island environment and is optimized for it. They know the terrain. They do not need roads to move fast or walls to defend well.</p>
 <h4 id="guanches">Guanches</h4>
 <p><em>"Echeyde is not a mountain. It is a door. And it is ours."</em></p>
 <p>The Guanches of Tenerife lived on the slopes of the Teide volcano — <em>Echeyde</em> in their language, the sacred gateway to the underworld. They were organized into seven kingdoms (menceyatos), each led by a mencey. When the Castilians invaded, six menceys submitted. One did not.</p>
 <p><strong>How they play:</strong> Guanches are a defensive civilization built around volcanic terrain. Malpaís tiles — the black, jagged lava rock that covers much of the Canarian landscape — are impassable for every other civilization. The Guanches walk through them freely. Their stone buildings are harder to destroy than anyone else's, they raise banot Pikemen from the Dark Age — the earliest anti-cavalry answer in the game — and the desert winds barely touch them.</p>
-<p><strong>Strengths:</strong> Volcanic terrain dominance, durable buildings, weather resilience <strong>Weaknesses:</strong> No cavalry; no gunpowder; weak at sea</p>
-<p><strong>Passive bonuses:</strong></p>
-<ul><li>Free traversal of malpaís (lava-rock) terrain</li><li>Stone buildings +20% HP</li><li>Immune to the Calima; half penalty from Volcanic Ash</li></ul>
+<p><strong>Strengths:</strong> Volcanic terrain dominance, durable buildings, weather resilience
+<strong>Weaknesses:</strong> No cavalry; no gunpowder; weak at sea</p>
+<p><strong>Passive bonuses:</strong>
+- Free traversal of malpaís (lava-rock) terrain
+- Stone buildings +20% HP
+- Immune to the Calima; half penalty from Volcanic Ash</p>
 <p><strong>Unique unit:</strong> <em>Menceyes Guard</em> — heavy infantry trained at the Barracks (Castle Age, 65 Food + 25 Gold); enters a Rage Aura below half HP</p>
 <p><strong>Hero: Bencomo</strong> — the real Mencey of Taoro who crushed the Castilian army at the first Battle of Acentejo (1494). His ability <em>Mencey's Charge</em> rallies nearby allied units: +30% attack speed for 10 seconds. Use it at the moment of contact, not before.</p>
 <p><strong>Heroine: Dácil</strong> — the princess who read the invaders before anyone else. Her <em>Mountain Voice</em> grants nearby allies +2 armor and +50% healing rate for 12 seconds.</p>
-<hr>
+<hr />
 <h4 id="canarii">Canarii</h4>
 <p><em>"The ravine is not a problem. It is a wall that builds itself."</em></p>
 <p>Gran Canaria's native people were the most politically complex of the archipelago — governed by a council of chiefs, with a warrior culture centered on individual combat. Their island's geography was their fortress: deep ravines, high plateaus, coastal cliffs.</p>
 <p><strong>How they play:</strong> Canarii have the strongest economy in the native tier. Their villagers gather food faster, their houses double as drop-off points (villagers unload wherever the town has grown), and their archers are cheap enough to field in large numbers early. On elevated terrain — the risco cliffs — their unique unit gains bonus attack range. They are also the protagonists of the campaign.</p>
-<p><strong>Strengths:</strong> Economy volume, early archer pressure, elevated terrain advantage <strong>Weaknesses:</strong> Limited heavy units; no naval strength; struggles on flat open maps</p>
-<p><strong>Passive bonuses:</strong></p>
-<ul><li>Villagers gather Food +15% faster</li><li>Archers cost 20% less Food</li><li>Half penalty from Sea Fog and Trade Winds</li></ul>
+<p><strong>Strengths:</strong> Economy volume, early archer pressure, elevated terrain advantage
+<strong>Weaknesses:</strong> Limited heavy units; no naval strength; struggles on flat open maps</p>
+<p><strong>Passive bonuses:</strong>
+- Villagers gather Food +15% faster
+- Archers cost 20% less Food
+- Half penalty from Sea Fog and Trade Winds</p>
 <p><strong>Unique unit:</strong> <em>Ravine Archer</em> — a light archer trained at the Archery Range (Castle Age, 40 Wood + 55 Gold); Ambush Shot doubles the first shot fired while standing still, and risco cliffs extend his range</p>
 <p><strong>Hero: Doramas</strong> — the legendary champion of Gran Canaria, who could only be killed by treachery. His ability <em>Challenge</em> taunts the nearest enemy unit into attacking only him for 6 seconds — pulling it out of formation, isolating it for your archers.</p>
 <p><strong>Heroine: Guayarmina</strong> — the last princess of Gáldar. Her <em>Fate's Arrow</em> is an unblockable shot for 80 damage that ignores armor; the cooldown is halved if the target dies.</p>
-<hr>
+<hr />
 <h4 id="mahos">Mahos</h4>
 <p><em>"The desert does not kill you. Your hurry does."</em></p>
 <p>Lanzarote and Fuerteventura are the oldest and driest islands — flat, windswept, almost entirely without trees. The Mahos built their world out of volcanic stone because there was nothing else. Their king Guadarfía is one of the most fascinating figures of the conquest: a man who survived by being indispensable to everyone.</p>
 <p><strong>How they play:</strong> Mahos build cheap because they substitute stone for wood. Their scouts and light cavalry move faster than any other civ's equivalent units, and dunes never slow them down — from a dune's crest they also see 40% farther, so the desert itself is their watchtower. They are an early-game harassment civilization — fast, unpredictable, hard to pin down.</p>
-<p><strong>Strengths:</strong> Speed, desert terrain mastery, cheap buildings, excellent scouting <strong>Weaknesses:</strong> Weak late-game; no archery depth; poor naval</p>
-<p><strong>Passive bonuses:</strong></p>
-<ul><li>Buildings cost 30% less Wood (dry-stone construction)</li><li>Scouts and light cavalry +25% movement speed</li><li>Free traversal of dune terrain; half penalty from the Calima</li></ul>
+<p><strong>Strengths:</strong> Speed, desert terrain mastery, cheap buildings, excellent scouting
+<strong>Weaknesses:</strong> Weak late-game; no archery depth; poor naval</p>
+<p><strong>Passive bonuses:</strong>
+- Buildings cost 30% less Wood (dry-stone construction)
+- Scouts and light cavalry +25% movement speed
+- Free traversal of dune terrain; half penalty from the Calima</p>
 <p><strong>Unique unit:</strong> <em>Sand Raider</em> — fast light cavalry trained at the Stable (Feudal Age, 60 Food + 40 Gold). Hits and runs: retreats automatically after each strike. Excellent for raiding villager lines and escaping before the enemy can respond.</p>
 <p><strong>Hero: Guadarfía</strong> — the Maho king who survived the conquest by being too useful to eliminate. His ability <em>Ambush</em> makes him nearly invisible for 8 seconds — enemies cannot auto-attack him while cloaked. Combine with Sand Raiders for a classic Maho ambush.</p>
 <p><strong>Heroine: Tibiabin</strong> — the seer of Fuerteventura. Her <em>Sandstorm</em> raises a 200 px storm for 10 seconds: 3 damage per second, −40% speed and −50% projectile accuracy for enemies inside.</p>
-<hr>
+<hr />
 <h3 id="european-invaders">European Invaders</h3>
 <p>They did not know the terrain. They knew something else: organization, iron, and the patience of empires. Each European civ has a different reason for being in the archipelago — and a different way of fighting.</p>
 <h4 id="francos">Francos</h4>
 <p><em>"The contract was signed. The islands were already ours on paper."</em></p>
 <p>Jean de Béthencourt was not a conqueror in the traditional sense — he was a Norman lord in service to the Castilian crown, and his conquest of Lanzarote and Fuerteventura in 1402 was administrative before it was military. He exploited the Mahos' internal divisions and allied with Guadarfía. His was the first European foothold in the Atlantic.</p>
 <p><strong>How they play:</strong> Francos advance through the Ages faster and cheaper than almost any other civilization. Their cavalry is strong from Feudal Age onwards. They expand early, pressure the enemy before they are ready, and win through momentum. They are the quintessential "timing attack" civilization.</p>
-<p><strong>Strengths:</strong> Fastest age advancement, powerful cavalry, early expansion <strong>Weaknesses:</strong> Weak archery; limited naval in late game</p>
-<p><strong>Passive bonuses:</strong></p>
-<ul><li>Age advancement costs 15% less</li><li>Cavalry units +15% HP</li></ul>
+<p><strong>Strengths:</strong> Fastest age advancement, powerful cavalry, early expansion
+<strong>Weaknesses:</strong> Weak archery; limited naval in late game</p>
+<p><strong>Passive bonuses:</strong>
+- Age advancement costs 15% less
+- Cavalry units +15% HP</p>
 <p><strong>Unique unit:</strong> <em>Chevalier Normand</em> — heavy cavalry trained at the Stable (Castle Age, 75 Food + 65 Gold); Lance Charge deals ×2.5 damage after 80 px of unbroken approach</p>
 <p><strong>Hero: Jean de Béthencourt</strong> — the Norman lord who first planted a European flag in the archipelago. His ability <em>Forced Diplomacy</em> converts the nearest enemy unit to your side for 12 seconds — a direct reference to his historical strategy of turning native leaders into collaborators.</p>
 <p><strong>Heroine: Catalina de Béthencourt</strong> — the duelist of the house. Her <em>Honor Duel</em> challenges an enemy hero or unique unit: both deal +100% damage to each other and −50% to everyone else for 15 seconds; if Catalina wins, she heals half her HP.</p>
-<hr>
+<hr />
 <h4 id="britanos">Britanos</h4>
 <p><em>"We are not here to stay. We are here to leave with more than we arrived with."</em></p>
 <p>The English presence in the Canaries was never about colonization. It was about disruption. Francis Drake's 1595 sack of Las Palmas de Gran Canaria was the most dramatic moment of a relationship built on privateering, piracy, and commercial competition with Castile. The English came in fast, hit hard, and left.</p>
 <p><strong>How they play:</strong> Britanos have the best warships in the game and the longest-range archers of any civilization. Their raiding economy — Drake's Plunder — means aggressive, unit-killing play can pay for itself. They reward aggression at sea and at range.</p>
-<p><strong>Strengths:</strong> Naval supremacy, long-range archery, raiding economy <strong>Weaknesses:</strong> Weak heavy cavalry upgrades; light defensive buildings</p>
-<p><strong>Passive bonuses:</strong></p>
-<ul><li>Foot archers gain +1 attack range per Age (from Feudal onwards)</li><li>Warships attack 20% faster</li><li>Half penalty from the Atlantic Storm</li></ul>
+<p><strong>Strengths:</strong> Naval supremacy, long-range archery, raiding economy
+<strong>Weaknesses:</strong> Weak heavy cavalry upgrades; light defensive buildings</p>
+<p><strong>Passive bonuses:</strong>
+- Foot archers gain +1 attack range per Age (from Feudal onwards)
+- Warships attack 20% faster
+- Half penalty from the Atlantic Storm</p>
 <p><strong>Unique unit:</strong> <em>Longbowman</em> — foot archer trained at the Archery Range (Castle Age, 30 Wood + 60 Gold) with exceptional range and armour-piercing arrows (+4 vs cavalry)</p>
 <p><strong>Hero: Francis Drake</strong> — the privateer who sacked Las Palmas in 1595 and was still repelled by the city's militia. His ability <em>Plunder</em> lasts 20 seconds — every enemy unit killed within his radius pays 15 gold. Send him into a dense fight, activate <em>Plunder</em>, and watch the economy swing.</p>
 <p><strong>Heroine: Grace O'Malley</strong> — the pirate queen of Ireland. Her <em>Boarding Action</em> dashes 200 px in a line, dealing 30 damage and stunning enemies for 2 seconds — and 100 damage to buildings.</p>
-<hr>
+<hr />
 <h4 id="castellanos">Castellanos</h4>
 <p><em>"We are not the first. We will be the last."</em></p>
 <p>The Crown of Castile funded the final and complete conquest of the archipelago. Alonso Fernández de Lugo took Tenerife in two campaigns — losing the first catastrophically at Acentejo in 1494 to Bencomo, returning in 1496 with a reinforced army to win the second. He founded La Laguna, still the historic capital of Tenerife, and completed the pacification of all seven islands.</p>
 <p><strong>How they play:</strong> Castellanos are slow to start and expensive to maintain, but their late-game power is unmatched. Every age advance unlocks a free Blacksmith technology. Their swordsmen are among the hardiest in the game. If you let Castellanos reach Imperial Age comfortably, they are very difficult to defeat.</p>
-<p><strong>Strengths:</strong> Best late-game military, hardy infantry, free technologies <strong>Weaknesses:</strong> Slow early economy; most powerful units require Castle or Imperial Age</p>
-<p><strong>Passive bonuses:</strong></p>
-<ul><li>Advancing to a new Age unlocks one free Blacksmith technology</li><li>Swordsman line +15% HP</li><li>Half penalty from the Calima</li></ul>
+<p><strong>Strengths:</strong> Best late-game military, hardy infantry, free technologies
+<strong>Weaknesses:</strong> Slow early economy; most powerful units require Castle or Imperial Age</p>
+<p><strong>Passive bonuses:</strong>
+- Advancing to a new Age unlocks one free Blacksmith technology
+- Swordsman line +15% HP
+- Half penalty from the Calima</p>
 <p><strong>Unique unit:</strong> <em>Conquistador</em> — armored infantry trained at the Barracks (Castle Age, 60 Food + 60 Gold); Salvo Fire unleashes 3 rapid shots on a 12 s cooldown</p>
 <p><strong>Hero: Don Quijote de la Mancha</strong> — a knight errant from La Mancha who arrives in the islands convinced he is on a sacred crusade. Cervantes wrote his story in 1605, just after the Canarian conquest ended, as a satire of exactly these men: idealistic, relentless, not entirely sure what they are fighting. The windmills he famously charges at? There are real historical windmills on Lanzarote and Fuerteventura — the very islands the Castellanos set foot on first.</p>
 <p>His active ability <em>Knight Errant's Charge</em> sends him galloping in a straight line, damaging everything in his path — friend or foe. Aim carefully. His passive <em>Rocinante</em> gives him extra movement speed at all times, but his attacks land with a slight delay, as if he always arrives one step behind reality. He has the strongest raw charge damage of any hero — and is the most likely to trample your own units if used carelessly.</p>
 <p><strong>Heroine: Dulcinea del Toboso</strong> — the idea worth fighting for, made real. Her <em>Call to Arms</em> summons 3 temporary Militia (+20% HP and attack) for 40 seconds; they do not count as casualties when they fade.</p>
-<hr>
+<hr />
 <h2 id="terrain">Terrain</h2>
 <p>The archipelago is not flat. Every tile type changes how units move and fight.</p>
-<table><thead><tr><th>Terrain</th><th>Effect</th><th>Notes</th></tr></thead><tbody><tr><td>Grass</td><td>Normal movement</td><td>Standard buildable land</td></tr><tr><td>Sand / Dune</td><td>Heavy infantry −20% speed</td><td>Mahos traverse freely</td></tr><tr><td>Malpaís (volcanic rock)</td><td>Impassable</td><td>Not buildable; Guanches walk it freely</td></tr><tr><td>Laurisilva (dense forest)</td><td>All units −35% speed; vision −30% under the canopy</td><td>Very high wood yield</td></tr><tr><td>Risco (cliff edge)</td><td>Impassable</td><td>Ranged units at the cliff edge gain +2 attack range</td></tr><tr><td>Shallow water</td><td>Land units blocked</td><td>Only amphibious units wade it — the Atlantes Tidecaller, at full speed</td></tr><tr><td>Ocean</td><td>Land units blocked</td><td>Ships, and the Tidecaller swimming at 60% speed; fishing available</td></tr><tr><td>Caldera (volcanic crater)</td><td>Impassable</td><td>Volcanic Ash events strike around calderas; a Mining Camp built in a caldera's shadow trickles stone to its owner</td></tr></tbody></table>
-<hr>
+<table>
+<thead>
+<tr>
+<th>Terrain</th>
+<th>Effect</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grass</td>
+<td>Normal movement</td>
+<td>Standard buildable land</td>
+</tr>
+<tr>
+<td>Sand / Dune</td>
+<td>Heavy infantry −20% speed</td>
+<td>Mahos traverse freely</td>
+</tr>
+<tr>
+<td>Malpaís (volcanic rock)</td>
+<td>Impassable</td>
+<td>Not buildable; Guanches walk it freely</td>
+</tr>
+<tr>
+<td>Laurisilva (dense forest)</td>
+<td>All units −35% speed; vision −30% under the canopy</td>
+<td>Very high wood yield</td>
+</tr>
+<tr>
+<td>Risco (cliff edge)</td>
+<td>Impassable</td>
+<td>Ranged units at the cliff edge gain +2 attack range</td>
+</tr>
+<tr>
+<td>Shallow water</td>
+<td>Land units blocked</td>
+<td>Only amphibious units wade it — the Atlantes Tidecaller, at full speed</td>
+</tr>
+<tr>
+<td>Ocean</td>
+<td>Land units blocked</td>
+<td>Ships, and the Tidecaller swimming at 60% speed; fishing available</td>
+</tr>
+<tr>
+<td>Caldera (volcanic crater)</td>
+<td>Impassable</td>
+<td>Volcanic Ash events strike around calderas; a Mining Camp built in a caldera's shadow trickles stone to its owner</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="resources-economy">Resources &amp; Economy</h2>
 <p>Four resources drive everything in <em>Calima</em>. You start with 200 Food, 75 Wood, and 50 Gold (Stone starts at 0). Normal mode uses these defaults; Scarce and Abundant scale the map's deposits; Full Combat sets all four stockpiles to 9999.</p>
 <h3 id="the-four-resources">The four resources</h3>
-<table><thead><tr><th>Resource</th><th>How to gather</th></tr></thead><tbody><tr><td><strong>Food</strong></td><td>Send Villagers to berry bushes, hunt animals, or build Farms. The <strong>Mill</strong> is the food drop-off; it trains <strong>Presa Canario</strong> herding dogs, which lead animals (including enemy sheep, which convert on the way) back to your base — every trip also pays food for how far the dog brought the animal home. Wild sheep flocks graze the open map, and the AI raises dogs of its own, so unclaimed flocks are a race. On water maps, Fishing Boats pull food from ocean nodes and Fish Traps provide a passive stream.</td></tr><tr><td><strong>Wood</strong></td><td>Order Villagers to chop trees. Build a Lumber Camp close to the forest — it acts as the drop-off point.</td></tr><tr><td><strong>Gold</strong></td><td>Mine gold deposits. Build a Mining Camp nearby. The Market also converts other resources to gold.</td></tr><tr><td><strong>Stone</strong></td><td>Mine stone quarries. Same drop-off logic as gold: Mining Camp required. Used for walls and Watch Towers.</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>How to gather</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Food</strong></td>
+<td>Send Villagers to berry bushes, hunt animals, or build Farms. The <strong>Mill</strong> is the food drop-off; it trains <strong>Presa Canario</strong> herding dogs, which lead animals (including enemy sheep, which convert on the way) back to your base — every trip also pays food for how far the dog brought the animal home. Wild sheep flocks graze the open map, and the AI raises dogs of its own, so unclaimed flocks are a race. On water maps, Fishing Boats pull food from ocean nodes and Fish Traps provide a passive stream.</td>
+</tr>
+<tr>
+<td><strong>Wood</strong></td>
+<td>Order Villagers to chop trees. Build a Lumber Camp close to the forest — it acts as the drop-off point.</td>
+</tr>
+<tr>
+<td><strong>Gold</strong></td>
+<td>Mine gold deposits. Build a Mining Camp nearby. The Market also converts other resources to gold.</td>
+</tr>
+<tr>
+<td><strong>Stone</strong></td>
+<td>Mine stone quarries. Same drop-off logic as gold: Mining Camp required. Used for walls and Watch Towers.</td>
+</tr>
+</tbody>
+</table>
 <p>Villagers carry up to <strong>10 units</strong> of a resource before walking it home. Two Blacksmith techs raise the basket for everything (+25% each: <strong>Canarian Cart</strong>, <strong>Island Handcart</strong>), and each camp's own three-step tech line (see the tech tree) adds +10% carry and +15% gather speed per step for its resource. Build drop-offs close to the nodes — travel time is the real cost.</p>
 <h3 id="population">Population</h3>
 <p>You start with a cap of <strong>15</strong>. Every completed <strong>House</strong> raises the cap by <strong>5</strong>. If you hit the cap, training pauses — the HUD flashes and a toast offers to place a House with one click.</p>
 <h3 id="market-trading">Market trading</h3>
 <p>The Market sells food, wood or stone for gold and buys them back, at per-player rates that degrade with use and recover over time. Build it from the Feudal Age (Fenicios: from the Dark Age). Every civilization can also <strong>hire mercenaries</strong> there — units from other civs' rosters, paid in gold on a cooldown (Fenicios pay 25% less).</p>
-<hr>
+<hr />
 <h2 id="age-progression">Age Progression</h2>
 <p>Advancing Ages is the backbone of the game. Each Age unlocks new units, buildings, and techs. You advance from the Town Center once you can afford the cost.</p>
-<table><thead><tr><th>Age</th><th>Advance cost</th><th>Research time</th><th>What becomes available</th></tr></thead><tbody><tr><td><strong>Dark Age</strong></td><td>— (starting age)</td><td>—</td><td>Villager, Militia, Scout, Presa Canario, basic buildings, Dock, Fishing Boat</td></tr><tr><td><strong>Feudal Age</strong></td><td>500 Food</td><td>~2 min 10 s</td><td>Archer, Heavy Scout, Archery Range, Blacksmith, Stable, Market, Watch Tower, War Galley, Transport Ship, Trireme, Sand Raider</td></tr><tr><td><strong>Castle Age</strong></td><td>800 Food + 200 Gold</td><td>~2 min 40 s</td><td>Pikeman, Knight, University, Temple, Siege Workshop, extra Town Centers, most unique units, Harimaguada</td></tr><tr><td><strong>Imperial Age</strong></td><td>1000 Food + 800 Gold</td><td>~3 min 10 s</td><td>Wonder, Trebuchet, the top of every tech line</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Age</th>
+<th>Advance cost</th>
+<th>Research time</th>
+<th>What becomes available</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dark Age</strong></td>
+<td>— (starting age)</td>
+<td>—</td>
+<td>Villager, Militia, Scout, Presa Canario, basic buildings, Dock, Fishing Boat</td>
+</tr>
+<tr>
+<td><strong>Feudal Age</strong></td>
+<td>500 Food</td>
+<td>~2 min 10 s</td>
+<td>Archer, Heavy Scout, Archery Range, Blacksmith, Stable, Market, Watch Tower, War Galley, Transport Ship, Trireme, Sand Raider</td>
+</tr>
+<tr>
+<td><strong>Castle Age</strong></td>
+<td>800 Food + 200 Gold</td>
+<td>~2 min 40 s</td>
+<td>Pikeman, Knight, University, Temple, Siege Workshop, extra Town Centers, most unique units, Harimaguada</td>
+</tr>
+<tr>
+<td><strong>Imperial Age</strong></td>
+<td>1000 Food + 800 Gold</td>
+<td>~3 min 10 s</td>
+<td>Wonder, Trebuchet, the top of every tech line</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Francos</strong> advance 15% cheaper. <strong>Castellanos</strong> receive a free Blacksmith technology every time they advance.</p>
-<hr>
+<hr />
 <h2 id="units">Units</h2>
 <h3 id="economy-support">Economy &amp; support</h3>
-<table><thead><tr><th>Unit</th><th>Age</th><th>Building</th><th>Cost</th><th>Role</th></tr></thead><tbody><tr><td><strong>Villager</strong></td><td>Dark</td><td>Town Center</td><td>50 Food</td><td>Gathers all four resources; builds and repairs</td></tr><tr><td><strong>Presa Canario</strong></td><td>Dark</td><td>Mill</td><td>30 Food + 10 Gold</td><td>Herding dog: fetches animals and leads them home (paying food for the trip); bites back when pressed but never abandons a herding trip on its own</td></tr><tr><td><strong>Harimaguada</strong></td><td>Castle</td><td>Temple</td><td>85 Food + 25 Gold</td><td>Priestess-healer (always female): heals 5 HP/s at touch range, auto-triages nearby wounded while idle; never fights</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Age</th>
+<th>Building</th>
+<th>Cost</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Villager</strong></td>
+<td>Dark</td>
+<td>Town Center</td>
+<td>50 Food</td>
+<td>Gathers all four resources; builds and repairs</td>
+</tr>
+<tr>
+<td><strong>Presa Canario</strong></td>
+<td>Dark</td>
+<td>Mill</td>
+<td>30 Food + 10 Gold</td>
+<td>Herding dog: fetches animals and leads them home (paying food for the trip); bites back when pressed but never abandons a herding trip on its own</td>
+</tr>
+<tr>
+<td><strong>Harimaguada</strong></td>
+<td>Castle</td>
+<td>Temple</td>
+<td>85 Food + 25 Gold</td>
+<td>Priestess-healer (always female): heals 5 HP/s at touch range, auto-triages nearby wounded while idle; never fights</td>
+</tr>
+</tbody>
+</table>
 <h3 id="military">Military</h3>
-<table><thead><tr><th>Unit</th><th>Age</th><th>Building</th><th>Cost</th><th>Role</th></tr></thead><tbody><tr><td><strong>Militia</strong></td><td>Dark</td><td>Barracks</td><td>60 Food + 20 Wood</td><td>Basic melee infantry</td></tr><tr><td><strong>Scout</strong></td><td>Dark</td><td>Stable (one free at start)</td><td>80 Food</td><td>Fast explorer with an auto-explore mode; weak in combat</td></tr><tr><td><strong>Archer</strong></td><td>Feudal</td><td>Barracks / Archery Range</td><td>25 Wood + 45 Gold</td><td>Ranged; fragile up close; attack-ground and cover fire</td></tr><tr><td><strong>Man-at-Arms</strong></td><td>Feudal</td><td>upgrade of Militia</td><td>tech: 100 Food + 40 Gold</td><td>Upgraded infantry line</td></tr><tr><td><strong>Heavy Scout</strong></td><td>Feudal</td><td>Stable (upgrade of Scout)</td><td>80 Food + 30 Gold</td><td>Fast raiding cavalry</td></tr><tr><td><strong>Pikeman</strong></td><td>Castle</td><td>Barracks</td><td>60 Food + 30 Gold</td><td>Anti-cavalry spearman</td></tr><tr><td><strong>Long Swordsman</strong></td><td>Castle</td><td>upgrade of Man-at-Arms</td><td>tech: 200 Food + 60 Gold</td><td>Top of the infantry line</td></tr><tr><td><strong>Knight</strong></td><td>Castle</td><td>Stable</td><td>60 Food + 75 Gold</td><td>Heavy cavalry; the dominant Castle Age ground unit</td></tr><tr><td><strong>Battering Ram</strong></td><td>Castle</td><td>Siege Workshop</td><td>160 Wood</td><td>×3 damage vs buildings, nearly harmless to units</td></tr><tr><td><strong>Mangonel</strong></td><td>Castle</td><td>Siege Workshop</td><td>160 Wood + 135 Gold</td><td>Splash damage (72 px); minimum range</td></tr><tr><td><strong>Trebuchet</strong></td><td>Imperial</td><td>Siege Workshop</td><td>200 Wood + 200 Gold</td><td>Longest range in the game; must deploy to fire</td></tr><tr><td><strong>Hero</strong></td><td>Dark (free)</td><td>respawns at the TC</td><td>Free</td><td>One per player, chosen from your civ's hero pair; unique ability</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Age</th>
+<th>Building</th>
+<th>Cost</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Militia</strong></td>
+<td>Dark</td>
+<td>Barracks</td>
+<td>60 Food + 20 Wood</td>
+<td>Basic melee infantry</td>
+</tr>
+<tr>
+<td><strong>Scout</strong></td>
+<td>Dark</td>
+<td>Stable (one free at start)</td>
+<td>80 Food</td>
+<td>Fast explorer with an auto-explore mode; weak in combat</td>
+</tr>
+<tr>
+<td><strong>Archer</strong></td>
+<td>Feudal</td>
+<td>Barracks / Archery Range</td>
+<td>25 Wood + 45 Gold</td>
+<td>Ranged; fragile up close; attack-ground and cover fire</td>
+</tr>
+<tr>
+<td><strong>Man-at-Arms</strong></td>
+<td>Feudal</td>
+<td>upgrade of Militia</td>
+<td>tech: 100 Food + 40 Gold</td>
+<td>Upgraded infantry line</td>
+</tr>
+<tr>
+<td><strong>Heavy Scout</strong></td>
+<td>Feudal</td>
+<td>Stable (upgrade of Scout)</td>
+<td>80 Food + 30 Gold</td>
+<td>Fast raiding cavalry</td>
+</tr>
+<tr>
+<td><strong>Pikeman</strong></td>
+<td>Castle</td>
+<td>Barracks</td>
+<td>60 Food + 30 Gold</td>
+<td>Anti-cavalry spearman</td>
+</tr>
+<tr>
+<td><strong>Long Swordsman</strong></td>
+<td>Castle</td>
+<td>upgrade of Man-at-Arms</td>
+<td>tech: 200 Food + 60 Gold</td>
+<td>Top of the infantry line</td>
+</tr>
+<tr>
+<td><strong>Knight</strong></td>
+<td>Castle</td>
+<td>Stable</td>
+<td>60 Food + 75 Gold</td>
+<td>Heavy cavalry; the dominant Castle Age ground unit</td>
+</tr>
+<tr>
+<td><strong>Battering Ram</strong></td>
+<td>Castle</td>
+<td>Siege Workshop</td>
+<td>160 Wood</td>
+<td>×3 damage vs buildings, nearly harmless to units</td>
+</tr>
+<tr>
+<td><strong>Mangonel</strong></td>
+<td>Castle</td>
+<td>Siege Workshop</td>
+<td>160 Wood + 135 Gold</td>
+<td>Splash damage (72 px); minimum range</td>
+</tr>
+<tr>
+<td><strong>Trebuchet</strong></td>
+<td>Imperial</td>
+<td>Siege Workshop</td>
+<td>200 Wood + 200 Gold</td>
+<td>Longest range in the game; must deploy to fire</td>
+</tr>
+<tr>
+<td><strong>Hero</strong></td>
+<td>Dark (free)</td>
+<td>respawns at the TC</td>
+<td>Free</td>
+<td>One per player, chosen from your civ's hero pair; unique ability</td>
+</tr>
+</tbody>
+</table>
 <p>Each civilization also fields its <strong>unique unit</strong> — see the civilization sections above for building, age and cost.</p>
 <p>Heroes are not trained — each player starts with one. If a hero dies, they respawn at the Town Center after <strong>2 minutes</strong> — except in <strong>Regicide</strong>, where hero death means instant defeat. A hero widget stays on screen in Regicide, and a HUD button locates your hero at any time.</p>
-<hr>
+<hr />
 <h2 id="buildings">Buildings</h2>
 <h3 id="production">Production</h3>
-<table><thead><tr><th>Building</th><th>Cost</th><th>Notes</th></tr></thead><tbody><tr><td><strong>Town Center</strong></td><td>starting building (extra TCs: 275 Wood, Castle Age)</td><td>Trains Villagers; Age advancement; garrisons 10 (shoots arrows while garrisoned); Town Bell</td></tr><tr><td><strong>Barracks</strong></td><td>175 Wood</td><td>Trains Militia, Archer, Pikeman and several unique units; researches the infantry upgrades</td></tr><tr><td><strong>Archery Range</strong></td><td>175 Wood (Feudal)</td><td>Trains Archer, Ravine Archer, Longbowman</td></tr><tr><td><strong>Stable</strong></td><td>175 Wood (Feudal)</td><td>Trains Scout line, Knight, Sand Raider, Chevalier Normand; researches the cavalry upgrades</td></tr><tr><td><strong>Siege Workshop</strong></td><td>200 Wood (Castle)</td><td>Trains Battering Ram, Mangonel, Trebuchet</td></tr><tr><td><strong>Dock</strong></td><td>150 Wood</td><td>Coastal placement; trains Fishing Boat, Transport Ship, War Galley, Trireme</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Building</th>
+<th>Cost</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Town Center</strong></td>
+<td>starting building (extra TCs: 275 Wood, Castle Age)</td>
+<td>Trains Villagers; Age advancement; garrisons 10 (shoots arrows while garrisoned); Town Bell</td>
+</tr>
+<tr>
+<td><strong>Barracks</strong></td>
+<td>175 Wood</td>
+<td>Trains Militia, Archer, Pikeman and several unique units; researches the infantry upgrades</td>
+</tr>
+<tr>
+<td><strong>Archery Range</strong></td>
+<td>175 Wood (Feudal)</td>
+<td>Trains Archer, Ravine Archer, Longbowman</td>
+</tr>
+<tr>
+<td><strong>Stable</strong></td>
+<td>175 Wood (Feudal)</td>
+<td>Trains Scout line, Knight, Sand Raider, Chevalier Normand; researches the cavalry upgrades</td>
+</tr>
+<tr>
+<td><strong>Siege Workshop</strong></td>
+<td>200 Wood (Castle)</td>
+<td>Trains Battering Ram, Mangonel, Trebuchet</td>
+</tr>
+<tr>
+<td><strong>Dock</strong></td>
+<td>150 Wood</td>
+<td>Coastal placement; trains Fishing Boat, Transport Ship, War Galley, Trireme</td>
+</tr>
+</tbody>
+</table>
 <h3 id="economy">Economy</h3>
-<table><thead><tr><th>Building</th><th>Cost</th><th>Notes</th></tr></thead><tbody><tr><td><strong>Lumber Camp</strong></td><td>100 Wood</td><td>Wood drop-off; researches the wood tech line</td></tr><tr><td><strong>Mining Camp</strong></td><td>100 Wood</td><td>Gold and stone drop-off; researches the mining tech line</td></tr><tr><td><strong>Mill</strong></td><td>100 Wood</td><td>Food drop-off; trains the Presa Canario; researches the farming tech line</td></tr><tr><td><strong>Farm</strong></td><td>60 Wood</td><td>Continuous food source; one Villager works it</td></tr><tr><td><strong>Fish Trap</strong></td><td>75 Wood</td><td>Built on ocean tiles by Fishing Boats; passive food</td></tr><tr><td><strong>Market</strong></td><td>175 Wood (Feudal)</td><td>Trade resources for gold; hire mercenaries</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Building</th>
+<th>Cost</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Lumber Camp</strong></td>
+<td>100 Wood</td>
+<td>Wood drop-off; researches the wood tech line</td>
+</tr>
+<tr>
+<td><strong>Mining Camp</strong></td>
+<td>100 Wood</td>
+<td>Gold and stone drop-off; researches the mining tech line</td>
+</tr>
+<tr>
+<td><strong>Mill</strong></td>
+<td>100 Wood</td>
+<td>Food drop-off; trains the Presa Canario; researches the farming tech line</td>
+</tr>
+<tr>
+<td><strong>Farm</strong></td>
+<td>60 Wood</td>
+<td>Continuous food source; one Villager works it</td>
+</tr>
+<tr>
+<td><strong>Fish Trap</strong></td>
+<td>75 Wood</td>
+<td>Built on ocean tiles by Fishing Boats; passive food</td>
+</tr>
+<tr>
+<td><strong>Market</strong></td>
+<td>175 Wood (Feudal)</td>
+<td>Trade resources for gold; hire mercenaries</td>
+</tr>
+</tbody>
+</table>
 <h3 id="research">Research</h3>
-<table><thead><tr><th>Building</th><th>Cost</th><th>Notes</th></tr></thead><tbody><tr><td><strong>Blacksmith</strong></td><td>150 Wood (Feudal)</td><td>Weapon, armour and cart technologies</td></tr><tr><td><strong>University</strong></td><td>200 Wood (Castle)</td><td>Ballistics, Chemistry, Siege Engineering</td></tr><tr><td><strong>Temple</strong></td><td>175 Wood (Castle)</td><td>Fervor, Sanctity, Atonement; trains the Harimaguada; field hospital — garrisoned units (5) heal 4 HP/s, heroes at half rate</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Building</th>
+<th>Cost</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Blacksmith</strong></td>
+<td>150 Wood (Feudal)</td>
+<td>Weapon, armour and cart technologies</td>
+</tr>
+<tr>
+<td><strong>University</strong></td>
+<td>200 Wood (Castle)</td>
+<td>Ballistics, Chemistry, Siege Engineering</td>
+</tr>
+<tr>
+<td><strong>Temple</strong></td>
+<td>175 Wood (Castle)</td>
+<td>Fervor, Sanctity, Atonement; trains the Harimaguada; field hospital — garrisoned units (5) heal 4 HP/s, heroes at half rate</td>
+</tr>
+</tbody>
+</table>
 <h3 id="defense">Defense</h3>
-<table><thead><tr><th>Building</th><th>Cost</th><th>Notes</th></tr></thead><tbody><tr><td><strong>House</strong></td><td>25 Wood</td><td>+5 population cap on completion</td></tr><tr><td><strong>Wall</strong></td><td>5 Stone per segment</td><td>Drag to place a whole run</td></tr><tr><td><strong>Gate</strong></td><td>30 Wood</td><td>Opens for allies; lock/unlock with O</td></tr><tr><td><strong>Watch Tower</strong></td><td>125 Stone (Feudal)</td><td>Fires arrows at the nearest enemy; garrisons 5 — each occupant adds an arrow to the volley</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Building</th>
+<th>Cost</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>House</strong></td>
+<td>25 Wood</td>
+<td>+5 population cap on completion</td>
+</tr>
+<tr>
+<td><strong>Wall</strong></td>
+<td>5 Stone per segment</td>
+<td>Drag to place a whole run</td>
+</tr>
+<tr>
+<td><strong>Gate</strong></td>
+<td>30 Wood</td>
+<td>Opens for allies; lock/unlock with O</td>
+</tr>
+<tr>
+<td><strong>Watch Tower</strong></td>
+<td>125 Stone (Feudal)</td>
+<td>Fires arrows at the nearest enemy; garrisons 5 — each occupant adds an arrow to the volley</td>
+</tr>
+</tbody>
+</table>
 <h3 id="special">Special</h3>
-<table><thead><tr><th>Building</th><th>Cost</th><th>Notes</th></tr></thead><tbody><tr><td><strong>Wonder</strong></td><td>2500 Food + 2500 Wood + 2500 Stone + 5000 Gold</td><td>Imperial Age only; triggers the 4-minute victory countdown in Wonder mode</td></tr></tbody></table>
-<hr>
+<table>
+<thead>
+<tr>
+<th>Building</th>
+<th>Cost</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Wonder</strong></td>
+<td>2500 Food + 2500 Wood + 2500 Stone + 5000 Gold</td>
+<td>Imperial Age only; triggers the 4-minute victory countdown in Wonder mode</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="research-tech-tree">Research (Tech Tree)</h2>
 <p>Thirty-two technologies across eight buildings. Each building researches one tech at a time but queues up to <strong>5 in flight</strong> — queued techs are paid when queued and fully refunded if you cancel them. Prerequisites chain naturally: you can queue a whole line at once.</p>
 <h3 id="blacksmith">Blacksmith</h3>
-<table><thead><tr><th>Tech</th><th>Age</th><th>Cost</th><th>Effect</th></tr></thead><tbody><tr><td><strong>Loom</strong></td><td>Dark</td><td>50 Food</td><td>Villager HP +15%</td></tr><tr><td><strong>Forging</strong></td><td>Feudal</td><td>75 Food</td><td>All unit attack +15%</td></tr><tr><td><strong>Scale Barding</strong></td><td>Feudal</td><td>100 Food + 50 Gold</td><td>Cavalry melee armour +1</td></tr><tr><td><strong>Fletching</strong></td><td>Feudal</td><td>100 Gold</td><td>Archer attack +20%</td></tr><tr><td><strong>Padded Archer Armour</strong></td><td>Feudal</td><td>100 Food</td><td>Archer pierce armour +1</td></tr><tr><td><strong>Shipwright</strong></td><td>Feudal</td><td>200 Wood + 60 Gold</td><td>Ship HP +15%; ship cost −15%</td></tr><tr><td><strong>Canarian Cart</strong></td><td>Feudal</td><td>150 Food + 75 Wood</td><td>Villager carry capacity +25% (farms unaffected)</td></tr><tr><td><strong>Iron Casting</strong></td><td>Castle</td><td>150 Gold</td><td>All unit attack +20% (requires Forging)</td></tr><tr><td><strong>Chain Barding</strong></td><td>Castle</td><td>200 Food + 100 Gold</td><td>Cavalry melee armour +1 (requires Scale Barding)</td></tr><tr><td><strong>Bodkin Arrow</strong></td><td>Castle</td><td>100 Food + 150 Gold</td><td>Archer attack +20%, range +10% (requires Fletching)</td></tr><tr><td><strong>Island Handcart</strong></td><td>Castle</td><td>200 Food + 125 Wood</td><td>Carry capacity +25% again (requires Canarian Cart)</td></tr><tr><td><strong>Blast Furnace</strong></td><td>Imperial</td><td>275 Food + 225 Gold</td><td>All unit attack +15%</td></tr><tr><td><strong>Plate Barding</strong></td><td>Imperial</td><td>300 Food + 200 Gold</td><td>Cavalry melee armour +1 (requires Chain Barding)</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Tech</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Loom</strong></td>
+<td>Dark</td>
+<td>50 Food</td>
+<td>Villager HP +15%</td>
+</tr>
+<tr>
+<td><strong>Forging</strong></td>
+<td>Feudal</td>
+<td>75 Food</td>
+<td>All unit attack +15%</td>
+</tr>
+<tr>
+<td><strong>Scale Barding</strong></td>
+<td>Feudal</td>
+<td>100 Food + 50 Gold</td>
+<td>Cavalry melee armour +1</td>
+</tr>
+<tr>
+<td><strong>Fletching</strong></td>
+<td>Feudal</td>
+<td>100 Gold</td>
+<td>Archer attack +20%</td>
+</tr>
+<tr>
+<td><strong>Padded Archer Armour</strong></td>
+<td>Feudal</td>
+<td>100 Food</td>
+<td>Archer pierce armour +1</td>
+</tr>
+<tr>
+<td><strong>Shipwright</strong></td>
+<td>Feudal</td>
+<td>200 Wood + 60 Gold</td>
+<td>Ship HP +15%; ship cost −15%</td>
+</tr>
+<tr>
+<td><strong>Canarian Cart</strong></td>
+<td>Feudal</td>
+<td>150 Food + 75 Wood</td>
+<td>Villager carry capacity +25% (farms unaffected)</td>
+</tr>
+<tr>
+<td><strong>Iron Casting</strong></td>
+<td>Castle</td>
+<td>150 Gold</td>
+<td>All unit attack +20% (requires Forging)</td>
+</tr>
+<tr>
+<td><strong>Chain Barding</strong></td>
+<td>Castle</td>
+<td>200 Food + 100 Gold</td>
+<td>Cavalry melee armour +1 (requires Scale Barding)</td>
+</tr>
+<tr>
+<td><strong>Bodkin Arrow</strong></td>
+<td>Castle</td>
+<td>100 Food + 150 Gold</td>
+<td>Archer attack +20%, range +10% (requires Fletching)</td>
+</tr>
+<tr>
+<td><strong>Island Handcart</strong></td>
+<td>Castle</td>
+<td>200 Food + 125 Wood</td>
+<td>Carry capacity +25% again (requires Canarian Cart)</td>
+</tr>
+<tr>
+<td><strong>Blast Furnace</strong></td>
+<td>Imperial</td>
+<td>275 Food + 225 Gold</td>
+<td>All unit attack +15%</td>
+</tr>
+<tr>
+<td><strong>Plate Barding</strong></td>
+<td>Imperial</td>
+<td>300 Food + 200 Gold</td>
+<td>Cavalry melee armour +1 (requires Chain Barding)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="university">University</h3>
-<table><thead><tr><th>Tech</th><th>Age</th><th>Cost</th><th>Effect</th></tr></thead><tbody><tr><td><strong>Ballistics</strong></td><td>Castle</td><td>175 Gold</td><td>Archer attack speed +20% (requires Fletching)</td></tr><tr><td><strong>Siege Engineering</strong></td><td>Castle</td><td>200 Gold</td><td>All units deal +20% damage to buildings</td></tr><tr><td><strong>Chemistry</strong></td><td>Imperial</td><td>300 Gold</td><td>Archer attack +15% (requires Ballistics)</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Tech</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ballistics</strong></td>
+<td>Castle</td>
+<td>175 Gold</td>
+<td>Archer attack speed +20% (requires Fletching)</td>
+</tr>
+<tr>
+<td><strong>Siege Engineering</strong></td>
+<td>Castle</td>
+<td>200 Gold</td>
+<td>All units deal +20% damage to buildings</td>
+</tr>
+<tr>
+<td><strong>Chemistry</strong></td>
+<td>Imperial</td>
+<td>300 Gold</td>
+<td>Archer attack +15% (requires Ballistics)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="temple">Temple</h3>
-<table><thead><tr><th>Tech</th><th>Age</th><th>Cost</th><th>Effect</th></tr></thead><tbody><tr><td><strong>Sanctity</strong></td><td>Castle</td><td>100 Food</td><td>Swordsman HP +15%</td></tr><tr><td><strong>Fervor</strong></td><td>Castle</td><td>150 Gold</td><td>All unit move speed +10%</td></tr><tr><td><strong>Atonement</strong></td><td>Imperial</td><td>150 Food + 100 Gold</td><td>Cavalry HP +20% (requires Sanctity)</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Tech</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Sanctity</strong></td>
+<td>Castle</td>
+<td>100 Food</td>
+<td>Swordsman HP +15%</td>
+</tr>
+<tr>
+<td><strong>Fervor</strong></td>
+<td>Castle</td>
+<td>150 Gold</td>
+<td>All unit move speed +10%</td>
+</tr>
+<tr>
+<td><strong>Atonement</strong></td>
+<td>Imperial</td>
+<td>150 Food + 100 Gold</td>
+<td>Cavalry HP +20% (requires Sanctity)</td>
+</tr>
+</tbody>
+</table>
 <h3 id="camp-economy-lines">Camp economy lines</h3>
 <p>Each camp researches its own three-step line — one step per age from Feudal, each giving <strong>+15% gather rate and +10% carry</strong> for that resource:</p>
-<table><thead><tr><th>Building</th><th>Feudal</th><th>Castle</th><th>Imperial</th></tr></thead><tbody><tr><td><strong>Lumber Camp</strong> (wood)</td><td>Double-Bit Axe — 100 Food + 50 Wood</td><td>Bow Saw — 150 Food + 100 Wood</td><td>Two-Man Saw — 300 Food + 200 Wood</td></tr><tr><td><strong>Mining Camp</strong> (gold + stone)</td><td>Reinforced Picks — 100 Food + 75 Wood</td><td>Shaft Mining — 175 Food + 100 Wood</td><td>Deep Galleries — 300 Food + 150 Wood</td></tr><tr><td><strong>Mill</strong> (food)</td><td>Horse Collar — 75 Food + 75 Wood</td><td>Heavy Plow — 125 Food + 125 Wood</td><td>Crop Rotation — 250 Food + 250 Wood</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Building</th>
+<th>Feudal</th>
+<th>Castle</th>
+<th>Imperial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Lumber Camp</strong> (wood)</td>
+<td>Double-Bit Axe — 100 Food + 50 Wood</td>
+<td>Bow Saw — 150 Food + 100 Wood</td>
+<td>Two-Man Saw — 300 Food + 200 Wood</td>
+</tr>
+<tr>
+<td><strong>Mining Camp</strong> (gold + stone)</td>
+<td>Reinforced Picks — 100 Food + 75 Wood</td>
+<td>Shaft Mining — 175 Food + 100 Wood</td>
+<td>Deep Galleries — 300 Food + 150 Wood</td>
+</tr>
+<tr>
+<td><strong>Mill</strong> (food)</td>
+<td>Horse Collar — 75 Food + 75 Wood</td>
+<td>Heavy Plow — 125 Food + 125 Wood</td>
+<td>Crop Rotation — 250 Food + 250 Wood</td>
+</tr>
+</tbody>
+</table>
 <h3 id="unit-upgrades">Unit upgrades</h3>
 <p>Researched at the building that trains the unit; every living unit of the old type transforms immediately.</p>
-<table><thead><tr><th>Tech</th><th>Building</th><th>Age</th><th>Cost</th><th>Transforms</th></tr></thead><tbody><tr><td><strong>Man-at-Arms</strong></td><td>Barracks</td><td>Feudal</td><td>100 Food + 40 Gold</td><td>Militia → Man-at-Arms</td></tr><tr><td><strong>Long Swordsman</strong></td><td>Barracks</td><td>Castle</td><td>200 Food + 60 Gold</td><td>Man-at-Arms → Long Swordsman</td></tr><tr><td><strong>Heavy Scout</strong></td><td>Stable</td><td>Feudal</td><td>150 Food + 75 Gold</td><td>Scout → Heavy Scout</td></tr><tr><td><strong>Knight</strong></td><td>Stable</td><td>Castle</td><td>200 Food + 100 Gold</td><td>Heavy Scout → Knight</td></tr></tbody></table>
-<hr>
+<table>
+<thead>
+<tr>
+<th>Tech</th>
+<th>Building</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Transforms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Man-at-Arms</strong></td>
+<td>Barracks</td>
+<td>Feudal</td>
+<td>100 Food + 40 Gold</td>
+<td>Militia → Man-at-Arms</td>
+</tr>
+<tr>
+<td><strong>Long Swordsman</strong></td>
+<td>Barracks</td>
+<td>Castle</td>
+<td>200 Food + 60 Gold</td>
+<td>Man-at-Arms → Long Swordsman</td>
+</tr>
+<tr>
+<td><strong>Heavy Scout</strong></td>
+<td>Stable</td>
+<td>Feudal</td>
+<td>150 Food + 75 Gold</td>
+<td>Scout → Heavy Scout</td>
+</tr>
+<tr>
+<td><strong>Knight</strong></td>
+<td>Stable</td>
+<td>Castle</td>
+<td>200 Food + 100 Gold</td>
+<td>Heavy Scout → Knight</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="combat">Combat</h2>
-<h3 id="counter-triangle">The counter triangle</h3>
+<h3 id="the-counter-triangle">The counter triangle</h3>
 <p>Every attack carries a flat <strong>class bonus</strong> against certain target classes, read from the unit's data — army composition matters as much as army size:</p>
-<table><thead><tr><th>Attacker</th><th>Bonus</th><th>Against</th></tr></thead><tbody>
-<tr><td>Pikeman</td><td>+12</td><td>Cavalry</td></tr>
-<tr><td>Knight, Heavy Scout, Sand Raider, Chevalier Normand</td><td>+4</td><td>Archers</td></tr>
-<tr><td>Scout</td><td>+3</td><td>Archers</td></tr>
-<tr><td>Archer, Ravine Archer, Conquistador</td><td>+3</td><td>Spearmen</td></tr>
-<tr><td>Longbowman (Armour Piercing)</td><td>+4 / +3</td><td>Cavalry / Spearmen</td></tr>
-</tbody></table>
-<p>The loop closes: <strong>pikes punish cavalry, cavalry eats archer lines, archers pick off spearmen</strong>. The AI reads what you field and trains counters, so mixed armies beat single-unit spam.</p>
+<table>
+<thead>
+<tr>
+<th>Attacker</th>
+<th>Bonus</th>
+<th>Against</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pikeman</td>
+<td>+12</td>
+<td>Cavalry</td>
+</tr>
+<tr>
+<td>Knight, Heavy Scout, Sand Raider, Chevalier Normand</td>
+<td>+4</td>
+<td>Archers</td>
+</tr>
+<tr>
+<td>Scout</td>
+<td>+3</td>
+<td>Archers</td>
+</tr>
+<tr>
+<td>Archer, Ravine Archer, Conquistador</td>
+<td>+3</td>
+<td>Spearmen</td>
+</tr>
+<tr>
+<td>Longbowman (Armour Piercing)</td>
+<td>+4 / +3</td>
+<td>Cavalry / Spearmen</td>
+</tr>
+</tbody>
+</table>
+<p>The loop closes: <strong>pikes punish cavalry, cavalry eats archer lines, archers pick off spearmen</strong>. A knight charge dies on a braced pike wall; naked pikemen melt under massed arrows. The AI reads what you field and trains counters, so mixed armies beat single-unit spam.</p>
 <h3 id="stances">Stances</h3>
 <p>Every military unit carries one of four stances (buttons on the selection panel). Stances govern what a unit does <strong>on its own</strong> — an explicit attack order always chases:</p>
-<ul><li><strong>Aggressive</strong> (default) — chases any enemy it notices</li><li><strong>Defensive</strong> — fights back but returns to its post; never chases far</li><li><strong>Stand Ground</strong> — attacks whatever is in reach, never moves</li><li><strong>No Attack</strong> — never fights on its own</li></ul>
+<ul>
+<li><strong>Aggressive</strong> (default) — chases any enemy it notices</li>
+<li><strong>Defensive</strong> — fights back but returns to its post; never chases far</li>
+<li><strong>Stand Ground</strong> — attacks whatever is in reach, never moves</li>
+<li><strong>No Attack</strong> — never fights on its own</li>
+</ul>
 <p>Idle units notice hostiles within sight (~240 px) and act by their stance — an idle army will not watch enemy villagers stroll past.</p>
 <h3 id="formations">Formations</h3>
 <p>Group move orders use the selected formation: <strong>Line</strong> (melee front, ranged behind, siege rear), <strong>Box</strong>, <strong>Spread</strong> (against splash damage), or <strong>Rings</strong>. Picking a formation immediately reforms the selection in place.</p>
 <h3 id="garrison">Garrison</h3>
-<ul><li>The <strong>Town Center</strong> holds 10 units, <strong>Watch Towers</strong> hold 5, <strong>Transport Ships</strong> carry 8.</li><li>Every garrisoned soldier adds an arrow to the building's volley (the TC only shoots while garrisoned).</li><li>Right-clicking your TC/tower garrisons <strong>military</strong> units. Villagers use their <strong>Garrison</strong> button, or the TC's <strong>Town Bell</strong> — one ring shelters every villager in the nearest building with room; a second ring ejects everyone.</li><li>Garrisoned units die if the building falls. Choose walls or feet accordingly.</li></ul>
+<ul>
+<li>The <strong>Town Center</strong> holds 10 units, <strong>Watch Towers</strong> hold 5, <strong>Transport Ships</strong> carry 8.</li>
+<li>Every garrisoned soldier adds an arrow to the building's volley (the TC only shoots while garrisoned).</li>
+<li>Right-clicking your TC/tower garrisons <strong>military</strong> units. Villagers use their <strong>Garrison</strong> button, or the TC's <strong>Town Bell</strong> — one ring shelters every villager in the nearest building with room; a second ring ejects everyone.</li>
+<li>Garrisoned units die if the building falls. Choose walls or feet accordingly.</li>
+</ul>
 <h3 id="healing">Healing</h3>
 <p>The <strong>Harimaguada</strong> heals 5 HP/s at touch range and auto-triages the most wounded nearby ally while idle. The <strong>Temple</strong> heals its garrison at 4 HP/s (heroes at half rate — an immortal king in a Temple will not stall a Regicide).</p>
 <h3 id="siege">Siege</h3>
 <p>Rams barely scratch units but demolish buildings. Mangonels splash but cannot fire at point-blank range. Trebuchets outrange everything, deploy to fire, and pack up to move. Ranged units and siege can <strong>attack ground</strong> (area denial) and use <strong>Cover Fire</strong> (walk into range, then bombard).</p>
-<hr>
+<hr />
 <h2 id="weather">Weather</h2>
 <p>Weather events roll in procedurally (frequency set in the lobby: Off / Normal / Frequent / Extreme). A <strong>forecast banner</strong> warns you seconds before an event hits, and a countdown pill tracks it. Effects scale in and out smoothly — and every civilization resists some weather (see the civ sections).</p>
-<table><thead><tr><th>Weather</th><th>Effects</th></tr></thead><tbody><tr><td><strong>Calima</strong> (Saharan dust)</td><td>Vision −40%, food/wood gathering −20%, land speed −15%</td></tr><tr><td><strong>Atlantic Storm</strong></td><td>Naval speed −30%, fishing −50%, arrows drift in the crosswind</td></tr><tr><td><strong>Sea Fog</strong></td><td>Coastal vision −60%; units near the coast are <strong>cloaked</strong> — spotted only up close (180 px; 90 px for Atlantes) or for 3 s after they attack</td></tr><tr><td><strong>Trade Winds</strong></td><td>Ships ±20% speed depending on heading; projectiles drift with the wind</td></tr><tr><td><strong>Volcanic Ash</strong></td><td>Only near calderas on Volcanic Coast: vision −50%, gathering −30%, buildings take damage over time</td></tr></tbody></table>
-<hr>
+<table>
+<thead>
+<tr>
+<th>Weather</th>
+<th>Effects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calima</strong> (Saharan dust)</td>
+<td>Vision −40%, food/wood gathering −20%, land speed −15%</td>
+</tr>
+<tr>
+<td><strong>Atlantic Storm</strong></td>
+<td>Naval speed −30%, fishing −50%, arrows drift in the crosswind</td>
+</tr>
+<tr>
+<td><strong>Sea Fog</strong></td>
+<td>Coastal vision −60%; units near the coast are <strong>cloaked</strong> — spotted only up close (180 px; 90 px for Atlantes) or for 3 s after they attack</td>
+</tr>
+<tr>
+<td><strong>Trade Winds</strong></td>
+<td>Ships ±20% speed depending on heading; projectiles drift with the wind</td>
+</tr>
+<tr>
+<td><strong>Volcanic Ash</strong></td>
+<td>Only near calderas on Volcanic Coast: vision −50%, gathering −30%, buildings take damage over time</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="victory-conditions">Victory Conditions</h2>
 <p>Three modes, chosen in the lobby. With <strong>teams</strong>, a side wins when only mutually allied players remain.</p>
 <h3 id="conquest">Conquest</h3>
@@ -281,47 +1036,203 @@
 <p>Build the <strong>Wonder</strong> (Imperial Age; 2500 Food + 2500 Wood + 2500 Stone + 5000 Gold). Once complete, a <strong>4-minute countdown</strong> begins — if it survives, you win. Everyone else has exactly four minutes to tear it down (destroying it cancels the countdown; the game continues).</p>
 <h3 id="defeat-and-what-happens-next">Defeat — and what happens next</h3>
 <p>Surrendering (Esc → Surrender), or losing everything, shows your defeat panel — but if other hostile sides are still fighting, the match goes on. Press <strong>View map</strong> to keep watching the live battle as a spectator (orders locked). The definitive result arrives when the war actually ends.</p>
-<hr>
+<hr />
 <h2 id="naval-warfare">Naval Warfare</h2>
 <p>On <strong>Islands</strong> maps the ocean is the main theatre; Volcanic and Desert Coast maps have a coastline worth contesting too. Build a <strong>Dock</strong> (150 Wood, on the shore) to fish and to fight.</p>
-<table><thead><tr><th>Unit</th><th>Age</th><th>Cost</th><th>Role</th></tr></thead><tbody><tr><td><strong>Fishing Boat</strong></td><td>Dark</td><td>75 Wood</td><td>Gathers fish from ocean nodes, drops off at the Dock; builds Fish Traps</td></tr><tr><td><strong>Transport Ship</strong></td><td>Feudal</td><td>125 Wood</td><td>Carries up to <strong>8 land units</strong> across the water; unloads on dry ground</td></tr><tr><td><strong>War Galley</strong></td><td>Feudal</td><td>75 Wood + 35 Gold</td><td>Ranged warship</td></tr><tr><td><strong>Trireme</strong> (Fenicios)</td><td>Feudal</td><td>100 Wood + 50 Gold</td><td>Fast ram: ×2 vs ships + knockback; passive gold trickle</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Age</th>
+<th>Cost</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Fishing Boat</strong></td>
+<td>Dark</td>
+<td>75 Wood</td>
+<td>Gathers fish from ocean nodes, drops off at the Dock; builds Fish Traps</td>
+</tr>
+<tr>
+<td><strong>Transport Ship</strong></td>
+<td>Feudal</td>
+<td>125 Wood</td>
+<td>Carries up to <strong>8 land units</strong> across the water; unloads on dry ground</td>
+</tr>
+<tr>
+<td><strong>War Galley</strong></td>
+<td>Feudal</td>
+<td>75 Wood + 35 Gold</td>
+<td>Ranged warship</td>
+</tr>
+<tr>
+<td><strong>Trireme</strong> (Fenicios)</td>
+<td>Feudal</td>
+<td>100 Wood + 50 Gold</td>
+<td>Fast ram: ×2 vs ships + knockback; passive gold trickle</td>
+</tr>
+</tbody>
+</table>
 <p>Naval tips:</p>
-<ul><li>Build your Dock before Feudal Age on Islands maps. A War Galley the opponent cannot answer wins the strait.</li><li>Fishing Boats are not combat units — escort them.</li><li>Load an army into Transport Ships, right-click the far shore, and they unload automatically. Villagers can board too — an island expansion needs builders.</li><li><strong>Atlantes</strong> and <strong>Britanos</strong> dominate open water if left unchecked; the AI runs naval patrols and amphibious assaults of its own.</li></ul>
-<hr>
+<ul>
+<li>Build your Dock before Feudal Age on Islands maps. A War Galley the opponent cannot answer wins the strait.</li>
+<li>Fishing Boats are not combat units — escort them.</li>
+<li>Load an army into Transport Ships, right-click the far shore, and they unload automatically. Villagers can board too — an island expansion needs builders.</li>
+<li><strong>Atlantes</strong> and <strong>Britanos</strong> dominate open water if left unchecked; the AI runs naval patrols and amphibious assaults of its own.</li>
+</ul>
+<hr />
 <h2 id="maps">Maps</h2>
-<table><thead><tr><th>Map</th><th>Description</th><th>Strategic note</th></tr></thead><tbody><tr><td><strong>Plains</strong></td><td>Flat land, no special terrain</td><td>Beginner-friendly; no terrain penalties</td></tr><tr><td><strong>Standard</strong></td><td>Mixed land terrain</td><td>General-purpose play</td></tr><tr><td><strong>Volcanic Coast</strong></td><td>Coastal strip with an impassable caldera</td><td>Corridor fights; Guanches advantaged; Volcanic Ash weather</td></tr><tr><td><strong>Desert Coast</strong></td><td>Arid, wood-scarce, ocean to the west</td><td>Mahos advantaged; wood discipline required</td></tr><tr><td><strong>Islands</strong></td><td>Islands separated by ocean</td><td>Naval required — control the strait to win</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Map</th>
+<th>Description</th>
+<th>Strategic note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Plains</strong></td>
+<td>Flat land, no special terrain</td>
+<td>Beginner-friendly; no terrain penalties</td>
+</tr>
+<tr>
+<td><strong>Standard</strong></td>
+<td>Mixed land terrain</td>
+<td>General-purpose play</td>
+</tr>
+<tr>
+<td><strong>Volcanic Coast</strong></td>
+<td>Coastal strip with an impassable caldera</td>
+<td>Corridor fights; Guanches advantaged; Volcanic Ash weather</td>
+</tr>
+<tr>
+<td><strong>Desert Coast</strong></td>
+<td>Arid, wood-scarce, ocean to the west</td>
+<td>Mahos advantaged; wood discipline required</td>
+</tr>
+<tr>
+<td><strong>Islands</strong></td>
+<td>Islands separated by ocean</td>
+<td>Naval required — control the strait to win</td>
+</tr>
+</tbody>
+</table>
 <p>Three map sizes (Small / Medium / Large), procedurally generated each match.</p>
-<hr>
+<hr />
 <h2 id="match-setup-skirmish">Match Setup (Skirmish)</h2>
-<ul><li><strong>Map type &amp; size</strong>, <strong>starting resources</strong> (Scarce / Normal / Abundant / Full Combat — all stockpiles 9999)</li><li><strong>Civilization</strong> for you and each rival; <strong>1–3 AI rivals</strong></li><li><strong>Teams</strong> — assign players to teams 1–4 for 2v2, 2v1, or free-for-all; allied AIs share vision, defend you and announce their attacks</li><li><strong>Starting Age</strong>, <strong>Victory condition</strong>, <strong>Weather frequency</strong></li><li><strong>Hero gender</strong> — Random / Male / Female (each civ has one hero of each)</li><li><strong>AI difficulty</strong> is set in Settings (Easy / Normal / Hard)</li></ul>
-<hr>
+<ul>
+<li><strong>Map type &amp; size</strong>, <strong>starting resources</strong> (Scarce / Normal / Abundant / Full Combat — all stockpiles 9999)</li>
+<li><strong>Civilization</strong> for you and each rival; <strong>1–3 AI rivals</strong></li>
+<li><strong>Teams</strong> — assign players to teams 1–4 for 2v2, 2v1, or free-for-all; allied AIs share vision, defend you and announce their attacks</li>
+<li><strong>Starting Age</strong>, <strong>Victory condition</strong>, <strong>Weather frequency</strong></li>
+<li><strong>Hero gender</strong> — Random / Male / Female (each civ has one hero of each)</li>
+<li><strong>AI difficulty</strong> is set in Settings (Easy / Normal / Hard)</li>
+</ul>
+<hr />
 <h2 id="campaign-the-flames-of-tamaran">Campaign — The Flames of Tamarán</h2>
 <p>Play the Atlante invasion from the Canarii side, from the main menu <strong>Campaign</strong> button. Missions unlock in order; progress is saved.</p>
-<table><thead><tr><th>Mission</th><th>What awaits</th></tr></thead><tbody><tr><td><strong>Prologue: The First Settlement</strong></td><td>A guided first settlement — the tutorial, now part of the story. Optional.</td></tr><tr><td><strong>1. The Vanguard</strong></td><td>Repel the Atlante beachhead: raise an army and a Mill, and have a Presa Canario herd sheep home while scripted raids press you.</td></tr><tr><td><strong>2. Land of Fire</strong></td><td>Hold the sacred mountain through the ash: survive 12 minutes of escalating waves; towers are your friends.</td></tr><tr><td><strong>3. The Strait</strong></td><td>Take the war to the water: build a Dock, sink theirs, and cross the strait to finish it.</td></tr><tr><td><strong>4. The Last Mountain</strong></td><td>The final battle against two Atlante hosts — kill their leaders (Regicide) while keeping yours alive.</td></tr></tbody></table>
+<table>
+<thead>
+<tr>
+<th>Mission</th>
+<th>What awaits</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Prologue: The First Settlement</strong></td>
+<td>A guided first settlement — the tutorial, now part of the story. Optional.</td>
+</tr>
+<tr>
+<td><strong>1. The Vanguard</strong></td>
+<td>Repel the Atlante beachhead: raise an army and a Mill, and have a Presa Canario herd sheep home while scripted raids press you.</td>
+</tr>
+<tr>
+<td><strong>2. Land of Fire</strong></td>
+<td>Hold the sacred mountain through the ash: survive 12 minutes of escalating waves; towers are your friends.</td>
+</tr>
+<tr>
+<td><strong>3. The Strait</strong></td>
+<td>Take the war to the water: build a Dock, sink theirs, and cross the strait to finish it.</td>
+</tr>
+<tr>
+<td><strong>4. The Last Mountain</strong></td>
+<td>The final battle against two Atlante hosts — kill their leaders (Regicide) while keeping yours alive.</td>
+</tr>
+</tbody>
+</table>
 <p>Missions have side objectives (tracked in a panel at the top-left), fixed maps, story intros and outros.</p>
-<hr>
+<hr />
 <h2 id="multiplayer">Multiplayer</h2>
 <p>Up to <strong>4 players</strong> over LAN or Internet, with teams and AI-filled seats.</p>
-<ul><li><strong>LAN</strong>: one player hosts, everyone else joins from the LAN menu (the host's address is shown in the lobby header).</li><li><strong>Internet</strong>: the host presses the Internet button — the game maps the port automatically via UPnP and shows the public address (manual port forwarding as a fallback). A <strong>Steam</strong> prototype (lobbies + friend invites) also exists.</li><li><strong>The lobby</strong> is shared with skirmish: each player picks a name, colour, civilization and team; the host configures the match settings, the remaining seats (Open / AI / Closed) and can kick. There is a lobby chat, and an in-game chat on Enter.</li><li><strong>Version check</strong>: the host refuses clients running a different build, with a clear message.</li><li><strong>Reconnection</strong>: if a player drops, their seat is held for 90 seconds — reconnect and the game streams you back in where you left off.</li><li><strong>Save &amp; resume</strong>: the host can save an online match; resuming re-opens the lobby with everyone's seat reserved. The match can start even before every player has returned — their seat waits under the same grace rules.</li><li>Pause is host-authoritative; a surrendering or disconnected player becomes a resignation (and may keep watching as a spectator).</li></ul>
-<hr>
+<ul>
+<li><strong>LAN</strong>: one player hosts, everyone else joins from the LAN menu (the host's address is shown in the lobby header).</li>
+<li><strong>Internet</strong>: the host presses the Internet button — the game maps the port automatically via UPnP and shows the public address (manual port forwarding as a fallback). A <strong>Steam</strong> prototype (lobbies + friend invites) also exists.</li>
+<li><strong>The lobby</strong> is shared with skirmish: each player picks a name, colour, civilization and team; the host configures the match settings, the remaining seats (Open / AI / Closed) and can kick. There is a lobby chat, and an in-game chat on Enter.</li>
+<li><strong>Version check</strong>: the host refuses clients running a different build, with a clear message.</li>
+<li><strong>Reconnection</strong>: if a player drops, their seat is held for 90 seconds — reconnect and the game streams you back in where you left off.</li>
+<li><strong>Save &amp; resume</strong>: the host can save an online match; resuming re-opens the lobby with everyone's seat reserved. The match can start even before every player has returned — their seat waits under the same grace rules.</li>
+<li>Pause is host-authoritative; a surrendering or disconnected player becomes a resignation (and may keep watching as a spectator).</li>
+</ul>
+<hr />
 <h2 id="replays">Replays</h2>
 <p>Every match records itself (toggle in Settings → replay recording). From the main menu <strong>Replays</strong> browser you can watch, delete, or export any of them.</p>
-<ul><li><strong>Playback</strong>: pause, seek anywhere on the timeline (backwards too), change speed, and <strong>reveal the whole map</strong>. Replays are recorded history — no orders can be given.</li><li><strong>Cinematic mode</strong> (<strong>C</strong>): hides the entire UI for clean viewing; optionally keeps a floating minimap.</li><li><strong>Export to video</strong>: renders the replay to a 30 FPS video file in the background while you keep playing. Mark <strong>A/B clip points</strong> on the timeline to export just the highlight — the replay bar itself never appears in the footage.</li><li>After a match, the game-over screen offers <strong>Watch replay</strong> directly.</li></ul>
-<hr>
+<ul>
+<li><strong>Playback</strong>: pause, seek anywhere on the timeline (backwards too), change speed, and <strong>reveal the whole map</strong>. Replays are recorded history — no orders can be given.</li>
+<li><strong>Cinematic mode</strong> (<strong>C</strong>): hides the entire UI for clean viewing; optionally keeps a floating minimap.</li>
+<li><strong>Export to video</strong>: renders the replay to a 30 FPS video file in the background while you keep playing. Mark <strong>A/B clip points</strong> on the timeline to export just the highlight — the replay bar itself never appears in the footage.</li>
+<li>After a match, the game-over screen offers <strong>Watch replay</strong> directly.</li>
+</ul>
+<hr />
 <h2 id="settings">Settings</h2>
 <p>Available from the main menu and the in-game pause menu:</p>
-<ul><li><strong>Audio</strong>: music and effects volume (all audio is synthesized — each civilization speaks its own invented language)</li><li><strong>Game</strong>: language (English / Español), AI difficulty, replay recording</li><li><strong>Video</strong>: fullscreen, VSync, FPS counter, <strong>Unit style</strong> — <em>Classic</em> (flat vector figures), <em>Enhanced</em> (outlines, shading and extra animation) or <em>Redesigned</em> (fully re-modelled lore rigs); switching applies instantly to every unit on screen</li><li><strong>Controls</strong>: remappable camera pan keys (arrows always work), edge scrolling, on-screen d-pad</li><li><strong>Videos</strong>: include the minimap in exported replay videos</li></ul>
-<hr>
+<ul>
+<li><strong>Audio</strong>: music and effects volume (all audio is synthesized — each civilization speaks its own invented language)</li>
+<li><strong>Game</strong>: language (English / Español), AI difficulty, replay recording</li>
+<li><strong>Video</strong>: fullscreen, VSync, FPS counter, <strong>Unit style</strong> — <em>Classic</em> (flat vector figures), <em>Enhanced</em> (outlines, shading and extra animation) or <em>Redesigned</em> (fully re-modelled lore rigs); switching applies instantly to every unit on screen</li>
+<li><strong>Controls</strong>: remappable camera pan keys (arrows always work), edge scrolling, on-screen d-pad</li>
+<li><strong>Videos</strong>: include the minimap in exported replay videos</li>
+</ul>
+<hr />
 <h2 id="know-your-enemy-ai-behaviour">Know your enemy (AI behaviour)</h2>
-<ul><li>The AI plays your economy: it gathers, builds with <strong>real villagers</strong> (watch for construction sites — they can be raided), farms, herds animals with its own dogs, fishes, and advances Ages.</li><li>It scouts and remembers: enemy AIs only target what they have actually <strong>seen</strong> — buildings are remembered once scouted, units only while visible.</li><li>It defends its base, escalates when attacked, and its attacks grow with its economy and difficulty setting.</li><li>On water maps it fishes, patrols with galleys, burns your coastline (docks and fish traps are priority targets) and lands transport assaults.</li><li>AI players fight <strong>each other</strong> too — in free-for-all matches, expect real three-way wars; when an enemy is beaten down to its last units, the AI hunts the survivors.</li><li>Idle units — yours and theirs — engage hostiles that come within sight, by their stance.</li></ul>
-<hr>
+<ul>
+<li>The AI plays your economy: it gathers, builds with <strong>real villagers</strong> (watch for construction sites — they can be raided), farms, herds animals with its own dogs, fishes, and advances Ages.</li>
+<li>It scouts and remembers: enemy AIs only target what they have actually <strong>seen</strong> — buildings are remembered once scouted, units only while visible.</li>
+<li>It defends its base, escalates when attacked, and its attacks grow with its economy and difficulty setting.</li>
+<li>On water maps it fishes, patrols with galleys, burns your coastline (docks and fish traps are priority targets) and lands transport assaults.</li>
+<li>AI players fight <strong>each other</strong> too — in free-for-all matches, expect real three-way wars; when an enemy is beaten down to its last units, the AI hunts the survivors.</li>
+<li>Idle units — yours and theirs — engage hostiles that come within sight, by their stance.</li>
+</ul>
+<hr />
 <h2 id="tips">Tips</h2>
-<ul><li><strong>Scout early</strong> — the caldera, the laurisilva woods, the gold, the wild flocks: knowing where things are is your first advantage.</li><li><strong>Heroes respawn — except in Regicide.</strong> Two minutes at your Town Center. In Regicide, death is final: keep the hero home.</li><li><strong>Terrain is a weapon</strong> — Guanches can retreat across malpaís no one else can enter; Mahos outrun everyone across dunes; a Ravine Archer on a cliff outranges his own kind.</li><li><strong>Research as you advance</strong> — an empty Blacksmith is a losing Blacksmith, and the camp tech lines pay for themselves quickly. Queue whole lines: research is paid up front and refunded on cancel.</li><li><strong>Herd the wild flocks</strong> — a Presa Canario pays food just for walking sheep home, and every sheep it converts is one the enemy dog doesn't get.</li><li><strong>Use the toasts</strong> — pop-cap warning? One click builds the House. Attack alert? SPACE takes you there.</li><li><strong>Wonder mode is a race</strong> — if you're ahead, rush Imperial and build it; if the enemy builds first, you have exactly 4 minutes. Drop everything.</li><li><strong>In team games, talk</strong> — allied AIs ping their targets and come when you're raided; do the same for them.</li></ul>
-<hr>
+<ul>
+<li><strong>Scout early</strong> — the caldera, the laurisilva woods, the gold, the wild flocks: knowing where things are is your first advantage.</li>
+<li><strong>Heroes respawn — except in Regicide.</strong> Two minutes at your Town Center. In Regicide, death is final: keep the hero home.</li>
+<li><strong>Terrain is a weapon</strong> — Guanches can retreat across malpaís no one else can enter; Mahos outrun everyone across dunes; a Ravine Archer on a cliff outranges his own kind.</li>
+<li><strong>Research as you advance</strong> — an empty Blacksmith is a losing Blacksmith, and the camp tech lines pay for themselves quickly. Queue whole lines: research is paid up front and refunded on cancel.</li>
+<li><strong>Herd the wild flocks</strong> — a Presa Canario pays food just for walking sheep home, and every sheep it converts is one the enemy dog doesn't get.</li>
+<li><strong>Use the toasts</strong> — pop-cap warning? One click builds the House. Attack alert? SPACE takes you there.</li>
+<li><strong>Wonder mode is a race</strong> — if you're ahead, rush Imperial and build it; if the enemy builds first, you have exactly 4 minutes. Drop everything.</li>
+<li><strong>In team games, talk</strong> — allied AIs ping their targets and come when you're raided; do the same for them.</li>
+</ul>
+<hr />
 <h2 id="visual-presentation">Visual Presentation</h2>
 <p>All of the game's art is vector and procedural (no external textures), designed so every element reads at a glance:</p>
-<ul><li><strong>Three unit styles</strong> — Classic, Enhanced and Redesigned — selectable live in Settings.</li><li><strong>Readable units</strong> — each unit is a clear figure for its role; civ-unique units and the 16 heroes each have distinguishing features.</li><li><strong>Random visual gender</strong> — human units are randomly male or female (cosmetic only; the Harimaguada is always female, by lore).</li><li><strong>Team colours</strong> — units wear their owner's colour on their clothes; buildings carry it on roofs, flags, banners and sails.</li><li><strong>Lore-true landmarks</strong> — the Temple is an almogarén (an open dry-stone Canarian shrine), the Mill a stone tower with canvas sails.</li><li><strong>A living world</strong> — swelling water with coastal foam, pulsing caldera lava, trotting animals, ground shadows, hero auras, progressive fire and smoke on damaged buildings.</li><li><strong>Synthesized audio</strong> — every sound is generated: each civilization speaks its own gibberish language, with distinct voices per unit class and gender.</li></ul>
-<footer>Player's manual generated on 2026-09-06 from <code>docs/guide_en.md</code>, verified against the game data (<code>project/resources/</code>). Calima: Flames of the Atlantic — 100% procedural art and audio.</footer>
+<ul>
+<li><strong>Three unit styles</strong> — Classic, Enhanced and Redesigned — selectable live in Settings.</li>
+<li><strong>Readable units</strong> — each unit is a clear figure for its role; civ-unique units and the 16 heroes each have distinguishing features.</li>
+<li><strong>Random visual gender</strong> — human units are randomly male or female (cosmetic only; the Harimaguada is always female, by lore).</li>
+<li><strong>Team colours</strong> — units wear their owner's colour on their clothes; buildings carry it on roofs, flags, banners and sails.</li>
+<li><strong>Lore-true landmarks</strong> — the Temple is an almogarén (an open dry-stone Canarian shrine), the Mill a stone tower with canvas sails.</li>
+<li><strong>A living world</strong> — swelling water with coastal foam, pulsing caldera lava, trotting animals, ground shadows, hero auras, progressive fire and smoke on damaged buildings.</li>
+<li><strong>Synthesized audio</strong> — every sound is generated: each civilization speaks its own gibberish language, with distinct voices per unit class and gender.</li>
+</ul>
+<footer class="site">Generated from <code>docs/guide_en.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
 </div>
 </body>
 </html>

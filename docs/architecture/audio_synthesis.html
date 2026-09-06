@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Procedural Audio Synthesis · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="procedural-audio-synthesis">Procedural Audio Synthesis</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#1-pcm-foundation">1. PCM foundation</a></li>
+<li><a href="#2-sound-effects">2. Sound effects</a></li>
+<li><a href="#3-unit-voices-formant-synthesis">3. Unit voices (formant synthesis)</a><ul>
+<li><a href="#the-cast-kinds-civs-genders">The cast: kinds × civs × genders</a></li>
+<li><a href="#bake-threading">Bake threading</a></li>
+</ul>
+</li>
+<li><a href="#4-music">4. Music</a></li>
+<li><a href="#5-extending-it">5. Extending it</a></li>
+<li><a href="#6-guardrails">6. Guardrails</a></li>
+</ul>
+</div>
+</nav>
+<p>Calima ships <strong>zero audio files</strong>. Every sound effect, every unit voice and
+every music track is synthesized as raw PCM at runtime by
+<code>project/scripts/core/audio_manager.gd</code> and stored in memory as
+<code>AudioStreamWAV</code> resources. This document explains how each layer is
+generated, why it is structured the way it is, and how to extend it.</p>
+<h2 id="1-pcm-foundation">1. PCM foundation</h2>
+<p>All synthesis produces a <code>PackedFloat32Array</code> of samples in <code>[-1, 1]</code> at
+<code>SAMPLE_RATE = 22050</code> Hz, mono, converted once by <code>_make_wav()</code> into a
+16-bit <code>AudioStreamWAV</code>. The building blocks (all in <code>audio_manager.gd</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Helper</th>
+<th>Produces</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_sine(freq, dur, amp)</code></td>
+<td>pure tone with linear fade-out</td>
+</tr>
+<tr>
+<td><code>_square(freq, dur, amp)</code></td>
+<td>hollow/buzzy tone</td>
+</tr>
+<tr>
+<td><code>_noise(dur, amp)</code></td>
+<td>white noise burst</td>
+</tr>
+<tr>
+<td><code>_sweep(f0, f1, dur, amp)</code></td>
+<td>pitch glide (rise/fall)</td>
+</tr>
+<tr>
+<td><code>_mix(a, b)</code> / <code>_concat(a, b)</code></td>
+<td>layer two buffers / play one after another</td>
+</tr>
+</tbody>
+</table>
+<p>Simple one-pole filters are inlined where a timbre needs shaping
+(<code>lp = lp + k * (raw - lp)</code> is a low-pass; subtracting it from the input
+gives a high-pass; chaining both gives a band-pass). See the weather
+ambiences for worked examples.</p>
+<h2 id="2-sound-effects">2. Sound effects</h2>
+<p>Each effect is a tiny recipe over the helpers — e.g. an axe chop is a
+noise burst mixed with a 280 Hz thump; a build-complete fanfare is three
+concatenated sine notes. Two registration modes:</p>
+<ul>
+<li><code>_register(id, stream)</code> — a polyphony pool of <code>POOL_SIZE</code> players sharing
+  one stream. <code>play(id)</code> round-robins the pool so rapid repeats overlap
+  instead of cutting each other.</li>
+<li><code>_register_multi(id, [streams])</code> — the pool's players carry <strong>different
+  takes</strong> (the same recipe with a pitch/length factor <code>k</code>, e.g.
+  <code>_synth_chop(0.86)</code> … <code>_synth_chop(1.15)</code>), so the round-robin rotates
+  variants for free. Used for the repetitive sounds: hits, deaths,
+  chopping, mining.</li>
+</ul>
+<p>Looping ambiences (weather) use <code>_register_loop</code>, which marks the WAV as
+<code>LOOP_FORWARD</code> over its whole length; the recipes are ~4 s filtered-noise
+textures with slow amplitude wobbles.</p>
+<h2 id="3-unit-voices-formant-synthesis">3. Unit voices (formant synthesis)</h2>
+<p>The voices are AoE2-style gibberish barks, built like a tiny vocal tract:</p>
+<ol>
+<li><strong>Glottal source</strong> — a band-limited sawtooth at the fundamental
+   frequency F0: the sum of <code>sin(h·phase)/h</code> harmonics up to ~8.8 kHz,
+   with 2.2 % vibrato at 5.3 Hz plus a slow random pitch jitter. A
+   <code>growl</code> option amplitude-modulates the source at 74 Hz (throaty
+   soldiers); <code>breath</code> mixes in white noise.</li>
+<li><strong>Formant filters</strong> — the source runs through three parallel two-pole
+   resonators (<code>y = g·x + 2r·cos(ω)·y₁ − r²·y₂</code>) tuned to the F1/F2/F3
+   frequencies of the target vowel (<code>VOICE_VOWELS</code>: /a/ 800·1150·2500 Hz,
+   /i/ 320·2300·3000 Hz, …). Female voices scale the formants ×1.16 and
+   use a higher F0.</li>
+<li><strong>Consonant onsets</strong> (<code>VOICE_CONSONANTS</code>) — plosives are a beat of
+   closure silence plus a resonator-filtered noise burst (t/k/p/d/g/b at
+   different center frequencies); fricatives (s/h) are longer shaped
+   noise; nasals (m/n) a voiced hum; liquids (r/l) a short schwa glide.</li>
+<li><strong>Prosody</strong> — a "word" is 1–3 syllables with a natural pitch
+   declination; the last syllable's contour mark decides the melody:
+   <code>?</code> rises ×1.32 (attentive question — selections), <code>!</code> attacks high
+   and drops to ×0.74 (bark — infantry, attack orders), no mark falls
+   softly (statement — acknowledgments). Heroes add a single 85 ms
+   delayed reflection (<code>echo</code>) that reads as a stone hall.</li>
+<li>Every word is peak-normalized to <code>VOICE_PEAK = 0.42</code>.</li>
+</ol>
+<h3 id="the-cast-kinds-civs-genders">The cast: kinds × civs × genders</h3>
+<ul>
+<li><code>VOICE_KINDS</code> defines the <strong>class prosody</strong>: F0 per gender, syllable
+  count range, contour mark and render opts. Selection kinds
+  (<code>select_villager</code>, <code>select_infantry</code>, …) ask; order confirmations
+  (<code>ack_move</code>, <code>ack_attack</code>) affirm. A kind with <code>f0_f = 0</code> bakes no
+  female bank (ship crews).</li>
+<li><code>VOICE_CIV_POOLS</code> gives each civilization its <strong>syllable pool</strong> — its
+  phonetic identity — plus a <code>default</code> pool for unowned/unknown speakers.</li>
+<li><code>VOICE_CIV_PITCH</code> is the per-civ <strong>accent</strong>: a multiplier on the class
+  F0 (Guanches 0.94 deep … Fenicios 1.06 bright).</li>
+<li>Words are generated <strong>deterministically</strong>: an RNG seeded with
+  <code>"kind|civ|gender".hash()</code> draws <code>VOICE_VARIANTS = 3</code> lines from the
+  civ pool. Same seed → the same lines on every machine, every launch.</li>
+</ul>
+<p>Playback goes through <code>play_voice(kind, female, civ_id)</code>, which resolves
+bank <code>kind_civ_gender</code> with fallbacks (civ male → default gender →
+default male → the plain sound id, so siege keeps its mechanical clunk),
+and never repeats the same variant twice in a row. Call sites: unit
+selection in <code>hud_manager.gd</code> (<code>get_selection_sound()</code> + lead unit's
+<code>is_female</code>/<code>civ_id</code>) and order confirmation in <code>world_commands.gd</code>
+(<code>_play_order_voice</code>).</p>
+<h3 id="bake-threading">Bake threading</h3>
+<p>The full cast is ~460 clips (~7 s of DSP), so:</p>
+<ul>
+<li>Windowed runs bake it in parallel with
+  <code>WorkerThreadPool.add_group_task</code> — one voice kind per worker, each
+  writing its own pre-sized slot of <code>_baked_by_kind</code> (no shared-array
+  writes). A main-thread poll in <code>_process</code> installs the finished banks;
+  until then <code>play_voice</code> falls back to the generic blip (in practice the
+  bake finishes while the player is still in the main menu).</li>
+<li><strong>Headless runs skip the bake entirely</strong> (dummy audio can't play it and
+  the engine waits for worker tasks on exit). Tools and tests that need
+  the cast call <code>ensure_voices_ready()</code>, which bakes synchronously.</li>
+</ul>
+<h2 id="4-music">4. Music</h2>
+<p>Each map type owns a looping track built from a melody table
+(<code>[[freq, beats], …]</code>) over a two-note drone, rendered with <code>_sine_note</code>
+(ADSR-lite envelope) by <code>_build_melody_wav</code>. The five tracks differ in
+mode and mood: Plains D Dorian (calm), Standard G Major (epic), Volcanic
+E Phrygian (tense), Desert A Hijaz (exotic), Islands D Major pentatonic
+(marine).</p>
+<h2 id="5-extending-it">5. Extending it</h2>
+<ul>
+<li><strong>New civ</strong>: add a syllable pool to <code>VOICE_CIV_POOLS</code> and an accent to
+  <code>VOICE_CIV_PITCH</code>. Everything else (all kinds × genders) bakes itself.</li>
+<li><strong>New voice kind</strong> (e.g. a "repair" ack): add a <code>VOICE_KINDS</code> entry and
+  call <code>play_voice("your_kind", female, civ)</code> from the UI layer.</li>
+<li><strong>New syllables</strong>: single consonant + single vowel only (<code>"ka"</code>, <code>"o"</code>),
+  consonants limited to the <code>VOICE_CONSONANTS</code> table — the parser takes
+  the last character as the vowel and looks up the rest as the onset.</li>
+<li><strong>New sfx take</strong>: give the synth a <code>k</code> factor parameter and register
+  with <code>_register_multi</code>.</li>
+<li><strong>Tuning voices</strong>: <code>CALIMA_SHOT_DIR=/tmp/calima-voices godot --headless
+  --path project res://tools/check_voice_gallery.tscn</code> exports listenable
+  WAVs (narrow with <code>CALIMA_CIVS=guanches,fenicios</code>), checks all clips
+  for degeneracy, and <code>afplay</code> plays them from the terminal.</li>
+</ul>
+<h2 id="6-guardrails">6. Guardrails</h2>
+<ul>
+<li><code>tests/unit/test_voice_banks.gd</code> locks the cast contract: every kind
+  bakes per civ and gender, generation is deterministic, accents differ,
+  clips are normalized real audio, fallback paths don't crash, and the
+  multi-take pools actually carry distinct takes.</li>
+<li><code>tools/check_voice_gallery.tscn</code> is the audition/regression gate for
+  the whole cast.</li>
+<li>GDScript note: the DSP runs on worker threads — keep it pure (const
+  tables + local state, no nodes, no autoload writes) or the bake will
+  race the main thread.</li>
+</ul>
+<footer class="site">Generated from <code>docs/architecture/audio_synthesis.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>

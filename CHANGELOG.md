@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation site
+- `docs/` is now a publishable static site: `docs/build_site.py` converts every Markdown document (player manuals, GDD, architecture, lore, changelog, controls) to themed self-contained HTML with rewritten links; portal at `docs/index.html`; zero broken links (checked site-wide).
+
 ### Counter triangle
 - Class-based attack bonuses (`UnitResource.attack_bonuses`, read in `UnitBase._strike_damage`): pikemen +12 vs cavalry, cavalry +4 (scout +3) vs archers, archers +3 vs spearmen; the Longbowman's Armour Piercing migrated to data. Arrows inherit the bonus. Army composition now matters as much as size.
 - The AI counters what it sights: `_counter_bias` shifts the barracks mix toward pikes/swords/archers based on the enemy composition it can actually see.

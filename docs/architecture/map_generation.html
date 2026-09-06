@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map Generation · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index.html">CALIMA · DOCS</a>
+  <a href="../index.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  
+</header>
+<h1 id="map-generation">Map Generation</h1><nav class="toc"><b>Contents</b><div class="toc">
+<ul>
+<li><a href="#module-layout">Module layout</a></li>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#map-types">Map types</a></li>
+<li><a href="#map-sizes">Map sizes</a></li>
+<li><a href="#tc-placement">TC placement</a><ul>
+<li><a href="#island-ring-layout">Island ring layout</a></li>
+</ul>
+</li>
+<li><a href="#terrain-zones">Terrain zones</a><ul>
+<li><a href="#terrain-types">Terrain types</a></li>
+<li><a href="#zone-counts-per-map-type">Zone counts per map type</a></li>
+</ul>
+</li>
+<li><a href="#visual-painting">Visual painting</a></li>
+<li><a href="#resource-spawning">Resource spawning</a><ul>
+<li><a href="#per-player-resources-land-maps">Per-player resources (land maps)</a></li>
+<li><a href="#forest-size-variants">Forest size variants</a></li>
+<li><a href="#per-player-resources-islands">Per-player resources (Islands)</a></li>
+<li><a href="#neutral-resources-land-maps">Neutral resources (land maps)</a></li>
+<li><a href="#scattered-resources-land-maps">Scattered resources (land maps)</a></li>
+<li><a href="#islands-only-resources">Islands-only resources</a></li>
+</ul>
+</li>
+<li><a href="#placement-collision-system">Placement collision system</a><ul>
+<li><a href="#clearance-radii">Clearance radii</a></li>
+<li><a href="#spatial-hash">Spatial hash</a></li>
+</ul>
+</li>
+<li><a href="#navigation-meshes">Navigation meshes</a></li>
+<li><a href="#minimap-texture">Minimap texture</a></li>
+</ul>
+</div>
+</nav>
+<blockquote>
+<p><strong>Source files:</strong> <code>project/scripts/map/map_generator.gd</code> ·
+<code>terrain_painter.gd</code> · <code>terrain_detail.gd</code> · <code>map_materials.gd</code> ·
+<code>entity_placer.gd</code> · <code>resource_visuals.gd</code> · <code>nav_mesh_builder.gd</code> ·
+<code>project/scripts/core/terrain_manager.gd</code></p>
+<p><strong>Keep in sync:</strong> update this document whenever any of those files changes.</p>
+</blockquote>
+<hr />
+<h2 id="module-layout">Module layout</h2>
+<p><code>MapGenerator</code> only sequences the pipeline (~150 lines). The work lives in
+<code>RefCounted</code> modules it owns, each wired through an explicit <code>setup(...)</code> call so
+there is no back-reference to the generator:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MapMaterials</code></td>
+<td>Shared shader materials (terrain per type, deep/shallow water, lava) + the terrain colour table and <code>STAIN_TILE</code> grid</td>
+</tr>
+<tr>
+<td><code>TerrainDetail</code></td>
+<td>Tile-dithered ground decals and per-biome detail variants (grass/dune/malpaís/risco/laurisilva/caldera)</td>
+</tr>
+<tr>
+<td><code>TerrainPainter</code></td>
+<td>Backgrounds, per-map-type zone layouts, zone visuals, shorelines, island polygons; owns <code>MapMaterials</code> + <code>TerrainDetail</code></td>
+</tr>
+<tr>
+<td><code>EntityPlacer</code></td>
+<td>Occupancy grid (spatial hash) and every spawn: TC ring, starting units, animals, resources, laurisilva forests, fish, islets</td>
+</tr>
+<tr>
+<td><code>ResourceVisuals</code></td>
+<td>Static art library for resource nodes (also used by <code>SaveManager</code> when restoring a save and by <code>ResourceNode</code> for stumps)</td>
+</tr>
+<tr>
+<td><code>NavMeshBuilder</code></td>
+<td>Land/ocean <code>NavigationPolygon</code> carving, zone obstacles, ocean boundary walls</td>
+</tr>
+</tbody>
+</table>
+<p>All modules receive the <strong>same</strong> <code>RandomNumberGenerator</code> instance, so a given
+seed always produces the same map regardless of how the code is split.
+<code>project/tools/check_map_gen.tscn</code> prints a deterministic census (TC positions,
+zone checksum, per-type resource counts/amounts, animals, nav polygon counts, RNG
+state) and is the regression gate for changes here — capture it before a change,
+diff it after.</p>
+<p>Two more headless harnesses cover the Islands map specifically:</p>
+<table>
+<thead>
+<tr>
+<th>Harness</th>
+<th>Checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project/tools/check_islands_layout.tscn</code></td>
+<td>Island polygons don't overlap, keep a channel ≥ 120 px and stay inside the boundary; both nav meshes are non-empty; a ship spawning at the dock sits on the ocean mesh and can sail to a rival island. Env: <code>CALIMA_RIVALS</code>, <code>CALIMA_MAP_SIZE</code>, <code>CALIMA_SEED</code></td>
+</tr>
+<tr>
+<td><code>project/tools/check_nav_islands.tscn</code></td>
+<td>The runtime navmesh rebake (<code>WorldPlacement</code>) neither opens a land route across open sea nor wipes the ocean mesh. Env: <code>CALIMA_MAP</code>, <code>CALIMA_SEED</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>Map generation runs synchronously at match start before any unit is spawned.
+It is triggered by a single static call:</p>
+<pre><code class="language-gdscript">MapGenerator.generate(parent, units_layer, rng)  # returns { tc_positions: Array[Vector2] }
+</code></pre>
+<p>The return value is a dictionary with one key — <code>tc_positions</code> — an array of
+world-space coordinates, one per player (index 0 = human player, 1…N = AI rivals).</p>
+<p>The whole pipeline runs inside <code>MapGenerator._run()</code> and follows a fixed order:</p>
+<pre><code>1. Town-center positions (TC ring) + footprint registration
+2. Terrain background &amp; zones            (TerrainPainter)
+3. Animals                               (EntityPlacer)
+4. Player resources (per-TC)             (EntityPlacer)
+5. Neutral + scattered resources         (EntityPlacer)
+6. Laurisilva forests                    (EntityPlacer)
+7. Navigation meshes, obstacles, walls   (NavMeshBuilder)
+8. Minimap texture bake                  (TerrainManager)
+</code></pre>
+<p>Town centers are placed and registered <em>first</em> so the occupancy grid rejects any
+later spawn that would land on a starting base.</p>
+<hr />
+<h2 id="map-types">Map types</h2>
+<p>Selected in the lobby via <code>MatchConfig.map_type</code> (<code>MatchConfig.MapType</code> enum).</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Enum</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plains</td>
+<td><code>PLAINS</code></td>
+<td>Flat green grass, no terrain zones — simplest map</td>
+</tr>
+<tr>
+<td>Standard</td>
+<td><code>STANDARD</code></td>
+<td>Grass base with scattered terrain zones</td>
+</tr>
+<tr>
+<td>Volcanic Coast</td>
+<td><code>VOLCANIC_COAST</code></td>
+<td>Central caldera + malpais bands</td>
+</tr>
+<tr>
+<td>Desert Coast</td>
+<td><code>DESERT_COAST</code></td>
+<td>Full dune base with grass oases near TCs</td>
+</tr>
+<tr>
+<td>Islands</td>
+<td><code>ISLANDS</code></td>
+<td>One land island per player surrounded by ocean</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="map-sizes">Map sizes</h2>
+<p>Set via <code>MatchConfig.map_size</code>. Determines <code>_map_half</code> (world half-extent in pixels).</p>
+<table>
+<thead>
+<tr>
+<th>Size</th>
+<th><code>_map_half</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Small</td>
+<td>1200 px</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>1800 px</td>
+</tr>
+<tr>
+<td>Large</td>
+<td>2600 px</td>
+</tr>
+</tbody>
+</table>
+<p>All distances in the generator are expressed as fractions of <code>_map_half</code> so they
+scale automatically.</p>
+<hr />
+<h2 id="tc-placement">TC placement</h2>
+<p>For every map type except Islands, town centers are placed with <code>EntityPlacer.place_tc_ring()</code>:</p>
+<ul>
+<li>N positions are distributed evenly around a circle of radius <code>_map_half * 0.48</code>.</li>
+<li>The ring starts at a random angle so no player has a fixed compass advantage.</li>
+<li>Each TC receives a random jitter of ±7 % of <code>_map_half</code> in both axes.</li>
+<li>For 2 players this reproduces the classic face-to-face layout; for 3 a triangle; for 4 a square.</li>
+</ul>
+<p>On Islands maps each TC is placed near the centre of its own island (±60 px random offset).</p>
+<h3 id="island-ring-layout">Island ring layout</h3>
+<p><code>MapGenerator._island_layout(player_count)</code> solves the island radius and the ring
+distance instead of taking a fixed share of the map. Islands used to be sized at
+<code>_map_half * 0.30</code> for 3+ players, which on a small 4-player map made neighbours
+overlap: they merged into a single land mass <em>and</em> broke the ocean nav mesh.</p>
+<p>The solver pushes the ring as far out as the boundary allows (that buys the
+largest radius) and then sizes the radius so the worst case still fits:</p>
+<pre><code>ring   = map_half - ISLAND_SHORE_MARGIN - ISLAND_CENTER_JITTER - radius * ISLAND_BLOB_MAX
+2 * ring * sin(PI / n) &gt;= 2 * radius * ISLAND_BLOB_MAX + 2 * ISLAND_CENTER_JITTER + ISLAND_CHANNEL
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ISLAND_BLOB_MAX</code></td>
+<td>1.22</td>
+<td>Worst-case radial factor of <code>TerrainPainter.make_island_poly()</code> — a "radius r" island actually bulges to <code>r * 1.22</code></td>
+</tr>
+<tr>
+<td><code>ISLAND_CHANNEL</code></td>
+<td>200 px</td>
+<td>Open water kept between neighbouring islands (the transport lane)</td>
+</tr>
+<tr>
+<td><code>ISLAND_SHORE_MARGIN</code></td>
+<td>80 px</td>
+<td>Open water kept between an island and the map boundary the ocean mesh is cut to</td>
+</tr>
+<tr>
+<td><code>ISLAND_CENTER_JITTER</code></td>
+<td>20 px</td>
+<td>Random offset applied to each island centre</td>
+</tr>
+</tbody>
+</table>
+<p>The radius is clamped to <code>[map_half * 0.16, map_half * 0.38]</code> (0.30 for 3+
+players) so a duel map keeps its generous island and a crowded map still gets
+real land rather than token islets. Above the lobby's 4-player cap the floor
+takes over from the channel constraint; islands shrink but never touch.</p>
+<p>Resource islets (<code>EntityPlacer.spawn_resource_islets()</code>) obey the same rule with
+<code>ISLET_CHANNEL</code> (160 px): a candidate outside <code>map_half - islet_extent -
+ISLET_CHANNEL</code>, or too close to an existing land polygon, is <strong>rejected</strong> instead
+of clamped back inside — clamping is what used to push islets into the islands.</p>
+<hr />
+<h2 id="terrain-zones">Terrain zones</h2>
+<p><code>TerrainManager</code> stores terrain as a list of circular zones:</p>
+<pre><code class="language-gdscript">{ center: Vector2, radius: float, type: TerrainType }
+</code></pre>
+<p>Zones are evaluated in <strong>reverse insertion order</strong> — the last zone added wins.
+This means specific overrides (e.g. grass oases) should be added after the base zone.</p>
+<h3 id="terrain-types">Terrain types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Passable</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GRASS</code></td>
+<td>Yes</td>
+<td>No penalty (default)</td>
+</tr>
+<tr>
+<td><code>LAURISILVA</code></td>
+<td>Yes</td>
+<td>Speed × 0.65; contains trees</td>
+</tr>
+<tr>
+<td><code>DUNE</code></td>
+<td>Yes</td>
+<td>Speed × 0.80; Mahos immune</td>
+</tr>
+<tr>
+<td><code>MALPAIS</code></td>
+<td>No*</td>
+<td>Impassable; Guanches immune</td>
+</tr>
+<tr>
+<td><code>RISCO</code></td>
+<td>No</td>
+<td>Impassable; range bonus nearby</td>
+</tr>
+<tr>
+<td><code>OCEAN</code></td>
+<td>No*</td>
+<td>Ships and amphibious units only; shallows at full speed, deep water × <code>deep_water_speed</code></td>
+</tr>
+<tr>
+<td><code>CALDERA</code></td>
+<td>No</td>
+<td>Impassable</td>
+</tr>
+</tbody>
+</table>
+<p>*Civ immunity overrides passability for land zones; ocean is opened by the unit's
+<code>is_amphibious()</code>, not by the civ — see <code>TerrainManager.get_speed_mult()</code>.</p>
+<h3 id="zone-counts-per-map-type">Zone counts per map type</h3>
+<p><strong>Standard:</strong>
+- 3 laurisilva patches (radius 6–14 % of map half)
+- 2 malpais blobs (8–18 %)
+- 2 dune patches (7–15 %)
+- 4 risco clusters (3–7 %)</p>
+<p><strong>Volcanic Coast:</strong>
+- 1 central caldera (radius 16 %)
+- 4 malpais rings around caldera (6–12 %, distributed at 90° intervals)
+- 4 risco clusters (3–7 %)
+- 2 laurisilva patches on northern half (8–15 %)</p>
+<p><strong>Desert Coast:</strong>
+- 1 full-map dune zone (base layer)
+- 2 grass oases near player starting positions (18 %)
+- 3 risco ridges on east edge (4–9 %)</p>
+<p><strong>Islands (per island):</strong>
+- 1–2 laurisilva patches near centre (12–22 % of island radius)
+- 1 malpais or risco on the coastal edge (8–15 %)</p>
+<hr />
+<h2 id="visual-painting">Visual painting</h2>
+<p>After zones are registered in <code>TerrainManager</code>, <code>TerrainPainter.flush_zone_visuals()</code> iterates them
+and creates Polygon2D scene-tree nodes for each:</p>
+<table>
+<thead>
+<tr>
+<th>Zone type</th>
+<th>Nodes created</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Laurisilva</td>
+<td>1 base circle + 3 batched canopy Polygon2D (10–16 trees per zone)</td>
+</tr>
+<tr>
+<td>Risco</td>
+<td>1 base circle + 2 batched rock Polygon2D (light/dark shard groups)</td>
+</tr>
+<tr>
+<td>Malpais</td>
+<td>1 base circle + 1 batched fragment Polygon2D</td>
+</tr>
+<tr>
+<td>Caldera</td>
+<td>2 base circles (outer red + inner black) + 3–5 Line2D lava cracks</td>
+</tr>
+<tr>
+<td>Other</td>
+<td>1 circle Polygon2D</td>
+</tr>
+</tbody>
+</table>
+<p>All terrain nodes use <code>z_index</code> between −9 and −6 so they render below units and buildings.</p>
+<p>Trees are batched: all canopy polygons of the same colour group inside one zone are
+concatenated into a single <code>Polygon2D</code> (sub-polygons separated by a degenerate bridge edge).
+This keeps the scene-tree node count low regardless of tree density.</p>
+<hr />
+<h2 id="resource-spawning">Resource spawning</h2>
+<h3 id="per-player-resources-land-maps">Per-player resources (land maps)</h3>
+<p>Called once per TC with an angle offset so deposits face outward.
+Forest zones use <strong>tight packing</strong> (<code>FOREST_NODE_RADIUS = 13 px</code>) with random size variants.</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Count</th>
+<th>Distance from TC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gold deposit</td>
+<td>5 nodes</td>
+<td>320–480 px</td>
+</tr>
+<tr>
+<td>Stone deposit</td>
+<td>5 nodes</td>
+<td>360–530 px</td>
+</tr>
+<tr>
+<td>Forest zones</td>
+<td>8 zones (size variant chosen randomly)</td>
+<td>160–500 px</td>
+</tr>
+<tr>
+<td>Hunting food</td>
+<td>2 deposits of 3 nodes</td>
+<td>160–300 px</td>
+</tr>
+</tbody>
+</table>
+<h3 id="forest-size-variants">Forest size variants</h3>
+<p>Applied to player, neutral, and scattered forests. Tight packing removes large gaps that block units.</p>
+<table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>Tree count</th>
+<th>Zone radius</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Small</td>
+<td>12–18</td>
+<td>50 px</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>22–30</td>
+<td>75 px</td>
+</tr>
+<tr>
+<td>Large</td>
+<td>35–45</td>
+<td>105 px</td>
+</tr>
+</tbody>
+</table>
+<h3 id="per-player-resources-islands">Per-player resources (Islands)</h3>
+<p>Distances are clamped to 65 % of island radius to keep deposits on land.</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gold deposit</td>
+<td>4 nodes</td>
+</tr>
+<tr>
+<td>Stone deposit</td>
+<td>4 nodes</td>
+</tr>
+<tr>
+<td>Forest zones</td>
+<td>6–8 zones (size variant randomly chosen)</td>
+</tr>
+<tr>
+<td>Hunting food</td>
+<td>1 deposit of 3 nodes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="neutral-resources-land-maps">Neutral resources (land maps)</h3>
+<p>Placed around map centre regardless of TC positions.</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Count</th>
+<th>Distance from centre</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gold deposits</td>
+<td>2 × 6 nodes</td>
+<td>400–700 px</td>
+</tr>
+<tr>
+<td>Stone deposits</td>
+<td>2 × 5 nodes</td>
+<td>450–720 px</td>
+</tr>
+<tr>
+<td>Forest zones</td>
+<td>7 zones (size variant randomly chosen)</td>
+<td>250–700 px</td>
+</tr>
+</tbody>
+</table>
+<h3 id="scattered-resources-land-maps">Scattered resources (land maps)</h3>
+<p><code>EntityPlacer.spawn_scattered_resources()</code> runs after neutral resources on all non-Islands maps.
+Deposits are placed at <strong>random positions across the full map</strong>, with a 500 px minimum distance from any TC.
+This ensures the mid-map and map edges are not empty.</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Groups placed</th>
+<th>Nodes per group</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gold deposits</td>
+<td>~3 × res_mult</td>
+<td>4–7</td>
+</tr>
+<tr>
+<td>Stone deposits</td>
+<td>~2 × res_mult</td>
+<td>4–6</td>
+</tr>
+<tr>
+<td>Forest zones</td>
+<td>~6 × res_mult</td>
+<td>size variant randomly chosen</td>
+</tr>
+</tbody>
+</table>
+<p>After the random scatter, an <strong>edge pass</strong> places 8 evenly-distributed groups around the map perimeter (75–95 % of <code>_map_half</code>), alternating forest → gold → forest → stone. This fills corners and edges that the random scatter might miss.</p>
+<h3 id="islands-only-resources">Islands-only resources</h3>
+<ul>
+<li><strong>Fish banks</strong> (<code>FOOD_FISH</code>): ~8 × player_count × 0.75 nodes scattered in ocean around the map centre, between 0.5× and 2× island radius.</li>
+<li><strong>Resource islets</strong>: 3–4 small procedural land polygons in open ocean. Each islet carries one random template from: <code>[Gold]</code>, <code>[Wood+Stone]</code>, <code>[Stone]</code>, <code>[Wood]</code>, <code>[Gold+Stone]</code>.</li>
+</ul>
+<hr />
+<h2 id="placement-collision-system">Placement collision system</h2>
+<p>All objects (TCs, units, animals, resource nodes) are registered in a spatial hash before placement.
+A candidate position is accepted only if its required clearance radius does not overlap any
+already-registered object.</p>
+<h3 id="clearance-radii">Clearance radii</h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Radius</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Town center</td>
+<td>130 px</td>
+</tr>
+<tr>
+<td>Unit</td>
+<td>22 px</td>
+</tr>
+<tr>
+<td>Animal</td>
+<td>28 px</td>
+</tr>
+<tr>
+<td>Wood node</td>
+<td>22 px</td>
+</tr>
+<tr>
+<td>Other resource</td>
+<td>30 px</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spatial-hash">Spatial hash</h3>
+<p>Objects are indexed into a grid of 140 px cells (<code>SPATIAL_CELL</code>).
+Collision checks scan only the 3×3 neighbourhood of cells around the candidate point,
+making each check O(1) amortised instead of O(n).</p>
+<p><code>EntityPlacer._find_free_arc()</code> and <code>_find_free_near()</code> attempt up to <code>MAX_PLACE_TRIES</code> (30) random
+positions before giving up. Forest zones use <code>count × 12</code> attempts.</p>
+<hr />
+<h2 id="navigation-meshes">Navigation meshes</h2>
+<p>Carved by <code>NavMeshBuilder.build(parent, map_half, land_polys)</code>. Three
+<code>NavigationRegion2D</code> nodes live in the scene:</p>
+<table>
+<thead>
+<tr>
+<th>Node</th>
+<th>Navigation layer</th>
+<th>Used by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NavigationRegion2D</code></td>
+<td>Layer 1</td>
+<td>Land units</td>
+</tr>
+<tr>
+<td><code>OceanNavigationRegion2D</code></td>
+<td>Layer 2</td>
+<td>Ships</td>
+</tr>
+<tr>
+<td><code>AmphibiousNavigationRegion2D</code></td>
+<td>Layer 4</td>
+<td>Amphibious land units (Tidecaller)</td>
+</tr>
+</tbody>
+</table>
+<p>The amphibious mesh is the full playable square, baked on every map type and never
+carved against the coastline: land and ocean are both inset by their 10 px
+<code>agent_radius</code>, so they never share an edge and an agent on both layers would still
+be stuck on its island. Only a single continuous mesh crosses the shore.</p>
+<p>On Islands maps both meshes are rebuilt from the procedural land polygons by
+<code>NavMeshBuilder._bake()</code>, which feeds a <code>NavigationMeshSourceGeometryData2D</code> to
+<code>NavigationServer2D.bake_from_source_geometry_data()</code>:</p>
+<ul>
+<li><strong>Land mesh</strong> — the island polygons as <em>traversable</em> outlines, no obstructions.</li>
+<li><strong>Ocean mesh</strong> — the full-map square as the traversable outline and every island polygon as an <em>obstruction</em>, so ships navigate everywhere except land.</li>
+</ul>
+<p>The baker replaces the earlier <code>NavigationPolygon.make_polygons_from_outlines()</code>
+call, which is deprecated <strong>and</strong> fails its convex partition whenever two source
+outlines touch or overlap: two islands close together produced an ocean mesh with
+zero polygons, which froze every ship on the map (a unit whose start position is
+off-mesh never receives a path). The baked meshes keep no source outlines, so the
+census and the harnesses report <em>polygon</em> counts instead. <code>_bake()</code> keeps the
+scene's <code>agent_radius</code>/<code>cell_size</code> and, if a bake ever comes back empty, leaves
+the existing mesh in place and pushes a warning rather than blanking the region.</p>
+<p>On other map types only the land mesh is used (ships are not trained on non-ocean maps).</p>
+<p>After mesh creation, four thin <code>StaticBody2D</code> walls are placed just outside the map boundary on the ocean layer so ships cannot sail out of bounds.</p>
+<p>Impassable terrain zones (Malpais, Risco, Caldera) are carved from the land nav mesh via
+<code>NavigationObstacle2D</code> nodes sized to the zone radius.</p>
+<hr />
+<h2 id="minimap-texture">Minimap texture</h2>
+<p><code>TerrainManager.bake_minimap_texture(map_half, 256)</code> samples a 256×256 grid.
+For each pixel it evaluates terrain type using flat <code>PackedFloat32Array</code> zone data
+(no Dictionary lookup) and uses <code>distance_squared</code> to avoid square-root calls.
+The result is stored in <code>TerrainManager.minimap_texture</code> as an <code>ImageTexture</code>.</p>
+<footer class="site">Generated from <code>docs/architecture/map_generation.md</code> on 2026-09-06 —
+regenerate with <code>python3 docs/build_site.py</code>. ·
+<a href="../index.html">Documentation portal</a></footer>
+</div>
+</body>
+</html>
