@@ -244,6 +244,16 @@
 <table><thead><tr><th>Tecnología</th><th>Edificio</th><th>Edad</th><th>Coste</th><th>Transforma</th></tr></thead><tbody><tr><td><strong>Hombre de Armas</strong></td><td>Cuartel</td><td>Feudal</td><td>100 Comida + 40 Oro</td><td>Milicia → Hombre de Armas</td></tr><tr><td><strong>Espadachín</strong></td><td>Cuartel</td><td>Castillo</td><td>200 Comida + 60 Oro</td><td>Hombre de Armas → Espadachín</td></tr><tr><td><strong>Explorador Pesado</strong></td><td>Establo</td><td>Feudal</td><td>150 Comida + 75 Oro</td><td>Explorador → Explorador Pesado</td></tr><tr><td><strong>Caballero</strong></td><td>Establo</td><td>Castillo</td><td>200 Comida + 100 Oro</td><td>Explorador Pesado → Caballero</td></tr></tbody></table>
 <hr>
 <h2 id="combate">Combate</h2>
+<h3 id="triangulo">El triángulo de contraataques</h3>
+<p>Cada ataque lleva un <strong>bonus de clase</strong> plano contra ciertas clases de objetivo, leído de los datos de la unidad — la composición del ejército importa tanto como su tamaño:</p>
+<table><thead><tr><th>Atacante</th><th>Bonus</th><th>Contra</th></tr></thead><tbody>
+<tr><td>Piquero</td><td>+12</td><td>Caballería</td></tr>
+<tr><td>Caballero, Explorador Pesado, Saqueador de Dunas, Chevalier Normand</td><td>+4</td><td>Arqueros</td></tr>
+<tr><td>Explorador</td><td>+3</td><td>Arqueros</td></tr>
+<tr><td>Arquero, Arquero del Barranco, Conquistador</td><td>+3</td><td>Lanceros</td></tr>
+<tr><td>Arquero de Tiro Largo (Perfora Armaduras)</td><td>+4 / +3</td><td>Caballería / Lanceros</td></tr>
+</tbody></table>
+<p>El ciclo se cierra: <strong>las picas castigan a la caballería, la caballería come líneas de arqueros, los arqueros abaten lanceros</strong>. La IA lee lo que despliegas y entrena los contraataques, así que un ejército mixto vence al spam de una sola unidad.</p>
 <h3 id="actitudes">Actitudes</h3>
 <p>Toda unidad militar lleva una de cuatro actitudes (botones en el panel de selección). La actitud gobierna lo que la unidad hace <strong>por su cuenta</strong> — una orden explícita de ataque siempre persigue:</p>
 <ul><li><strong>Agresivo</strong> (por defecto) — persigue a cualquier enemigo que detecte</li><li><strong>Defensivo</strong> — contraataca pero vuelve a su puesto; nunca persigue lejos</li><li><strong>Mantener posición</strong> — ataca lo que tenga a su alcance sin moverse</li><li><strong>No atacar</strong> — nunca combate por su cuenta</li></ul>

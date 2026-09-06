@@ -244,6 +244,16 @@
 <table><thead><tr><th>Tech</th><th>Building</th><th>Age</th><th>Cost</th><th>Transforms</th></tr></thead><tbody><tr><td><strong>Man-at-Arms</strong></td><td>Barracks</td><td>Feudal</td><td>100 Food + 40 Gold</td><td>Militia → Man-at-Arms</td></tr><tr><td><strong>Long Swordsman</strong></td><td>Barracks</td><td>Castle</td><td>200 Food + 60 Gold</td><td>Man-at-Arms → Long Swordsman</td></tr><tr><td><strong>Heavy Scout</strong></td><td>Stable</td><td>Feudal</td><td>150 Food + 75 Gold</td><td>Scout → Heavy Scout</td></tr><tr><td><strong>Knight</strong></td><td>Stable</td><td>Castle</td><td>200 Food + 100 Gold</td><td>Heavy Scout → Knight</td></tr></tbody></table>
 <hr>
 <h2 id="combat">Combat</h2>
+<h3 id="counter-triangle">The counter triangle</h3>
+<p>Every attack carries a flat <strong>class bonus</strong> against certain target classes, read from the unit's data — army composition matters as much as army size:</p>
+<table><thead><tr><th>Attacker</th><th>Bonus</th><th>Against</th></tr></thead><tbody>
+<tr><td>Pikeman</td><td>+12</td><td>Cavalry</td></tr>
+<tr><td>Knight, Heavy Scout, Sand Raider, Chevalier Normand</td><td>+4</td><td>Archers</td></tr>
+<tr><td>Scout</td><td>+3</td><td>Archers</td></tr>
+<tr><td>Archer, Ravine Archer, Conquistador</td><td>+3</td><td>Spearmen</td></tr>
+<tr><td>Longbowman (Armour Piercing)</td><td>+4 / +3</td><td>Cavalry / Spearmen</td></tr>
+</tbody></table>
+<p>The loop closes: <strong>pikes punish cavalry, cavalry eats archer lines, archers pick off spearmen</strong>. The AI reads what you field and trains counters, so mixed armies beat single-unit spam.</p>
 <h3 id="stances">Stances</h3>
 <p>Every military unit carries one of four stances (buttons on the selection panel). Stances govern what a unit does <strong>on its own</strong> — an explicit attack order always chases:</p>
 <ul><li><strong>Aggressive</strong> (default) — chases any enemy it notices</li><li><strong>Defensive</strong> — fights back but returns to its post; never chases far</li><li><strong>Stand Ground</strong> — attacks whatever is in reach, never moves</li><li><strong>No Attack</strong> — never fights on its own</li></ul>

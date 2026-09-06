@@ -14,6 +14,7 @@ population_cost = 1
 attack = 8.0
 attack_range = 1.2
 attack_speed = 0.9
+attack_bonuses = {"spearman": 3.0}
 damage_type = 1
 armor_melee = 1.0
 armor_pierce = 1.0

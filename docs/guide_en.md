@@ -434,6 +434,20 @@ Researched at the building that trains the unit; every living unit of the old ty
 
 ## Combat
 
+### The counter triangle
+
+Every attack carries a flat **class bonus** against certain target classes, read from the unit's data — army composition matters as much as army size:
+
+| Attacker | Bonus | Against |
+|---|---|---|
+| Pikeman | +12 | Cavalry |
+| Knight, Heavy Scout, Sand Raider, Chevalier Normand | +4 | Archers |
+| Scout | +3 | Archers |
+| Archer, Ravine Archer, Conquistador | +3 | Spearmen |
+| Longbowman (Armour Piercing) | +4 / +3 | Cavalry / Spearmen |
+
+The loop closes: **pikes punish cavalry, cavalry eats archer lines, archers pick off spearmen**. A knight charge dies on a braced pike wall; naked pikemen melt under massed arrows. The AI reads what you field and trains counters, so mixed armies beat single-unit spam.
+
 ### Stances
 
 Every military unit carries one of four stances (buttons on the selection panel). Stances govern what a unit does **on its own** — an explicit attack order always chases:

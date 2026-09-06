@@ -458,8 +458,12 @@ func _handle_building(delta: float) -> void:
 				_play_animation(_get_animation_name())
 		return
 
-	# Construction: building is under construction
-	build_target.add_construction(build_rate * delta)
+	# Construction: building is under construction. Franks raise their farms
+	# faster (farm_build_speed — the .tres promised it for months unread).
+	var rate: float = build_rate
+	if build_target is Farm:
+		rate *= CivBonusManager.get_multiplier(player_id, "farm_build_speed")
+	build_target.add_construction(rate * delta)
 
 func _handle_attacking(delta: float) -> void:
 	if not is_instance_valid(attack_target):

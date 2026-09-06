@@ -20,6 +20,12 @@ enum DamageType { MELEE, PIERCE }
 
 @export_group("Combat")
 @export var attack: float = 3.0
+## Counter triangle: flat bonus damage vs a target's combat class
+## (UnitBase.COMBAT_CLASSES keys: "cavalry", "archer", "spearman",
+## "infantry", "siege", "ship", "villager"). Added to the attack BEFORE the
+## target's armour subtracts, read in UnitBase._strike_damage — the arrow
+## path inherits it because archers charge their arrows with _strike_damage.
+@export var attack_bonuses: Dictionary = {}
 @export var attack_range: float = 0.5
 @export var attack_speed: float = 1.5  # attacks per second
 @export var damage_type: DamageType = DamageType.MELEE

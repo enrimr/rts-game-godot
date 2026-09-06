@@ -1009,7 +1009,39 @@ func _execute_strike(target: Node) -> void:
 	_after_strike(target)
 
 func _strike_damage(target: Node) -> float:
-	return _get_effective_attack_vs(target) - _get_target_armor(target)
+	return _get_effective_attack_vs(target) + _class_bonus_vs(target) \
+		- _get_target_armor(target)
+
+## Combat class per unit id — the counter triangle's vocabulary. Any land
+## military id not listed reads as "infantry" (the generalist class).
+const COMBAT_CLASSES: Dictionary = {
+	"pikeman": "spearman",
+	"scout": "cavalry", "heavy_scout": "cavalry", "knight": "cavalry",
+	"sand_raider": "cavalry", "chevalier_normand": "cavalry",
+	"archer": "archer", "ravine_archer": "archer", "longbowman": "archer",
+	"conquistador": "archer",
+	"battering_ram": "siege", "mangonel": "siege", "trebuchet": "siege",
+	"fishing_boat": "ship", "transport_ship": "ship", "war_galley": "ship",
+	"trireme": "ship",
+	"villager": "villager",
+}
+
+static func combat_class_of(target: Node) -> String:
+	var udata: Variant = target.get("unit_data")
+	if udata is UnitResource:
+		return COMBAT_CLASSES.get((udata as UnitResource).id, "infantry") as String
+	return ""   # buildings and animals carry no unit class
+
+## Flat class bonus from the unit's .tres (pikes punish cavalry, cavalry
+## eats archers, archers pick off spearmen) — data-driven so a rebalance
+## never touches code.
+func _class_bonus_vs(target: Node) -> float:
+	if unit_data == null or unit_data.attack_bonuses.is_empty():
+		return 0.0
+	var cls: String = combat_class_of(target)
+	if cls.is_empty():
+		return 0.0
+	return unit_data.attack_bonuses.get(cls, 0.0) as float
 
 ## True for COMBAT_REVEAL_TIME after the last strike. Read by FogOfWar so a unit
 ## shooting from inside a fog bank cannot stay invisible while it fires.

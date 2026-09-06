@@ -423,23 +423,27 @@ func test_sand_raider_selection_sound() -> void:
 # Longbowman
 # ===========================================================================
 
-# 18. CAVALRY_IDS contains expected entries
+# 18. The cavalry roster lives in the shared COMBAT_CLASSES map now
 func test_longbowman_cavalry_ids_contains_expected() -> void:
 	for cav_id: String in ["scout", "heavy_scout", "knight", "chevalier_normand", "sand_raider"]:
-		assert_true(cav_id in Longbowman.CAVALRY_IDS,
-			"CAVALRY_IDS must contain '%s'" % cav_id)
+		assert_eq(UnitBase.COMBAT_CLASSES.get(cav_id, ""), "cavalry",
+			"COMBAT_CLASSES must class '%s' as cavalry" % cav_id)
 
 
-# 19. _get_cavalry_bonus returns bonus for cavalry target
+# 19. The Armour Piercing bonus migrated to attack_bonuses data
 func test_longbowman_cavalry_bonus_vs_cavalry() -> void:
 	var u: Longbowman = _make_longbowman()
+	# The synthetic factory data has no bonuses — this assertion is about the
+	# SHIPPED data, so read the real .tres.
+	u.unit_data = load("res://resources/units/longbowman_data.tres") as UnitResource
 	var target: FakeCavalryTarget = FakeCavalryTarget.new()
 	add_child_autofree(target)
 
-	var bonus: float = u._get_cavalry_bonus(target)
+	var bonus: float = u._class_bonus_vs(target)
 
-	assert_eq(bonus, Longbowman.CAVALRY_BONUS_DAMAGE,
-		"_get_cavalry_bonus must return CAVALRY_BONUS_DAMAGE vs cavalry target")
+	assert_eq(bonus, u.unit_data.attack_bonuses.get("cavalry", 0.0) as float,
+		"_class_bonus_vs must pay the .tres cavalry bonus vs a cavalry target")
+	assert_eq(bonus, 4.0, "Armour Piercing stays +4 after the data migration")
 
 
 # 20. _get_cavalry_bonus returns 0 for non-cavalry target
@@ -448,10 +452,10 @@ func test_longbowman_cavalry_bonus_vs_infantry() -> void:
 	var target: FakeTarget = FakeTarget.new()  # unit_data.id = "militia"
 	add_child_autofree(target)
 
-	var bonus: float = u._get_cavalry_bonus(target)
+	var bonus: float = u._class_bonus_vs(target)
 
 	assert_eq(bonus, 0.0,
-		"_get_cavalry_bonus must return 0.0 for non-cavalry targets")
+		"_class_bonus_vs must return 0.0 for non-cavalry targets")
 
 
 # 21. Selection sound

@@ -85,7 +85,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/militia.gd` | Dark Age infantry |
 | `project/scripts/units/man_at_arms.gd` | Feudal Age infantry upgrade |
 | `project/scripts/units/long_swordsman.gd` | Castle Age infantry upgrade |
-| `project/scripts/units/pikeman.gd` | Castle Age anti-cavalry spearman |
+| `project/scripts/units/pikeman.gd` | Castle Age anti-cavalry spearman (+12 vs cavalry via `attack_bonuses`; Guanches train it from the Dark Age) |
 | `project/scripts/units/archer.gd` | Feudal Age ranged infantry, attack-ground, cover fire |
 | `project/scripts/units/scout.gd` | Dark Age exploration cavalry, auto-explore ability |
 | `project/scripts/units/heavy_scout.gd` | Feudal Age cavalry upgrade |
@@ -101,7 +101,7 @@ docs/             ← Architecture and design documentation
 | `project/scripts/units/ravine_archer.gd` | Canarii archer: Ambush Shot (×2 first shot when stationary) |
 | `project/scripts/units/sand_raider.gd` | Mahos cavalry: Hit & Run (retreat after attack) |
 | `project/scripts/units/chevalier_normand.gd` | Franks cavalry: Lance Charge (×2.5 after 80 px movement) |
-| `project/scripts/units/longbowman.gd` | Britons archer: Armour Piercing (+4 vs cavalry) |
+| `project/scripts/units/longbowman.gd` | Britons archer: Armour Piercing (+4 vs cavalry, +3 vs spearmen — lives in its .tres `attack_bonuses`, applied by the shared counter-triangle path) |
 | `project/scripts/units/conquistador.gd` | Castellanos infantry: Salvo Fire (3 rapid shots, 12 s CD) |
 | `project/scripts/units/tidecaller.gd` | Atlantes amphibious: Tidal Pulse (2 splash damage); the only land unit with `is_amphibious()` true (gated on the civ's `can_traverse_ocean`), rides navigation layer 4 |
 | `project/scripts/units/trireme.gd` | Fenicios ship: Ram (×2 vs ships, 40 px knockback) |
@@ -387,9 +387,9 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Guanches: Stone building HP bonus, Pikemen from the Dark Age, infantry-focused, malpaís traversal
 - Canarii: Food gather bonus, cheap archers, houses double as drop-off points, no heavy cavalry
 - Mahos: Cheaper timber (building wood cost ×0.70 — applied at button/AI/command alike via `CivBonusManager.get_building_costs`), fast cavalry, dune traversal, vision ×1.40 while standing on dunes (`dune_vision`, read by `FogOfWar._dune_vision_mult`)
-- Franks: Cheaper age advance, cavalry HP bonus, fast farms
+- Franks: Cheaper age advance, cavalry HP bonus, farms built ×1.20 faster (`farm_build_speed`, read in `Villager._handle_building`)
 - Britons: Archer range +1/age, warship attack speed bonus
-- Castellanos: Free Blacksmith tech/age, balanced roster
+- Castellanos: Free Blacksmith tech/age, defensive volleys reach ×1.10 (`tower_range`, read in `BuildingBase._attack_range`), balanced roster
 - Atlantes: Ship attack speed bonus, distinct sea-stone/bronze fleet (`CivStyle.NAVAL`), amphibious unique unit (Tidecaller wades shallows at full speed, swims deep water at `deep_water_speed` 0.60), harder to spot in Sea Fog (`fog_stealth` 0.5), +50 % vision within 400 px of a shore (`coastal_vision` 1.50, read by `FogOfWar._coastal_vision_mult`)
 - Fenicios: Market from the Dark Age, ship cost ×0.85, trireme passive gold, mercenary discount, ramming naval unique unit
 
@@ -404,7 +404,7 @@ reporting "all passed" — always check the `Scripts` count in the summary and r
 - Lobby-configurable frequency (Off/Normal/Frequent/Extreme)
 
 **Combat:**
-- Melee and ranged damage calculation with armour types (melee/pierce)
+- Melee and ranged damage calculation with armour types (melee/pierce); counter triangle via `UnitResource.attack_bonuses` read in `UnitBase._strike_damage` (COMBAT_CLASSES map: pikeman +12 vs cavalry, cavalry +4/scout +3 vs archers, archers +3 vs spearmen, longbowman keeps its +4 vs cavalry as data) — arrows inherit it because archers charge them with `_strike_damage`; the AI counters what it SIGHTS (`_counter_bias` shifts the barracks mix)
 - Projectile system with flight time and drift (weather-affected)
 - Area-of-effect splash damage (Mangonel 72 px, Trebuchet 48 px)
 - Attack-ground command for ranged/siege units

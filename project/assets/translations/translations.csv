@@ -238,11 +238,11 @@ CIV_ATLANTES_NAME,Atlantes,Atlantes
 CIV_ATLANTES_DESC,"Mysterious seafarers. Build on ocean tiles, move freely through shallow water and dominate the coast.","Navegantes misteriosos. Construyen sobre el océano, se mueven libremente por aguas poco profundas y dominan la costa."
 CIV_FENICIOS_NAME,Fenicios,Fenicios
 CIV_FENICIOS_DESC,Ancient traders. Market available from the start; triremes trickle passive gold; ships cost 15% less and mercenaries are hired at a discount.,Comerciantes ancestrales. Mercado disponible desde el inicio; los trirremes generan oro pasivo; los barcos cuestan un 15% menos y los mercenarios se contratan con descuento.
-CIV_GUANCHES_UNIQUE_UNIT,Menceyes Guard,Guardia Menceyes
+CIV_GUANCHES_UNIQUE_UNIT,Menceyes Guard,Guardia del Mencey
 CIV_CANARII_UNIQUE_UNIT,Ravine Archer,Arquero de Barranco
-CIV_MAHOS_UNIQUE_UNIT,Sand Raider,Corsario de Arena
+CIV_MAHOS_UNIQUE_UNIT,Sand Raider,Saqueador de Dunas
 CIV_FRANKS_UNIQUE_UNIT,Chevalier Normand,Chevalier Normand
-CIV_BRITONS_UNIQUE_UNIT,Longbowman,Arquero de Arco Largo
+CIV_BRITONS_UNIQUE_UNIT,Longbowman,Arquero de Tiro Largo
 CIV_CASTELLANOS_UNIQUE_UNIT,Conquistador,Conquistador
 CIV_ATLANTES_UNIQUE_UNIT,Tidecaller,Invocador de Mareas
 CIV_FENICIOS_UNIQUE_UNIT,Trireme,Trirreme

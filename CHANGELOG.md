@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Counter triangle
+- Class-based attack bonuses (`UnitResource.attack_bonuses`, read in `UnitBase._strike_damage`): pikemen +12 vs cavalry, cavalry +4 (scout +3) vs archers, archers +3 vs spearmen; the Longbowman's Armour Piercing migrated to data. Arrows inherit the bonus. Army composition now matters as much as size.
+- The AI counters what it sights: `_counter_bias` shifts the barracks mix toward pikes/swords/archers based on the enemy composition it can actually see.
+- Franks farms build 20% faster and Castellanos defensive volleys reach 10% further (the last two declared-but-unread civ keys, now wired); dead `castle_range` key dropped; lobby unique-unit names in translations.csv unified with the canonical UNIT_* rows.
+
 ### Civilization bonuses wired for real
 - The four bonuses advertised in-game but never implemented now work: Fenicios build their Market from the Dark Age and their ships cost 15% less; Guanches train Pikemen from the Dark Age; Canarii houses double as drop-off points; Mahos building wood discount (×0.70) is now actually charged — button price, AI price sheet and the placement command all agree.
 - New: caldera claim — a Mining Camp raised within a caldera's shadow trickles stone to its owner (Volcanic Coast).

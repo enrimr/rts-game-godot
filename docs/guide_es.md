@@ -434,6 +434,20 @@ Se investigan en el edificio que entrena la unidad; todas las unidades vivas del
 
 ## Combate
 
+### El triángulo de contraataques
+
+Cada ataque lleva un **bonus de clase** plano contra ciertas clases de objetivo, leído de los datos de la unidad — la composición del ejército importa tanto como su tamaño:
+
+| Atacante | Bonus | Contra |
+|---|---|---|
+| Piquero | +12 | Caballería |
+| Caballero, Explorador Pesado, Saqueador de Dunas, Chevalier Normand | +4 | Arqueros |
+| Explorador | +3 | Arqueros |
+| Arquero, Arquero del Barranco, Conquistador | +3 | Lanceros |
+| Arquero de Tiro Largo (Perfora Armaduras) | +4 / +3 | Caballería / Lanceros |
+
+El ciclo se cierra: **las picas castigan a la caballería, la caballería come líneas de arqueros, los arqueros abaten lanceros**. Una carga de caballeros muere contra un muro de picas; unos piqueros desnudos se derriten bajo flechas en masa. La IA lee lo que despliegas y entrena los contraataques, así que un ejército mixto vence al spam de una sola unidad.
+
 ### Actitudes
 
 Toda unidad militar lleva una de cuatro actitudes (botones en el panel de selección). La actitud gobierna lo que la unidad hace **por su cuenta** — una orden explícita de ataque siempre persigue:

@@ -477,7 +477,9 @@ func _ranged_attack_arrows() -> int:
 	return 0
 
 func _attack_range() -> float:
-	return 220.0
+	# Castellanos tower_range: their defensive volleys (towers and the TC)
+	# reach 10% further — the civ .tres declared it with no reader.
+	return 220.0 * CivBonusManager.get_multiplier(player_id, "tower_range")
 
 func _attack_damage() -> float:
 	return 5.0

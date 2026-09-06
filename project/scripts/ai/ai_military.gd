@@ -146,7 +146,7 @@ func manage_military() -> void:
 		_:
 			desired = {"militia": 0.2, "archer": 0.4, "pikeman": 0.4}
 
-	var unit_id: String = _pick_unit_to_train(desired)
+	var unit_id: String = _pick_unit_to_train(_counter_bias(desired))
 	if unit_id.is_empty():
 		return
 
@@ -483,6 +483,35 @@ func _defend_base() -> void:
 	if not defenders.is_empty():
 		CommandBus.submit(UnitTargetCommand.make(_ai.player_id, "attack", defenders,
 			EntityRegistry.id_of(best_enemy)))
+
+## Counter-intel: shift the desired barracks mix toward the counters of what
+## the enemy actually FIELDS (fog-honest: sighted units only). Cavalry on the
+## board raises the pike share, archer lines raise the sword fodder that
+## closes on them, infantry masses raise archers — composition now answers
+## composition instead of following the static per-age table blindly.
+func _counter_bias(desired: Dictionary) -> Dictionary:
+	var seen: Array = _ai.world.sighted_enemy_units(_ai.player_id)
+	if seen.size() < 4:
+		return desired
+	var cav: int = 0
+	var arch: int = 0
+	var inf: int = 0
+	for u: Node in seen:
+		match UnitBase.combat_class_of(u):
+			"cavalry":
+				cav += 1
+			"archer":
+				arch += 1
+			"infantry", "spearman":
+				inf += 1
+	var total: int = cav + arch + inf
+	if total == 0:
+		return desired
+	var out: Dictionary = desired.duplicate()
+	out["pikeman"] = (out.get("pikeman", 0.0) as float) + float(cav) / float(total) * 0.6
+	out["militia"] = (out.get("militia", 0.0) as float) + float(arch) / float(total) * 0.4
+	out["archer"] = (out.get("archer", 0.0) as float) + float(inf) / float(total) * 0.4
+	return out
 
 func _pick_unit_to_train(desired: Dictionary) -> String:
 	var militia_c: int = _count_of_type("Militia")

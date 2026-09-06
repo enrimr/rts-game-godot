@@ -14,6 +14,7 @@ population_cost = 1
 attack = 10.0
 attack_range = 1.5
 attack_speed = 0.9
+attack_bonuses = {"archer": 4.0}
 armor_melee = 2.0
 armor_pierce = 1.0
 age_required = 2
