@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calima: Flames of the Atlantic · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index_es.html">CALIMA · DOCS</a>
+  <a href="index_es.html">Portal</a>
+  <a href="manual/manual_es.html">Manual (ES)</a>
+  <a href="manual/manual_en.html">Manual (EN)</a>
+  <a href="about.html">English version</a>
+</header>
+<h1 id="calima-flames-of-the-atlantic">Calima: Flames of the Atlantic</h1><nav class="toc"><b>Contenido</b><div class="toc">
+<ul>
+<li><a href="#caracteristicas-principales">Características principales</a><ul>
+<li><a href="#contenido">Contenido</a></li>
+<li><a href="#sistemas">Sistemas</a></li>
+<li><a href="#multijugador">Multijugador</a></li>
+<li><a href="#repeticiones-y-kit-de-creador">Repeticiones y kit de creador</a></li>
+<li><a href="#presentacion">Presentación</a></li>
+</ul>
+</li>
+<li><a href="#civilizaciones">Civilizaciones</a></li>
+<li><a href="#capturas-de-pantalla">Capturas de pantalla</a></li>
+<li><a href="#primeros-pasos">Primeros pasos</a><ul>
+<li><a href="#jugar">Jugar</a></li>
+<li><a href="#aprender-a-jugar">Aprender a jugar</a></li>
+<li><a href="#tests">Tests</a></li>
+</ul>
+</li>
+<li><a href="#arquitectura">Arquitectura</a></li>
+<li><a href="#licencia">Licencia</a></li>
+<li><a href="#agradecimientos">Agradecimientos</a></li>
+<li><a href="#enlaces">Enlaces</a></li>
+</ul>
+</div>
+</nav>
+<p>Un juego de estrategia en tiempo real al estilo de Age of Empires II, ambientado en las Islas Canarias, en la encrucijada de los reinos nativos, los navegantes de la antigüedad y los invasores europeos. Construido íntegramente con <a href="https://godotengine.org">Godot 4</a> y GDScript — cada sprite, sonido y voz del juego se genera de forma procedural, sin ningún recurso externo de arte o audio.</p>
+<p>Creado por <strong>Enrique Ismael Mendoza Robaina</strong> (<a href="https://github.com/enrimr">@enrimr</a>).</p>
+<p>Versión actual: <strong>0.9.8-beta</strong> (ver <a href="changelog_es.html">changelog</a>).</p>
+<hr />
+<h2 id="caracteristicas-principales">Características principales</h2>
+<h3 id="contenido">Contenido</h3>
+<ul>
+<li><strong>8 civilizaciones</strong> en tres capas históricas (isleños nativos, navegantes de la antigüedad, invasores europeos), cada una con bonificaciones únicas, una unidad militar única y dos héroes con nombre propio</li>
+<li><strong>26 tipos de unidad</strong> — aldeanos, una sacerdotisa sanadora, un perro pastor, tres líneas de infantería, caballería, máquinas de asedio (con un trabuquete que se despliega y repliega), barcos y 8 unidades únicas de civilización</li>
+<li><strong>16 héroes con nombre</strong> (uno masculino + una femenina por civilización), cada uno con una habilidad activa distinta; el género del héroe se elige en el lobby</li>
+<li><strong>20 tipos de edificio</strong> — economía, producción militar, investigación, defensa y la Maravilla</li>
+<li><strong>32 tecnologías</strong> — las líneas de armas/armaduras de la Herrería, la ciencia de asedio de la Universidad, los ritos del Templo, cuatro mejoras de unidad y líneas económicas de tres pasos en el Campamento Maderero, el Campamento Minero y el Molino</li>
+<li><strong>Campaña</strong>: <em>Las Llamas de Tamarán</em> — un prólogo tutorial más cuatro misiones guionizadas de la resistencia canarii contra la invasión atlante</li>
+<li><strong>3 condiciones de victoria</strong>: Conquista, Regicidio (protege a tu héroe), Maravilla (constrúyela y consérvala)</li>
+<li><strong>5 tipos de mapa procedural</strong> (Llanura, Estándar, Costa Volcánica, Costa Desértica, Islas) en tres tamaños, con 4 modos de recursos iniciales</li>
+</ul>
+<h3 id="sistemas">Sistemas</h3>
+<ul>
+<li><strong>Clima dinámico</strong> — 5 tipos de evento (calima, Tormenta Atlántica, Niebla Marina, Vientos Alisios, Ceniza Volcánica) con efectos reales sobre las estadísticas, aviso de pronóstico, resistencias por civilización y ocultación en la niebla marina</li>
+<li><strong>Terreno que importa</strong> — campos de lava de malpaís, dunas, riscos con ventaja de visión, bosques de laurisilva y calderas, cada uno con efectos de movimiento/visión/combate y bonificaciones de tránsito por civilización</li>
+<li><strong>Controles de combate al estilo AoE2</strong> — actitudes, formaciones de grupo, atacar-mover, patrulla, puntos de ruta encolados con Shift, grupos de control, guarnición con descargas de flechas desde los edificios, campana</li>
+<li><strong>Guerra naval y anfibia</strong> — economía pesquera, galeras de guerra, transportes de tropas y el Invocador de Mareas atlante, que se adentra en el mar</li>
+<li><strong>Oponentes de IA completos</strong> — economía (incluidos perros pastores y ganado), construcción con aldeanos constructores reales, objetivos militares honestos con la niebla de guerra, asaltos navales, cooperación de IA aliada y tres niveles de dificultad</li>
+<li><strong>Guardar/Cargar</strong> — 99 ranuras, estado completo de la partida incluyendo investigaciones en curso, guarniciones y el clima en vivo</li>
+<li><strong>Niebla de guerra</strong> — tres estados con memoria de edificios al estilo AoE2 en el mapa y el minimapa</li>
+</ul>
+<h3 id="multijugador">Multijugador</h3>
+<ul>
+<li>Multijugador por <strong>LAN e Internet</strong> (UPnP) para hasta 4 jugadores, con host autoritativo y mundos espejo en los clientes interpolados a 15 Hz</li>
+<li><strong>Equipos y alianzas</strong> (2v2, 2v1, ...) en escaramuza y multijugador, con compañeros de equipo de IA aliada</li>
+<li>Lobby unificado con colores, civilizaciones y equipos por jugador, asientos abiertos/IA/cerrados, chat, expulsión y verificación de versión</li>
+<li><strong>Reconexión a mitad de partida</strong> (asientos reservados + resincronización completa) y <strong>guardado/reanudación multijugador</strong> con los jugadores originales</li>
+<li><strong>Prototipo de transporte por Steam</strong> (lobbies, invitaciones, relé de Valve — AppID de pruebas)</li>
+</ul>
+<h3 id="repeticiones-y-kit-de-creador">Repeticiones y kit de creador</h3>
+<ul>
+<li>Cada partida se graba a sí misma (<code>user://replays/</code>); mírala desde el menú <strong>Repeticiones</strong> con línea de tiempo navegable, pausa, velocidades de reproducción y opción de revelar el mapa</li>
+<li><strong>Modo cine</strong> (sin interfaz), minimapa flotante opcional y <strong>exportación a vídeo</strong> — renderiza una repetición completa o un clip marcado con A/B a un vídeo a 30 FPS en segundo plano</li>
+<li><strong>Modo espectador</strong> — ¿derrotado o rendido mientras otros siguen luchando? "Ver mapa" te deja mirando la batalla en vivo (órdenes bloqueadas)</li>
+</ul>
+<h3 id="presentacion">Presentación</h3>
+<ul>
+<li>Arte vectorial 100 % procedural con tres estilos de unidad seleccionables — <strong>Clásico</strong>, <strong>Mejorado</strong> (contorno a tinta + sombreado + animación extra) y <strong>Rediseñado</strong> (rigs basados en la ambientación) — intercambiables en vivo desde los ajustes</li>
+<li>Colores de equipo en unidades y edificios, arquitectura y vestimenta naval por civilización, auras de héroe, fuego/humo progresivos en los edificios dañados</li>
+<li>Audio totalmente sintetizado: "idiomas" de voz inventados por civilización (síntesis de formantes), efectos de sonido espaciales y música procedural</li>
+<li>Localización en inglés y español</li>
+</ul>
+<hr />
+<h2 id="civilizaciones">Civilizaciones</h2>
+<table>
+<thead>
+<tr>
+<th>Civilización</th>
+<th>Capa</th>
+<th>Identidad</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Guanches</strong> (Tenerife)</td>
+<td>Nativa</td>
+<td>Edificios de piedra +20% PV, tránsito por malpaís, lanceros tempranos — Guardia del Mencey</td>
+</tr>
+<tr>
+<td><strong>Canarii</strong> (Gran Canaria)</td>
+<td>Nativa</td>
+<td>+15% recolección de comida, arqueros baratos — Arquero del Barranco (bonificación de alcance en riscos)</td>
+</tr>
+<tr>
+<td><strong>Mahos</strong> (Lanzarote/Fuerteventura)</td>
+<td>Nativa</td>
+<td>−30% coste de madera de los edificios, caballería ligera rápida, tránsito por dunas — Saqueador de Dunas</td>
+</tr>
+<tr>
+<td><strong>Francos</strong> (conquistadores normandos)</td>
+<td>Invasora</td>
+<td>−15% coste de avance de edad, +15% PV de caballería — Chevalier Normando</td>
+</tr>
+<tr>
+<td><strong>Britanos</strong> (corsarios ingleses)</td>
+<td>Invasora</td>
+<td>Alcance de arqueros +1 por edad, barcos de guerra más rápidos — Arquero de Tiro Largo</td>
+</tr>
+<tr>
+<td><strong>Castellanos</strong> (corona de Castilla)</td>
+<td>Invasora</td>
+<td>Tecnología gratuita de la Herrería por edad, espadachines resistentes — Conquistador</td>
+</tr>
+<tr>
+<td><strong>Atlantes</strong> (el imperio hundido)</td>
+<td>Antigua</td>
+<td>Visión costera +50%, sigilo en la niebla marina, barcos más rápidos — Invocador de Mareas anfibio</td>
+</tr>
+<tr>
+<td><strong>Fenicios</strong> (comerciantes fenicios)</td>
+<td>Antigua</td>
+<td>Mercado desde la Edad Oscura, contratación de mercenarios — Trirreme con espolón</td>
+</tr>
+</tbody>
+</table>
+<p>Todos los detalles: <a href="design/civilizations_es.html">civilizaciones</a> · <a href="manual/manual_es.html">guía del jugador</a>.</p>
+<hr />
+<h2 id="capturas-de-pantalla">Capturas de pantalla</h2>
+<p>Las galerías de estilos de unidad (capturadas por los arneses de revisión) están en el repositorio:</p>
+<ul>
+<li><a href="design/unit-redesign-gallery/a_2_redesigned_grid.png">Rigs de unidades rediseñados</a> — y <a href="design/unit-redesign-gallery/a_6_redesigned_attack.png">en movimiento</a></li>
+<li><a href="design/unit-enhanced-gallery/enhanced_grid.png">Estilo Mejorado</a> vs <a href="design/unit-enhanced-gallery/classic_grid.png">Clásico</a></li>
+</ul>
+<hr />
+<h2 id="primeros-pasos">Primeros pasos</h2>
+<h3 id="jugar">Jugar</h3>
+<ul>
+<li><a href="https://godotengine.org/download">Godot 4.6</a> o posterior (build estándar, sin C#)</li>
+</ul>
+<pre><code class="language-bash">git clone https://github.com/enrimr/age-of-empires-clone-godot.git
+cd age-of-empires-clone-godot
+</code></pre>
+<p>Abre <strong>Godot → Import</strong>, selecciona <code>project/project.godot</code> y pulsa <strong>F5</strong>.</p>
+<h3 id="aprender-a-jugar">Aprender a jugar</h3>
+<ul>
+<li><strong><a href="gameplay_es.html">Referencia rápida</a></strong> — controles y atajos de teclado</li>
+<li><strong><a href="manual/manual_en.html">Player's Guide (EN)</a></strong> / <strong><a href="manual/manual_es.html">Guía del Jugador (ES)</a></strong> — el manual completo: civilizaciones, economía, árbol de tecnologías, combate, multijugador, repeticiones, campaña</li>
+</ul>
+<h3 id="tests">Tests</h3>
+<p>Las instrucciones para ejecutar la suite de tests y los arneses de revisión están en la documentación en inglés: <a href="testing/harnesses.html">catálogo de arneses</a>.</p>
+<hr />
+<h2 id="arquitectura">Arquitectura</h2>
+<p>Notas de diseño y arquitectura (en inglés): <a href="architecture/overview.html">visión general</a> · <a href="architecture/systems.html">detalles de los sistemas</a>. Entre los principios: patrón de comandos (<code>GameCommand</code> a través de <code>CommandBus</code>, base de las repeticiones y el multijugador), comunicación entre sistemas solo mediante señales (EventBus), datos en archivos <code>Resource</code> (nunca hardcodeados), multijugador con host autoritativo y aleatoriedad de simulación determinista (<code>MatchRng</code>).</p>
+<hr />
+<h2 id="licencia">Licencia</h2>
+<p><a href="https://github.com/enrimr/rts-game-godot/blob/main/LICENSE">CC BY-NC 4.0</a> — Libre para usar y modificar con atribución, sin uso comercial.</p>
+<p>Copyright © 2026 Enrique Ismael Mendoza Robaina.</p>
+<hr />
+<h2 id="agradecimientos">Agradecimientos</h2>
+<p>Inspirado en Age of Empires II y en la historia de las Islas Canarias.</p>
+<p>Construido con <a href="https://godotengine.org">Godot Engine</a>. Tests con <a href="https://github.com/bitwes/Gut">GUT</a>. Redes de Steam mediante <a href="https://godotsteam.com">GodotSteam</a>.</p>
+<hr />
+<h2 id="enlaces">Enlaces</h2>
+<ul>
+<li><a href="gameplay_es.html">Referencia rápida de juego</a> — controles y atajos</li>
+<li><a href="manual/manual_en.html">Player's Guide</a> / <a href="manual/manual_es.html">Guía del Jugador</a> — el manual completo</li>
+<li><a href="architecture/overview.html">Visión general de la arquitectura</a> · <a href="architecture/systems.html">Detalles de diseño de los sistemas</a></li>
+<li><a href="design/game-design-document_es.html">Documento de diseño del juego</a></li>
+<li><a href="design/civilizations_es.html">Referencia de civilizaciones</a></li>
+<li><a href="changelog_es.html">Registro de cambios</a></li>
+</ul>
+<footer class="site">Generado desde <code>docs/about_es.md</code> el 2026-09-06 —
+regenera con <code>python3 docs/build_site.py</code>. ·
+<a href="index_es.html">Portal de documentación</a></footer>
+</div>
+</body>
+</html>

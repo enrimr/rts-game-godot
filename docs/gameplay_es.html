@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calima: Flames of the Atlantic — Referencia rápida · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index_es.html">CALIMA · DOCS</a>
+  <a href="index_es.html">Portal</a>
+  <a href="manual/manual_es.html">Manual (ES)</a>
+  <a href="manual/manual_en.html">Manual (EN)</a>
+  <a href="gameplay.html">English version</a>
+</header>
+<h1 id="calima-flames-of-the-atlantic-referencia-rapida">Calima: Flames of the Atlantic — Referencia rápida</h1><nav class="toc"><b>Contenido</b><div class="toc">
+<ul>
+<li><a href="#el-bucle-basico">El bucle básico</a></li>
+<li><a href="#camara">Cámara</a></li>
+<li><a href="#seleccion">Selección</a></li>
+<li><a href="#ordenes">Órdenes</a></li>
+<li><a href="#aldeanos-y-construccion">Aldeanos y construcción</a></li>
+<li><a href="#interfaz">Interfaz</a></li>
+<li><a href="#repeticiones">Repeticiones</a></li>
+<li><a href="#ajustes">Ajustes</a></li>
+</ul>
+</div>
+</nav>
+<p>Controles y atajos de teclado de un vistazo. Para el manual completo — civilizaciones, economía, el árbol de 32 tecnologías, combate, clima, multijugador, repeticiones y la campaña — lee la <strong><a href="manual/manual_en.html">Player's Guide (EN)</a></strong> / <strong><a href="manual/manual_es.html">Guía del Jugador (ES)</a></strong>.</p>
+<p>Cada botón del juego muestra su atajo en una insignia y su descripción completa (con el coste real, leído de los datos del juego) en un tooltip.</p>
+<hr />
+<h2 id="el-bucle-basico">El bucle básico</h2>
+<ol>
+<li>Recolecta <strong>comida, madera, oro y piedra</strong> con aldeanos (construye campamentos de entrega cerca de los recursos).</li>
+<li>Construye Casas (+5 de población cada una) y una base; entrena un ejército.</li>
+<li>Investiga tecnologías y avanza <strong>Edad Oscura → Edad Feudal → Edad del Castillo → Era Imperial</strong> en el Centro Urbano.</li>
+<li>Gana por <strong>Conquista</strong> (elimina a todos los bandos hostiles), <strong>Regicidio</strong> (mata a los héroes enemigos y protege a los tuyos) o <strong>Maravilla</strong> (constrúyela y consérvala durante 4 minutos).</li>
+</ol>
+<hr />
+<h2 id="camara">Cámara</h2>
+<table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Entrada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Desplazar</td>
+<td>W / A / S / D (reasignables en Ajustes) o teclas de flecha</td>
+</tr>
+<tr>
+<td>Desplazamiento por bordes</td>
+<td>Lleva el ratón a un borde de la pantalla (se activa en Ajustes)</td>
+</tr>
+<tr>
+<td>Desplazamiento libre</td>
+<td>Arrastrar con clic central</td>
+</tr>
+<tr>
+<td>Zoom</td>
+<td>Rueda del ratón</td>
+</tr>
+<tr>
+<td>Saltar a la última alerta de ataque</td>
+<td><strong>Espacio</strong> (memoria de 5 alertas; los avisos de ataque también son clicables)</td>
+</tr>
+<tr>
+<td>Seguir la selección</td>
+<td>Botón Seguir en el panel inferior</td>
+</tr>
+<tr>
+<td>Cruceta en pantalla</td>
+<td>Opcional, actívala en Ajustes</td>
+</tr>
+</tbody>
+</table>
+<h2 id="seleccion">Selección</h2>
+<table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Entrada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Seleccionar unidad / edificio</td>
+<td>Clic izquierdo</td>
+</tr>
+<tr>
+<td>Selección por recuadro (hasta 40 unidades)</td>
+<td>Arrastrar con clic izquierdo</td>
+</tr>
+<tr>
+<td>Seleccionar todas las del mismo tipo</td>
+<td>Doble clic en una unidad o en un edificio (los edificios comparten punto de reunión y entrenamiento)</td>
+</tr>
+<tr>
+<td>Asignar grupo de control</td>
+<td>Ctrl/Cmd + 1–9</td>
+</tr>
+<tr>
+<td>Recuperar grupo de control</td>
+<td>1–9 (los chips del HUD son clicables; doble clic centra la cámara)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ordenes">Órdenes</h2>
+<p>El clic derecho es contextual: mover, atacar a un enemigo, recolectar un recurso, construir/reparar un edificio propio (aldeanos), guarecer militares en un Centro Urbano/torre propios, pastorear un animal (selecciones solo de perros).</p>
+<table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Tecla</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mover a</td>
+<td>M</td>
+</tr>
+<tr>
+<td>Atacar-Mover</td>
+<td>Z</td>
+</tr>
+<tr>
+<td>Patrullar (va y viene entre dos puntos)</td>
+<td>R</td>
+</tr>
+<tr>
+<td>Encolar puntos de ruta</td>
+<td>Shift + clic derecho</td>
+</tr>
+<tr>
+<td>Parar</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Guarecerse (clic pendiente sobre un edificio tuyo)</td>
+<td>E</td>
+</tr>
+<tr>
+<td>Fuego de Cobertura (a distancia/asedio: acercarse al alcance y atacar el suelo)</td>
+<td>C</td>
+</tr>
+<tr>
+<td>Ver Ruta</td>
+<td>P</td>
+</tr>
+<tr>
+<td>Destruir la unidad/edificio seleccionado</td>
+<td>Supr (Retroceso en macOS; con &gt;5 edificios pide confirmación)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Actitudes</strong> (militares, botones en el panel): Agresivo / Defensivo (persigue con correa y vuelve) / Mantener posición / No atacar. Las unidades inactivas atacan automáticamente a los hostiles a la vista (~240 px) según su actitud.</p>
+<p><strong>Formaciones</strong> (movimientos de grupo): Línea (melé delante, a distancia detrás) / Cuadro / Dispersa / Anillos — al elegir una, la selección se reforma de inmediato.</p>
+<h2 id="aldeanos-y-construccion">Aldeanos y construcción</h2>
+<table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Tecla</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Menú de construcción</td>
+<td>B</td>
+</tr>
+<tr>
+<td>Recolectar madera / oro / piedra / comida</td>
+<td>C / G / T / H</td>
+</tr>
+<tr>
+<td>Rotar el fantasma de colocación</td>
+<td>R</td>
+</tr>
+<tr>
+<td>Colocación libre (sin ajuste a la cuadrícula de 16 px)</td>
+<td>Mantener Alt</td>
+</tr>
+<tr>
+<td>Colocar en cadena el mismo edificio</td>
+<td>Mantener Shift al hacer clic</td>
+</tr>
+<tr>
+<td>Cancelar la colocación</td>
+<td>Clic derecho o Esc</td>
+</tr>
+</tbody>
+</table>
+<p>Teclas del menú de construcción: Casa <strong>H</strong>, Cuartel <strong>B</strong>, Galería de Tiro <strong>A</strong>, Herrería <strong>K</strong>, Establo <strong>J</strong>, Campamento Maderero <strong>L</strong>, Campamento Minero <strong>N</strong>, Granja <strong>F</strong>, Molino <strong>M</strong>, Muralla <strong>Q</strong> (arrastra para un tramo), Puerta <strong>G</strong>, Torre de Vigilancia <strong>O</strong>, Muelle <strong>C</strong>, Mercado <strong>R</strong>, Universidad <strong>U</strong>, Templo <strong>T</strong>, Taller de Asedio <strong>I</strong>, Centro Urbano <strong>Y</strong>, Maravilla <strong>V</strong>.</p>
+<p>Teclas de entrenamiento habituales: Aldeano <strong>V</strong>, Milicia <strong>M</strong>, Arquero <strong>R</strong>, Piquero <strong>P</strong>, Explorador Pesado <strong>H</strong>, Caballero <strong>K</strong>, unidad única de la civilización <strong>U</strong>, Presa Canario <strong>P</strong> (Molino), Harimaguada <strong>H</strong> (Templo).</p>
+<p><strong>Campana</strong> (Centro Urbano, <strong>G</strong>): guarece a todos los aldeanos en el Centro Urbano/torre más cercanos con hueco; toca de nuevo para desalojar todas las guarniciones. Las puertas se bloquean/desbloquean con <strong>O</strong>.</p>
+<h2 id="interfaz">Interfaz</h2>
+<table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Entrada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Menú de pausa (Continuar / Ajustes / Guardar / Rendirse / Salir)</td>
+<td>Esc</td>
+</tr>
+<tr>
+<td>Chat (multijugador)</td>
+<td>Enter para abrir/enviar, Esc para cerrar</td>
+</tr>
+<tr>
+<td>Orden de movimiento en el minimapa</td>
+<td>Clic derecho en el minimapa</td>
+</tr>
+<tr>
+<td>Ping en el minimapa (aliados, multijugador)</td>
+<td>Alt + clic en el minimapa</td>
+</tr>
+<tr>
+<td>Panel de jugadores/puntuación</td>
+<td>Botón acoplado al minimapa</td>
+</tr>
+<tr>
+<td>Velocidad de juego</td>
+<td>Botones en la barra inferior (un jugador)</td>
+</tr>
+<tr>
+<td>Aldeano inactivo / militar inactivo / localizar héroe</td>
+<td>Botones de ciclo en la barra inferior</td>
+</tr>
+</tbody>
+</table>
+<p>Los avisos de notificación (ataques, edificios terminados/perdidos, límite de población, héroe en peligro) llevan un botón de acceso directo — salta al evento, coloca una Casa con un clic tras un aviso de límite de población o localiza a tu héroe.</p>
+<h2 id="repeticiones">Repeticiones</h2>
+<p>Cada partida se graba (se puede desactivar en Ajustes). Míralas desde el navegador de <strong>Repeticiones</strong> del menú principal: pausa, salta a cualquier punto de la línea de tiempo, cambia la velocidad, revela todo el mapa, <strong>C</strong> para el modo cine (sin interfaz, con minimapa flotante opcional) y exporta la repetición — o un clip marcado con A/B — a un archivo de vídeo. Las repeticiones no aceptan órdenes: son historia grabada.</p>
+<h2 id="ajustes">Ajustes</h2>
+<p>Volumen de música/efectos, idioma (EN/ES), dificultad de la IA, pantalla completa, VSync, contador de FPS, <strong>estilo de unidades</strong> (Clásico / Mejorado / Rediseñado — cambia en vivo), teclas de cámara, desplazamiento por bordes, cruceta en pantalla, grabación de repeticiones y minimapa en los vídeos exportados. Accesibles desde el menú principal y el menú de pausa dentro de la partida.</p>
+<footer class="site">Generado desde <code>docs/gameplay_es.md</code> el 2026-09-06 —
+regenera con <code>python3 docs/build_site.py</code>. ·
+<a href="index_es.html">Portal de documentación</a></footer>
+</div>
+</body>
+</html>

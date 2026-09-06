@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visual Guide to the Game · Calima: Flames of the Atlantic</title>
+<style>
+:root{
+  --bg:#faf8f4; --panel:#ffffff; --ink:#22201c; --muted:#6b675f; --line:#e5e0d6; --accent:#0e7a5f; --accent2:#8a5a12;
+}
+[data-theme="dark"]{
+  --bg:#141312; --panel:#1e1c1a; --ink:#ece8e0; --muted:#a29b8e; --line:#33302b; --accent:#4dc3a3; --accent2:#d9a44a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,'Segoe UI',Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+header{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:14px}
+h1{font-size:30px;margin:0 0 6px}
+h2{font-size:23px;margin:52px 0 10px;padding-top:16px;border-top:2px solid var(--line)}
+h3{font-size:18px;margin:30px 0 6px}
+.meta{color:var(--muted);font-size:14px}
+.lead{font-size:17px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media(max-width:760px){.pair,.quad{grid-template-columns:1fr}}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+figure img{width:100%;display:block}
+figure.solo{max-width:900px;margin:14px auto}
+figcaption{padding:8px 12px;font-size:13px;color:var(--muted)}
+figcaption b{color:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:12px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel)}
+.civ{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:22px 0}
+.civ h3{margin-top:0}
+.tagline{font-style:italic;color:var(--muted);margin:0 0 8px}
+.bonos{margin:8px 0;padding-left:20px}
+.bonos li{margin:3px 0}
+.uu{font-size:14px;color:var(--muted)}
+.uu b{color:var(--ink)}
+nav{font-size:14px;margin:10px 0 4px;line-height:2}
+nav a{color:var(--accent);text-decoration:none;margin-right:12px;white-space:nowrap}
+#theme-toggle{float:right;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px}
+#lang-toggle{float:right;margin:5px 12px 0 0;color:var(--accent);text-decoration:none;font-size:14px}
+code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:13px}
+.links{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:15px}
+.links a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <button id="theme-toggle">☾</button>
+  <a id="lang-toggle" href="guia-visual.html">Versión en español</a>
+  <h1>Calima: Flames of the Atlantic — Visual Guide</h1>
+  <div class="meta">Real-time strategy · Godot 4 · the Canary Islands of the 15th–16th centuries · original procedural art · updated 2026-09-06</div>
+  <nav>
+    <a href="#juego">The game</a><a href="#economia">Economy &amp; ages</a><a href="#victoria">Victory</a>
+    <a href="#civs">The 8 civilizations</a><a href="#estilos">Unit styles</a><a href="#terreno">Terrain &amp; weather</a><a href="#mapas">Maps</a><a href="#partida">A 4-player match</a>
+  </nav>
+</header>
+
+<p class="lead">A classic RTS set in the Canary archipelago: native peoples, European powers and
+two legendary Atlantic civilizations compete over islands of volcanoes, laurisilva and trade winds.
+Gather, advance through the ages, train an army and eliminate your rivals — or win by Wonder or Regicide.</p>
+
+<h2 id="juego">The game in one screen</h2>
+<figure class="solo"><img src="img/vista_juego.jpg" alt="In-game view">
+<figcaption><b>Your base at the start:</b> Town Center (here, Guanche style with a blue player trim), three villagers and a mounted scout.
+Top: resources, population and age. Bottom right: minimap with the camera-indicator diamond. The fog of war
+hides the unexplored and keeps what you have already seen in half-light.</figcaption></figure>
+
+<h2 id="economia">Economy and ages</h2>
+<table>
+<tr><th>Resource</th><th>Where it comes from</th><th>What it is for</th></tr>
+<tr><td>🍖 Food</td><td>Farms, hunting, fishing, berries, sheep</td><td>Villagers, troops, age advancement</td></tr>
+<tr><td>🪵 Wood</td><td>Trees (the laurisilva is the rich forest: trees of 260)</td><td>Buildings, archers, ships</td></tr>
+<tr><td>🪙 Gold</td><td>Gold mines</td><td>Advanced units, technology, market</td></tr>
+<tr><td>🪨 Stone</td><td>Quarries (and a Mining Camp next to a caldera generates a trickle of stone)</td><td>Watch Towers and walls</td></tr>
+</table>
+<p>Population starts at 15 and every <b>House</b> adds +5. You advance through four ages —
+<b>Dark → Feudal → Castle → Imperial</b> — by paying resources and waiting out a timer; each age
+unlocks units, buildings and technologies (32 in total, spread across eight buildings: Blacksmith, University, Temple, Barracks, Stable, Mill and the two gathering camps).</p>
+
+<h2 id="victoria">Victory conditions</h2>
+<table>
+<tr><th>Mode</th><th>How to win</th></tr>
+<tr><td><b>Conquest</b></td><td>Eliminate all enemy buildings and units</td></tr>
+<tr><td><b>Regicide</b></td><td>Kill the enemy hero (each civ has its own, with a unique ability)</td></tr>
+<tr><td><b>Wonder</b></td><td>Build the Wonder and defend it until the countdown runs out</td></tr>
+</table>
+
+<h2 id="civs">The 8 civilizations</h2>
+<p>Each civilization is recognisable at a glance by its <b>architecture</b> (material and roof silhouette) and the
+<b>dress</b> of its units; colour only marks the player. Each one has passive bonuses, a unique unit
+and a hero with an ability of their own.</p>
+
+<div class="civ" id="guanches">
+<h3>Guanches — the lords of the volcano</h3>
+<p class="tagline">Defensive · volcanic terrain · infantry</p>
+<ul class="bonos">
+<li>Cross the malpaís without penalty (everyone else crawls)</li>
+<li>Stone buildings +20% HP · pikemen from the Dark Age</li>
+<li>Immune to the Calima; half Volcanic Ash penalty</li>
+</ul>
+<p class="uu"><b>Unique:</b> Menceyes Guard (heavy anti-cavalry infantry) · <b>Hero:</b> Bencomo (+30% attack speed in an area)</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/guanches_buildings.jpg" alt="Guanche buildings"><figcaption>Dark volcanic stone, flat roofs with a parapet</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/guanches_units.jpg" alt="Guanche units"><figcaption>Headband + Menceyes Guard</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="canarii">
+<h3>Canarii — the ravine economy</h3>
+<p class="tagline">Economic boom · cheap archers · high ground</p>
+<ul class="bonos">
+<li>Villagers gather food +15% · houses serve as drop-off points</li>
+<li>Archers -20% food cost</li>
+<li>Half Sea Fog and Trade Winds penalty</li>
+</ul>
+<p class="uu"><b>Unique:</b> Ravine Archer (+2 range next to cliffs) · <b>Hero:</b> Doramas (forces an enemy to attack only him)</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/canarii_buildings.jpg" alt="Canarii buildings"><figcaption>Whitewash, green hipped roofs</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/canarii_units.jpg" alt="Canarii units"><figcaption>No headgear, a sash — a sober identity</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="mahos">
+<h3>Mahos — the dune riders</h3>
+<p class="tagline">Raiding · fast cavalry · cheap buildings</p>
+<ul class="bonos">
+<li>Buildings -30% wood (dry stone)</li>
+<li>Scouts and light cavalry +25% speed</li>
+<li>+40% vision on the dunes · they cross them without slowing · half Calima penalty</li>
+</ul>
+<p class="uu"><b>Unique:</b> Sand Raider (hit-and-run light cavalry) · <b>Hero:</b> Guadarfía</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/mahos_buildings.jpg" alt="Mahos buildings"><figcaption>Sand adobe with domes</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/mahos_units.jpg" alt="Mahos units"><figcaption>Turban with a reddish tail + Sand Raider</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="franks">
+<h3>Francos — the feudal charge</h3>
+<p class="tagline">Cavalry · farms · cheap ages</p>
+<ul class="bonos">
+<li>Advancing an age costs -15%</li>
+<li>Cavalry +15% HP from the Feudal Age</li>
+</ul>
+<p class="uu"><b>Unique:</b> Chevalier Normand (medium cavalry, a charge with extra damage) · <b>Hero:</b> Jean de Béthencourt</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/franks_buildings.jpg" alt="Frankish buildings"><figcaption>Cream timber framing, steep slate gables</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/franks_units.jpg" alt="Frankish units"><figcaption>Visored cap + Chevalier</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="britons">
+<h3>Britanos — the English reach</h3>
+<p class="tagline">Elite archers · naval pressure</p>
+<ul class="bonos">
+<li>Foot archers +1 range per age (from Feudal)</li>
+<li>Warships attack +20% faster</li>
+<li>Half Atlantic Storm penalty</li>
+</ul>
+<p class="uu"><b>Unique:</b> Longbowman (exceptional range, +4 vs cavalry) · <b>Hero:</b> Francis Drake</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/britons_buildings.jpg" alt="British buildings"><figcaption>Grey ashlar, near-black charcoal roofs</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/britons_units.jpg" alt="British units"><figcaption>Hood + Longbowman</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="castellanos">
+<h3>Castellanos — the late-game power</h3>
+<p class="tagline">Long game · free technology · full roster</p>
+<ul class="bonos">
+<li>Each age advance unlocks a free Blacksmith technology</li>
+<li>Swordsmen +15% HP</li>
+<li>Half Calima penalty</li>
+</ul>
+<p class="uu"><b>Unique:</b> Conquistador (armoured infantry with Salvo Fire: 3 rapid shots) · <b>Hero:</b> Don Quijote de la Mancha</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/castellanos_buildings.jpg" alt="Castellano buildings"><figcaption>Cream stucco, terracotta hipped roofs</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/castellanos_units.jpg" alt="Castellano units"><figcaption>Helmet crest + Conquistador</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="atlantes">
+<h3>Atlantes — the legendary amphibians</h3>
+<p class="tagline">Coast · fast ships · amphibious</p>
+<ul class="bonos">
+<li>+50% vision within 400 px of a shore · ships attack 20% faster</li>
+<li>Their Tidecaller wades shallow water at full speed and swims the open sea (at 60%)</li>
+<li>Immune to the Atlantic Storm; in Sea Fog they are twice as hard to spot</li>
+</ul>
+<p class="uu"><b>Unique:</b> Tidecaller (amphibious infantry with an area Tidal Pulse) · <b>Hero:</b> Artaxerax</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/atlantes_buildings.jpg" alt="Atlantean buildings"><figcaption>Pale greenish stone, stepped bronze roofs</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/atlantes_units.jpg" alt="Atlantean units"><figcaption>Bronze diadem + Tidecaller</figcaption></figure>
+</div>
+</div>
+
+<div class="civ" id="fenicios">
+<h3>Fenicios — the merchants of the sea</h3>
+<p class="tagline">Trade · cheap fleet · naval mobility</p>
+<ul class="bonos">
+<li>Market from the Dark Age · Triremes generate passive gold (5 gold every 30 s)</li>
+<li>Ships −15% cost · Market mercenaries cost them 25% less</li>
+<li>Half Atlantic Storm penalty</li>
+</ul>
+<p class="uu"><b>Unique:</b> Trireme (ramming galley: ×2 vs ships + knockback) · <b>Hero:</b> Hanno the Navigator</p>
+<div class="pair">
+<figure><img src="../analysis/civ-gallery/img/fenicios_buildings.jpg" alt="Phoenician buildings"><figcaption>Sandstone, flat roofs with a purple wash</figcaption></figure>
+<figure><img src="../analysis/civ-gallery/img/fenicios_units.jpg" alt="Phoenician units"><figcaption>Headscarf with a purple tail + Trireme</figcaption></figure>
+</div>
+</div>
+
+<h2 id="terreno">Terrain and weather</h2>
+<table>
+<tr><th>Terrain</th><th>Effect</th></tr>
+<tr><td>Malpaís (lava)</td><td>Impassable, unbuildable — only the Guanches cross it</td></tr>
+<tr><td>Dune</td><td>Heavy infantry −20% speed — the Mahos cross it without penalty and see further</td></tr>
+<tr><td>Laurisilva</td><td>-35% speed, vision -30% under the canopy, forests of rich wood</td></tr>
+<tr><td>Risco (cliff)</td><td>Impassable; ranged units next to the edge: +2 range</td></tr>
+<tr><td>Shallow water</td><td>Blocks land units; amphibians wade it at full speed</td></tr>
+<tr><td>Caldera</td><td>Impassable; a Mining Camp in its shadow generates a trickle of stone</td></tr>
+</table>
+<p>Weather is procedural and announced in advance: <b>Calima</b> (vision and gathering),
+<b>Atlantic Storm</b> (naval and fishing), <b>Sea Fog</b> (coastal concealment), <b>Trade Winds</b>
+(naval speed by heading, projectile drift) and <b>Volcanic Ash</b> (damage to buildings near
+calderas, Volcanic Coast only). Each civilization better resists the weather of its homeland.</p>
+
+<h2 id="estilos">Three unit styles</h2>
+<p>From <b>Settings → Display</b> you choose the visual style of every unit; the change applies
+instantly, mid-match. <b>Classic</b> is the original flat vector figures,
+<b>Enhanced</b> adds outlines, shading and extra animation, and <b>Redesigned</b> remodels every
+figure faithful to Canarian lore.</p>
+<div class="pair">
+<figure><img src="../design/unit-enhanced-gallery/classic_close.png" alt="Classic style"><figcaption><b>Classic</b> — villager, man-at-arms, archer and pikeman as flat figures</figcaption></figure>
+<figure><img src="../design/unit-enhanced-gallery/enhanced_close.png" alt="Enhanced style"><figcaption><b>Enhanced</b> — the same units with outlines and shading</figcaption></figure>
+</div>
+<div class="pair">
+<figure><img src="../design/unit-redesign-gallery/a_4_redesigned_close_right.png" alt="Redesigned style"><figcaption><b>Redesigned</b> — remodelled figures: new proportions, readable weapons and dress</figcaption></figure>
+<figure><img src="../design/unit-redesign-gallery/crop_female.png" alt="Redesigned female villager"><figcaption><b>Redesigned, up close</b> — a female villager with an axe; each unit's visual gender is random</figcaption></figure>
+</div>
+<p class="meta">More screenshots in the galleries: <a href="../design/unit-redesign-gallery/">unit-redesign-gallery</a> ·
+<a href="../design/unit-enhanced-gallery/">unit-enhanced-gallery</a>.</p>
+
+<h2 id="mapas">Maps and setup</h2>
+<p><b>5 map types</b> (Plains, Standard, Volcanic Coast, Desert Coast, Islands — the last one demands
+a navy and transports), <b>4 resource modes</b> (Scarce→Full Combat), 3 victory modes, configurable weather
+frequency, teams 1–4 and a choice of civilization and hero gender in the lobby. Games can be saved in 99 slots.</p>
+<p>Beyond the skirmish: a <b>campaign</b> about the Atlantean invasion (prologue + 4 missions), LAN/Internet <b>multiplayer</b> for up to 4 players with online save and resume, and <b>replays</b> of every match, exportable to video with a cinematic mode.</p>
+
+<h2 id="partida">A 4-player match</h2>
+<figure class="solo"><img src="img/partida4_mapa.jpg" alt="Full 4-player map">
+<figcaption><b>The full map</b> of a Guanches (blue, south) vs Mahos (red, west) vs Francos (north) vs
+Atlantes (purple, east) match, with the fog revealed. Each base is recognisable by its architecture; the minimap carries the player colour.</figcaption></figure>
+<div class="quad">
+<figure><img src="img/base_oeste_mahos.jpg" alt="Mahos base"><figcaption><b>Mahos base</b> — adobe and domes, red trim</figcaption></figure>
+<figure><img src="img/base_este_atlantes.jpg" alt="Atlantean base"><figcaption><b>Atlantean base</b> — pale stepped stone, purple trim</figcaption></figure>
+<figure><img src="img/base_norte_franks.jpg" alt="Frankish base"><figcaption><b>Frankish base</b> — slate gables</figcaption></figure>
+<figure><img src="img/base_sur_guanches.jpg" alt="Guanche base"><figcaption><b>Guanche base</b> — volcanic stone, blue trim</figcaption></figure>
+</div>
+
+<h2>Further reading</h2>
+<div class="links">
+<ul>
+<li>📕 <a href="../manual/manual_en.html">Player manual (HTML)</a> — the complete guide, ready to read or print</li>
+<li>🌳 <a href="../design/tech_tree_en.html">Tech tree</a> — the 32 technologies generated from the game's data</li>
+<li>📖 <a href="../guide_en.md">Complete player guide</a> — lore, heroes, naval tips (markdown)</li>
+<li>🏛️ <a href="../analysis/civ-gallery/civilization-gallery_en.html">Civilization gallery</a> — the 20 buildings and the roster of every civ</li>
+<li>📐 <a href="../analysis/iso-refactor/informe-refactor-isometrico-2026-08-26.html">Isometric refactor report</a> — the before/after with blind-critic verdicts (Spanish)</li>
+<li>🗂️ <a href="../index_en.html">Documentation portal</a> — every document in the project</li>
+</ul>
+Screenshots regenerable with <code>tools/screenshot_runner.tscn</code> (<code>CALIMA_CIV</code>, <code>CALIMA_RIVAL_CIV="a,b,c"</code>, <code>CALIMA_MAP</code>, <code>CALIMA_PREVIEW=1</code>).
+</div>
+
+<p class="meta" style="margin-top:32px">Visual guide generated on 2026-08-26, updated on 2026-09-06 to the real state of the game · all art is procedural Polygon2D, original to the project.</p>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('theme-toggle');
+  var saved=null;try{saved=localStorage.getItem('guia-theme');}catch(e){}
+  if(!saved&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)saved='dark';
+  if(saved)root.setAttribute('data-theme',saved);
+  function sync(){btn.textContent=root.getAttribute('data-theme')==='dark'?'☀':'☾';}
+  sync();
+  btn.addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('guia-theme',next);}catch(e){}
+    sync();
+  });
+})();
+</script>
+</body>
+</html>

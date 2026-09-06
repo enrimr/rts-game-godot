@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Setup Instructions · Calima: Flames of the Atlantic</title>
+<title>La Harimaguada — Sanadora del Archipiélago · Calima: Flames of the Atlantic</title>
 <style>
 :root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
         --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
@@ -54,30 +54,38 @@ footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14p
 <body>
 <div class="wrap">
 <header class="site">
-  <a class="brand" href="../index_en.html">CALIMA · DOCS</a>
-  <a href="../index_en.html">Portal</a>
+  <a class="brand" href="../index_es.html">CALIMA · DOCS</a>
+  <a href="../index_es.html">Portal</a>
   <a href="../manual/manual_es.html">Manual (ES)</a>
   <a href="../manual/manual_en.html">Manual (EN)</a>
-  
+  <a href="harimaguada.html">English version</a>
 </header>
-<h1 id="setup-instructions">Setup Instructions</h1>
-<ol>
-<li>Install <a href="https://godotengine.org/download">Godot 4.6+</a> (standard build, no C#).</li>
-<li>Clone the repository and open <code>project/project.godot</code> in Godot (<strong>Import</strong>).</li>
-<li>Wait for the first import to complete, then press <strong>F5</strong> to play.</li>
-</ol>
-<p>Run the test suite headlessly from the repo root:</p>
-<pre><code class="language-bash">GODOT=/path/to/godot ./run_tests.sh
-</code></pre>
-<p>Full developer onboarding (project structure, harness catalog, conventions, sub-agent workflow, release tagging): <strong><a href="getting-started.html">docs/development/getting-started.md</a></strong>.</p>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<ul>
-<li><strong>Missing translations or class errors after pulling</strong>: close Godot, optionally delete <code>project/.godot/global_script_class_cache.cfg</code>, reopen the project and let it reimport. Translations can also be reimported individually (FileSystem dock → right-click <code>assets/translations/translations.csv</code> → Reimport).</li>
-<li><strong>New <code>class_name</code> not recognized headlessly</strong>: run <code>$GODOT --headless --path project --import</code> once.</li>
-</ul>
-<footer class="site">Generated from <code>SETUP_INSTRUCTIONS.md</code> on 2026-09-06 —
-regenerate with <code>python3 docs/build_site.py</code>. ·
-<a href="../index_en.html">Documentation portal</a></footer>
+<h1 id="la-harimaguada-sanadora-del-archipielago">La Harimaguada — Sanadora del Archipiélago</h1>
+<h2 id="contexto-historico">Contexto Histórico</h2>
+<p>Las harimaguadas (también maguadas o magadas) eran mujeres consagradas de la
+Gran Canaria precolonial. Las crónicas las describen viviendo en comunidad
+junto a recintos sagrados, vestidas con largas túnicas blancas de cuero,
+guardianas del rito, la sanación y la rogativa de lluvia. Gozaban de un
+estatus protegido, casi inviolable, en la sociedad canaria: sus personas y sus
+santuarios quedaban fuera de las querellas entre cantones.</p>
+<h2 id="en-el-juego">En el Juego</h2>
+<p><strong>Por qué la entrenan todas las civilizaciones:</strong> la guerra por el
+archipiélago se libra EN las islas — y las harimaguadas son de la tierra, no
+de ninguna bandera. Las potencias extranjeras no traen sanadoras a través del
+océano: levantan un templo en suelo canario, y son las sacerdotisas locales
+quienes atienden a cualquier ejército que respete sus santuarios. Lucha bajo
+la bandera que quieras; las islas y su gente siguen siendo canarias.</p>
+<p><strong>Rol:</strong> entrenada en el Templo (Edad de los Castillos). Nunca lucha — ataque
+cero, pasiva por voto. Con un paciente asignado sigue a los heridos y los
+sana en el campo; a su aire hace su propio triaje, atendiendo al aliado más
+malherido cercano, el peor primero. El propio Templo es su obra mayor: una
+sala donde las unidades guarecidas se curan (los héroes a mitad de ritmo —
+hasta un rey espera su turno bajo su techo).</p>
+<p><strong>Voz:</strong> cada civilización pronuncia su vocación en su propia lengua
+sintetizada — la misma mujer, ocho acentos.</p>
+<footer class="site">Generado desde <code>docs/lore/harimaguada_es.md</code> el 2026-09-06 —
+regenera con <code>python3 docs/build_site.py</code>. ·
+<a href="../index_es.html">Portal de documentación</a></footer>
 </div>
 </body>
 </html>

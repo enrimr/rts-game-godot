@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Civilization Gallery · Calima: Flames of the Atlantic</title>
+<style>
+:root{
+  --bg:#faf8f4; --panel:#ffffff; --ink:#22201c; --muted:#6b675f; --line:#e5e0d6; --accent:#0e7a5f;
+}
+[data-theme="dark"]{
+  --bg:#141312; --panel:#1e1c1a; --ink:#ece8e0; --muted:#a29b8e; --line:#33302b; --accent:#4dc3a3;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,'Segoe UI',Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+header{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:10px}
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:48px 0 4px;padding-top:14px;border-top:2px solid var(--line)}
+.meta{color:var(--muted);font-size:14px}
+.motif{color:var(--muted);font-size:15px;margin:2px 0 14px}
+.motif b{color:var(--ink)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.pair{grid-template-columns:1fr}}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+figure img{width:100%;display:block}
+figcaption{padding:7px 12px;font-size:13px;color:var(--muted)}
+#theme-toggle{float:right;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px}
+#lang-toggle{float:right;margin:5px 12px 0 0;color:var(--accent);text-decoration:none;font-size:14px}
+.bonus{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:8px 14px;font-size:14px;margin:8px 0 4px}
+.bonus b{color:var(--accent)}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:14px;color:var(--muted);margin-top:14px}
+code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:13px}
+nav{font-size:14px;margin:10px 0 4px}
+nav a{color:var(--accent);text-decoration:none;margin-right:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <button id="theme-toggle">☾</button>
+  <a id="lang-toggle" href="galeria-civilizaciones.html">Versión en español</a>
+  <h1>Civilization Gallery</h1>
+  <div class="meta">Calima: Flames of the Atlantic · original procedural art · screenshots from 2026-08-26 · bonuses verified against the code on 2026-09-06</div>
+  <nav>
+    <a href="#guanches">Guanches</a><a href="#canarii">Canarii</a><a href="#mahos">Mahos</a><a href="#franks">Francos</a>
+    <a href="#britons">Britanos</a><a href="#castellanos">Castellanos</a><a href="#atlantes">Atlantes</a><a href="#fenicios">Fenicios</a>
+  </nav>
+</header>
+
+<p class="motif">Per-civilization identity: <b>silhouette and material</b> (roof shape, walls, headgear) — player colour
+only marks ownership. Buildings: top row completed, bottom row under construction (scaffolding).
+Units: shared template (villager → cavalry) in the civ's dress, plus its <b>unique unit</b> at the end.
+Regenerable with <code>tools/check_building_gallery.tscn</code> and <code>tools/check_unit_gallery.tscn</code> (<code>CALIMA_CIV=…</code>).</p>
+
+<h2 id="guanches">Guanches</h2>
+<p class="motif"><b>Dark volcanic stone · flat roof with parapet · cream trim</b> — builders of the malpaís. Units wear a headband. Unique: Menceyes Guard.</p>
+<p class="bonus"><b>Bonuses:</b> stone buildings +20% HP (walls and mining camps) · pikemen available from the Dark Age · they cross the malpaís, impassable to everyone else · immune to the Calima and half Volcanic Ash penalty.</p>
+<div class="pair">
+  <figure><img src="img/guanches_buildings.jpg" alt="Guanche buildings"><figcaption>All 20 buildings in Guanche style</figcaption></figure>
+  <figure><img src="img/guanches_units.jpg" alt="Guanche units"><figcaption>Shared roster + Menceyes Guard</figcaption></figure>
+</div>
+
+<h2 id="canarii">Canarii</h2>
+<p class="motif"><b>Whitewash · green hipped roof · wood</b> — villages of the laurisilva. No headgear; identity in the sash. Unique: Ravine Archer.</p>
+<p class="bonus"><b>Bonuses:</b> food gathering +15% · the whole archer line costs 20% less food · Houses serve as resource drop-off points · half Sea Fog and Trade Winds penalty.</p>
+<div class="pair">
+  <figure><img src="img/canarii_buildings.jpg" alt="Canarii buildings"><figcaption>All 20 buildings in Canarii style</figcaption></figure>
+  <figure><img src="img/canarii_units.jpg" alt="Canarii units"><figcaption>Shared roster + Ravine Archer</figcaption></figure>
+</div>
+
+<h2 id="mahos">Mahos</h2>
+<p class="motif"><b>Sand adobe · dome with finial · ochre</b> — desert of the eastern islands. Turban with a reddish tail. Unique: Sand Raider.</p>
+<p class="bonus"><b>Bonuses:</b> buildings −30% wood cost · Scout and Sand Raider +25% speed · +40% vision on the dunes, which they cross without penalty · half Calima penalty.</p>
+<div class="pair">
+  <figure><img src="img/mahos_buildings.jpg" alt="Mahos buildings"><figcaption>All 20 buildings in Mahos style</figcaption></figure>
+  <figure><img src="img/mahos_units.jpg" alt="Mahos units"><figcaption>Shared roster + Sand Raider</figcaption></figure>
+</div>
+
+<h2 id="franks">Francos</h2>
+<p class="motif"><b>Cream timber framing · steep slate gable · ridge beam</b> — continental feudal. Visored cap. Unique: Chevalier Normand.</p>
+<p class="bonus"><b>Bonuses:</b> advancing an age costs 15% less · cavalry +15% HP · farms are built 20% faster.</p>
+<div class="pair">
+  <figure><img src="img/franks_buildings.jpg" alt="Frankish buildings"><figcaption>All 20 buildings in Frankish style</figcaption></figure>
+  <figure><img src="img/franks_units.jpg" alt="Frankish units"><figcaption>Shared roster + Chevalier Normand</figcaption></figure>
+</div>
+
+<h2 id="britons">Britanos</h2>
+<p class="motif"><b>Grey ashlar · near-black charcoal gable</b> — northern keeps. A hood framing the face. Unique: Longbowman.</p>
+<p class="bonus"><b>Bonuses:</b> foot archers +1 range per age (from Feudal) · warships +20% attack speed · half Atlantic Storm penalty.</p>
+<div class="pair">
+  <figure><img src="img/britons_buildings.jpg" alt="British buildings"><figcaption>All 20 buildings in British style</figcaption></figure>
+  <figure><img src="img/britons_units.jpg" alt="British units"><figcaption>Shared roster + Longbowman</figcaption></figure>
+</div>
+
+<h2 id="castellanos">Castellanos</h2>
+<p class="motif"><b>Cream stucco · terracotta hipped roof · terracotta capitals</b> — Iberian plateau. A thin helmet crest. Unique: Conquistador.</p>
+<p class="bonus"><b>Bonuses:</b> a free Blacksmith technology with each age advance · swordsman line +15% HP · towers and a garrisoned TC shoot 10% further · half Calima penalty.</p>
+<div class="pair">
+  <figure><img src="img/castellanos_buildings.jpg" alt="Castellano buildings"><figcaption>All 20 buildings in Castellano style</figcaption></figure>
+  <figure><img src="img/castellanos_units.jpg" alt="Castellano units"><figcaption>Shared roster + Conquistador</figcaption></figure>
+</div>
+
+<h2 id="atlantes">Atlantes</h2>
+<p class="motif"><b>Pale greenish stone · stepped bronze roof · turquoise band</b> — the mythical ones. Bronze diadem with a gem. Unique: Tidecaller.</p>
+<p class="bonus"><b>Bonuses:</b> +50% vision within 400 px of a shore · ships +20% attack speed · in Sea Fog they are spotted at half distance (90 px) · their Tidecaller is amphibious (shallow water at full speed, ocean at 60%) · immune to the Atlantic Storm and half Sea Fog penalty.</p>
+<div class="pair">
+  <figure><img src="img/atlantes_buildings.jpg" alt="Atlantean buildings"><figcaption>All 20 buildings in Atlantean style</figcaption></figure>
+  <figure><img src="img/atlantes_units.jpg" alt="Atlantean units"><figcaption>Shared roster + Tidecaller</figcaption></figure>
+</div>
+
+<h2 id="fenicios">Fenicios</h2>
+<p class="motif"><b>Sandstone · flat roof with a purple wash · purple awnings</b> — traders of the Levant. Headscarf with a purple tail. Unique: Trireme.</p>
+<p class="bonus"><b>Bonuses:</b> Market available from the Dark Age · ships −15% cost · Triremes generate passive gold (5 gold every 30 s) · Market mercenaries 25% cheaper · half Atlantic Storm penalty.</p>
+<div class="pair">
+  <figure><img src="img/fenicios_buildings.jpg" alt="Phoenician buildings"><figcaption>All 20 buildings in Phoenician style</figcaption></figure>
+  <figure><img src="img/fenicios_units.jpg" alt="Phoenician units"><figcaption>Shared roster + Trireme</figcaption></figure>
+</div>
+
+<div class="note">
+Validation: a blind critic identified 4/4 civilizations from unlabelled screenshots using only the motif
+legend (the two confusable pairs it flagged — Britons/Franks and Fenicios/Guanches — are already fixed with charcoal and
+the purple wash). Styles defined in <code>scripts/utils/civ_style.gd</code>; tweaking a civ is one line. The listed bonuses were verified against <code>resources/civilizations/*.tres</code> and their readers (<code>CivBonusManager</code>, <code>FogOfWar</code>, <code>TerrainManager</code>, <code>Trireme</code>, <code>House</code>, <code>Barracks</code>, <code>Market</code>).
+</div>
+
+<p class="meta" style="margin-top:32px">All art is procedural Polygon2D, original to the project.</p>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('theme-toggle');
+  var saved=null;try{saved=localStorage.getItem('civgal-theme');}catch(e){}
+  if(!saved&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)saved='dark';
+  if(saved)root.setAttribute('data-theme',saved);
+  function sync(){btn.textContent=root.getAttribute('data-theme')==='dark'?'☀':'☾';}
+  sync();
+  btn.addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('civgal-theme',next);}catch(e){}
+    sync();
+  });
+})();
+</script>
+</body>
+</html>

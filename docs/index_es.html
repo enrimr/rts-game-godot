@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calima: Flames of the Atlantic — Documentación</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #1a1108; --panel: #241a0c; --border: #3d2e18;
+    --gold: #c8a84b; --gold-dim: #8c7232; --gold-bright: #f0cc6a;
+    --text: #d8c9a3; --text-dim: #8a7a55; --link: #d9a44a;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 15px; line-height: 1.55; min-height: 100vh;
+  }
+  .page { max-width: 1060px; margin: 0 auto; padding: 40px 22px 60px; }
+  .langbar { text-align: right; font-size: 0.82rem; margin-bottom: 8px; }
+  .langbar a { color: var(--link); text-decoration: none; }
+  .langbar a:hover { color: var(--gold-bright); }
+  h1 {
+    color: var(--gold); font-variant: small-caps; letter-spacing: 0.1em;
+    font-size: 1.8rem; text-align: center;
+    text-shadow: 0 0 22px rgba(200,168,75,0.4);
+  }
+  .tagline { text-align: center; color: var(--text-dim); font-size: 0.9rem; margin: 6px 0 30px; }
+  h2 {
+    color: var(--gold); font-variant: small-caps; letter-spacing: 0.08em;
+    font-size: 1.1rem; margin: 30px 0 12px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .note { color: var(--text-dim); font-size: 0.83rem; margin: -6px 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; }
+  a.card {
+    display: block; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 15px; text-decoration: none; color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  a.card:hover { border-color: var(--gold-dim); box-shadow: 0 0 12px rgba(200,168,75,0.25); }
+  .card .t { color: var(--gold-bright); font-weight: 600; }
+  .card .d { color: var(--text-dim); font-size: 0.83rem; margin-top: 2px; }
+  .badge {
+    display: inline-block; border: 1px solid var(--gold-dim); border-radius: 10px;
+    color: var(--gold); font-size: 0.68rem; padding: 0 7px; margin-left: 6px;
+    vertical-align: 2px; letter-spacing: 0.04em;
+  }
+  footer { margin-top: 40px; text-align: center; color: var(--text-dim); font-size: 0.78rem; line-height: 1.6; }
+  footer code { background: rgba(0,0,0,0.35); border-radius: 3px; padding: 1px 5px; font-size: 0.74rem; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<p class="langbar"><a href="index.html">Inicio</a> · <a href="index_en.html">Documentation in English →</a></p>
+
+<h1>Calima: Flames of the Atlantic</h1>
+<p class="tagline">Portal de documentación · un juego de estrategia en tiempo real ambientado en las Islas Canarias de los siglos XV–XVI · Godot 4</p>
+
+<h2>Para jugadores</h2>
+<div class="grid">
+  <a class="card" href="manual/manual_es.html">
+    <span class="t">Manual del jugador</span><span class="badge">ES</span>
+    <div class="d">La guía completa en HTML: civilizaciones, unidades, edificios, tecnologías, clima, campaña y multijugador. Imprimible.</div>
+  </a>
+  <a class="card" href="design/tech_tree_es.html">
+    <span class="t">Árbol de tecnologías</span><span class="badge">ES</span>
+    <div class="d">Las 32 tecnologías de los 8 edificios de investigación, generadas desde los datos del juego (.tres): costes, tiempos, efectos y requisitos.</div>
+  </a>
+  <a class="card" href="guia-visual/guia-visual.html">
+    <span class="t">Guía visual</span><span class="badge">ES</span>
+    <div class="d">El juego en capturas: economía, victoria, las 8 civilizaciones, los tres estilos de unidad, terreno, clima y una partida a 4.</div>
+  </a>
+  <a class="card" href="analysis/civ-gallery/galeria-civilizaciones.html">
+    <span class="t">Galería de civilizaciones</span><span class="badge">ES</span>
+    <div class="d">La identidad visual de cada civilización — edificios y roster — con sus bonificaciones verificadas contra el código.</div>
+  </a>
+  <a class="card" href="gameplay_es.html">
+    <span class="t">Controles y atajos de teclado</span><span class="badge">ES</span>
+    <div class="d">Referencia completa de controles y teclas rápidas.</div>
+  </a>
+  <a class="card" href="changelog_es.html">
+    <span class="t">Registro de cambios</span><span class="badge">ES</span>
+    <div class="d">Todas las versiones, desde el primer prototipo hasta la beta actual.</div>
+  </a>
+  <a class="card" href="about_es.html">
+    <span class="t">Acerca del proyecto</span><span class="badge">ES</span>
+    <div class="d">Qué es Calima, sus características principales y cómo ejecutarlo.</div>
+  </a>
+</div>
+
+<h2>Diseño y trasfondo</h2>
+<div class="grid">
+  <a class="card" href="design/game-design-document_es.html">
+    <span class="t">Documento de diseño del juego</span><span class="badge">ES</span>
+    <div class="d">Visión, sistemas, hitos y estado de las características.</div>
+  </a>
+  <a class="card" href="design/civilizations_es.html">
+    <span class="t">Civilizaciones (diseño)</span><span class="badge">ES</span>
+    <div class="d">Estadísticas por civilización, unidades únicas y tablas de datos.</div>
+  </a>
+  <a class="card" href="design/campaign_story_es.html">
+    <span class="t">Historia de la campaña</span><span class="badge">ES</span>
+    <div class="d">Las Llamas de Tamarán — narrativa y estructura de las misiones.</div>
+  </a>
+  <a class="card" href="design/heroines-design_es.html">
+    <span class="t">Diseño de las heroínas</span><span class="badge">ES</span>
+    <div class="d">Las 8 heroínas y sus habilidades, civilización a civilización.</div>
+  </a>
+  <a class="card" href="lore/heroes-and-heroines_es.html">
+    <span class="t">Héroes y heroínas</span><span class="badge">ES</span>
+    <div class="d">Los 16 líderes legendarios y sus habilidades.</div>
+  </a>
+  <a class="card" href="lore/harimaguada_es.html">
+    <span class="t">Harimaguada</span><span class="badge">ES</span>
+    <div class="d">El trasfondo de la sacerdotisa sanadora canaria.</div>
+  </a>
+</div>
+
+<h2>Análisis</h2>
+<div class="grid">
+  <a class="card" href="analysis/analysis-2026-09-05-0340.html">
+    <span class="t">Último informe de análisis</span><span class="badge">2026-09-05</span>
+    <div class="d">El análisis crítico más reciente al estilo revista; los informes anteriores están archivados en <code>docs/analysis/</code>.</div>
+  </a>
+  <a class="card" href="analysis/iso-refactor/informe-refactor-isometrico-2026-08-26.html">
+    <span class="t">Informe del refactor isométrico</span><span class="badge">2026-08-26</span>
+    <div class="d">Antes y después del refactor de proyección isométrica, con veredictos de crítica a ciegas.</div>
+  </a>
+</div>
+
+<h2>Documentación técnica (solo en inglés)</h2>
+<p class="note">La documentación de arquitectura y desarrollo se mantiene únicamente en inglés por norma del proyecto.</p>
+<div class="grid">
+  <a class="card" href="architecture/overview.html">
+    <span class="t">Architecture overview</span><span class="badge">EN</span>
+    <div class="d">Autoloads, flujo de señales del EventBus y mapa de sistemas.</div>
+  </a>
+  <a class="card" href="architecture/systems.html">
+    <span class="t">Systems design</span><span class="badge">EN</span>
+    <div class="d">Notas de diseño por sistema.</div>
+  </a>
+  <a class="card" href="architecture/map_generation.html">
+    <span class="t">Map generation</span><span class="badge">EN</span>
+    <div class="d">El pipeline de generación procedural de mapas.</div>
+  </a>
+  <a class="card" href="architecture/resource_system.html">
+    <span class="t">Resource system</span><span class="badge">EN</span>
+    <div class="d">Recursos, recolección y economía interna.</div>
+  </a>
+  <a class="card" href="architecture/audio_synthesis.html">
+    <span class="t">Audio synthesis</span><span class="badge">EN</span>
+    <div class="d">Síntesis procedural de sonido y voces.</div>
+  </a>
+  <a class="card" href="development/getting-started.html">
+    <span class="t">Getting started</span><span class="badge">EN</span>
+    <div class="d">Cómo compilar y ejecutar el proyecto.</div>
+  </a>
+  <a class="card" href="development/conventions.html">
+    <span class="t">Conventions</span><span class="badge">EN</span>
+    <div class="d">Convenciones de código del proyecto.</div>
+  </a>
+  <a class="card" href="development/contributing.html">
+    <span class="t">Contributing</span><span class="badge">EN</span>
+    <div class="d">Flujo de trabajo para contribuir.</div>
+  </a>
+  <a class="card" href="development/setup.html">
+    <span class="t">Setup instructions</span><span class="badge">EN</span>
+    <div class="d">Instalación del motor y puesta en marcha.</div>
+  </a>
+  <a class="card" href="testing/harnesses.html">
+    <span class="t">Test harness catalog</span><span class="badge">EN</span>
+    <div class="d">Todos los <code>check_*</code> headless y puertas de CI, con sus comandos.</div>
+  </a>
+</div>
+
+<footer>
+  Generado el 2026-09-06 · Las páginas para jugadores están verificadas contra los datos del juego
+  (<code>project/resources/</code>) y el código (<code>project/scripts/</code>).<br>
+  <a href="index_en.html" style="color:var(--link)">Documentation in English</a>
+</footer>
+</div>
+</body>
+</html>

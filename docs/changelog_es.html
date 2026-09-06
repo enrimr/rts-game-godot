@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registro de cambios · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index_es.html">CALIMA · DOCS</a>
+  <a href="index_es.html">Portal</a>
+  <a href="manual/manual_es.html">Manual (ES)</a>
+  <a href="manual/manual_en.html">Manual (EN)</a>
+  <a href="changelog.html">English version</a>
+</header>
+<h1 id="registro-de-cambios">Registro de cambios</h1><nav class="toc"><b>Contenido</b><div class="toc">
+<ul>
+<li><a href="#unreleased">[Unreleased]</a><ul>
+<li><a href="#sitio-de-documentacion">Sitio de documentación</a></li>
+<li><a href="#triangulo-de-contraataques">Triángulo de contraataques</a></li>
+<li><a href="#bonificaciones-de-civilizacion-conectadas-de-verdad">Bonificaciones de civilización conectadas de verdad</a></li>
+<li><a href="#repeticiones-y-kit-de-creador">Repeticiones y kit de creador</a></li>
+<li><a href="#campana-las-llamas-de-tamaran">Campaña — Las Llamas de Tamarán</a></li>
+<li><a href="#economia-pastoril">Economía pastoril</a></li>
+<li><a href="#tecnologias-economicas-de-campamento-el-arbol-tecnologico-crece-hasta-32">Tecnologías económicas de campamento (el árbol tecnológico crece hasta 32)</a></li>
+<li><a href="#estilos-visuales-de-unidad">Estilos visuales de unidad</a></li>
+<li><a href="#modo-espectador-y-notificaciones">Modo espectador y notificaciones</a></li>
+<li><a href="#renovacion-de-la-ia">Renovación de la IA</a></li>
+<li><a href="#bajo-el-capo">Bajo el capó</a></li>
+</ul>
+</li>
+<li><a href="#098-beta-2026-09-02-equipos-social-de-steam-y-rendimiento">[0.9.8-beta] - 2026-09-02 - Equipos, social de Steam y rendimiento</a><ul>
+<li><a href="#anadido">Añadido</a></li>
+<li><a href="#corregido">Corregido</a></li>
+<li><a href="#rendimiento">Rendimiento</a></li>
+</ul>
+</li>
+<li><a href="#096-beta-097-beta-2026-08-31-multijugador-por-internet-y-steam">[0.9.6-beta / 0.9.7-beta] - 2026-08-31 - Multijugador por Internet y Steam</a><ul>
+<li><a href="#anadido_1">Añadido</a></li>
+<li><a href="#corregido_1">Corregido</a></li>
+</ul>
+</li>
+<li><a href="#091-beta-095-beta-2026-08-27-2026-08-31-patron-de-comandos-controles-de-combate-y-multijugador-lan">[0.9.1-beta → 0.9.5-beta] - 2026-08-27 → 2026-08-31 - Patrón de comandos, controles de combate y multijugador LAN</a><ul>
+<li><a href="#arquitectura">Arquitectura</a></li>
+<li><a href="#combate-y-controles">Combate y controles</a></li>
+<li><a href="#multijugador-fases-12">Multijugador (fases 1–2)</a></li>
+<li><a href="#corregido_2">Corregido</a></li>
+</ul>
+</li>
+<li><a href="#090-beta-2026-08-26-vista-isometrica-e-identidad-de-civilizacion">[0.9.0-beta] - 2026-08-26 - Vista isométrica e identidad de civilización</a><ul>
+<li><a href="#anadido_2">Añadido</a></li>
+</ul>
+</li>
+<li><a href="#060-2026-06-08-renovacion-visual">[0.6.0] - 2026-06-08 - Renovación visual</a><ul>
+<li><a href="#resumen">Resumen</a></li>
+<li><a href="#anadido_3">Añadido</a></li>
+<li><a href="#cambiado">Cambiado</a></li>
+<li><a href="#corregido_3">Corregido</a></li>
+</ul>
+</li>
+<li><a href="#051-2026-06-02-heroinas">[0.5.1] - 2026-06-02 - Heroínas</a><ul>
+<li><a href="#anadido_4">Añadido</a></li>
+</ul>
+</li>
+<li><a href="#050-2026-06-01-hito-listo-para-produccion">[0.5.0] - 2026-06-01 - Hito listo para producción</a><ul>
+<li><a href="#resumen_1">Resumen</a></li>
+<li><a href="#anadido_5">Añadido</a></li>
+<li><a href="#corregido_4">Corregido</a></li>
+<li><a href="#cambiado_1">Cambiado</a></li>
+<li><a href="#rendimiento_1">Rendimiento</a></li>
+</ul>
+</li>
+<li><a href="#040-2026-05-15-actualizacion-naval-y-de-clima">[0.4.0] - 2026-05-15 - Actualización naval y de clima</a><ul>
+<li><a href="#anadido_6">Añadido</a></li>
+<li><a href="#cambiado_2">Cambiado</a></li>
+</ul>
+</li>
+<li><a href="#030-2026-04-20-progresion-de-edades-y-expansion-militar">[0.3.0] - 2026-04-20 - Progresión de edades y expansión militar</a><ul>
+<li><a href="#anadido_7">Añadido</a></li>
+<li><a href="#cambiado_3">Cambiado</a></li>
+</ul>
+</li>
+<li><a href="#020-2026-03-10-militar-y-combate">[0.2.0] - 2026-03-10 - Militar y combate</a><ul>
+<li><a href="#anadido_8">Añadido</a></li>
+<li><a href="#cambiado_4">Cambiado</a></li>
+</ul>
+</li>
+<li><a href="#010-2026-02-01-cimientos">[0.1.0] - 2026-02-01 - Cimientos</a><ul>
+<li><a href="#anadido_9">Añadido</a></li>
+<li><a href="#infraestructura">Infraestructura</a></li>
+</ul>
+</li>
+<li><a href="#hoja-de-ruta-proximo">Hoja de ruta (próximo)</a></li>
+<li><a href="#resumen-del-historial-de-versiones">Resumen del historial de versiones</a></li>
+</ul>
+</div>
+</nav>
+<blockquote>
+<p>Traducción del CHANGELOG canónico en inglés.</p>
+</blockquote>
+<p>Todos los cambios relevantes de <strong>Calima: Flames of the Atlantic</strong> se documentan en este archivo.</p>
+<p>El formato se basa en <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+y este proyecto sigue el <a href="https://semver.org/spec/v2.0.0.html">Versionado Semántico</a>.</p>
+<hr />
+<h2 id="unreleased">[Unreleased]</h2>
+<h3 id="sitio-de-documentacion">Sitio de documentación</h3>
+<ul>
+<li><code>docs/</code> es ahora un sitio estático publicable: <code>docs/build_site.py</code> convierte cada documento Markdown (manuales del jugador, GDD, arquitectura, ambientación, changelog, controles) a HTML autocontenido con tema propio y enlaces reescritos; portal en <code>docs/index.html</code>; cero enlaces rotos (comprobado en todo el sitio).</li>
+</ul>
+<h3 id="triangulo-de-contraataques">Triángulo de contraataques</h3>
+<ul>
+<li>Bonificaciones de ataque por clase (<code>UnitResource.attack_bonuses</code>, leídas en <code>UnitBase._strike_damage</code>): piqueros +12 contra caballería, caballería +4 (explorador +3) contra arqueros, arqueros +3 contra lanceros; el Perforante de Armaduras del Arquero de Tiro Largo migró a datos. Las flechas heredan la bonificación. La composición del ejército importa ahora tanto como su tamaño.</li>
+<li>La IA contrarresta lo que avista: <code>_counter_bias</code> desplaza la mezcla del Cuartel hacia picas/espadas/arqueros según la composición enemiga que realmente puede ver.</li>
+<li>Las granjas de los Francos se construyen un 20% más rápido y las descargas defensivas de los Castellanos alcanzan un 10% más lejos (las dos últimas claves de civilización declaradas pero nunca leídas, ahora conectadas); eliminada la clave muerta <code>castle_range</code>; los nombres de unidad única del lobby en translations.csv se unificaron con las filas canónicas UNIT_*.</li>
+</ul>
+<h3 id="bonificaciones-de-civilizacion-conectadas-de-verdad">Bonificaciones de civilización conectadas de verdad</h3>
+<ul>
+<li>Las cuatro bonificaciones anunciadas en el juego pero nunca implementadas ahora funcionan: los Fenicios construyen su Mercado desde la Edad Oscura y sus barcos cuestan un 15% menos; los Guanches entrenan Piqueros desde la Edad Oscura; las casas de los Canarii sirven también como puntos de entrega; el descuento de madera en edificios de los Mahos (×0.70) ahora se cobra de verdad — el precio del botón, la tabla de precios de la IA y el comando de colocación coinciden.</li>
+<li>Nuevo: reclamo de caldera — un Campamento Minero levantado a la sombra de una caldera aporta un goteo de piedra a su dueño (Costa Volcánica).</li>
+<li>Nuevo: vista de dunas de los Mahos — visión ×1.40 mientras una unidad mahos pisa terreno de dunas (espejo de la visión costera de los Atlantes).</li>
+<li>2026-09-02 → 2026-09-06</li>
+</ul>
+<p>Todo lo posterior a la etiqueta <code>v0.9.8-beta</code>, agrupado por temas.</p>
+<h3 id="repeticiones-y-kit-de-creador">Repeticiones y kit de creador</h3>
+<ul>
+<li><strong>Cada partida se graba a sí misma</strong> como un flujo comprimido de instantáneas (<code>user://replays/</code>, fiel por construcción — sin re-simulación), visible desde el nuevo navegador de <strong>Repeticiones</strong> del menú principal</li>
+<li><strong>Reproducción de repeticiones v2</strong>: línea de tiempo navegable (los saltos hacia atrás reinician y avanzan rápido), pausa, velocidades de reproducción, opción de revelar el mapa y un botón "ver repetición" en la pantalla de fin de partida</li>
+<li><strong>Kit de creador</strong>: modo cine (<strong>C</strong>, sin interfaz, minimapa flotante opcional), tarjeta de título centrada y <strong>exportación a vídeo</strong> en segundo plano a 30 FPS fluidos — de la partida completa o de un <strong>clip marcado con A/B</strong>; la barra de repetición nunca entra en el metraje exportado</li>
+<li>Las repeticiones no aceptan órdenes: el menú de acciones, los atajos y las rutas de órdenes por clic derecho quedan bloqueados durante la reproducción</li>
+</ul>
+<h3 id="campana-las-llamas-de-tamaran">Campaña — <em>Las Llamas de Tamarán</em></h3>
+<ul>
+<li>Cuatro misiones canarii guionizadas contra la invasión atlante (mundos deterministas con semilla fija, objetivos secundarios, oleadas de ataque guionizadas, tipos de victoria conquista/resistir/regicidio) más un prólogo tutorial que ahora abre la misma guerra</li>
+<li>Informes de misión, epílogos narrativos, rampa de dificultad (límites de IA por misión), desbloqueo en cadena, progreso persistente; la misión 1 enseña el Molino y el juego de pastoreo</li>
+<li>Dieciséis sprites de héroe únicos — cada héroe reconocible por su historia (Don Quijote monta a Rocinante)</li>
+</ul>
+<h3 id="economia-pastoril">Economía pastoril</h3>
+<ul>
+<li>El <strong>Molino</strong> (punto de entrega de comida de la Edad Oscura) entrena al perro pastor <strong>Presa Canario</strong>: busca un animal, llévalo a casa y cobra comida por el acercamiento neto; las ovejas enemigas se convierten por el camino; mordisco de perro guardián cuando está ocioso, nunca abandona un viaje por su cuenta</li>
+<li>Sacerdotisa sanadora <strong>Harimaguada</strong> entrenada en el Templo (siempre mujer, por la ambientación): curación de seguir-y-sanar más triaje automático en reposo; el Templo hace también de hospital de campaña (las unidades guarnecidas se curan, los héroes a la mitad) y ahora luce como un <strong>almogarén</strong> — un santuario canario abierto de piedra seca</li>
+<li>Rebaños de ovejas salvajes pastan por el mapa abierto — objetivos disputados por los que compiten los perros del jugador y de la IA; el rebaño viste el color de su dueño (collares de equipo)</li>
+<li>La IA juega al mismo juego: construye un Molino, cría perros, pastorea animales sin dueño y sacrifica sus propias ovejas cuando escasea la comida</li>
+</ul>
+<h3 id="tecnologias-economicas-de-campamento-el-arbol-tecnologico-crece-hasta-32">Tecnologías económicas de campamento (el árbol tecnológico crece hasta 32)</h3>
+<ul>
+<li>Nueve tecnologías económicas al estilo AoE2, una por edad desde la Feudal, investigadas en los propios campamentos: Campamento Maderero — <em>Hacha de doble filo → Sierra de arco → Sierra de dos hombres</em> (madera); Campamento Minero — <em>Picos reforzados → Minería de pozo → Galerías profundas</em> (oro + piedra); Molino — <em>Collera de tiro → Arado pesado → Rotación de cultivos</em> (comida). Cada paso: +15% de velocidad de recolección y +10% de carga para ese recurso</li>
+<li>Auditoría completa del árbol tecnológico con correcciones reales, <strong>cola</strong> de investigación (hasta 5 en curso por edificio, pagadas al encolar, reembolso completo al cancelar) y un glifo al estilo AoE2 para cada tecnología</li>
+</ul>
+<h3 id="estilos-visuales-de-unidad">Estilos visuales de unidad</h3>
+<ul>
+<li>Nuevo ajuste de <strong>estilo de unidades</strong> de 3 opciones, intercambiable en vivo: <strong>Clásico</strong> (el plano por defecto), <strong>Mejorado</strong> (contorno a tinta reversible + sombreado de volumen + animación procedural extra) y <strong>Rediseñado</strong> (rigs desde cero basados en la ambientación para cada unidad, con una máquina de estados de animación completa)</li>
+</ul>
+<h3 id="modo-espectador-y-notificaciones">Modo espectador y notificaciones</h3>
+<ul>
+<li>Rendirse — o perderlo todo — mientras quedan bandos hostiles ya no termina la partida: el panel de derrota ofrece <strong>Ver mapa</strong> y sigues viendo la batalla en vivo con las órdenes bloqueadas; el resultado definitivo llega cuando la guerra realmente acaba</li>
+<li>Los avisos de notificación llevan ahora <strong>botones de acción directa</strong>: salta al evento, coloca una Casa con un clic tras un aviso de límite de población, localiza al héroe cuando está en peligro</li>
+</ul>
+<h3 id="renovacion-de-la-ia">Renovación de la IA</h3>
+<ul>
+<li><strong>La IA construye con aldeanos reales</strong> — se acabaron los edificios enemigos instantáneos; un constructor camina hasta cada obra (muelles incluidos, las trampas para peces las levantan los barcos pesqueros) y las obras abandonadas reciben nueva mano de obra</li>
+<li><strong>Adquisición en reposo</strong>: las unidades de combate ociosas (del jugador y de la IA por igual) ahora persiguen a los hostiles a la vista (~240 px) según las reglas de su actitud, en lugar de esperar a que las toquen</li>
+<li><strong>Las guerras IA contra IA ocurren de verdad</strong>, incluidas las navales — las galeras queman los muelles y trampas para peces enemigos conocidos, los transportes zarpan con ejércitos más pequeños</li>
+<li><strong>Limpieza final</strong>: sin nada que asediar, la IA caza a los últimos supervivientes avistados en lugar de quedarse parada</li>
+</ul>
+<h3 id="bajo-el-capo">Bajo el capó</h3>
+<ul>
+<li><strong>Esquema de guardado v2</strong>: las investigaciones en curso, las guarniciones, las actitudes de las unidades y la máquina de estados del clima sobreviven al ciclo de guardado; los esquemas más nuevos se rechazan con un motivo, los más antiguos cargan con valores por defecto</li>
+<li><strong>Endurecimiento del cable</strong>: el host revalida cada colocación de los clientes y despoja a los comandos llegados por red de los privilegios exclusivamente locales</li>
+<li>Continuó la descomposición del HUD: extraídos la rejilla de comandos (<code>HudActionMenu</code>), el guía del tutorial (<code>HudTutorial</code>) y las tablas de acciones (<code>HudActionDefs</code>); cada precio de botón procede ahora de los mismos datos <code>.tres</code> que cobra la simulación</li>
+<li>"Idiomas" de voz sintetizados por civilización, voces de confirmación de órdenes y sonidos de combate con varias tomas; referencia de síntesis de audio documentada</li>
+<li>Las unidades terrestres ya no pueden meterse en el mar (veto de paso en las dos rutas de movimiento fuera de la malla, sonda de caos en CI); animales incluidos</li>
+<li>Menú principal v2 (logo centrado, botón de jugar dorado), panel de jugadores/puntuación al estilo AoE2 en el minimapa, los granjeros permanecen en su granja, las miniaturas de héroe muestran al héroe real</li>
+</ul>
+<hr />
+<h2 id="098-beta-2026-09-02-equipos-social-de-steam-y-rendimiento">[0.9.8-beta] - 2026-09-02 - Equipos, social de Steam y rendimiento</h2>
+<h3 id="anadido">Añadido</h3>
+<ul>
+<li><strong>Equipos y alianzas</strong> (2v2, 2v1, ...) en escaramuza y multijugador: visión compartida, victoria por equipos, ataque automático consciente de los aliados, selectores de equipo en ambos lobbies, persistidos en las partidas guardadas</li>
+<li><strong>Cooperación de la IA aliada</strong>: los compañeros de IA envían escuadras de auxilio cuando te asaltan y anuncian sus ofensivas con un ping</li>
+<li><strong>Puntos de ruta encolados con Shift y patrulla</strong></li>
+<li><strong>Contratación de mercenarios terminada</strong> en el Mercado — todas las civilizaciones, localizada, con miniaturas de unidad e insignias de recarga; los Fenicios pagan un 25% menos</li>
+<li><strong>Guardado/reanudación multijugador</strong>: el host guarda la plantilla y la niebla por jugador; el lobby de reanudación reserva los asientos originales y la partida puede empezar con jugadores ausentes (su asiento aguanta durante la gracia de reconexión)</li>
+<li><strong>Verificación de versión</strong>: el host rechaza a los clientes de una build distinta con un diálogo motivado; las versiones se etiquetan solo mediante <code>scripts/release_tag.sh</code></li>
+<li><strong>Ajustes de pantalla y teclas de cámara reasignables</strong>; contador de FPS opcional</li>
+<li><strong>Pulido de Steam</strong>: avatares en la plantilla, rich presence, pings de minimapa aliados (Alt+clic)</li>
+<li><strong>Voces de selección de unidad sintetizadas por formantes</strong> (gritos al estilo AoE), horneadas en un hilo de trabajo</li>
+<li><strong>Colores de equipo más marcados en cada unidad</strong> — la tela se repinta al color del dueño conservando el sombreado</li>
+</ul>
+<h3 id="corregido">Corregido</h3>
+<ul>
+<li>Auditoría de habilidades de héroe: verificadas las habilidades de los 16 héroes, corregidos cinco errores reales (recargas de habilidades instantáneas, crash del Pacto Mercenario, embestida del Abordaje, conciencia de equipo, parentesco de la nube de Calima)</li>
+<li>Autenticación de reconexión por Steam-ID y un límite de frecuencia en la tubería de comandos</li>
+</ul>
+<h3 id="rendimiento">Rendimiento</h3>
+<ul>
+<li>Revelado incremental de la niebla de guerra (los ejércitos parados dejan de pagar por tick)</li>
+<li>Recuperación de física limitada a 2 pasos por fotograma — batallas de 200 contra 200 de 7.5 a 30 fps</li>
+<li>Eliminados los obstáculos RVO por recurso; histéresis en los recálculos de ruta de persecución; reescritura del dibujado del minimapa; las puertas de rendimiento se sumaron a la suite de tests</li>
+</ul>
+<hr />
+<h2 id="096-beta-097-beta-2026-08-31-multijugador-por-internet-y-steam">[0.9.6-beta / 0.9.7-beta] - 2026-08-31 - Multijugador por Internet y Steam</h2>
+<h3 id="anadido_1">Añadido</h3>
+<ul>
+<li><strong>Alojamiento por Internet mediante UPnP</strong> desde el lobby (mapeo automático de puertos, dirección pública en la cabecera); separación LAN vs Internet en el menú principal</li>
+<li><strong>Prototipo de transporte por Steam</strong> (GDExtension GodotSteam): lobbies públicos, invitaciones a amigos (con un selector dentro del juego cuando el overlay no está disponible), red por relé de Valve — en el AppID de pruebas</li>
+<li><strong>Reconexión a mitad de partida</strong>: el asiento de un jugador caído se reserva (90 s de gracia), el cliente que vuelve recupera su antiguo id de jugador y una resincronización completa del estado</li>
+<li><strong>Chat multijugador</strong>: panel en el lobby y overlay en partida (Enter), con códigos de color y líneas de sistema; cambio de nombre en el lobby (fijado a la persona de Steam en sesiones de Steam)</li>
+<li>Visual de la roca de asedio con eco en el cliente — la Manganela por fin lanza una piedra visible</li>
+</ul>
+<h3 id="corregido_1">Corregido</h3>
+<ul>
+<li>Colocación en el cliente validada contra el propio inventario del cliente (los clientes solo podían colocar casas)</li>
+<li>El HUD del cliente no mostraba acciones en sus propios edificios (estaba condicionado al jugador 0)</li>
+</ul>
+<hr />
+<h2 id="091-beta-095-beta-2026-08-27-2026-08-31-patron-de-comandos-controles-de-combate-y-multijugador-lan">[0.9.1-beta → 0.9.5-beta] - 2026-08-27 → 2026-08-31 - Patrón de comandos, controles de combate y multijugador LAN</h2>
+<h3 id="arquitectura">Arquitectura</h3>
+<ul>
+<li><strong>Patrón de comandos</strong>: cada orden que muta la simulación — del jugador Y de la IA — es un <code>GameCommand</code> serializable a través del <code>CommandBus</code>, sellado con el tick en un registro de partida (la base sobre la que se construyen las repeticiones y el multijugador)</li>
+<li><strong>MatchRng</strong>: un único flujo de RNG con semilla para toda la aleatoriedad de la simulación; capa de decisión determinista (registros de comandos idénticos entre ejecuciones con semilla fija)</li>
+<li>División de los objetos-dios: <code>game_world.gd</code> en seis controladores de mundo (setup/victoria/cámara/selección/comandos/colocación), <code>map_generator.gd</code> en seis módulos de pipeline, el HUD en componentes autoconectados</li>
+<li>Tabla unificada de costes de edificio respaldada por <code>.tres</code> — jugador e IA pagan los mismos precios (la vieja tabla escrita a mano dejaba al jugador construir algunos edificios gratis)</li>
+</ul>
+<h3 id="combate-y-controles">Combate y controles</h3>
+<ul>
+<li><strong>Actitudes de combate al estilo AoE2</strong> (Agresivo / Defensivo con correa / Mantener posición / No atacar), <strong>formaciones de grupo</strong> (Línea / Cuadro / Dispersa / Anillos) y <strong>guarnición en edificios</strong> (Centro Urbano 10, torres 5, una flecha extra por ocupante; los aldeanos mediante el botón Guarecerse o la Campana)</li>
+<li>Máquina de estados de combate canónica en <code>UnitBase</code> — las 16 unidades hoja migradas a ganchos de sobreescritura</li>
+<li>Las Torres de Vigilancia disparan flechas visibles; fuego/humo progresivos en los edificios dañados; barras de vida universales en los edificios (el daño a edificios era invisible antes)</li>
+<li>El doble clic selecciona todos los edificios de un tipo (punto de reunión y entrenamiento compartidos); insignias de cola por tipo de unidad; glifos de actitud/formación con estados activos persistentes; confirmación antes de demoler &gt;5 edificios; Retroceso hace de Supr en macOS</li>
+</ul>
+<h3 id="multijugador-fases-12">Multijugador (fases 1–2)</h3>
+<ul>
+<li><strong>Multijugador LAN</strong>: sesión ENet con host autoritativo, lobby unificado con asientos de jugador (Abierto/IA/Cerrado), nombre/color/civilización por jugador, expulsión, ajustes editados por el host con resumen en vivo para los clientes</li>
+<li><strong>Replicación de estado host→cliente</strong> a 15 Hz con mundos espejo títere interpolados; colas, investigación, mercado, clima y proyectiles replicados; flujo de deltas con fotogramas clave por debajo de la MTU de ENet</li>
+<li><strong>Robustez</strong>: las desconexiones y rendiciones se convierten en dimisiones, diálogo de host ausente, pausa replicada</li>
+</ul>
+<h3 id="corregido_2">Corregido</h3>
+<ul>
+<li>Reajustada la evitación RVO (las unidades rápidas tenían la velocidad capada; las multitudes se atascaban); eliminados los obstáculos RVO de los edificios (sellaban pasillos que la malla de navegación había abierto)</li>
+<li>El terreno intransitable se talla en la malla de navegación — las rutas rodean la lava en lugar de congelarse en el borde</li>
+<li>La cuadrícula de la niebla de guerra se dimensiona al mapa real (los márgenes de los mapas grandes quedaban permanentemente sin niebla)</li>
+<li>Las colocaciones diagonales de edificios ya no colapsan el horneado de la malla de navegación (empujón de medio píxel + escalera de alternativas)</li>
+</ul>
+<hr />
+<h2 id="090-beta-2026-08-26-vista-isometrica-e-identidad-de-civilizacion">[0.9.0-beta] - 2026-08-26 - Vista isométrica e identidad de civilización</h2>
+<p>La primera beta etiquetada: el refactor isométrico fusionado tras un mes de trabajo previo de UI/UX.</p>
+<h3 id="anadido_2">Añadido</h3>
+<ul>
+<li><strong>Presentación isométrica</strong>: proyección a nivel de cámara (<code>IsoProjection</code>), entidades verticales en billboard con ordenación por profundidad (<code>IsoBillboard</code>), volumetrías de edificios</li>
+<li><strong>Identidad visual por civilización</strong>: estilos de arquitectura (<code>CivStyle</code>), vestimenta de unidades (tocados/fajines), cascos y velas de barco por civilización (<code>ShipDress</code>)</li>
+<li><strong>Cursores contextuales</strong> (el puntero de tabona + glifos de contexto, horneado seguro en macOS)</li>
+<li><strong>Grupos de control</strong> (Ctrl/Cmd+1–9) con chips clicables en el HUD; ESPACIO salta a la última alerta de ataque; botones de ciclo de aldeano/militar inactivo con insignias de recuento; widget de héroe persistente en Regicidio; cámara de seguimiento</li>
+<li><strong>Pasada de localización</strong>: EN/ES para nombres de unidades/edificios, lobby, HUD; tooltips de coste enriquecidos que sustituyen a la tira de costes</li>
+<li>Aura de energía del héroe; los héroes aparecen delante del Centro Urbano mediante la espiral de aparición</li>
+</ul>
+<hr />
+<h2 id="060-2026-06-08-renovacion-visual">[0.6.0] - 2026-06-08 - Renovación visual</h2>
+<h3 id="resumen">Resumen</h3>
+<p>Una pasada de arte completa: todas las unidades, edificios, animales y el terreno se rediseñaron de polígonos de colores crípticos a figuras claramente legibles, y todas las unidades humanas tienen ahora un género visual aleatorio. Ninguna regla de juego cambió — esta versión es puramente de calidad visual, identificación y pulido.</p>
+<h3 id="anadido_3">Añadido</h3>
+<ul>
+<li><strong>Género visual aleatorio para todas las unidades humanas</strong> — cada unidad humana (aldeano, infantería, caballería, arqueros, unidades únicas) es aleatoriamente hombre o mujer (50/50) al crearse, mostrado con pelo largo enmarcando la cabeza. Persistido al guardar/cargar. Los barcos, las máquinas de asedio y los animales no se ven afectados.</li>
+<li><strong>Sprites de heroína diferenciados</strong> — las héroes femeninas ahora se leen como mujeres: pelo largo, una diadema dorada (son reinas/líderes) y un vestido acampanado, conservando su arma y su escudo.</li>
+<li><strong>Acentos de edificio en color de equipo</strong> — los edificios llevan detalles en el color del equipo (tejados, banderas, estandartes, toldos, cúpulas, velas) para que el dueño de cada edificio sea identificable de un vistazo.</li>
+<li><strong>Sombras en el suelo</strong> bajo cada unidad y edificio, asentándolos sobre el terreno.</li>
+<li><strong>Shader de agua animada</strong> (oleaje por capas, ondulaciones, espuma) para océanos y costas.</li>
+<li><strong>Shader de detalle de terreno</strong> (grano + variación tonal) para que el terreno no sea color plano.</li>
+<li><strong>Lava animada</strong> (brillo de brasa pulsante) en las vetas de malpaís y las grietas/pozas de las calderas.</li>
+<li><strong>Océanos costeros</strong> con playas arenosas de anchura variable y espuma en los mapas Costa Volcánica y Costa Desértica.</li>
+<li><strong>Iluminación ambiental + viñeta</strong> por tipo de mapa para dar atmósfera.</li>
+<li><strong>Andar para los animales</strong> — las patas de ciervos y ovejas se balancean al trote mientras se mueven.</li>
+</ul>
+<h3 id="cambiado">Cambiado</h3>
+<ul>
+<li><strong>Todos los sprites de unidad rediseñados</strong> en figuras reconocibles: aldeano (campesino con sombrero de paja y pico), milicia/hombre de armas/espadachín (espadachines con casco y escudo), piquero (pica), explorador/explorador pesado/caballero y caballería única (jinetes a caballo), arqueros (tensando un arco), las 8 unidades únicas de civilización, y las máquinas de asedio y los barcos (con detalle de casco, remos, velas).</li>
+<li><strong>Todos los sprites de edificio mejorados</strong> con sombreado de sillería, líneas de sillar, almenas y detalle temático (brillo de forja, puestos de mercado, cúpulas de templo/universidad, etc.).</li>
+<li><strong>Sprites de animal rediseñados</strong> — ciervo (con cornamenta) y oveja (lanuda), convertidos de rectángulos planos a figuras.</li>
+<li><strong>La orientación de unidades y animales</strong> sigue ahora el destino de navegación, de modo que miran hacia donde viajan (incluso en rutas diagonales y casi verticales).</li>
+<li><strong>Bordes de terreno suavizados</strong> — los límites de zona se funden con las vecinas siguiendo el contorno real de la zona, y las costas se redondean con anchura de playa/espuma naturalmente variable.</li>
+</ul>
+<h3 id="corregido_3">Corregido</h3>
+<ul>
+<li><strong>Movimiento de unidades a trompicones</strong> — activada la interpolación de física 2D (el renderizado iba más rápido que el paso de física a 60 Hz sin interpolación, así que los sprites saltaban entre ticks). El movimiento es ahora suave.</li>
+</ul>
+<hr />
+<h2 id="051-2026-06-02-heroinas">[0.5.1] - 2026-06-02 - Heroínas</h2>
+<p><em>(Incorporado desde el antiguo <code>HEROINES_CHANGELOG.md</code>.)</em></p>
+<h3 id="anadido_4">Añadido</h3>
+<ul>
+<li><strong>8 héroes femeninas</strong> — una por civilización, duplicando la plantilla de héroes hasta <strong>16</strong> (8 hombres + 8 mujeres), cada una con una habilidad única y sus propias estadísticas <code>.tres</code>:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Civilización</th>
+<th>Heroína</th>
+<th>Habilidad</th>
+<th>Rol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Guanches</td>
+<td>Dácil</td>
+<td>Voz de la Montaña</td>
+<td>Potenciadora defensiva</td>
+</tr>
+<tr>
+<td>Canarii</td>
+<td>Guayarmina</td>
+<td>Flecha del Destino</td>
+<td>Asesina francotiradora</td>
+</tr>
+<tr>
+<td>Mahos</td>
+<td>Tibiabin</td>
+<td>Tormenta de Arena</td>
+<td>Negación de área</td>
+</tr>
+<tr>
+<td>Francos</td>
+<td>Catalina de Béthencourt</td>
+<td>Duelo de Honor</td>
+<td>Cazadora de héroes</td>
+</tr>
+<tr>
+<td>Britanos</td>
+<td>Grace O'Malley</td>
+<td>Abordaje</td>
+<td>Iniciadora</td>
+</tr>
+<tr>
+<td>Castellanos</td>
+<td>Dulcinea del Toboso</td>
+<td>Llamada a las Armas</td>
+<td>Multiplicadora de fuerza</td>
+</tr>
+<tr>
+<td>Atlantes</td>
+<td>Cleito</td>
+<td>Marea Creciente</td>
+<td>Apoyo híbrido</td>
+</tr>
+<tr>
+<td>Fenicios</td>
+<td>Elissa</td>
+<td>Pacto Mercenario</td>
+<td>Conversión económica</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Selección del género del héroe</strong> en el lobby (Aleatorio / Masculino / Femenino) con información dinámica del héroe</li>
+<li>Documentación de ambientación bilingüe (<code>docs/lore/heroes-and-heroines.md</code>, <code>docs/design/heroines-design.md</code>) y traducciones EN/ES</li>
+</ul>
+<hr />
+<h2 id="050-2026-06-01-hito-listo-para-produccion">[0.5.0] - 2026-06-01 - Hito listo para producción</h2>
+<h3 id="resumen_1">Resumen</h3>
+<p>Todas las funcionalidades básicas implementadas: 8 civilizaciones jugables, la plantilla de unidades completa y el árbol tecnológico de entonces, un oponente de IA completo, guardar/cargar, clima dinámico y 3 condiciones de victoria. El trabajo se centró en el pulido y la corrección de errores para alcanzar el estado listo para producción.</p>
+<h3 id="anadido_5">Añadido</h3>
+<ul>
+<li><strong>Comando Fuego de Cobertura</strong> para arqueros y unidades de asedio (acercarse al alcance y atacar el suelo)</li>
+<li><strong>Proyectiles de flecha volantes</strong> con animación de arco visual</li>
+<li><strong>Animación corporal procedural</strong> para todas las unidades (caminar, atacar, trabajar)</li>
+<li><strong>Siluetas Polygon2D</strong> para todas las unidades y edificios (sustituye a los marcadores ColorRect)</li>
+<li><strong>Visual de torre de piedra alta</strong> para la Torre de Vigilancia</li>
+<li>Edificio <strong>Galería de Tiro</strong> (Edad Feudal, entrena al Arquero)</li>
+<li><strong>Comando de atacar el suelo</strong> para unidades a distancia y de asedio</li>
+<li><strong>Posicionamiento de aparición en espiral hacia fuera</strong> usando consultas de física para evitar el solapamiento de unidades</li>
+<li><strong>Árbol tecnológico</strong> a través de la Herrería, la Universidad, el Templo, las mejoras de unidad y las concesiones instantáneas de los Castellanos</li>
+<li><strong>8 unidades de Héroe</strong> con habilidades únicas (Ímpetu del Mencey, Desafío, Emboscada, Diplomacia Forzada, Saqueo, Acometida del Caballero Errante, Calima, Ruta Comercial)</li>
+<li><strong>8 unidades únicas</strong> con mecánicas especiales (Guardia del Mencey, Arquero del Barranco, Saqueador de Dunas, Chevalier Normando, Arquero de Tiro Largo, Conquistador, Invocador de Mareas, Trirreme)</li>
+<li><strong>Sistema de clima dinámico</strong> con 5 tipos de evento procedurales (Calima, Tormenta Atlántica, Niebla Marina, Vientos Alisios, Ceniza Volcánica)</li>
+<li><strong>Overlay de clima</strong> con efectos visuales (lluvia, polvo, ceniza, viento, viñeta de niebla)</li>
+<li>Edificio <strong>Mercado</strong> con tasas de cambio dinámicas (por jugador, por recurso) y contratación de mercenarios</li>
+<li><strong>Juego naval</strong> en los mapas de Islas (Muelle, Barco Pesquero, Barco de Transporte, Galera de Guerra, Trampa para Peces)</li>
+<li><strong>Asalto naval de la IA</strong> con embarque en barcos de transporte y desembarco anfibio</li>
+<li><strong>3 condiciones de victoria</strong> (Conquista, Regicidio, Maravilla)</li>
+<li><strong>Sistema de guardar/cargar</strong> con 99 ranuras JSON e interfaz de metadatos</li>
+<li><strong>Sistema de límite de población</strong> (5 por Casa, empieza en 15)</li>
+<li><strong>Audio espacial</strong> con atenuación por distancia</li>
+<li><strong>Grupos de control</strong> (Ctrl+1-9 para guardar, 1-9 para recuperar)</li>
+<li><strong>Cámara de seguimiento</strong> para los grupos de unidades seleccionados</li>
+<li><strong>Minimapa</strong> con órdenes de movimiento por clic derecho e iconos de recursos/unidades/edificios</li>
+</ul>
+<h3 id="corregido_4">Corregido</h3>
+<ol>
+<li><strong>Fuego de Cobertura</strong>: registrar como acción pendiente, acercarse al alcance antes de disparar</li>
+<li><strong>Posicionamiento de aparición</strong>: la consulta de física en espiral hacia fuera evita el solapamiento de unidades</li>
+<li><strong>Minimapa</strong>: corregido el revelado de racimos enteros de recursos de golpe (radio de revelado reducido al 30% del alcance de visión de la unidad)</li>
+<li><strong>HUD de clima</strong>: corregido el banner y la píldora descentrados en resoluciones distintas de 1920</li>
+<li><strong>Aldeano</strong>: corregida la firma de <code>_animate_body</code> que no coincidía (parámetro delta)</li>
+<li><strong>Centro Urbano</strong>: corregido el renderizado del gráfico inicial</li>
+<li><strong>Galera de Guerra</strong>: corregida la comprobación de PV que usaba nombres de propiedad erróneos</li>
+<li><strong>Victoria por Conquista</strong>: corregidas las comprobaciones de nodos DEAD/DESTROYED ausentes en la lógica de eliminación</li>
+<li><strong>Derrota por Conquista</strong>: corregido que nunca se disparaba para el jugador humano</li>
+<li><strong>Regicidio</strong>: corregida la lógica de condición de victoria por modo</li>
+<li><strong>Mercado</strong>: corregido el reinicio de página al refrescar la recarga (recarga de mercenarios aumentada a 2 min)</li>
+<li><strong>Ceniza Volcánica</strong>: corregida la aplicación de daño a edificios</li>
+<li><strong>Obstáculos de malla de navegación</strong>: omitir para el terreno que la civilización del jugador puede transitar</li>
+<li><strong>Script de release</strong>: resolver la ruta del repositorio del juego correctamente antes del cd</li>
+<li><strong>Revelado de recursos en el minimapa</strong>: corregido que se mostraran todos los recursos del grupo cuando solo una celda estaba explorada</li>
+</ol>
+<h3 id="cambiado_1">Cambiado</h3>
+<ul>
+<li><strong>Animación del aldeano</strong>: diferenciar las animaciones de caminar y trabajar</li>
+<li><strong>Animación de unidades</strong>: todas las unidades tienen ahora animación corporal procedural (rotación durante el movimiento/ataque)</li>
+<li><strong>Visuales de edificios</strong>: sustituidos los marcadores ColorRect planos por siluetas Polygon2D</li>
+<li><strong>Torre de Vigilancia</strong>: rediseñada con una silueta poligonal de piedra alta</li>
+<li><strong>Proyectiles de flecha</strong>: los arqueros disparan ahora flechas volantes visibles</li>
+<li><strong>Frecuencia del clima</strong>: configurable en el lobby (Desactivado/Normal/Frecuente/Extremo)</li>
+<li><strong>Agresividad de la IA</strong>: escala cuando se ve amenazada (PASSIVE → ALERTED → AGGRESSIVE)</li>
+<li><strong>Defensa de la base de la IA</strong>: defiende contra enemigos cerca de cualquier edificio, no solo en el radio del Centro Urbano</li>
+</ul>
+<h3 id="rendimiento_1">Rendimiento</h3>
+<ul>
+<li><strong>Detección de alcance con Area2D</strong>: los alcances de ataque usan monitorización con Area2D, sin consultas de física por fotograma</li>
+<li><strong>Consultas de física cacheadas</strong>: las consultas espaciales se cachean y reutilizan cuando es posible</li>
+<li><strong>Aparición en espiral hacia fuera</strong>: BuildingBase.find_spawn_pos() usa un patrón de búsqueda en anillos eficiente</li>
+</ul>
+<hr />
+<h2 id="040-2026-05-15-actualizacion-naval-y-de-clima">[0.4.0] - 2026-05-15 - Actualización naval y de clima</h2>
+<h3 id="anadido_6">Añadido</h3>
+<ul>
+<li><strong>Juego naval</strong> en el tipo de mapa Islas</li>
+<li>Edificio <strong>Muelle</strong> (150 de madera, entrena barcos)</li>
+<li><strong>Barco Pesquero</strong> (recolecta FOOD_FISH del océano)</li>
+<li><strong>Barco de Transporte</strong> (transporta 10 unidades militares)</li>
+<li><strong>Galera de Guerra</strong> (combate naval a distancia)</li>
+<li><strong>Trampa para Peces</strong> (75 de madera, fuente pasiva de comida en el océano)</li>
+<li><strong>Sistema de clima</strong> con eventos procedurales</li>
+<li><strong>5 tipos de clima</strong>: Calima, Tormenta Atlántica, Niebla Marina, Vientos Alisios, Ceniza Volcánica</li>
+<li><strong>Modificadores de estadísticas por clima</strong>: visión, movimiento, velocidad de recolección, deriva de proyectiles, daño a edificios</li>
+<li><strong>Efectos visuales de clima</strong>: lluvia, polvo, ceniza, viento, viñeta de niebla</li>
+<li><strong>Módulo naval de la IA</strong> (AINaval): entrenamiento de barcos, patrullas de galeras, asaltos con transportes</li>
+<li>Edificio <strong>Mercado</strong> con comercio de recursos</li>
+<li><strong>Tecnologías de la Herrería</strong> (Telar, Forja, Fundición de Hierro, etc.)</li>
+<li>Edificio <strong>Universidad</strong> con tecnologías avanzadas</li>
+<li>Edificio <strong>Templo</strong> con mejoras de moral</li>
+</ul>
+<h3 id="cambiado_2">Cambiado</h3>
+<ul>
+<li><strong>Generación de mapas</strong>: añadido el tipo de mapa Islas con zonas de océano</li>
+<li><strong>Sistema de terreno</strong>: las casillas de océano marcadas como intransitables para las unidades terrestres</li>
+<li><strong>Economía de la IA</strong>: objetivos de recursos ajustados por edad</li>
+<li><strong>Construcción de la IA</strong>: añadida la lógica de construcción de trampas para peces</li>
+</ul>
+<hr />
+<h2 id="030-2026-04-20-progresion-de-edades-y-expansion-militar">[0.3.0] - 2026-04-20 - Progresión de edades y expansión militar</h2>
+<h3 id="anadido_7">Añadido</h3>
+<ul>
+<li><strong>4 Edades</strong>: Oscura → Feudal → del Castillo → Imperial</li>
+<li><strong>Sistema de avance de edad</strong> con costes y temporizadores</li>
+<li>Unidad <strong>Arquero</strong> (Edad Feudal, infantería a distancia)</li>
+<li>Unidad <strong>Piquero</strong> (Edad del Castillo, anticaballería)</li>
+<li><strong>Hombre de Armas</strong> (mejora de infantería de la Edad Feudal)</li>
+<li><strong>Espadachín</strong> (mejora de infantería de la Edad del Castillo)</li>
+<li>Unidad <strong>Explorador</strong> (caballería de exploración con habilidad de exploración automática)</li>
+<li><strong>Explorador Pesado</strong> (mejora de caballería de la Edad Feudal)</li>
+<li><strong>Caballero</strong> (caballería pesada de la Edad del Castillo)</li>
+<li>Edificio <strong>Establo</strong> (entrena caballería)</li>
+<li><strong>Taller de Asedio</strong> (Edad del Castillo, entrena unidades de asedio)</li>
+<li><strong>Ariete</strong> (asedio cuerpo a cuerpo, ×3 contra edificios)</li>
+<li><strong>Manganela</strong> (asedio de área, 72 px de salpicadura, alcance mínimo)</li>
+<li><strong>Trabuquete</strong> (asedio de largo alcance de la Era Imperial, despliegue/repliegue)</li>
+<li><strong>Investigación de tecnologías</strong> en el Cuartel (8 tecnologías)</li>
+<li>Lógica de <strong>avance de edad de la IA</strong></li>
+<li><strong>Módulo militar de la IA</strong> (entrenamiento, investigación, combate)</li>
+</ul>
+<h3 id="cambiado_3">Cambiado</h3>
+<ul>
+<li><strong>Entrenamiento de unidades</strong>: condicionado por los requisitos de Edad</li>
+<li><strong>Disponibilidad de edificios</strong>: estructuras bloqueadas por Edad (Establo, Taller de Asedio, Universidad)</li>
+<li><strong>Comportamiento de la IA</strong>: adapta la estrategia por edad</li>
+</ul>
+<hr />
+<h2 id="020-2026-03-10-militar-y-combate">[0.2.0] - 2026-03-10 - Militar y combate</h2>
+<h3 id="anadido_8">Añadido</h3>
+<ul>
+<li>Edificio <strong>Cuartel</strong> (175 de madera, entrena infantería)</li>
+<li>Unidad <strong>Milicia</strong> (infantería de la Edad Oscura)</li>
+<li><strong>Sistema de combate cuerpo a cuerpo</strong> con cálculo de daño</li>
+<li><strong>Sistema de combate a distancia</strong> con proyectiles</li>
+<li><strong>Tipos de armadura</strong> (melé/perforante)</li>
+<li><strong>Niebla de guerra</strong> con 3 estados (sin explorar/explorado/visible)</li>
+<li><strong>Minimapa</strong> con iconos de unidades/edificios/recursos</li>
+<li><strong>Oponente de IA</strong> con economía y ejército básicos</li>
+<li><strong>Módulo de construcción de la IA</strong> (colocación de edificios)</li>
+<li><strong>Módulo de economía de la IA</strong> (gestión de aldeanos)</li>
+<li><strong>Rejilla de selección</strong> que muestra hasta 40 unidades seleccionadas</li>
+<li><strong>Barras de vida</strong> para unidades y edificios</li>
+<li><strong>Centro Urbano</strong> como edificio principal de la base</li>
+</ul>
+<h3 id="cambiado_4">Cambiado</h3>
+<ul>
+<li><strong>Aldeanos</strong>: ahora pueden construir estructuras militares</li>
+<li><strong>Recolección de recursos</strong>: entrega en el Centro Urbano, el Campamento Maderero y el Campamento Minero</li>
+<li><strong>Generación de mapas</strong>: añadida la posición inicial del enemigo</li>
+</ul>
+<hr />
+<h2 id="010-2026-02-01-cimientos">[0.1.0] - 2026-02-01 - Cimientos</h2>
+<h3 id="anadido_9">Añadido</h3>
+<ul>
+<li>Configuración del proyecto de <strong>Godot 4</strong></li>
+<li><strong>Aldeanos</strong> con recolección (comida, madera, oro)</li>
+<li><strong>Nodos de recursos</strong> (árboles, minas de oro, bayas, ovejas)</li>
+<li><strong>Edificios de entrega</strong> (Centro Urbano, Campamento Maderero, Campamento Minero)</li>
+<li>Edificio <strong>Granja</strong> (60 de madera, comida renovable)</li>
+<li>Edificio <strong>Casa</strong> (25 de madera, +5 al límite de población)</li>
+<li>Edificios <strong>Muralla y Puerta</strong> (estructuras defensivas)</li>
+<li><strong>Generación procedural de mapas</strong> con recursos aleatorios</li>
+<li><strong>Resource Manager</strong> (inventarios por jugador)</li>
+<li><strong>Selection Manager</strong> (selección de unidades, grupos de control)</li>
+<li>Arquitectura <strong>EventBus</strong> para señales desacopladas</li>
+<li><strong>Diseño orientado a datos</strong> con archivos Resource</li>
+<li><strong>Sistema de navegación</strong> con NavigationAgent2D</li>
+<li><strong>HUD básico</strong> (visor de recursos, contador de población)</li>
+<li><strong>Lobby de partida</strong> con ajustes de mapa</li>
+</ul>
+<h3 id="infraestructura">Infraestructura</h3>
+<ul>
+<li>Integración del <strong>framework de tests GUT</strong></li>
+<li><strong>Pipeline CI/CD</strong> con GitHub Actions</li>
+<li><strong>Documentación</strong> (CLAUDE.md, documentos de arquitectura)</li>
+<li><strong>Sistema de subagentes</strong> (developer, tester, code-reviewer, docs-keeper, performance-checker)</li>
+</ul>
+<hr />
+<h2 id="hoja-de-ruta-proximo">Hoja de ruta (próximo)</h2>
+<ul>
+<li>Prueba en vivo de lobbies de Steam en un AppID real</li>
+<li>Simulación lockstep (requiere movimiento de unidades determinista y sin física)</li>
+<li>Ajuste de equilibrio a partir de las pruebas de juego</li>
+<li>Más capítulos de campaña</li>
+</ul>
+<hr />
+<h2 id="resumen-del-historial-de-versiones">Resumen del historial de versiones</h2>
+<table>
+<thead>
+<tr>
+<th>Versión</th>
+<th>Fecha</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(unreleased)</td>
+<td>2026-09-06</td>
+<td>Repeticiones y kit de creador, campaña, economía pastoril, tecnologías de campamento, estilos de unidad, espectador, renovación de la IA</td>
+</tr>
+<tr>
+<td>0.9.8-beta</td>
+<td>2026-09-02</td>
+<td>Equipos y alianzas, social de Steam, mercenarios, auditoría de héroes, guardado/reanudación MP, rendimiento</td>
+</tr>
+<tr>
+<td>0.9.6/0.9.7-beta</td>
+<td>2026-08-31</td>
+<td>Internet (UPnP) + prototipo de Steam, reconexión, chat</td>
+</tr>
+<tr>
+<td>0.9.1–0.9.5-beta</td>
+<td>2026-08-27→31</td>
+<td>Patrón de comandos, actitudes/formaciones/guarnición, multijugador LAN fases 1–2</td>
+</tr>
+<tr>
+<td>0.9.0-beta</td>
+<td>2026-08-26</td>
+<td>Vista isométrica, identidad visual por civilización, grupos de control, localización</td>
+</tr>
+<tr>
+<td>0.6.0</td>
+<td>2026-06-08</td>
+<td>Renovación visual: figuras legibles, género de unidades, terreno vivo</td>
+</tr>
+<tr>
+<td>0.5.1</td>
+<td>2026-06-02</td>
+<td>Heroínas: plantilla de 16 héroes, elección de género en el lobby</td>
+</tr>
+<tr>
+<td>0.5.0</td>
+<td>2026-06-01</td>
+<td>Un jugador listo para producción: 8 civilizaciones, clima, guardar/cargar, pulido</td>
+</tr>
+<tr>
+<td>0.4.0</td>
+<td>2026-05-15</td>
+<td>Juego naval, sistema de clima, mercado, edificios de investigación</td>
+</tr>
+<tr>
+<td>0.3.0</td>
+<td>2026-04-20</td>
+<td>Progresión de edades, caballería, asedio, investigación tecnológica</td>
+</tr>
+<tr>
+<td>0.2.0</td>
+<td>2026-03-10</td>
+<td>Unidades militares, combate, niebla de guerra, oponente de IA</td>
+</tr>
+<tr>
+<td>0.1.0</td>
+<td>2026-02-01</td>
+<td>Cimientos: aldeanos, recursos, generación de mapas</td>
+</tr>
+</tbody>
+</table>
+<footer class="site">Generado desde <code>docs/changelog_es.md</code> el 2026-09-06 —
+regenera con <code>python3 docs/build_site.py</code>. ·
+<a href="index_es.html">Portal de documentación</a></footer>
+</div>
+</body>
+</html>

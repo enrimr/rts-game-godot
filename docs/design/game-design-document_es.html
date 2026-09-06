@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documento de Diseño del Juego — Calima: Flames of the Atlantic · Calima: Flames of the Atlantic</title>
+<style>
+:root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
+        --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:17px/1.65 Georgia, 'Times New Roman', serif; }
+.wrap { max-width:940px; margin:0 auto; padding:24px 28px 64px; }
+header.site { border-bottom:1px solid var(--line); padding:14px 0 12px;
+       display:flex; gap:18px; align-items:baseline; flex-wrap:wrap;
+       font-family:Verdana, Geneva, sans-serif; font-size:13px; }
+header.site .brand { color:var(--gold); font-weight:bold; font-size:15px;
+       letter-spacing:.06em; text-decoration:none; }
+header.site a { color:var(--dim); text-decoration:none; }
+header.site a:hover { color:var(--gold); }
+h1,h2,h3,h4 { font-family:Verdana, Geneva, sans-serif; color:var(--gold);
+       line-height:1.25; }
+h1 { font-size:30px; border-bottom:2px solid var(--gold-dark); padding-bottom:8px; }
+h2 { font-size:22px; margin-top:2.2em; border-bottom:1px solid var(--line);
+       padding-bottom:5px; }
+h3 { font-size:18px; margin-top:1.8em; color:#e6c979; }
+a { color:var(--gold); }
+code { background:var(--code); padding:1px 6px; border-radius:4px;
+       font:14px/1.5 Menlo, Consolas, monospace; color:#e6c979; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:8px;
+       padding:14px 16px; overflow-x:auto; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0;
+       font-size:15px; font-family:Verdana, Geneva, sans-serif; }
+th { background:#262019; color:var(--gold); text-align:left; }
+th,td { border:1px solid var(--line); padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#1a1712; }
+blockquote { border-left:3px solid var(--gold-dark); margin:1em 0;
+       padding:2px 18px; color:var(--dim); }
+hr { border:none; border-top:1px solid var(--line); margin:2.4em 0; }
+img { max-width:100%; border-radius:6px; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+       padding:14px 22px; font-family:Verdana, Geneva, sans-serif; font-size:14px; }
+.toc ul { margin:6px 0; padding-left:20px; }
+.toc a { text-decoration:none; color:var(--dim); }
+.toc a:hover { color:var(--gold); }
+footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14px;
+       color:var(--dim); font:12px Verdana, Geneva, sans-serif; }
+@media print { body { background:#fff; color:#111; }
+       header.site, footer.site, .toc { display:none; }
+       h1,h2,h3 { color:#000; } a { color:#000; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="../index_es.html">CALIMA · DOCS</a>
+  <a href="../index_es.html">Portal</a>
+  <a href="../manual/manual_es.html">Manual (ES)</a>
+  <a href="../manual/manual_en.html">Manual (EN)</a>
+  <a href="game-design-document.html">English version</a>
+</header>
+<h1 id="documento-de-diseno-del-juego-calima-flames-of-the-atlantic">Documento de Diseño del Juego — Calima: Flames of the Atlantic</h1><nav class="toc"><b>Contenido</b><div class="toc">
+<ul>
+<li><a href="#vision">Visión</a></li>
+<li><a href="#ambientacion">Ambientación</a></li>
+<li><a href="#bucle-central">Bucle central</a></li>
+<li><a href="#recursos">Recursos</a></li>
+<li><a href="#progresion-de-edades">Progresión de Edades</a></li>
+<li><a href="#civilizaciones">Civilizaciones</a></li>
+<li><a href="#heroes">Héroes</a></li>
+<li><a href="#tipos-de-mapa">Tipos de mapa</a></li>
+<li><a href="#casillas-de-terreno">Casillas de terreno</a><ul>
+<li><a href="#aplicacion-de-la-intransitabilidad">Aplicación de la intransitabilidad</a></li>
+</ul>
+</li>
+<li><a href="#unidades-navales">Unidades navales</a><ul>
+<li><a href="#muelle">Muelle</a></li>
+<li><a href="#plantilla-de-unidades-navales">Plantilla de unidades navales</a></li>
+</ul>
+</li>
+<li><a href="#unidades-de-asedio">Unidades de asedio</a></li>
+<li><a href="#arbol-tecnologico">Árbol tecnológico</a><ul>
+<li><a href="#herreria-13-tecnologias">Herrería (13 tecnologías)</a></li>
+<li><a href="#universidad-3-tecnologias">Universidad (3 tecnologías)</a></li>
+<li><a href="#templo-3-tecnologias">Templo (3 tecnologías)</a></li>
+<li><a href="#lineas-economicas-de-los-campamentos-9-tecnologias">Líneas económicas de los campamentos (9 tecnologías)</a></li>
+<li><a href="#tecnologias-de-mejora-de-unidad-4">Tecnologías de mejora de unidad (4)</a></li>
+<li><a href="#concesiones-tecnologicas-instantaneas-por-civilizacion">Concesiones tecnológicas instantáneas por civilización</a></li>
+</ul>
+</li>
+<li><a href="#sistema-de-clima">Sistema de clima</a><ul>
+<li><a href="#tipos-de-clima">Tipos de clima</a></li>
+<li><a href="#fases-del-clima">Fases del clima</a></li>
+<li><a href="#ajustes-de-frecuencia-del-clima">Ajustes de frecuencia del clima</a></li>
+<li><a href="#efectos-visuales">Efectos visuales</a></li>
+</ul>
+</li>
+<li><a href="#condiciones-de-victoria">Condiciones de victoria</a></li>
+<li><a href="#configuracion-de-partida-sala">Configuración de partida (Sala)</a></li>
+<li><a href="#hitos">Hitos</a><ul>
+<li><a href="#totales-de-contenido-actuales">Totales de contenido actuales</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+<h2 id="vision">Visión</h2>
+<p>Un juego de estrategia en tiempo real inspirado en Age of Empires II, ambientado en el archipiélago atlántico de las Islas Canarias entre los siglos XV y XVI. El jugador dirige una de ocho civilizaciones — desde navegantes de la antigüedad e isleños nativos hasta conquistadores europeos — a través de islas volcánicas, estrechos oceánicos y costas desérticas.</p>
+<p>El alcance publicado cubre escaramuza para un jugador contra hasta 3 rivales de IA (con equipos), una campaña de cuatro misiones con un prólogo tutorial (<em>Las Llamas de Tamarán</em>), multijugador LAN/Internet para hasta 4 jugadores (con autoridad en el host, con reconexión y guardado/reanudación), y un sistema de repeticiones con exportación a vídeo.</p>
+<hr />
+<h2 id="ambientacion">Ambientación</h2>
+<p>Las Islas Canarias se encuentran en el Atlántico oriental, a 100 km de la costa del noroeste de África. Fueron el primer archipiélago atlántico disputado entre potencias europeas y poblaciones indígenas, lo que las convierte en una encrucijada natural de la era de la exploración.</p>
+<p>El juego bebe de tres capas históricas y mitológicas:</p>
+<ul>
+<li><strong>Antigua</strong> — Expediciones fenicias y cartaginesas documentaron las islas siglos antes de la conquista medieval. El mito de la Atlántida, situado por los autores griegos cerca de las Columnas de Hércules, da licencia para una civilización fantástica.</li>
+<li><strong>Nativa</strong> — Tres civilizaciones nativas distintas (Guanches, Canarii, Mahos) habitaban islas diferentes, cada una con ventajas de terreno y culturas propias.</li>
+<li><strong>Europea</strong> — Tres potencias invasoras (Francos, Britanos, Castellanos) llegaron en momentos distintos con motivaciones distintas: colonización, piratería y conquista.</li>
+</ul>
+<hr />
+<h2 id="bucle-central">Bucle central</h2>
+<ol>
+<li>Recolectar recursos (Comida, Madera, Oro, Piedra)</li>
+<li>Construir una base y entrenar un ejército</li>
+<li>Investigar tecnologías para mejorar las unidades</li>
+<li>Avanzar a través de las Edades</li>
+<li>Derrotar al enemigo</li>
+</ol>
+<hr />
+<h2 id="recursos">Recursos</h2>
+<table>
+<thead>
+<tr>
+<th>Recurso</th>
+<th>Fuentes</th>
+<th>Uso principal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Comida</strong></td>
+<td>Granjas, caza, pesca (océano), recolección, ganado pastoreado (un perro Presa Canario, entrenado en el Molino, lleva animales al punto de entrega propio más cercano — las ovejas enemigas se convierten por el camino)</td>
+<td>Entrenamiento de unidades</td>
+</tr>
+<tr>
+<td><strong>Comida (Pescado)</strong></td>
+<td>Nodos de peces oceánicos (<code>FOOD_FISH</code>); recolectada por Barcos Pesqueros</td>
+<td>Entrenamiento de unidades — mismo almacén que la Comida</td>
+</tr>
+<tr>
+<td><strong>Madera</strong></td>
+<td>Árboles, bosque de Laurisilva</td>
+<td>Edificios, barcos, arqueros</td>
+</tr>
+<tr>
+<td><strong>Oro</strong></td>
+<td>Minas de oro, comercio, habilidades de héroe</td>
+<td>Mejoras militares, mercenarios</td>
+</tr>
+<tr>
+<td><strong>Piedra</strong></td>
+<td>Canteras, depósitos volcánicos cerca de las calderas</td>
+<td>Castillos, torres, murallas</td>
+</tr>
+</tbody>
+</table>
+<p><code>FOOD_FISH</code> es un valor distinto del enum <code>ResourceNode.ResourceType</code>. Los nodos de peces aparecen en el océano entre las dos islas en los mapas de tipo Islas. Los Barcos Pesqueros son la única unidad que puede recolectarlos.</p>
+<hr />
+<h2 id="progresion-de-edades">Progresión de Edades</h2>
+<table>
+<thead>
+<tr>
+<th>Edad</th>
+<th>Nombre</th>
+<th>Desbloquea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><strong>Edad Oscura</strong></td>
+<td>Centro Urbano, Casas, economía básica</td>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>Edad Feudal</strong></td>
+<td>Cuartel, Galería de Tiro, Herrería, Establo (Explorador Pesado), Mercado (Fenicios: desde la Edad Oscura)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Edad del Castillo</strong></td>
+<td>Castillo, Universidad, Taller de Asedio, Establo (Caballero), Centro Urbano adicional (construible), unidades únicas, tecnología avanzada</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Era Imperial</strong></td>
+<td>Árbol tecnológico completo, unidades únicas de élite</td>
+</tr>
+</tbody>
+</table>
+<p>Avanzar requiere gastar Comida y Oro en el Centro Urbano. Cada civilización puede tener bonificaciones que alteran el coste o la velocidad del avance.</p>
+<hr />
+<h2 id="civilizaciones">Civilizaciones</h2>
+<p>Ocho civilizaciones repartidas en tres capas históricas. Consulta <code>civilizations_es.md</code> / <code>civilizations_en.md</code> para el detalle completo.</p>
+<table>
+<thead>
+<tr>
+<th>Capa</th>
+<th>Civilización</th>
+<th>Identidad</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Antigua</td>
+<td><strong>Atlantes</strong></td>
+<td>Maestros navales, constructores costeros, niebla de guerra (+50 % de visión a lo largo de sus costas, más difíciles de detectar en la Niebla Marina), Invocador de Mareas anfibio que se adentra en el mar</td>
+</tr>
+<tr>
+<td>Antigua</td>
+<td><strong>Fenicios</strong></td>
+<td>Comercio, mercenarios, rutas comerciales</td>
+</tr>
+<tr>
+<td>Nativa</td>
+<td><strong>Guanches</strong></td>
+<td>Terreno volcánico, infantería resistente, fortalezas de piedra</td>
+</tr>
+<tr>
+<td>Nativa</td>
+<td><strong>Canarii</strong></td>
+<td>Economía, arqueros equilibrados, bonificación en terreno elevado</td>
+</tr>
+<tr>
+<td>Nativa</td>
+<td><strong>Mahos</strong></td>
+<td>Velocidad, terreno desértico, dependencia mínima de la madera</td>
+</tr>
+<tr>
+<td>Invasora</td>
+<td><strong>Francos</strong></td>
+<td>Avance rápido, caballería organizada, presión temprana</td>
+</tr>
+<tr>
+<td>Invasora</td>
+<td><strong>Britanos</strong></td>
+<td>Poder naval, arqueros de largo alcance, economía de saqueo</td>
+</tr>
+<tr>
+<td>Invasora</td>
+<td><strong>Castellanos</strong></td>
+<td>Tecnología superior en el juego tardío, infantería pesada, torres</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="heroes">Héroes</h2>
+<p>Cada civilización tiene una <strong>pareja de héroes</strong> — un héroe con nombre masculino y otro femenino (16 en total), seleccionados en la sala (<code>MatchConfig.hero_gender</code>: Aleatorio / Masculino / Femenino). Los héroes son únicos — aparecen una vez al comienzo de la partida y portan una habilidad especial. Consulta <code>civilizations_es.md</code> y <code>heroines-design_es.md</code> para el nombre y la habilidad de cada héroe.</p>
+<p>Reglas de los héroes:
+- Aparecen cerca del Centro Urbano al inicio de la partida
+- No se pueden entrenar; si muere, el héroe reaparece en el Centro Urbano tras 120 s (<code>HERO_RESPAWN_TIME</code>) — excepto en Regicidio, donde la muerte del héroe es derrota inmediata
+- Estadísticas equivalentes a una unidad única de la Edad del Castillo
+- Una habilidad especial con un enfriamiento de 45–120 s (auditado: <code>tests/unit/test_hero_abilities.gd</code> lanza las 16)</p>
+<hr />
+<h2 id="tipos-de-mapa">Tipos de mapa</h2>
+<table>
+<thead>
+<tr>
+<th>Mapa</th>
+<th>Descripción</th>
+<th>Enfoque estratégico</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Llanura</strong></td>
+<td>Terreno llano, sin terreno especial</td>
+<td>Apto para principiantes</td>
+</tr>
+<tr>
+<td><strong>Estándar</strong></td>
+<td>Mapa terrestre con terreno variado</td>
+<td>Juego general</td>
+</tr>
+<tr>
+<td><strong>Costa Volcánica</strong></td>
+<td>Terreno costero con una caldera intransitable en el centro</td>
+<td>Dos corredores terrestres, ventaja para los Guanches</td>
+</tr>
+<tr>
+<td><strong>Costa Desértica</strong></td>
+<td>Mapa árido al estilo de Lanzarote, océano al oeste</td>
+<td>Escasez de madera, ventaja para los Mahos</td>
+</tr>
+<tr>
+<td><strong>Islas</strong></td>
+<td>Dos islas separadas por océano</td>
+<td>Lo naval es obligatorio; Muelle, Barcos Pesqueros, Barcos de Transporte y Galeras de Guerra esenciales</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="casillas-de-terreno">Casillas de terreno</h2>
+<table>
+<thead>
+<tr>
+<th>Casilla</th>
+<th>Movimiento</th>
+<th>Construible</th>
+<th>Efecto especial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hierba</td>
+<td>Normal</td>
+<td>Sí</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Arena / Duna</td>
+<td>-20% infantería (pesada)</td>
+<td>Sí</td>
+<td>Los Mahos son inmunes a la penalización</td>
+</tr>
+<tr>
+<td>Malpaís (roca volcánica)</td>
+<td>Intransitable (recortado del navmesh)</td>
+<td>No</td>
+<td>Los Guanches lo atraviesan mediante la malla de malpaís de la capa 8</td>
+</tr>
+<tr>
+<td>Arena negra de lava enfriada</td>
+<td>Normal</td>
+<td>No</td>
+<td>Costera/decorativa</td>
+</tr>
+<tr>
+<td>Laurisilva (bosque denso)</td>
+<td>-35%</td>
+<td>No</td>
+<td>Alto rendimiento de madera (bosques densos de 260 de madera), visión −30% bajo el dosel</td>
+</tr>
+<tr>
+<td>Risco (borde de acantilado)</td>
+<td>Sin paso</td>
+<td>No</td>
+<td>Unidades a distancia a menos de 48 px del borde del risco: +2 de alcance de ataque</td>
+</tr>
+<tr>
+<td>Agua poco profunda (océano ≤120 px de la costa)</td>
+<td>Unidades terrestres bloqueadas; anfibios a velocidad completa</td>
+<td>No</td>
+<td>Solo el Invocador de Mareas de los Atlantes vadea — el resto de su ejército se queda en seco</td>
+</tr>
+<tr>
+<td>Océano</td>
+<td>Unidades terrestres bloqueadas</td>
+<td>No</td>
+<td>Barcos y unidades anfibias; el Invocador de Mareas nada al 60% de velocidad (<code>deep_water_speed</code>); pesca disponible</td>
+</tr>
+<tr>
+<td>Caldera (activa)</td>
+<td>Intransitable</td>
+<td>No</td>
+<td>El clima de Ceniza Volcánica golpea dentro del radio de la caldera + 800 px</td>
+</tr>
+</tbody>
+</table>
+<h3 id="aplicacion-de-la-intransitabilidad">Aplicación de la intransitabilidad</h3>
+<p><code>TerrainManager.is_impassable_for(world_pos, civ_id, amphibious)</code> es la barrera en tiempo de ejecución. Todas las órdenes de movimiento de unidades resuelven el destino final a través de <code>TerrainManager.nearest_passable</code> antes de asignar un objetivo al agente de navegación. Si una posición solicitada está dentro de una zona intransitable, la unidad se redirige a la casilla alcanzable más cercana mediante una búsqueda radial de 30 anillos (24 px por anillo). El argumento <code>amphibious</code> proviene de la propia unidad (<code>UnitBase.is_amphibious()</code>), de modo que el agua se abre por unidad y no por civilización: a una milicia atlante se le niega el mar, a su Invocador de Mareas no.</p>
+<p>El recorte del NavMesh (<code>NavMeshBuilder.build</code>) lo respalda a nivel de malla: las zonas de malpaís, risco y caldera se recortan de las mallas horneadas (<code>zone_obstructions</code>), de modo que los caminos las rodean; una cuarta malla (capa 8) deja el malpaís transitable para las civilizaciones que lo atraviesan. En los mapas de Islas el polígono de navegación se sustituye por polígonos de tierra por isla, de modo que la malla horneada nunca se extiende sobre el océano. Las unidades anfibias caminan por la malla de la capa 4, que abarca tierra y agua.</p>
+<hr />
+<h2 id="unidades-navales">Unidades navales</h2>
+<p>Las unidades navales extienden <code>ShipBase</code>, que extiende <code>UnitBase</code>. El terreno oceánico es transitable para todos los barcos.</p>
+<h3 id="muelle">Muelle</h3>
+<table>
+<thead>
+<tr>
+<th>Propiedad</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Coste</td>
+<td>150 Madera</td>
+</tr>
+<tr>
+<td>PV</td>
+<td>1.800</td>
+</tr>
+<tr>
+<td>Tiempo de construcción</td>
+<td>45 s</td>
+</tr>
+<tr>
+<td>Límite de cola de entrenamiento</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Restricción de emplazamiento</td>
+<td>Debe ser adyacente al agua (solo emplazamiento costero)</td>
+</tr>
+<tr>
+<td>Tecla HUD</td>
+<td>D</td>
+</tr>
+</tbody>
+</table>
+<p>El Muelle es el único edificio de producción de unidades navales. Los Barcos Pesqueros entregan automáticamente los recursos de pesca en el Muelle amigo más cercano.</p>
+<h3 id="plantilla-de-unidades-navales">Plantilla de unidades navales</h3>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>PV</th>
+<th>Ataque</th>
+<th>Alcance</th>
+<th>Rol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Barco Pesquero</strong></td>
+<td>Oscura</td>
+<td>75M</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Recolecta FOOD_FISH de los nodos oceánicos; devuelve la comida al Muelle; puede construir Trampas para Peces</td>
+</tr>
+<tr>
+<td><strong>Barco de Transporte</strong></td>
+<td>Feudal</td>
+<td>125M</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Transporta hasta 8 unidades terrestres (aldeanos incluidos); los barcos y los barcos pesqueros no pueden embarcar; descarga en tierra firme</td>
+</tr>
+<tr>
+<td><strong>Galera de Guerra</strong></td>
+<td>Feudal</td>
+<td>75M + 35O</td>
+<td>120</td>
+<td>6</td>
+<td>5.5</td>
+<td>Combate naval a distancia</td>
+</tr>
+</tbody>
+</table>
+<h2 id="unidades-de-asedio">Unidades de asedio</h2>
+<p>Se producen en el <strong>Taller de Asedio</strong> (Edad del Castillo, 200 Madera).</p>
+<table>
+<thead>
+<tr>
+<th>Unidad</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>PV</th>
+<th>Ataque</th>
+<th>Alcance</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ariete</strong></td>
+<td>Castillo</td>
+<td>160M</td>
+<td>180</td>
+<td>40 (x3 contra edificios)</td>
+<td>Cuerpo a cuerpo</td>
+<td>Solo ataca automáticamente edificios; 0.2x de daño contra unidades</td>
+</tr>
+<tr>
+<td><strong>Manganela</strong></td>
+<td>Castillo</td>
+<td>160M + 135O</td>
+<td>90</td>
+<td>35</td>
+<td>7</td>
+<td>AoE de 72 px de salpicadura; alcance mínimo (35 % del máximo)</td>
+</tr>
+<tr>
+<td><strong>Trabuquete</strong></td>
+<td>Imperial</td>
+<td>200M + 200O</td>
+<td>70</td>
+<td>200</td>
+<td>12</td>
+<td>AoE de 48 px de salpicadura; debe desplegarse (3 s) antes de disparar; se repliega automáticamente con órdenes de movimiento; alcance mínimo (40 % del máximo)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="arbol-tecnologico">Árbol tecnológico</h2>
+<p>32 tecnologías repartidas en 8 edificios de investigación (Herrería, Universidad, Templo, Cuartel, Establo, Campamento Maderero, Campamento Minero, Molino). Las tecnologías otorgan bonificaciones permanentes de estadísticas a unidades/edificios. Cada edificio de investigación ejecuta una tecnología activa más una cola de espera — hasta 5 tecnologías en curso por edificio, pagadas al encolar y reembolsadas íntegramente al cancelar.</p>
+<h3 id="herreria-13-tecnologias">Herrería (13 tecnologías)</h3>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Telar</strong></td>
+<td>Oscura</td>
+<td>50c</td>
+<td>25s</td>
+<td>PV del Aldeano ×1.15</td>
+</tr>
+<tr>
+<td><strong>Forja</strong></td>
+<td>Feudal</td>
+<td>75c</td>
+<td>40s</td>
+<td>Ataque de las unidades ×1.15</td>
+</tr>
+<tr>
+<td><strong>Armadura de Escamas</strong></td>
+<td>Feudal</td>
+<td>100c+50o</td>
+<td>40s</td>
+<td>Armadura cuerpo a cuerpo de las unidades +1</td>
+</tr>
+<tr>
+<td><strong>Armadura Acolchada</strong></td>
+<td>Feudal</td>
+<td>100c</td>
+<td>35s</td>
+<td>Armadura perforante del Arquero +1</td>
+</tr>
+<tr>
+<td><strong>Flechado</strong></td>
+<td>Feudal</td>
+<td>100o</td>
+<td>35s</td>
+<td>Ataque del Arquero ×1.20</td>
+</tr>
+<tr>
+<td><strong>Maestro Carpintero Naval</strong></td>
+<td>Feudal</td>
+<td>200m+60o</td>
+<td>40s</td>
+<td>PV de los barcos ×1.15, coste −15%</td>
+</tr>
+<tr>
+<td><strong>Carreta Canaria</strong> (<code>carreta_canaria</code>)</td>
+<td>Feudal</td>
+<td>150c+75m</td>
+<td>40s</td>
+<td>Capacidad de carga del Aldeano +25% (las granjas depositan al instante, no afectadas)</td>
+</tr>
+<tr>
+<td><strong>Fundición de Hierro</strong></td>
+<td>Castillo</td>
+<td>150o</td>
+<td>55s</td>
+<td>Ataque de las unidades ×1.20 (requiere Forja)</td>
+</tr>
+<tr>
+<td><strong>Carretón Isleño</strong> (<code>carreton_isleno</code>)</td>
+<td>Castillo</td>
+<td>200c+125m</td>
+<td>55s</td>
+<td>Capacidad de carga del Aldeano +25% adicional (requiere Carreta Canaria)</td>
+</tr>
+<tr>
+<td><strong>Armadura de Mallas</strong></td>
+<td>Castillo</td>
+<td>200c+100o</td>
+<td>45s</td>
+<td>Armadura cuerpo a cuerpo de las unidades +1 (requiere Armadura de Escamas)</td>
+</tr>
+<tr>
+<td><strong>Flecha Bodkin</strong></td>
+<td>Castillo</td>
+<td>100c+150o</td>
+<td>35s</td>
+<td>Ataque del Arquero ×1.20, alcance ×1.10 (requiere Flechado)</td>
+</tr>
+<tr>
+<td><strong>Alto Horno</strong></td>
+<td>Imperial</td>
+<td>275c+225o</td>
+<td>50s</td>
+<td>Ataque de las unidades ×1.15</td>
+</tr>
+<tr>
+<td><strong>Armadura de Placas</strong></td>
+<td>Imperial</td>
+<td>300c+200o</td>
+<td>60s</td>
+<td>Armadura cuerpo a cuerpo de las unidades +1 (requiere Armadura de Mallas)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="universidad-3-tecnologias">Universidad (3 tecnologías)</h3>
+<p>Edificio de la Edad del Castillo (200 madera). Investiga mejoras militares avanzadas.</p>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ingeniería de Asedio</strong></td>
+<td>Castillo</td>
+<td>200o</td>
+<td>60s</td>
+<td>Daño contra edificios ×1.20</td>
+</tr>
+<tr>
+<td><strong>Balística</strong></td>
+<td>Castillo</td>
+<td>175o</td>
+<td>50s</td>
+<td>Velocidad de ataque del Arquero ×1.20 (requiere Flechado)</td>
+</tr>
+<tr>
+<td><strong>Química</strong></td>
+<td>Imperial</td>
+<td>300o</td>
+<td>70s</td>
+<td>Ataque del Arquero ×1.15 (requiere Balística)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="templo-3-tecnologias">Templo (3 tecnologías)</h3>
+<p>Edificio de la Edad del Castillo (175 madera). Investiga mejoras de moral y PV. El Templo es también el hospital de campaña — las unidades guarnecidas (capacidad 5) curan 4 PV/s, los héroes a la mitad — y entrena a la sacerdotisa-sanadora <strong>Harimaguada</strong> (85 Comida + 25 Oro, Edad del Castillo): siempre mujer, nunca lucha, sana aliados a 5 PV/s a distancia de contacto y hace triaje automático de los heridos cercanos mientras está inactiva.</p>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>Efecto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Fervor</strong></td>
+<td>Castillo</td>
+<td>150o</td>
+<td>50s</td>
+<td>Velocidad de movimiento de las unidades ×1.10</td>
+</tr>
+<tr>
+<td><strong>Santidad</strong></td>
+<td>Castillo</td>
+<td>100c</td>
+<td>40s</td>
+<td>PV del Espadachín ×1.15</td>
+</tr>
+<tr>
+<td><strong>Expiación</strong></td>
+<td>Imperial</td>
+<td>150c+100o</td>
+<td>55s</td>
+<td>PV de la caballería ×1.20 (requiere Santidad)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="lineas-economicas-de-los-campamentos-9-tecnologias">Líneas económicas de los campamentos (9 tecnologías)</h3>
+<p>Cada campamento de entrega investiga su propia línea de tres pasos — una tecnología por edad desde Feudal, con requisitos encadenados. Cada paso multiplica la velocidad de recolección del aldeano para ese recurso por 1.15 y su cesta de carga por 1.10 (claves de efecto <code>villager_&lt;res&gt;_gather_rate</code> / <code>villager_&lt;res&gt;_carry</code>, acumuladas sobre las carretas de la Herrería).</p>
+<table>
+<thead>
+<tr>
+<th>Edificio (recurso)</th>
+<th>Feudal</th>
+<th>Castillo</th>
+<th>Imperial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Campamento Maderero</strong> (madera)</td>
+<td>Hacha de doble filo — 100c+50m, 25s</td>
+<td>Sierra de arco — 150c+100m, 40s</td>
+<td>Sierra de dos hombres — 300c+200m, 60s</td>
+</tr>
+<tr>
+<td><strong>Campamento Minero</strong> (oro + piedra)</td>
+<td>Picos reforzados — 100c+75m, 25s</td>
+<td>Minería de pozo — 175c+100m, 40s</td>
+<td>Galerías profundas — 300c+150m, 60s</td>
+</tr>
+<tr>
+<td><strong>Molino</strong> (comida)</td>
+<td>Collera de tiro — 75c+75m, 25s</td>
+<td>Arado pesado — 125c+125m, 40s</td>
+<td>Rotación de cultivos — 250c+250m, 60s</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tecnologias-de-mejora-de-unidad-4">Tecnologías de mejora de unidad (4)</h3>
+<p>Se investigan en el edificio que entrena la unidad. Transforman inmediatamente todas las unidades existentes de ese tipo (PV escalados proporcionalmente), y el edificio pasa a entrenar la nueva unidad en adelante.</p>
+<table>
+<thead>
+<tr>
+<th>Tecnología</th>
+<th>Edificio</th>
+<th>Edad</th>
+<th>Coste</th>
+<th>Tiempo</th>
+<th>Transforma</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hombre de Armas</strong></td>
+<td>Cuartel</td>
+<td>Feudal</td>
+<td>100c+40o</td>
+<td>45s</td>
+<td>Milicia → Hombre de Armas</td>
+</tr>
+<tr>
+<td><strong>Espadachín</strong></td>
+<td>Cuartel</td>
+<td>Castillo</td>
+<td>200c+60o</td>
+<td>45s</td>
+<td>Hombre de Armas → Espadachín</td>
+</tr>
+<tr>
+<td><strong>Explorador Pesado</strong></td>
+<td>Establo</td>
+<td>Feudal</td>
+<td>150c+75o</td>
+<td>45s</td>
+<td>Explorador → Explorador Pesado</td>
+</tr>
+<tr>
+<td><strong>Caballero</strong></td>
+<td>Establo</td>
+<td>Castillo</td>
+<td>200c+100o</td>
+<td>45s</td>
+<td>Explorador Pesado → Caballero</td>
+</tr>
+</tbody>
+</table>
+<h3 id="concesiones-tecnologicas-instantaneas-por-civilizacion">Concesiones tecnológicas instantáneas por civilización</h3>
+<p><strong>Castellanos</strong>: Reciben una tecnología de Herrería gratuita cada vez que avanzan de Edad. El juego concede automáticamente la tecnología de Herrería más antigua sin investigar disponible en la nueva Edad (respetando los requisitos). Ejemplo: avanzar a Feudal concede Telar o Forja gratis.</p>
+<hr />
+<h2 id="sistema-de-clima">Sistema de clima</h2>
+<p>Eventos de clima procedurales afectan al juego con modificadores de estadísticas y efectos visuales. Activación/desactivación y frecuencia configurables en la sala.</p>
+<h3 id="tipos-de-clima">Tipos de clima</h3>
+<table>
+<thead>
+<tr>
+<th>Clima</th>
+<th>Restricción de mapa</th>
+<th>Duración (pico)</th>
+<th>Efectos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Calima</strong> (polvo sahariano)</td>
+<td>Todos los mapas</td>
+<td>70-130s</td>
+<td>Visión −40%, recolección −20% (madera/comida), velocidad de movimiento −15%</td>
+</tr>
+<tr>
+<td><strong>Tormenta Atlántica</strong></td>
+<td>Todos los mapas</td>
+<td>40-90s</td>
+<td>Velocidad naval −30%, pesca −50%, deriva de proyectiles (30 px de viento cruzado)</td>
+</tr>
+<tr>
+<td><strong>Niebla Marina</strong></td>
+<td>Solo mapas costeros</td>
+<td>60-120s</td>
+<td>Visión costera −60%, ocultación de unidades dentro de la zona costera (intensidad ≥0.5) — se rompe a corta distancia (180 px, 90 px para los Atlantes) o al atacar (3 s)</td>
+</tr>
+<tr>
+<td><strong>Vientos Alisios</strong></td>
+<td>Todos los mapas</td>
+<td>100-160s</td>
+<td>Velocidad naval ±20% (alineación con el viento), deriva de proyectiles (40 px a favor del viento)</td>
+</tr>
+<tr>
+<td><strong>Ceniza Volcánica</strong></td>
+<td>Costa Volcánica</td>
+<td>40-80s</td>
+<td>Visión −50%, recolección −30%, drenaje de PV de edificios (2/s), alrededor de las calderas (radio de la caldera + 800 px)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fases-del-clima">Fases del clima</h3>
+<p>Cada evento de clima tiene 3 fases:
+1. <strong>Entrada</strong> (10 s): intensidad 0.0 → 1.0
+2. <strong>Pico</strong> (duración indicada arriba): intensidad = 1.0
+3. <strong>Salida</strong> (10 s): intensidad 1.0 → 0.0
+4. <strong>Despejado</strong> (60-120 s): sin clima, intensidad = 0.0</p>
+<h3 id="ajustes-de-frecuencia-del-clima">Ajustes de frecuencia del clima</h3>
+<ul>
+<li><strong>Desactivado</strong>: Sin eventos de clima</li>
+<li><strong>Normal</strong>: Duración del despeje 60-120 s (línea base)</li>
+<li><strong>Frecuente</strong>: Duración del despeje ×0.6 (36-72 s)</li>
+<li><strong>Extremo</strong>: Duración del despeje ×0.3 (18-36 s)</li>
+</ul>
+<h3 id="efectos-visuales">Efectos visuales</h3>
+<p><code>WeatherOverlay</code> renderiza efectos en espacio de pantalla:
+- <strong>Lluvia</strong> (Tormenta Atlántica): partículas que caen
+- <strong>Polvo</strong> (Calima): partículas horizontales
+- <strong>Ceniza</strong> (Ceniza Volcánica): partículas grises que caen
+- <strong>Viento</strong> (Vientos Alisios): partículas horizontales
+- <strong>Viñeta de niebla</strong> (Niebla Marina): oscurecimiento de los bordes de la pantalla</p>
+<hr />
+<h2 id="condiciones-de-victoria">Condiciones de victoria</h2>
+<p>Hay tres modos de victoria implementados, seleccionables en la sala:</p>
+<ul>
+<li><strong>Conquista</strong>: Un jugador queda fuera cuando tiene cero unidades y cero edificios de producción; gana el último bando mutuamente aliado en pie.</li>
+<li><strong>Regicidio</strong>: Cada jugador empieza con un Héroe. La muerte del héroe elimina a ese jugador al instante (sin reaparición en este modo).</li>
+<li><strong>Maravilla</strong>: Construye una Maravilla (Era Imperial, cuesta 2500 madera + 2500 comida + 2500 piedra + 5000 oro) y defiéndela durante <code>WONDER_COUNTDOWN_SEC</code> (240 s = 4 minutos). Destruir la Maravilla cancela su cuenta atrás; la partida continúa.</li>
+</ul>
+<p><strong>Eliminación y espectador</strong>: la eliminación emite <code>EventBus.player_eliminated</code>. Si el jugador local es eliminado (o se rinde) mientras quedan bandos hostiles, la partida sigue — el panel de derrota ofrece "Ver mapa" y el jugador observa con las órdenes bloqueadas (<code>GameWorld.local_player_defeated</code>); el fin de partida definitivo reconstruye el panel. Equipos: <code>GameManager.are_allied</code> es el único punto de paso para la comprobación de victoria.</p>
+<hr />
+<h2 id="configuracion-de-partida-sala">Configuración de partida (Sala)</h2>
+<p>Los jugadores configuran una escaramuza antes de empezar:</p>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Valores</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tamaño del mapa</td>
+<td>Pequeño / Mediano / Grande</td>
+</tr>
+<tr>
+<td>Tipo de mapa</td>
+<td>Llanura / Estándar / Costa Volcánica / Costa Desértica / Islas</td>
+</tr>
+<tr>
+<td>Recursos iniciales</td>
+<td>Escasos / Normales / Abundantes / Combate Total (todo a 9999) / Tutorial (solo 320 de madera)</td>
+</tr>
+<tr>
+<td>Civilización del jugador</td>
+<td>Elección entre 8 civilizaciones (Guanches, Canarii, Mahos, Francos, Britanos, Castellanos, Atlantes, Fenicios)</td>
+</tr>
+<tr>
+<td>Número de rivales</td>
+<td>1-3 oponentes de IA (multijugador: hasta 4 jugadores en total, asientos restantes Abierto / IA / Cerrado)</td>
+</tr>
+<tr>
+<td>Civilizaciones rivales</td>
+<td>Elección de civilización para cada IA</td>
+</tr>
+<tr>
+<td>Equipos</td>
+<td>Jugadores y rivales asignables a los equipos 1-4 (<code>MatchConfig.player_teams</code>)</td>
+</tr>
+<tr>
+<td>Edad inicial</td>
+<td>Oscura / Feudal / Castillo / Imperial</td>
+</tr>
+<tr>
+<td>Condición de victoria</td>
+<td>Conquista / Regicidio / Maravilla</td>
+</tr>
+<tr>
+<td>Clima activado</td>
+<td>Sí / No</td>
+</tr>
+<tr>
+<td>Frecuencia del clima</td>
+<td>Desactivado / Normal / Frecuente / Extremo</td>
+</tr>
+<tr>
+<td>Género del héroe</td>
+<td>Aleatorio / Masculino / Femenino</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="hitos">Hitos</h2>
+<table>
+<thead>
+<tr>
+<th>Hito</th>
+<th>Descripción</th>
+<th>Estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>Mapa jugable con aldeanos recolectando recursos</td>
+<td>✅ Hecho</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Centro Urbano, Cuartel, murallas, ejército básico, niebla de guerra</td>
+<td>✅ Hecho</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Progresión de edades (4 edades), árbol tecnológico (8 tecnologías), nuevas unidades (Arquero, Piquero)</td>
+<td>✅ Hecho</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>Juego naval (Muelle, barcos, mapa de Islas, asalto naval de la IA)</td>
+<td>✅ Hecho</td>
+</tr>
+<tr>
+<td>M5</td>
+<td><strong>Un jugador listo para producción</strong>: 8 civilizaciones con unidades únicas/héroes, sistema de clima, guardado/carga, 3 condiciones de victoria, pulido y corrección de errores</td>
+<td>✅ Hecho</td>
+</tr>
+<tr>
+<td>M6</td>
+<td>Terreno personalizado (malpaís, duna, risco, laurisilva) con bonificaciones de travesía por civilización y efectos de juego (visión/madera en laurisilva, ventaja de risco, agua poco profunda)</td>
+<td>✅ Hecho</td>
+</tr>
+<tr>
+<td>M7</td>
+<td>Multijugador: sesiones LAN/Internet con autoridad en el host, sala unificada, replicación de estado, robustez, chat, equipos, reconexión, guardado/reanudación, prototipo de transporte de Steam</td>
+<td>✅ Hecho</td>
+</tr>
+<tr>
+<td>M8</td>
+<td>Modo campaña: <em>Las Llamas de Tamarán</em> — prólogo tutorial + 4 misiones guionizadas</td>
+<td>✅ Hecho</td>
+</tr>
+<tr>
+<td>M9</td>
+<td>Repeticiones y kit de creador: grabación de partidas, reproducción con línea de tiempo, modo cinemático, exportación de vídeo/clips</td>
+<td>✅ Hecho</td>
+</tr>
+<tr>
+<td>M10</td>
+<td>Determinismo lockstep (movimiento fuera de la física de Godot), prueba con AppID de Steam en vivo, pase de balance</td>
+<td>📋 Planificado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="totales-de-contenido-actuales">Totales de contenido actuales</h3>
+<p>Verificados contra <code>project/resources/</code> y <code>project/scenes/</code> (2026-09-06):</p>
+<ul>
+<li>8 civilizaciones (<code>resources/civilizations/*.tres</code>)</li>
+<li>26 tipos de unidad jugables (25 regulares — 8 de ellas únicas de civilización — más la clase de héroe) y 16 héroes con nombre (2 por civilización, <code>resources/units/hero_*.tres</code>); 2 tipos de animal</li>
+<li>20 tipos de edificio (<code>resources/buildings/*.tres</code>)</li>
+<li>32 tecnologías (<code>resources/technologies/*.tres</code>; TechManager carga el directorio)</li>
+<li>5 tipos de mapa, 3 tamaños, 4 modos de recursos, 3 condiciones de victoria, 5 tipos de clima, 99 ranuras de guardado</li>
+<li>Campaña: prólogo tutorial + 4 misiones (<code>CampaignData.MISSIONS</code>)</li>
+</ul>
+<footer class="site">Generado desde <code>docs/design/game-design-document_es.md</code> el 2026-09-06 —
+regenera con <code>python3 docs/build_site.py</code>. ·
+<a href="../index_es.html">Portal de documentación</a></footer>
+</div>
+</body>
+</html>

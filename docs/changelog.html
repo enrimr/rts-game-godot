@@ -54,15 +54,16 @@ footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14p
 <body>
 <div class="wrap">
 <header class="site">
-  <a class="brand" href="index.html">CALIMA · DOCS</a>
-  <a href="index.html">Portal</a>
+  <a class="brand" href="index_en.html">CALIMA · DOCS</a>
+  <a href="index_en.html">Portal</a>
   <a href="manual/manual_es.html">Manual (ES)</a>
   <a href="manual/manual_en.html">Manual (EN)</a>
-  
+  <a href="changelog_es.html">Versión en español</a>
 </header>
 <h1 id="changelog">Changelog</h1><nav class="toc"><b>Contents</b><div class="toc">
 <ul>
 <li><a href="#unreleased">[Unreleased]</a><ul>
+<li><a href="#documentation-site">Documentation site</a></li>
 <li><a href="#counter-triangle">Counter triangle</a></li>
 <li><a href="#civilization-bonuses-wired-for-real">Civilization bonuses wired for real</a></li>
 <li><a href="#replays-creator-kit">Replays &amp; creator kit</a></li>
@@ -146,6 +147,10 @@ footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14p
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <hr />
 <h2 id="unreleased">[Unreleased]</h2>
+<h3 id="documentation-site">Documentation site</h3>
+<ul>
+<li><code>docs/</code> is now a publishable static site: <code>docs/build_site.py</code> converts every Markdown document (player manuals, GDD, architecture, lore, changelog, controls) to themed self-contained HTML with rewritten links; portal at <code>docs/index.html</code>; zero broken links (checked site-wide).</li>
+</ul>
 <h3 id="counter-triangle">Counter triangle</h3>
 <ul>
 <li>Class-based attack bonuses (<code>UnitResource.attack_bonuses</code>, read in <code>UnitBase._strike_damage</code>): pikemen +12 vs cavalry, cavalry +4 (scout +3) vs archers, archers +3 vs spearmen; the Longbowman's Armour Piercing migrated to data. Arrows inherit the bonus. Army composition now matters as much as size.</li>
@@ -646,7 +651,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 </table>
 <footer class="site">Generated from <code>CHANGELOG.md</code> on 2026-09-06 —
 regenerate with <code>python3 docs/build_site.py</code>. ·
-<a href="index.html">Documentation portal</a></footer>
+<a href="index_en.html">Documentation portal</a></footer>
 </div>
 </body>
 </html>

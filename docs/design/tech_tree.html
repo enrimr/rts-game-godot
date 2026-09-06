@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calima: Flames of the Atlantic — Tech Tree Reference</title>
+<title>Calima: Flames of the Atlantic — Tech Tree · Árbol de Tecnologías</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,251 +16,76 @@
     --gold-bright: #f0cc6a;
     --text:        #d4c49a;
     --text-dim:    #7a6a4a;
-    --age-dark:    #4a3520;
-    --age-feudal:  #4a4020;
-    --age-castle:  #3a3a50;
-    --age-imperial:#4a2020;
-    --food:        #e86c2a;
-    --wood:        #6aaa3a;
-    --gold-res:    #e8c830;
     --shadow:      rgba(0,0,0,0.6);
     --glow:        rgba(200,168,75,0.3);
   }
 
   body {
-    background: var(--bg);
+    background: radial-gradient(ellipse at 50% -20%, #2a1c0c 0%, var(--bg) 60%);
     color: var(--text);
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 14px;
     min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
   }
 
-  header {
-    background: linear-gradient(180deg, #0d0904 0%, #1a1108 100%);
-    border-bottom: 2px solid var(--gold-dim);
-    padding: 18px 24px 12px;
-    text-align: center;
-    box-shadow: 0 4px 20px var(--shadow);
-  }
+  .panel { text-align: center; max-width: 560px; }
 
-  header h1 {
+  h1 {
     color: var(--gold);
-    font-size: 1.6rem;
+    font-size: 1.7rem;
     font-variant: small-caps;
     letter-spacing: 0.12em;
     text-shadow: 0 0 20px rgba(200,168,75,0.5);
+    line-height: 1.35;
   }
 
-  header .subtitle {
+  .game {
     color: var(--text-dim);
     font-size: 0.85rem;
-    margin-top: 4px;
-  }
-
-  nav {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 2px 14px;
-    margin-top: 10px;
-  }
-
-  nav a {
-    color: var(--text-dim);
-    text-decoration: none;
     font-variant: small-caps;
-    letter-spacing: 0.06em;
-    font-size: 0.85rem;
-  }
-  nav a:hover { color: var(--gold-bright); }
-
-  main {
-    padding: 24px 20px 40px;
-    max-width: 1400px;
-    margin: 0 auto;
+    letter-spacing: 0.14em;
+    margin-bottom: 10px;
   }
 
-  .intro {
-    color: var(--text-dim);
-    font-size: 0.85rem;
-    line-height: 1.55;
-    max-width: 940px;
-    margin: 0 auto 8px;
+  .rule {
+    border: 0;
+    border-top: 1px solid var(--card-border);
+    margin: 22px auto;
+    width: 240px;
   }
-  .intro b { color: var(--text); }
 
-  .card {
+  .langs { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+
+  .langs a {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 6px;
-    padding: 12px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .card:hover { border-color: var(--gold-dim); box-shadow: 0 0 12px var(--glow); }
-
-  .card-title {
-    color: var(--gold);
-    font-size: 0.9rem;
-    font-variant: small-caps;
-    letter-spacing: 0.06em;
-  }
-  .card-subtitle {
-    color: var(--text-dim);
-    font-size: 0.76rem;
-    font-style: italic;
-    margin-bottom: 2px;
-  }
-
-  .cost { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .cost-item { border-radius: 3px; font-size: 0.78rem; font-weight: 600; padding: 2px 7px; }
-  .cost-food { background: rgba(232,108,42,0.18); color: var(--food);     border: 1px solid rgba(232,108,42,0.35); }
-  .cost-wood { background: rgba(106,170,58,0.18); color: var(--wood);     border: 1px solid rgba(106,170,58,0.35); }
-  .cost-gold { background: rgba(232,200,48,0.18); color: var(--gold-res); border: 1px solid rgba(232,200,48,0.35); }
-
-  .tech-section { margin: 34px 0; }
-
-  .tech-section-heading {
-    color: var(--gold);
-    font-size: 1.1rem;
-    font-variant: small-caps;
-    letter-spacing: 0.1em;
-    margin-bottom: 4px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--card-border);
-  }
-  .tech-section-heading .count {
-    color: var(--text-dim);
-    font-size: 0.75rem;
-    letter-spacing: 0.03em;
-    margin-left: 10px;
-  }
-
-  .tech-age-col {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-    margin-top: 10px;
-  }
-
-  .tech-grid-header {
-    padding: 8px;
-    font-variant: small-caps;
-    font-size: 0.8rem;
     color: var(--gold-bright);
-    letter-spacing: 0.07em;
-    border-bottom: 2px solid var(--card-border);
-  }
-  .tech-grid-header .age-es {
     display: block;
-    color: var(--text-dim);
-    font-size: 0.68rem;
-    letter-spacing: 0.04em;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    min-width: 220px;
+    padding: 14px 26px;
+    text-decoration: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px var(--shadow);
   }
-  .tech-grid-header.age-0 { background: rgba(74,53,32,0.4); }
-  .tech-grid-header.age-1 { background: rgba(74,64,32,0.4); }
-  .tech-grid-header.age-2 { background: rgba(58,58,80,0.4); }
-  .tech-grid-header.age-3 { background: rgba(74,32,32,0.4); }
-
-  .tech-cards-column {
-    padding: 8px 6px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .empty-slot { color: var(--text-dim); text-align: center; padding: 16px 0; }
-
-  .tech-effect {
-    background: rgba(60,100,60,0.15);
-    border-left: 2px solid rgba(80,160,80,0.4);
-    color: #8ecf8e;
-    font-size: 0.73rem;
-    margin-top: 6px;
-    padding: 3px 7px;
-    line-height: 1.4;
-  }
-
-  .prereq-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 5px;
-    align-items: center;
-  }
-  .prereq-label { color: var(--text-dim); font-size: 0.68rem; }
-  .prereq-chip {
-    background: rgba(200,100,40,0.12);
-    border: 1px solid rgba(200,100,40,0.3);
-    border-radius: 12px;
-    color: #e8a040;
-    font-size: 0.68rem;
-    padding: 1px 7px;
-  }
-
-  .tech-times { color: var(--text-dim); font-size: 0.73rem; margin-top: 4px; }
-
-  .tech-card.upgrade-card { border-color: rgba(200,168,75,0.5); }
-  .tech-card.upgrade-card:hover { border-color: var(--gold); box-shadow: 0 0 14px rgba(200,168,75,0.4); }
-  .upgrade-transform {
-    background: rgba(200,168,75,0.08);
-    border-left: 2px solid var(--gold-dim);
-    color: var(--gold);
-    font-size: 0.73rem;
-    margin-top: 6px;
-    padding: 3px 7px;
-    line-height: 1.4;
-  }
-
-  footer {
-    border-top: 1px solid var(--card-border);
-    color: var(--text-dim);
-    font-size: 0.75rem;
-    text-align: center;
-    padding: 16px 20px 28px;
-    line-height: 1.6;
-  }
-  footer code {
-    background: rgba(0,0,0,0.3);
-    border-radius: 3px;
-    padding: 1px 5px;
-    font-size: 0.72rem;
-  }
-  footer a { color: var(--gold-dim); }
-
-  @media (max-width: 900px) { .tech-age-col { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 560px) { .tech-age-col { grid-template-columns: 1fr; } }
-
-  ::-webkit-scrollbar { width: 8px; background: #0d0904; }
-  ::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+  .langs a:hover { border-color: var(--gold-dim); box-shadow: 0 0 14px var(--glow); }
+  .langs a small { color: var(--text-dim); display: block; font-size: 0.72rem; margin-top: 3px; }
 </style>
 </head>
 <body>
-
-<header>
-  <h1>Calima: Flames of the Atlantic — Tech Tree</h1>
-  <div class="subtitle">32 technologies · 8 research buildings · 32 tecnologías · 8 edificios de investigación</div>
-  <nav><a href="#blacksmith">Blacksmith</a> <a href="#university">University</a> <a href="#temple">Temple</a> <a href="#barracks">Barracks</a> <a href="#stable">Stable</a> <a href="#lumber-camp">Lumber Camp</a> <a href="#mining-camp">Mining Camp</a> <a href="#mill">Mill</a></nav>
-</header>
-
-<main>
-  <p class="intro">
-    Each building researches <b>one technology at a time</b> and queues up to <b>5 in flight</b>
-    (paid when queued, fully refunded on cancel; a destroyed building refunds its whole queue).
-    The three camp economy lines (Lumber Camp, Mining Camp, Mill) chain <b>one step per age from the
-    Feudal Age</b>. <b>Castellanos</b> receive the oldest unresearched Blacksmith technology free on
-    every age advance. · Cada edificio investiga <b>una tecnología a la vez</b> y encola hasta
-    <b>5 en curso</b> (pagadas al encolar, reembolso íntegro al cancelar). Las líneas de los
-    campamentos encadenan <b>un paso por edad desde la Edad Feudal</b>.
-  </p>
-  <div class="tech-section" id="blacksmith"><div class="tech-section-heading">Blacksmith · Herrería <span class="count">13 technologies</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Dark Age<span class="age-es">Edad Oscura</span></div><div class="tech-grid-header age-1">Feudal Age<span class="age-es">Edad Feudal</span></div><div class="tech-grid-header age-2">Castle Age<span class="age-es">Edad del Castillo</span></div><div class="tech-grid-header age-3">Imperial Age<span class="age-es">Edad Imperial</span></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Loom</div><div class="card-subtitle">Telar</div><div class="cost"><span class="cost-item cost-food">🍖 50</span></div><div class="tech-times">⏱ 25 s</div><div class="tech-effect">Villager HP +15%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Canarian Cart</div><div class="card-subtitle">Carreta Canaria</div><div class="cost"><span class="cost-item cost-food">🍖 150</span><span class="cost-item cost-wood">🪵 75</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">Villager carry capacity (farms unaffected) +25%</div></div><div class="card tech-card"><div class="card-title">Fletching</div><div class="card-subtitle">Flechado</div><div class="cost"><span class="cost-item cost-gold">💰 100</span></div><div class="tech-times">⏱ 35 s</div><div class="tech-effect">Archer attack +20%</div></div><div class="card tech-card"><div class="card-title">Forging</div><div class="card-subtitle">Forja</div><div class="cost"><span class="cost-item cost-food">🍖 75</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">All unit attack +15%</div></div><div class="card tech-card"><div class="card-title">Padded Archer Armor</div><div class="card-subtitle">Armadura Acolchada</div><div class="cost"><span class="cost-item cost-food">🍖 100</span></div><div class="tech-times">⏱ 35 s</div><div class="tech-effect">Archer-line pierce armour +1</div></div><div class="card tech-card"><div class="card-title">Scale Barding</div><div class="card-subtitle">Armadura de Escamas</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-gold">💰 50</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">Cavalry melee armour +1</div></div><div class="card tech-card"><div class="card-title">Shipwright</div><div class="card-subtitle">Maestro Carpintero Naval</div><div class="cost"><span class="cost-item cost-wood">🪵 200</span><span class="cost-item cost-gold">💰 60</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">Ship HP +15% · Ship cost −15%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Bodkin Arrow</div><div class="card-subtitle">Flecha Bodkin</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-gold">💰 150</span></div><div class="tech-times">⏱ 35 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Fletching</span></div><div class="tech-effect">Archer attack +20% · Archer range +10%</div></div><div class="card tech-card"><div class="card-title">Island Handcart</div><div class="card-subtitle">Carretón Isleño</div><div class="cost"><span class="cost-item cost-food">🍖 200</span><span class="cost-item cost-wood">🪵 125</span></div><div class="tech-times">⏱ 55 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Canarian Cart</span></div><div class="tech-effect">Villager carry capacity (farms unaffected) +25%</div></div><div class="card tech-card"><div class="card-title">Chain Barding</div><div class="card-subtitle">Armadura de Mallas</div><div class="cost"><span class="cost-item cost-food">🍖 200</span><span class="cost-item cost-gold">💰 100</span></div><div class="tech-times">⏱ 45 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Scale Barding</span></div><div class="tech-effect">Cavalry melee armour +1</div></div><div class="card tech-card"><div class="card-title">Iron Casting</div><div class="card-subtitle">Fundición de Hierro</div><div class="cost"><span class="cost-item cost-gold">💰 150</span></div><div class="tech-times">⏱ 55 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Forging</span></div><div class="tech-effect">All unit attack +20%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Blast Furnace</div><div class="card-subtitle">Alto Horno</div><div class="cost"><span class="cost-item cost-food">🍖 275</span><span class="cost-item cost-gold">💰 225</span></div><div class="tech-times">⏱ 50 s</div><div class="tech-effect">All unit attack +15%</div></div><div class="card tech-card"><div class="card-title">Plate Barding</div><div class="card-subtitle">Armadura de Placas</div><div class="cost"><span class="cost-item cost-food">🍖 300</span><span class="cost-item cost-gold">💰 200</span></div><div class="tech-times">⏱ 60 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Chain Barding</span></div><div class="tech-effect">Cavalry melee armour +1</div></div></div></div></div><div class="tech-section" id="university"><div class="tech-section-heading">University · Universidad <span class="count">3 technologies</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Dark Age<span class="age-es">Edad Oscura</span></div><div class="tech-grid-header age-1">Feudal Age<span class="age-es">Edad Feudal</span></div><div class="tech-grid-header age-2">Castle Age<span class="age-es">Edad del Castillo</span></div><div class="tech-grid-header age-3">Imperial Age<span class="age-es">Edad Imperial</span></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Ballistics</div><div class="card-subtitle">Balística</div><div class="cost"><span class="cost-item cost-gold">💰 175</span></div><div class="tech-times">⏱ 50 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Fletching</span></div><div class="tech-effect">Archer attack speed +20%</div></div><div class="card tech-card"><div class="card-title">Siege Engineering</div><div class="card-subtitle">Ingeniería de Asedio</div><div class="cost"><span class="cost-item cost-gold">💰 200</span></div><div class="tech-times">⏱ 60 s</div><div class="tech-effect">Damage vs buildings (all units) +20%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Chemistry</div><div class="card-subtitle">Química</div><div class="cost"><span class="cost-item cost-gold">💰 300</span></div><div class="tech-times">⏱ 70 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Ballistics</span></div><div class="tech-effect">Archer attack +15%</div></div></div></div></div><div class="tech-section" id="temple"><div class="tech-section-heading">Temple · Templo <span class="count">3 technologies</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Dark Age<span class="age-es">Edad Oscura</span></div><div class="tech-grid-header age-1">Feudal Age<span class="age-es">Edad Feudal</span></div><div class="tech-grid-header age-2">Castle Age<span class="age-es">Edad del Castillo</span></div><div class="tech-grid-header age-3">Imperial Age<span class="age-es">Edad Imperial</span></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Fervor</div><div class="cost"><span class="cost-item cost-gold">💰 150</span></div><div class="tech-times">⏱ 50 s</div><div class="tech-effect">All unit move speed +10%</div></div><div class="card tech-card"><div class="card-title">Sanctity</div><div class="card-subtitle">Santidad</div><div class="cost"><span class="cost-item cost-food">🍖 100</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">Infantry (swordsman line) HP +15%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Atonement</div><div class="card-subtitle">Expiación</div><div class="cost"><span class="cost-item cost-food">🍖 150</span><span class="cost-item cost-gold">💰 100</span></div><div class="tech-times">⏱ 55 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Sanctity</span></div><div class="tech-effect">Cavalry HP +20%</div></div></div></div></div><div class="tech-section" id="barracks"><div class="tech-section-heading">Barracks · Cuartel <span class="count">2 technologies</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Dark Age<span class="age-es">Edad Oscura</span></div><div class="tech-grid-header age-1">Feudal Age<span class="age-es">Edad Feudal</span></div><div class="tech-grid-header age-2">Castle Age<span class="age-es">Edad del Castillo</span></div><div class="tech-grid-header age-3">Imperial Age<span class="age-es">Edad Imperial</span></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card upgrade-card"><div class="card-title">Man-at-Arms</div><div class="card-subtitle">Hombre de Armas</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-gold">💰 40</span></div><div class="tech-times">⏱ 45 s</div><div class="upgrade-transform">▲ Militia → Man-at-Arms — upgrades every living unit and all future training</div></div></div><div class="tech-cards-column"><div class="card tech-card upgrade-card"><div class="card-title">Long Swordsman</div><div class="card-subtitle">Espadachín</div><div class="cost"><span class="cost-item cost-food">🍖 200</span><span class="cost-item cost-gold">💰 60</span></div><div class="tech-times">⏱ 45 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Man-at-Arms</span></div><div class="upgrade-transform">▲ Man-at-Arms → Long Swordsman — upgrades every living unit and all future training</div></div></div><div class="tech-cards-column"><div class="empty-slot">—</div></div></div></div><div class="tech-section" id="stable"><div class="tech-section-heading">Stable · Establo <span class="count">2 technologies</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Dark Age<span class="age-es">Edad Oscura</span></div><div class="tech-grid-header age-1">Feudal Age<span class="age-es">Edad Feudal</span></div><div class="tech-grid-header age-2">Castle Age<span class="age-es">Edad del Castillo</span></div><div class="tech-grid-header age-3">Imperial Age<span class="age-es">Edad Imperial</span></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card upgrade-card"><div class="card-title">Heavy Scout</div><div class="card-subtitle">Explorador Pesado</div><div class="cost"><span class="cost-item cost-food">🍖 150</span><span class="cost-item cost-gold">💰 75</span></div><div class="tech-times">⏱ 45 s</div><div class="upgrade-transform">▲ Scout → Heavy Scout — upgrades every living unit and all future training</div></div></div><div class="tech-cards-column"><div class="card tech-card upgrade-card"><div class="card-title">Knight</div><div class="card-subtitle">Caballero</div><div class="cost"><span class="cost-item cost-food">🍖 200</span><span class="cost-item cost-gold">💰 100</span></div><div class="tech-times">⏱ 45 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Heavy Scout</span></div><div class="upgrade-transform">▲ Heavy Scout → Knight — upgrades every living unit and all future training</div></div></div><div class="tech-cards-column"><div class="empty-slot">—</div></div></div></div><div class="tech-section" id="lumber-camp"><div class="tech-section-heading">Lumber Camp · Campamento Maderero <span class="count">3 technologies</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Dark Age<span class="age-es">Edad Oscura</span></div><div class="tech-grid-header age-1">Feudal Age<span class="age-es">Edad Feudal</span></div><div class="tech-grid-header age-2">Castle Age<span class="age-es">Edad del Castillo</span></div><div class="tech-grid-header age-3">Imperial Age<span class="age-es">Edad Imperial</span></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Double-Bit Axe</div><div class="card-subtitle">Hacha de doble filo</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-wood">🪵 50</span></div><div class="tech-times">⏱ 25 s</div><div class="tech-effect">Wood gather rate +15% · Wood carry +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Bow Saw</div><div class="card-subtitle">Sierra de arco</div><div class="cost"><span class="cost-item cost-food">🍖 150</span><span class="cost-item cost-wood">🪵 100</span></div><div class="tech-times">⏱ 40 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Double-Bit Axe</span></div><div class="tech-effect">Wood gather rate +15% · Wood carry +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Two-Man Saw</div><div class="card-subtitle">Sierra de dos hombres</div><div class="cost"><span class="cost-item cost-food">🍖 300</span><span class="cost-item cost-wood">🪵 200</span></div><div class="tech-times">⏱ 60 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Bow Saw</span></div><div class="tech-effect">Wood gather rate +15% · Wood carry +10%</div></div></div></div></div><div class="tech-section" id="mining-camp"><div class="tech-section-heading">Mining Camp · Campamento Minero <span class="count">3 technologies</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Dark Age<span class="age-es">Edad Oscura</span></div><div class="tech-grid-header age-1">Feudal Age<span class="age-es">Edad Feudal</span></div><div class="tech-grid-header age-2">Castle Age<span class="age-es">Edad del Castillo</span></div><div class="tech-grid-header age-3">Imperial Age<span class="age-es">Edad Imperial</span></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Reinforced Picks</div><div class="card-subtitle">Picos reforzados</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-wood">🪵 75</span></div><div class="tech-times">⏱ 25 s</div><div class="tech-effect">Gold gather rate +15% · Stone gather rate +15% · Gold carry +10% · Stone carry +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Shaft Mining</div><div class="card-subtitle">Minería de pozo</div><div class="cost"><span class="cost-item cost-food">🍖 175</span><span class="cost-item cost-wood">🪵 100</span></div><div class="tech-times">⏱ 40 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Reinforced Picks</span></div><div class="tech-effect">Gold gather rate +15% · Stone gather rate +15% · Gold carry +10% · Stone carry +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Deep Galleries</div><div class="card-subtitle">Galerías profundas</div><div class="cost"><span class="cost-item cost-food">🍖 300</span><span class="cost-item cost-wood">🪵 150</span></div><div class="tech-times">⏱ 60 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Shaft Mining</span></div><div class="tech-effect">Gold gather rate +15% · Stone gather rate +15% · Gold carry +10% · Stone carry +10%</div></div></div></div></div><div class="tech-section" id="mill"><div class="tech-section-heading">Mill · Molino <span class="count">3 technologies</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Dark Age<span class="age-es">Edad Oscura</span></div><div class="tech-grid-header age-1">Feudal Age<span class="age-es">Edad Feudal</span></div><div class="tech-grid-header age-2">Castle Age<span class="age-es">Edad del Castillo</span></div><div class="tech-grid-header age-3">Imperial Age<span class="age-es">Edad Imperial</span></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Horse Collar</div><div class="card-subtitle">Collera de tiro</div><div class="cost"><span class="cost-item cost-food">🍖 75</span><span class="cost-item cost-wood">🪵 75</span></div><div class="tech-times">⏱ 25 s</div><div class="tech-effect">Food gather rate +15% · Food carry +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Heavy Plow</div><div class="card-subtitle">Arado pesado</div><div class="cost"><span class="cost-item cost-food">🍖 125</span><span class="cost-item cost-wood">🪵 125</span></div><div class="tech-times">⏱ 40 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Horse Collar</span></div><div class="tech-effect">Food gather rate +15% · Food carry +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Crop Rotation</div><div class="card-subtitle">Rotación de cultivos</div><div class="cost"><span class="cost-item cost-food">🍖 250</span><span class="cost-item cost-wood">🪵 250</span></div><div class="tech-times">⏱ 60 s</div><div class="prereq-chips"><span class="prereq-label">Requires · Requiere:</span><span class="prereq-chip">Heavy Plow</span></div><div class="tech-effect">Food gather rate +15% · Food carry +10%</div></div></div></div></div>
-</main>
-
-<footer>
-  Generated from the game data: <code>project/resources/technologies/*.tres</code> (32 files),
-  building groups from <code>TechnologyResource.ResearchBuilding</code>, Spanish names from
-  <code>project/assets/translations/translations.csv</code> and <code>docs/guide_es.md</code>.<br>
-  Effect scopes follow <code>CivBonusManager</code>/<code>TechManager</code> (barding = cavalry line,
-  padded armour = archer line). Generated on 2026-09-06.
-</footer>
+  <div class="panel">
+    <div class="game">Calima: Flames of the Atlantic</div>
+    <h1>Tech Tree · Árbol de Tecnologías</h1>
+    <hr class="rule">
+    <div class="langs">
+      <a href="tech_tree_es.html" lang="es">Versión en español <small>32 tecnologías · 8 edificios</small></a>
+      <a href="tech_tree_en.html">English version <small>32 technologies · 8 buildings</small></a>
+    </div>
+  </div>
 </body>
 </html>

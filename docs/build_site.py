@@ -8,8 +8,16 @@ Run from the repo root:  python3 docs/build_site.py
 
 The player manuals (docs/manual/manual_es.html / manual_en.html) are
 REGENERATED from docs/guide_es.md / guide_en.md by this script — edit the
-Markdown guides, never the manual HTML. Hand-crafted pages (index.html,
-design/tech_tree.html, guia-visual, civ gallery) are left untouched.
+Markdown guides, never the manual HTML. Hand-crafted pages (the index.html
+language landing, the index_es.html / index_en.html portals, guia-visual,
+civ gallery) are left untouched; the tech tree pages come from
+docs/build_tech_tree.py.
+
+Every player-facing page exists in BOTH languages (unsuffixed = English,
+`_es` suffix = Spanish); page chrome (header nav, TOC title, footer) is
+localized per language. Technical/dev docs (architecture, development,
+testing) are English-only by project rule and appear only in the English
+portal (the Spanish portal lists them under a labeled English-only section).
 """
 import datetime
 import os
@@ -29,15 +37,21 @@ PAGES = {
     "docs/guide_es.md": "docs/manual/manual_es.html",
     "docs/guide_en.md": "docs/manual/manual_en.html",
     "GAMEPLAY.md": "docs/gameplay.html",
+    "docs/gameplay_es.md": "docs/gameplay_es.html",
     "README.md": "docs/about.html",
+    "docs/about_es.md": "docs/about_es.html",
     "CHANGELOG.md": "docs/changelog.html",
+    "docs/changelog_es.md": "docs/changelog_es.html",
     "CONTRIBUTING.md": "docs/development/contributing.html",
     "SETUP_INSTRUCTIONS.md": "docs/development/setup.html",
     "docs/design/civilizations_en.md": "docs/design/civilizations_en.html",
     "docs/design/civilizations_es.md": "docs/design/civilizations_es.html",
     "docs/design/game-design-document.md": "docs/design/game-design-document.html",
+    "docs/design/game-design-document_es.md": "docs/design/game-design-document_es.html",
     "docs/design/campaign_story.md": "docs/design/campaign_story.html",
+    "docs/design/campaign_story_es.md": "docs/design/campaign_story_es.html",
     "docs/design/heroines-design.md": "docs/design/heroines-design.html",
+    "docs/design/heroines-design_es.md": "docs/design/heroines-design_es.html",
     "docs/architecture/overview.md": "docs/architecture/overview.html",
     "docs/architecture/systems.md": "docs/architecture/systems.html",
     "docs/architecture/audio_synthesis.md": "docs/architecture/audio_synthesis.html",
@@ -46,17 +60,48 @@ PAGES = {
     "docs/development/conventions.md": "docs/development/conventions.html",
     "docs/development/getting-started.md": "docs/development/getting-started.html",
     "docs/lore/harimaguada.md": "docs/lore/harimaguada.html",
+    "docs/lore/harimaguada_es.md": "docs/lore/harimaguada_es.html",
     "docs/lore/heroes-and-heroines.md": "docs/lore/heroes-and-heroines.html",
+    "docs/lore/heroes-and-heroines_es.md": "docs/lore/heroes-and-heroines_es.html",
     "docs/testing/harnesses.md": "docs/testing/harnesses.html",
 }
 # CLAUDE.md is intentionally excluded: internal agent instructions, not site content.
 
-# Language pairs get a toggle link in the header.
-LANG_PAIRS = {
-    "docs/manual/manual_es.html": ("docs/manual/manual_en.html", "English version"),
-    "docs/manual/manual_en.html": ("docs/manual/manual_es.html", "Versión en español"),
-    "docs/design/civilizations_es.html": ("docs/design/civilizations_en.html", "English version"),
-    "docs/design/civilizations_en.html": ("docs/design/civilizations_es.html", "Versión en español"),
+# Language pairs get a toggle link in the header: (spanish_out, english_out).
+_PAIRS = [
+    ("docs/manual/manual_es.html", "docs/manual/manual_en.html"),
+    ("docs/design/civilizations_es.html", "docs/design/civilizations_en.html"),
+    ("docs/gameplay_es.html", "docs/gameplay.html"),
+    ("docs/about_es.html", "docs/about.html"),
+    ("docs/changelog_es.html", "docs/changelog.html"),
+    ("docs/design/game-design-document_es.html", "docs/design/game-design-document.html"),
+    ("docs/design/campaign_story_es.html", "docs/design/campaign_story.html"),
+    ("docs/design/heroines-design_es.html", "docs/design/heroines-design.html"),
+    ("docs/lore/harimaguada_es.html", "docs/lore/harimaguada.html"),
+    ("docs/lore/heroes-and-heroines_es.html", "docs/lore/heroes-and-heroines.html"),
+]
+LANG_PAIRS = {}
+for _es, _en in _PAIRS:
+    LANG_PAIRS[_es] = (_en, "English version")
+    LANG_PAIRS[_en] = (_es, "Versión en español")
+
+# Localized page chrome. Technical/dev docs are English-only by project rule,
+# so English chrome is the default for every unpaired page.
+CHROME = {
+    "en": {
+        "home": "docs/index_en.html",
+        "toc": "Contents",
+        "footer": ("Generated from <code>{src}</code> on {date} —\n"
+                   "regenerate with <code>python3 docs/build_site.py</code>. ·\n"
+                   '<a href="{home}">Documentation portal</a>'),
+    },
+    "es": {
+        "home": "docs/index_es.html",
+        "toc": "Contenido",
+        "footer": ("Generado desde <code>{src}</code> el {date} —\n"
+                   "regenera con <code>python3 docs/build_site.py</code>. ·\n"
+                   '<a href="{home}">Portal de documentación</a>'),
+    },
 }
 
 CSS = """
@@ -124,9 +169,7 @@ TEMPLATE = """<!DOCTYPE html>
   {lang_link}
 </header>
 {body}
-<footer class="site">Generated from <code>{src}</code> on {date} —
-regenerate with <code>python3 docs/build_site.py</code>. ·
-<a href="{home}">Documentation portal</a></footer>
+<footer class="site">{footer}</footer>
 </div>
 </body>
 </html>
@@ -177,17 +220,19 @@ def build_page(src: str, out: str) -> None:
     body = md.convert(text)
     title_m = re.search(r"<h1[^>]*>(.*?)</h1>", body, re.S)
     title = re.sub(r"<[^>]+>", "", title_m.group(1)) if title_m else os.path.basename(src)
+    lang = "es" if out.endswith("_es.html") or "/guia" in out else "en"
+    chrome = CHROME[lang]
     # A linked TOC after the H1 for long pages.
     if body.count("<h2") >= 4 and title_m:
-        toc = '<nav class="toc"><b>Contents</b>%s</nav>' % md.toc
+        toc = '<nav class="toc"><b>%s</b>%s</nav>' % (chrome["toc"], md.toc)
         body = body.replace(title_m.group(0), title_m.group(0) + toc, 1)
-    lang = "es" if out.endswith("_es.html") or "/guia" in out else "en"
     pair = LANG_PAIRS.get(out)
     lang_link = '<a href="%s">%s</a>' % (rel(out, pair[0]), pair[1]) if pair else ""
+    home = rel(out, chrome["home"])
+    footer = chrome["footer"].format(src=src, date=datetime.date.today().isoformat(),
+                                     home=home)
     html = TEMPLATE.format(
-        lang=lang, title=title, css=CSS, body=body, src=src,
-        date=datetime.date.today().isoformat(),
-        home=rel(out, "docs/index.html"),
+        lang=lang, title=title, css=CSS, body=body, home=home, footer=footer,
         manual_es=rel(out, "docs/manual/manual_es.html"),
         manual_en=rel(out, "docs/manual/manual_en.html"),
         lang_link=lang_link)

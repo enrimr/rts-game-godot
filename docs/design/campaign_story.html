@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Flames of Tamarán — Campaign Story / La Historia de la Campaña · Calima: Flames of the Atlantic</title>
+<title>The Flames of Tamarán — Campaign Story · Calima: Flames of the Atlantic</title>
 <style>
 :root { --bg:#141210; --panel:#1d1a16; --ink:#e8e0cd; --dim:#a89b7f;
         --gold:#d8b45a; --gold-dark:#8a6d2f; --line:#3a3226; --code:#241f19; }
@@ -54,27 +54,23 @@ footer.site { border-top:1px solid var(--line); margin-top:48px; padding-top:14p
 <body>
 <div class="wrap">
 <header class="site">
-  <a class="brand" href="../index.html">CALIMA · DOCS</a>
-  <a href="../index.html">Portal</a>
+  <a class="brand" href="../index_en.html">CALIMA · DOCS</a>
+  <a href="../index_en.html">Portal</a>
   <a href="../manual/manual_es.html">Manual (ES)</a>
   <a href="../manual/manual_en.html">Manual (EN)</a>
-  
+  <a href="campaign_story_es.html">Versión en español</a>
 </header>
-<h1 id="the-flames-of-tamaran-campaign-story-la-historia-de-la-campana">The Flames of Tamarán — Campaign Story / La Historia de la Campaña</h1>
+<h1 id="the-flames-of-tamaran-campaign-story">The Flames of Tamarán — Campaign Story</h1>
 <blockquote>
 <p>Status: <strong>REVIEW DOCUMENT</strong> — part 1 records the story as shipped, part 2 is
 the critique, part 3 is a proposed revision. Nothing in part 3 is
 implemented; each proposal notes its implementation cost so items can be
 approved individually.</p>
-<p><em>Estado: </em><em>DOCUMENTO DE REVISIÓN</em><em> — la parte 1 recoge la historia tal como
-está en el juego, la parte 2 es la crítica, la parte 3 es la revisión
-propuesta. Nada de la parte 3 está implementado; cada propuesta anota su
-coste para poder aprobarlas por separado.</em></p>
 </blockquote>
 <hr />
-<h2 id="1-the-story-as-shipped-la-historia-actual">1 · The story as shipped / La historia actual</h2>
-<p><strong>Campaign title:</strong> <em>The Flames of Tamarán / Las Llamas de Tamarán</em> — "the
-Canarii against the Atlante invasion — four battles for the archipelago".</p>
+<h2 id="1-the-story-as-shipped">1 · The story as shipped</h2>
+<p><strong>Campaign title:</strong> <em>The Flames of Tamarán</em> — "the Canarii against the
+Atlante invasion — four battles for the archipelago".</p>
 <table>
 <thead>
 <tr>
@@ -93,25 +89,25 @@ Canarii against the Atlante invasion — four battles for the archipelago".</p>
 </tr>
 <tr>
 <td>1</td>
-<td>The Vanguard / La Vanguardia</td>
+<td>The Vanguard</td>
 <td>Standard, conquest</td>
 <td>Bronze sails at dawn. The Atlantes raise a beachhead on Tamarán. <strong>Doramas</strong> gathers the warriors of the ravines: destroy the camp before it takes root.</td>
 </tr>
 <tr>
 <td>2</td>
-<td>Land of Fire / Tierra de Fuego</td>
+<td>Land of Fire</td>
 <td>Volcanic, survive 12 min</td>
 <td>The volcano answers with ash. Scarce land, waves under falling ash. <strong>Guayarmina</strong> watches from the ridge: hold until "the sacred night" passes.</td>
 </tr>
 <tr>
 <td>3</td>
-<td>The Strait / El Estrecho</td>
+<td>The Strait</td>
 <td>Islands, conquest</td>
 <td>The invaders rule the water; their far-shore dock feeds the war. Build a fleet in secret, cross, burn everything. <em>(No named characters.)</em></td>
 </tr>
 <tr>
 <td>4</td>
-<td>The Last Mountain / La Última Montaña</td>
+<td>The Last Mountain</td>
 <td>Volcanic, regicide</td>
 <td>Two Atlante armies close on the last stronghold. "While <strong>their deathless champion</strong> stands, the invasion cannot be broken. Find them. End this." <em>(Champion unnamed.)</em></td>
 </tr>
@@ -121,17 +117,17 @@ Canarii against the Atlante invasion — four battles for the archipelago".</p>
 (<code>CAMP_M0_INTRO</code> … <code>CAMP_M4_INTRO</code>); mission data in
 <code>project/scripts/campaign/campaign_data.gd</code>.</p>
 <hr />
-<h2 id="2-critique-critica">2 · Critique / Crítica</h2>
-<p><strong>What already works / Lo que ya funciona</strong></p>
+<h2 id="2-critique">2 · Critique</h2>
+<p><strong>What already works</strong></p>
 <ul>
 <li>The four-act military arc is sound: repel the beachhead → survive the
   counter-blow → break their supply line → cut off the head. Classic and clean.</li>
 <li>Strong sense of place: ravines, ash, black fields, the strait. The prose has
-  voice ("velas de bronce cortan el horizonte").</li>
+  voice ("bronze sails cut the horizon").</li>
 <li>Escalation through GAME SYSTEMS, not just text: weather turns on in M2, the
   navy in M3, regicide in M4. The mechanics carry the drama.</li>
 </ul>
-<p><strong>Weaknesses / Debilidades</strong></p>
+<p><strong>Weaknesses</strong></p>
 <ol>
 <li><strong>The prologue breaks the fiction.</strong> The campaign is Canarii vs Atlantes,
    but the prologue is played as <em>Guanches</em> against <em>Castellanos</em> — a
@@ -155,8 +151,8 @@ Canarii against the Atlante invasion — four battles for the archipelago".</p>
    explained and never referenced again.</li>
 </ol>
 <hr />
-<h2 id="3-proposed-revision-revision-propuesta">3 · Proposed revision / Revisión propuesta</h2>
-<h3 id="31-the-premise-give-the-invasion-a-heart-la-premisa">3.1 The premise: give the invasion a heart / La premisa</h3>
+<h2 id="3-proposed-revision">3 · Proposed revision</h2>
+<h3 id="31-the-premise-give-the-invasion-a-heart">3.1 The premise: give the invasion a heart</h3>
 <p><strong>The Atlantes are not conquerors — they are the drowned.</strong> Their island
 kingdom sank beneath the Atlantic (the legend the civ is already built on).
 <strong>Cleito, Mistress of Tides</strong> — in the game's own files, "mortal wife of
@@ -164,17 +160,11 @@ Poseidon in the Atlantis legend" — leads the survivor fleet. Her people believ
 that a kingdom that died by water can only be reborn by fire: they have come
 for <strong>Tamarán's volcano</strong>, the last great flame of the ocean, to crown it
 their new throne. They are refugees turned invaders — wrong, but not evil.</p>
-<p><em>Los atlantes no son conquistadores: son los ahogados. Su reino insular se
-hundió bajo el Atlántico. </em><em>Cleito, la Señora de las Mareas</em><em>, guía la flota
-superviviente. Su pueblo cree que un reino muerto por agua solo puede renacer
-por fuego: vienen a por </em><em>el volcán de Tamarán</em><em>, la última gran llama del
-océano, para coronarlo como su nuevo trono. Refugiados convertidos en
-invasores — equivocados, pero no malvados.</em></p>
 <p>This costs nothing mechanically — Cleito and her admiral <strong>Artaxerax</strong> already
 exist as Atlante hero units, and M4 is already regicide: the "deathless
 champion" the player must kill <strong>is literally her</strong>. The story only has to say
 her name.</p>
-<h3 id="32-the-protagonists-a-thread-to-follow-los-protagonistas">3.2 The protagonists: a thread to follow / Los protagonistas</h3>
+<h3 id="32-the-protagonists-a-thread-to-follow">3.2 The protagonists: a thread to follow</h3>
 <ul>
 <li><strong>Doramas</strong> carries M1 and M4 — the warrior of the ravines who rises from
   vanguard skirmisher to the man who must end the war. His own unit text says
@@ -187,74 +177,73 @@ her name.</p>
   Through them the player learns the enemy's grief (see M2/M4 beats), which
   makes the ending land as tragedy averted rather than extermination.</li>
 </ul>
-<h3 id="33-mission-by-mission-mision-a-mision">3.3 Mission-by-mission / Misión a misión</h3>
+<h3 id="33-mission-by-mission">3.3 Mission-by-mission</h3>
 <p>Each block: <strong>proposed intro</strong> (replaces the current one), <strong>proposed outro</strong>
-(new — requires the small <code>outro_key</code> feature, see 3.4), in Spanish first for
-review, English mirror to be written on approval.</p>
+(new — requires the small <code>outro_key</code> feature, see 3.4). The texts were
+drafted in Spanish first for review; the English mirrors are given here.</p>
 <hr />
-<p><strong>M0 · Prologue — "El Primer Asentamiento"</strong></p>
+<p><strong>M0 · Prologue — "The First Settlement"</strong></p>
 <p><em>Fix:</em> rival becomes <strong>Atlantes</strong> (a scouting party), player becomes
 <strong>Canarii</strong>, matching the campaign. One-line data change.</p>
 <blockquote>
-<p><strong>Intro (ES):</strong> «Antes de las velas de bronce, estaba la tierra. Los ancianos
-guiarán tu mano: levanta un asentamiento, alimenta a tu gente, arma a sus
-defensores. Y presta atención a las velas extrañas que rondan la costa —
-los pescadores dicen que preguntan por la montaña de fuego.»</p>
-<p><strong>Outro (ES):</strong> «El asentamiento respira. Pero esa noche, en la playa, las
-huellas de los extraños llegaban hasta el agua… y ninguna volvía.»</p>
+<p><strong>Intro (EN):</strong> "Before the bronze sails, there was the land. The elders
+will guide your hand: raise a settlement, feed your people, arm their
+defenders. And mind the strange sails prowling the coast — the fishermen
+say they ask about the mountain of fire."</p>
+<p><strong>Outro (EN):</strong> "The settlement breathes. But that night, on the beach, the
+strangers' footprints ran down to the water — and none came back."</p>
 </blockquote>
-<p><strong>M1 · "La Vanguardia"</strong> <em>(text updated, objectives unchanged — the Mill/dog
+<p><strong>M1 · "The Vanguard"</strong> <em>(text updated, objectives unchanged — the Mill/dog
 objectives now get their story line)</em></p>
 <blockquote>
-<p><strong>Intro (ES):</strong> «Velas de bronce cortan el amanecer. Los atlantes — los
-ahogados del mar profundo — han clavado un campamento en la costa de
-Tamarán. Doramas reúne a los guerreros de los barrancos: "Cada oveja, cada
-molino, cada perro pastor alimenta esta guerra. Echadlos al agua antes de
-que echen raíces."»</p>
-<p><strong>Outro (ES):</strong> «El campamento arde. Entre los restos, Doramas encuentra un
-estandarte empapado que ninguna ola trajo: un tridente coronado. "No es una
-incursión", dice. "Es un éxodo."»</p>
+<p><strong>Intro (EN):</strong> "Bronze sails cut the dawn. The Atlantes — the drowned of
+the deep sea — have driven a camp into the shore of Tamarán. Doramas
+gathers the warriors of the ravines: 'Every sheep, every mill, every herding
+dog feeds this war. Throw them back into the water before they take root.'"</p>
+<p><strong>Outro (EN):</strong> "The camp burns. Among the wreckage Doramas finds a sodden
+banner no wave carried in: a crowned trident. 'This is no raid,' he says.
+'It is an exodus.'"</p>
 </blockquote>
-<p><strong>M2 · "Tierra de Fuego"</strong> <em>(the "sacred night" gets its meaning; the
+<p><strong>M2 · "Land of Fire"</strong> <em>(the "sacred night" gets its meaning; the
 harimaguadas enter)</em></p>
 <blockquote>
-<p><strong>Intro (ES):</strong> «La montaña responde a la invasión con ceniza y truenos: la
-noche sagrada, cuando las harimaguadas suben al almogarén a pedir que el
-fuego se calme. Guayarmina vigila desde el risco. "Los atlantes vienen a por
-el volcán", dice. "Resistid hasta el alba: si la montaña amanece nuestra,
-seguirá siéndolo."»</p>
-<p><strong>Outro (ES):</strong> «Al alba, las harimaguadas bajan del almogarén — y traen
-heridos de los dos bandos. Una de ellas repite las palabras de una moribunda
-atlante: "Nuestra reina no quiere vuestra tierra. Quiere vuestro fuego,
-porque el agua le quitó el suyo."»</p>
+<p><strong>Intro (EN):</strong> "The mountain answers the invasion with ash and thunder:
+the sacred night, when the harimaguadas climb to the almogarén to pray the
+fire calm. Guayarmina keeps watch from the ridge. 'The Atlantes have come
+for the volcano,' she says. 'Hold until dawn: if the mountain wakes ours,
+ours it will remain.'"</p>
+<p><strong>Outro (EN):</strong> "At dawn the harimaguadas come down from the almogarén —
+carrying wounded from both sides. One of them repeats a dying Atlante
+woman's words: 'Our queen does not want your land. She wants your fire,
+because the water took hers.'"</p>
 </blockquote>
-<p><strong>M3 · "El Estrecho"</strong> <em>(Artaxerax enters as the visible antagonist; the sea
+<p><strong>M3 · "The Strait"</strong> <em>(Artaxerax enters as the visible antagonist; the sea
 fog becomes story — it is already a stealth mechanic)</em></p>
 <blockquote>
-<p><strong>Intro (ES):</strong> «El almirante Artaxerax domina el agua entre las islas:
-ninguna canoa cruza sin encontrar espolones de bronce, y su puerto alimenta
-la guerra con guerreros y acero. Guayarmina señala la niebla del mar: "Su
-velo también puede ser el nuestro. Construid la flota donde la niebla
-duerme, cruzad el estrecho y quemad hasta el último tablón."»</p>
-<p><strong>Outro (ES):</strong> «El puerto arde y Artaxerax se retira hacia el volcán. Antes
-de perderse en la calima, grita sobre el agua: "¡Habéis quemado madera! ¡La
-Señora de las Mareas no navega — espera!"»</p>
+<p><strong>Intro (EN):</strong> "Admiral Artaxerax rules the water between the islands: no
+canoe crosses without meeting bronze rams, and his dock feeds the war with
+warriors and steel. Guayarmina points at the sea fog: 'Their veil can be
+ours too. Build the fleet where the fog sleeps, cross the strait, and burn
+every last plank.'"</p>
+<p><strong>Outro (EN):</strong> "The dock burns and Artaxerax falls back toward the
+volcano. Before the calima swallows him he shouts across the water: 'You
+have burned timber! The Mistress of Tides does not sail — she waits!'"</p>
 </blockquote>
-<p><strong>M4 · "La Última Montaña"</strong> <em>(the champion has a name and a grief; Doramas'
+<p><strong>M4 · "The Last Mountain"</strong> <em>(the champion has a name and a grief; Doramas'
 legend closes the arc)</em></p>
 <blockquote>
-<p><strong>Intro (ES):</strong> «Todo termina al pie del volcán. Dos ejércitos cierran el
-cerco, y a su cabeza está ella: Cleito, la Señora de las Mareas, reina de un
-reino ahogado, la campeona que no muere. Los ancianos hablan con una sola
-voz: mientras ella siga en pie, la invasión no se romperá. Doramas afila la
-tabona y sonríe: "A mí solo puede matarme la traición. A ella, solo la
-verdad: esta montaña no le devolverá su reino."»</p>
-<p><strong>Outro (ES):</strong> «La marea se retira. Las harimaguadas cantan por los muertos
-de los dos pueblos, y a los atlantes que deponen el bronce se les señala una
-costa donde levantar casas — lejos del volcán. La montaña sigue siendo de
-quien la escucha, no de quien la corona. Tamarán respira.»</p>
+<p><strong>Intro (EN):</strong> "It all ends at the foot of the volcano. Two armies close
+the ring, and at their head stands her: Cleito, Mistress of Tides, queen of
+a drowned kingdom, the champion who does not die. The elders speak with one
+voice: while she stands, the invasion will not break. Doramas whets his
+tabona and smiles: 'Only treachery can kill me. Only the truth can kill
+her: this mountain will not give her kingdom back.'"</p>
+<p><strong>Outro (EN):</strong> "The tide withdraws. The harimaguadas sing for the dead of
+both peoples, and the Atlantes who lay down their bronze are shown a shore
+to build houses on — far from the volcano. The mountain belongs to those
+who listen to it, not to those who crown it. Tamarán breathes."</p>
 </blockquote>
-<h3 id="34-implementation-notes-notas-de-implementacion">3.4 Implementation notes / Notas de implementación</h3>
+<h3 id="34-implementation-notes">3.4 Implementation notes</h3>
 <table>
 <thead>
 <tr>
@@ -280,7 +269,7 @@ quien la escucha, no de quien la corona. Tamarán respira.»</p>
 <td>Free — both heroes exist; M4 regicide already spawns the Atlante hero as the actual kill target</td>
 </tr>
 <tr>
-<td>Optional: mid-mission story toasts (e.g. M2 wave 3: "¡La ceniza esconde sus estandartes!") reusing <code>_toast</code> at wave times</td>
+<td>Optional: mid-mission story toasts (e.g. M2 wave 3: "The ash hides their banners!") reusing <code>_toast</code> at wave times</td>
 <td>Small — a <code>"story"</code> field on wave entries</td>
 </tr>
 <tr>
@@ -293,7 +282,7 @@ quien la escucha, no de quien la corona. Tamarán respira.»</p>
 shape is right; it only needs its people and its reasons.</p>
 <footer class="site">Generated from <code>docs/design/campaign_story.md</code> on 2026-09-06 —
 regenerate with <code>python3 docs/build_site.py</code>. ·
-<a href="../index.html">Documentation portal</a></footer>
+<a href="../index_en.html">Documentation portal</a></footer>
 </div>
 </body>
 </html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calima: Flames of the Atlantic — Árbol de Tecnologías</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:          #1a1108;
+    --card-bg:     #2a1f0e;
+    --card-border: #3d2e18;
+    --gold:        #c8a84b;
+    --gold-dim:    #8c7232;
+    --gold-bright: #f0cc6a;
+    --text:        #d4c49a;
+    --text-dim:    #7a6a4a;
+    --food:        #e86c2a;
+    --wood:        #6aaa3a;
+    --gold-res:    #e8c830;
+    --shadow:      rgba(0,0,0,0.6);
+    --glow:        rgba(200,168,75,0.3);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(180deg, #0d0904 0%, #1a1108 100%);
+    border-bottom: 2px solid var(--gold-dim);
+    padding: 18px 24px 12px;
+    text-align: center;
+    box-shadow: 0 4px 20px var(--shadow);
+  }
+
+  header h1 {
+    color: var(--gold);
+    font-size: 1.6rem;
+    font-variant: small-caps;
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 20px rgba(200,168,75,0.5);
+  }
+
+  header .subtitle {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+
+  nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+    margin-top: 10px;
+  }
+
+  nav a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+    font-size: 0.85rem;
+  }
+  nav a:hover { color: var(--gold-bright); }
+  nav a.lang-toggle {
+    border: 1px solid var(--gold-dim);
+    border-radius: 12px;
+    color: var(--gold);
+    font-variant: normal;
+    padding: 1px 10px;
+  }
+  nav a.lang-toggle:hover { border-color: var(--gold); color: var(--gold-bright); }
+
+  main {
+    padding: 24px 20px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .intro {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    line-height: 1.55;
+    max-width: 940px;
+    margin: 0 auto 8px;
+  }
+  .intro b { color: var(--text); }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .card:hover { border-color: var(--gold-dim); box-shadow: 0 0 12px var(--glow); }
+
+  .card-title {
+    color: var(--gold);
+    font-size: 0.9rem;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+  }
+  .card-subtitle {
+    color: var(--text-dim);
+    font-size: 0.76rem;
+    font-style: italic;
+    margin-bottom: 2px;
+  }
+
+  .cost { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .cost-item { border-radius: 3px; font-size: 0.78rem; font-weight: 600; padding: 2px 7px; }
+  .cost-food { background: rgba(232,108,42,0.18); color: var(--food);     border: 1px solid rgba(232,108,42,0.35); }
+  .cost-wood { background: rgba(106,170,58,0.18); color: var(--wood);     border: 1px solid rgba(106,170,58,0.35); }
+  .cost-gold { background: rgba(232,200,48,0.18); color: var(--gold-res); border: 1px solid rgba(232,200,48,0.35); }
+
+  .tech-section { margin: 34px 0; }
+
+  .tech-section-heading {
+    color: var(--gold);
+    font-size: 1.1rem;
+    font-variant: small-caps;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .tech-section-heading .count {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+    margin-left: 10px;
+  }
+
+  .tech-age-col {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-top: 10px;
+  }
+
+  .tech-grid-header {
+    padding: 8px;
+    font-variant: small-caps;
+    font-size: 0.8rem;
+    color: var(--gold-bright);
+    letter-spacing: 0.07em;
+    border-bottom: 2px solid var(--card-border);
+  }
+  .tech-grid-header.age-0 { background: rgba(74,53,32,0.4); }
+  .tech-grid-header.age-1 { background: rgba(74,64,32,0.4); }
+  .tech-grid-header.age-2 { background: rgba(58,58,80,0.4); }
+  .tech-grid-header.age-3 { background: rgba(74,32,32,0.4); }
+
+  .tech-cards-column {
+    padding: 8px 6px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .empty-slot { color: var(--text-dim); text-align: center; padding: 16px 0; }
+
+  .tech-effect {
+    background: rgba(60,100,60,0.15);
+    border-left: 2px solid rgba(80,160,80,0.4);
+    color: #8ecf8e;
+    font-size: 0.73rem;
+    margin-top: 6px;
+    padding: 3px 7px;
+    line-height: 1.4;
+  }
+
+  .prereq-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 5px;
+    align-items: center;
+  }
+  .prereq-label { color: var(--text-dim); font-size: 0.68rem; }
+  .prereq-chip {
+    background: rgba(200,100,40,0.12);
+    border: 1px solid rgba(200,100,40,0.3);
+    border-radius: 12px;
+    color: #e8a040;
+    font-size: 0.68rem;
+    padding: 1px 7px;
+  }
+
+  .tech-times { color: var(--text-dim); font-size: 0.73rem; margin-top: 4px; }
+
+  .tech-card.upgrade-card { border-color: rgba(200,168,75,0.5); }
+  .tech-card.upgrade-card:hover { border-color: var(--gold); box-shadow: 0 0 14px rgba(200,168,75,0.4); }
+  .upgrade-transform {
+    background: rgba(200,168,75,0.08);
+    border-left: 2px solid var(--gold-dim);
+    color: var(--gold);
+    font-size: 0.73rem;
+    margin-top: 6px;
+    padding: 3px 7px;
+    line-height: 1.4;
+  }
+
+  footer {
+    border-top: 1px solid var(--card-border);
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    text-align: center;
+    padding: 16px 20px 28px;
+    line-height: 1.6;
+  }
+  footer code {
+    background: rgba(0,0,0,0.3);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 0.72rem;
+  }
+  footer a { color: var(--gold-dim); }
+
+  @media (max-width: 900px) { .tech-age-col { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .tech-age-col { grid-template-columns: 1fr; } }
+
+  ::-webkit-scrollbar { width: 8px; background: #0d0904; }
+  ::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Calima: Flames of the Atlantic — Árbol de Tecnologías</h1>
+  <div class="subtitle">32 tecnologías · 8 edificios de investigación</div>
+  <nav><a href="../index_es.html">Portal</a> <a href="../manual/manual_es.html">Manual (ES)</a> <a href="../manual/manual_en.html">Manual (EN)</a> <a class="lang-toggle" href="tech_tree_en.html" lang="en">English version</a></nav>
+  <nav><a href="#blacksmith">Herrería</a> <a href="#university">Universidad</a> <a href="#temple">Templo</a> <a href="#barracks">Cuartel</a> <a href="#stable">Establo</a> <a href="#lumber-camp">Campamento Maderero</a> <a href="#mining-camp">Campamento Minero</a> <a href="#mill">Molino</a></nav>
+</header>
+
+<main>
+  <p class="intro">Cada edificio investiga <b>una tecnología a la vez</b> y encola hasta <b>5 en curso</b> (pagadas al encolar, reembolso íntegro al cancelar; un edificio destruido reembolsa toda su cola). Las tres líneas económicas de campamento (Campamento Maderero, Campamento Minero, Molino) encadenan <b>un paso por edad desde la Edad Feudal</b>. Los <b>Castellanos</b> reciben gratis la tecnología de Herrería más antigua sin investigar en cada avance de edad.</p>
+<div class="tech-section" id="blacksmith"><div class="tech-section-heading">Herrería <span class="count">13 tecnologías</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Edad Oscura</div><div class="tech-grid-header age-1">Edad Feudal</div><div class="tech-grid-header age-2">Edad del Castillo</div><div class="tech-grid-header age-3">Era Imperial</div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Telar</div><div class="card-subtitle">Los aldeanos ganan salud adicional gracias a ropas reforzadas.</div><div class="cost"><span class="cost-item cost-food">🍖 50</span></div><div class="tech-times">⏱ 25 s</div><div class="tech-effect">PV de los aldeanos +15%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Carreta Canaria</div><div class="card-subtitle">Robustas carretas de madera permiten a los aldeanos cargar un 25% más por viaje. Las granjas depositan al instante y no se ven afectadas.</div><div class="cost"><span class="cost-item cost-food">🍖 150</span><span class="cost-item cost-wood">🪵 75</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">Capacidad de carga de los aldeanos (no afecta a las granjas) +25%</div></div><div class="card tech-card"><div class="card-title">Flechado</div><div class="card-subtitle">Astiles de flecha mejorados aumentan el ataque de los arqueros.</div><div class="cost"><span class="cost-item cost-gold">💰 100</span></div><div class="tech-times">⏱ 35 s</div><div class="tech-effect">Ataque de los arqueros +20%</div></div><div class="card tech-card"><div class="card-title">Forja</div><div class="card-subtitle">Mejora el ataque cuerpo a cuerpo de la infantería.</div><div class="cost"><span class="cost-item cost-food">🍖 75</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">Ataque de todas las unidades +15%</div></div><div class="card tech-card"><div class="card-title">Armadura Acolchada</div><div class="card-subtitle">Mejora la armadura perforante de los arqueros.</div><div class="cost"><span class="cost-item cost-food">🍖 100</span></div><div class="tech-times">⏱ 35 s</div><div class="tech-effect">Armadura perforante de la línea de arqueros +1</div></div><div class="card tech-card"><div class="card-title">Armadura de Escamas</div><div class="card-subtitle">La armadura de escamas mejora la protección cuerpo a cuerpo de todas las unidades.</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-gold">💰 50</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">Armadura cuerpo a cuerpo de la caballería +1</div></div><div class="card tech-card"><div class="card-title">Maestro Carpintero Naval</div><div class="card-subtitle">Maestros carpinteros navales construyen cascos más resistentes y reducen los costes de construcción.</div><div class="cost"><span class="cost-item cost-wood">🪵 200</span><span class="cost-item cost-gold">💰 60</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">PV de los barcos +15% · Coste de los barcos −15%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Flecha Bodkin</div><div class="card-subtitle">Puntas bodkin perforantes mejoran el ataque y el alcance de los arqueros.</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-gold">💰 150</span></div><div class="tech-times">⏱ 35 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Flechado</span></div><div class="tech-effect">Ataque de los arqueros +20% · Alcance de los arqueros +10%</div></div><div class="card tech-card"><div class="card-title">Carretón Isleño</div><div class="card-subtitle">Carretones reforzados: los aldeanos cargan otro 25% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 200</span><span class="cost-item cost-wood">🪵 125</span></div><div class="tech-times">⏱ 55 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Carreta Canaria</span></div><div class="tech-effect">Capacidad de carga de los aldeanos (no afecta a las granjas) +25%</div></div><div class="card tech-card"><div class="card-title">Armadura de Mallas</div><div class="card-subtitle">Anillas entrelazadas proporcionan una armadura cuerpo a cuerpo superior.</div><div class="cost"><span class="cost-item cost-food">🍖 200</span><span class="cost-item cost-gold">💰 100</span></div><div class="tech-times">⏱ 45 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Armadura de Escamas</span></div><div class="tech-effect">Armadura cuerpo a cuerpo de la caballería +1</div></div><div class="card tech-card"><div class="card-title">Fundición de Hierro</div><div class="card-subtitle">Aleaciones superiores mejoran el ataque de todas las unidades.</div><div class="cost"><span class="cost-item cost-gold">💰 150</span></div><div class="tech-times">⏱ 55 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Forja</span></div><div class="tech-effect">Ataque de todas las unidades +20%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Alto Horno</div><div class="card-subtitle">La forja a alta temperatura produce armas superiores para todas las unidades.</div><div class="cost"><span class="cost-item cost-food">🍖 275</span><span class="cost-item cost-gold">💰 225</span></div><div class="tech-times">⏱ 50 s</div><div class="tech-effect">Ataque de todas las unidades +15%</div></div><div class="card tech-card"><div class="card-title">Armadura de Placas</div><div class="card-subtitle">La armadura de placas completa otorga la máxima protección cuerpo a cuerpo.</div><div class="cost"><span class="cost-item cost-food">🍖 300</span><span class="cost-item cost-gold">💰 200</span></div><div class="tech-times">⏱ 60 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Armadura de Mallas</span></div><div class="tech-effect">Armadura cuerpo a cuerpo de la caballería +1</div></div></div></div></div>
+<div class="tech-section" id="university"><div class="tech-section-heading">Universidad <span class="count">3 tecnologías</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Edad Oscura</div><div class="tech-grid-header age-1">Edad Feudal</div><div class="tech-grid-header age-2">Edad del Castillo</div><div class="tech-grid-header age-3">Era Imperial</div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Balística</div><div class="card-subtitle">Los arqueros predicen el movimiento enemigo, aumentando su velocidad de ataque.</div><div class="cost"><span class="cost-item cost-gold">💰 175</span></div><div class="tech-times">⏱ 50 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Flechado</span></div><div class="tech-effect">Velocidad de ataque de los arqueros +20%</div></div><div class="card tech-card"><div class="card-title">Ingeniería de Asedio</div><div class="card-subtitle">Las unidades militares infligen un 20% más de daño a los edificios.</div><div class="cost"><span class="cost-item cost-gold">💰 200</span></div><div class="tech-times">⏱ 60 s</div><div class="tech-effect">Daño contra edificios (todas las unidades) +20%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Química</div><div class="card-subtitle">Propelentes mejorados aumentan el daño de todos los ataques a distancia.</div><div class="cost"><span class="cost-item cost-gold">💰 300</span></div><div class="tech-times">⏱ 70 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Balística</span></div><div class="tech-effect">Ataque de los arqueros +15%</div></div></div></div></div>
+<div class="tech-section" id="temple"><div class="tech-section-heading">Templo <span class="count">3 tecnologías</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Edad Oscura</div><div class="tech-grid-header age-1">Edad Feudal</div><div class="tech-grid-header age-2">Edad del Castillo</div><div class="tech-grid-header age-3">Era Imperial</div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Fervor</div><div class="card-subtitle">La disciplina espiritual aumenta la velocidad de movimiento de todas las unidades.</div><div class="cost"><span class="cost-item cost-gold">💰 150</span></div><div class="tech-times">⏱ 50 s</div><div class="tech-effect">Velocidad de movimiento de todas las unidades +10%</div></div><div class="card tech-card"><div class="card-title">Santidad</div><div class="card-subtitle">Los guerreros bendecidos ganan salud adicional.</div><div class="cost"><span class="cost-item cost-food">🍖 100</span></div><div class="tech-times">⏱ 40 s</div><div class="tech-effect">PV de la infantería (línea de espadachines) +15%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Expiación</div><div class="card-subtitle">Las prácticas espirituales mejoran la salud de la caballería.</div><div class="cost"><span class="cost-item cost-food">🍖 150</span><span class="cost-item cost-gold">💰 100</span></div><div class="tech-times">⏱ 55 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Santidad</span></div><div class="tech-effect">PV de la caballería +20%</div></div></div></div></div>
+<div class="tech-section" id="barracks"><div class="tech-section-heading">Cuartel <span class="count">2 tecnologías</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Edad Oscura</div><div class="tech-grid-header age-1">Edad Feudal</div><div class="tech-grid-header age-2">Edad del Castillo</div><div class="tech-grid-header age-3">Era Imperial</div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card upgrade-card"><div class="card-title">Man-at-Arms</div><div class="card-subtitle">Mejora toda la Milicia a Hombres de Armas y entrena Hombres de Armas en adelante.</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-gold">💰 40</span></div><div class="tech-times">⏱ 45 s</div><div class="upgrade-transform">▲ Milicia → Hombre de Armas — mejora todas las unidades vivas y todo el entrenamiento futuro</div></div></div><div class="tech-cards-column"><div class="card tech-card upgrade-card"><div class="card-title">Long Swordsman</div><div class="card-subtitle">Mejora todos los Hombres de Armas a Espadachines y entrena Espadachines en adelante.</div><div class="cost"><span class="cost-item cost-food">🍖 200</span><span class="cost-item cost-gold">💰 60</span></div><div class="tech-times">⏱ 45 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Man-at-Arms</span></div><div class="upgrade-transform">▲ Hombre de Armas → Espadachín — mejora todas las unidades vivas y todo el entrenamiento futuro</div></div></div><div class="tech-cards-column"><div class="empty-slot">—</div></div></div></div>
+<div class="tech-section" id="stable"><div class="tech-section-heading">Establo <span class="count">2 tecnologías</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Edad Oscura</div><div class="tech-grid-header age-1">Edad Feudal</div><div class="tech-grid-header age-2">Edad del Castillo</div><div class="tech-grid-header age-3">Era Imperial</div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card upgrade-card"><div class="card-title">Heavy Scout</div><div class="card-subtitle">Mejora todos los Exploradores a Exploradores Pesados y entrena Exploradores Pesados en adelante.</div><div class="cost"><span class="cost-item cost-food">🍖 150</span><span class="cost-item cost-gold">💰 75</span></div><div class="tech-times">⏱ 45 s</div><div class="upgrade-transform">▲ Explorador → Explorador Pesado — mejora todas las unidades vivas y todo el entrenamiento futuro</div></div></div><div class="tech-cards-column"><div class="card tech-card upgrade-card"><div class="card-title">Knight</div><div class="card-subtitle">Mejora todos los Exploradores Pesados a Caballeros y entrena Caballeros en adelante.</div><div class="cost"><span class="cost-item cost-food">🍖 200</span><span class="cost-item cost-gold">💰 100</span></div><div class="tech-times">⏱ 45 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Heavy Scout</span></div><div class="upgrade-transform">▲ Explorador Pesado → Caballero — mejora todas las unidades vivas y todo el entrenamiento futuro</div></div></div><div class="tech-cards-column"><div class="empty-slot">—</div></div></div></div>
+<div class="tech-section" id="lumber-camp"><div class="tech-section-heading">Campamento Maderero <span class="count">3 tecnologías</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Edad Oscura</div><div class="tech-grid-header age-1">Edad Feudal</div><div class="tech-grid-header age-2">Edad del Castillo</div><div class="tech-grid-header age-3">Era Imperial</div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Hacha de doble filo</div><div class="card-subtitle">Los aldeanos cortan madera un 15% más rápido y cargan un 10% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-wood">🪵 50</span></div><div class="tech-times">⏱ 25 s</div><div class="tech-effect">Ritmo de recolección de madera +15% · Carga de madera +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Sierra de arco</div><div class="card-subtitle">Los aldeanos cortan madera un 15% adicional más rápido y cargan un 10% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 150</span><span class="cost-item cost-wood">🪵 100</span></div><div class="tech-times">⏱ 40 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Hacha de doble filo</span></div><div class="tech-effect">Ritmo de recolección de madera +15% · Carga de madera +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Sierra de dos hombres</div><div class="card-subtitle">Los aldeanos cortan madera un 15% adicional más rápido y cargan un 10% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 300</span><span class="cost-item cost-wood">🪵 200</span></div><div class="tech-times">⏱ 60 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Sierra de arco</span></div><div class="tech-effect">Ritmo de recolección de madera +15% · Carga de madera +10%</div></div></div></div></div>
+<div class="tech-section" id="mining-camp"><div class="tech-section-heading">Campamento Minero <span class="count">3 tecnologías</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Edad Oscura</div><div class="tech-grid-header age-1">Edad Feudal</div><div class="tech-grid-header age-2">Edad del Castillo</div><div class="tech-grid-header age-3">Era Imperial</div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Picos reforzados</div><div class="card-subtitle">Los aldeanos extraen oro y piedra un 15% más rápido y cargan un 10% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 100</span><span class="cost-item cost-wood">🪵 75</span></div><div class="tech-times">⏱ 25 s</div><div class="tech-effect">Ritmo de recolección de oro +15% · Ritmo de recolección de piedra +15% · Carga de oro +10% · Carga de piedra +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Minería de pozo</div><div class="card-subtitle">Los aldeanos extraen oro y piedra un 15% adicional más rápido y cargan un 10% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 175</span><span class="cost-item cost-wood">🪵 100</span></div><div class="tech-times">⏱ 40 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Picos reforzados</span></div><div class="tech-effect">Ritmo de recolección de oro +15% · Ritmo de recolección de piedra +15% · Carga de oro +10% · Carga de piedra +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Galerías profundas</div><div class="card-subtitle">Los aldeanos extraen oro y piedra un 15% adicional más rápido y cargan un 10% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 300</span><span class="cost-item cost-wood">🪵 150</span></div><div class="tech-times">⏱ 60 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Minería de pozo</span></div><div class="tech-effect">Ritmo de recolección de oro +15% · Ritmo de recolección de piedra +15% · Carga de oro +10% · Carga de piedra +10%</div></div></div></div></div>
+<div class="tech-section" id="mill"><div class="tech-section-heading">Molino <span class="count">3 tecnologías</span></div><div class="tech-age-col"><div class="tech-grid-header age-0">Edad Oscura</div><div class="tech-grid-header age-1">Edad Feudal</div><div class="tech-grid-header age-2">Edad del Castillo</div><div class="tech-grid-header age-3">Era Imperial</div><div class="tech-cards-column"><div class="empty-slot">—</div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Collera de tiro</div><div class="card-subtitle">Los aldeanos recolectan comida un 15% más rápido y cargan un 10% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 75</span><span class="cost-item cost-wood">🪵 75</span></div><div class="tech-times">⏱ 25 s</div><div class="tech-effect">Ritmo de recolección de comida +15% · Carga de comida +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Arado pesado</div><div class="card-subtitle">Los aldeanos recolectan comida un 15% adicional más rápido y cargan un 10% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 125</span><span class="cost-item cost-wood">🪵 125</span></div><div class="tech-times">⏱ 40 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Collera de tiro</span></div><div class="tech-effect">Ritmo de recolección de comida +15% · Carga de comida +10%</div></div></div><div class="tech-cards-column"><div class="card tech-card"><div class="card-title">Rotación de cultivos</div><div class="card-subtitle">Los aldeanos recolectan comida un 15% adicional más rápido y cargan un 10% más por viaje.</div><div class="cost"><span class="cost-item cost-food">🍖 250</span><span class="cost-item cost-wood">🪵 250</span></div><div class="tech-times">⏱ 60 s</div><div class="prereq-chips"><span class="prereq-label">Requiere:</span><span class="prereq-chip">Arado pesado</span></div><div class="tech-effect">Ritmo de recolección de comida +15% · Carga de comida +10%</div></div></div></div></div>
+</main>
+
+<footer>
+  Generado desde <code>project/resources/technologies/*.tres</code> (32 archivos) — regenera con <code>python3 docs/build_tech_tree.py</code>. Los ámbitos de los efectos siguen <code>CivBonusManager</code>/<code>TechManager</code> (las bardas = línea de caballería, la armadura acolchada = línea de arqueros).
+</footer>
+</body>
+</html>
