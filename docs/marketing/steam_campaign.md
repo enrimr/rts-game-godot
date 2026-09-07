@@ -137,6 +137,25 @@ Captured with the marketing harness (no HUD, fog revealed, zoom 1.6):
 
 Captions localized ES/EN mirroring the feature blocks.
 
+**Produced so far** (in `builds/marketing/`, regenerate any time):
+- `screenshots/01_red_city_almogaren.png` — the living town (temple, mill, farms, dogs)
+- `screenshots/02_red_city_early.png` — the same town younger (before/after pair for devlogs)
+- `screenshots/04_hero_frontier.png` — heroine with golden aura at a frontier outpost
+- `screenshots/05_late_game.png` — late-game sprawl
+- `screenshots/06_islands_straits.png` — Islands map: straits, fishing boats, fish schools
+- `screenshots/07_islands_coast_ship.png` — coastal economy with a ship off the beach
+- `screenshots/08_islands_landing_calima_warning.png` — amphibious landing WITH the calima forecast banner in frame
+- `clip_red_city.mp4` (60 s), `clip_battle_early.mp4` (85 s), `clip_battle_2.mp4`
+  (80 s, burning barracks raid), `clip_island_landing.mp4` (70 s) — 1080p30 source clips
+- `teaser_50s.mp4` — assembled rough cut: town life → mobilization → island
+  landing → burning raid (crossfades, fade-out; ffmpeg command in git history)
+- `.avi` files are the MJPEG masters straight out of the engine — safe to
+  delete once the mp4s are approved.
+
+Still to capture: sea-fog cloaked fleet, volcanic-ash assault, dog-vs-dog
+pastoral duel close-up, one full-HUD interface shot (take it in a live session
+— the replay viewer's HUD is the playback bar, not the game interface).
+
 ---
 
 ## 5. Rollout plan
