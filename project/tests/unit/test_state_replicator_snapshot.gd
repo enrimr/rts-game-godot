@@ -73,3 +73,23 @@ func test_arrows_are_never_registered_as_entities() -> void:
 	# The sampler must not have minted an id for the arrow behind our back.
 	var announced: Dictionary = _replicator.get("_announced") as Dictionary
 	assert_eq(announced.size(), 0, "an empty world announces nothing")
+
+## After the player TC dies, _world.drop_off is a FREED instance. `is Node`
+## on a freed Variant is a script error that aborted every snapshot tick —
+## live matches spammed errors and recordings after the wipe were EMPTY
+## (the whole sampler died before emitting a single packet).
+func test_snapshot_survives_freed_drop_off() -> void:
+	var militia: Node2D = MILITIA_SCENE.instantiate() as Node2D
+	militia.set("player_id", 0)
+	_units.add_child(militia)
+	var militia_id: int = EntityRegistry.id_of(militia)
+
+	var tc: Node2D = Node2D.new()
+	_world.set("drop_off", tc)
+	tc.free()   # immediate free, exactly how the endgame wipe does it
+
+	_replicator._host_snapshot()
+
+	var announced: Dictionary = _replicator.get("_announced") as Dictionary
+	assert_true(announced.has(militia_id),
+		"the sampler must survive the freed TC and keep streaming the world")
