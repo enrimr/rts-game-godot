@@ -150,7 +150,9 @@ func full_resync_to(player_id: int) -> void:
 	var buildings: Array = []
 	var bld_nodes: Array = _buildings_layer.get_children()
 	var drop_off: Variant = _world.get("drop_off")
-	if drop_off is Node and is_instance_valid(drop_off as Node):
+	# is_instance_valid FIRST: after the player TC dies, `is Node` on the
+	# freed instance is a script error on every snapshot tick.
+	if is_instance_valid(drop_off) and drop_off is Node:
 		bld_nodes.append(drop_off)
 	for node: Variant in bld_nodes:
 		if not is_instance_valid(node) or not (node is Node2D):
@@ -325,7 +327,9 @@ func _host_snapshot() -> void:
 			st, node.get("health") as float])
 	var bld_nodes: Array = _buildings_layer.get_children()
 	var drop_off: Variant = _world.get("drop_off")
-	if drop_off is Node and is_instance_valid(drop_off as Node):
+	# is_instance_valid FIRST: after the player TC dies, `is Node` on the
+	# freed instance is a script error on every snapshot tick.
+	if is_instance_valid(drop_off) and drop_off is Node:
 		bld_nodes.append(drop_off)
 	for node: Variant in bld_nodes:
 		if not is_instance_valid(node) or not (node is Node2D):
