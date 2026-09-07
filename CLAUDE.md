@@ -327,6 +327,12 @@ CALIMA_SHOT_DIR=/tmp/calima-replays $GODOT --path project --resolution 1600x900 
 # tests/unit/test_hud_panels.gd contract, which also audits button prices)
 CALIMA_SHOT_DIR=/tmp/calima-camp-research $GODOT --path project --resolution 1500x900 \
   res://tools/check_camp_research.tscn
+# Marketing beauty shots / battle scanner (real renderer): boots a replay in
+# cinematic mode, auto-frames battles or player towns, screenshots each moment;
+# CALIMA_MKT_SCAN=1 locates battle windows for CALIMA_CINE_CAM clip exports.
+# Full Steam asset pipeline: docs/marketing/steam_campaign.md
+CALIMA_CINE=1 CALIMA_MKT_ZOOM=1.6 CALIMA_SHOT_DIR=/tmp/calima-marketing \
+  $GODOT --path project --resolution 1920x1080 res://tools/check_marketing_shots.tscn
 # Campaign gate (headless): mission 1 boots deterministically, the director
 # mounts, the first scripted wave spawns, victory records progress (progress
 # file is backed up/restored). UI review: check_campaign_screen.tscn (renderer).

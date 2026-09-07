@@ -210,6 +210,11 @@ CLAUDE.md &gt; Testing. Screenshot galleries from past reviews are kept under
 <td><code>CALIMA_MAPS</code> <code>CALIMA_RIVALS</code> <code>CALIMA_SEED</code></td>
 </tr>
 <tr>
+<td><code>check_marketing_shots</code></td>
+<td>Marketing beauty shots (real renderer): boots a recorded replay in CINEMATIC mode (run with CALIMA_CINE=1 for clean fog-revealed frames), seeks through the match, auto-frames the camera on the ACTION (closest hostile contact, else touring each player's densest crowd) and screenshots each moment at the window resolut...</td>
+<td><code>CALIMA_CINE</code> <code>CALIMA_CINE_CAM</code> <code>CALIMA_MKT_REPLAY</code> <code>CALIMA_MKT_SCAN</code> <code>CALIMA_MKT_STEP</code> <code>CALIMA_MKT_TIMES</code> <code>CALIMA_MKT_ZOOM</code> <code>CALIMA_SHOT_DIR</code></td>
+</tr>
+<tr>
 <td><code>check_match_sim</code></td>
 <td>Headed match simulator: boots a full game like screenshot_runner, fast- forwards CALIMA_WARMUP seconds of gameplay at CALIMA_TIMESCALE, then prints per-player development stats (age, population, unit/building census, stockpiles) at regular intervals so AI stalls and combat anomalies show up as numbers instead of nee...</td>
 <td><code>CALIMA_CIV</code> <code>CALIMA_MAP</code> <code>CALIMA_RIVALS</code> <code>CALIMA_RIVAL_CIV</code> <code>CALIMA_SEED</code> <code>CALIMA_TIMESCALE</code> <code>CALIMA_WARMUP</code></td>
@@ -370,7 +375,7 @@ CLAUDE.md &gt; Testing. Screenshot galleries from past reviews are kept under
 <p>The table above is scraped from the <code>##</code> header block of every <code>tools/check_*.gd</code>.
 After adding or changing a harness, re-run the generator snippet kept in
 <code>docs/testing/regen_harness_catalog.py</code> (python3, from the repo root).</p>
-<footer class="site">Generated from <code>docs/testing/harnesses.md</code> on 2026-09-06 —
+<footer class="site">Generated from <code>docs/testing/harnesses.md</code> on 2026-09-07 —
 regenerate with <code>python3 docs/build_site.py</code>. ·
 <a href="../index_en.html">Documentation portal</a></footer>
 </div>
