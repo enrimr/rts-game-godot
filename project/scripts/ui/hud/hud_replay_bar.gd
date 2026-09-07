@@ -191,6 +191,25 @@ func init(hud_root: Control, replicator: StateReplicator,
 		reveal.set_pressed_no_signal(true)
 		_set_cinematic(true)
 		_panel.visible = false
+		_apply_cine_camera()
+
+## Hands-free framing for export runs: CALIMA_CINE_CAM="x,y[,zoom]" points the
+## camera at the shot (a battle, a town) instead of wherever the world booted.
+## Deferred past the first frames so world camera setup can't override it.
+func _apply_cine_camera() -> void:
+	var cam_env: String = OS.get_environment("CALIMA_CINE_CAM")
+	if cam_env.is_empty():
+		return
+	var parts: PackedStringArray = cam_env.split(",")
+	if parts.size() < 2:
+		return
+	await get_tree().create_timer(0.5).timeout
+	var world: Node = get_tree().get_first_node_in_group("world")
+	if world == null:
+		return
+	world.call("jump_camera_to", Vector2(float(parts[0]), float(parts[1])))
+	if parts.size() >= 3:
+		world.call("set_zoom", float(parts[2]))
 
 ## ── Creator mode ─────────────────────────────────────────────────────────────
 
@@ -411,6 +430,6 @@ func _cycle_speed() -> void:
 ## the fog kept computing underneath all along.
 func _set_reveal_all(on: bool) -> void:
 	if is_instance_valid(_fog):
-		_fog.visible = not on
+		(_fog as FogOfWar).set_reveal_override(on)
 	if is_instance_valid(_minimap):
 		_minimap.fog = null if on else (_fog as FogOfWar)

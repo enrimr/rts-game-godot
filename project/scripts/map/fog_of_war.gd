@@ -108,15 +108,32 @@ func setup(units: Node, buildings: Node, drop_off: Node, world: Node = null) -> 
 	_world_node = world
 	GameManager.game_over.connect(_on_game_over)
 
+## Once revealed, the fog never re-forms; the tick keeps running only to show
+## entities spawned AFTER the reveal (replay/spectator streams keep spawning —
+## without this they'd be born invisible and stay that way forever).
+var _reveal_locked: bool = false
+## Reversible flavour of the same thing for the replay "view all" toggle:
+## exploration state stays intact underneath, so switching it off restores
+## the viewer's real perspective.
+var _reveal_override: bool = false
+
+func set_reveal_override(on: bool) -> void:
+	_reveal_override = on
+	_sprite.visible = not on
+	if on:
+		_show_everything()
+	else:
+		mark_all_dirty()
+
 func reveal_all() -> void:
+	_reveal_locked = true
 	_cells.fill(STATE_VISIBLE)
 	mark_all_dirty()
 	_render()
 	_sprite.visible = false
-	# Stop ticking or the next tick demotes everything back to EXPLORED and the
-	# minimap re-darkens even though the world fog sprite is hidden.
-	set_process(false)
-	# Make all previously hidden enemy units and buildings visible
+	_show_everything()
+
+func _show_everything() -> void:
 	if is_instance_valid(_units_node):
 		for unit: Node in _units_node.get_children():
 			if is_instance_valid(unit):
@@ -132,12 +149,14 @@ func reveal_all() -> void:
 
 func _on_game_over(_winner: int) -> void:
 	reveal_all()
-	set_process(false)
 
 func _process(delta: float) -> void:
 	_update_timer += delta
 	if _update_timer >= UPDATE_INTERVAL:
 		_update_timer = 0.0
+		if _reveal_locked or _reveal_override:
+			_show_everything()
+			return
 		_tick()
 
 ## Call this when the tutorial exploration step activates to start counting new cells.

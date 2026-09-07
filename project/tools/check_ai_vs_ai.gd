@@ -23,7 +23,9 @@ func _ready() -> void:
 	OS.set_environment("CALIMA_SEED", seed_env if not seed_env.is_empty() else "4242")
 	var map_env: String = OS.get_environment("CALIMA_MAP")
 	MatchConfig.map_type = int(map_env) if not map_env.is_empty() else MatchConfig.MapType.STANDARD
-	MatchConfig.weather_enabled = false
+	# CALIMA_WEATHER=1 keeps weather on (marketing replay recordings want the
+	# storms/fog in frame); the hostility gate itself runs without it.
+	MatchConfig.weather_enabled = OS.get_environment("CALIMA_WEATHER") == "1"
 	MatchConfig.rival_count = 2
 	MatchConfig.player_teams = {}   # FFA: everyone hostile
 	var ticks_env: String = OS.get_environment("CALIMA_TICKS")
