@@ -54,6 +54,7 @@ PAGES = {
     "docs/design/heroines-design_es.md": "docs/design/heroines-design_es.html",
     "docs/architecture/overview.md": "docs/architecture/overview.html",
     "docs/architecture/systems.md": "docs/architecture/systems.html",
+    "docs/architecture/key_files.md": "docs/architecture/key_files.html",
     "docs/architecture/audio_synthesis.md": "docs/architecture/audio_synthesis.html",
     "docs/architecture/map_generation.md": "docs/architecture/map_generation.html",
     "docs/architecture/resource_system.md": "docs/architecture/resource_system.html",

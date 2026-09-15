@@ -25,6 +25,7 @@ You are invoked after code changes — typically one or more `.gd`, `.tscn`, or 
 3. **Check which docs are affected** — cross-reference against:
    - `docs/architecture/overview.md` — system table, autoload list, signal flow diagram
    - `docs/architecture/systems.md` — per-system design descriptions
+   - `docs/architecture/key_files.md` — detailed per-file notes, feature inventory, CI-gate harness commands
    - `docs/design/game-design-document.md` — milestone status, feature list
    - `docs/design/civilizations.md` — civ stats and unique content
    - `docs/development/conventions.md` — only update if a convention actually changed in code
@@ -41,6 +42,7 @@ You are invoked after code changes — typically one or more `.gd`, `.tscn`, or 
 - Never fabricate API names, class names, or signal names — read the actual source first.
 - If a function or class was renamed, find every doc that mentions the old name and update it.
 - If a new `class_name` appears in a `.gd` file, add it to the key files table in `CLAUDE.md`.
+- **CLAUDE.md stays small (under ~15 KB): ONE line per file in its Key Files table.** Long-form notes (constants, bug history, rationale), feature inventories and harness command blocks go to `docs/architecture/key_files.md` or `docs/architecture/systems.md` — never into CLAUDE.md.
 - If a new autoload is added to `project.godot`, add it to the autoload table in `docs/architecture/overview.md`.
 - Preserve the existing structure and headings of docs unless a structural change is warranted.
 - Write documentation in English.
