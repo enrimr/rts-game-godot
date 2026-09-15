@@ -427,23 +427,37 @@ Eight civilizations in three historical layers. Your choice sets your bonuses, y
 
 The fading empire of myth, with the world's finest seamanship. They own the water: no shoreline stops an Atlantean attack.
 
+**Bonuses**
+
 - +50 % vision within 400 px of a coast
 - Harder to spot in Sea Fog (found at 90 px, not 180)
 - Ship attack speed ×1.20; immune to the Atlantic Storm
-- **Unique:** *Tidecaller* (Barracks, Castle, 50 F + 70 G) — amphibious infantry with an area Tidal Pulse; the only land unit that swims
-- **Hero: Artaxerax** — *Calima*: veils nearby allies for 12 s (they cannot be targeted). **Heroine: Cleito** — *Rising Tide*: a 250 px wave healing allies 60 HP and hastening them +30 % for 8 s; enemies take 20 damage and lose 20 % speed.
-- Weak on pure land maps: no heavy cavalry, no siege workshop.
+
+**Unique unit — Tidecaller** (Barracks, Castle Age, 50 Food + 70 Gold): amphibious infantry with an area Tidal Pulse; the only land unit that swims.
+
+**Hero — Artaxerax:** *Calima* — veils nearby allies for 12 s; while it lasts, they cannot be targeted.
+
+**Heroine — Cleito:** *Rising Tide* — a 250 px wave that heals allies 60 HP and hastens them +30 % for 8 s; enemies take 20 damage and lose 20 % speed.
+
+**Weaknesses:** no heavy cavalry, no siege workshop — they struggle on pure land maps.
 
 #### Phoenicians — *"We need not conquer what we can simply buy."*
 
 The mapmakers of the Atlantic. They live off the Market, open from the Dark Age.
 
+**Bonuses**
+
 - Market from the Dark Age; mercenaries −25 %
 - Ships −15 % cost; Triremes trickle passive gold (5 per 30 s)
 - Half the Atlantic Storm penalty
-- **Unique:** *Trireme* (Dock, Feudal, 100 W + 50 G) — ram: ×2 vs ships with knockback
-- **Hero: Hanno the Navigator** — *Trade Route*: 50 gold over 30 s. **Heroine: Elissa** — *Mercenary Pact*: 400 gold permanently converts a nearby enemy unit.
-- Vulnerable to early aggression; no knights.
+
+**Unique unit — Trireme** (Dock, Feudal Age, 100 Wood + 50 Gold): ram — ×2 vs ships, with knockback.
+
+**Hero — Hanno the Navigator:** *Trade Route* — establishes a route that yields 50 gold over 30 s.
+
+**Heroine — Elissa:** *Mercenary Pact* — 400 gold permanently converts a nearby enemy unit.
+
+**Weaknesses:** vulnerable to early aggression; no knights.
 
 ### Native civilizations
 
@@ -451,34 +465,55 @@ The mapmakers of the Atlantic. They live off the Market, open from the Dark Age.
 
 The kingdoms of Tenerife, masters of volcanic ground.
 
+**Bonuses**
+
 - Cross **malpaís** freely; stone buildings +20 % HP
 - Pikemen from the **Dark Age** — the earliest anti-cavalry in the game
 - Immune to the Calima; half the Volcanic Ash penalty
-- **Unique:** *Menceyes Guard* (Barracks, Castle, 65 F + 25 G) — heavy infantry with a Rage Aura below half health
-- **Hero: Bencomo** — *Mencey's Rush*: +30 % attack speed for nearby allies, 10 s. **Heroine: Dácil** — *Voice of the Mountain*: +2 armour and +50 % healing for 12 s.
-- No cavalry; weak at sea.
+
+**Unique unit — Menceyes Guard** (Barracks, Castle Age, 65 Food + 25 Gold): heavy infantry that enters a Rage Aura below half health.
+
+**Hero — Bencomo:** *Mencey's Rush* — +30 % attack speed for nearby allies for 10 s.
+
+**Heroine — Dácil:** *Voice of the Mountain* — +2 armour and +50 % healing speed for 12 s.
+
+**Weaknesses:** no cavalry; weak at sea.
 
 #### Canarii — *"The ravine is not a problem. It is a wall that builds itself."*
 
 Gran Canaria's economic powerhouse — and the protagonists of the campaign.
 
+**Bonuses**
+
 - Villagers +15 % gathering Food; **Houses double as drop-off points**
 - Archers −20 % Food cost
 - Half the Sea Fog and Trade Winds penalties
-- **Unique:** *Ravine Archer* (Archery Range, Castle, 40 W + 55 G) — Ambush Shot: first shot ×2 when fired standing still; extra range on riscos
-- **Hero: Doramas** — *Challenge*: taunts the nearest enemy unit for 6 s. **Heroine: Guayarmina** — *Arrow of Fate*: 80 damage ignoring armour; a kill halves the cooldown.
-- No naval strength; struggle on flat, open maps.
+
+**Unique unit — Ravine Archer** (Archery Range, Castle Age, 40 Wood + 55 Gold): Ambush Shot — the first shot fired standing still deals ×2; gains range on riscos.
+
+**Hero — Doramas:** *Challenge* — taunts the nearest enemy unit into attacking only him for 6 s.
+
+**Heroine — Guayarmina:** *Arrow of Fate* — 80 damage ignoring armour; if the target dies, the cooldown is halved.
+
+**Weaknesses:** no naval strength; they struggle on flat, open maps.
 
 #### Mahos — *"The desert does not kill you. Your hurry does."*
 
 The dry-stone builders of Lanzarote and Fuerteventura. Fast, relentless harassment.
 
+**Bonuses**
+
 - Buildings −30 % Wood cost
-- Scouts and light cavalry +25 % speed; cross **dunes** freely and see +40 % from them
-- Half the Calima penalty
-- **Unique:** *Sand Raider* (Stable, Feudal, 60 F + 40 G) — hit and run: retreats after every attack
-- **Hero: Guadarfía** — *Ambush*: near-invisible for 8 s. **Heroine: Tibiabin** — *Sandstorm*: 200 px for 10 s — 3 damage/s, −40 % speed and −50 % projectile accuracy for enemies inside.
-- Weak late game; poor archery and navy.
+- Scouts and light cavalry +25 % speed
+- Cross **dunes** freely and see +40 % from them; half the Calima penalty
+
+**Unique unit — Sand Raider** (Stable, Feudal Age, 60 Food + 40 Gold): hit and run — retreats automatically after every attack.
+
+**Hero — Guadarfía:** *Ambush* — near-invisible for 8 s; enemies cannot auto-attack him.
+
+**Heroine — Tibiabin:** *Sandstorm* — a 200 px storm for 10 s: 3 damage per second, −40 % speed and −50 % projectile accuracy for enemies inside.
+
+**Weaknesses:** weak late game; poor archery and navy.
 
 ### European invaders
 
@@ -486,30 +521,55 @@ The dry-stone builders of Lanzarote and Fuerteventura. Fast, relentless harassme
 
 Jean de Béthencourt's Normans: early expansion and timing attacks.
 
-- Age advance −15 % cost; cavalry +15 % HP; farms built faster
-- **Unique:** *Chevalier Normand* (Stable, Castle, 75 F + 65 G) — Lance Charge: ×2.5 after 80 px of approach
-- **Hero: Jean de Béthencourt** — *Forced Diplomacy*: converts the nearest enemy unit for 12 s. **Heroine: Catalina de Béthencourt** — *Duel of Honour*: a 15 s single combat (+100 % mutual damage, −50 % to everyone else; victory restores half her health).
-- Weak archery; limited navy.
+**Bonuses**
+
+- Age advance −15 % cost
+- Cavalry +15 % HP
+- Farms built faster
+
+**Unique unit — Chevalier Normand** (Stable, Castle Age, 75 Food + 65 Gold): Lance Charge — ×2.5 damage after 80 px of uninterrupted approach.
+
+**Hero — Jean de Béthencourt:** *Forced Diplomacy* — converts the nearest enemy unit to your side for 12 s.
+
+**Heroine — Catalina de Béthencourt:** *Duel of Honour* — a 15 s single combat: +100 % mutual damage and −50 % against everyone else; victory restores half her health.
+
+**Weaknesses:** weak archery; limited navy.
 
 #### Britons — *"We haven't come to stay. We've come to leave with more than we brought."*
 
 Privateers and archers. The best warships and the longest reach in the game.
 
+**Bonuses**
+
 - Foot archers +1 range per Age (from Feudal)
-- Warships +20 % attack speed; half the Atlantic Storm penalty
-- **Unique:** *Longbowman* (Archery Range, Castle, 30 W + 60 G) — exceptional range, armour-piercing arrows (+4 vs cavalry)
-- **Hero: Francis Drake** — *Plunder*: for 20 s, every enemy felled nearby pays 15 gold. **Heroine: Grace O'Malley** — *Boarding*: a 200 px dash dealing 30 damage plus a 2 s stun (100 to buildings).
-- Weak heavy cavalry; light defenses.
+- Warships +20 % attack speed
+- Half the Atlantic Storm penalty
+
+**Unique unit — Longbowman** (Archery Range, Castle Age, 30 Wood + 60 Gold): exceptional range and armour-piercing arrows (+4 vs cavalry).
+
+**Hero — Francis Drake:** *Plunder* — for 20 s, every enemy felled in his radius pays 15 gold.
+
+**Heroine — Grace O'Malley:** *Boarding* — a 200 px dash dealing 30 damage plus a 2 s stun (100 damage to buildings).
+
+**Weaknesses:** weak heavy cavalry; light defenses.
 
 #### Castilians — *"We are not the first. We will be the last."*
 
 The crown that finished the conquest. Slow to start, unstoppable late.
 
+**Bonuses**
+
 - One **free** Blacksmith technology with every Age advance
-- Swordsman line +15 % HP; towers +10 % range; half the Calima penalty
-- **Unique:** *Conquistador* (Barracks, Castle, 60 F + 60 G) — Salvo Fire: 3 rapid shots, 12 s cooldown
-- **Hero: Don Quixote de la Mancha** — *Errant Knight's Charge*: a straight-line gallop damaging everything in its path, friend or foe; his passive *Rocinante* grants extra speed at the price of a slight delay on his blows. **Heroine: Dulcinea del Toboso** — *Call to Arms*: summons 3 temporary Militia (+20 % HP and attack) for 40 s.
-- Slow early economy; their power needs Castle or Imperial Age.
+- Swordsman line +15 % HP; towers +10 % range
+- Half the Calima penalty
+
+**Unique unit — Conquistador** (Barracks, Castle Age, 60 Food + 60 Gold): Salvo Fire — 3 rapid shots with a 12 s cooldown.
+
+**Hero — Don Quixote de la Mancha:** *Errant Knight's Charge* — a straight-line gallop damaging everything in its path, friend or foe. His passive *Rocinante* grants extra speed at the price of a slight delay on his blows.
+
+**Heroine — Dulcinea del Toboso:** *Call to Arms* — summons 3 temporary Militia (+20 % HP and attack) for 40 s.
+
+**Weaknesses:** slow early economy; their power needs Castle or Imperial Age.
 
 ---
 

@@ -427,23 +427,37 @@ Ocho civilizaciones en tres capas históricas. Tu elección fija tus bonificacio
 
 El imperio en declive del mito, con el mejor conocimiento náutico del mundo. Controlan el agua: ninguna orilla detiene un ataque atlante.
 
+**Bonificaciones**
+
 - +50 % de visión a menos de 400 px de una costa
-- Más difíciles de detectar en la Niebla Marina (los descubren a 90 px, no 180)
+- Más difíciles de detectar en la Niebla Marina (los descubren a 90 px, no a 180)
 - Velocidad de ataque de barcos ×1.20; inmunes a la Tormenta Atlántica
-- **Única:** *Invocador de Mareas* (Cuartel, Castillo, 50 C + 70 O) — infantería anfibia con Pulso de Marea en área; la única unidad terrestre que nada
-- **Héroe: Artaxerax** — *Calima*: vela a los aliados cercanos 12 s (no pueden ser objetivo). **Heroína: Cleito** — *Marea Creciente*: ola de 250 px que cura 60 PV y acelera +30 % a los aliados 8 s; 20 de daño y −20 % de velocidad a los enemigos.
-- Débiles en mapas de tierra pura: sin caballería pesada ni taller de asedio.
+
+**Unidad única — Invocador de Mareas** (Cuartel, Edad del Castillo, 50 Comida + 70 Oro): infantería anfibia con Pulso de Marea en área; la única unidad terrestre que nada.
+
+**Héroe — Artaxerax:** *Calima* — vela a los aliados cercanos durante 12 s; mientras dura, no pueden ser objetivo.
+
+**Heroína — Cleito:** *Marea Creciente* — una ola de 250 px que cura 60 PV y acelera +30 % a los aliados durante 8 s; los enemigos reciben 20 de daño y pierden un 20 % de velocidad.
+
+**Debilidades:** sin caballería pesada ni taller de asedio — sufren en mapas de tierra pura.
 
 #### Fenicios — *«No necesitamos conquistar lo que simplemente podemos comprar.»*
 
 Los cartografistas del Atlántico. Viven del Mercado, que abren en la Edad Oscura.
 
+**Bonificaciones**
+
 - Mercado desde la Edad Oscura; mercenarios −25 %
 - Barcos −15 % de coste; los Trirremes generan oro pasivo (5 cada 30 s)
 - Media penalización de la Tormenta Atlántica
-- **Única:** *Trirreme* (Muelle, Feudal, 100 M + 50 O) — embestida ×2 contra barcos con empuje
-- **Héroe: Hannón el Navegante** — *Ruta Comercial*: 50 de oro a lo largo de 30 s. **Heroína: Elissa** — *Pacto Mercenario*: 400 de oro convierten permanentemente a una unidad enemiga cercana.
-- Vulnerables a la agresión temprana; sin caballeros.
+
+**Unidad única — Trirreme** (Muelle, Edad Feudal, 100 Madera + 50 Oro): embestida ×2 contra barcos, con empuje.
+
+**Héroe — Hannón el Navegante:** *Ruta Comercial* — establece una ruta que genera 50 de oro a lo largo de 30 s.
+
+**Heroína — Elissa:** *Pacto Mercenario* — 400 de oro convierten permanentemente a una unidad enemiga cercana.
+
+**Debilidades:** vulnerables a la agresión temprana; sin caballeros.
 
 ### Civilizaciones nativas
 
@@ -451,34 +465,55 @@ Los cartografistas del Atlántico. Viven del Mercado, que abren en la Edad Oscur
 
 Los reinos de Tenerife, defensores del terreno volcánico.
 
+**Bonificaciones**
+
 - Cruzan libremente el **malpaís**; edificios de piedra +20 % PV
 - Piqueros desde la **Edad Oscura** — la anticaballería más temprana del juego
 - Inmunes a la Calima; media penalización de la Ceniza Volcánica
-- **Única:** *Guardia del Mencey* (Cuartel, Castillo, 65 C + 25 O) — infantería pesada con Aura de Furia por debajo de media vida
-- **Héroe: Bencomo** — *Ímpetu del Mencey*: +30 % de velocidad de ataque a los aliados cercanos 10 s. **Heroína: Dácil** — *Voz de la Montaña*: +2 de armadura y +50 % de curación 12 s.
-- Sin caballería; débiles en el mar.
+
+**Unidad única — Guardia del Mencey** (Cuartel, Edad del Castillo, 65 Comida + 25 Oro): infantería pesada que entra en Aura de Furia por debajo de media vida.
+
+**Héroe — Bencomo:** *Ímpetu del Mencey* — +30 % de velocidad de ataque a los aliados cercanos durante 10 s.
+
+**Heroína — Dácil:** *Voz de la Montaña* — +2 de armadura y +50 % de velocidad de curación durante 12 s.
+
+**Debilidades:** sin caballería; débiles en el mar.
 
 #### Canarii — *«El barranco no es un problema. Es un muro que se construye solo.»*
 
 La potencia económica nativa de Gran Canaria — y los protagonistas de la campaña.
 
+**Bonificaciones**
+
 - Aldeanos +15 % recolectando Comida; las **Casas sirven de punto de entrega**
 - Arqueros −20 % de coste de Comida
 - Media penalización de la Niebla Marina y los Vientos Alisios
-- **Única:** *Arquero del Barranco* (Galería de Tiro, Castillo, 40 M + 55 O) — Disparo de Emboscada: primer disparo ×2 hecho quieto; más alcance en los riscos
-- **Héroe: Doramas** — *Desafío*: provoca a la unidad enemiga más cercana 6 s. **Heroína: Guayarmina** — *Flecha del Destino*: 80 de daño ignorando armadura; si mata, medio enfriamiento.
-- Sin fuerza naval; sufren en mapas llanos.
+
+**Unidad única — Arquero del Barranco** (Galería de Tiro, Edad del Castillo, 40 Madera + 55 Oro): Disparo de Emboscada — el primer disparo hecho quieto hace ×2; gana alcance en los riscos.
+
+**Héroe — Doramas:** *Desafío* — provoca a la unidad enemiga más cercana para que le ataque solo a él durante 6 s.
+
+**Heroína — Guayarmina:** *Flecha del Destino* — 80 de daño ignorando armadura; si el objetivo muere, el enfriamiento se reduce a la mitad.
+
+**Debilidades:** sin fuerza naval; sufren en mapas llanos.
 
 #### Mahos — *«El desierto no te mata. Tus prisas sí.»*
 
 Los constructores de piedra de Lanzarote y Fuerteventura. Hostigamiento veloz.
 
+**Bonificaciones**
+
 - Edificios −30 % de coste de Madera
-- Exploradores y caballería ligera +25 % de velocidad; cruzan las **dunas** libremente y ven +40 % desde ellas
-- Media penalización de la Calima
-- **Única:** *Saqueador de Dunas* (Establo, Feudal, 60 C + 40 O) — golpea y huye: se retira tras cada ataque
-- **Héroe: Guadarfía** — *Emboscada*: casi invisible 8 s. **Heroína: Tibiabin** — *Tormenta de Arena*: 200 px, 10 s — 3 de daño/s, −40 % de velocidad y −50 % de precisión enemiga.
-- Juego tardío débil; mala arquería y naval.
+- Exploradores y caballería ligera +25 % de velocidad
+- Cruzan las **dunas** libremente y ven +40 % desde ellas; media penalización de la Calima
+
+**Unidad única — Saqueador de Dunas** (Establo, Edad Feudal, 60 Comida + 40 Oro): golpea y huye — se retira automáticamente tras cada ataque.
+
+**Héroe — Guadarfía:** *Emboscada* — casi invisible durante 8 s; los enemigos no pueden atacarle automáticamente.
+
+**Heroína — Tibiabin:** *Tormenta de Arena* — una tormenta de 200 px durante 10 s: 3 de daño por segundo, −40 % de velocidad y −50 % de precisión de proyectiles para los enemigos dentro.
+
+**Debilidades:** juego tardío débil; mala arquería y naval.
 
 ### Invasores europeos
 
@@ -486,30 +521,55 @@ Los constructores de piedra de Lanzarote y Fuerteventura. Hostigamiento veloz.
 
 Los normandos de Jean de Béthencourt: expansión temprana y ataques de tempo.
 
-- Avance de Edad −15 % de coste; caballería +15 % PV; granjas construidas más rápido
-- **Única:** *Chevalier Normando* (Establo, Castillo, 75 C + 65 O) — Carga de Lanza: ×2.5 tras 80 px de aproximación
-- **Héroe: Jean de Béthencourt** — *Diplomacia Forzada*: convierte a la unidad enemiga más cercana 12 s. **Heroína: Catalina de Béthencourt** — *Duelo de Honor*: reto singular 15 s (+100 % de daño mutuo, −50 % al resto; si vence, recupera media vida).
-- Arquería débil; naval limitada.
+**Bonificaciones**
+
+- Avance de Edad −15 % de coste
+- Caballería +15 % PV
+- Granjas construidas más rápido
+
+**Unidad única — Chevalier Normando** (Establo, Edad del Castillo, 75 Comida + 65 Oro): Carga de Lanza — daño ×2.5 tras 80 px de aproximación ininterrumpida.
+
+**Héroe — Jean de Béthencourt:** *Diplomacia Forzada* — convierte a la unidad enemiga más cercana a tu bando durante 12 s.
+
+**Heroína — Catalina de Béthencourt:** *Duelo de Honor* — reto singular de 15 s: +100 % de daño mutuo y −50 % contra el resto; si vence, recupera media vida.
+
+**Debilidades:** arquería débil; naval limitada.
 
 #### Britanos — *«No hemos venido a quedarnos. Hemos venido a irnos con más de lo que trajimos.»*
 
 Corsarios y arqueros. Los mejores barcos de guerra y el mayor alcance del juego.
 
+**Bonificaciones**
+
 - Arqueros de a pie +1 de alcance por Edad (desde Feudal)
-- Barcos de guerra +20 % de velocidad de ataque; media penalización de la Tormenta Atlántica
-- **Única:** *Arquero de Tiro Largo* (Galería de Tiro, Castillo, 30 M + 60 O) — alcance excepcional, flechas perforantes (+4 contra caballería)
-- **Héroe: Francis Drake** — *Saqueo*: 20 s en los que cada enemigo caído cerca paga 15 de oro. **Heroína: Grace O'Malley** — *Abordaje*: embestida de 200 px, 30 de daño + aturdimiento 2 s (100 a edificios).
-- Caballería pesada floja; defensas ligeras.
+- Barcos de guerra +20 % de velocidad de ataque
+- Media penalización de la Tormenta Atlántica
+
+**Unidad única — Arquero de Tiro Largo** (Galería de Tiro, Edad del Castillo, 30 Madera + 60 Oro): alcance excepcional y flechas perforantes (+4 contra caballería).
+
+**Héroe — Francis Drake:** *Saqueo* — durante 20 s, cada enemigo caído en su radio paga 15 de oro.
+
+**Heroína — Grace O'Malley:** *Abordaje* — embestida de 200 px que causa 30 de daño y aturde 2 s (100 de daño a edificios).
+
+**Debilidades:** caballería pesada floja; defensas ligeras.
 
 #### Castellanos — *«No somos los primeros. Seremos los últimos.»*
 
 La corona que completó la conquista. Lentos al inicio, imparables al final.
 
+**Bonificaciones**
+
 - Una tecnología de Herrería **gratuita** con cada avance de Edad
-- Espadachines +15 % PV; torres con +10 % de alcance; media penalización de la Calima
-- **Única:** *Conquistador* (Cuartel, Castillo, 60 C + 60 O) — Fuego en Salva: 3 disparos rápidos, 12 s de enfriamiento
-- **Héroe: Don Quijote de la Mancha** — *Acometida del Caballero Errante*: carga en línea recta que daña todo a su paso, amigo o enemigo; su pasiva *Rocinante* le da velocidad extra a cambio de un leve retardo en sus golpes. **Heroína: Dulcinea del Toboso** — *Llamada a las Armas*: invoca 3 Milicias temporales (+20 % vida y ataque) durante 40 s.
-- Economía temprana lenta; su poder exige llegar a Castillo o Imperial.
+- Espadachines +15 % PV; torres con +10 % de alcance
+- Media penalización de la Calima
+
+**Unidad única — Conquistador** (Cuartel, Edad del Castillo, 60 Comida + 60 Oro): Fuego en Salva — 3 disparos rápidos con 12 s de enfriamiento.
+
+**Héroe — Don Quijote de la Mancha:** *Acometida del Caballero Errante* — una carga en línea recta que daña todo a su paso, amigo o enemigo. Su pasiva *Rocinante* le da velocidad extra a cambio de un leve retardo en sus golpes.
+
+**Heroína — Dulcinea del Toboso:** *Llamada a las Armas* — invoca 3 Milicias temporales (+20 % de vida y ataque) durante 40 s.
+
+**Debilidades:** economía temprana lenta; su poder exige llegar a Castillo o Imperial.
 
 ---
 
